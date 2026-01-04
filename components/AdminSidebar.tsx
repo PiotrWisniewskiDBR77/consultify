@@ -1,31 +1,32 @@
 /**
  * AdminSidebar Component
- * 
+ *
  * 8-module navigation for Admin Panel following SuperAdmin pattern.
  * Modules: Overview | Organization | Team | Workspace | AI | Billing | Security | Feedback
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    LayoutDashboard,
-    Users,
+    ArrowLeft,
     Brain,
+    Building2,
+    ChevronRight,
+    CreditCard,
+    FolderOpen,
+    LayoutDashboard,
+    LogOut,
+    MessageSquare,
+    PanelLeftClose,
+    Pin,
     Settings,
     Shield,
-    LogOut,
-    ChevronRight,
-    FolderOpen,
-    Pin,
-    PanelLeftClose,
-    ArrowLeft,
-    Building2,
-    CreditCard,
-    MessageSquare,
+    Users,
 } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
-import { Api } from '../services/api';
-import { AppView } from '../types';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+import { AppView } from '../types';
 
 // 8-module structure for Admin (matching AdminView)
 export type AdminSection =
@@ -40,14 +41,14 @@ export type AdminSection =
 
 // Mapping between sections and AppView
 export const adminSectionToAppView: Record<AdminSection, AppView> = {
-    'overview': AppView.ADMIN_OVERVIEW,
-    'organization': AppView.ADMIN_ORGANIZATION,
-    'team': AppView.ADMIN_TEAM,
-    'workspace': AppView.ADMIN_WORKSPACE,
-    'ai': AppView.ADMIN_AI,
-    'billing': AppView.ADMIN_BILLING,
-    'security': AppView.ADMIN_SECURITY,
-    'feedback': AppView.ADMIN_FEEDBACK,
+    overview: AppView.ADMIN_OVERVIEW,
+    organization: AppView.ADMIN_ORGANIZATION,
+    team: AppView.ADMIN_TEAM,
+    workspace: AppView.ADMIN_WORKSPACE,
+    ai: AppView.ADMIN_AI,
+    billing: AppView.ADMIN_BILLING,
+    security: AppView.ADMIN_SECURITY,
+    feedback: AppView.ADMIN_FEEDBACK,
 };
 
 export const appViewToAdminSection: Record<string, AdminSection> = {
@@ -108,7 +109,7 @@ const menuItems: MenuItem[] = [
 ];
 
 // Reusable menu button component
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const MenuButton: React.FC<{
     item: MenuItem;
     activeSection: AdminSection;
@@ -118,17 +119,20 @@ const MenuButton: React.FC<{
     t: (key: string, options?: any) => any;
 }> = ({ item, activeSection, showFull, onSectionChange, badge, t }) => {
     const label = t(item.labelKey, item.id.charAt(0).toUpperCase() + item.id.slice(1));
-    
+
     return (
         <button
             onClick={() => onSectionChange(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${activeSection === item.id
-                ? 'bg-gradient-to-r from-purple-600/20 to-transparent text-purple-600 dark:text-white border-l-2 border-purple-500'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                }`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+                activeSection === item.id
+                    ? 'bg-gradient-to-r from-purple-600/20 to-transparent text-purple-600 dark:text-white border-l-2 border-purple-500'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+            }`}
             title={!showFull ? label : undefined}
         >
-            <span className={`shrink-0 relative ${activeSection === item.id ? 'text-purple-500 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>
+            <span
+                className={`shrink-0 relative ${activeSection === item.id ? 'text-purple-500 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+            >
                 {item.icon}
                 {/* Badge for collapsed state */}
                 {badge && badge > 0 && !showFull && (
@@ -138,8 +142,11 @@ const MenuButton: React.FC<{
                 )}
             </span>
 
-            <span className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
-                }`}>
+            <span
+                className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                    showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
+                }`}
+            >
                 {label}
             </span>
 
@@ -162,7 +169,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     onSectionChange,
     onBackToApp,
     currentUserEmail,
-    companyName
+    companyName,
 }) => {
     const { t } = useTranslation();
     const { isSidebarCollapsed, toggleSidebarCollapse } = useAppStore();
@@ -204,7 +211,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     <Shield size={18} className="text-white" />
                 </div>
 
-                <div className={`overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
+                <div
+                    className={`overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}
+                >
                     <div className="font-bold text-slate-900 dark:text-white text-sm tracking-wide whitespace-nowrap">
                         {t('admin.title', 'ADMIN')}
                     </div>
@@ -222,7 +231,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                             setIsHovered(false);
                         }}
                         className="absolute right-2 p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                        title={isSidebarCollapsed ? t('sidebar.pin', 'Pin Sidebar') : t('sidebar.unpin', 'Unpin Sidebar')}
+                        title={
+                            isSidebarCollapsed ? t('sidebar.pin', 'Pin Sidebar') : t('sidebar.unpin', 'Unpin Sidebar')
+                        }
                     >
                         {isSidebarCollapsed ? <Pin size={16} className="rotate-45" /> : <PanelLeftClose size={16} />}
                     </button>
@@ -253,12 +264,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
             {/* User / Back Section */}
             <div className="p-3 border-t border-slate-200 dark:border-white/5 shrink-0">
-                <div className={`flex items-center gap-3 px-2 py-2 mb-1 overflow-hidden transition-all duration-300 ${showFull ? 'opacity-100' : 'opacity-0 h-0 hidden'}`}>
+                <div
+                    className={`flex items-center gap-3 px-2 py-2 mb-1 overflow-hidden transition-all duration-300 ${showFull ? 'opacity-100' : 'opacity-0 h-0 hidden'}`}
+                >
                     <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center shrink-0">
                         <Shield size={16} className="text-purple-500 dark:text-purple-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-slate-900 dark:text-white truncate">{currentUserEmail}</div>
+                        <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
+                            {currentUserEmail}
+                        </div>
                         <div className="text-[10px] text-purple-500 dark:text-purple-400 uppercase">
                             {t('admin.role', 'Admin')}
                         </div>
@@ -270,7 +285,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     title={t('admin.backToApp', 'Back to App')}
                 >
                     <ArrowLeft size={18} className="shrink-0" />
-                    <span className={`text-sm whitespace-nowrap transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0 hidden'}`}>
+                    <span
+                        className={`text-sm whitespace-nowrap transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0 hidden'}`}
+                    >
                         {t('admin.backToApp', 'Back to App')}
                     </span>
                 </button>
@@ -280,4 +297,3 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 };
 
 export default AdminSidebar;
-

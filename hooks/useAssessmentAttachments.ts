@@ -3,7 +3,7 @@
  * Provides upload, delete, and fetch functionality for evidence files
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
@@ -44,102 +44,104 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
     /**
      * Upload a file attachment for a specific level
      */
-    const uploadAttachment = useCallback(async (
-        file: File,
-        axisId: string,
-        levelNumber: number,
-        options?: {
-            areaId?: string;
-            attachmentType?: LevelAttachment['attachmentType'];
-            description?: string;
-        }
-    ): Promise<LevelAttachment | null> => {
-        const token = getAuthToken();
-        if (!token || !assessmentId) {
-            setError('Missing authentication or assessment ID');
-            return null;
-        }
-
-        setIsUploading(true);
-        setError(null);
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('assessmentId', assessmentId);
-            formData.append('axisId', axisId);
-            formData.append('levelNumber', levelNumber.toString());
-            
-            if (options?.areaId) {
-                formData.append('areaId', options.areaId);
-            }
-            if (options?.attachmentType) {
-                formData.append('attachmentType', options.attachmentType);
-            }
-            if (options?.description) {
-                formData.append('description', options.description);
+    const uploadAttachment = useCallback(
+        async (
+            file: File,
+            axisId: string,
+            levelNumber: number,
+            options?: {
+                areaId?: string;
+                attachmentType?: LevelAttachment['attachmentType'];
+                description?: string;
+            },
+        ): Promise<LevelAttachment | null> => {
+            const token = getAuthToken();
+            if (!token || !assessmentId) {
+                setError('Missing authentication or assessment ID');
+                return null;
             }
 
-            const response = await fetch('/api/assessment-level-attachments', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
+            setIsUploading(true);
+            setError(null);
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Failed to upload file');
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('assessmentId', assessmentId);
+                formData.append('axisId', axisId);
+                formData.append('levelNumber', levelNumber.toString());
+
+                if (options?.areaId) {
+                    formData.append('areaId', options.areaId);
+                }
+                if (options?.attachmentType) {
+                    formData.append('attachmentType', options.attachmentType);
+                }
+                if (options?.description) {
+                    formData.append('description', options.description);
+                }
+
+                const response = await fetch('/api/assessment-level-attachments', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to upload file');
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Upload failed';
+                setError(message);
+                console.error('[useAssessmentAttachments] Upload error:', err);
+                return null;
+            } finally {
+                setIsUploading(false);
             }
-
-            const data = await response.json();
-            return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Upload failed';
-            setError(message);
-            console.error('[useAssessmentAttachments] Upload error:', err);
-            return null;
-        } finally {
-            setIsUploading(false);
-        }
-    }, [assessmentId]);
+        },
+        [assessmentId],
+    );
 
     /**
      * Get attachments for a specific level
      */
-    const getAttachments = useCallback(async (
-        axisId: string,
-        levelNumber: number,
-        areaId?: string
-    ): Promise<LevelAttachmentsResponse | null> => {
-        const token = getAuthToken();
-        if (!token || !assessmentId) {
-            return null;
-        }
-
-        try {
-            let url = `/api/assessment-level-attachments/level/${assessmentId}/${axisId}/${levelNumber}`;
-            if (areaId) {
-                url += `?areaId=${encodeURIComponent(areaId)}`;
+    const getAttachments = useCallback(
+        async (axisId: string, levelNumber: number, areaId?: string): Promise<LevelAttachmentsResponse | null> => {
+            const token = getAuthToken();
+            if (!token || !assessmentId) {
+                return null;
             }
 
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            try {
+                let url = `/api/assessment-level-attachments/level/${assessmentId}/${axisId}/${levelNumber}`;
+                if (areaId) {
+                    url += `?areaId=${encodeURIComponent(areaId)}`;
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch attachments');
+                const response = await fetch(url, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch attachments');
+                }
+
+                return await response.json();
+            } catch (err) {
+                console.error('[useAssessmentAttachments] Fetch error:', err);
+                return null;
             }
-
-            return await response.json();
-        } catch (err) {
-            console.error('[useAssessmentAttachments] Fetch error:', err);
-            return null;
-        }
-    }, [assessmentId]);
+        },
+        [assessmentId],
+    );
 
     /**
      * Get all attachments for the assessment
@@ -157,8 +159,8 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
         try {
             const response = await fetch(`/api/assessment-level-attachments/${assessmentId}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) {
@@ -189,8 +191,8 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
             const response = await fetch(`/api/assessment-level-attachments/${attachmentId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) {
@@ -211,10 +213,7 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
     /**
      * Update attachment description
      */
-    const updateDescription = useCallback(async (
-        attachmentId: string,
-        description: string
-    ): Promise<boolean> => {
+    const updateDescription = useCallback(async (attachmentId: string, description: string): Promise<boolean> => {
         const token = getAuthToken();
         if (!token) {
             return false;
@@ -224,10 +223,10 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
             const response = await fetch(`/api/assessment-level-attachments/${attachmentId}/description`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ description })
+                body: JSON.stringify({ description }),
             });
 
             return response.ok;
@@ -253,9 +252,8 @@ export function useAssessmentAttachments({ assessmentId }: UseAssessmentAttachme
         getDownloadUrl,
         isUploading,
         isDeleting,
-        error
+        error,
     };
 }
 
 export default useAssessmentAttachments;
-

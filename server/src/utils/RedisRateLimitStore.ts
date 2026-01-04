@@ -1,12 +1,13 @@
 /**
  * Redis Rate Limit Store
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * A simple Redis store for express-rate-limit
  * Uses the existing Redis client connection
  */
 
-import type { Store, IncrementResponse } from 'express-rate-limit';
+import type { IncrementResponse, Store } from 'express-rate-limit';
+
 import { getRedisClient, isRedisConnected } from '../../services/ai/redisClient.js';
 
 // ==========================================
@@ -57,7 +58,7 @@ export class RedisRateLimitStore implements Store {
 
             // CRITICAL FIX: express-rate-limit v8 requires positive integer
             // Redis incr returns 0 on fresh keys or null on errors
-            const safeHits = (typeof hits === 'number' && hits > 0) ? hits : 1;
+            const safeHits = typeof hits === 'number' && hits > 0 ? hits : 1;
 
             if (safeHits === 1) {
                 await client.expire(rKey, Math.ceil(this.windowMs / 1000));
@@ -66,14 +67,14 @@ export class RedisRateLimitStore implements Store {
             const resetTime = new Date(Date.now() + this.windowMs); // Approximate
             return {
                 totalHits: safeHits,
-                resetTime
+                resetTime,
             };
         } catch (error: unknown) {
             console.error('[RateLimit] Redis error:', error);
             // Fail open - must return a positive integer for totalHits (v8 requirement)
             return {
                 totalHits: 1,
-                resetTime: new Date(Date.now() + (this.windowMs || 60000))
+                resetTime: new Date(Date.now() + (this.windowMs || 60000)),
             };
         }
     }
@@ -124,11 +125,11 @@ export class RedisRateLimitStore implements Store {
 
             const parsedHits = parseInt(String(hits), 10);
             // CRITICAL: Must return positive integer or undefined
-            const safeHits = (parsedHits > 0) ? parsedHits : 1;
+            const safeHits = parsedHits > 0 ? parsedHits : 1;
 
             return {
                 totalHits: safeHits,
-                resetTime: new Date(Date.now() + this.windowMs)
+                resetTime: new Date(Date.now() + this.windowMs),
             };
         } catch (error: unknown) {
             console.error('[RateLimit] Redis get error:', error);
@@ -139,7 +140,4 @@ export class RedisRateLimitStore implements Store {
 }
 
 export default RedisRateLimitStore;
-
-
-
 

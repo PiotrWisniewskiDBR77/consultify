@@ -1,27 +1,28 @@
 /**
  * FeatureFlagsPanel - Full Implementation
- * 
+ *
  * Complete feature flag management with CRUD operations, targeting rules, and A/B testing
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
 import {
-    Flag,
-    Plus,
+    Check,
     Edit,
-    Trash2,
+    Filter,
+    Flag,
+    History,
+    Loader2,
+    Plus,
+    Search,
+    Settings,
     ToggleLeft,
     ToggleRight,
-    Search,
-    Filter,
-    History,
-    Settings,
-    Loader2,
-    Check,
-    X
+    Trash2,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface FeatureFlag {
     id: string;
@@ -92,8 +93,9 @@ export const FeatureFlagsPanel: React.FC = () => {
         }
     };
 
-    const filteredFlags = flags.filter(flag => {
-        const matchesSearch = !searchTerm || 
+    const filteredFlags = flags.filter((flag) => {
+        const matchesSearch =
+            !searchTerm ||
             flag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             flag.flag_key.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesSearch;
@@ -113,9 +115,7 @@ export const FeatureFlagsPanel: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white mb-2">Feature Flags</h2>
-                    <p className="text-slate-400 text-sm">
-                        Control feature availability across your platform
-                    </p>
+                    <p className="text-slate-400 text-sm">Control feature availability across your platform</p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
@@ -182,9 +182,7 @@ export const FeatureFlagsPanel: React.FC = () => {
                                         {flag.flag_type === 'percentage' && (
                                             <span>Rollout: {flag.rollout_percentage}%</span>
                                         )}
-                                        {flag.organization_id && (
-                                            <span>Org-specific</span>
-                                        )}
+                                        {flag.organization_id && <span>Org-specific</span>}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -245,10 +243,7 @@ export const FeatureFlagsPanel: React.FC = () => {
 
             {/* History Modal */}
             {selectedFlagHistory && (
-                <FlagHistoryModal
-                    flagId={selectedFlagHistory}
-                    onClose={() => setSelectedFlagHistory(null)}
-                />
+                <FlagHistoryModal flagId={selectedFlagHistory} onClose={() => setSelectedFlagHistory(null)} />
             )}
         </div>
     );
@@ -268,7 +263,7 @@ const FeatureFlagModal: React.FC<{
         flag_type: flag?.flag_type || 'boolean',
         rollout_percentage: flag?.rollout_percentage || 0,
         environment: flag?.environment || 'production',
-        targeting_rules: flag?.targeting_rules || []
+        targeting_rules: flag?.targeting_rules || [],
     });
     const [saving, setSaving] = useState(false);
 
@@ -300,19 +295,14 @@ const FeatureFlagModal: React.FC<{
                     <h3 className="text-xl font-bold text-white">
                         {flag ? 'Edit Feature Flag' : 'Create Feature Flag'}
                     </h3>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    >
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                         <X size={20} className="text-slate-400" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Flag Key *
-                        </label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Flag Key *</label>
                         <input
                             type="text"
                             required
@@ -324,9 +314,7 @@ const FeatureFlagModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Name *
-                        </label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
                         <input
                             type="text"
                             required
@@ -337,9 +325,7 @@ const FeatureFlagModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Description
-                        </label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -350,9 +336,7 @@ const FeatureFlagModal: React.FC<{
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Type *
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Type *</label>
                             <select
                                 value={formData.flag_type}
                                 onChange={(e) => setFormData({ ...formData, flag_type: e.target.value as any })}
@@ -366,9 +350,7 @@ const FeatureFlagModal: React.FC<{
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Environment *
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Environment *</label>
                             <select
                                 value={formData.environment}
                                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
@@ -383,15 +365,15 @@ const FeatureFlagModal: React.FC<{
 
                     {formData.flag_type === 'percentage' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Rollout Percentage
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Rollout Percentage</label>
                             <input
                                 type="number"
                                 min="0"
                                 max="100"
                                 value={formData.rollout_percentage}
-                                onChange={(e) => setFormData({ ...formData, rollout_percentage: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, rollout_percentage: parseInt(e.target.value) })
+                                }
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
@@ -463,10 +445,7 @@ const FlagHistoryModal: React.FC<{
             <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-white">Feature Flag History</h3>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    >
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                         <X size={20} className="text-slate-400" />
                     </button>
                 </div>
@@ -481,10 +460,7 @@ const FlagHistoryModal: React.FC<{
                             <p className="text-slate-400 text-center py-8">No history available</p>
                         ) : (
                             history.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="p-3 bg-white/5 rounded-lg border border-white/10"
-                                >
+                                <div key={item.id} className="p-3 bg-white/5 rounded-lg border border-white/10">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-sm font-medium text-white">{item.change_type}</span>
                                         <span className="text-xs text-slate-500">

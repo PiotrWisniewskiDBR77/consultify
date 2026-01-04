@@ -14,7 +14,8 @@ import axios from 'axios';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
 import UserIntegrationService from '../services/userIntegrationService.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -413,7 +414,7 @@ router.put('/:provider/config', async (req, res) => {
 
         // Update in database
         await new Promise((resolve, reject) => {
-            const db = getDatabase();
+            
             db.run(
                 `UPDATE user_integrations 
                 SET config_json = ?, updated_at = CURRENT_TIMESTAMP
@@ -463,6 +464,7 @@ router.get('/:provider/logs', async (req, res) => {
 });
 
 export default router;
+
 
 
 

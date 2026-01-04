@@ -3,25 +3,26 @@
  * Dashboard for assessment reviewers showing pending, in-progress, and completed reviews
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    ClipboardCheck, 
-    Clock, 
-    CheckCircle2, 
-    AlertTriangle,
-    ChevronRight,
-    Star,
-    MessageSquare,
-    User,
-    Calendar,
-    Timer,
-    Loader2,
-    RefreshCw,
-    Filter,
-    BarChart3,
+import {
     AlertCircle,
-    FileEdit
+    AlertTriangle,
+    BarChart3,
+    Calendar,
+    CheckCircle2,
+    ChevronRight,
+    ClipboardCheck,
+    Clock,
+    FileEdit,
+    Filter,
+    Loader2,
+    MessageSquare,
+    RefreshCw,
+    Star,
+    Timer,
+    User,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 import { ReviewFeedbackPanel } from './panels/ReviewFeedbackPanel';
@@ -59,11 +60,9 @@ interface ReviewerDashboardProps {
 
 type TabType = 'pending' | 'in_progress' | 'completed';
 
-export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
-    onNavigateToReview
-}) => {
+export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigateToReview }) => {
     const { currentUser, setCurrentView } = useAppStore();
-    
+
     // State
     const [reviews, setReviews] = useState<Review[]>([]);
     const [stats, setStats] = useState<ReviewerStats | null>(null);
@@ -78,8 +77,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
         try {
             const response = await fetch('/api/assessment-workflow/pending-reviews', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             if (!response.ok) {
@@ -88,7 +87,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
 
             const data = await response.json();
             setReviews(data.reviews || []);
-            
+
             // Calculate stats
             const allReviews = data.reviews || [];
             const pending = allReviews.filter((r: Review) => r.status === 'PENDING');
@@ -98,13 +97,14 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
 
             // Calculate avg completion time
             const completedWithTime = completed.filter((r: Review) => r.assignedAt && r.completedAt);
-            const avgTime = completedWithTime.length > 0
-                ? completedWithTime.reduce((sum: number, r: Review) => {
-                    const assigned = new Date(r.assignedAt).getTime();
-                    const done = new Date(r.completedAt!).getTime();
-                    return sum + (done - assigned) / (1000 * 60 * 60);
-                }, 0) / completedWithTime.length
-                : 0;
+            const avgTime =
+                completedWithTime.length > 0
+                    ? completedWithTime.reduce((sum: number, r: Review) => {
+                          const assigned = new Date(r.assignedAt).getTime();
+                          const done = new Date(r.completedAt!).getTime();
+                          return sum + (done - assigned) / (1000 * 60 * 60);
+                      }, 0) / completedWithTime.length
+                    : 0;
 
             setStats({
                 total: allReviews.length,
@@ -112,9 +112,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                 inProgress: inProgress.length,
                 completed: completed.length,
                 overdue: overdue.length,
-                avgCompletionTime: Math.round(avgTime)
+                avgCompletionTime: Math.round(avgTime),
             });
-
         } catch (err: any) {
             console.error('[ReviewerDashboard] Error:', err);
             setError(err.message);
@@ -139,9 +138,9 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
             await fetch(`/api/assessment-workflow/reviews/${review.id}/start`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             // Navigate to assessment
@@ -162,7 +161,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -170,14 +169,14 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
         const date = new Date(dateStr);
         const now = new Date();
         const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-        
+
         if (diffHours < 1) return 'przed chwilą';
         if (diffHours < 24) return `${diffHours}h temu`;
         const days = Math.floor(diffHours / 24);
         return `${days} dni temu`;
     };
 
-    const filteredReviews = reviews.filter(review => {
+    const filteredReviews = reviews.filter((review) => {
         switch (activeTab) {
             case 'pending':
                 return review.status === 'PENDING';
@@ -207,12 +206,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                         <ClipboardCheck className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                            Panel Recenzenta
-                        </h1>
-                        <p className="text-slate-500 dark:text-slate-400">
-                            Zarządzaj przypisanymi recenzjami ocen
-                        </p>
+                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Panel Recenzenta</h1>
+                        <p className="text-slate-500 dark:text-slate-400">Zarządzaj przypisanymi recenzjami ocen</p>
                     </div>
                 </div>
 
@@ -296,8 +291,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                 {[
                     { id: 'pending' as TabType, label: 'Oczekujące', icon: Clock, count: stats?.pending },
                     { id: 'in_progress' as TabType, label: 'W trakcie', icon: Timer, count: stats?.inProgress },
-                    { id: 'completed' as TabType, label: 'Ukończone', icon: CheckCircle2, count: stats?.completed }
-                ].map(tab => (
+                    { id: 'completed' as TabType, label: 'Ukończone', icon: CheckCircle2, count: stats?.completed },
+                ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -310,11 +305,13 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                         <tab.icon className="w-4 h-4" />
                         <span className="font-medium">{tab.label}</span>
                         {tab.count !== undefined && tab.count > 0 && (
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                activeTab === tab.id
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                            }`}>
+                            <span
+                                className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                    activeTab === tab.id
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                            >
                                 {tab.count}
                             </span>
                         )}
@@ -341,7 +338,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                         </p>
                     </div>
                 ) : (
-                    filteredReviews.map(review => (
+                    filteredReviews.map((review) => (
                         <div
                             key={review.id}
                             className={`bg-white dark:bg-navy-900 rounded-xl border p-4 transition-all hover:shadow-lg ${
@@ -352,15 +349,17 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                         >
                             <div className="flex items-start gap-4">
                                 {/* Status Icon */}
-                                <div className={`p-3 rounded-xl ${
-                                    review.status === 'COMPLETED'
-                                        ? 'bg-green-100 dark:bg-green-900/30'
-                                        : review.isOverdue
-                                            ? 'bg-red-100 dark:bg-red-900/30'
-                                            : review.status === 'IN_PROGRESS'
+                                <div
+                                    className={`p-3 rounded-xl ${
+                                        review.status === 'COMPLETED'
+                                            ? 'bg-green-100 dark:bg-green-900/30'
+                                            : review.isOverdue
+                                              ? 'bg-red-100 dark:bg-red-900/30'
+                                              : review.status === 'IN_PROGRESS'
                                                 ? 'bg-purple-100 dark:bg-purple-900/30'
                                                 : 'bg-amber-100 dark:bg-amber-900/30'
-                                }`}>
+                                    }`}
+                                >
                                     {review.status === 'COMPLETED' ? (
                                         <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
                                     ) : review.isOverdue ? (
@@ -401,9 +400,11 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                                             Przypisano: {formatDate(review.assignedAt)}
                                         </span>
                                         {review.dueDate && (
-                                            <span className={`flex items-center gap-1 ${
-                                                review.isOverdue ? 'text-red-500' : ''
-                                            }`}>
+                                            <span
+                                                className={`flex items-center gap-1 ${
+                                                    review.isOverdue ? 'text-red-500' : ''
+                                                }`}
+                                            >
                                                 <Timer className="w-3.5 h-3.5" />
                                                 Termin: {formatDate(review.dueDate)}
                                             </span>
@@ -425,9 +426,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
                                                 {review.feedback && (
                                                     <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                                                         <MessageSquare className="w-4 h-4" />
-                                                        <span className="truncate max-w-md">
-                                                            "{review.feedback}"
-                                                        </span>
+                                                        <span className="truncate max-w-md">"{review.feedback}"</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -482,4 +481,3 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({
         </div>
     );
 };
-

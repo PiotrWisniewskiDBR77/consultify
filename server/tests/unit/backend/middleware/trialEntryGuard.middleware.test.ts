@@ -4,9 +4,17 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { trialEntryGuard, requireOrgContext, isTrialEntryUser, setDependencies, BLOCKED_ROUTES, type AuthRequest } from '../../../../src/middleware/trialEntryGuard.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    BLOCKED_ROUTES,
+    isTrialEntryUser,
+    requireOrgContext,
+    setDependencies,
+    trialEntryGuard,
+} from '../../../../src/middleware/trialEntryGuard.middleware.js';
 
 describe('Trial Entry Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -65,7 +73,7 @@ describe('Trial Entry Guard Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'TRIAL_ENTRY_RESTRICTION',
-                })
+                }),
             );
         });
 
@@ -146,13 +154,10 @@ describe('Trial Entry Guard Middleware', () => {
         });
 
         it('should block initiative creation', () => {
-            const route = BLOCKED_ROUTES.find(r => r.path.test('/api/initiatives'));
+            const route = BLOCKED_ROUTES.find((r) => r.path.test('/api/initiatives'));
             expect(route).toBeDefined();
             expect(route?.method).toBe('POST');
         });
     });
 });
-
-
-
 

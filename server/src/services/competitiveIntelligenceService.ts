@@ -10,6 +10,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import * as DbPromise from '../utils/DbPromise.js';
 
 export const TREND_CATEGORIES = {
@@ -18,26 +19,26 @@ export const TREND_CATEGORIES = {
     MARKET: 'market',
     REGULATORY: 'regulatory',
     TALENT: 'talent',
-    CUSTOMER: 'customer'
+    CUSTOMER: 'customer',
 } as const;
 
 export const TREND_MATURITY = {
     EMERGING: 'emerging',
     GROWING: 'growing',
     MAINSTREAM: 'mainstream',
-    DECLINING: 'declining'
+    DECLINING: 'declining',
 } as const;
 
 export const IMPACT_LEVELS = {
     TRANSFORMATIONAL: 'transformational',
     HIGH: 'high',
     MEDIUM: 'medium',
-    LOW: 'low'
+    LOW: 'low',
 } as const;
 
-type TrendCategory = typeof TREND_CATEGORIES[keyof typeof TREND_CATEGORIES];
-type TrendMaturity = typeof TREND_MATURITY[keyof typeof TREND_MATURITY];
-type ImpactLevel = typeof IMPACT_LEVELS[keyof typeof IMPACT_LEVELS];
+type TrendCategory = (typeof TREND_CATEGORIES)[keyof typeof TREND_CATEGORIES];
+type TrendMaturity = (typeof TREND_MATURITY)[keyof typeof TREND_MATURITY];
+type ImpactLevel = (typeof IMPACT_LEVELS)[keyof typeof IMPACT_LEVELS];
 
 type TrendRecord = {
     id?: string;
@@ -127,7 +128,7 @@ const CompetitiveIntelligenceService = {
         const params: Array<string | number> = [];
 
         if (industry) {
-            sql += ' AND (industry = ? OR industry = \'global\')';
+            sql += " AND (industry = ? OR industry = 'global')";
             params.push(industry);
         }
 
@@ -148,7 +149,7 @@ const CompetitiveIntelligenceService = {
         return (rows || []).map((row) => ({
             ...row,
             insights: parseJsonArray(row.insights),
-            sources: parseJsonArray(row.sources)
+            sources: parseJsonArray(row.sources),
         }));
     },
 
@@ -159,13 +160,14 @@ const CompetitiveIntelligenceService = {
                 category: TREND_CATEGORIES.TECHNOLOGY,
                 maturity: TREND_MATURITY.GROWING,
                 impact: IMPACT_LEVELS.TRANSFORMATIONAL,
-                description: 'Rapid adoption of generative AI tools for content creation, coding assistance, and process automation.',
+                description:
+                    'Rapid adoption of generative AI tools for content creation, coding assistance, and process automation.',
                 relevanceScore: 95,
                 insights: [
                     '40% of enterprises experimenting with GenAI',
                     'Expected to impact 300M+ jobs globally',
-                    'Key use cases: content, code, customer service'
-                ]
+                    'Key use cases: content, code, customer service',
+                ],
             },
             {
                 name: 'Sustainable Digital Transformation',
@@ -177,8 +179,8 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'ESG considerations in technology decisions',
                     'Green IT becoming competitive advantage',
-                    'Carbon footprint tracking in supply chains'
-                ]
+                    'Carbon footprint tracking in supply chains',
+                ],
             },
             {
                 name: 'Data Mesh Architecture',
@@ -190,8 +192,8 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'Domain-oriented data ownership',
                     'Self-serve data infrastructure',
-                    'Alternative to centralized data lakes'
-                ]
+                    'Alternative to centralized data lakes',
+                ],
             },
             {
                 name: 'Composable Enterprise',
@@ -203,8 +205,8 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'Modular business architecture',
                     'API-first strategies',
-                    'Packaged business capabilities (PBCs)'
-                ]
+                    'Packaged business capabilities (PBCs)',
+                ],
             },
             {
                 name: 'Cybersecurity Mesh',
@@ -216,8 +218,8 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'Zero-trust architecture adoption',
                     'Identity-first security',
-                    'Response to remote work expansion'
-                ]
+                    'Response to remote work expansion',
+                ],
             },
             {
                 name: 'Talent Experience Platforms',
@@ -229,8 +231,8 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'Skills-based organizations emerging',
                     'Internal talent marketplaces',
-                    'AI-driven learning paths'
-                ]
+                    'AI-driven learning paths',
+                ],
             },
             {
                 name: 'Hyperautomation',
@@ -242,8 +244,8 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'Process mining driving automation discovery',
                     'Low-code/no-code platforms accelerating adoption',
-                    '25%+ cost reduction in mature implementations'
-                ]
+                    '25%+ cost reduction in mature implementations',
+                ],
             },
             {
                 name: 'Industry Cloud Platforms',
@@ -255,9 +257,9 @@ const CompetitiveIntelligenceService = {
                 insights: [
                     'Faster time-to-value for industry solutions',
                     'Pre-configured compliance',
-                    'Major cloud vendors expanding industry offerings'
-                ]
-            }
+                    'Major cloud vendors expanding industry offerings',
+                ],
+            },
         ];
 
         const industryTrends: Record<string, TrendRecord[]> = {
@@ -272,9 +274,9 @@ const CompetitiveIntelligenceService = {
                     insights: [
                         'Digital twin adoption accelerating',
                         'Predictive maintenance reducing downtime by 30%+',
-                        'Supply chain visibility critical post-pandemic'
-                    ]
-                }
+                        'Supply chain visibility critical post-pandemic',
+                    ],
+                },
             ],
             'Financial Services': [
                 {
@@ -287,9 +289,9 @@ const CompetitiveIntelligenceService = {
                     insights: [
                         'Banking-as-a-service market growing 30%+ annually',
                         'Non-banks capturing financial margins',
-                        'Regulatory frameworks evolving'
-                    ]
-                }
+                        'Regulatory frameworks evolving',
+                    ],
+                },
             ],
             Retail: [
                 {
@@ -302,10 +304,10 @@ const CompetitiveIntelligenceService = {
                     insights: [
                         'Real-time inventory visibility essential',
                         'Buy online, pickup/return anywhere expectations',
-                        'Personalization driving loyalty'
-                    ]
-                }
-            ]
+                        'Personalization driving loyalty',
+                    ],
+                },
+            ],
         };
 
         const trendsToStore = [...globalTrends, ...(industryTrends[industry] || [])];
@@ -313,7 +315,7 @@ const CompetitiveIntelligenceService = {
         for (const trend of trendsToStore) {
             await CompetitiveIntelligenceService.storeTrend({
                 ...trend,
-                industry: trend.category === TREND_CATEGORIES.MARKET ? industry : 'global'
+                industry: trend.category === TREND_CATEGORIES.MARKET ? industry : 'global',
             });
         }
 
@@ -338,35 +340,72 @@ const CompetitiveIntelligenceService = {
                 trend.industry || 'global',
                 trend.relevanceScore || 50,
                 JSON.stringify(trend.insights || []),
-                JSON.stringify(trend.sources || [])
+                JSON.stringify(trend.sources || []),
             ],
-            { fallback: false }
+            { fallback: false },
         );
 
         return trend;
     },
 
-    getTechnologyRadar: async (industry: string | null = null): Promise<{
-        adopt: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
-        trial: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
-        assess: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
+    getTechnologyRadar: async (
+        industry: string | null = null,
+    ): Promise<{
+        adopt: Array<{
+            name: string;
+            description: string | null;
+            impact: string | null;
+            relevanceScore: number | null;
+        }>;
+        trial: Array<{
+            name: string;
+            description: string | null;
+            impact: string | null;
+            relevanceScore: number | null;
+        }>;
+        assess: Array<{
+            name: string;
+            description: string | null;
+            impact: string | null;
+            relevanceScore: number | null;
+        }>;
         hold: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
     }> => {
         const trends = await CompetitiveIntelligenceService.getStoredTrends(industry, {
             category: TREND_CATEGORIES.TECHNOLOGY,
-            limit: 50
+            limit: 50,
         });
 
         const radar = {
             adopt: [],
             trial: [],
             assess: [],
-            hold: []
+            hold: [],
         } as {
-            adopt: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
-            trial: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
-            assess: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
-            hold: Array<{ name: string; description: string | null; impact: string | null; relevanceScore: number | null }>;
+            adopt: Array<{
+                name: string;
+                description: string | null;
+                impact: string | null;
+                relevanceScore: number | null;
+            }>;
+            trial: Array<{
+                name: string;
+                description: string | null;
+                impact: string | null;
+                relevanceScore: number | null;
+            }>;
+            assess: Array<{
+                name: string;
+                description: string | null;
+                impact: string | null;
+                relevanceScore: number | null;
+            }>;
+            hold: Array<{
+                name: string;
+                description: string | null;
+                impact: string | null;
+                relevanceScore: number | null;
+            }>;
         };
 
         for (const trend of trends) {
@@ -374,7 +413,7 @@ const CompetitiveIntelligenceService = {
                 name: trend.name,
                 description: trend.description,
                 impact: trend.impact,
-                relevanceScore: trend.relevance_score
+                relevanceScore: trend.relevance_score,
             };
 
             switch (trend.maturity) {
@@ -399,7 +438,7 @@ const CompetitiveIntelligenceService = {
 
     getMaturityBenchmark: async (
         organizationId: string,
-        assessmentData: AssessmentData
+        assessmentData: AssessmentData,
     ): Promise<{
         industry: string;
         organizationScore: number;
@@ -407,10 +446,9 @@ const CompetitiveIntelligenceService = {
         gaps: Array<{ area: string; description: string; recommendation: string }>;
         strengths: Array<unknown>;
     }> => {
-        const org = await DbPromise.get<{ industry?: string }>(
-            'SELECT industry FROM organizations WHERE id = ?',
-            [organizationId]
-        );
+        const org = await DbPromise.get<{ industry?: string }>('SELECT industry FROM organizations WHERE id = ?', [
+            organizationId,
+        ]);
 
         const industry = org?.industry || 'Unknown';
 
@@ -419,7 +457,7 @@ const CompetitiveIntelligenceService = {
                 SELECT * FROM recognized_patterns
                 WHERE industry = ? AND type = 'industry_benchmark'
             `,
-            [industry]
+            [industry],
         );
 
         const comparison = {
@@ -427,7 +465,7 @@ const CompetitiveIntelligenceService = {
             organizationScore: assessmentData?.overallScore || 0,
             benchmarks: {} as Record<string, Record<string, unknown>>,
             gaps: [] as Array<{ area: string; description: string; recommendation: string }>,
-            strengths: [] as Array<unknown>
+            strengths: [] as Array<unknown>,
         };
 
         for (const benchmark of benchmarks) {
@@ -441,14 +479,16 @@ const CompetitiveIntelligenceService = {
             comparison.gaps.push({
                 area: 'Overall Maturity',
                 description: 'Below industry average',
-                recommendation: 'Focus on foundational capabilities'
+                recommendation: 'Focus on foundational capabilities',
             });
         }
 
         return comparison;
     },
 
-    getCompetitiveLandscape: async (industry: string): Promise<{
+    getCompetitiveLandscape: async (
+        industry: string,
+    ): Promise<{
         industry: string;
         topTrends: StoredTrend[];
         technologyRadar: { adoptCount: number; trialCount: number; assessCount: number; holdCount: number };
@@ -465,10 +505,10 @@ const CompetitiveIntelligenceService = {
                 adoptCount: radar.adopt.length,
                 trialCount: radar.trial.length,
                 assessCount: radar.assess.length,
-                holdCount: radar.hold.length
+                holdCount: radar.hold.length,
             },
             keyInsights: trends.slice(0, 3).flatMap((trend) => trend.insights || []),
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
         };
     },
 
@@ -491,11 +531,15 @@ const CompetitiveIntelligenceService = {
                 )
             `,
             [],
-            { fallback: false }
+            { fallback: false },
         );
-        await DbPromise.run('CREATE INDEX IF NOT EXISTS idx_mt_industry ON market_trends(industry)', [], { fallback: false });
-        await DbPromise.run('CREATE INDEX IF NOT EXISTS idx_mt_category ON market_trends(category)', [], { fallback: false });
-    }
+        await DbPromise.run('CREATE INDEX IF NOT EXISTS idx_mt_industry ON market_trends(industry)', [], {
+            fallback: false,
+        });
+        await DbPromise.run('CREATE INDEX IF NOT EXISTS idx_mt_category ON market_trends(category)', [], {
+            fallback: false,
+        });
+    },
 };
 
 export default CompetitiveIntelligenceService;

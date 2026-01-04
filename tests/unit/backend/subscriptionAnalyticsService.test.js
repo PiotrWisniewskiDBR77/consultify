@@ -13,17 +13,20 @@ describe('SubscriptionAnalyticsService', () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        
+
         mockDb = createMockDb();
-        
+
         // Mock database
         vi.doMock('../../../server/database', () => ({
             default: mockDb
         }));
-        
+
         // Import after mocks
         subscriptionAnalyticsService = (await import('../../../server/services/subscriptionAnalyticsService.js')).default;
-        subscriptionAnalyticsService.setDependencies({ db: mockDb });
+        subscriptionAnalyticsService.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'test-uuid'
+        });
     });
 
     afterEach(() => {
@@ -58,7 +61,7 @@ describe('SubscriptionAnalyticsService', () => {
             });
 
             const result = await subscriptionAnalyticsService.getMRRTrend({ days: 30 });
-            
+
             expect(result).toHaveProperty('period');
             expect(result).toHaveProperty('data');
             expect(result.data).toEqual([]);
@@ -133,7 +136,7 @@ describe('SubscriptionAnalyticsService', () => {
             });
 
             const result = await subscriptionAnalyticsService.getLTV();
-            
+
             // When churn is 0, LTV calculation handles it (could be 0 or infinity handled case)
             expect(result).toHaveProperty('ltv');
         });
@@ -162,7 +165,7 @@ describe('SubscriptionAnalyticsService', () => {
             });
 
             const result = await subscriptionAnalyticsService.getCohortAnalysis();
-            
+
             expect(result).toHaveProperty('cohorts');
             expect(result.cohorts).toEqual([]);
         });
@@ -205,7 +208,7 @@ describe('SubscriptionAnalyticsService', () => {
             mockDb.get.mockImplementation((query, params, callback) => {
                 callback(null, { total_mrr: 50000, active_subscriptions: 50 });
             });
-            
+
             mockDb.all.mockImplementation((query, params, callback) => {
                 callback(null, [
                     { plan_id: 'plan-1', plan_name: 'Basic', price_monthly: 29, subscriber_count: 20, plan_mrr: 580 },

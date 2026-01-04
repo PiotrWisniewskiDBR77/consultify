@@ -1,7 +1,7 @@
 /**
  * Budget Management Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles user, project, and organization budgets with limits and alerts
  * Fully migrated to Class-based Async DI pattern
  */
@@ -122,7 +122,7 @@ class BudgetManagementServiceClass {
 
                 this.#deps = {
                     db,
-                    uuidv4
+                    uuidv4,
                 };
 
                 this.#initialized = true;
@@ -177,7 +177,9 @@ class BudgetManagementServiceClass {
                 reset_day_of_month = excluded.reset_day_of_month,
                 updated_at = datetime('now')`,
             [
-                id, orgId, userId,
+                id,
+                orgId,
+                userId,
                 budget.monthlyTokenBudget || null,
                 budget.monthlyStorageBudgetGb || null,
                 budget.monthlyCostBudgetUsd || null,
@@ -186,8 +188,8 @@ class BudgetManagementServiceClass {
                 budget.alertAt100 ? 1 : 0,
                 budget.hardLimitEnabled ? 1 : 0,
                 budget.autoUpgradeOnLimit ? 1 : 0,
-                resetDay
-            ]
+                resetDay,
+            ],
         );
 
         return { id, success: true };
@@ -196,7 +198,11 @@ class BudgetManagementServiceClass {
     /**
      * Set project budget
      */
-    async setProjectBudget(orgId: string, projectId: string, budget: ProjectBudget): Promise<{ id: string; success: boolean }> {
+    async setProjectBudget(
+        orgId: string,
+        projectId: string,
+        budget: ProjectBudget,
+    ): Promise<{ id: string; success: boolean }> {
         const deps = await this.#getDeps();
         const id = `budget-project-${deps.uuidv4()}`;
         const resetDay = budget.resetDayOfMonth || 1;
@@ -220,7 +226,9 @@ class BudgetManagementServiceClass {
                 reset_day_of_month = excluded.reset_day_of_month,
                 updated_at = datetime('now')`,
             [
-                id, orgId, projectId,
+                id,
+                orgId,
+                projectId,
                 budget.monthlyTokenBudget || null,
                 budget.monthlyStorageBudgetGb || null,
                 budget.monthlyCostBudgetUsd || null,
@@ -229,8 +237,8 @@ class BudgetManagementServiceClass {
                 budget.alertAt100 ? 1 : 0,
                 budget.hardLimitEnabled ? 1 : 0,
                 budget.autoUpgradeOnLimit ? 1 : 0,
-                resetDay
-            ]
+                resetDay,
+            ],
         );
 
         return { id, success: true };
@@ -248,7 +256,7 @@ class BudgetManagementServiceClass {
              ON CONFLICT(organization_id) DO UPDATE SET
                 cost_cap_monthly = excluded.cost_cap_monthly,
                 updated_at = datetime('now')`,
-            [orgId, budget.monthlyCostBudgetUsd || null]
+            [orgId, budget.monthlyCostBudgetUsd || null],
         );
 
         return { success: true };
@@ -262,7 +270,7 @@ class BudgetManagementServiceClass {
         userId: string | null = null,
         projectId: string | null = null,
         usageType: UsageType,
-        quantity: number
+        quantity: number,
     ): Promise<CheckBudgetLimitResult> {
         const deps = await this.#getDeps();
         // Get relevant budget
@@ -272,14 +280,14 @@ class BudgetManagementServiceClass {
             const row = await DbPromise.get<UserBudgetRow>(
                 deps.db,
                 `SELECT * FROM user_budgets WHERE organization_id = ? AND user_id = ?`,
-                [orgId, userId]
+                [orgId, userId],
             );
             budget = row;
         } else if (projectId) {
             const row = await DbPromise.get<ProjectBudgetRow>(
                 deps.db,
                 `SELECT * FROM project_budgets WHERE organization_id = ? AND project_id = ?`,
-                [orgId, projectId]
+                [orgId, projectId],
             );
             budget = row;
         } else {
@@ -287,7 +295,7 @@ class BudgetManagementServiceClass {
             const row = await DbPromise.get<OrgBudgetRow>(
                 deps.db,
                 `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
-                [orgId]
+                [orgId],
             );
             budget = row as BudgetStatus;
         }
@@ -334,7 +342,7 @@ class BudgetManagementServiceClass {
                 currentUsage,
                 budgetLimit,
                 projectedUsage,
-                usagePercent: usagePercent.toFixed(2)
+                usagePercent: usagePercent.toFixed(2),
             };
         } else {
             return {
@@ -342,7 +350,7 @@ class BudgetManagementServiceClass {
                 currentUsage,
                 budgetLimit,
                 projectedUsage,
-                usagePercent: usagePercent.toFixed(2)
+                usagePercent: usagePercent.toFixed(2),
             };
         }
     }
@@ -353,7 +361,7 @@ class BudgetManagementServiceClass {
     async getBudgetStatus(
         orgId: string,
         userId: string | null = null,
-        projectId: string | null = null
+        projectId: string | null = null,
     ): Promise<BudgetStatus | null> {
         const deps = await this.#getDeps();
         let budget: BudgetStatus | null = null;
@@ -362,21 +370,21 @@ class BudgetManagementServiceClass {
             const row = await DbPromise.get<UserBudgetRow>(
                 deps.db,
                 `SELECT * FROM user_budgets WHERE organization_id = ? AND user_id = ?`,
-                [orgId, userId]
+                [orgId, userId],
             );
             budget = row;
         } else if (projectId) {
             const row = await DbPromise.get<ProjectBudgetRow>(
                 deps.db,
                 `SELECT * FROM project_budgets WHERE organization_id = ? AND project_id = ?`,
-                [orgId, projectId]
+                [orgId, projectId],
             );
             budget = row;
         } else {
             const row = await DbPromise.get<OrgBudgetRow>(
                 deps.db,
                 `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
-                [orgId]
+                [orgId],
             );
             budget = row as BudgetStatus;
         }
@@ -389,13 +397,22 @@ class BudgetManagementServiceClass {
         const result: BudgetStatus = { ...budget };
 
         if (budget.monthly_token_budget) {
-            result.tokenUsagePercent = (((budget.tokens_used_this_month || 0) as number) / (budget.monthly_token_budget || 1) * 100).toFixed(2);
+            result.tokenUsagePercent = (
+                (((budget.tokens_used_this_month || 0) as number) / (budget.monthly_token_budget || 1)) *
+                100
+            ).toFixed(2);
         }
         if (budget.monthly_storage_budget_gb) {
-            result.storageUsagePercent = (((budget.storage_used_this_month_gb || 0) as number) / (budget.monthly_storage_budget_gb || 1) * 100).toFixed(2);
+            result.storageUsagePercent = (
+                (((budget.storage_used_this_month_gb || 0) as number) / (budget.monthly_storage_budget_gb || 1)) *
+                100
+            ).toFixed(2);
         }
         if (budget.monthly_cost_budget_usd) {
-            result.costUsagePercent = (((budget.cost_this_month_usd || 0) as number) / (budget.monthly_cost_budget_usd || 1) * 100).toFixed(2);
+            result.costUsagePercent = (
+                (((budget.cost_this_month_usd || 0) as number) / (budget.monthly_cost_budget_usd || 1)) *
+                100
+            ).toFixed(2);
         }
 
         return result;
@@ -419,7 +436,7 @@ class BudgetManagementServiceClass {
                 last_reset_date = date('now'),
                 updated_at = datetime('now')
             WHERE reset_day_of_month = ?`,
-            [today]
+            [today],
         );
 
         await DbPromise.run(
@@ -431,7 +448,7 @@ class BudgetManagementServiceClass {
                 last_reset_date = date('now'),
                 updated_at = datetime('now')
             WHERE reset_day_of_month = ?`,
-            [today]
+            [today],
         );
 
         return { reset: true, day: today };
@@ -442,14 +459,26 @@ class BudgetManagementServiceClass {
 const budgetManagementServiceInstance = new BudgetManagementServiceClass();
 
 // Export individual functions for backward compatibility
-export const setDependencies = (newDeps: Partial<BudgetManagementServiceDependencies>) => budgetManagementServiceInstance.setDependencies(newDeps);
-export const setUserBudget = (orgId: string, userId: string, budget: UserBudget) => budgetManagementServiceInstance.setUserBudget(orgId, userId, budget);
-export const setProjectBudget = (orgId: string, projectId: string, budget: ProjectBudget) => budgetManagementServiceInstance.setProjectBudget(orgId, projectId, budget);
-export const setOrgBudget = (orgId: string, budget: OrgBudget) => budgetManagementServiceInstance.setOrgBudget(orgId, budget);
-export const checkBudgetLimit = (orgId: string, userId: string | null = null, projectId: string | null = null, usageType: UsageType, quantity: number) => budgetManagementServiceInstance.checkBudgetLimit(orgId, userId, projectId, usageType, quantity);
-export const getBudgetStatus = (orgId: string, userId: string | null = null, projectId: string | null = null) => budgetManagementServiceInstance.getBudgetStatus(orgId, userId, projectId);
+export const setDependencies = (newDeps: Partial<BudgetManagementServiceDependencies>) =>
+    budgetManagementServiceInstance.setDependencies(newDeps);
+export const setUserBudget = (orgId: string, userId: string, budget: UserBudget) =>
+    budgetManagementServiceInstance.setUserBudget(orgId, userId, budget);
+export const setProjectBudget = (orgId: string, projectId: string, budget: ProjectBudget) =>
+    budgetManagementServiceInstance.setProjectBudget(orgId, projectId, budget);
+export const setOrgBudget = (orgId: string, budget: OrgBudget) =>
+    budgetManagementServiceInstance.setOrgBudget(orgId, budget);
+export const checkBudgetLimit = (
+    orgId: string,
+    userId: string | null = null,
+    projectId: string | null = null,
+    usageType: UsageType,
+    quantity: number,
+) => budgetManagementServiceInstance.checkBudgetLimit(orgId, userId, projectId, usageType, quantity);
+export const getBudgetStatus = (orgId: string, userId: string | null = null, projectId: string | null = null) =>
+    budgetManagementServiceInstance.getBudgetStatus(orgId, userId, projectId);
 export const resetMonthlyBudgets = () => budgetManagementServiceInstance.resetMonthlyBudgets();
-export const getBudgetUsage = (orgId: string, userId: string | null = null, projectId: string | null = null) => budgetManagementServiceInstance.getBudgetStatus(orgId, userId, projectId);
+export const getBudgetUsage = (orgId: string, userId: string | null = null, projectId: string | null = null) =>
+    budgetManagementServiceInstance.getBudgetStatus(orgId, userId, projectId);
 
 // Default export for backward compatibility
 const BudgetManagementService = {
@@ -460,7 +489,7 @@ const BudgetManagementService = {
     checkBudgetLimit,
     getBudgetStatus,
     resetMonthlyBudgets,
-    getBudgetUsage
+    getBudgetUsage,
 };
 
 export default BudgetManagementService;

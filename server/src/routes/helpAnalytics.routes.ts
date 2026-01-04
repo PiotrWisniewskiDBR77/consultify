@@ -1,7 +1,7 @@
 /**
  * HelpAnalytics Routes
  * API endpoints for helpAnalytics
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof helpAnalyticsRoutesJS === 'function' || (helpAnalyticsRoutesJS && typeof helpAnalyticsRoutesJS.handle === 'function')) {
+if (
+    typeof helpAnalyticsRoutesJS === 'function' ||
+    (helpAnalyticsRoutesJS && typeof helpAnalyticsRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(helpAnalyticsRoutesJS);
 } else {

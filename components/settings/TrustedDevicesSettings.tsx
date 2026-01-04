@@ -1,6 +1,6 @@
 /**
  * TrustedDevicesSettings - Manage trusted devices for MFA
- * 
+ *
  * Features:
  * - List all trusted devices with fingerprint info
  * - Device location, browser, last used
@@ -8,27 +8,28 @@
  * - Trust duration settings
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Smartphone,
-    Monitor,
-    Tablet,
-    Laptop,
-    Trash2,
-    RefreshCw,
-    MapPin,
-    Clock,
-    Shield,
     AlertTriangle,
     CheckCircle,
-    Globe,
-    Settings,
     ChevronDown,
-    Loader2
+    Clock,
+    Globe,
+    Laptop,
+    Loader2,
+    MapPin,
+    Monitor,
+    RefreshCw,
+    Settings,
+    Shield,
+    Smartphone,
+    Tablet,
+    Trash2,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface TrustedDevicesSettingsProps {
@@ -56,10 +57,7 @@ interface TrustDurationOption {
     label: string;
 }
 
-export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
-    currentUser,
-    className = ''
-}) => {
+export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({ currentUser, className = '' }) => {
     const { t } = useTranslation();
     const [devices, setDevices] = useState<TrustedDevice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -75,7 +73,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
         { value: 30, label: t('security.devices.duration30', '30 days') },
         { value: 60, label: t('security.devices.duration60', '60 days') },
         { value: 90, label: t('security.devices.duration90', '90 days') },
-        { value: 0, label: t('security.devices.durationNever', 'Never expire') }
+        { value: 0, label: t('security.devices.durationNever', 'Never expire') },
     ];
 
     useEffect(() => {
@@ -105,7 +103,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                     trustedAt: new Date(Date.now() - 86400000 * 15).toISOString(),
                     lastUsed: new Date().toISOString(),
                     expiresAt: new Date(Date.now() + 86400000 * 15).toISOString(),
-                    isCurrent: true
+                    isCurrent: true,
                 },
                 {
                     id: '2',
@@ -119,7 +117,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                     trustedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
                     lastUsed: new Date(Date.now() - 3600000 * 2).toISOString(),
                     expiresAt: new Date(Date.now() + 86400000 * 23).toISOString(),
-                    isCurrent: false
+                    isCurrent: false,
                 },
                 {
                     id: '3',
@@ -133,8 +131,8 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                     trustedAt: new Date(Date.now() - 86400000 * 25).toISOString(),
                     lastUsed: new Date(Date.now() - 86400000 * 3).toISOString(),
                     expiresAt: new Date(Date.now() + 86400000 * 5).toISOString(),
-                    isCurrent: false
-                }
+                    isCurrent: false,
+                },
             ]);
         } finally {
             setLoading(false);
@@ -142,14 +140,21 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
     };
 
     const handleRevokeDevice = async (deviceId: string) => {
-        if (!confirm(t('security.devices.revokeConfirm', 'Are you sure you want to remove this trusted device? You will need to verify again on next login.'))) {
+        if (
+            !confirm(
+                t(
+                    'security.devices.revokeConfirm',
+                    'Are you sure you want to remove this trusted device? You will need to verify again on next login.',
+                ),
+            )
+        ) {
             return;
         }
 
         setRevoking(deviceId);
         try {
             await Api.delete(`/api/mfa/devices/${deviceId}`);
-            setDevices(devices.filter(d => d.id !== deviceId));
+            setDevices(devices.filter((d) => d.id !== deviceId));
             toast.success(t('security.devices.revokeSuccess', 'Device removed from trusted list'));
         } catch (error) {
             toast.error(t('security.devices.revokeError', 'Failed to remove device'));
@@ -159,7 +164,14 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
     };
 
     const handleRevokeAll = async () => {
-        if (!confirm(t('security.devices.revokeAllConfirm', 'Are you sure you want to remove all trusted devices? You will need to verify 2FA on all devices.'))) {
+        if (
+            !confirm(
+                t(
+                    'security.devices.revokeAllConfirm',
+                    'Are you sure you want to remove all trusted devices? You will need to verify 2FA on all devices.',
+                ),
+            )
+        ) {
             return;
         }
 
@@ -192,11 +204,16 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
 
     const getDeviceIcon = (type: string) => {
         switch (type) {
-            case 'mobile': return <Smartphone className="w-6 h-6" />;
-            case 'tablet': return <Tablet className="w-6 h-6" />;
-            case 'laptop': return <Laptop className="w-6 h-6" />;
-            case 'desktop': return <Monitor className="w-6 h-6" />;
-            default: return <Globe className="w-6 h-6" />;
+            case 'mobile':
+                return <Smartphone className="w-6 h-6" />;
+            case 'tablet':
+                return <Tablet className="w-6 h-6" />;
+            case 'laptop':
+                return <Laptop className="w-6 h-6" />;
+            case 'desktop':
+                return <Monitor className="w-6 h-6" />;
+            default:
+                return <Globe className="w-6 h-6" />;
         }
     };
 
@@ -204,7 +221,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
         return new Date(dateString).toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -294,7 +311,10 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                                 {t('security.devices.trustDuration', 'Trust Duration')}
                             </p>
                             <p className="text-sm text-slate-500">
-                                {t('security.devices.trustDurationDesc', 'How long devices stay trusted after verification')}
+                                {t(
+                                    'security.devices.trustDurationDesc',
+                                    'How long devices stay trusted after verification',
+                                )}
                             </p>
                         </div>
                     </div>
@@ -309,7 +329,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                             ) : (
                                 <>
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {durationOptions.find(o => o.value === trustDuration)?.label}
+                                        {durationOptions.find((o) => o.value === trustDuration)?.label}
                                     </span>
                                     <ChevronDown className="w-4 h-4 text-slate-400" />
                                 </>
@@ -322,8 +342,8 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                                         key={option.value}
                                         onClick={() => handleSaveTrustDuration(option.value)}
                                         className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                                            trustDuration === option.value 
-                                                ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10' 
+                                            trustDuration === option.value
+                                                ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10'
                                                 : 'text-slate-700 dark:text-slate-300'
                                         }`}
                                     >
@@ -346,29 +366,34 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                         {t('security.devices.noDevices', 'No Trusted Devices')}
                     </h4>
                     <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                        {t('security.devices.noDevicesDesc', 'When you verify 2FA and choose to trust a device, it will appear here. Trusted devices can skip 2FA for the trust duration.')}
+                        {t(
+                            'security.devices.noDevicesDesc',
+                            'When you verify 2FA and choose to trust a device, it will appear here. Trusted devices can skip 2FA for the trust duration.',
+                        )}
                     </p>
                 </div>
             ) : (
                 <div className="space-y-3">
                     {devices.map((device) => (
-                        <div 
+                        <div
                             key={device.id}
                             className={`bg-white dark:bg-navy-900 rounded-xl border ${
-                                device.isCurrent 
-                                    ? 'border-emerald-200 dark:border-emerald-500/30' 
+                                device.isCurrent
+                                    ? 'border-emerald-200 dark:border-emerald-500/30'
                                     : isExpiringSoon(device.expiresAt)
-                                    ? 'border-amber-200 dark:border-amber-500/30'
-                                    : 'border-slate-200 dark:border-white/10'
+                                      ? 'border-amber-200 dark:border-amber-500/30'
+                                      : 'border-slate-200 dark:border-white/10'
                             } p-4 transition-all hover:shadow-md`}
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-4">
-                                    <div className={`p-3 rounded-xl ${
-                                        device.isCurrent 
-                                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
-                                            : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                                    }`}>
+                                    <div
+                                        className={`p-3 rounded-xl ${
+                                            device.isCurrent
+                                                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                                        }`}
+                                    >
                                         {getDeviceIcon(device.deviceType)}
                                     </div>
                                     <div className="flex-1">
@@ -391,7 +416,9 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                                         <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
                                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Globe className="w-4 h-4" />
-                                                <span>{device.browser} • {device.os}</span>
+                                                <span>
+                                                    {device.browser} • {device.os}
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <MapPin className="w-4 h-4" />
@@ -399,11 +426,17 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                                             </div>
                                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <Clock className="w-4 h-4" />
-                                                <span>{t('security.devices.lastUsed', 'Last used')}: {formatRelativeTime(device.lastUsed)}</span>
+                                                <span>
+                                                    {t('security.devices.lastUsed', 'Last used')}:{' '}
+                                                    {formatRelativeTime(device.lastUsed)}
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 <CheckCircle className="w-4 h-4" />
-                                                <span>{t('security.devices.expires', 'Expires')}: {formatRelativeTime(device.expiresAt)}</span>
+                                                <span>
+                                                    {t('security.devices.expires', 'Expires')}:{' '}
+                                                    {formatRelativeTime(device.expiresAt)}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -437,7 +470,10 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                             {t('security.devices.infoTitle', 'About Trusted Devices')}
                         </h4>
                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                            {t('security.devices.infoDesc', 'Trusted devices allow you to skip 2FA verification when logging in. If you lose access to a device or suspect unauthorized access, revoke it immediately. We recommend reviewing your trusted devices regularly.')}
+                            {t(
+                                'security.devices.infoDesc',
+                                'Trusted devices allow you to skip 2FA verification when logging in. If you lose access to a device or suspect unauthorized access, revoke it immediately. We recommend reviewing your trusted devices regularly.',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -447,11 +483,4 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
 };
 
 export default TrustedDevicesSettings;
-
-
-
-
-
-
-
 

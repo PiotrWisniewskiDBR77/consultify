@@ -4,13 +4,8 @@
  * UNIFIED DESIGN: Same height/padding/font as NotificationsHub tabs
  */
 
+import { CheckSquare, FolderKanban, Plus, Scale } from 'lucide-react';
 import React from 'react';
-import {
-    CheckSquare,
-    Scale,
-    FolderKanban,
-    Plus
-} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export type WorkTab = 'tasks' | 'decisions' | 'projects';
@@ -34,12 +29,7 @@ interface TabConfig {
     comingSoon?: boolean;
 }
 
-export const PillNavigation: React.FC<PillNavigationProps> = ({
-    activeTab,
-    onTabChange,
-    counts,
-    onCreateNew
-}) => {
+export const PillNavigation: React.FC<PillNavigationProps> = ({ activeTab, onTabChange, counts, onCreateNew }) => {
     const { t } = useTranslation();
 
     const tabs: TabConfig[] = [
@@ -48,22 +38,22 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
             label: t('myWork.tasks', 'Tasks'),
             icon: CheckSquare,
             count: counts.tasks,
-            activeColor: 'bg-blue-500 text-white'
+            activeColor: 'bg-blue-500 text-white',
         },
         {
             key: 'decisions',
             label: t('myWork.decisions', 'Decisions'),
             icon: Scale,
             count: counts.decisions,
-            activeColor: 'bg-purple-500 text-white'
+            activeColor: 'bg-purple-500 text-white',
         },
         {
             key: 'projects',
             label: t('myWork.projects', 'Projects'),
             icon: FolderKanban,
             activeColor: 'bg-emerald-500 text-white',
-            comingSoon: true
-        }
+            comingSoon: true,
+        },
     ];
 
     const getButtonLabel = () => {
@@ -93,29 +83,29 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
                             className={`
                                 flex items-center gap-1.5 h-8 px-3 rounded-md text-[12px] font-medium
                                 transition-all duration-150
-                                ${isActive
-                                    ? `${tab.activeColor} shadow-sm`
-                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
+                                ${
+                                    isActive
+                                        ? `${tab.activeColor} shadow-sm`
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
                                 }
                                 ${tab.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
                         >
                             <Icon size={14} />
                             <span>{tab.label}</span>
-                            
+
                             {/* Count Badge */}
                             {tab.count !== undefined && tab.count > 0 && (
-                                <span className={`
+                                <span
+                                    className={`
                                     px-1.5 min-w-[20px] text-center text-[10px] font-semibold rounded-full
-                                    ${isActive 
-                                        ? 'bg-white/25' 
-                                        : 'bg-slate-200 dark:bg-white/10'
-                                    }
-                                `}>
+                                    ${isActive ? 'bg-white/25' : 'bg-slate-200 dark:bg-white/10'}
+                                `}
+                                >
                                     {tab.count}
                                 </span>
                             )}
-                            
+
                             {/* Coming Soon Badge */}
                             {tab.comingSoon && (
                                 <span className="px-1.5 text-[9px] font-semibold rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400">

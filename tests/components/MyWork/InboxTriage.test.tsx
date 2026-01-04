@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InboxTriage } from '../../../components/MyWork/Inbox/InboxTriage';
+import { InboxTriage } from '../../components/MyWork/Inbox/InboxTriage';
 import { Api } from '../../../services/api';
 
 // Mock dependencies
@@ -581,6 +581,7 @@ describe('InboxTriage Component', () => {
         });
     });
 });
+
 
 
 

@@ -1,12 +1,11 @@
-
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 describe('PMOStandardsMapping', () => {
     let PMOStandardsMapping;
     let PMODomainRegistry;
 
     beforeEach(async () => {
-        vi.resetModules();
+        vi.clearAllMocks();
         PMOStandardsMapping = (await import('../../../server/services/pmoStandardsMapping.js')).default;
         PMODomainRegistry = (await import('../../../server/services/pmoDomainRegistry.js')).default;
     });

@@ -5,7 +5,7 @@
  * with legacy JavaScript imports.
  */
 
-import TokenBillingService from '../src/services/tokenBillingService.js';
+import TokenBillingService from '../dist/services/tokenBillingService.js';
 
 export default TokenBillingService;
 

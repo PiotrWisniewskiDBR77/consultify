@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRapidLeanUpload, rapidLeanPhotoUpload, _setDependencies } from '../../../../server/middleware/rapidLeanUploadMiddleware';
 
+vi.mock('multer', () => ({
+    default: vi.fn(() => ({
+        array: vi.fn(() => (req, res, next) => next())
+    })),
+    diskStorage: vi.fn()
+}));
+
 describe('RapidLean Upload Middleware', () => {
     let req;
     let res;

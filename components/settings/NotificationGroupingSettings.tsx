@@ -1,24 +1,19 @@
 /**
  * NotificationGroupingSettings - Notification grouping options
- * 
+ *
  * Features:
  * - Enable/disable grouping
  * - Group by (project, type, time)
  * - Batch window
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Layers,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Layers, Loader2, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface NotificationGroupingSettingsProps {
     currentUser: User;
@@ -31,9 +26,9 @@ const GROUPING_OPTIONS = [
     { value: 'time', label: 'By Time' },
 ] as const;
 
-export const NotificationGroupingSettings: React.FC<NotificationGroupingSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
+export const NotificationGroupingSettings: React.FC<NotificationGroupingSettingsProps> = ({
+    currentUser,
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [groupingEnabled, setGroupingEnabled] = useState(true);
@@ -63,22 +58,24 @@ export const NotificationGroupingSettings: React.FC<NotificationGroupingSettings
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/notifications/grouping', {
                 enabled: groupingEnabled,
                 groupingBy,
                 batchingEnabled,
-                batchWindow
+                batchWindow,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.notifications.grouping.saved', 'Grouping preferences saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
-            toast.error(error.message || t('settings.notifications.grouping.error', 'Failed to save grouping preferences'));
+            toast.error(
+                error.message || t('settings.notifications.grouping.error', 'Failed to save grouping preferences'),
+            );
         } finally {
             setIsSaving(false);
         }
@@ -92,7 +89,10 @@ export const NotificationGroupingSettings: React.FC<NotificationGroupingSettings
                     {t('settings.notifications.grouping.title', 'Notification Grouping')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.notifications.grouping.subtitle', 'Organize notifications by grouping similar ones together')}
+                    {t(
+                        'settings.notifications.grouping.subtitle',
+                        'Organize notifications by grouping similar ones together',
+                    )}
                 </p>
             </div>
 
@@ -152,7 +152,10 @@ export const NotificationGroupingSettings: React.FC<NotificationGroupingSettings
                                     {t('settings.notifications.grouping.batching', 'Batching')}
                                 </label>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('settings.notifications.grouping.batchingDesc', 'Batch notifications within a time window')}
+                                    {t(
+                                        'settings.notifications.grouping.batchingDesc',
+                                        'Batch notifications within a time window',
+                                    )}
                                 </p>
                             </div>
                             <button
@@ -226,10 +229,4 @@ export const NotificationGroupingSettings: React.FC<NotificationGroupingSettings
 };
 
 export default NotificationGroupingSettings;
-
-
-
-
-
-
 

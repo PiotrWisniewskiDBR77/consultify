@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import { Book, ChevronRight, ExternalLink, HelpCircle, MessageSquare, Search, Video, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HelpCircle, X, Search, ChevronRight, Book, Video, MessageSquare, ExternalLink } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { HelpItem, getHelpForView } from '../../config/helpContent';
+
+import { getHelpForView, HelpItem } from '../../config/helpContent';
 
 /**
  * FloatingHelpWidget — Global help widget (bottom-left)
- * 
+ *
  * Features:
  * - Contextual help based on current view
  * - Search across help content
@@ -41,9 +42,7 @@ interface FloatingHelpWidgetProps {
     defaultOpen?: boolean;
 }
 
-export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({
-    defaultOpen = false,
-}) => {
+export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({ defaultOpen = false }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const [searchQuery, setSearchQuery] = useState('');
@@ -56,14 +55,15 @@ export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({
     // Memoize translated and filtered help items
     const filteredHelp = useMemo(() => {
         return contextualHelpRaw
-            .map(item => ({
+            .map((item) => ({
                 ...item,
                 translatedTitle: t(item.title),
-                translatedContent: t(item.content)
+                translatedContent: t(item.content),
             }))
-            .filter(item =>
-                item.translatedTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.translatedContent.toLowerCase().includes(searchQuery.toLowerCase())
+            .filter(
+                (item) =>
+                    item.translatedTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    item.translatedContent.toLowerCase().includes(searchQuery.toLowerCase()),
             );
     }, [contextualHelpRaw, searchQuery, t]);
 
@@ -78,10 +78,7 @@ export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({
                         animation: 'widgetColorPulse 5s ease-in-out infinite',
                     }}
                 >
-                    <HelpCircle
-                        size={22}
-                        style={{ animation: 'widgetIconGlow 5s ease-in-out infinite' }}
-                    />
+                    <HelpCircle size={22} style={{ animation: 'widgetIconGlow 5s ease-in-out infinite' }} />
                     <span className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity shadow-lg">
                         {t('help.widget.label')}
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-900 rotate-45" />
@@ -148,7 +145,10 @@ export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({
                                         {item.translatedContent}
                                     </p>
                                 </div>
-                                <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 mt-1 shrink-0" />
+                                <ChevronRight
+                                    size={14}
+                                    className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 mt-1 shrink-0"
+                                />
                             </button>
                         ))}
                     </div>

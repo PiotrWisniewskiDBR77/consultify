@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
+
 import { useAIContext } from '../contexts/AIContext';
-import { ScreenContextPayload, AIContextPersona } from '../types/AIContract';
+import { AIContextPersona, ScreenContextPayload } from '../types/AIContract';
 
 // Global sequence counter
 let globalSequenceId = 0;
@@ -10,7 +11,7 @@ export const useScreenContext = (
     title: string,
     data: any,
     description?: string,
-    persona: AIContextPersona = 'consultant'
+    persona: AIContextPersona = 'consultant',
 ) => {
     const { setScreenContext } = useAIContext();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -30,9 +31,9 @@ export const useScreenContext = (
                 persona,
                 data: {
                     ...data,
-                    _meta: { title, description }
+                    _meta: { title, description },
                 },
-                intent: description
+                intent: description,
             };
 
             setScreenContext(payload);

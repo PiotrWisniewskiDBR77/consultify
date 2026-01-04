@@ -1,29 +1,34 @@
 /**
  * Metrics Collector Service
- * 
+ *
  * STEP 7: Metrics & Conversion Intelligence (Enterprise+)
- * 
+ *
  * Single point of entry for all metric event recording.
  * This service implements an APPEND-ONLY event store for business intelligence.
- * 
+ *
  * CRITICAL: This is the ONLY service that should write to metrics_events.
  * Never UPDATE or DELETE events - all analytics are derived from the event stream.
- * 
+ *
  * Event Sources:
  * - trialService: trial_started, trial_extended, trial_expired, upgraded_to_paid
  * - invitationService: invite_sent, invite_accepted
  * - helpService: help_started, help_completed
  * - settlementService: settlement_generated
  * - demoService: demo_started
- * 
+ *
  * @module metricsCollector
  */
 
-import db from '../database';
 import { v4 as uuidv4 } from 'uuid';
 
+import db from '../database.js';
+
 interface Database {
-    run: (sql: string, params: unknown[], callback: (this: { lastID?: number; changes: number }, err: Error | null) => void) => void;
+    run: (
+        sql: string,
+        params: unknown[],
+        callback: (this: { lastID?: number; changes: number }, err: Error | null) => void,
+    ) => void;
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
     get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
 }
@@ -36,7 +41,7 @@ interface Dependencies {
 // Dependency injection container (for deterministic unit tests)
 const deps: Dependencies = {
     db: db as Database,
-    uuidv4
+    uuidv4,
 };
 
 /**
@@ -61,10 +66,10 @@ export const EVENT_TYPES = {
     HELP_COMPLETED: 'help_completed',
 
     // Settlement events
-    SETTLEMENT_GENERATED: 'settlement_generated'
+    SETTLEMENT_GENERATED: 'settlement_generated',
 } as const;
 
-export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES];
+export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];
 
 /**
  * Source type constants (attribution sources)
@@ -76,10 +81,10 @@ export const SOURCE_TYPES = {
     PROMO: 'PROMO',
     PARTNER: 'PARTNER',
     SELF_SERVE: 'SELF_SERVE',
-    HELP: 'HELP'
+    HELP: 'HELP',
 } as const;
 
-export type SourceType = typeof SOURCE_TYPES[keyof typeof SOURCE_TYPES];
+export type SourceType = (typeof SOURCE_TYPES)[keyof typeof SOURCE_TYPES];
 
 export interface EventPayload {
     userId?: string | null;
@@ -174,22 +179,19 @@ const MetricsCollector: MetricsCollector = {
                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
             `;
 
-            deps.db.run(sql, [
-                eventId,
-                eventType,
-                userId,
-                organizationId,
-                source,
-                JSON.stringify(context)
-            ], function (this: { lastID?: number; changes: number }, err: Error | null) {
-                if (err) {
-                    console.error(`[MetricsCollector] Failed to record event ${eventType}:`, err.message);
-                    reject(err);
-                } else {
-                    console.log(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
-                    resolve({ eventId, success: true });
-                }
-            });
+            deps.db.run(
+                sql,
+                [eventId, eventType, userId, organizationId, source, JSON.stringify(context)],
+                function (this: { lastID?: number; changes: number }, err: Error | null) {
+                    if (err) {
+                        console.error(`[MetricsCollector] Failed to record event ${eventType}:`, err.message);
+                        reject(err);
+                    } else {
+                        console.log(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
+                        resolve({ eventId, success: true });
+                    }
+                },
+            );
         });
     },
 
@@ -230,10 +232,12 @@ const MetricsCollector: MetricsCollector = {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve((rows as EventRecord[]).map(row => ({
-                        ...row,
-                        context: row.context ? JSON.parse(row.context as string) : {}
-                    })));
+                    resolve(
+                        (rows as EventRecord[]).map((row) => ({
+                            ...row,
+                            context: row.context ? JSON.parse(row.context as string) : {},
+                        })),
+                    );
                 }
             });
         });
@@ -242,7 +246,10 @@ const MetricsCollector: MetricsCollector = {
     /**
      * Get all events for a specific organization
      */
-    getOrganizationEvents: async (organizationId: string, options: OrganizationEventOptions = {}): Promise<EventRecord[]> => {
+    getOrganizationEvents: async (
+        organizationId: string,
+        options: OrganizationEventOptions = {},
+    ): Promise<EventRecord[]> => {
         const { eventTypes, startDate, endDate, limit = 100 } = options;
 
         let sql = `SELECT * FROM metrics_events WHERE organization_id = ?`;
@@ -271,10 +278,12 @@ const MetricsCollector: MetricsCollector = {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve((rows as EventRecord[]).map(row => ({
-                        ...row,
-                        context: row.context ? JSON.parse(row.context as string) : {}
-                    })));
+                    resolve(
+                        (rows as EventRecord[]).map((row) => ({
+                            ...row,
+                            context: row.context ? JSON.parse(row.context as string) : {},
+                        })),
+                    );
                 }
             });
         });
@@ -393,7 +402,10 @@ const MetricsCollector: MetricsCollector = {
     /**
      * Get events grouped by source (for attribution analysis)
      */
-    getEventsBySource: async (eventType: EventType, options: TimeSeriesOptions = {}): Promise<SourceAnalysisRecord[]> => {
+    getEventsBySource: async (
+        eventType: EventType,
+        options: TimeSeriesOptions = {},
+    ): Promise<SourceAnalysisRecord[]> => {
         const { startDate, endDate } = options;
 
         let sql = `
@@ -427,8 +439,7 @@ const MetricsCollector: MetricsCollector = {
                 }
             });
         });
-    }
+    },
 };
 
 export default MetricsCollector;
-

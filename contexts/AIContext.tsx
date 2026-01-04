@@ -1,13 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
-import {
-    ScreenContextPayload,
-    validateScreenContext,
-    ScreenContextSchema
-} from '../types/AIContract';
 import { AppView, DRDAxis } from '../types';
-import { WorkspaceContext, ChatDisplayMode } from '../types/workspace';
+import { ScreenContextPayload, ScreenContextSchema, validateScreenContext } from '../types/AIContract';
+import { ChatDisplayMode, WorkspaceContext } from '../types/workspace';
 
 // --- PMO Context Types ---
 interface PMOContext {
@@ -84,18 +81,10 @@ const viewToScreen = (view: AppView): string => {
 };
 
 export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const {
-        currentUser,
-        currentProjectId,
-        currentView,
-        addChatMessage
-    } = useAppStore();
-    
+    const { currentUser, currentProjectId, currentView, addChatMessage } = useAppStore();
+
     // UNIFIED CHAT SYSTEM: Get workspace context from conversation store
-    const {
-        workspaceContext,
-        displayMode: chatDisplayMode
-    } = useConversationStore();
+    const { workspaceContext, displayMode: chatDisplayMode } = useConversationStore();
 
     // Local state for chat visibility
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -106,7 +95,10 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [screenContext, _setScreenContext] = useState<ScreenContextPayload | null>(null);
 
     // Selected object state (for task/initiative focus)
-    const [selectedObject, setSelectedObject] = useState<{ type: 'task' | 'initiative' | null; id: string | null }>({ type: null, id: null });
+    const [selectedObject, setSelectedObject] = useState<{ type: 'task' | 'initiative' | null; id: string | null }>({
+        type: null,
+        id: null,
+    });
 
     // AI Roles Model: Project AI role state
     const [projectAIRole, setProjectAIRole] = useState<'ADVISOR' | 'MANAGER' | 'OPERATOR'>('ADVISOR');
@@ -119,12 +111,12 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         targetScore: null,
         justification: null,
         completedAxes: [],
-        assessmentProgress: 0
+        assessmentProgress: 0,
     });
 
     // Update assessment context
     const updateAssessmentContext = useCallback((update: Partial<AssessmentContext>) => {
-        setAssessmentContext(prev => ({ ...prev, ...update }));
+        setAssessmentContext((prev) => ({ ...prev, ...update }));
     }, []);
 
     // Clear assessment context
@@ -136,28 +128,29 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
             targetScore: null,
             justification: null,
             completedAxes: [],
-            assessmentProgress: 0
+            assessmentProgress: 0,
         });
     }, []);
 
     // Request assessment guidance via chat
-    const requestAssessmentGuidance = useCallback(async (axisId: DRDAxis) => {
-        if (!currentProjectId) return;
+    const requestAssessmentGuidance = useCallback(
+        async (axisId: DRDAxis) => {
+            if (!currentProjectId) return;
 
-        const axisNames: Record<DRDAxis, string> = {
-            processes: 'Procesy Cyfrowe',
-            digitalProducts: 'Produkty Cyfrowe',
-            businessModels: 'Modele Biznesowe',
-            dataManagement: 'Zarządzanie Danymi',
-            culture: 'Kultura Organizacyjna',
-            cybersecurity: 'Cyberbezpieczeństwo',
-            aiMaturity: 'Dojrzałość AI'
-        };
+            const axisNames: Record<DRDAxis, string> = {
+                processes: 'Procesy Cyfrowe',
+                digitalProducts: 'Produkty Cyfrowe',
+                businessModels: 'Modele Biznesowe',
+                dataManagement: 'Zarządzanie Danymi',
+                culture: 'Kultura Organizacyjna',
+                cybersecurity: 'Cyberbezpieczeństwo',
+                aiMaturity: 'Dojrzałość AI',
+            };
 
-        const guidanceMsg = {
-            id: `guidance-${Date.now()}`,
-            role: 'ai' as const,
-            content: `🎯 **Wsparcie AI dla: ${axisNames[axisId]}**
+            const guidanceMsg = {
+                id: `guidance-${Date.now()}`,
+                role: 'ai' as const,
+                content: `🎯 **Wsparcie AI dla: ${axisNames[axisId]}**
 
 Jestem gotowy pomóc Ci z oceną tej osi. Mogę:
 - Zasugerować odpowiedni poziom na podstawie opisu sytuacji
@@ -166,12 +159,14 @@ Jestem gotowy pomóc Ci z oceną tej osi. Mogę:
 - Zasugerować dowody wspierające ocenę
 
 **Jak mogę Ci pomóc?** Opisz aktualny stan w Twojej organizacji, a ja pomogę określić właściwy poziom.`,
-            timestamp: new Date()
-        };
+                timestamp: new Date(),
+            };
 
-        addChatMessage(guidanceMsg);
-        setIsChatOpen(true);
-    }, [currentProjectId, addChatMessage]);
+            addChatMessage(guidanceMsg);
+            setIsChatOpen(true);
+        },
+        [currentProjectId, addChatMessage],
+    );
 
     // Request gap analysis via chat
     const requestGapAnalysis = useCallback(async () => {
@@ -184,22 +179,26 @@ Jestem gotowy pomóc Ci z oceną tej osi. Mogę:
 
 Analizuję Twoją ocenę dojrzałości cyfrowej...
 
-${assessmentContext.completedAxes.length > 0 
-    ? `✅ Ukończono ocenę ${assessmentContext.completedAxes.length} osi.`
-    : '⏳ Rozpocznij ocenę osi, aby zobaczyć analizę luk.'}
+${
+    assessmentContext.completedAxes.length > 0
+        ? `✅ Ukończono ocenę ${assessmentContext.completedAxes.length} osi.`
+        : '⏳ Rozpocznij ocenę osi, aby zobaczyć analizę luk.'
+}
 
-${assessmentContext.currentAxis && assessmentContext.currentScore && assessmentContext.targetScore
-    ? `\n**Aktualna oś:** ${assessmentContext.currentAxis}
+${
+    assessmentContext.currentAxis && assessmentContext.currentScore && assessmentContext.targetScore
+        ? `\n**Aktualna oś:** ${assessmentContext.currentAxis}
 **Obecny poziom:** ${assessmentContext.currentScore}/7
 **Cel:** ${assessmentContext.targetScore}/7
 **Gap:** ${assessmentContext.targetScore - assessmentContext.currentScore} poziomów`
-    : ''}
+        : ''
+}
 
 Zapytaj mnie o:
 - Szczegółową ścieżkę rozwoju dla wybranej osi
 - Priorytetyzację obszarów do poprawy
 - Szacowany czas i zasoby potrzebne do osiągnięcia celu`,
-            timestamp: new Date()
+            timestamp: new Date(),
         };
 
         addChatMessage(analysisMsg);
@@ -208,29 +207,33 @@ Zapytaj mnie o:
 
     // Auto-detect assessment mode from view
     useEffect(() => {
-        const isAssessmentView = currentView.includes('ASSESSMENT') || 
-                                  currentView.includes('FULL_STEP1') ||
-                                  currentView.includes('FULL_STEP2') ||
-                                  currentView.includes('FULL_STEP3') ||
-                                  currentView.includes('FULL_STEP4') ||
-                                  currentView.includes('FULL_STEP5');
-        
+        const isAssessmentView =
+            currentView.includes('ASSESSMENT') ||
+            currentView.includes('FULL_STEP1') ||
+            currentView.includes('FULL_STEP2') ||
+            currentView.includes('FULL_STEP3') ||
+            currentView.includes('FULL_STEP4') ||
+            currentView.includes('FULL_STEP5');
+
         if (isAssessmentView !== assessmentContext.isInAssessmentMode) {
             updateAssessmentContext({ isInAssessmentMode: isAssessmentView });
         }
     }, [currentView, assessmentContext.isInAssessmentMode, updateAssessmentContext]);
 
     // Compute PMO Context from store
-    const pmoContext = useMemo<PMOContext>(() => ({
-        organizationId: currentUser?.organizationId || null,
-        projectId: currentProjectId,
-        currentPhase: viewToPhase(currentView),
-        currentScreen: viewToScreen(currentView),
-        userRole: currentUser?.role || 'user',
-        selectedObject,
-        // AI Roles Model
-        aiRole: projectAIRole
-    }), [currentUser?.organizationId, currentProjectId, currentView, currentUser?.role, selectedObject, projectAIRole]);
+    const pmoContext = useMemo<PMOContext>(
+        () => ({
+            organizationId: currentUser?.organizationId || null,
+            projectId: currentProjectId,
+            currentPhase: viewToPhase(currentView),
+            currentScreen: viewToScreen(currentView),
+            userRole: currentUser?.role || 'user',
+            selectedObject,
+            // AI Roles Model
+            aiRole: projectAIRole,
+        }),
+        [currentUser?.organizationId, currentProjectId, currentView, currentUser?.role, selectedObject, projectAIRole],
+    );
 
     // Robust setter with validation
     const setScreenContext = useCallback((rawContext: unknown) => {
@@ -245,16 +248,16 @@ Zapytaj mnie o:
         if (validContext) {
             _setScreenContext(validContext);
         } else {
-            console.warn("[AIContext] Invalid context payload rejected", rawContext);
+            console.warn('[AIContext] Invalid context payload rejected', rawContext);
         }
     }, []);
 
-    const toggleChat = () => setIsChatOpen(prev => !prev);
+    const toggleChat = () => setIsChatOpen((prev) => !prev);
 
     const openChat = (initialMessage?: string) => {
         setIsChatOpen(true);
         if (initialMessage) {
-            console.log("Open with message:", initialMessage);
+            console.log('Open with message:', initialMessage);
         }
     };
 
@@ -278,21 +281,33 @@ Zapytaj mnie o:
 
             // Format blockers
             const blockers = pmoData.blockingIssues || [];
-            const blockersText = blockers.length > 0
-                ? `\n\n**🚨 Blocking Issues (${blockers.length}):**\n${blockers.slice(0, 3).map((b: any) => `- ${b.title}`).join('\n')}`
-                : '\n\n✅ No blocking issues.';
+            const blockersText =
+                blockers.length > 0
+                    ? `\n\n**🚨 Blocking Issues (${blockers.length}):**\n${blockers
+                          .slice(0, 3)
+                          .map((b: any) => `- ${b.title}`)
+                          .join('\n')}`
+                    : '\n\n✅ No blocking issues.';
 
             // Format pending decisions
             const decisions = pmoData.pendingDecisions || [];
-            const decisionsText = decisions.length > 0
-                ? `\n\n**📋 Pending Decisions (${decisions.length}):**\n${decisions.slice(0, 3).map((d: any) => `- ${d.title}`).join('\n')}`
-                : '';
+            const decisionsText =
+                decisions.length > 0
+                    ? `\n\n**📋 Pending Decisions (${decisions.length}):**\n${decisions
+                          .slice(0, 3)
+                          .map((d: any) => `- ${d.title}`)
+                          .join('\n')}`
+                    : '';
 
             // Format risks
             const risks = pmoData.risks || [];
-            const risksText = risks.length > 0
-                ? `\n\n**⚠️ Active Risks (${risks.length}):**\n${risks.slice(0, 2).map((r: any) => `- ${r.title}`).join('\n')}`
-                : '';
+            const risksText =
+                risks.length > 0
+                    ? `\n\n**⚠️ Active Risks (${risks.length}):**\n${risks
+                          .slice(0, 2)
+                          .map((r: any) => `- ${r.title}`)
+                          .join('\n')}`
+                    : '';
 
             const welcomeMsg = {
                 id: `auto-${Date.now()}`,
@@ -305,7 +320,7 @@ ${blockersText}${decisionsText}${risksText}
 
 ---
 _I'm ready to assist with your PMO tasks. Ask me about current status, blockers, or recommendations._`,
-                timestamp: new Date()
+                timestamp: new Date(),
             };
 
             addChatMessage(welcomeMsg);
@@ -328,7 +343,7 @@ I'm ready to assist with your PMO tasks. Ask me about:
 - Task recommendations
 
 _Context: ${pmoContext.currentScreen}_`,
-                timestamp: new Date()
+                timestamp: new Date(),
             };
 
             addChatMessage(welcomeMsg);
@@ -372,7 +387,7 @@ _Context: ${pmoContext.currentScreen}_`,
 
     // UNIFIED CHAT SYSTEM: Compute if in split mode
     const isInSplitMode = chatDisplayMode === 'split';
-    
+
     const globalContext = {
         user: currentUser,
         company: currentUser ? { name: currentUser.companyName } : null,
@@ -383,32 +398,34 @@ _Context: ${pmoContext.currentScreen}_`,
         // UNIFIED CHAT SYSTEM: Include workspace context for split-screen AI awareness
         workspace: workspaceContext,
         chatMode: chatDisplayMode,
-        isInSplitMode
+        isInSplitMode,
     };
 
     return (
-        <AIContext.Provider value={{
-            isChatOpen,
-            toggleChat,
-            openChat,
-            screenContext,
-            setScreenContext,
-            globalContext,
-            pmoContext,
-            triggerProjectSummary,
-            autoSummaryEnabled,
-            setAutoSummaryEnabled,
-            // Assessment context
-            assessmentContext,
-            updateAssessmentContext,
-            clearAssessmentContext,
-            requestAssessmentGuidance,
-            requestGapAnalysis,
-            // UNIFIED CHAT SYSTEM: Workspace context
-            workspaceContext,
-            chatDisplayMode,
-            isInSplitMode
-        }}>
+        <AIContext.Provider
+            value={{
+                isChatOpen,
+                toggleChat,
+                openChat,
+                screenContext,
+                setScreenContext,
+                globalContext,
+                pmoContext,
+                triggerProjectSummary,
+                autoSummaryEnabled,
+                setAutoSummaryEnabled,
+                // Assessment context
+                assessmentContext,
+                updateAssessmentContext,
+                clearAssessmentContext,
+                requestAssessmentGuidance,
+                requestGapAnalysis,
+                // UNIFIED CHAT SYSTEM: Workspace context
+                workspaceContext,
+                chatDisplayMode,
+                isInSplitMode,
+            }}
+        >
             {children}
         </AIContext.Provider>
     );
@@ -421,4 +438,3 @@ export const useAIContext = () => {
     }
     return context;
 };
-

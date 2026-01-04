@@ -1,14 +1,12 @@
 /**
  * Compliance Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadComplianceservice = createCachedLazyService('../../services/complianceService.js');
+import service from '../../services/complianceService.js';
 
 // Export default instance (for backward compatibility)
-export default loadComplianceservice();
+export default service;

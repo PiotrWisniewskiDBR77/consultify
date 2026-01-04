@@ -1,7 +1,7 @@
 /**
  * Base API Client
  * Enterprise SaaS Architecture - Core HTTP utilities
- * 
+ *
  * Provides: fetchWithRetry, handleResponse, getHeaders
  * Features: Token refresh, correlation IDs, error handling
  */
@@ -11,9 +11,7 @@ import { tokenService } from '../tokenService';
 export const API_URL = '/api';
 
 // Generate correlation ID for request tracing
-let correlationId = typeof sessionStorage !== 'undefined' 
-    ? sessionStorage.getItem('correlationId') 
-    : null;
+let correlationId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('correlationId') : null;
 
 if (!correlationId) {
     correlationId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -29,8 +27,8 @@ export const getHeaders = (): Record<string, string> => {
     const token = tokenService.getToken();
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'X-Correlation-ID': correlationId as string
+        Authorization: token ? `Bearer ${token}` : '',
+        'X-Correlation-ID': correlationId as string,
     };
 };
 
@@ -40,8 +38,8 @@ export const getHeaders = (): Record<string, string> => {
 export const getAuthHeaders = (): Record<string, string> => {
     const token = tokenService.getToken();
     return {
-        'Authorization': token ? `Bearer ${token}` : '',
-        'X-Correlation-ID': correlationId as string
+        Authorization: token ? `Bearer ${token}` : '',
+        'X-Correlation-ID': correlationId as string,
     };
 };
 
@@ -49,7 +47,7 @@ export const getAuthHeaders = (): Record<string, string> => {
  * Fetch wrapper with automatic token refresh on 401
  */
 export const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const headers = { ...getHeaders(), ...(options.headers as Record<string, string> || {}) };
+    const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
     let res = await fetch(url, { ...options, headers });
 
     // If 401, try to refresh token and retry once
@@ -82,12 +80,14 @@ export const handleResponse = async <T = unknown>(res: Response, defaultError: s
 
     // Check for Demo Block
     if (res.status === 403 && (data.code === 'DEMO_BLOCKED' || data.errorCode === 'DEMO_ACTION_BLOCKED')) {
-        window.dispatchEvent(new CustomEvent('DEMO_ACTION_BLOCKED', {
-            detail: {
-                message: data.message || data.error,
-                action: data.action
-            }
-        }));
+        window.dispatchEvent(
+            new CustomEvent('DEMO_ACTION_BLOCKED', {
+                detail: {
+                    message: data.message || data.error,
+                    action: data.action,
+                },
+            }),
+        );
         return null as T;
     }
 
@@ -98,7 +98,7 @@ export const handleResponse = async <T = unknown>(res: Response, defaultError: s
         store.setAiFreezeStatus({
             isFrozen: true,
             reason: data.error,
-            scope: data.budgetStatus?.scope || 'Global'
+            scope: data.budgetStatus?.scope || 'Global',
         });
         throw new Error(data.error || 'AI Budget Exhausted');
     }
@@ -127,7 +127,7 @@ export const httpClient = {
     post: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'POST',
-            body: data ? JSON.stringify(data) : undefined
+            body: data ? JSON.stringify(data) : undefined,
         });
         return handleResponse<T>(res, `POST ${url} failed`);
     },
@@ -135,7 +135,7 @@ export const httpClient = {
     put: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PUT',
-            body: data ? JSON.stringify(data) : undefined
+            body: data ? JSON.stringify(data) : undefined,
         });
         return handleResponse<T>(res, `PUT ${url} failed`);
     },
@@ -143,14 +143,14 @@ export const httpClient = {
     patch: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PATCH',
-            body: data ? JSON.stringify(data) : undefined
+            body: data ? JSON.stringify(data) : undefined,
         });
         return handleResponse<T>(res, `PATCH ${url} failed`);
     },
 
     delete: async <T = unknown>(url: string): Promise<T> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         return handleResponse<T>(res, `DELETE ${url} failed`);
     },
@@ -159,10 +159,8 @@ export const httpClient = {
         const res = await fetch(`${API_URL}${url}`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: formData
+            body: formData,
         });
         return handleResponse<T>(res, `Upload to ${url} failed`);
-    }
+    },
 };
-
-

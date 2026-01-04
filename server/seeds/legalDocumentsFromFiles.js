@@ -9,7 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
@@ -184,6 +184,7 @@ seedLegalDocuments, loadMetadata, loadDocumentContent
 };
 
 export default { seedLegalDocuments, loadMetadata, loadDocumentContent };
+
 
 
 

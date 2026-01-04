@@ -2,9 +2,10 @@
  * Model Router - Dynamic LLM Provider Selection & Fallback
  */
 
-import { aiLogger } from './logger.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import type { LLMConfigService } from './llmConfigService.js';
+import { aiLogger } from './logger.js';
+import { appCache } from '../redis/CacheService.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -25,7 +26,7 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
     suggestTasks: 'BUDGET',
     validateInitiative: 'STANDARD',
     generateInsights: 'STANDARD',
-    buildRoadmap: 'PREMIUM'
+    buildRoadmap: 'PREMIUM',
 };
 
 export const MODEL_PROVIDER_MAP: Record<string, string> = {
@@ -34,7 +35,7 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
     'gpt-4-turbo': 'openai',
     'gpt-3.5-turbo': 'openai',
     'o1-preview': 'openai',
-    'o1': 'openai',
+    o1: 'openai',
     'o1-mini': 'openai',
     'claude-3-5-sonnet': 'anthropic',
     'claude-3-5-sonnet-20241022': 'anthropic',
@@ -57,7 +58,7 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
     'meta/llama3-8b-instruct': 'nvidia',
     'glm-4-plus': 'zai',
     'glm-4': 'zai',
-    'glm-4.6': 'zai'
+    'glm-4.6': 'zai',
 };
 
 export const TIER_DEFAULTS: Record<string, string> = {
@@ -65,7 +66,7 @@ export const TIER_DEFAULTS: Record<string, string> = {
     STANDARD: 'gpt-4o',
     PREMIUM: 'gpt-4o',
     REASONING: 'gpt-4o',
-    VISION: 'gpt-4o'
+    VISION: 'gpt-4o',
 };
 
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
@@ -73,7 +74,7 @@ export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
     STANDARD: ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'command-r-plus', 'qwen-max', 'glm-4-plus'],
     PREMIUM: ['gpt-4o', 'claude-3-opus', 'gemini-1.5-pro', 'meta/llama-3.1-405b-instruct', 'glm-4-plus'],
     REASONING: ['o1-preview', 'gpt-4o', 'deepseek-chat', 'claude-3-opus'],
-    VISION: ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'qwen-vl-max']
+    VISION: ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'qwen-vl-max'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
@@ -81,7 +82,7 @@ export const TIER_FALLBACKS: Record<string, string> = {
     STANDARD: 'gpt-4o-mini',
     PREMIUM: 'gpt-4o',
     REASONING: 'gpt-4o',
-    VISION: 'gemini-1.5-pro'
+    VISION: 'gemini-1.5-pro',
 };
 
 type ProviderRow = {
@@ -150,13 +151,26 @@ async function getLLMConfigService(): Promise<LLMConfigService | null> {
 }
 
 export class ModelRouter {
-    private overrideCache = new Map<string, { value: OverrideRow | null; expiresAt: number }>();
-    private defaultProviderCache: ProviderRow | null = null;
-    private defaultProviderExpiry = 0;
-    private healthStatusCache = new Map<string, string>();
-    private healthCacheExpiry = 0;
-    private tierAssignmentsCache = new Map<string, TierAssignmentRow[]>();
-    private tierCacheExpiry = 0;
+    // Distributed cache via Redis (appCache) used instead of local Maps
+    // private overrideCache = new Map<string, { value: OverrideRow | null; expiresAt: number }>();
+    // private defaultProviderCache: ProviderRow | null = null;
+
+    private subscriptionActive = false;
+
+    private async initSubscription() {
+        if (this.subscriptionActive) return;
+        this.subscriptionActive = true;
+
+        try {
+            await appCache.subscribe('router:config_update', (msg) => {
+                aiLogger.info('ModelRouter', `Received invalidation message: ${msg}`);
+                this.clearCache().catch(err => aiLogger.error('ModelRouter', 'Failed to clear cache', err));
+            });
+        } catch (error) {
+            aiLogger.error('ModelRouter', 'Failed to subscribe to updates', error);
+            this.subscriptionActive = false;
+        }
+    }
 
     async select(params: SelectParams): Promise<ProviderConfig> {
         const { capability, organizationId, options = {} } = params;
@@ -174,7 +188,10 @@ export class ModelRouter {
         if (availableModels.length > 0) {
             const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
             if (selectedModel) {
-                aiLogger.info('ModelRouter', `Selected via round-robin: ${selectedModel.model_id} (${selectedModel.provider})`);
+                aiLogger.info(
+                    'ModelRouter',
+                    `Selected via round-robin: ${selectedModel.model_id} (${selectedModel.provider})`,
+                );
                 return {
                     id: selectedModel.model_id || selectedModel.id,
                     tier,
@@ -182,7 +199,7 @@ export class ModelRouter {
                     apiKey: selectedModel.api_key || null,
                     endpoint: selectedModel.endpoint || null,
                     source: 'tier_assignment',
-                    raw: selectedModel
+                    raw: selectedModel,
                 };
             }
         }
@@ -201,7 +218,7 @@ export class ModelRouter {
                             provider: providerConfig.provider,
                             apiKey: providerConfig.api_key || null,
                             endpoint: providerConfig.endpoint || null,
-                            healthStatus: providerConfig.healthStatus || null
+                            healthStatus: providerConfig.healthStatus || null,
                         };
                     }
                 }
@@ -213,13 +230,16 @@ export class ModelRouter {
 
         const defaultProvider = await this.getDefaultProvider();
         if (defaultProvider && defaultProvider.api_key) {
-            aiLogger.info('ModelRouter', `Using database default: ${defaultProvider.model_id} (${defaultProvider.provider})`);
+            aiLogger.info(
+                'ModelRouter',
+                `Using database default: ${defaultProvider.model_id} (${defaultProvider.provider})`,
+            );
             return {
                 id: defaultProvider.model_id || defaultProvider.id,
                 tier,
                 provider: defaultProvider.provider,
                 apiKey: defaultProvider.api_key || null,
-                endpoint: defaultProvider.endpoint || null
+                endpoint: defaultProvider.endpoint || null,
             };
         }
 
@@ -308,7 +328,11 @@ export class ModelRouter {
         }
     }
 
-    async selectWithRoundRobin(tier: Tier, organizationId: string | undefined, availableModels: ProviderRow[]): Promise<ProviderRow | null> {
+    async selectWithRoundRobin(
+        tier: Tier,
+        organizationId: string | undefined,
+        availableModels: ProviderRow[],
+    ): Promise<ProviderRow | null> {
         if (!availableModels || availableModels.length === 0) {
             return null;
         }
@@ -317,16 +341,17 @@ export class ModelRouter {
         }
 
         const lastUsed = await this.getLastUsedProvider(tier, organizationId);
-        const lastIndex = lastUsed
-            ? availableModels.findIndex(model => model.id === lastUsed)
-            : -1;
+        const lastIndex = lastUsed ? availableModels.findIndex((model) => model.id === lastUsed) : -1;
 
         const nextIndex = (lastIndex + 1) % availableModels.length;
         const selectedModel = availableModels[nextIndex];
 
         await this.updateLastUsedProvider(tier, organizationId, selectedModel.id);
 
-        aiLogger.info('ModelRouter', `Round-robin selected: ${selectedModel.name} (index ${nextIndex}/${availableModels.length})`);
+        aiLogger.info(
+            'ModelRouter',
+            `Round-robin selected: ${selectedModel.name} (index ${nextIndex}/${availableModels.length})`,
+        );
         return selectedModel;
     }
 
@@ -336,7 +361,9 @@ export class ModelRouter {
             FROM tier_round_robin_state 
             WHERE tier = ? AND (organization_id = ? OR (organization_id IS NULL AND ? IS NULL))
         `;
-        const row = await DbPromise.get<{ last_provider_id?: string }>(query, [tier, organizationId, organizationId], { fallback: true });
+        const row = await DbPromise.get<{ last_provider_id?: string }>(query, [tier, organizationId, organizationId], {
+            fallback: true,
+        });
         return row?.last_provider_id || null;
     }
 
@@ -354,8 +381,12 @@ export class ModelRouter {
         }
     }
 
-    async selectFallback(tier: Tier, excludeModels: string[] = [], organizationId: string | null = null): Promise<ProviderConfig | null> {
-        const excludeSet = new Set(excludeModels.map(model => model.toLowerCase()));
+    async selectFallback(
+        tier: Tier,
+        excludeModels: string[] = [],
+        organizationId: string | null = null,
+    ): Promise<ProviderConfig | null> {
+        const excludeSet = new Set(excludeModels.map((model) => model.toLowerCase()));
 
         const sameTierModels = await this.getModelsForTier(tier, organizationId || undefined);
         for (const model of sameTierModels) {
@@ -367,7 +398,7 @@ export class ModelRouter {
                     provider: model.provider,
                     apiKey: model.api_key || null,
                     endpoint: model.endpoint || null,
-                    source: 'fallback_same_tier'
+                    source: 'fallback_same_tier',
                 };
             }
         }
@@ -379,7 +410,10 @@ export class ModelRouter {
 
             for (const model of fallbackModels) {
                 if (!excludeSet.has((model.model_id || '').toLowerCase())) {
-                    aiLogger.info('ModelRouter', `Cross-tier fallback from ${tier} to ${fallbackTier}: ${model.model_id}`);
+                    aiLogger.info(
+                        'ModelRouter',
+                        `Cross-tier fallback from ${tier} to ${fallbackTier}: ${model.model_id}`,
+                    );
                     return {
                         id: model.model_id || model.id,
                         tier: fallbackTier,
@@ -387,7 +421,7 @@ export class ModelRouter {
                         apiKey: model.api_key || null,
                         endpoint: model.endpoint || null,
                         source: 'fallback_lower_tier',
-                        originalTier: tier
+                        originalTier: tier,
                     };
                 }
             }
@@ -396,7 +430,7 @@ export class ModelRouter {
         const configService = await getLLMConfigService();
         if (configService) {
             try {
-                const excludeProviders = excludeModels.map(model => this.inferProvider(model));
+                const excludeProviders = excludeModels.map((model) => this.inferProvider(model));
                 const nextProvider = await configService.getNextFallback(excludeProviders, tier);
                 if (nextProvider) {
                     aiLogger.info('ModelRouter', `Selected fallback from config service: ${nextProvider.provider}`);
@@ -405,7 +439,7 @@ export class ModelRouter {
                         tier,
                         provider: nextProvider.provider,
                         apiKey: nextProvider.api_key || null,
-                        endpoint: nextProvider.endpoint || null
+                        endpoint: nextProvider.endpoint || null,
                     };
                 }
             } catch (error: unknown) {
@@ -418,14 +452,14 @@ export class ModelRouter {
     }
 
     async getAnyActiveProvider(tier: Tier, excludeModels: string[] = []): Promise<ProviderConfig | null> {
-        const excludeProviders = new Set(excludeModels.map(model => this.inferProvider(model)));
+        const excludeProviders = new Set(excludeModels.map((model) => this.inferProvider(model)));
 
         const row = await DbPromise.get<ProviderRow>(
             `SELECT * FROM llm_providers 
              WHERE is_active = 1 AND api_key IS NOT NULL AND api_key != ''
              ORDER BY is_default DESC, priority DESC LIMIT 1`,
             [],
-            { fallback: true }
+            { fallback: true },
         );
 
         if (row && !excludeProviders.has(row.provider)) {
@@ -435,7 +469,7 @@ export class ModelRouter {
                 tier,
                 provider: row.provider,
                 apiKey: row.api_key || null,
-                endpoint: row.endpoint || null
+                endpoint: row.endpoint || null,
             };
         }
 
@@ -443,7 +477,11 @@ export class ModelRouter {
         return null;
     }
 
-    async assignModelToTier(providerId: string, tier: Tier, priority = 0): Promise<{ id: string; providerId: string; tier: Tier; priority: number }> {
+    async assignModelToTier(
+        providerId: string,
+        tier: Tier,
+        priority = 0,
+    ): Promise<{ id: string; providerId: string; tier: Tier; priority: number }> {
         const id = `${providerId}-${tier}`;
         const query = `
             INSERT OR REPLACE INTO model_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
@@ -471,7 +509,11 @@ export class ModelRouter {
         return { success: true };
     }
 
-    async setOrgProviderEnabled(organizationId: string, providerId: string, isEnabled: boolean): Promise<{ success: true }> {
+    async setOrgProviderEnabled(
+        organizationId: string,
+        providerId: string,
+        isEnabled: boolean,
+    ): Promise<{ success: true }> {
         const id = `${organizationId}-${providerId}`;
         const query = `
             INSERT OR REPLACE INTO organization_provider_settings 
@@ -483,7 +525,9 @@ export class ModelRouter {
         return { success: true };
     }
 
-    async getOrgProviderSettings(organizationId: string): Promise<Array<ProviderRow & { is_enabled_for_org: number; custom_priority?: number }>> {
+    async getOrgProviderSettings(
+        organizationId: string,
+    ): Promise<Array<ProviderRow & { is_enabled_for_org: number; custom_priority?: number }>> {
         const query = `
             SELECT 
                 p.*,
@@ -507,14 +551,14 @@ export class ModelRouter {
              AND (model_id = ? OR model_id IS NULL OR model_id = '') 
              LIMIT 1`,
             [providerName, modelId],
-            { fallback: true }
+            { fallback: true },
         );
 
         if (!provider) {
             provider = await DbPromise.get<ProviderRow>(
                 `SELECT * FROM llm_providers WHERE provider = ? AND is_active = 1 LIMIT 1`,
                 [providerName],
-                { fallback: true }
+                { fallback: true },
             );
         }
 
@@ -531,7 +575,7 @@ export class ModelRouter {
                     endpoint: this.getDefaultEndpoint(providerName),
                     source: 'platform',
                     markupMultiplier: 1.0,
-                    raw: null
+                    raw: null,
                 };
             }
         }
@@ -544,23 +588,26 @@ export class ModelRouter {
             endpoint: provider?.endpoint || this.getDefaultEndpoint(providerName),
             source: provider?.api_key ? 'organization' : 'platform',
             markupMultiplier: provider?.markup_multiplier || 1.0,
-            raw: provider || null
+            raw: provider || null,
         };
     }
 
     async getDefaultProvider(): Promise<ProviderRow | null> {
-        if (this.defaultProviderCache && Date.now() < this.defaultProviderExpiry) {
-            return this.defaultProviderCache;
-        }
+        const CACHE_KEY = 'router:default_provider';
+
+        try {
+            const cached = await appCache.get<ProviderRow>(CACHE_KEY);
+            if (cached) return cached;
+        } catch (err) { /* ignore */ }
 
         const row = await DbPromise.get<ProviderRow>(
             'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1',
             [],
-            { fallback: true }
+            { fallback: true },
         );
+
         if (row) {
-            this.defaultProviderCache = row;
-            this.defaultProviderExpiry = Date.now() + 5 * 60 * 1000;
+            await appCache.set(CACHE_KEY, row, 300); // 5 mins
         }
         return row || null;
     }
@@ -568,22 +615,20 @@ export class ModelRouter {
     async getOrgOverride(organizationId?: string, capability?: string): Promise<OverrideRow | null> {
         if (!organizationId || !capability) return null;
 
-        const cacheKey = `${organizationId}:${capability}`;
-        const cached = this.overrideCache.get(cacheKey);
-        if (cached && Date.now() < cached.expiresAt) {
-            return cached.value;
-        }
+        const CACHE_KEY = `router:override:${organizationId}:${capability}`;
+
+        try {
+            const cached = await appCache.get<OverrideRow>(CACHE_KEY);
+            if (cached) return cached;
+        } catch (err) { /* ignore */ }
 
         const row = await DbPromise.get<OverrideRow>(
             `SELECT * FROM ai_model_overrides WHERE organization_id = ? AND capability = ?`,
             [organizationId, capability],
-            { fallback: true }
+            { fallback: true },
         );
 
-        this.overrideCache.set(cacheKey, {
-            value: row || null,
-            expiresAt: Date.now() + 5 * 60 * 1000
-        });
+        await appCache.set(CACHE_KEY, row || null, 300); // 5 mins
 
         return row || null;
     }
@@ -621,7 +666,7 @@ export class ModelRouter {
             cohere: 'COHERE_API_KEY',
             nvidia: 'NVIDIA_API_KEY',
             qwen: 'ALIBABA_API_KEY',
-            zai: 'ZAI_API_KEY'
+            zai: 'ZAI_API_KEY',
         };
         return envKeys[provider] || `${provider.toUpperCase()}_API_KEY`;
     }
@@ -636,19 +681,15 @@ export class ModelRouter {
             cohere: 'https://api.cohere.ai/v1/chat',
             nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
             qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-            zai: 'https://api.z.ai/api/paas/v4/chat/completions'
+            zai: 'https://api.z.ai/api/paas/v4/chat/completions',
         };
         return endpoints[provider] || null;
     }
 
-    clearCache(): void {
-        this.overrideCache.clear();
-        this.defaultProviderCache = null;
-        this.defaultProviderExpiry = 0;
-        this.healthStatusCache.clear();
-        this.healthCacheExpiry = 0;
-        this.tierAssignmentsCache.clear();
-        this.tierCacheExpiry = 0;
+    async clearCache(): Promise<void> {
+        // Redis cache invalidation
+        await appCache.delPattern('router:*');
+        aiLogger.info('ModelRouter', 'Cache cleared via pattern match router:*');
     }
 
     async isProviderConfigured(_providerId: string): Promise<boolean> {
@@ -662,11 +703,14 @@ export class ModelRouter {
              WHERE is_active = 1 AND api_key IS NOT NULL AND api_key != ''
              ORDER BY priority DESC, is_default DESC`,
             [],
-            { fallback: true }
+            { fallback: true },
         );
     }
 
-    async route(capabilityOrUserId: string | SelectParams, intentOrCapability?: string): Promise<{
+    async route(
+        capabilityOrUserId: string | SelectParams,
+        intentOrCapability?: string,
+    ): Promise<{
         providerConfig: ProviderRow | { model_id: string; provider: string; markup_multiplier?: number };
         orgId?: string;
         sourceType?: string;
@@ -678,7 +722,7 @@ export class ModelRouter {
             params = capabilityOrUserId;
         } else {
             params = {
-                capability: intentOrCapability || 'chat'
+                capability: intentOrCapability || 'chat',
             };
         }
 
@@ -690,11 +734,11 @@ export class ModelRouter {
             providerConfig: result.raw || {
                 model_id: result.id,
                 provider: result.provider,
-                markup_multiplier: result.markupMultiplier
+                markup_multiplier: result.markupMultiplier,
             },
             orgId: params.organizationId,
             sourceType: result.source || 'platform',
-            model: result.id
+            model: result.id,
         };
     }
 }

@@ -1,6 +1,6 @@
 /**
  * SSOConfigurationView - Super Admin SSO/SAML Configuration
- * 
+ *
  * Enterprise SSO management with support for:
  * - Google Workspace (OIDC)
  * - Generic SAML 2.0
@@ -9,32 +9,33 @@
  * - Domain mapping
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Key,
-    Shield,
-    Building2,
-    Globe,
-    Settings,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
+    Building2,
+    CheckCircle2,
+    ChevronRight,
     Copy,
-    ExternalLink,
     Download,
-    Upload,
+    ExternalLink,
+    Filter,
+    Globe,
+    Info,
+    Key,
+    Loader2,
+    Lock,
+    MoreVertical,
     RefreshCw,
     Search,
-    Filter,
-    MoreVertical,
-    ChevronRight,
-    Lock,
-    Loader2,
-    Info,
-    Zap
+    Settings,
+    Shield,
+    Upload,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 interface SSOConfig {
     id: string;
@@ -87,22 +88,22 @@ export const SSOConfigurationView: React.FC = () => {
         autoProvisionUsers: true,
         defaultRole: 'USER',
         // Domain restriction
-        domainRestriction: ''
+        domainRestriction: '',
     });
-    
+
     // Google SSO form state
     const [googleForm, setGoogleForm] = useState({
         organizationId: '',
         clientId: '',
         clientSecret: '',
-        allowedDomains: ''
+        allowedDomains: '',
     });
-    
+
     // Organizations list for dropdowns
     const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-    
+
     // Fetch organizations for dropdown
     const fetchOrganizations = useCallback(async () => {
         try {
@@ -112,30 +113,30 @@ export const SSOConfigurationView: React.FC = () => {
             console.error('Failed to fetch organizations:', error);
         }
     }, []);
-    
+
     // Save Google SSO config
     const saveGoogleConfig = async () => {
         if (!googleForm.organizationId || !googleForm.clientId) {
             setMessage({ type: 'error', text: 'Organization and Client ID are required' });
             return;
         }
-        
+
         setSaving(true);
         setMessage(null);
-        
+
         try {
             const allowedDomains = googleForm.allowedDomains
                 .split(',')
-                .map(d => d.trim())
-                .filter(d => d.length > 0);
-                
+                .map((d) => d.trim())
+                .filter((d) => d.length > 0);
+
             await Api.post('/sso/superadmin/google/config', {
                 organizationId: googleForm.organizationId,
                 clientId: googleForm.clientId,
                 clientSecret: googleForm.clientSecret,
-                allowedDomains
+                allowedDomains,
             });
-            
+
             setMessage({ type: 'success', text: 'Google SSO configuration saved successfully!' });
             setGoogleForm({ organizationId: '', clientId: '', clientSecret: '', allowedDomains: '' });
             fetchSSOConfigs();
@@ -145,7 +146,7 @@ export const SSOConfigurationView: React.FC = () => {
             setSaving(false);
         }
     };
-    
+
     // Toggle SSO config active status
     const toggleSSOConfig = async (configId: string, isActive: boolean) => {
         try {
@@ -155,13 +156,17 @@ export const SSOConfigurationView: React.FC = () => {
             console.error('Failed to toggle SSO config:', error);
         }
     };
-    
+
     // Delete SSO config
     const deleteSSOConfig = async (configId: string) => {
-        if (!window.confirm('Are you sure you want to delete this SSO configuration? Users will no longer be able to use SSO to login.')) {
+        if (
+            !window.confirm(
+                'Are you sure you want to delete this SSO configuration? Users will no longer be able to use SSO to login.',
+            )
+        ) {
             return;
         }
-        
+
         try {
             await Api.delete(`/sso/superadmin/config/${configId}`);
             fetchSSOConfigs();
@@ -188,10 +193,12 @@ export const SSOConfigurationView: React.FC = () => {
         fetchOrganizations();
     }, [fetchSSOConfigs, fetchOrganizations]);
 
-    const filteredConfigs = ssoConfigs.filter(config => {
-        const matchesSearch = config.organizationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const filteredConfigs = ssoConfigs.filter((config) => {
+        const matchesSearch =
+            config.organizationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             config.providerName?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = filterStatus === 'all' ||
+        const matchesStatus =
+            filterStatus === 'all' ||
             (filterStatus === 'active' && config.isActive) ||
             (filterStatus === 'inactive' && !config.isActive);
         return matchesSearch && matchesStatus;
@@ -199,9 +206,9 @@ export const SSOConfigurationView: React.FC = () => {
 
     const stats = {
         total: ssoConfigs.length,
-        active: ssoConfigs.filter(c => c.isActive).length,
-        saml: ssoConfigs.filter(c => c.providerType === 'saml').length,
-        google: ssoConfigs.filter(c => c.providerType === 'google' || c.providerType === 'oidc').length
+        active: ssoConfigs.filter((c) => c.isActive).length,
+        saml: ssoConfigs.filter((c) => c.providerType === 'saml').length,
+        google: ssoConfigs.filter((c) => c.providerType === 'google' || c.providerType === 'oidc').length,
     };
 
     const copyToClipboard = (text: string) => {
@@ -293,12 +300,24 @@ export const SSOConfigurationView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Organization</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Provider</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Policies</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
-                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Organization
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Provider
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Policies
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Created
+                            </th>
+                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -310,17 +329,29 @@ export const SSOConfigurationView: React.FC = () => {
                                             {config.organizationName.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
-                                            <div className="font-medium text-slate-900 dark:text-white">{config.organizationName}</div>
-                                            <div className="text-xs text-slate-500 font-mono">{config.organizationId.slice(0, 8)}...</div>
+                                            <div className="font-medium text-slate-900 dark:text-white">
+                                                {config.organizationName}
+                                            </div>
+                                            <div className="text-xs text-slate-500 font-mono">
+                                                {config.organizationId.slice(0, 8)}...
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
-                                        {config.providerType === 'google' && <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />}
-                                        {config.providerType === 'saml' && <Shield size={18} className="text-blue-500" />}
-                                        {config.providerType === 'azure_ad' && <Shield size={18} className="text-sky-500" />}
-                                        {config.providerType === 'okta' && <Shield size={18} className="text-indigo-500" />}
+                                        {config.providerType === 'google' && (
+                                            <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />
+                                        )}
+                                        {config.providerType === 'saml' && (
+                                            <Shield size={18} className="text-blue-500" />
+                                        )}
+                                        {config.providerType === 'azure_ad' && (
+                                            <Shield size={18} className="text-sky-500" />
+                                        )}
+                                        {config.providerType === 'okta' && (
+                                            <Shield size={18} className="text-indigo-500" />
+                                        )}
                                         <span className="text-slate-700 dark:text-slate-300 capitalize">
                                             {config.providerName || config.providerType.replace('_', ' ')}
                                         </span>
@@ -349,13 +380,19 @@ export const SSOConfigurationView: React.FC = () => {
                                 <td className="px-6 py-4">
                                     <div className="flex flex-wrap gap-1">
                                         {config.enforceSso && (
-                                            <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400">SSO Only</span>
+                                            <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400">
+                                                SSO Only
+                                            </span>
                                         )}
                                         {config.autoProvisionUsers && (
-                                            <span className="text-xs px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400">Auto-provision</span>
+                                            <span className="text-xs px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                                                Auto-provision
+                                            </span>
                                         )}
                                         {config.allowPasswordLogin && (
-                                            <span className="text-xs px-2 py-0.5 rounded bg-slate-500/10 text-slate-600 dark:text-slate-400">Password fallback</span>
+                                            <span className="text-xs px-2 py-0.5 rounded bg-slate-500/10 text-slate-600 dark:text-slate-400">
+                                                Password fallback
+                                            </span>
                                         )}
                                     </div>
                                 </td>
@@ -367,8 +404,8 @@ export const SSOConfigurationView: React.FC = () => {
                                         <button
                                             onClick={() => toggleSSOConfig(config.id, config.isActive)}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                                config.isActive 
-                                                    ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20' 
+                                                config.isActive
+                                                    ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'
                                                     : 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
                                             }`}
                                         >
@@ -396,7 +433,9 @@ export const SSOConfigurationView: React.FC = () => {
                                     <div className="text-slate-500">
                                         <Key size={40} className="mx-auto mb-3 opacity-30" />
                                         <p className="font-medium">No SSO configurations found</p>
-                                        <p className="text-sm">Configure SSO for organizations to enable enterprise authentication</p>
+                                        <p className="text-sm">
+                                            Configure SSO for organizations to enable enterprise authentication
+                                        </p>
                                     </div>
                                 </td>
                             </tr>
@@ -416,21 +455,26 @@ export const SSOConfigurationView: React.FC = () => {
                     </div>
                     <div className="flex-1">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Google Workspace SSO</h3>
-                        <p className="text-slate-500 mt-1">Configure OAuth 2.0 / OpenID Connect for Google Workspace authentication</p>
+                        <p className="text-slate-500 mt-1">
+                            Configure OAuth 2.0 / OpenID Connect for Google Workspace authentication
+                        </p>
                     </div>
                 </div>
 
                 <div className="space-y-6">
                     {/* Status message */}
                     {message && (
-                        <div className={`p-4 rounded-lg border ${message.type === 'success' 
-                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400' 
-                            : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
-                        }`}>
+                        <div
+                            className={`p-4 rounded-lg border ${
+                                message.type === 'success'
+                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                                    : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
+                            }`}
+                        >
                             {message.text}
                         </div>
                     )}
-                    
+
                     <div className="bg-blue-50 dark:bg-blue-500/10 rounded-lg p-4 border border-blue-200 dark:border-blue-500/20">
                         <div className="flex items-start gap-3">
                             <Info size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
@@ -439,13 +483,16 @@ export const SSOConfigurationView: React.FC = () => {
                                 <ol className="text-sm text-blue-800 dark:text-blue-400 mt-2 space-y-2 list-decimal list-inside">
                                     <li>Go to Google Cloud Console → APIs & Services → Credentials</li>
                                     <li>Create an OAuth 2.0 Client ID (Web Application)</li>
-                                    <li>Add authorized redirect URI: <code className="bg-blue-100 dark:bg-blue-500/20 px-1 rounded">{`${window.location.origin}/api/sso/google/callback`}</code></li>
+                                    <li>
+                                        Add authorized redirect URI:{' '}
+                                        <code className="bg-blue-100 dark:bg-blue-500/20 px-1 rounded">{`${window.location.origin}/api/sso/google/callback`}</code>
+                                    </li>
                                     <li>Copy the Client ID and Client Secret below</li>
                                 </ol>
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Organization selection */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -457,8 +504,10 @@ export const SSOConfigurationView: React.FC = () => {
                             className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                         >
                             <option value="">Select organization...</option>
-                            {organizations.map(org => (
-                                <option key={org.id} value={org.id}>{org.name}</option>
+                            {organizations.map((org) => (
+                                <option key={org.id} value={org.id}>
+                                    {org.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -501,11 +550,13 @@ export const SSOConfigurationView: React.FC = () => {
                             onChange={(e) => setGoogleForm({ ...googleForm, allowedDomains: e.target.value })}
                             className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Only users from these domains can authenticate. Leave empty to allow all domains.</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                            Only users from these domains can authenticate. Leave empty to allow all domains.
+                        </p>
                     </div>
 
                     <div className="flex justify-end gap-3">
-                        <button 
+                        <button
                             onClick={saveGoogleConfig}
                             disabled={saving || !googleForm.organizationId || !googleForm.clientId}
                             className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
@@ -528,7 +579,9 @@ export const SSOConfigurationView: React.FC = () => {
                     </div>
                     <div className="flex-1">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">SAML 2.0 Configuration</h3>
-                        <p className="text-slate-500 mt-1">Configure generic SAML 2.0 for enterprise identity providers</p>
+                        <p className="text-slate-500 mt-1">
+                            Configure generic SAML 2.0 for enterprise identity providers
+                        </p>
                     </div>
                 </div>
 
@@ -545,7 +598,10 @@ export const SSOConfigurationView: React.FC = () => {
                                 <code className="flex-1 text-sm bg-white dark:bg-navy-800 px-3 py-2 rounded border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 truncate">
                                     {`${window.location.origin}/sso/metadata/[ORG_ID]`}
                                 </code>
-                                <button onClick={() => copyToClipboard(`${window.location.origin}/sso/metadata/[ORG_ID]`)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded">
+                                <button
+                                    onClick={() => copyToClipboard(`${window.location.origin}/sso/metadata/[ORG_ID]`)}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                                >
                                     <Copy size={14} className="text-slate-400" />
                                 </button>
                             </div>
@@ -556,7 +612,12 @@ export const SSOConfigurationView: React.FC = () => {
                                 <code className="flex-1 text-sm bg-white dark:bg-navy-800 px-3 py-2 rounded border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 truncate">
                                     {`${window.location.origin}/api/sso/callback/[ORG_ID]`}
                                 </code>
-                                <button onClick={() => copyToClipboard(`${window.location.origin}/api/sso/callback/[ORG_ID]`)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded">
+                                <button
+                                    onClick={() =>
+                                        copyToClipboard(`${window.location.origin}/api/sso/callback/[ORG_ID]`)
+                                    }
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                                >
                                     <Copy size={14} className="text-slate-400" />
                                 </button>
                             </div>
@@ -574,7 +635,7 @@ export const SSOConfigurationView: React.FC = () => {
                         <Upload size={16} />
                         Identity Provider Configuration
                     </h4>
-                    
+
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             IdP Metadata URL or XML
@@ -647,7 +708,9 @@ export const SSOConfigurationView: React.FC = () => {
                     </div>
                     <div className="flex-1">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Domain Mapping</h3>
-                        <p className="text-slate-500 mt-1">Route users to the correct organization based on their email domain</p>
+                        <p className="text-slate-500 mt-1">
+                            Route users to the correct organization based on their email domain
+                        </p>
                     </div>
                     <button className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors">
                         <Globe size={16} />
@@ -659,7 +722,9 @@ export const SSOConfigurationView: React.FC = () => {
                     <div className="flex items-start gap-3">
                         <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 mt-0.5" />
                         <div>
-                            <h4 className="font-medium text-amber-900 dark:text-amber-300">Domain Verification Required</h4>
+                            <h4 className="font-medium text-amber-900 dark:text-amber-300">
+                                Domain Verification Required
+                            </h4>
                             <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
                                 Each domain must be verified via DNS TXT record before it can be used for SSO routing.
                             </p>
@@ -670,11 +735,21 @@ export const SSOConfigurationView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
-                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Domain</th>
-                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Organization</th>
-                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Added</th>
-                            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Domain
+                            </th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Organization
+                            </th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Added
+                            </th>
+                            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -751,4 +826,3 @@ export const SSOConfigurationView: React.FC = () => {
 };
 
 export default SSOConfigurationView;
-

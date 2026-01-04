@@ -1,7 +1,7 @@
 /**
  * Request Context Utility
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Safely extracts user and organization context from a request object.
  * Used for logging, auditing, and server-side RBAC enforcement.
  */
@@ -35,6 +35,6 @@ export const getRequestContext = (req: Request): RequestContext => {
         userAgent: req.get('User-Agent') || 'unknown',
         method: req.method,
         path: req.path,
-        requestId: (req.get('X-Request-Id') as string) || 'none'
+        requestId: (req.get('X-Request-Id') as string) || 'none',
     };
 };

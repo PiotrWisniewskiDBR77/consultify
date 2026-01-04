@@ -1,7 +1,7 @@
 /**
  * ExecutiveDashboard - Main executive command center
  * BCG/McKinsey style: Data-dense, scannable, actionable
- * 
+ *
  * Layout:
  * - Personalized greeting with date
  * - Portfolio Health Score (prominent)
@@ -10,27 +10,19 @@
  * - Two-column: Decision Queue + Team Performance
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import {
-    RefreshCw,
-    Sun,
-    Moon,
-    Sunrise,
-    Calendar,
-    Bell,
-    Settings,
-    Sparkles
-} from 'lucide-react';
+import { Bell, Calendar, Moon, RefreshCw, Settings, Sparkles, Sun, Sunrise } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { PortfolioHealthScore } from './PortfolioHealthScore';
-import { KPIGrid } from './KPIGrid';
-import { ActionRequiredStrip } from './ActionRequiredStrip';
-import { DecisionQueuePreview } from './DecisionQueuePreview';
-import { TeamPerformancePreview } from './TeamPerformancePreview';
+
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
-import toast from 'react-hot-toast';
+import { ActionRequiredStrip } from './ActionRequiredStrip';
+import { DecisionQueuePreview } from './DecisionQueuePreview';
+import { KPIGrid } from './KPIGrid';
+import { PortfolioHealthScore } from './PortfolioHealthScore';
+import { TeamPerformancePreview } from './TeamPerformancePreview';
 
 interface ExecutiveDashboardProps {
     onNavigate?: (section: string) => void;
@@ -42,20 +34,20 @@ interface ExecutiveDashboardProps {
 const getGreeting = (t: (key: string, fallback: string) => string): { text: string; icon: React.ReactNode } => {
     const hour = new Date().getHours();
     if (hour < 12) {
-        return { 
-            text: t('executive.greeting.morning', 'Good morning'), 
-            icon: <Sunrise size={24} className="text-amber-500" /> 
+        return {
+            text: t('executive.greeting.morning', 'Good morning'),
+            icon: <Sunrise size={24} className="text-amber-500" />,
         };
     }
     if (hour < 18) {
-        return { 
-            text: t('executive.greeting.afternoon', 'Good afternoon'), 
-            icon: <Sun size={24} className="text-orange-500" /> 
+        return {
+            text: t('executive.greeting.afternoon', 'Good afternoon'),
+            icon: <Sun size={24} className="text-orange-500" />,
         };
     }
-    return { 
-        text: t('executive.greeting.evening', 'Good evening'), 
-        icon: <Moon size={24} className="text-indigo-500" /> 
+    return {
+        text: t('executive.greeting.evening', 'Good evening'),
+        icon: <Moon size={24} className="text-indigo-500" />,
     };
 };
 
@@ -65,17 +57,17 @@ const formatDate = (): string => {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
     });
 };
 
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     onNavigate,
     onDecisionApprove,
-    onDecisionReject
+    onDecisionReject,
 }) => {
     const { t } = useTranslation();
-    const user = useAppStore(state => state.currentUser);
+    const user = useAppStore((state) => state.currentUser);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -89,15 +81,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             execution: 0,
             decisions: 0,
             capacity: 0,
-            risk: 0
-        }
+            risk: 0,
+        },
     });
 
     const [kpiData, setKpiData] = useState({
         tasks: { completed: 0, total: 0, overdueCount: 0, onTimeRate: 0, trend: 'stable' as const },
         decisions: { pending: 0, avgWaitDays: 0, critical: 0, trend: 'stable' as const },
         team: { avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable' as const },
-        risk: { level: 'low' as const, blockers: 0, escalations: 0, trend: 'stable' as const }
+        risk: { level: 'low' as const, blockers: 0, escalations: 0, trend: 'stable' as const },
     });
 
     const [actionItems, setActionItems] = useState<any[]>([]);
@@ -121,14 +113,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 Api.get('/my-work/stats?period=week'),
                 Api.get('/decisions?status=PENDING&limit=10'),
                 Api.get('/my-work/team-workload'),
-                Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any)
+                Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
             ]);
 
             // Process stats
             if (statsRes.status === 'fulfilled' && statsRes.value) {
                 const stats = statsRes.value;
                 const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-                
+
                 setHealthScore({
                     score: Math.round((completionRate + (stats.onTimeRate || 70)) / 2),
                     previousScore: Math.round((completionRate + (stats.onTimeRate || 70)) / 2) - 5,
@@ -136,20 +128,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     breakdown: {
                         execution: completionRate,
                         decisions: 75, // Placeholder
-                        capacity: 82,  // Placeholder
-                        risk: 68       // Placeholder
-                    }
+                        capacity: 82, // Placeholder
+                        risk: 68, // Placeholder
+                    },
                 });
 
-                setKpiData(prev => ({
+                setKpiData((prev) => ({
                     ...prev,
                     tasks: {
                         completed: stats.completed || 0,
                         total: stats.total || 0,
                         overdueCount: stats.byStatus?.overdue || 0,
                         onTimeRate: stats.onTimeRate || 0,
-                        trend: stats.trend || 'stable'
-                    }
+                        trend: stats.trend || 'stable',
+                    },
                 }));
             }
 
@@ -157,26 +149,28 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
                 const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
                 const pendingDecisions = decisionList.filter((d: any) => d.status === 'PENDING');
-                
-                setDecisions(pendingDecisions.map((d: any) => ({
-                    id: d.id,
-                    title: d.title,
-                    type: d.decisionType || 'GENERAL',
-                    priority: d.priority?.toLowerCase() || 'medium',
-                    daysWaiting: Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
-                    requestedBy: d.requestedByName,
-                    projectName: d.projectName
-                })));
+
+                setDecisions(
+                    pendingDecisions.map((d: any) => ({
+                        id: d.id,
+                        title: d.title,
+                        type: d.decisionType || 'GENERAL',
+                        priority: d.priority?.toLowerCase() || 'medium',
+                        daysWaiting: Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+                        requestedBy: d.requestedByName,
+                        projectName: d.projectName,
+                    })),
+                );
 
                 const criticalCount = pendingDecisions.filter((d: any) => d.priority === 'CRITICAL').length;
-                setKpiData(prev => ({
+                setKpiData((prev) => ({
                     ...prev,
                     decisions: {
                         pending: pendingDecisions.length,
                         avgWaitDays: 2.4,
                         critical: criticalCount,
-                        trend: 'stable'
-                    }
+                        trend: 'stable',
+                    },
                 }));
 
                 // Build action items from critical decisions
@@ -190,38 +184,48 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                         urgency: d.priority === 'CRITICAL' ? 'critical' : 'high',
                         projectName: d.projectName,
                         owner: d.requestedByName,
-                        daysOverdue: Math.max(0, Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)) - 7)
+                        daysOverdue: Math.max(
+                            0,
+                            Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)) - 7,
+                        ),
                     }));
-                
+
                 setActionItems(urgentItems);
             }
 
             // Process team data
             if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)) {
-                setTeamMembers(teamRes.value.map((m: any) => ({
-                    id: m.id,
-                    name: m.name,
-                    initials: m.initials || m.name.split(' ').map((n: string) => n[0]).join(''),
-                    capacity: m.capacity || 80,
-                    tasksCompleted: m.tasksCompleted || 0,
-                    tasksTotal: m.tasksAssigned || 0,
-                    trend: 'stable'
-                })));
+                setTeamMembers(
+                    teamRes.value.map((m: any) => ({
+                        id: m.id,
+                        name: m.name,
+                        initials:
+                            m.initials ||
+                            m.name
+                                .split(' ')
+                                .map((n: string) => n[0])
+                                .join(''),
+                        capacity: m.capacity || 80,
+                        tasksCompleted: m.tasksCompleted || 0,
+                        tasksTotal: m.tasksAssigned || 0,
+                        trend: 'stable',
+                    })),
+                );
 
                 const avgCapacity = Math.round(
-                    teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) / teamRes.value.length
+                    teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) / teamRes.value.length,
                 );
                 const overloadedCount = teamRes.value.filter((m: any) => (m.capacity || 0) > 100).length;
                 const availableCount = teamRes.value.filter((m: any) => (m.capacity || 100) < 50).length;
 
-                setKpiData(prev => ({
+                setKpiData((prev) => ({
                     ...prev,
                     team: {
                         avgCapacity,
                         overloaded: overloadedCount,
                         available: availableCount,
-                        trend: 'stable'
-                    }
+                        trend: 'stable',
+                    },
                 }));
             }
 
@@ -231,18 +235,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     if (!t.dueDate) return false;
                     return new Date(t.dueDate) < new Date();
                 });
-                
-                const riskLevel = overdueTasks.length > 5 ? 'high' : 
-                                  overdueTasks.length > 2 ? 'medium' : 'low';
 
-                setKpiData(prev => ({
+                const riskLevel = overdueTasks.length > 5 ? 'high' : overdueTasks.length > 2 ? 'medium' : 'low';
+
+                setKpiData((prev) => ({
                     ...prev,
                     risk: {
                         level: riskLevel as any,
                         blockers: overdueTasks.length,
                         escalations: prev.risk.escalations,
-                        trend: 'stable'
-                    }
+                        trend: 'stable',
+                    },
                 }));
             }
 
@@ -254,7 +257,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 score: 76,
                 previousScore: 71,
                 trend: 'up',
-                breakdown: { execution: 78, decisions: 72, capacity: 82, risk: 68 }
+                breakdown: { execution: 78, decisions: 72, capacity: 82, risk: 68 },
             });
         } finally {
             setLoading(false);
@@ -264,11 +267,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
     useEffect(() => {
         fetchDashboardData();
-        
+
         // Auto-refresh every 5 minutes
-        const interval = setInterval(() => {
-            fetchDashboardData(true);
-        }, 5 * 60 * 1000);
+        const interval = setInterval(
+            () => {
+                fetchDashboardData(true);
+            },
+            5 * 60 * 1000,
+        );
 
         return () => clearInterval(interval);
     }, [fetchDashboardData]);
@@ -323,9 +329,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 <div className="flex items-center gap-2">
                     {/* Last updated indicator */}
                     <span className="text-xs text-slate-400 mr-2">
-                        {t('executive.lastUpdated', 'Updated')}: {lastUpdated.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                        {t('executive.lastUpdated', 'Updated')}:{' '}
+                        {lastUpdated.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    
+
                     {/* Refresh button */}
                     <button
                         onClick={() => fetchDashboardData(true)}
@@ -353,11 +360,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
                 {/* KPI Grid - Takes 2/3 on large screens */}
                 <div className="xl:col-span-2">
-                    <KPIGrid
-                        data={kpiData}
-                        loading={loading}
-                        onNavigate={onNavigate}
-                    />
+                    <KPIGrid data={kpiData} loading={loading} onNavigate={onNavigate} />
                 </div>
             </div>
 
@@ -400,9 +403,3 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 };
 
 export default ExecutiveDashboard;
-
-
-
-
-
-

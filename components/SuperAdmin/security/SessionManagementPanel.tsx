@@ -1,6 +1,6 @@
 /**
  * SessionManagementPanel - Active Session Management
- * 
+ *
  * Features:
  * - Lista aktywnych sesji per user/org
  * - Force logout funkcjonalność
@@ -8,27 +8,28 @@
  * - Geolocation info
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Monitor,
-    Smartphone,
-    Tablet,
-    Globe,
-    MapPin,
+    Activity,
+    AlertTriangle,
+    Building2,
+    ChevronDown,
     Clock,
+    Filter,
+    Globe,
+    Loader2,
     LogOut,
+    MapPin,
+    Monitor,
     RefreshCw,
     Search,
-    Filter,
-    AlertTriangle,
-    ChevronDown,
+    Smartphone,
+    Tablet,
     Users,
-    Building2,
-    Loader2,
-    Activity
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface Session {
     id: string;
@@ -100,15 +101,15 @@ export const SessionManagementPanel: React.FC = () => {
     }, [fetchSessions]);
 
     const handleTerminateSession = async (sessionId: string) => {
-        setTerminatingIds(prev => new Set(prev).add(sessionId));
+        setTerminatingIds((prev) => new Set(prev).add(sessionId));
         try {
             await Api.post(`/security-policies/sessions/${sessionId}/terminate`, { reason: 'admin_action' });
             toast.success('Session terminated');
-            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            setSessions((prev) => prev.filter((s) => s.id !== sessionId));
         } catch (error: any) {
             toast.error(error.message || 'Failed to terminate session');
         } finally {
-            setTerminatingIds(prev => {
+            setTerminatingIds((prev) => {
                 const next = new Set(prev);
                 next.delete(sessionId);
                 return next;
@@ -120,7 +121,7 @@ export const SessionManagementPanel: React.FC = () => {
         try {
             await Api.post(`/security-policies/${orgId}/sessions/terminate-all`, { userId, reason: 'admin_action' });
             toast.success('All user sessions terminated');
-            setSessions(prev => prev.filter(s => s.user_id !== userId));
+            setSessions((prev) => prev.filter((s) => s.user_id !== userId));
         } catch (error: any) {
             toast.error(error.message || 'Failed to terminate sessions');
         }
@@ -142,14 +143,14 @@ export const SessionManagementPanel: React.FC = () => {
         const now = new Date();
         const then = new Date(date);
         const diff = Math.floor((now.getTime() - then.getTime()) / 1000);
-        
+
         if (diff < 60) return 'Just now';
         if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
         if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
         return `${Math.floor(diff / 86400)}d ago`;
     };
 
-    const filteredSessions = sessions.filter(session => {
+    const filteredSessions = sessions.filter((session) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -162,12 +163,15 @@ export const SessionManagementPanel: React.FC = () => {
     });
 
     // Group sessions by user
-    const sessionsByUser = filteredSessions.reduce((acc, session) => {
-        const key = session.user_id;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(session);
-        return acc;
-    }, {} as Record<string, Session[]>);
+    const sessionsByUser = filteredSessions.reduce(
+        (acc, session) => {
+            const key = session.user_id;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(session);
+            return acc;
+        },
+        {} as Record<string, Session[]>,
+    );
 
     return (
         <div className="space-y-6">
@@ -184,19 +188,21 @@ export const SessionManagementPanel: React.FC = () => {
                             className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none w-64"
                         />
                     </div>
-                    
+
                     <select
                         value={selectedOrgId}
                         onChange={(e) => setSelectedOrgId(e.target.value)}
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                     >
                         <option value="all">All Organizations</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg">
                         <Activity size={16} className="text-emerald-400" />
@@ -227,7 +233,10 @@ export const SessionManagementPanel: React.FC = () => {
                     {Object.entries(sessionsByUser).map(([userId, userSessions]) => {
                         const firstSession = userSessions[0];
                         return (
-                            <div key={userId} className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden">
+                            <div
+                                key={userId}
+                                className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden"
+                            >
                                 {/* User Header */}
                                 <div className="flex items-center justify-between p-4 bg-slate-900/30">
                                     <div className="flex items-center gap-4">
@@ -236,14 +245,17 @@ export const SessionManagementPanel: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className="font-medium text-white">
-                                                {firstSession.user_first_name} {firstSession.user_last_name || firstSession.user_email}
+                                                {firstSession.user_first_name}{' '}
+                                                {firstSession.user_last_name || firstSession.user_email}
                                             </p>
                                             <p className="text-sm text-slate-400">{firstSession.user_email}</p>
                                         </div>
                                         {firstSession.organization_name && (
                                             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-full">
                                                 <Building2 size={12} className="text-slate-400" />
-                                                <span className="text-xs text-slate-300">{firstSession.organization_name}</span>
+                                                <span className="text-xs text-slate-300">
+                                                    {firstSession.organization_name}
+                                                </span>
                                             </div>
                                         )}
                                     </div>
@@ -251,7 +263,9 @@ export const SessionManagementPanel: React.FC = () => {
                                         <span className="text-sm text-slate-400">{userSessions.length} session(s)</span>
                                         {userSessions.length > 1 && (
                                             <button
-                                                onClick={() => handleTerminateAllForUser(userId, firstSession.organization_id)}
+                                                onClick={() =>
+                                                    handleTerminateAllForUser(userId, firstSession.organization_id)
+                                                }
                                                 className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm transition-colors"
                                             >
                                                 <LogOut size={14} />
@@ -263,8 +277,11 @@ export const SessionManagementPanel: React.FC = () => {
 
                                 {/* Sessions */}
                                 <div className="divide-y divide-white/[0.04]">
-                                    {userSessions.map(session => (
-                                        <div key={session.id} className="flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors">
+                                    {userSessions.map((session) => (
+                                        <div
+                                            key={session.id}
+                                            className="flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
+                                        >
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-lg bg-slate-900/50 flex items-center justify-center text-slate-400">
                                                     {getDeviceIcon(session.device_type)}
@@ -275,7 +292,9 @@ export const SessionManagementPanel: React.FC = () => {
                                                             {session.browser || 'Unknown Browser'}
                                                         </span>
                                                         <span className="text-slate-500">•</span>
-                                                        <span className="text-slate-400">{session.os || 'Unknown OS'}</span>
+                                                        <span className="text-slate-400">
+                                                            {session.os || 'Unknown OS'}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
                                                         <span className="flex items-center gap-1">
@@ -291,7 +310,7 @@ export const SessionManagementPanel: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
                                                     <div className="flex items-center gap-1.5 text-sm text-slate-400">
@@ -328,10 +347,4 @@ export const SessionManagementPanel: React.FC = () => {
 };
 
 export default SessionManagementPanel;
-
-
-
-
-
-
 

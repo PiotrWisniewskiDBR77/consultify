@@ -1,6 +1,6 @@
 /**
  * DataControlsSettings - Enhanced GDPR Compliance Data Controls
- * 
+ *
  * Features:
  * - Consent management dashboard
  * - Data portability (full GDPR export)
@@ -10,34 +10,35 @@
  * - Right to be forgotten workflow
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Database,
-    Eye,
-    Trash2,
-    Download,
-    Shield,
-    Clock,
     AlertTriangle,
-    CheckCircle,
-    XCircle,
-    FileText,
-    Loader2,
-    ChevronRight,
-    RefreshCw,
-    Globe,
-    Brain,
     BarChart3,
-    Share2,
+    Brain,
     Calendar,
+    CheckCircle,
+    ChevronRight,
+    Clock,
+    Database,
+    Download,
+    Eye,
+    FileText,
+    Globe,
     Info,
+    Loader2,
+    Lock,
     Mail,
-    Lock
+    RefreshCw,
+    Share2,
+    Shield,
+    Trash2,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { User } from '../../types';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface DataControlsSettingsProps {
     currentUser: User;
@@ -78,18 +79,18 @@ const DEFAULT_CONSENTS: ConsentSettings = {
     personalization: true,
     marketing: false,
     thirdPartySharing: false,
-    aiTraining: true
+    aiTraining: true,
 };
 
 const DEFAULT_RETENTION: DataRetention = {
     period: '365',
-    autoDelete: false
+    autoDelete: false,
 };
 
-export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({ 
+export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     currentUser,
     onUpdateUser,
-    className = '' 
+    className = '',
 }) => {
     const { t } = useTranslation();
     const [consents, setConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
@@ -113,7 +114,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             const [consentsRes, retentionRes, exportRes] = await Promise.all([
                 Api.get('/api/gdpr/consents').catch(() => null),
                 Api.get('/api/gdpr/retention').catch(() => null),
-                Api.get('/api/gdpr/export-status').catch(() => null)
+                Api.get('/api/gdpr/export-status').catch(() => null),
             ]);
 
             if (consentsRes?.consents) {
@@ -164,7 +165,9 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             const response = await Api.post('/api/gdpr/export-request', {});
             if (response?.request) {
                 setExportRequest(response.request);
-                toast.success(t('settings.data.exportRequested', 'Data export requested. You will be notified when ready.'));
+                toast.success(
+                    t('settings.data.exportRequested', 'Data export requested. You will be notified when ready.'),
+                );
             } else {
                 // Fallback: direct download
                 const data = await Api.get('/api/user/data-export');
@@ -203,7 +206,12 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 setDeletionRequest(response.request);
                 setShowDeleteConfirm(false);
                 setDeleteConfirmText('');
-                toast.success(t('settings.data.deletionRequested', 'Account deletion scheduled. You will receive a confirmation email.'));
+                toast.success(
+                    t(
+                        'settings.data.deletionRequested',
+                        'Account deletion scheduled. You will receive a confirmation email.',
+                    ),
+                );
             }
         } catch (error) {
             toast.error(t('settings.data.deletionError', 'Failed to request account deletion'));
@@ -229,7 +237,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         { value: '90', label: t('settings.data.retention90', '90 days') },
         { value: '180', label: t('settings.data.retention180', '6 months') },
         { value: '365', label: t('settings.data.retention365', '1 year') },
-        { value: 'forever', label: t('settings.data.retentionForever', 'Forever') }
+        { value: 'forever', label: t('settings.data.retentionForever', 'Forever') },
     ];
 
     if (loading) {
@@ -241,7 +249,9 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     }
 
     return (
-        <div className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ${className}`}>
+        <div
+            className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ${className}`}
+        >
             {/* Header */}
             <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/25">
@@ -265,7 +275,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         {t('settings.data.gdprTitle', 'GDPR Compliant')}
                     </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                        {t('settings.data.gdprDesc', 'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.')}
+                        {t(
+                            'settings.data.gdprDesc',
+                            'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.',
+                        )}
                     </p>
                 </div>
             </div>
@@ -285,35 +298,50 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <ConsentToggle
                         icon={<BarChart3 className="w-5 h-5" />}
                         title={t('settings.data.analytics', 'Usage Analytics')}
-                        description={t('settings.data.analyticsDesc', 'Help improve the product by sharing anonymous usage data')}
+                        description={t(
+                            'settings.data.analyticsDesc',
+                            'Help improve the product by sharing anonymous usage data',
+                        )}
                         checked={consents.analytics}
                         onChange={(checked) => handleConsentChange('analytics', checked)}
                     />
                     <ConsentToggle
                         icon={<Brain className="w-5 h-5" />}
                         title={t('settings.data.personalization', 'Personalization')}
-                        description={t('settings.data.personalizationDesc', 'Use your data to personalize your experience and recommendations')}
+                        description={t(
+                            'settings.data.personalizationDesc',
+                            'Use your data to personalize your experience and recommendations',
+                        )}
                         checked={consents.personalization}
                         onChange={(checked) => handleConsentChange('personalization', checked)}
                     />
                     <ConsentToggle
                         icon={<Mail className="w-5 h-5" />}
                         title={t('settings.data.marketing', 'Marketing Communications')}
-                        description={t('settings.data.marketingDesc', 'Receive product updates, tips, and promotional offers')}
+                        description={t(
+                            'settings.data.marketingDesc',
+                            'Receive product updates, tips, and promotional offers',
+                        )}
                         checked={consents.marketing}
                         onChange={(checked) => handleConsentChange('marketing', checked)}
                     />
                     <ConsentToggle
                         icon={<Share2 className="w-5 h-5" />}
                         title={t('settings.data.thirdParty', 'Third-Party Data Sharing')}
-                        description={t('settings.data.thirdPartyDesc', 'Share data with trusted partners for enhanced features')}
+                        description={t(
+                            'settings.data.thirdPartyDesc',
+                            'Share data with trusted partners for enhanced features',
+                        )}
                         checked={consents.thirdPartySharing}
                         onChange={(checked) => handleConsentChange('thirdPartySharing', checked)}
                     />
                     <ConsentToggle
                         icon={<Brain className="w-5 h-5" />}
                         title={t('settings.data.aiTraining', 'AI Model Training')}
-                        description={t('settings.data.aiTrainingDesc', 'Allow your anonymized data to improve our AI models')}
+                        description={t(
+                            'settings.data.aiTrainingDesc',
+                            'Allow your anonymized data to improve our AI models',
+                        )}
                         checked={consents.aiTraining}
                         onChange={(checked) => handleConsentChange('aiTraining', checked)}
                         highlight={!consents.aiTraining}
@@ -351,7 +379,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 </div>
                 <p className="text-xs text-slate-500 mt-4 flex items-center gap-1">
                     <Info className="w-4 h-4" />
-                    {t('settings.data.retentionNote', 'After this period, inactive data will be automatically anonymized or deleted.')}
+                    {t(
+                        'settings.data.retentionNote',
+                        'After this period, inactive data will be automatically anonymized or deleted.',
+                    )}
                 </p>
             </div>
 
@@ -374,15 +405,15 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         exportRequest?.status === 'ready'
                             ? t('settings.data.exportReady', 'Your export is ready to download')
                             : exportRequest?.status === 'processing'
-                            ? t('settings.data.exportProcessing', 'Export is being prepared...')
-                            : t('settings.data.exportDataDesc', 'Download all your data (GDPR)')
+                              ? t('settings.data.exportProcessing', 'Export is being prepared...')
+                              : t('settings.data.exportDataDesc', 'Download all your data (GDPR)')
                     }
                     buttonText={
                         exportRequest?.status === 'ready'
                             ? t('settings.data.downloadExport', 'Download')
                             : exportRequest?.status === 'processing'
-                            ? t('settings.data.exportPending', 'Processing...')
-                            : t('settings.data.requestExport', 'Request Export')
+                              ? t('settings.data.exportPending', 'Processing...')
+                              : t('settings.data.requestExport', 'Request Export')
                     }
                     loading={exporting || exportRequest?.status === 'processing'}
                     onClick={exportRequest?.status === 'ready' ? handleDownloadExport : handleExportRequest}
@@ -395,7 +426,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     title={t('settings.data.deleteData', 'Delete My Data')}
                     description={
                         deletionRequest?.status === 'scheduled'
-                            ? t('settings.data.deletionScheduled', `Deletion scheduled for ${new Date(deletionRequest.scheduledFor!).toLocaleDateString()}`)
+                            ? t(
+                                  'settings.data.deletionScheduled',
+                                  `Deletion scheduled for ${new Date(deletionRequest.scheduledFor!).toLocaleDateString()}`,
+                              )
                             : t('settings.data.deleteDataDesc', 'Permanently delete your account and data')
                     }
                     buttonText={
@@ -403,7 +437,11 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                             ? t('settings.data.cancelDeletion', 'Cancel Deletion')
                             : t('settings.data.requestDeletion', 'Request Deletion')
                     }
-                    onClick={deletionRequest?.status === 'scheduled' ? handleCancelDeletion : () => setShowDeleteConfirm(true)}
+                    onClick={
+                        deletionRequest?.status === 'scheduled'
+                            ? handleCancelDeletion
+                            : () => setShowDeleteConfirm(true)
+                    }
                     variant="danger"
                     status={deletionRequest?.status}
                 />
@@ -422,7 +460,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                             </h3>
                         </div>
                         <p className="text-slate-600 dark:text-slate-400 mb-4">
-                            {t('settings.data.deleteConfirmDesc', 'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.')}
+                            {t(
+                                'settings.data.deleteConfirmDesc',
+                                'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.',
+                            )}
                         </p>
                         <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg p-4 mb-4">
                             <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">
@@ -438,7 +479,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         </div>
                         <div className="flex gap-3">
                             <button
-                                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
+                                onClick={() => {
+                                    setShowDeleteConfirm(false);
+                                    setDeleteConfirmText('');
+                                }}
                                 className="flex-1 py-3 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
                             >
                                 {t('common.cancel', 'Cancel')}
@@ -467,15 +511,24 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     {t('settings.data.relatedDocs', 'Related Documents')}
                 </h4>
                 <div className="flex flex-wrap gap-3">
-                    <a href="/privacy" className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+                    <a
+                        href="/privacy"
+                        className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                    >
                         <Globe className="w-3 h-3" />
                         {t('settings.data.privacyPolicy', 'Privacy Policy')}
                     </a>
-                    <a href="/legal/dpa" className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+                    <a
+                        href="/legal/dpa"
+                        className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                    >
                         <Lock className="w-3 h-3" />
                         {t('settings.data.dpa', 'Data Processing Agreement')}
                     </a>
-                    <a href="/cookies" className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+                    <a
+                        href="/cookies"
+                        className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                    >
                         <Database className="w-3 h-3" />
                         {t('settings.data.cookiePolicy', 'Cookie Policy')}
                     </a>
@@ -495,18 +548,13 @@ interface ConsentToggleProps {
     highlight?: boolean;
 }
 
-const ConsentToggle: React.FC<ConsentToggleProps> = ({
-    icon,
-    title,
-    description,
-    checked,
-    onChange,
-    highlight
-}) => {
+const ConsentToggle: React.FC<ConsentToggleProps> = ({ icon, title, description, checked, onChange, highlight }) => {
     return (
         <div className={`p-4 flex items-center justify-between ${highlight ? 'bg-amber-50 dark:bg-amber-500/5' : ''}`}>
             <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg ${checked ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                <div
+                    className={`p-2 rounded-lg ${checked ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}
+                >
                     {icon}
                 </div>
                 <div>
@@ -520,7 +568,7 @@ const ConsentToggle: React.FC<ConsentToggleProps> = ({
                     checked ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
                 }`}
             >
-                <span 
+                <span
                     className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
             </button>
@@ -548,27 +596,31 @@ const DataActionCard: React.FC<DataActionCardProps> = ({
     onClick,
     variant = 'default',
     loading,
-    status
+    status,
 }) => {
     const isDanger = variant === 'danger';
 
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border ${
-            isDanger ? 'border-red-200 dark:border-red-500/30' : 'border-slate-200 dark:border-white/10'
-        } p-6 flex flex-col`}>
-            <div className={`w-12 h-12 rounded-xl ${
-                isDanger 
-                    ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400' 
-                    : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
-            } flex items-center justify-center mb-4`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border ${
+                isDanger ? 'border-red-200 dark:border-red-500/30' : 'border-slate-200 dark:border-white/10'
+            } p-6 flex flex-col`}
+        >
+            <div
+                className={`w-12 h-12 rounded-xl ${
+                    isDanger
+                        ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
+                } flex items-center justify-center mb-4`}
+            >
                 {icon}
             </div>
-            <h4 className={`font-semibold ${isDanger ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white'} mb-1`}>
+            <h4
+                className={`font-semibold ${isDanger ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white'} mb-1`}
+            >
                 {title}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 flex-1">
-                {description}
-            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 flex-1">{description}</p>
             <button
                 onClick={onClick}
                 disabled={loading}

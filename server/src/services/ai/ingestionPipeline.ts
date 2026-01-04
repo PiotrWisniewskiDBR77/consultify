@@ -7,20 +7,21 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { embeddingService } from './embeddingService.js';
+
 import { aiLogger } from '../../../services/ai/logger.js';
+import { embeddingService } from './embeddingService.js';
 
 export const CHUNK_CONFIG = {
     targetSize: 800,
     maxSize: 1200,
     overlapSize: 150,
-    minSize: 100
+    minSize: 100,
 };
 
 export const DOCUMENT_TYPES = {
     markdown: { extensions: ['.md', '.mdx'], parser: 'markdown' },
     text: { extensions: ['.txt'], parser: 'text' },
-    json: { extensions: ['.json'], parser: 'json' }
+    json: { extensions: ['.json'], parser: 'json' },
 } as const;
 
 type DocumentType = keyof typeof DOCUMENT_TYPES;
@@ -61,7 +62,7 @@ export class IngestionPipeline {
         this.stats = {
             documentsProcessed: 0,
             chunksCreated: 0,
-            errors: 0
+            errors: 0,
         };
     }
 
@@ -70,18 +71,14 @@ export class IngestionPipeline {
      */
     async ingestFile(
         filePath: string,
-        options: IngestionOptions = {}
+        options: IngestionOptions = {},
     ): Promise<{
         documentId: string;
         fileName: string;
         chunksCreated: number;
         totalChunks: number;
     }> {
-        const {
-            organizationId,
-            sourceType = 'knowledge_base',
-            metadata = {}
-        } = options;
+        const { organizationId, sourceType = 'knowledge_base', metadata = {} } = options;
 
         try {
             aiLogger.info('Ingestion', `Processing file: ${filePath}`);
@@ -90,9 +87,7 @@ export class IngestionPipeline {
             const fileName = path.basename(filePath);
             const extension = path.extname(filePath).toLowerCase();
 
-            const docType = Object.entries(DOCUMENT_TYPES).find(
-                ([, config]) => config.extensions.includes(extension)
-            );
+            const docType = Object.entries(DOCUMENT_TYPES).find(([, config]) => config.extensions.includes(extension));
 
             if (!docType) {
                 throw new Error(`Unsupported file type: ${extension}`);
@@ -104,7 +99,7 @@ export class IngestionPipeline {
             const chunks = this._smartChunk(parsedContent, {
                 fileName,
                 documentId,
-                ...metadata
+                ...metadata,
             });
 
             aiLogger.info('Ingestion', `Created ${chunks.length} chunks from ${fileName}`);
@@ -126,10 +121,10 @@ export class IngestionPipeline {
                             metadata: {
                                 fileName,
                                 ...chunk.metadata,
-                                ...metadata
-                            }
+                                ...metadata,
+                            },
                         },
-                        embedding
+                        embedding,
                     );
 
                     storedCount++;
@@ -149,7 +144,7 @@ export class IngestionPipeline {
                 documentId,
                 fileName,
                 chunksCreated: storedCount,
-                totalChunks: chunks.length
+                totalChunks: chunks.length,
             };
         } catch (error: unknown) {
             const err = error as Error;
@@ -164,12 +159,19 @@ export class IngestionPipeline {
      */
     async ingestDirectory(
         dirPath: string,
-        options: DirectoryIngestionOptions = {}
+        options: DirectoryIngestionOptions = {},
     ): Promise<{
         totalFiles: number;
         successful: number;
         failed: number;
-        results: Array<{ file?: string; error?: string; documentId?: string; fileName?: string; chunksCreated?: number; totalChunks?: number }>;
+        results: Array<{
+            file?: string;
+            error?: string;
+            documentId?: string;
+            fileName?: string;
+            chunksCreated?: number;
+            totalChunks?: number;
+        }>;
     }> {
         const { recursive = true, pattern, ...ingestionOptions } = options;
 
@@ -178,7 +180,14 @@ export class IngestionPipeline {
 
             aiLogger.info('Ingestion', `Found ${files.length} files in ${dirPath}`);
 
-            const results: Array<{ file?: string; error?: string; documentId?: string; fileName?: string; chunksCreated?: number; totalChunks?: number }> = [];
+            const results: Array<{
+                file?: string;
+                error?: string;
+                documentId?: string;
+                fileName?: string;
+                chunksCreated?: number;
+                totalChunks?: number;
+            }> = [];
             for (const file of files) {
                 try {
                     const result = await this.ingestFile(file, ingestionOptions);
@@ -187,16 +196,16 @@ export class IngestionPipeline {
                     const err = error as Error;
                     results.push({
                         file,
-                        error: err.message
+                        error: err.message,
                     });
                 }
             }
 
             return {
                 totalFiles: files.length,
-                successful: results.filter(result => !result.error).length,
-                failed: results.filter(result => result.error).length,
-                results
+                successful: results.filter((result) => !result.error).length,
+                failed: results.filter((result) => result.error).length,
+                results,
             };
         } catch (error: unknown) {
             const err = error as Error;
@@ -210,14 +219,9 @@ export class IngestionPipeline {
      */
     async ingestText(
         content: string,
-        options: TextIngestionOptions = {}
+        options: TextIngestionOptions = {},
     ): Promise<{ documentId: string; title?: string; chunksCreated: number; totalChunks: number }> {
-        const {
-            title,
-            organizationId,
-            sourceType = 'knowledge_base',
-            metadata = {}
-        } = options;
+        const { title, organizationId, sourceType = 'knowledge_base', metadata = {} } = options;
 
         try {
             const documentId = uuidv4();
@@ -225,7 +229,7 @@ export class IngestionPipeline {
             const chunks = this._smartChunk(content, {
                 title,
                 documentId,
-                ...metadata
+                ...metadata,
             });
 
             let storedCount = 0;
@@ -245,10 +249,10 @@ export class IngestionPipeline {
                             metadata: {
                                 title,
                                 ...chunk.metadata,
-                                ...metadata
-                            }
+                                ...metadata,
+                            },
                         },
-                        embedding
+                        embedding,
                     );
 
                     storedCount++;
@@ -265,7 +269,7 @@ export class IngestionPipeline {
                 documentId,
                 title,
                 chunksCreated: storedCount,
-                totalChunks: chunks.length
+                totalChunks: chunks.length,
             };
         } catch (error: unknown) {
             const err = error as Error;
@@ -282,7 +286,7 @@ export class IngestionPipeline {
             case 'markdown':
                 return content
                     .replace(/```[\s\S]*?```/g, '\n[CODE BLOCK]\n')
-                    .replace(/`[^`]+`/g, match => match.replace(/`/g, ''));
+                    .replace(/`[^`]+`/g, (match) => match.replace(/`/g, ''));
             case 'json':
                 try {
                     const parsed = JSON.parse(content);
@@ -305,7 +309,7 @@ export class IngestionPipeline {
         const sections = content.split(/(?=^#{1,3}\s)/m);
 
         let currentChunk = '';
-        let chunkMetadata = { ...metadata };
+        const chunkMetadata = { ...metadata };
 
         for (const section of sections) {
             const headerMatch = section.match(/^(#{1,3})\s+(.+?)[\r\n]/);
@@ -326,7 +330,7 @@ export class IngestionPipeline {
                 if (this._estimateTokens(currentChunk) >= CHUNK_CONFIG.minSize) {
                     chunks.push({
                         content: currentChunk.trim(),
-                        metadata: { ...chunkMetadata }
+                        metadata: { ...chunkMetadata },
                     });
                 }
 
@@ -354,7 +358,7 @@ export class IngestionPipeline {
                     if (splitContent.trim() && this._estimateTokens(splitContent) >= CHUNK_CONFIG.minSize) {
                         chunks.push({
                             content: splitContent.trim(),
-                            metadata: { ...chunkMetadata }
+                            metadata: { ...chunkMetadata },
                         });
                         currentChunk = this._getOverlap(splitContent) + remaining;
                     }
@@ -365,7 +369,7 @@ export class IngestionPipeline {
         if (currentChunk.trim() && this._estimateTokens(currentChunk) >= CHUNK_CONFIG.minSize) {
             chunks.push({
                 content: currentChunk.trim(),
-                metadata: { ...chunkMetadata }
+                metadata: { ...chunkMetadata },
             });
         }
 
@@ -401,13 +405,12 @@ export class IngestionPipeline {
      */
     private async _listFiles(
         dirPath: string,
-        options: { recursive?: boolean; pattern?: string } = {}
+        options: { recursive?: boolean; pattern?: string } = {},
     ): Promise<string[]> {
         const { recursive = true, pattern } = options;
         const files: string[] = [];
 
-        const supportedExtensions = Object.values(DOCUMENT_TYPES)
-            .flatMap(type => type.extensions);
+        const supportedExtensions = Object.values(DOCUMENT_TYPES).flatMap((type) => type.extensions);
 
         const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
@@ -444,7 +447,7 @@ export class IngestionPipeline {
         this.stats = {
             documentsProcessed: 0,
             chunksCreated: 0,
-            errors: 0
+            errors: 0,
         };
     }
 }
@@ -455,5 +458,5 @@ export default {
     IngestionPipeline,
     ingestionPipeline,
     CHUNK_CONFIG,
-    DOCUMENT_TYPES
+    DOCUMENT_TYPES,
 };

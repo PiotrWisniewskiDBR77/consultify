@@ -1,18 +1,27 @@
 /**
  * Initiative Financial Integration Component
- * 
+ *
  * Provides bidirectional integration between Initiatives and Economics modules.
  * Shows linked analysis status and allows creating/navigating to financial analysis.
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-    Calculator, ExternalLink, Plus, Link2, 
-    TrendingUp, DollarSign, Loader2, Check,
-    AlertCircle, ArrowRight, BarChart2
+import {
+    AlertCircle,
+    ArrowRight,
+    BarChart2,
+    Calculator,
+    Check,
+    DollarSign,
+    ExternalLink,
+    Link2,
+    Loader2,
+    Plus,
+    TrendingUp,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface LinkedAnalysis {
     id: string;
@@ -44,7 +53,7 @@ interface InitiativeFinancialIntegrationProps {
 export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegrationProps> = ({
     initiative,
     onNavigateToAnalysis,
-    currency = 'PLN'
+    currency = 'PLN',
 }) => {
     const [linkedAnalysis, setLinkedAnalysis] = useState<LinkedAnalysis | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -57,11 +66,10 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             try {
                 // Try to find analysis linked to this initiative
                 const analyses = await Api.getDigitizationAnalyses({ search: initiative.name });
-                const linked = analyses.analyses?.find((a: any) => 
-                    a.linked_initiative_id === initiative.id || 
-                    a.projectId === initiative.id
+                const linked = analyses.analyses?.find(
+                    (a: any) => a.linked_initiative_id === initiative.id || a.projectId === initiative.id,
                 );
-                
+
                 if (linked) {
                     // Load full analysis with financial data
                     const fullAnalysis = await Api.getDigitizationAnalysis(linked.id);
@@ -94,7 +102,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             const newAnalysis = await Api.createDigitizationAnalysis({
                 name: `Analiza ekonomiczna: ${initiative.name}`,
                 description: `Analiza ekonomiczna dla inicjatywy: ${initiative.name}`,
-                projectId: initiative.id
+                projectId: initiative.id,
             });
 
             // Link to initiative
@@ -105,13 +113,13 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 await Api.updateAnalysisFinancials(newAnalysis.id, {
                     costs: [
                         { year: 0, amount: initiative.costCapex || 0, description: 'CAPEX' },
-                        { year: 1, amount: initiative.costOpex || 0, description: 'OPEX (roczne)' }
+                        { year: 1, amount: initiative.costOpex || 0, description: 'OPEX (roczne)' },
                     ],
-                    benefits: initiative.annualBenefit ? [
-                        { year: 1, amount: initiative.annualBenefit, description: 'Roczne korzyści' }
-                    ] : [],
+                    benefits: initiative.annualBenefit
+                        ? [{ year: 1, amount: initiative.annualBenefit, description: 'Roczne korzyści' }]
+                        : [],
                     discountRate: 10,
-                    investmentHorizon: 5
+                    investmentHorizon: 5,
                 });
             }
 
@@ -121,7 +129,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 status: 'draft',
                 overallScore: null,
                 completionPercent: 0,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
             });
 
             toast.success('Utworzono analizę ekonomiczną');
@@ -151,7 +159,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         return new Intl.NumberFormat('pl-PL', {
             style: 'currency',
             currency,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(value);
     };
 
@@ -202,15 +210,20 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                         <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
                             {linkedAnalysis.name}
                         </span>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            linkedAnalysis.status === 'completed' 
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                        <span
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                linkedAnalysis.status === 'completed'
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                    : linkedAnalysis.status === 'in_progress'
+                                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
+                                      : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400'
+                            }`}
+                        >
+                            {linkedAnalysis.status === 'completed'
+                                ? 'Zakończona'
                                 : linkedAnalysis.status === 'in_progress'
-                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
-                                : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400'
-                        }`}>
-                            {linkedAnalysis.status === 'completed' ? 'Zakończona' : 
-                             linkedAnalysis.status === 'in_progress' ? 'W trakcie' : 'Szkic'}
+                                  ? 'W trakcie'
+                                  : 'Szkic'}
                         </span>
                     </div>
 
@@ -221,7 +234,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                             <span>{linkedAnalysis.completionPercent}%</span>
                         </div>
                         <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-emerald-500 rounded-full transition-all"
                                 style={{ width: `${linkedAnalysis.completionPercent}%` }}
                             />
@@ -238,21 +251,25 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                         </div>
                         <div className="text-center p-2 bg-white/50 dark:bg-navy-900/50 rounded-lg">
                             <p className="text-xs text-slate-500 mb-1">NPV</p>
-                            <p className={`text-lg font-bold ${
-                                linkedAnalysis.npv && linkedAnalysis.npv > 0 
-                                    ? 'text-emerald-600 dark:text-emerald-400' 
-                                    : 'text-red-600 dark:text-red-400'
-                            }`}>
+                            <p
+                                className={`text-lg font-bold ${
+                                    linkedAnalysis.npv && linkedAnalysis.npv > 0
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                }`}
+                            >
                                 {formatCurrency(linkedAnalysis.npv)}
                             </p>
                         </div>
                         <div className="text-center p-2 bg-white/50 dark:bg-navy-900/50 rounded-lg">
                             <p className="text-xs text-slate-500 mb-1">ROI</p>
-                            <p className={`text-lg font-bold ${
-                                linkedAnalysis.roi && linkedAnalysis.roi > 0 
-                                    ? 'text-emerald-600 dark:text-emerald-400' 
-                                    : 'text-red-600 dark:text-red-400'
-                            }`}>
+                            <p
+                                className={`text-lg font-bold ${
+                                    linkedAnalysis.roi && linkedAnalysis.roi > 0
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                }`}
+                            >
                                 {formatPercent(linkedAnalysis.roi)}
                             </p>
                         </div>
@@ -262,7 +279,9 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 {/* Quick Actions */}
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                     <BarChart2 size={14} />
-                    <span>Kliknij "Otwórz analizę" aby zobaczyć pełne wyniki i przeprowadzić szczegółową analizę finansową</span>
+                    <span>
+                        Kliknij "Otwórz analizę" aby zobaczyć pełne wyniki i przeprowadzić szczegółową analizę finansową
+                    </span>
                 </div>
             </div>
         );
@@ -275,9 +294,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center mb-4">
                     <Calculator size={32} className="text-emerald-500" />
                 </div>
-                <h3 className="font-bold text-navy-900 dark:text-white mb-2">
-                    Szczegółowa analiza ekonomiczna
-                </h3>
+                <h3 className="font-bold text-navy-900 dark:text-white mb-2">Szczegółowa analiza ekonomiczna</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">
                     Przeprowadź pełną analizę NPV, IRR, okresu zwrotu i wrażliwości dla tej inicjatywy.
                 </p>
@@ -345,12 +362,4 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
 };
 
 export default InitiativeFinancialIntegration;
-
-
-
-
-
-
-
-
 

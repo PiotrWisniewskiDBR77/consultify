@@ -1,7 +1,7 @@
 /**
  * Redis Client Utility
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Full TypeScript migration of redisClient.js
  * Provides Redis client with fallback to mock client
  */
@@ -37,8 +37,8 @@ interface MockRedisClient {
 // Create mock client
 function createMockClient(): MockRedisClient {
     const mockClient: MockRedisClient = {
-        on: () => { },
-        connect: async () => { },
+        on: () => {},
+        connect: async () => {},
         isOpen: true,
         get: async () => null,
         set: async () => 'OK',
@@ -47,7 +47,7 @@ function createMockClient(): MockRedisClient {
         decr: async () => 0,
         expire: async () => 1,
         duplicate: () => mockClient,
-        quit: async () => { },
+        quit: async () => {},
     };
     return mockClient;
 }
@@ -80,8 +80,8 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
                 const delay = Math.min(1000 * Math.pow(2, retries), 30000);
                 console.log(`[Redis] Reconnecting in ${delay}ms (attempt ${retries})`);
                 return delay;
-            }
-        }
+            },
+        },
     }) as RedisClientType;
 
     client.on('error', (err: Error) => console.error('[Redis] Client Error', err.message));
@@ -95,7 +95,7 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
                 // Add timeout to prevent hanging
                 const connectPromise = (client as RedisClientType).connect();
                 const timeoutPromise = new Promise<never>((_, reject) =>
-                    setTimeout(() => reject(new Error('Redis connection timeout')), connectTimeout)
+                    setTimeout(() => reject(new Error('Redis connection timeout')), connectTimeout),
                 );
                 await Promise.race([connectPromise, timeoutPromise]);
                 console.log('[Redis] Successfully connected');
@@ -113,4 +113,3 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
 
 export default client;
 export type { MockRedisClient };
-

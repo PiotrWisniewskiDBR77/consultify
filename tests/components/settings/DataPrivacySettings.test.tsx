@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DataPrivacySettings } from '../../../components/settings/DataPrivacySettings';
+import { DataPrivacySettings } from '../../components/settings/DataPrivacySettings';
 import { Api } from '../../../services/api';
 
 // Mock API
@@ -461,6 +461,7 @@ describe('DataPrivacySettings Component', () => {
         });
     });
 });
+
 
 
 

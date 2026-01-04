@@ -7,6 +7,10 @@
  * - Rate limiting
  * - Usage tracking
  */
+declare module 'bcrypt' {
+    function hash(data: string, saltRounds: number): Promise<string>;
+    function compare(data: string, encrypted: string): Promise<boolean>;
+}
 export interface ApiKeyScopes {
     'read:users': string;
     'write:users': string;

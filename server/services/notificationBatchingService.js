@@ -9,7 +9,8 @@
  * - Critical notification bypass
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import BaseService from './BaseService.js';
 import NotificationService from './notificationService.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -473,6 +474,7 @@ const NotificationBatchingService = Object.assign({}, BaseService, {
 });
 
 export default NotificationBatchingService;
+
 
 
 

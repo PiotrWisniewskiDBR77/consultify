@@ -1,12 +1,12 @@
 /**
  * Unit Tests for Server Entry Point
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Tests for server/src/index.ts - 100% coverage target
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Express } from 'express';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Server Entry Point', () => {
     let originalEnv: NodeJS.ProcessEnv;
@@ -132,7 +132,4 @@ describe('Server Entry Point', () => {
         });
     });
 });
-
-
-
 

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { CapacityView } from '../../../components/Implementation/CapacityView';
+import { CapacityView } from '../../components/Implementation/CapacityView';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -75,6 +75,7 @@ describe('CapacityView Component', () => {
         expect(screen.getByRole('status')).toBeInTheDocument();
     });
 });
+
 
 
 

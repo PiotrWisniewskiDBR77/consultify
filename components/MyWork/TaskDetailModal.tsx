@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { X, Calendar, CheckSquare, Link as LinkIcon, Save, Loader2, Trash2 } from 'lucide-react';
-import { Api } from '../../services/api';
-import { useTranslation } from 'react-i18next';
+import { Calendar, CheckSquare, Link as LinkIcon, Loader2, Save, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { InitiativeService } from '../../services/initiativeService';
 
 interface TaskDetailModalProps {
@@ -25,14 +26,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
     const [dueDate, setDueDate] = useState('');
     const [progress, setProgress] = useState(0);
     const [blockedReason, setBlockedReason] = useState('');
-    const [checklist, setChecklist] = useState<{ id: string, text: string, completed: boolean }[]>([]);
+    const [checklist, setChecklist] = useState<{ id: string; text: string; completed: boolean }[]>([]);
 
     // Links
     const [initiativeId, setInitiativeId] = useState('');
-    const [initiatives, setInitiatives] = useState<{ id: string, name: string }[]>([]);
+    const [initiatives, setInitiatives] = useState<{ id: string; name: string }[]>([]);
     // Users
     const [assigneeId, setAssigneeId] = useState('');
-    const [users, setUsers] = useState<{ id: string, firstName: string, lastName: string }[]>([]);
+    const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
 
     useEffect(() => {
         loadInitiatives();
@@ -43,7 +44,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
         try {
             // API returns { users: [...], total: N }
             const response = await Api.get('/users');
-            const usersArray = Array.isArray(response) ? response : (response?.users || []);
+            const usersArray = Array.isArray(response) ? response : response?.users || [];
             setUsers(usersArray.map((u: any) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })));
         } catch (error) {
             console.error('Failed to load users', error);
@@ -54,7 +55,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
         try {
             const data = await InitiativeService.getAll();
             // Handle both array and object response
-            const initiativesArray = Array.isArray(data) ? data : ((data as any)?.initiatives || []);
+            const initiativesArray = Array.isArray(data) ? data : (data as any)?.initiatives || [];
             setInitiatives(initiativesArray.map((i: any) => ({ id: i.id, name: i.name })));
         } catch (error) {
             console.error('Failed to load initiatives', error);
@@ -125,7 +126,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                 blockedReason: status === 'blocked' ? blockedReason : '',
                 checklist,
                 initiativeId: initiativeId || null,
-                assigneeId: assigneeId || null
+                assigneeId: assigneeId || null,
             };
 
             if (taskId) {
@@ -149,11 +150,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
     };
 
     const updateChecklistItem = (id: string, updates: any) => {
-        setChecklist(checklist.map(item => item.id === id ? { ...item, ...updates } : item));
+        setChecklist(checklist.map((item) => (item.id === id ? { ...item, ...updates } : item)));
     };
 
     const removeChecklistItem = (id: string) => {
-        setChecklist(checklist.filter(item => item.id !== id));
+        setChecklist(checklist.filter((item) => item.id !== id));
     };
 
     if (!isOpen) return null;
@@ -248,7 +249,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                             <div className="space-y-4">
                                 <div>
                                     <div className="flex justify-between mb-1">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Progress</label>
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            Progress
+                                        </label>
                                         <span className="text-sm font-bold text-blue-600">{progress}%</span>
                                     </div>
                                     <input
@@ -312,7 +315,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                                             <input
                                                 type="checkbox"
                                                 checked={item.completed}
-                                                onChange={(e) => updateChecklistItem(item.id, { completed: e.target.checked })}
+                                                onChange={(e) =>
+                                                    updateChecklistItem(item.id, { completed: e.target.checked })
+                                                }
                                                 className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                                             />
                                             <input
@@ -322,7 +327,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                                                 className="flex-1 px-2 py-1 text-sm border-b border-transparent focus:border-slate-300 bg-transparent outline-none"
                                                 placeholder="Subtask..."
                                             />
-                                            <button onClick={() => removeChecklistItem(item.id)} className="text-slate-400 hover:text-red-500">
+                                            <button
+                                                onClick={() => removeChecklistItem(item.id)}
+                                                className="text-slate-400 hover:text-red-500"
+                                            >
                                                 <X size={14} />
                                             </button>
                                         </div>
@@ -345,7 +353,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                                     className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-slate-50 dark:bg-navy-950 text-sm outline-none"
                                 >
                                     <option value="">Select Initiative (Optional)</option>
-                                    {initiatives.map(initiative => (
+                                    {initiatives.map((initiative) => (
                                         <option key={initiative.id} value={initiative.id}>
                                             {initiative.name}
                                         </option>
@@ -364,7 +372,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClos
                                     className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg bg-slate-50 dark:bg-navy-950 text-sm outline-none"
                                 >
                                     <option value="">Unassigned</option>
-                                    {users.map(user => (
+                                    {users.map((user) => (
                                         <option key={user.id} value={user.id}>
                                             {user.firstName} {user.lastName}
                                         </option>

@@ -57,14 +57,16 @@ export const UpdateTaxSettingsSchema = z.object({
     taxId: z.string().max(50).optional(),
     taxIdType: z.enum(['vat', 'gst', 'ein', 'other']).optional(),
     businessName: z.string().max(255).optional(),
-    address: z.object({
-        line1: z.string().max(255),
-        line2: z.string().max(255).optional(),
-        city: z.string().max(100),
-        state: z.string().max(100).optional(),
-        postalCode: z.string().max(20),
-        country: z.string().length(2), // ISO country code
-    }).optional(),
+    address: z
+        .object({
+            line1: z.string().max(255),
+            line2: z.string().max(255).optional(),
+            city: z.string().max(100),
+            state: z.string().max(100).optional(),
+            postalCode: z.string().max(20),
+            country: z.string().length(2), // ISO country code
+        })
+        .optional(),
     exemptFromTax: z.boolean().optional(),
 });
 
@@ -137,5 +139,3 @@ export const AddApiKeySchema = z.object({
 });
 
 export type AddApiKeyInput = z.infer<typeof AddApiKeySchema>;
-
-

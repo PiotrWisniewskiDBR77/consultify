@@ -1,5 +1,5 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
-import { LLMConfigService } from '../services/ai/llmConfigService.js';
+import { LLMConfigService } from '../src/services/ai/llmConfigService.js';
 import db from '../database.js';
 
 async function testConnection() {

@@ -1,6 +1,6 @@
 /**
  * PDF Import Wizard Component
- * 
+ *
  * 4-step wizard for importing external assessment reports:
  * 1. Upload PDF
  * 2. Framework Detection
@@ -8,27 +8,34 @@
  * 4. Mapping & Save
  */
 
-import React, { useState, useCallback, useRef } from 'react';
 import {
-    Upload,
-    FileText,
-    Cpu,
-    CheckCircle,
     AlertTriangle,
-    X,
+    CheckCircle,
     ChevronLeft,
     ChevronRight,
-    Loader2,
-    File,
-    Trash2,
+    Cpu,
     Edit2,
+    File,
+    FileText,
+    Info,
+    Loader2,
     Sparkles,
     Target,
-    Info
+    Trash2,
+    Upload,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AssessmentFrameworkId, PDFImportResult, SIRIAssessmentData, ADMAAssessmentData, CMMIAssessmentData } from '../../../types';
+
 import { FRAMEWORK_CONFIGS, getFrameworkConfig } from '../../../services/frameworkRegistry';
+import {
+    ADMAAssessmentData,
+    AssessmentFrameworkId,
+    CMMIAssessmentData,
+    PDFImportResult,
+    SIRIAssessmentData,
+} from '../../../types';
 
 // ============================================
 // TYPES
@@ -39,7 +46,7 @@ interface PDFImportWizardProps {
     onImportComplete: (
         framework: AssessmentFrameworkId,
         data: SIRIAssessmentData | ADMAAssessmentData | CMMIAssessmentData,
-        fileName: string
+        fileName: string,
     ) => void;
     allowedFrameworks?: AssessmentFrameworkId[];
 }
@@ -65,14 +72,14 @@ const StepIndicator: React.FC<{
     currentStep: WizardStep;
     steps: { id: WizardStep; label: string }[];
 }> = ({ currentStep, steps }) => {
-    const currentIndex = steps.findIndex(s => s.id === currentStep);
-    
+    const currentIndex = steps.findIndex((s) => s.id === currentStep);
+
     return (
         <div className="flex items-center justify-center gap-2 mb-6">
             {steps.map((step, index) => {
                 const isCompleted = index < currentIndex;
                 const isCurrent = index === currentIndex;
-                
+
                 return (
                     <React.Fragment key={step.id}>
                         <div className="flex items-center gap-2">
@@ -81,8 +88,8 @@ const StepIndicator: React.FC<{
                                     isCompleted
                                         ? 'bg-green-500 text-white'
                                         : isCurrent
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                                          ? 'bg-blue-500 text-white'
+                                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
                                 }`}
                             >
                                 {isCompleted ? <CheckCircle size={16} /> : index + 1}
@@ -120,38 +127,43 @@ const UploadStep: React.FC<{
     setIsDragging: (v: boolean) => void;
 }> = ({ file, onFileSelect, onFileRemove, isDragging, setIsDragging }) => {
     const inputRef = useRef<HTMLInputElement>(null);
-    
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile?.type === 'application/pdf') {
-            onFileSelect(droppedFile);
-        }
-    }, [onFileSelect, setIsDragging]);
-    
-    const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        if (selectedFile) {
-            onFileSelect(selectedFile);
-        }
-    }, [onFileSelect]);
-    
+
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragging(false);
+
+            const droppedFile = e.dataTransfer.files[0];
+            if (droppedFile?.type === 'application/pdf') {
+                onFileSelect(droppedFile);
+            }
+        },
+        [onFileSelect, setIsDragging],
+    );
+
+    const handleFileInput = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const selectedFile = e.target.files?.[0];
+            if (selectedFile) {
+                onFileSelect(selectedFile);
+            }
+        },
+        [onFileSelect],
+    );
+
     return (
         <div className="space-y-4">
             <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    Wgraj raport PDF
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                    Obsługiwane formaty: SIRI, ADMA, CMMI
-                </p>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wgraj raport PDF</h3>
+                <p className="text-sm text-slate-500 mt-1">Obsługiwane formaty: SIRI, ADMA, CMMI</p>
             </div>
-            
+
             {!file ? (
                 <div
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                    }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
                     onClick={() => inputRef.current?.click()}
@@ -167,13 +179,7 @@ const UploadStep: React.FC<{
                         <span className="text-blue-500 font-medium">kliknij aby wybrać</span>
                     </p>
                     <p className="text-xs text-slate-400 mt-2">Maksymalny rozmiar: 10MB</p>
-                    <input
-                        ref={inputRef}
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileInput}
-                        className="hidden"
-                    />
+                    <input ref={inputRef} type="file" accept=".pdf" onChange={handleFileInput} className="hidden" />
                 </div>
             ) : (
                 <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 flex items-center justify-between">
@@ -183,13 +189,14 @@ const UploadStep: React.FC<{
                         </div>
                         <div>
                             <p className="font-medium text-navy-900 dark:text-white">{file.name}</p>
-                            <p className="text-xs text-slate-500">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
+                            <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
                     </div>
                     <button
-                        onClick={(e) => { e.stopPropagation(); onFileRemove(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onFileRemove();
+                        }}
                         className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                     >
                         <Trash2 size={18} />
@@ -219,15 +226,13 @@ const DetectionStep: React.FC<{
             </div>
         );
     }
-    
+
     return (
         <div className="space-y-4">
             <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    Wykryty framework
-                </h3>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wykryty framework</h3>
             </div>
-            
+
             {detectedFramework && (
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-xl p-4 mb-4">
                     <div className="flex items-center gap-3">
@@ -243,31 +248,31 @@ const DetectionStep: React.FC<{
                     </div>
                 </div>
             )}
-            
-            <p className="text-sm text-slate-500 mb-4">
-                Wybierz lub potwierdź framework:
-            </p>
-            
+
+            <p className="text-sm text-slate-500 mb-4">Wybierz lub potwierdź framework:</p>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {allowedFrameworks.filter(fw => ['SIRI', 'ADMA', 'CMMI'].includes(fw)).map(fw => {
-                    const config = FRAMEWORK_CONFIGS[fw];
-                    const isSelected = detectedFramework === fw;
-                    
-                    return (
-                        <button
-                            key={fw}
-                            onClick={() => onFrameworkSelect(fw)}
-                            className={`p-4 rounded-xl border-2 text-left transition-all ${
-                                isSelected
-                                    ? `border-${config.color}-500 bg-${config.color}-50 dark:bg-${config.color}-900/20`
-                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
-                            }`}
-                        >
-                            <div className="font-bold text-navy-900 dark:text-white">{config.name}</div>
-                            <div className="text-xs text-slate-500">{config.fullName}</div>
-                        </button>
-                    );
-                })}
+                {allowedFrameworks
+                    .filter((fw) => ['SIRI', 'ADMA', 'CMMI'].includes(fw))
+                    .map((fw) => {
+                        const config = FRAMEWORK_CONFIGS[fw];
+                        const isSelected = detectedFramework === fw;
+
+                        return (
+                            <button
+                                key={fw}
+                                onClick={() => onFrameworkSelect(fw)}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                                    isSelected
+                                        ? `border-${config.color}-500 bg-${config.color}-50 dark:bg-${config.color}-900/20`
+                                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
+                                }`}
+                            >
+                                <div className="font-bold text-navy-900 dark:text-white">{config.name}</div>
+                                <div className="text-xs text-slate-500">{config.fullName}</div>
+                            </button>
+                        );
+                    })}
             </div>
         </div>
     );
@@ -283,7 +288,7 @@ const ExtractionStep: React.FC<{
     onScoreEdit: (dimensionId: string, newScore: number) => void;
 }> = ({ framework, extractedScores, isExtracting, onScoreEdit }) => {
     const config = FRAMEWORK_CONFIGS[framework];
-    
+
     if (isExtracting) {
         return (
             <div className="text-center py-12">
@@ -296,27 +301,23 @@ const ExtractionStep: React.FC<{
             </div>
         );
     }
-    
+
     return (
         <div className="space-y-4">
             <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    Wyekstrahowane oceny
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                    Zweryfikuj i edytuj wyniki przed zapisaniem
-                </p>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wyekstrahowane oceny</h3>
+                <p className="text-sm text-slate-500 mt-1">Zweryfikuj i edytuj wyniki przed zapisaniem</p>
             </div>
-            
+
             {/* AI Notice */}
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-3 flex items-start gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500 shrink-0" />
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Oceny zostały automatycznie wyekstrahowane przez AI. 
-                    Wartości z niskim poziomem pewności są oznaczone.
+                    Oceny zostały automatycznie wyekstrahowane przez AI. Wartości z niskim poziomem pewności są
+                    oznaczone.
                 </p>
             </div>
-            
+
             {/* Scores Table */}
             <div className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                 <table className="w-full">
@@ -329,8 +330,11 @@ const ExtractionStep: React.FC<{
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                        {extractedScores.map(score => (
-                            <tr key={score.dimensionId} className={score.edited ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}>
+                        {extractedScores.map((score) => (
+                            <tr
+                                key={score.dimensionId}
+                                className={score.edited ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}
+                            >
                                 <td className="px-4 py-3">
                                     <div className="font-medium text-navy-900 dark:text-white text-sm">
                                         {score.dimensionName}
@@ -347,34 +351,36 @@ const ExtractionStep: React.FC<{
                                     />
                                 </td>
                                 <td className="px-4 py-3 text-center">
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                        score.confidence >= 0.8
-                                            ? 'bg-green-100 text-green-700'
-                                            : score.confidence >= 0.5
-                                            ? 'bg-yellow-100 text-yellow-700'
-                                            : 'bg-red-100 text-red-700'
-                                    }`}>
-                                        {score.confidence >= 0.8 ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
+                                    <span
+                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                            score.confidence >= 0.8
+                                                ? 'bg-green-100 text-green-700'
+                                                : score.confidence >= 0.5
+                                                  ? 'bg-yellow-100 text-yellow-700'
+                                                  : 'bg-red-100 text-red-700'
+                                        }`}
+                                    >
+                                        {score.confidence >= 0.8 ? (
+                                            <CheckCircle size={12} />
+                                        ) : (
+                                            <AlertTriangle size={12} />
+                                        )}
                                         {(score.confidence * 100).toFixed(0)}%
                                     </span>
                                 </td>
                                 <td className="px-4 py-3 text-center">
-                                    {score.edited && (
-                                        <span className="text-xs text-yellow-600">Edytowane</span>
-                                    )}
+                                    {score.edited && <span className="text-xs text-yellow-600">Edytowane</span>}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-            
+
             {/* Summary Stats */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-navy-900 dark:text-white">
-                        {extractedScores.length}
-                    </div>
+                    <div className="text-2xl font-bold text-navy-900 dark:text-white">{extractedScores.length}</div>
                     <div className="text-xs text-slate-500">Wymiarów</div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 text-center">
@@ -385,7 +391,11 @@ const ExtractionStep: React.FC<{
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-navy-900 dark:text-white">
-                        {(extractedScores.reduce((sum, s) => sum + s.confidence, 0) / extractedScores.length * 100).toFixed(0)}%
+                        {(
+                            (extractedScores.reduce((sum, s) => sum + s.confidence, 0) / extractedScores.length) *
+                            100
+                        ).toFixed(0)}
+                        %
                     </div>
                     <div className="text-xs text-slate-500">Śr. Pewność</div>
                 </div>
@@ -406,19 +416,15 @@ const ConfirmStep: React.FC<{
     onMapToDRDChange: (v: boolean) => void;
 }> = ({ framework, fileName, scoreCount, averageScore, mapToDRD, onMapToDRDChange }) => {
     const config = FRAMEWORK_CONFIGS[framework];
-    
+
     return (
         <div className="space-y-4">
             <div className="text-center mb-4">
                 <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    Gotowe do zapisania
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                    Sprawdź podsumowanie i potwierdź import
-                </p>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Gotowe do zapisania</h3>
+                <p className="text-sm text-slate-500 mt-1">Sprawdź podsumowanie i potwierdź import</p>
             </div>
-            
+
             {/* Summary Card */}
             <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -440,7 +446,7 @@ const ConfirmStep: React.FC<{
                     </span>
                 </div>
             </div>
-            
+
             {/* Map to DRD Option */}
             <div className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-white/10 p-4">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -451,23 +457,20 @@ const ConfirmStep: React.FC<{
                         className="mt-1 w-5 h-5 rounded border-slate-300"
                     />
                     <div>
-                        <div className="font-medium text-navy-900 dark:text-white">
-                            Mapuj do osi DRD
-                        </div>
+                        <div className="font-medium text-navy-900 dark:text-white">Mapuj do osi DRD</div>
                         <p className="text-sm text-slate-500 mt-1">
-                            Automatycznie przelicz oceny na skalę DRD (1-7) w celu generowania inicjatyw transformacyjnych.
+                            Automatycznie przelicz oceny na skalę DRD (1-7) w celu generowania inicjatyw
+                            transformacyjnych.
                         </p>
                     </div>
                 </label>
             </div>
-            
+
             {/* Legal Notice */}
             {config.legalNotice && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                     <Info className="w-5 h-5 text-amber-500 shrink-0" />
-                    <p className="text-xs text-amber-700 dark:text-amber-300">
-                        {config.legalNotice}
-                    </p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">{config.legalNotice}</p>
                 </div>
             )}
         </div>
@@ -484,7 +487,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
     allowedFrameworks = ['SIRI', 'ADMA', 'CMMI', 'DRD', 'LEAN'],
 }) => {
     const { t } = useTranslation();
-    
+
     // State
     const [currentStep, setCurrentStep] = useState<WizardStep>('upload');
     const [file, setFile] = useState<File | null>(null);
@@ -496,65 +499,65 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
     const [extractedScores, setExtractedScores] = useState<ExtractedScore[]>([]);
     const [mapToDRD, setMapToDRD] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     const steps: { id: WizardStep; label: string }[] = [
         { id: 'upload', label: 'Wgraj' },
         { id: 'detect', label: 'Wykryj' },
         { id: 'extract', label: 'Ekstrahuj' },
         { id: 'confirm', label: 'Potwierdź' },
     ];
-    
+
     // Handlers
     const handleFileSelect = useCallback((selectedFile: File) => {
         setFile(selectedFile);
         setError(null);
     }, []);
-    
+
     const handleFileRemove = useCallback(() => {
         setFile(null);
         setDetectedFramework(null);
         setExtractedScores([]);
     }, []);
-    
+
     const handleFrameworkSelect = useCallback((fw: AssessmentFrameworkId) => {
         setDetectedFramework(fw);
     }, []);
-    
+
     const handleScoreEdit = useCallback((dimensionId: string, newScore: number) => {
-        setExtractedScores(prev => prev.map(score =>
-            score.dimensionId === dimensionId
-                ? { ...score, score: newScore, edited: true }
-                : score
-        ));
+        setExtractedScores((prev) =>
+            prev.map((score) =>
+                score.dimensionId === dimensionId ? { ...score, score: newScore, edited: true } : score,
+            ),
+        );
     }, []);
-    
+
     const analyzeDocument = useCallback(async () => {
         if (!file) return;
-        
+
         setIsAnalyzing(true);
         setError(null);
-        
+
         try {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             const response = await fetch('/api/pdf-import/detect-framework', {
                 method: 'POST',
                 body: formData,
             });
-            
+
             if (!response.ok) {
                 throw new Error('Błąd podczas analizy dokumentu');
             }
-            
+
             const result = await response.json();
             setDetectedFramework(result.framework);
             setConfidence(result.confidence);
         } catch (err) {
             // Fallback: simulate detection for demo
             console.warn('API not available, using mock detection');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
             // Detect based on filename or default to SIRI
             const fileName = file.name.toLowerCase();
             if (fileName.includes('siri')) {
@@ -574,40 +577,49 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
             setIsAnalyzing(false);
         }
     }, [file]);
-    
+
     const extractScores = useCallback(async () => {
         if (!file || !detectedFramework) return;
-        
+
         setIsExtracting(true);
         setError(null);
-        
+
         try {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('framework', detectedFramework);
-            
+
             const response = await fetch('/api/pdf-import/extract-scores', {
                 method: 'POST',
                 body: formData,
             });
-            
+
             if (!response.ok) {
                 throw new Error('Błąd podczas ekstrakcji ocen');
             }
-            
+
             const result = await response.json();
             setExtractedScores(result.scores);
         } catch (err) {
             // Fallback: generate mock scores for demo
             console.warn('API not available, using mock extraction');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
             const mockScores: ExtractedScore[] = [];
             const config = FRAMEWORK_CONFIGS[detectedFramework];
-            
+
             // Generate mock scores based on framework
             if (detectedFramework === 'SIRI') {
-                const dimensions = ['Operations', 'Supply Chain', 'Product Lifecycle', 'Automation', 'Connectivity', 'Intelligence', 'Talent Readiness', 'Structure & Management'];
+                const dimensions = [
+                    'Operations',
+                    'Supply Chain',
+                    'Product Lifecycle',
+                    'Automation',
+                    'Connectivity',
+                    'Intelligence',
+                    'Talent Readiness',
+                    'Structure & Management',
+                ];
                 dimensions.forEach((name, i) => {
                     mockScores.push({
                         dimensionId: `dim_${i}`,
@@ -617,7 +629,20 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                     });
                 });
             } else if (detectedFramework === 'ADMA') {
-                const dimensions = ['Digital Strategy', 'Digital Investments', 'Digital Culture', 'Product Features', 'Product Data', 'Production Tech', 'Production IT', 'Supply Integration', 'Supply Visibility', 'Data Collection', 'Data Analytics', 'Data Services'];
+                const dimensions = [
+                    'Digital Strategy',
+                    'Digital Investments',
+                    'Digital Culture',
+                    'Product Features',
+                    'Product Data',
+                    'Production Tech',
+                    'Production IT',
+                    'Supply Integration',
+                    'Supply Visibility',
+                    'Data Collection',
+                    'Data Analytics',
+                    'Data Services',
+                ];
                 dimensions.forEach((name, i) => {
                     mockScores.push({
                         dimensionId: `dim_${i}`,
@@ -627,7 +652,28 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                     });
                 });
             } else if (detectedFramework === 'CMMI') {
-                const practiceAreas = ['EST', 'PAD', 'MC', 'PI', 'PQA', 'RDM', 'RM', 'TS', 'VER', 'VAL', 'CAR', 'CM', 'DAR', 'RSKM', 'SAM', 'GOV', 'II', 'OT', 'PCM', 'MPM'];
+                const practiceAreas = [
+                    'EST',
+                    'PAD',
+                    'MC',
+                    'PI',
+                    'PQA',
+                    'RDM',
+                    'RM',
+                    'TS',
+                    'VER',
+                    'VAL',
+                    'CAR',
+                    'CM',
+                    'DAR',
+                    'RSKM',
+                    'SAM',
+                    'GOV',
+                    'II',
+                    'OT',
+                    'PCM',
+                    'MPM',
+                ];
                 practiceAreas.forEach((code, i) => {
                     mockScores.push({
                         dimensionId: code,
@@ -637,19 +683,19 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                     });
                 });
             }
-            
+
             setExtractedScores(mockScores);
         } finally {
             setIsExtracting(false);
         }
     }, [file, detectedFramework]);
-    
+
     const handleConfirm = useCallback(async () => {
         if (!detectedFramework || !file || extractedScores.length === 0) return;
-        
+
         // Build assessment data based on framework
         let assessmentData: SIRIAssessmentData | ADMAAssessmentData | CMMIAssessmentData;
-        
+
         if (detectedFramework === 'SIRI') {
             const data: SIRIAssessmentData = {
                 buildingBlocks: {
@@ -666,15 +712,15 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                     source: 'imported',
                 },
             };
-            
-            extractedScores.forEach(score => {
+
+            extractedScores.forEach((score) => {
                 data.dimensions[score.dimensionId] = {
                     current: score.score,
                     target: Math.min(score.score + 1, 5),
                     gap: Math.max(0, Math.min(score.score + 1, 5) - score.score),
                 };
             });
-            
+
             data.overallScore = extractedScores.reduce((sum, s) => sum + s.score, 0) / extractedScores.length;
             assessmentData = data;
         } else if (detectedFramework === 'ADMA') {
@@ -694,15 +740,15 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                     source: 'imported',
                 },
             };
-            
-            extractedScores.forEach(score => {
+
+            extractedScores.forEach((score) => {
                 data.dimensions[score.dimensionId] = {
                     current: score.score,
                     target: Math.min(score.score + 1, 5),
                     gap: Math.max(0, Math.min(score.score + 1, 5) - score.score),
                 };
             });
-            
+
             data.overallMaturity = extractedScores.reduce((sum, s) => sum + s.score, 0) / extractedScores.length;
             assessmentData = data;
         } else {
@@ -723,21 +769,21 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                     model: 'DEV',
                 },
             };
-            
-            extractedScores.forEach(score => {
+
+            extractedScores.forEach((score) => {
                 data.practiceAreas[score.dimensionId] = {
                     level: score.score,
                 };
             });
-            
+
             data.overallScore = extractedScores.reduce((sum, s) => sum + s.score, 0) / extractedScores.length;
-            data.maturityLevel = Math.min(...extractedScores.map(s => s.score));
+            data.maturityLevel = Math.min(...extractedScores.map((s) => s.score));
             assessmentData = data;
         }
-        
+
         onImportComplete(detectedFramework, assessmentData, file.name);
     }, [detectedFramework, file, extractedScores, onImportComplete]);
-    
+
     // Navigation
     const goToNext = useCallback(async () => {
         if (currentStep === 'upload' && file) {
@@ -750,28 +796,32 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
             setCurrentStep('confirm');
         }
     }, [currentStep, file, detectedFramework, extractedScores, analyzeDocument, extractScores]);
-    
+
     const goToPrev = useCallback(() => {
-        const stepIndex = steps.findIndex(s => s.id === currentStep);
+        const stepIndex = steps.findIndex((s) => s.id === currentStep);
         if (stepIndex > 0) {
             setCurrentStep(steps[stepIndex - 1].id);
         }
     }, [currentStep, steps]);
-    
+
     const canGoNext = useCallback(() => {
         switch (currentStep) {
-            case 'upload': return !!file;
-            case 'detect': return !!detectedFramework && !isAnalyzing;
-            case 'extract': return extractedScores.length > 0 && !isExtracting;
-            case 'confirm': return true;
-            default: return false;
+            case 'upload':
+                return !!file;
+            case 'detect':
+                return !!detectedFramework && !isAnalyzing;
+            case 'extract':
+                return extractedScores.length > 0 && !isExtracting;
+            case 'confirm':
+                return true;
+            default:
+                return false;
         }
     }, [currentStep, file, detectedFramework, isAnalyzing, extractedScores, isExtracting]);
-    
-    const averageScore = extractedScores.length > 0
-        ? extractedScores.reduce((sum, s) => sum + s.score, 0) / extractedScores.length
-        : 0;
-    
+
+    const averageScore =
+        extractedScores.length > 0 ? extractedScores.reduce((sum, s) => sum + s.score, 0) / extractedScores.length : 0;
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -781,19 +831,16 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                         <Upload className="text-blue-500" />
                         Import PDF Assessment
                     </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
-                    >
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg">
                         <X size={20} />
                     </button>
                 </div>
-                
+
                 {/* Step Indicator */}
                 <div className="px-6 pt-4">
                     <StepIndicator currentStep={currentStep} steps={steps} />
                 </div>
-                
+
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
                     {error && (
@@ -802,7 +849,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                             <span className="text-red-700 dark:text-red-400">{error}</span>
                         </div>
                     )}
-                    
+
                     {currentStep === 'upload' && (
                         <UploadStep
                             file={file}
@@ -812,7 +859,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                             setIsDragging={setIsDragging}
                         />
                     )}
-                    
+
                     {currentStep === 'detect' && (
                         <DetectionStep
                             detectedFramework={detectedFramework}
@@ -822,7 +869,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                             allowedFrameworks={allowedFrameworks}
                         />
                     )}
-                    
+
                     {currentStep === 'extract' && detectedFramework && (
                         <ExtractionStep
                             framework={detectedFramework}
@@ -831,7 +878,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                             onScoreEdit={handleScoreEdit}
                         />
                     )}
-                    
+
                     {currentStep === 'confirm' && detectedFramework && file && (
                         <ConfirmStep
                             framework={detectedFramework}
@@ -843,7 +890,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                         />
                     )}
                 </div>
-                
+
                 {/* Footer */}
                 <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-white/10">
                     <button
@@ -854,7 +901,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
                         <ChevronLeft size={18} />
                         Wstecz
                     </button>
-                    
+
                     {currentStep === 'confirm' ? (
                         <button
                             onClick={handleConfirm}
@@ -880,12 +927,4 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
 };
 
 export default PDFImportWizard;
-
-
-
-
-
-
-
-
 

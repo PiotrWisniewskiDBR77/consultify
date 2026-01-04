@@ -1,24 +1,25 @@
 /**
  * Portfolio List View
- * 
+ *
  * Sortable table view with inline editing support.
  */
 
-import React, { useState, useMemo } from 'react';
 import {
-    ChevronUp,
-    ChevronDown,
-    MoreVertical,
-    User,
     Calendar,
+    ChevronDown,
+    ChevronUp,
     DollarSign,
-    TrendingUp,
     Edit2,
     Eye,
-    Trash2
+    MoreVertical,
+    Trash2,
+    TrendingUp,
+    User,
 } from 'lucide-react';
-import { PortfolioInitiative, InitiativeStatus, PortfolioSortConfig } from '../../types';
-import { getStatusClasses, getPriorityClasses, getAxisColor } from '../../config/portfolioColors';
+import React, { useMemo, useState } from 'react';
+
+import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
+import { InitiativeStatus, PortfolioInitiative, PortfolioSortConfig } from '../../types';
 
 interface PortfolioListViewProps {
     initiatives: PortfolioInitiative[];
@@ -30,31 +31,40 @@ interface PortfolioListViewProps {
 type SortField = 'name' | 'status' | 'priority' | 'plannedStartDate' | 'budget' | 'progress';
 
 const STATUS_ORDER: Record<string, number> = {
-    'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4
+    CRITICAL: 1,
+    HIGH: 2,
+    MEDIUM: 3,
+    LOW: 4,
 };
 
 const PRIORITY_ORDER: Record<string, number> = {
-    'DRAFT': 1, 'PLANNING': 2, 'REVIEW': 3, 'APPROVED': 4, 'EXECUTING': 5, 'DONE': 6, 'BLOCKED': 7
+    DRAFT: 1,
+    PLANNING: 2,
+    REVIEW: 3,
+    APPROVED: 4,
+    EXECUTING: 5,
+    DONE: 6,
+    BLOCKED: 7,
 };
 
 export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     initiatives,
     onInitiativeClick,
     onStatusChange,
-    onQuickUpdate
+    onQuickUpdate,
 }) => {
     const [sortConfig, setSortConfig] = useState<PortfolioSortConfig>({
         field: 'priority',
-        direction: 'asc'
+        direction: 'asc',
     });
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
-    
+
     // Sort initiatives
     const sortedInitiatives = useMemo(() => {
         return [...initiatives].sort((a, b) => {
             let comparison = 0;
-            
+
             switch (sortConfig.field) {
                 case 'name':
                     comparison = a.name.localeCompare(b.name);
@@ -75,20 +85,20 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                     comparison = (a.progress || 0) - (b.progress || 0);
                     break;
             }
-            
+
             return sortConfig.direction === 'asc' ? comparison : -comparison;
         });
     }, [initiatives, sortConfig]);
-    
+
     const handleSort = (field: SortField) => {
-        setSortConfig(prev => ({
+        setSortConfig((prev) => ({
             field,
-            direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+            direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
         }));
     };
-    
+
     const toggleSelect = (id: string) => {
-        setSelectedIds(prev => {
+        setSelectedIds((prev) => {
             const next = new Set(prev);
             if (next.has(id)) {
                 next.delete(id);
@@ -98,39 +108,41 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
             return next;
         });
     };
-    
+
     const toggleSelectAll = () => {
         if (selectedIds.size === initiatives.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(initiatives.map(i => i.id)));
+            setSelectedIds(new Set(initiatives.map((i) => i.id)));
         }
     };
-    
+
     const formatCurrency = (amount: number) => {
         if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
         if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
         return `$${amount}`;
     };
-    
+
     const formatDate = (dateStr: string | undefined) => {
         if (!dateStr) return '-';
-        return new Date(dateStr).toLocaleDateString('en-US', { 
-            month: 'short', 
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
-    
+
     const SortIcon: React.FC<{ field: SortField }> = ({ field }) => {
         if (sortConfig.field !== field) {
             return <div className="w-4 h-4" />;
         }
-        return sortConfig.direction === 'asc' 
-            ? <ChevronUp size={14} className="text-purple-500" />
-            : <ChevronDown size={14} className="text-purple-500" />;
+        return sortConfig.direction === 'asc' ? (
+            <ChevronUp size={14} className="text-purple-500" />
+        ) : (
+            <ChevronDown size={14} className="text-purple-500" />
+        );
     };
-    
+
     return (
         <div className="h-full overflow-auto">
             <table className="w-full">
@@ -145,9 +157,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
                             />
                         </th>
-                        
+
                         {/* Name */}
-                        <th 
+                        <th
                             className="text-left px-4 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800"
                             onClick={() => handleSort('name')}
                         >
@@ -156,9 +168,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 <SortIcon field="name" />
                             </div>
                         </th>
-                        
+
                         {/* Status */}
-                        <th 
+                        <th
                             className="text-left px-4 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 w-32"
                             onClick={() => handleSort('status')}
                         >
@@ -167,9 +179,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 <SortIcon field="status" />
                             </div>
                         </th>
-                        
+
                         {/* Priority */}
-                        <th 
+                        <th
                             className="text-left px-4 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 w-28"
                             onClick={() => handleSort('priority')}
                         >
@@ -178,16 +190,16 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 <SortIcon field="priority" />
                             </div>
                         </th>
-                        
+
                         {/* Owner */}
                         <th className="text-left px-4 py-3 w-40">
                             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                                 Owner
                             </div>
                         </th>
-                        
+
                         {/* Timeline */}
-                        <th 
+                        <th
                             className="text-left px-4 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 w-36"
                             onClick={() => handleSort('plannedStartDate')}
                         >
@@ -196,9 +208,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 <SortIcon field="plannedStartDate" />
                             </div>
                         </th>
-                        
+
                         {/* Budget */}
-                        <th 
+                        <th
                             className="text-right px-4 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 w-28"
                             onClick={() => handleSort('budget')}
                         >
@@ -207,9 +219,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 <SortIcon field="budget" />
                             </div>
                         </th>
-                        
+
                         {/* Progress */}
-                        <th 
+                        <th
                             className="text-left px-4 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 w-32"
                             onClick={() => handleSort('progress')}
                         >
@@ -218,21 +230,21 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 <SortIcon field="progress" />
                             </div>
                         </th>
-                        
+
                         {/* Actions */}
                         <th className="w-12 px-4 py-3" />
                     </tr>
                 </thead>
-                
+
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {sortedInitiatives.map(initiative => (
-                        <tr 
+                    {sortedInitiatives.map((initiative) => (
+                        <tr
                             key={initiative.id}
                             className="hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
                             onClick={() => onInitiativeClick(initiative)}
                         >
                             {/* Checkbox */}
-                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                 <input
                                     type="checkbox"
                                     checked={selectedIds.has(initiative.id)}
@@ -240,7 +252,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
                                 />
                             </td>
-                            
+
                             {/* Name */}
                             <td className="px-4 py-3">
                                 <div className="flex items-center gap-3">
@@ -257,9 +269,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     </div>
                                 </div>
                             </td>
-                            
+
                             {/* Status */}
-                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                 <select
                                     value={initiative.status}
                                     onChange={(e) => onStatusChange(initiative.id, e.target.value as InitiativeStatus)}
@@ -274,21 +286,27 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     <option value="BLOCKED">Blocked</option>
                                 </select>
                             </td>
-                            
+
                             {/* Priority */}
                             <td className="px-4 py-3">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityClasses(initiative.priority)}`}>
+                                <span
+                                    className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityClasses(initiative.priority)}`}
+                                >
                                     {initiative.priority}
                                 </span>
                             </td>
-                            
+
                             {/* Owner */}
                             <td className="px-4 py-3">
                                 {initiative.ownerBusiness ? (
                                     <div className="flex items-center gap-2">
                                         <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
                                             {initiative.ownerBusiness.avatarUrl ? (
-                                                <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                <img
+                                                    src={initiative.ownerBusiness.avatarUrl}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                />
                                             ) : (
                                                 `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
                                             )}
@@ -301,7 +319,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     <span className="text-xs text-slate-400 italic">Unassigned</span>
                                 )}
                             </td>
-                            
+
                             {/* Timeline */}
                             <td className="px-4 py-3">
                                 <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
@@ -309,19 +327,19 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     {formatDate(initiative.plannedStartDate)}
                                 </div>
                             </td>
-                            
+
                             {/* Budget */}
                             <td className="px-4 py-3 text-right">
                                 <span className="text-sm font-medium text-navy-900 dark:text-white">
                                     {formatCurrency(initiative.budget)}
                                 </span>
                             </td>
-                            
+
                             {/* Progress */}
                             <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-purple-500 rounded-full transition-all"
                                             style={{ width: `${initiative.progress}%` }}
                                         />
@@ -331,34 +349,35 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     </span>
                                 </div>
                             </td>
-                            
+
                             {/* Actions */}
-                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                 <div className="relative">
                                     <button
-                                        onClick={() => setActiveMenu(activeMenu === initiative.id ? null : initiative.id)}
+                                        onClick={() =>
+                                            setActiveMenu(activeMenu === initiative.id ? null : initiative.id)
+                                        }
                                         className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                     >
                                         <MoreVertical size={16} />
                                     </button>
-                                    
+
                                     {activeMenu === initiative.id && (
                                         <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 py-1 z-20">
-                                            <button 
-                                                onClick={() => { onInitiativeClick(initiative); setActiveMenu(null); }}
+                                            <button
+                                                onClick={() => {
+                                                    onInitiativeClick(initiative);
+                                                    setActiveMenu(null);
+                                                }}
                                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
                                             >
                                                 <Eye size={14} /> View Details
                                             </button>
-                                            <button 
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                                            >
+                                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10">
                                                 <Edit2 size={14} /> Edit
                                             </button>
                                             <hr className="my-1 border-slate-200 dark:border-white/10" />
-                                            <button 
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                            >
+                                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                                 <Trash2 size={14} /> Delete
                                             </button>
                                         </div>
@@ -374,12 +393,4 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 };
 
 export default PortfolioListView;
-
-
-
-
-
-
-
-
 

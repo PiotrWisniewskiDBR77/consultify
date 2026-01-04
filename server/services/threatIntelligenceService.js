@@ -5,7 +5,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 
 
@@ -444,6 +445,7 @@ export default {
     THREAT_LEVELS,
     THREAT_TYPES
 };
+
 
 
 

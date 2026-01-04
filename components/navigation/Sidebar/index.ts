@@ -1,19 +1,15 @@
 /**
  * Sidebar Module - Apple HIG Design System
- * 
+ *
  * Composable sidebar navigation components.
  */
 
-export { Sidebar } from './Sidebar';
-export { SidebarHeader } from './SidebarHeader';
-export { SidebarFooter } from './SidebarFooter';
-export { NavItem } from './NavItem';
 export { FloatingSubmenu } from './FloatingSubmenu';
-export { useSidebarState } from './useSidebarState';
-export * from './types';
 export * from './menuConfig';
-
-
-
-
+export { NavItem } from './NavItem';
+export { Sidebar } from './Sidebar';
+export { SidebarFooter } from './SidebarFooter';
+export { SidebarHeader } from './SidebarHeader';
+export * from './types';
+export { useSidebarState } from './useSidebarState';
 

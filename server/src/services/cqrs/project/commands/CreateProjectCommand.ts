@@ -1,6 +1,7 @@
-import type { IDatabase } from '../../../database/IDatabase.js';
-import { getDatabase } from '../../../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../../../../database/Database.js';
+import type { IDatabase } from '../../../../database/IDatabase.js';
 
 export interface CreateProjectCommand {
     name: string;
@@ -19,7 +20,7 @@ export class CreateProjectHandler {
         await this.db.run(
             `INSERT INTO projects (id, name, organization_id, owner_id, summary, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [id, command.name, command.organizationId, command.ownerId, command.summary || '', now, now]
+            [id, command.name, command.organizationId, command.ownerId, command.summary || '', now, now],
         );
 
         return {
@@ -28,7 +29,7 @@ export class CreateProjectHandler {
             organizationId: command.organizationId,
             ownerId: command.ownerId,
             summary: command.summary || '',
-            createdAt: now
+            createdAt: now,
         };
     }
 }

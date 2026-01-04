@@ -1,20 +1,21 @@
 /**
  * Project Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles all project-related business logic
  */
 
 import type { Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { v4 as uuidv4 } from 'uuid';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
     CreateProjectRequest,
-    UpdateProjectRequest,
     ProjectNotificationSettingsRequest,
     UpdateAIRoleRequest,
+    UpdateProjectRequest,
     UpdateRegulatoryModeRequest,
 } from '../validators/project.validators.js';
 
@@ -111,6 +112,13 @@ export class ProjectController {
             return;
         }
 
+        // Pagination
+        const query = req.query as unknown as { page?: string; limit?: string };
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 50; // Default to 50 for projects
+        const offset = (page - 1) * limit;
+
+        const countSql = `SELECT COUNT(*) as total FROM projects WHERE organization_id = ?`;
         const sql = `
             SELECT 
                 p.*, 
@@ -124,45 +132,62 @@ export class ProjectController {
             LEFT JOIN users u ON p.owner_id = u.id
             WHERE p.organization_id = ?
             ORDER BY p.created_at DESC
+            LIMIT ? OFFSET ?
         `;
 
-        const rows = await queryHelpers.queryAll(sql, [orgId]);
+        const [rows, countResult] = await Promise.all([
+            queryHelpers.queryAll(sql, [orgId, limit, offset]),
+            queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
+        ]);
 
-        res.json(rows.map(row => ({
-            ...row,
-            memberCount: row.real_member_count,
-            initiativeCount: row.real_initiative_count,
-            assessmentCount: row.real_assessment_count,
-            documentCount: row.real_document_count
-        })));
+        const total = countResult?.total || 0;
+        const totalPages = Math.ceil(total / limit);
+
+        // Set Pagination Headers
+        res.setHeader('X-Total-Count', total);
+        res.setHeader('X-Page', page);
+        res.setHeader('X-Limit', limit);
+        res.setHeader('X-Total-Pages', totalPages);
+
+        res.json(
+            rows.map((row) => ({
+                ...row,
+                memberCount: row.real_member_count,
+                initiativeCount: row.real_initiative_count,
+                assessmentCount: row.real_assessment_count,
+                documentCount: row.real_document_count,
+            })),
+        );
     });
 
     /**
      * Create a new project
      */
-    static createProject = asyncHandler(async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        const userId = req.user?.id;
-        if (!orgId || !userId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static createProject = asyncHandler(
+        async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
+            const orgId = req.user?.organizationId;
+            const userId = req.user?.id;
+            if (!orgId || !userId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        const { name, ownerId, description, goal } = req.body;
+            const { name, ownerId, description, goal } = req.body;
 
-        if (!name) {
-            res.status(400).json({ error: 'Project name is required' });
-            return;
-        }
+            if (!name) {
+                res.status(400).json({ error: 'Project name is required' });
+                return;
+            }
 
-        const id = uuidv4();
-        const owner = ownerId || userId;
+            const id = uuidv4();
+            const owner = ownerId || userId;
 
-        const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+            const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-        await queryHelpers.queryRun(sql, [id, orgId, name, description || null, goal || null, 'active', owner]);
-        res.json({ id, name, description, goal, status: 'active', ownerId: owner });
-    });
+            await queryHelpers.queryRun(sql, [id, orgId, name, description || null, goal || null, 'active', owner]);
+            res.json({ id, name, description, goal, status: 'active', ownerId: owner });
+        },
+    );
 
     /**
      * Get single project details
@@ -193,16 +218,22 @@ export class ProjectController {
 
         // Parallelize detailed fetches
         const [members, workstreams, initiatives, assessments, documents] = await Promise.all([
-            queryHelpers.queryAll<ProjectMember>(`
+            queryHelpers.queryAll<ProjectMember>(
+                `
                 SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url, u.role as account_role
                 FROM project_members pm
                 JOIN users u ON pm.user_id = u.id
                 WHERE pm.project_id = ?
-            `, [id]),
+            `,
+                [id],
+            ),
             queryHelpers.queryAll<Workstream>(`SELECT * FROM workstreams WHERE project_id = ?`, [id]),
             queryHelpers.queryAll<Initiative>(`SELECT * FROM initiatives WHERE project_id = ?`, [id]),
             queryHelpers.queryAll<Assessment>(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll<Document>(`SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`, [id])
+            queryHelpers.queryAll<Document>(
+                `SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`,
+                [id],
+            ),
         ]);
 
         res.json({
@@ -211,23 +242,24 @@ export class ProjectController {
             workstreams,
             initiatives,
             assessments,
-            documents
+            documents,
         });
     });
 
     /**
      * Update project
      */
-    static updateProject = asyncHandler(async (req: AuthenticatedRequest<UpdateProjectRequest>, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        const { id } = req.params;
-        const { name, description, goal, status } = req.body;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateProject = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateProjectRequest>, res: Response): Promise<void> => {
+            const orgId = req.user?.organizationId;
+            const { id } = req.params;
+            const { name, description, goal, status } = req.body;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        const sql = `
+            const sql = `
             UPDATE projects 
             SET name = COALESCE(?, name), 
                 description = COALESCE(?, description), 
@@ -236,14 +268,15 @@ export class ProjectController {
             WHERE id = ? AND organization_id = ?
         `;
 
-        const result = await queryHelpers.queryRun(sql, [name, description, goal, status, id, orgId]);
-        if (result.changes === 0) {
-            res.status(404).json({ error: 'Project not found or access denied' });
-            return;
-        }
+            const result = await queryHelpers.queryRun(sql, [name, description, goal, status, id, orgId]);
+            if (result.changes === 0) {
+                res.status(404).json({ error: 'Project not found or access denied' });
+                return;
+            }
 
-        res.json({ message: 'Project updated' });
-    });
+            res.json({ message: 'Project updated' });
+        },
+    );
 
     /**
      * Delete project
@@ -272,7 +305,9 @@ export class ProjectController {
     static getNotificationSettings = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const row = await queryHelpers.queryOne(`SELECT * FROM project_notification_settings WHERE project_id = ?`, [id]);
+        const row = await queryHelpers.queryOne(`SELECT * FROM project_notification_settings WHERE project_id = ?`, [
+            id,
+        ]);
 
         // Return default settings if none exist
         if (!row) {
@@ -286,7 +321,7 @@ export class ProjectController {
                 escalation_enabled: true,
                 escalation_days: 3,
                 email_notifications: false,
-                in_app_notifications: true
+                in_app_notifications: true,
             });
             return;
         }
@@ -297,24 +332,25 @@ export class ProjectController {
     /**
      * Update notification settings for project
      */
-    static updateNotificationSettings = asyncHandler(async (req: AuthenticatedRequest<ProjectNotificationSettingsRequest>, res: Response): Promise<void> => {
-        const { id: projectId } = req.params;
-        const {
-            task_overdue_enabled = true,
-            task_due_today_enabled = true,
-            blocker_detected_enabled = true,
-            gate_ready_enabled = true,
-            decision_required_enabled = true,
-            escalation_enabled = true,
-            escalation_days = 3,
-            email_notifications = false,
-            in_app_notifications = true
-        } = req.body;
+    static updateNotificationSettings = asyncHandler(
+        async (req: AuthenticatedRequest<ProjectNotificationSettingsRequest>, res: Response): Promise<void> => {
+            const { id: projectId } = req.params;
+            const {
+                task_overdue_enabled = true,
+                task_due_today_enabled = true,
+                blocker_detected_enabled = true,
+                gate_ready_enabled = true,
+                decision_required_enabled = true,
+                escalation_enabled = true,
+                escalation_days = 3,
+                email_notifications = false,
+                in_app_notifications = true,
+            } = req.body;
 
-        const settingsId = uuidv4();
+            const settingsId = uuidv4();
 
-        // Upsert using REPLACE
-        const sql = `
+            // Upsert using REPLACE
+            const sql = `
             INSERT OR REPLACE INTO project_notification_settings 
             (id, project_id, task_overdue_enabled, task_due_today_enabled, blocker_detected_enabled,
              gate_ready_enabled, decision_required_enabled, escalation_enabled, escalation_days,
@@ -325,30 +361,32 @@ export class ProjectController {
             )
         `;
 
-        await queryHelpers.queryRun(sql, [
-            projectId, settingsId, projectId,
-            task_overdue_enabled ? 1 : 0,
-            task_due_today_enabled ? 1 : 0,
-            blocker_detected_enabled ? 1 : 0,
-            gate_ready_enabled ? 1 : 0,
-            decision_required_enabled ? 1 : 0,
-            escalation_enabled ? 1 : 0,
-            escalation_days,
-            email_notifications ? 1 : 0,
-            in_app_notifications ? 1 : 0
-        ]);
+            await queryHelpers.queryRun(sql, [
+                projectId,
+                settingsId,
+                projectId,
+                task_overdue_enabled ? 1 : 0,
+                task_due_today_enabled ? 1 : 0,
+                blocker_detected_enabled ? 1 : 0,
+                gate_ready_enabled ? 1 : 0,
+                decision_required_enabled ? 1 : 0,
+                escalation_enabled ? 1 : 0,
+                escalation_days,
+                email_notifications ? 1 : 0,
+                in_app_notifications ? 1 : 0,
+            ]);
 
-        res.json({ success: true, message: 'Notification settings saved' });
-    });
+            res.json({ success: true, message: 'Notification settings saved' });
+        },
+    );
 
     /**
      * Get AI role for project
      */
     static getAIRole = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then(m => m.default || m);
+
+        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then((m) => m.default || m);
         const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
         res.json({
@@ -356,168 +394,170 @@ export class ProjectController {
             aiRole: roleConfig.activeRole,
             capabilities: roleConfig.capabilities,
             description: roleConfig.roleDescription,
-            roleHierarchy: roleConfig.roleHierarchy
+            roleHierarchy: roleConfig.roleHierarchy,
         });
     });
 
     /**
      * Update AI role for project
      */
-    static updateAIRole = asyncHandler(async (req: AuthenticatedRequest<UpdateAIRoleRequest>, res: Response): Promise<void> => {
-        const { id: projectId } = req.params;
-        const { aiRole, justification } = req.body;
-        const userId = req.user?.id;
-        const orgId = req.user?.organizationId;
-        if (!userId || !orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateAIRole = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateAIRoleRequest>, res: Response): Promise<void> => {
+            const { id: projectId } = req.params;
+            const { aiRole, justification } = req.body;
+            const userId = req.user?.id;
+            const orgId = req.user?.organizationId;
+            if (!userId || !orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        // Validate role
-        const validRoles = ['ADVISOR', 'MANAGER', 'OPERATOR'];
-        if (!validRoles.includes(aiRole)) {
-            res.status(400).json({
-                error: `Invalid AI role: ${aiRole}. Must be one of: ${validRoles.join(', ')}`
+            // Validate role
+            const validRoles = ['ADVISOR', 'MANAGER', 'OPERATOR'];
+            if (!validRoles.includes(aiRole)) {
+                res.status(400).json({
+                    error: `Invalid AI role: ${aiRole}. Must be one of: ${validRoles.join(', ')}`,
+                });
+                return;
+            }
+
+            // Check admin permission
+            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+                res.status(403).json({
+                    error: 'Only admins can change project AI role',
+                });
+                return;
+            }
+
+            const AIRoleGuard = await import('../../services/aiRoleGuard.js').then((m) => m.default || m);
+
+            const AIAuditLogger = await import('../../services/aiAuditLogger.js').then((m) => m.default || m);
+
+            // Get current role for audit
+            const currentRole = await AIRoleGuard.getProjectRole(projectId);
+
+            // Update the role
+            await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
+
+            // Audit the change
+            await AIAuditLogger.logInteraction({
+                userId,
+                organizationId: orgId,
+                projectId,
+                actionType: 'AI_ROLE_CHANGE',
+                actionDescription: `AI role changed from ${currentRole} to ${aiRole}`,
+                aiRole: 'SYSTEM',
+                policyLevel: 'ADMIN',
+                aiProjectRole: aiRole,
+                justification: justification || 'Admin action',
             });
-            return;
-        }
 
-        // Check admin permission
-        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
-            res.status(403).json({
-                error: 'Only admins can change project AI role'
+            // Get updated config
+            const roleConfig = await AIRoleGuard.getRoleConfig(projectId);
+
+            res.json({
+                success: true,
+                projectId,
+                previousRole: currentRole,
+                newRole: aiRole,
+                capabilities: roleConfig.capabilities,
+                description: roleConfig.roleDescription,
             });
-            return;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then(m => m.default || m);
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIAuditLogger = await import('../../services/aiAuditLogger.js').then(m => m.default || m);
-
-        // Get current role for audit
-        const currentRole = await AIRoleGuard.getProjectRole(projectId);
-
-        // Update the role
-        await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
-
-        // Audit the change
-        await AIAuditLogger.logInteraction({
-            userId,
-            organizationId: orgId,
-            projectId,
-            actionType: 'AI_ROLE_CHANGE',
-            actionDescription: `AI role changed from ${currentRole} to ${aiRole}`,
-            aiRole: 'SYSTEM',
-            policyLevel: 'ADMIN',
-            aiProjectRole: aiRole,
-            justification: justification || 'Admin action'
-        });
-
-        // Get updated config
-        const roleConfig = await AIRoleGuard.getRoleConfig(projectId);
-
-        res.json({
-            success: true,
-            projectId,
-            previousRole: currentRole,
-            newRole: aiRole,
-            capabilities: roleConfig.capabilities,
-            description: roleConfig.roleDescription
-        });
-    });
+        },
+    );
 
     /**
      * Get regulatory mode status for project
      */
     static getRegulatoryMode = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
-        
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(m => m.default || m);
+
+        const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then((m) => m.default || m);
         const status = await RegulatoryModeGuard.getStatus(id);
 
         res.json({
             projectId: id,
-            ...status
+            ...status,
         });
     });
 
     /**
      * Update regulatory mode for project
      */
-    static updateRegulatoryMode = asyncHandler(async (req: AuthenticatedRequest<UpdateRegulatoryModeRequest>, res: Response): Promise<void> => {
-        const { id: projectId } = req.params;
-        const { enabled, justification } = req.body;
-        const userId = req.user?.id;
-        const orgId = req.user?.organizationId;
-        if (!userId || !orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateRegulatoryMode = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateRegulatoryModeRequest>, res: Response): Promise<void> => {
+            const { id: projectId } = req.params;
+            const { enabled, justification } = req.body;
+            const userId = req.user?.id;
+            const orgId = req.user?.organizationId;
+            if (!userId || !orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        // Check admin permission
-        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
-            res.status(403).json({
-                error: 'Only admins can change Regulatory Mode settings'
+            // Check admin permission
+            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+                res.status(403).json({
+                    error: 'Only admins can change Regulatory Mode settings',
+                });
+                return;
+            }
+
+            // Validate input
+            if (typeof enabled !== 'boolean') {
+                res.status(400).json({
+                    error: 'enabled must be a boolean value',
+                });
+                return;
+            }
+
+            const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(
+                (m) => m.default || m,
+            );
+
+            const AIAuditLogger = await import('../../services/aiAuditLogger.js').then((m) => m.default || m);
+
+            // Get current status for audit
+            const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);
+
+            // Update the setting
+            const result = await RegulatoryModeGuard.setEnabled(projectId, enabled);
+
+            if (!result.success) {
+                res.status(404).json({ error: 'Project not found' });
+                return;
+            }
+
+            // Audit the change
+            await AIAuditLogger.logInteraction({
+                userId,
+                organizationId: orgId,
+                projectId,
+                actionType: 'REGULATORY_MODE_CHANGE',
+                actionDescription: `Regulatory Mode ${enabled ? 'enabled' : 'disabled'}`,
+                contextSnapshot: {
+                    previousValue: currentStatus,
+                    newValue: enabled,
+                    justification: justification || 'Admin action',
+                },
+                aiRole: 'SYSTEM',
+                policyLevel: 'ADMIN',
             });
-            return;
-        }
 
-        // Validate input
-        if (typeof enabled !== 'boolean') {
-            res.status(400).json({
-                error: 'enabled must be a boolean value'
+            // Get updated status
+            const newStatus = await RegulatoryModeGuard.getStatus(projectId);
+
+            res.json({
+                success: true,
+                projectId,
+                previousEnabled: currentStatus,
+                ...newStatus,
+                message: enabled
+                    ? 'Regulatory Mode enabled. AI is now in advisory-only mode.'
+                    : 'Regulatory Mode disabled. AI can operate with normal permissions.',
             });
-            return;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(m => m.default || m);
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AIAuditLogger = await import('../../services/aiAuditLogger.js').then(m => m.default || m);
-
-        // Get current status for audit
-        const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);
-
-        // Update the setting
-        const result = await RegulatoryModeGuard.setEnabled(projectId, enabled);
-
-        if (!result.success) {
-            res.status(404).json({ error: 'Project not found' });
-            return;
-        }
-
-        // Audit the change
-        await AIAuditLogger.logInteraction({
-            userId,
-            organizationId: orgId,
-            projectId,
-            actionType: 'REGULATORY_MODE_CHANGE',
-            actionDescription: `Regulatory Mode ${enabled ? 'enabled' : 'disabled'}`,
-            contextSnapshot: {
-                previousValue: currentStatus,
-                newValue: enabled,
-                justification: justification || 'Admin action'
-            },
-            aiRole: 'SYSTEM',
-            policyLevel: 'ADMIN'
-        });
-
-        // Get updated status
-        const newStatus = await RegulatoryModeGuard.getStatus(projectId);
-
-        res.json({
-            success: true,
-            projectId,
-            previousEnabled: currentStatus,
-            ...newStatus,
-            message: enabled
-                ? 'Regulatory Mode enabled. AI is now in advisory-only mode.'
-                : 'Regulatory Mode disabled. AI can operate with normal permissions.'
-        });
-    });
+        },
+    );
 }
 
 export default ProjectController;
-

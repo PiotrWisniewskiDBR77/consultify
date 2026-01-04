@@ -1,30 +1,31 @@
 /**
  * Proactive Suggestions Component
- * 
+ *
  * Displays AI-generated proactive suggestions based on:
  * - Current context
  * - User patterns
  * - Project state
- * 
+ *
  * Part of UX Excellence - Phase 4.3
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Sparkles,
-    Lightbulb,
     AlertTriangle,
     ArrowRight,
-    Zap,
-    TrendingUp,
-    HelpCircle,
-    X,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    HelpCircle,
+    Lightbulb,
+    Sparkles,
+    TrendingUp,
+    X,
+    Zap,
 } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { cn } from '../../utils/cn';
 
 interface Suggestion {
     id: string;
@@ -61,7 +62,7 @@ const SUGGESTION_ICONS: Record<string, React.FC<{ size?: number; className?: str
     insight: Lightbulb,
     warning: AlertTriangle,
     optimization: TrendingUp,
-    learning: Sparkles
+    learning: Sparkles,
 };
 
 const SUGGESTION_COLORS: Record<string, { bg: string; border: string; text: string; icon: string }> = {
@@ -69,44 +70,44 @@ const SUGGESTION_COLORS: Record<string, { bg: string; border: string; text: stri
         bg: 'bg-blue-50 dark:bg-blue-900/20',
         border: 'border-blue-200 dark:border-blue-800',
         text: 'text-blue-800 dark:text-blue-200',
-        icon: 'text-blue-600 dark:text-blue-400'
+        icon: 'text-blue-600 dark:text-blue-400',
     },
     did_you_mean: {
         bg: 'bg-purple-50 dark:bg-purple-900/20',
         border: 'border-purple-200 dark:border-purple-800',
         text: 'text-purple-800 dark:text-purple-200',
-        icon: 'text-purple-600 dark:text-purple-400'
+        icon: 'text-purple-600 dark:text-purple-400',
     },
     next_step: {
         bg: 'bg-green-50 dark:bg-green-900/20',
         border: 'border-green-200 dark:border-green-800',
         text: 'text-green-800 dark:text-green-200',
-        icon: 'text-green-600 dark:text-green-400'
+        icon: 'text-green-600 dark:text-green-400',
     },
     insight: {
         bg: 'bg-amber-50 dark:bg-amber-900/20',
         border: 'border-amber-200 dark:border-amber-800',
         text: 'text-amber-800 dark:text-amber-200',
-        icon: 'text-amber-600 dark:text-amber-400'
+        icon: 'text-amber-600 dark:text-amber-400',
     },
     warning: {
         bg: 'bg-red-50 dark:bg-red-900/20',
         border: 'border-red-200 dark:border-red-800',
         text: 'text-red-800 dark:text-red-200',
-        icon: 'text-red-600 dark:text-red-400'
+        icon: 'text-red-600 dark:text-red-400',
     },
     optimization: {
         bg: 'bg-cyan-50 dark:bg-cyan-900/20',
         border: 'border-cyan-200 dark:border-cyan-800',
         text: 'text-cyan-800 dark:text-cyan-200',
-        icon: 'text-cyan-600 dark:text-cyan-400'
+        icon: 'text-cyan-600 dark:text-cyan-400',
     },
     learning: {
         bg: 'bg-indigo-50 dark:bg-indigo-900/20',
         border: 'border-indigo-200 dark:border-indigo-800',
         text: 'text-indigo-800 dark:text-indigo-200',
-        icon: 'text-indigo-600 dark:text-indigo-400'
-    }
+        icon: 'text-indigo-600 dark:text-indigo-400',
+    },
 };
 
 export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
@@ -117,7 +118,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
     onQuerySuggestion,
     className = '',
     compact = false,
-    maxSuggestions = 3
+    maxSuggestions = 3,
 }) => {
     const { t } = useTranslation();
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -132,7 +133,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
             const response = await Api.getProactiveSuggestions({
                 projectId,
                 organizationId,
-                screenContext
+                screenContext,
             });
             setSuggestions(response.suggestions || []);
         } catch (error) {
@@ -150,25 +151,28 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
         return () => clearInterval(interval);
     }, [fetchSuggestions]);
 
-    const handleSuggestionClick = useCallback(async (suggestion: Suggestion) => {
-        // Record acceptance
-        try {
-            await Api.recordSuggestionAction(suggestion.id, 'accepted');
-        } catch (error) {
-            console.error('[ProactiveSuggestions] Failed to record action:', error);
-        }
+    const handleSuggestionClick = useCallback(
+        async (suggestion: Suggestion) => {
+            // Record acceptance
+            try {
+                await Api.recordSuggestionAction(suggestion.id, 'accepted');
+            } catch (error) {
+                console.error('[ProactiveSuggestions] Failed to record action:', error);
+            }
 
-        // Handle different action types
-        if (suggestion.action.type === 'ai_query' && suggestion.action.prompt && onQuerySuggestion) {
-            onQuerySuggestion(suggestion.action.prompt);
-        } else {
-            onSuggestionClick(suggestion);
-        }
-    }, [onSuggestionClick, onQuerySuggestion]);
+            // Handle different action types
+            if (suggestion.action.type === 'ai_query' && suggestion.action.prompt && onQuerySuggestion) {
+                onQuerySuggestion(suggestion.action.prompt);
+            } else {
+                onSuggestionClick(suggestion);
+            }
+        },
+        [onSuggestionClick, onQuerySuggestion],
+    );
 
     const handleDismiss = useCallback(async (suggestion: Suggestion, e: React.MouseEvent) => {
         e.stopPropagation();
-        setDismissedIds(prev => new Set([...prev, suggestion.id]));
+        setDismissedIds((prev) => new Set([...prev, suggestion.id]));
 
         try {
             await Api.recordSuggestionAction(suggestion.id, 'dismissed');
@@ -178,9 +182,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
     }, []);
 
     // Filter out dismissed suggestions
-    const visibleSuggestions = suggestions
-        .filter(s => !dismissedIds.has(s.id))
-        .slice(0, maxSuggestions);
+    const visibleSuggestions = suggestions.filter((s) => !dismissedIds.has(s.id)).slice(0, maxSuggestions);
 
     if (loading && suggestions.length === 0) {
         return (
@@ -207,11 +209,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                         {t('suggestions.title', 'Suggestions for you')}
                     </span>
-                    {!expanded && (
-                        <span className="text-xs text-gray-400">
-                            ({visibleSuggestions.length})
-                        </span>
-                    )}
+                    {!expanded && <span className="text-xs text-gray-400">({visibleSuggestions.length})</span>}
                 </div>
                 <button
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -235,7 +233,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
                                     'group relative rounded-lg border cursor-pointer transition-all duration-200',
                                     'hover:shadow-sm hover:scale-[1.01]',
                                     colors.bg,
-                                    colors.border
+                                    colors.border,
                                 )}
                                 onClick={() => handleSuggestionClick(suggestion)}
                                 role="button"
@@ -267,7 +265,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
                                         'absolute top-2 right-2 p-1 rounded-full',
                                         'opacity-0 group-hover:opacity-100 transition-opacity',
                                         'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300',
-                                        'hover:bg-white/50 dark:hover:bg-black/20'
+                                        'hover:bg-white/50 dark:hover:bg-black/20',
                                     )}
                                     aria-label={t('common.dismiss', 'Dismiss')}
                                 >
@@ -275,11 +273,13 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
                                 </button>
 
                                 {/* Action indicator */}
-                                <div className={cn(
-                                    'absolute bottom-2 right-2',
-                                    'opacity-0 group-hover:opacity-100 transition-opacity',
-                                    colors.icon
-                                )}>
+                                <div
+                                    className={cn(
+                                        'absolute bottom-2 right-2',
+                                        'opacity-0 group-hover:opacity-100 transition-opacity',
+                                        colors.icon,
+                                    )}
+                                >
                                     <ArrowRight size={14} />
                                 </div>
                             </div>
@@ -295,7 +295,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
                             }}
                         >
                             {t('suggestions.showMore', 'Show {{count}} more suggestions', {
-                                count: suggestions.length - maxSuggestions
+                                count: suggestions.length - maxSuggestions,
                             })}
                         </button>
                     )}
@@ -306,8 +306,4 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
 };
 
 export default ProactiveSuggestions;
-
-
-
-
 

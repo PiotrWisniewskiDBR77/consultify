@@ -1,18 +1,19 @@
 /**
  * Access Codes Routes — HARDENED
  * API endpoints for managing and using access codes
- * 
+ *
  * SECURITY:
  * - Rate limiting on validate/accept endpoints
  * - Sanitized responses (no org names, no attribution, no uses_count)
  * - Email from body for email-match validation
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response, Request } from 'express';
+import { Request, Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -44,28 +45,28 @@ interface AccessCodeServiceInterface {
         type?: string;
         requiresEmailMatch?: boolean;
     }>;
-    acceptCode?: (options: {
-        code: string;
-        actorUserId: string;
-        providedEmail?: string;
-        actorIp?: string;
-    }) => Promise<{
+    acceptCode?: (options: { code: string; actorUserId: string; providedEmail?: string; actorIp?: string }) => Promise<{
         ok: boolean;
         type?: string;
         outcome?: string;
         organizationId?: string;
         error?: string;
     }>;
-    listCodes?: (userId: string, role: string) => Promise<Array<{
-        id?: string;
-        code?: string;
-        type?: string;
-        max_uses?: number;
-        uses_count?: number;
-        expires_at?: string;
-        status?: string;
-        created_at?: string;
-    }>>;
+    listCodes?: (
+        userId: string,
+        role: string,
+    ) => Promise<
+        Array<{
+            id?: string;
+            code?: string;
+            type?: string;
+            max_uses?: number;
+            uses_count?: number;
+            expires_at?: string;
+            status?: string;
+            created_at?: string;
+        }>
+    >;
     revokeCode?: (id: string) => Promise<void>;
 }
 
@@ -93,7 +94,7 @@ const validateLimiter = rateLimit({
     message: { valid: false, error: 'RATE_LIMIT_EXCEEDED' },
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { xForwardedForHeader: false, default: true }
+    validate: { xForwardedForHeader: false, default: true },
 });
 
 /**
@@ -106,7 +107,7 @@ const acceptLimiter = rateLimit({
     message: { ok: false, error: 'RATE_LIMIT_EXCEEDED' },
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { xForwardedForHeader: false, default: true }
+    validate: { xForwardedForHeader: false, default: true },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -118,203 +119,222 @@ const acceptLimiter = rateLimit({
  * @desc Generate a new access code
  * @access Protected (Admin, Consultant)
  */
-router.post('/generate', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AccessCodeService?.generateCode || !AccessCodeService?.CODE_TYPES) {
-        return res.status(503).json({ error: 'AccessCodeService not available' });
-    }
-
-    try {
-        const { type, maxUses, expiresInDays, organizationId, targetEmail, metadata } = req.body;
-        const userId = req.user?.id;
-        const userRole = req.user?.role;
-
-        if (!userId || !userRole) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+    '/generate',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!AccessCodeService?.generateCode || !AccessCodeService?.CODE_TYPES) {
+            return res.status(503).json({ error: 'AccessCodeService not available' });
         }
 
-        // RBAC enforcement
-        let createdByConsultantId: string | null = null;
+        try {
+            const { type, maxUses, expiresInDays, organizationId, targetEmail, metadata } = req.body;
+            const userId = req.user?.id;
+            const userRole = req.user?.role;
 
-        if (type === AccessCodeService.CODE_TYPES.CONSULTANT || type === AccessCodeService.CODE_TYPES.TRIAL) {
-            if (!['SUPERADMIN', 'ADMIN', 'CONSULTANT'].includes(userRole)) {
-                return res.status(403).json({ error: 'Insufficient permissions' });
+            if (!userId || !userRole) {
+                return res.status(401).json({ error: 'Unauthorized' });
             }
-            if (userRole === 'CONSULTANT') {
-                createdByConsultantId = userId;
+
+            // RBAC enforcement
+            let createdByConsultantId: string | null = null;
+
+            if (type === AccessCodeService.CODE_TYPES.CONSULTANT || type === AccessCodeService.CODE_TYPES.TRIAL) {
+                if (!['SUPERADMIN', 'ADMIN', 'CONSULTANT'].includes(userRole)) {
+                    return res.status(403).json({ error: 'Insufficient permissions' });
+                }
+                if (userRole === 'CONSULTANT') {
+                    createdByConsultantId = userId;
+                }
+            } else if (type === AccessCodeService.CODE_TYPES.INVITE) {
+                if (!['SUPERADMIN', 'ADMIN'].includes(userRole)) {
+                    return res.status(403).json({ error: 'Only Admins can generate team invites' });
+                }
+                // Org scoping
+                const userOrgId = req.user?.organizationId || req.user?.organization_id;
+                if (userRole === 'ADMIN' && organizationId && organizationId !== userOrgId) {
+                    return res.status(403).json({ error: 'Cannot generate invite for another organization' });
+                }
             }
-        } else if (type === AccessCodeService.CODE_TYPES.INVITE) {
-            if (!['SUPERADMIN', 'ADMIN'].includes(userRole)) {
-                return res.status(403).json({ error: 'Only Admins can generate team invites' });
-            }
-            // Org scoping
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
-            if (userRole === 'ADMIN' && organizationId && organizationId !== userOrgId) {
-                return res.status(403).json({ error: 'Cannot generate invite for another organization' });
-            }
+
+            const code = await AccessCodeService.generateCode({
+                type,
+                createdByUserId: userId,
+                createdByConsultantId,
+                organizationId:
+                    organizationId ||
+                    (type === 'INVITE' ? req.user?.organizationId || req.user?.organization_id : null),
+                targetEmail: targetEmail || null,
+                maxUses,
+                expiresInDays,
+                metadata,
+            });
+
+            // Return plaintext code (ONCE)
+            res.status(201).json({
+                code: code.code,
+                expiresAt: code.expiresAt,
+                maxUses: code.maxUses,
+            });
+        } catch (err: unknown) {
+            console.error('[AccessCodes] Generate error:', err);
+            res.status(500).json({
+                error: err instanceof Error ? err.message : 'Unknown error',
+            });
         }
-
-        const code = await AccessCodeService.generateCode({
-            type,
-            createdByUserId: userId,
-            createdByConsultantId,
-            organizationId: organizationId || (type === 'INVITE' ? (req.user?.organizationId || req.user?.organization_id) : null),
-            targetEmail: targetEmail || null,
-            maxUses,
-            expiresInDays,
-            metadata
-        });
-
-        // Return plaintext code (ONCE)
-        res.status(201).json({
-            code: code.code,
-            expiresAt: code.expiresAt,
-            maxUses: code.maxUses
-        });
-    } catch (err: unknown) {
-        console.error('[AccessCodes] Generate error:', err);
-        res.status(500).json({
-            error: err instanceof Error ? err.message : 'Unknown error'
-        });
-    }
-}));
+    }),
+);
 
 /**
  * @route GET /api/access-codes/validate/:code
  * @desc Validate a code (PUBLIC, rate-limited)
  * @access Public
- * 
+ *
  * PRIVACY: Returns ONLY { valid, type, requiresEmailMatch }
  * NO org names, NO uses_count, NO target_email value
  */
-router.get('/validate/:code', validateLimiter, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AccessCodeService?.validatePublic) {
-        return res.status(503).json({ valid: false, error: 'AccessCodeService not available' });
-    }
+router.get(
+    '/validate/:code',
+    validateLimiter,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!AccessCodeService?.validatePublic) {
+            return res.status(503).json({ valid: false, error: 'AccessCodeService not available' });
+        }
 
-    try {
-        const result = await AccessCodeService.validatePublic(req.params.code);
-        res.json(result);
-    } catch (err: unknown) {
-        // Always return same shape for privacy
-        res.json({ valid: false });
-    }
-}));
+        try {
+            const result = await AccessCodeService.validatePublic(req.params.code);
+            res.json(result);
+        } catch (err: unknown) {
+            // Always return same shape for privacy
+            res.json({ valid: false });
+        }
+    }),
+);
 
 /**
  * @route POST /api/access-codes/accept
  * @desc Accept/consume a code (PUBLIC, rate-limited)
  * @access Public (for registration) or Protected (for logged-in users)
- * 
+ *
  * PRIVACY: Returns { ok, outcome, organizationId? } but NO attribution, NO sensitive metadata
  */
-router.post('/accept', acceptLimiter, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AccessCodeService?.acceptCode) {
-        return res.status(503).json({ ok: false, error: 'AccessCodeService not available' });
-    }
-
-    try {
-        const { code, email, userId: bodyUserId } = req.body;
-
-        // Determine user ID (logged-in takes precedence)
-        const actorUserId = req.user?.id || bodyUserId;
-
-        if (!actorUserId) {
-            return res.status(400).json({ ok: false, error: 'USER_REQUIRED' });
+router.post(
+    '/accept',
+    acceptLimiter,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!AccessCodeService?.acceptCode) {
+            return res.status(503).json({ ok: false, error: 'AccessCodeService not available' });
         }
 
-        if (!code) {
-            return res.status(400).json({ ok: false, error: 'CODE_REQUIRED' });
-        }
+        try {
+            const { code, email, userId: bodyUserId } = req.body;
 
-        const result = await AccessCodeService.acceptCode({
-            code,
-            actorUserId,
-            providedEmail: email,
-            actorIp: (req as Request).ip
-        });
+            // Determine user ID (logged-in takes precedence)
+            const actorUserId = req.user?.id || bodyUserId;
 
-        // Sanitize response
-        if (result.ok) {
-            res.json({
-                ok: true,
-                type: result.type,
-                outcome: result.outcome,
-                organizationId: result.organizationId || null
+            if (!actorUserId) {
+                return res.status(400).json({ ok: false, error: 'USER_REQUIRED' });
+            }
+
+            if (!code) {
+                return res.status(400).json({ ok: false, error: 'CODE_REQUIRED' });
+            }
+
+            const result = await AccessCodeService.acceptCode({
+                code,
+                actorUserId,
+                providedEmail: email,
+                actorIp: (req as Request).ip,
             });
-        } else {
-            res.status(400).json({
-                ok: false,
-                error: result.error
-            });
+
+            // Sanitize response
+            if (result.ok) {
+                res.json({
+                    ok: true,
+                    type: result.type,
+                    outcome: result.outcome,
+                    organizationId: result.organizationId || null,
+                });
+            } else {
+                res.status(400).json({
+                    ok: false,
+                    error: result.error,
+                });
+            }
+        } catch (err: unknown) {
+            console.error('[AccessCodes] Accept error:', err);
+            res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
         }
-    } catch (err: unknown) {
-        console.error('[AccessCodes] Accept error:', err);
-        res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
-    }
-}));
+    }),
+);
 
 /**
  * @route GET /api/access-codes/my-codes
  * @desc List codes created by current user
  * @access Protected
  */
-router.get('/my-codes', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AccessCodeService?.listCodes) {
-        return res.status(503).json({ error: 'AccessCodeService not available' });
-    }
-
-    try {
-        const userId = req.user?.id;
-        const userRole = req.user?.role;
-
-        if (!userId || !userRole) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.get(
+    '/my-codes',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!AccessCodeService?.listCodes) {
+            return res.status(503).json({ error: 'AccessCodeService not available' });
         }
 
-        const codes = await AccessCodeService.listCodes(
-            userId,
-            userRole === 'CONSULTANT' ? 'CONSULTANT' : 'USER'
-        );
+        try {
+            const userId = req.user?.id;
+            const userRole = req.user?.role;
 
-        // Sanitize: remove code_hash from response
-        const sanitized = codes.map(c => ({
-            id: c.id,
-            code: c.code,
-            type: c.type,
-            maxUses: c.max_uses,
-            usesCount: c.uses_count,
-            expiresAt: c.expires_at,
-            status: c.status,
-            createdAt: c.created_at
-        }));
+            if (!userId || !userRole) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
 
-        res.json(sanitized);
-    } catch (err: unknown) {
-        res.status(500).json({
-            error: err instanceof Error ? err.message : 'Unknown error'
-        });
-    }
-}));
+            const codes = await AccessCodeService.listCodes(userId, userRole === 'CONSULTANT' ? 'CONSULTANT' : 'USER');
+
+            // Sanitize: remove code_hash from response
+            const sanitized = codes.map((c) => ({
+                id: c.id,
+                code: c.code,
+                type: c.type,
+                maxUses: c.max_uses,
+                usesCount: c.uses_count,
+                expiresAt: c.expires_at,
+                status: c.status,
+                createdAt: c.created_at,
+            }));
+
+            res.json(sanitized);
+        } catch (err: unknown) {
+            res.status(500).json({
+                error: err instanceof Error ? err.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * @route POST /api/access-codes/:id/revoke
  * @desc Revoke a code
  * @access Protected
  */
-router.post('/:id/revoke', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AccessCodeService?.revokeCode) {
-        return res.status(503).json({ error: 'AccessCodeService not available' });
-    }
+router.post(
+    '/:id/revoke',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!AccessCodeService?.revokeCode) {
+            return res.status(503).json({ error: 'AccessCodeService not available' });
+        }
 
-    try {
-        // TODO: Add ownership verification
-        await AccessCodeService.revokeCode(req.params.id);
-        res.json({ success: true });
-    } catch (err: unknown) {
-        res.status(500).json({
-            error: err instanceof Error ? err.message : 'Unknown error'
-        });
-    }
-}));
+        try {
+            // TODO: Add ownership verification
+            await AccessCodeService.revokeCode(req.params.id);
+            res.json({ success: true });
+        } catch (err: unknown) {
+            res.status(500).json({
+                error: err instanceof Error ? err.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 export default router;

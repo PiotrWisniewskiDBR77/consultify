@@ -3,8 +3,9 @@
  * Enterprise-grade error handling with proper logging and responses
  */
 
-import type { Request, Response, NextFunction } from 'express';
-import { AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError } from '../types';
+import type { NextFunction, Request, Response } from 'express';
+
+import { _AuthenticationError, _AuthorizationError, _NotFoundError, AppError, ValidationError } from '../types.js';
 
 interface ErrorResponse {
     success: false;
@@ -17,24 +18,19 @@ interface ErrorResponse {
 /**
  * Global error handler middleware
  */
-export const errorHandler = (
-    err: Error,
-    req: Request,
-    res: Response,
-    _next: NextFunction
-): void => {
+export const errorHandler = (err: Error, req: Request, res: Response, _next: NextFunction): void => {
     // Log error (in production, use proper logger)
     console.error(`[Error] ${req.method} ${req.path}:`, {
         message: err.message,
         stack: err.stack,
-        correlationId: (req as unknown as { correlationId?: string }).correlationId
+        correlationId: (req as unknown as { correlationId?: string }).correlationId,
     });
 
     // Determine status code and response
     let statusCode = 500;
     let response: ErrorResponse = {
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
     };
 
     // Handle known error types
@@ -44,35 +40,35 @@ export const errorHandler = (
             success: false,
             error: err.message,
             code: err.code,
-            details: err.details
+            details: err.details,
         };
     } else if (err.name === 'ValidationError' || err.message.includes('validation')) {
         statusCode = 400;
         response = {
             success: false,
             error: err.message,
-            code: 'VALIDATION_ERROR'
+            code: 'VALIDATION_ERROR',
         };
     } else if (err.name === 'JsonWebTokenError') {
         statusCode = 401;
         response = {
             success: false,
             error: 'Invalid token',
-            code: 'INVALID_TOKEN'
+            code: 'INVALID_TOKEN',
         };
     } else if (err.name === 'TokenExpiredError') {
         statusCode = 401;
         response = {
             success: false,
             error: 'Token expired',
-            code: 'TOKEN_EXPIRED'
+            code: 'TOKEN_EXPIRED',
         };
     } else if (err.message.includes('ECONNREFUSED') || err.message.includes('ETIMEDOUT')) {
         statusCode = 503;
         response = {
             success: false,
             error: 'Service temporarily unavailable',
-            code: 'SERVICE_UNAVAILABLE'
+            code: 'SERVICE_UNAVAILABLE',
         };
     }
 
@@ -92,22 +88,21 @@ export const notFoundHandler = (req: Request, res: Response): void => {
     res.status(404).json({
         success: false,
         error: `Route ${req.method} ${req.path} not found`,
-        code: 'ROUTE_NOT_FOUND'
+        code: 'ROUTE_NOT_FOUND',
     });
 };
 
 /**
  * Request validation error handler (for Zod/Joi)
  */
-export const validationErrorHandler = (
-    errors: Array<{ path: string; message: string }>
-): never => {
+export const validationErrorHandler = (errors: Array<{ path: string; message: string }>): never => {
     throw new ValidationError('Validation failed', {
-        errors: errors.reduce((acc, err) => {
-            acc[err.path] = err.message;
-            return acc;
-        }, {} as Record<string, string>)
+        errors: errors.reduce(
+            (acc, err) => {
+                acc[err.path] = err.message;
+                return acc;
+            },
+            {} as Record<string, string>,
+        ),
     });
 };
-
-

@@ -1,6 +1,6 @@
 /**
  * ProfessionalProfileSection - Extended Professional Profile
- * 
+ *
  * Features:
  * - Bio/About Me
  * - Skills/Tags
@@ -10,29 +10,30 @@
  * - Social Media Links
  */
 
-import React, { useState, useEffect } from 'react';
-import { User, Certification, Education, WorkExperience, SocialLinks } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    UserCircle,
     Award,
-    GraduationCap,
     Briefcase,
-    Link2,
-    Plus,
-    Trash2,
     Edit2,
-    Save,
-    X,
-    Loader2,
-    Twitter,
+    ExternalLink,
     Github,
     Globe,
-    ExternalLink,
-    Tag
+    GraduationCap,
+    Link2,
+    Loader2,
+    Plus,
+    Save,
+    Tag,
+    Trash2,
+    Twitter,
+    UserCircle,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { Certification, Education, SocialLinks, User, WorkExperience } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface ProfessionalProfileSectionProps {
@@ -42,12 +43,12 @@ interface ProfessionalProfileSectionProps {
 
 export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProps> = ({
     currentUser,
-    onUpdateUser
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    
+
     // State
     const [bio, setBio] = useState(currentUser.bio || '');
     const [skills, setSkills] = useState<string[]>(currentUser.skills || []);
@@ -56,7 +57,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
     const [education, setEducation] = useState<Education[]>(currentUser.education || []);
     const [workExperience, setWorkExperience] = useState<WorkExperience[]>(currentUser.workExperience || []);
     const [socialLinks, setSocialLinks] = useState<SocialLinks>(currentUser.socialLinks || {});
-    
+
     // Edit states
     const [editingCert, setEditingCert] = useState<string | null>(null);
     const [editingEdu, setEditingEdu] = useState<string | null>(null);
@@ -91,7 +92,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
                 certifications,
                 education,
                 workExperience,
-                socialLinks
+                socialLinks,
             };
             await Api.put('/api/user/professional-profile', updates);
             onUpdateUser(updates);
@@ -111,7 +112,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
     };
 
     const removeSkill = (skill: string) => {
-        setSkills(skills.filter(s => s !== skill));
+        setSkills(skills.filter((s) => s !== skill));
     };
 
     const addCertification = () => {
@@ -122,18 +123,18 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             issueDate: new Date().toISOString().split('T')[0],
             expiryDate: undefined,
             credentialId: '',
-            credentialUrl: ''
+            credentialUrl: '',
         };
         setCertifications([...certifications, newCert]);
         setEditingCert(newCert.id);
     };
 
     const updateCertification = (id: string, updates: Partial<Certification>) => {
-        setCertifications(certs => certs.map(c => c.id === id ? { ...c, ...updates } : c));
+        setCertifications((certs) => certs.map((c) => (c.id === id ? { ...c, ...updates } : c)));
     };
 
     const removeCertification = (id: string) => {
-        setCertifications(certs => certs.filter(c => c.id !== id));
+        setCertifications((certs) => certs.filter((c) => c.id !== id));
         setEditingCert(null);
     };
 
@@ -146,18 +147,18 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             startDate: new Date().toISOString().split('T')[0],
             endDate: undefined,
             isCurrent: false,
-            description: ''
+            description: '',
         };
         setEducation([...education, newEdu]);
         setEditingEdu(newEdu.id);
     };
 
     const updateEducation = (id: string, updates: Partial<Education>) => {
-        setEducation(edu => edu.map(e => e.id === id ? { ...e, ...updates } : e));
+        setEducation((edu) => edu.map((e) => (e.id === id ? { ...e, ...updates } : e)));
     };
 
     const removeEducation = (id: string) => {
-        setEducation(edu => edu.filter(e => e.id !== id));
+        setEducation((edu) => edu.filter((e) => e.id !== id));
         setEditingEdu(null);
     };
 
@@ -170,29 +171,29 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             endDate: undefined,
             isCurrent: false,
             description: '',
-            location: ''
+            location: '',
         };
         setWorkExperience([...workExperience, newWork]);
         setEditingWork(newWork.id);
     };
 
     const updateWorkExperience = (id: string, updates: Partial<WorkExperience>) => {
-        setWorkExperience(work => work.map(w => w.id === id ? { ...w, ...updates } : w));
+        setWorkExperience((work) => work.map((w) => (w.id === id ? { ...w, ...updates } : w)));
     };
 
     const removeWorkExperience = (id: string) => {
-        setWorkExperience(work => work.filter(w => w.id !== id));
+        setWorkExperience((work) => work.filter((w) => w.id !== id));
         setEditingWork(null);
     };
 
     const updateSocialLink = (key: keyof SocialLinks, value: string) => {
-        setSocialLinks(prev => ({ ...prev, [key]: value }));
+        setSocialLinks((prev) => ({ ...prev, [key]: value }));
     };
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-professional-profile" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -201,7 +202,10 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
                         {t('settings.profile.professional.title', 'Professional Profile')}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        {t('settings.profile.professional.description', 'Showcase your professional background and expertise')}
+                        {t(
+                            'settings.profile.professional.description',
+                            'Showcase your professional background and expertise',
+                        )}
                     </p>
                 </div>
                 <button
@@ -222,7 +226,10 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
                 <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder={t('settings.profile.professional.bioPlaceholder', 'Tell us about yourself, your experience, and what you do...')}
+                    placeholder={t(
+                        'settings.profile.professional.bioPlaceholder',
+                        'Tell us about yourself, your experience, and what you do...',
+                    )}
                     rows={6}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
                 />
@@ -447,7 +454,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
     onSave,
     onCancel,
     onUpdate,
-    onDelete
+    onDelete,
 }) => {
     if (isEditing) {
         return (
@@ -496,10 +503,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
                     />
                 </div>
                 <div className="flex gap-2 mt-4">
-                    <button
-                        onClick={onSave}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
-                    >
+                    <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         Save
                     </button>
                     <button
@@ -508,10 +512,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
                     >
                         Cancel
                     </button>
-                    <button
-                        onClick={onDelete}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
-                    >
+                    <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -535,7 +536,12 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
                         <Edit2 size={16} />
                     </button>
                     {cert.credentialUrl && (
-                        <a href={cert.credentialUrl} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
+                        <a
+                            href={cert.credentialUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                        >
                             <ExternalLink size={16} />
                         </a>
                     )}
@@ -562,7 +568,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
     onSave,
     onCancel,
     onUpdate,
-    onDelete
+    onDelete,
 }) => {
     if (isEditing) {
         return (
@@ -624,7 +630,10 @@ const EducationCard: React.FC<EducationCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         Save
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         Cancel
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -673,7 +682,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
     onSave,
     onCancel,
     onUpdate,
-    onDelete
+    onDelete,
 }) => {
     if (isEditing) {
         return (
@@ -735,7 +744,10 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         Save
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         Cancel
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -775,20 +787,12 @@ interface SocialLinkInputProps {
     placeholder: string;
 }
 
-const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
-    icon,
-    label,
-    value,
-    onChange,
-    placeholder
-}) => {
+const SocialLinkInput: React.FC<SocialLinkInputProps> = ({ icon, label, value, onChange, placeholder }) => {
     return (
         <div className="flex items-center gap-3">
             <div className="text-slate-400">{icon}</div>
             <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    {label}
-                </label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>
                 <input
                     type="text"
                     value={value}
@@ -802,10 +806,4 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
 };
 
 export default ProfessionalProfileSection;
-
-
-
-
-
-
 

@@ -1,27 +1,23 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAppStore } from '../store/useAppStore';
-import { sendMessageToAI } from '../services/ai/gemini';
-import { AIMessageHistory, FullSession } from '../types';
-import { Bot, Send, User as UserIcon, Sparkles, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { Activity, Bot, DollarSign, Send, Sparkles, TrendingUp, User as UserIcon } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { formatChatError } from '../services/ai/errorMessages';
+import { sendMessageToAI } from '../services/ai/gemini';
+import { useAppStore } from '../store/useAppStore';
+import { AIMessageHistory, FullSession } from '../types';
 
 interface AIConsultantViewProps {
     session: FullSession;
 }
 
 export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) => {
-    const {
-        activeChatMessages: messages,
-        addChatMessage,
-        isBotTyping,
-        setIsBotTyping
-    } = useAppStore();
+    const { activeChatMessages: messages, addChatMessage, isBotTyping, setIsBotTyping } = useAppStore();
 
     const [input, setInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => {
@@ -39,15 +35,19 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
         try {
             // Dynamic Context Injection (The "Brain")
             // 1. Get Proactive Insights
-            const insights = await import('../services/ai/agent').then(m => m.Agent.analyzeSessionForInsights(session, 'Client'));
-            const insightSummary = insights.map(i => `- [${i.type.toUpperCase()}] ${i.text} (${i.impact} Priority)`).join('\n');
+            const insights = await import('../services/ai/agent').then((m) =>
+                m.Agent.analyzeSessionForInsights(session, 'Client'),
+            );
+            const insightSummary = insights
+                .map((i) => `- [${i.type.toUpperCase()}] ${i.text} (${i.impact} Priority)`)
+                .join('\n');
 
             // 2. Build Context
             const context = `
                 ACT AS: Digital Executive Consultant.
                 
                 REAL-TIME SYSTEM ALERTS (The "Brain"):
-                ${insightSummary || "No critical alerts."}
+                ${insightSummary || 'No critical alerts.'}
                 
                 CLIENT DATA:
                 - Progress: Assessment (${session.step2Completed ? 'Done' : 'Pending'}), Initiatives (${session.initiatives?.length || 0}).
@@ -59,9 +59,9 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
                 If the user's question relates to the alerts above, reference them explicitly.
             `;
 
-            const history: AIMessageHistory[] = messages.map(m => ({
+            const history: AIMessageHistory[] = messages.map((m) => ({
                 role: m.role === 'user' ? 'user' : 'model',
-                parts: [{ text: m.content }]
+                parts: [{ text: m.content }],
             }));
 
             const response = await sendMessageToAI(history, context);
@@ -70,7 +70,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
                 id: (Date.now() + 1).toString(),
                 role: 'ai',
                 content: response,
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         } catch (error) {
             console.error(error);
@@ -78,7 +78,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
                 id: (Date.now() + 1).toString(),
                 role: 'ai',
                 content: formatChatError(error as Error, 'chat_response'),
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         } finally {
             setIsBotTyping(false);
@@ -86,9 +86,21 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
     };
 
     const suggestedPrompts = [
-        { icon: <TrendingUp size={16} />, text: "Analyze my KPI trends", prompt: "Analyze the potential impact of our initiatives on key operational KPIs based on the roadmap." },
-        { icon: <DollarSign size={16} />, text: "Explain Financial ROI", prompt: "Break down the ROI calculation. How does the $120k cost translate to the projected benefits?" },
-        { icon: <Activity size={16} />, text: "Operational Recs", prompt: "What operational changes should we prioritize to unblock the 'Data Foundation' initiative?" },
+        {
+            icon: <TrendingUp size={16} />,
+            text: 'Analyze my KPI trends',
+            prompt: 'Analyze the potential impact of our initiatives on key operational KPIs based on the roadmap.',
+        },
+        {
+            icon: <DollarSign size={16} />,
+            text: 'Explain Financial ROI',
+            prompt: 'Break down the ROI calculation. How does the $120k cost translate to the projected benefits?',
+        },
+        {
+            icon: <Activity size={16} />,
+            text: 'Operational Recs',
+            prompt: "What operational changes should we prioritize to unblock the 'Data Foundation' initiative?",
+        },
     ];
 
     return (
@@ -113,23 +125,32 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
                         <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400">
                             <Sparkles size={32} />
                         </div>
-                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">How can I help you today?</h3>
+                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
+                            How can I help you today?
+                        </h3>
                         <p className="text-slate-500 max-w-sm mx-auto">
-                            I can analyze your transformation data, explain financial projections, or provide strategic recommendations.
+                            I can analyze your transformation data, explain financial projections, or provide strategic
+                            recommendations.
                         </p>
                     </div>
                 )}
 
                 {messages.map((msg) => (
                     <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-indigo-600 text-white'}`}>
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-slate-200 text-slate-600' : 'bg-indigo-600 text-white'}`}
+                        >
                             {msg.role === 'user' ? <UserIcon size={16} /> : <Bot size={16} />}
                         </div>
-                        <div className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-white border border-slate-200 text-navy-900 dark:bg-navy-800 dark:border-white/5 dark:text-white rounded-tr-none' : 'bg-indigo-600 text-white shadow-md rounded-tl-none'}`}>
+                        <div
+                            className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-white border border-slate-200 text-navy-900 dark:bg-navy-800 dark:border-white/5 dark:text-white rounded-tr-none' : 'bg-indigo-600 text-white shadow-md rounded-tl-none'}`}
+                        >
                             <div className="prose dark:prose-invert text-sm max-w-none whitespace-pre-wrap">
                                 {msg.content}
                             </div>
-                            <div className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-slate-400' : 'text-indigo-200'}`}>
+                            <div
+                                className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-slate-400' : 'text-indigo-200'}`}
+                            >
                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                         </div>

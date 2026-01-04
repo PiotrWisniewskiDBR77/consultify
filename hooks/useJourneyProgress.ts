@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Api } from '../services/api';
+import { useCallback, useEffect, useState } from 'react';
+
 import { ACTIVATION_MILESTONES, isPhaseActivated } from '../config/activationMilestones';
+import { Api } from '../services/api';
 
 /**
  * useJourneyProgress — Track user's journey progress
- * 
+ *
  * Features:
  * - Fetches journey data from API
  * - Calculates phase completion
@@ -55,9 +56,7 @@ const getNextAction = (phases: Record<string, PhaseProgress>): JourneyProgress['
         if (!phase.isActivated) {
             // Find first incomplete milestone
             const milestones = ACTIVATION_MILESTONES[phaseKey]?.milestones || [];
-            const incomplete = milestones.find(
-                m => !phase.completedMilestones.includes(m.id)
-            );
+            const incomplete = milestones.find((m) => !phase.completedMilestones.includes(m.id));
 
             if (incomplete) {
                 return {
@@ -96,12 +95,12 @@ export const useJourneyProgress = () => {
             let totalCompleted = 0;
             let totalMilestones = 0;
 
-            PHASE_ORDER.forEach(phaseKey => {
+            PHASE_ORDER.forEach((phaseKey) => {
                 const phaseConfig = ACTIVATION_MILESTONES[phaseKey];
                 if (!phaseConfig) return;
 
                 const milestones = phaseConfig.milestones || [];
-                const completed = milestones.filter(m => completedMilestoneIds.includes(m.id));
+                const completed = milestones.filter((m) => completedMilestoneIds.includes(m.id));
                 const isActivated = isPhaseActivated(phaseKey, completedMilestoneIds);
 
                 phases[phaseKey] = {
@@ -109,11 +108,9 @@ export const useJourneyProgress = () => {
                     phaseName: PHASE_NAMES[phaseKey],
                     isCompleted: isActivated,
                     isActivated,
-                    completedMilestones: completed.map(m => m.id),
+                    completedMilestones: completed.map((m) => m.id),
                     totalMilestones: milestones.length,
-                    progress: milestones.length > 0
-                        ? Math.round((completed.length / milestones.length) * 100)
-                        : 0,
+                    progress: milestones.length > 0 ? Math.round((completed.length / milestones.length) * 100) : 0,
                 };
 
                 if (isActivated) {
@@ -135,9 +132,7 @@ export const useJourneyProgress = () => {
             const journeyProgress: JourneyProgress = {
                 currentPhase,
                 phases,
-                overallProgress: totalMilestones > 0
-                    ? Math.round((totalCompleted / totalMilestones) * 100)
-                    : 0,
+                overallProgress: totalMilestones > 0 ? Math.round((totalCompleted / totalMilestones) * 100) : 0,
                 timeToValue: data.timeToValue || null,
                 nextAction: getNextAction(phases),
             };

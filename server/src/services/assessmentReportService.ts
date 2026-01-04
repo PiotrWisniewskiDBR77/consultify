@@ -1,14 +1,12 @@
 /**
  * Assessmentreport Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadAssessmentreportservice = createCachedLazyService('../../services/assessmentReportService.js');
+import service from '../../services/assessmentReportService.js';
 
 // Export default instance (for backward compatibility)
-export default loadAssessmentreportservice();
+export default service;

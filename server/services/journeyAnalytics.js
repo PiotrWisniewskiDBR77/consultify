@@ -9,7 +9,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 
 // Lazy-loaded database
 let db = null;

@@ -3,16 +3,9 @@
  * Part of My Work Module PMO Upgrade
  */
 
+import { AlertCircle, AlertTriangle, CheckCircle, Clock, FileQuestion, Target, Zap } from 'lucide-react';
 import React from 'react';
-import { 
-    AlertCircle, 
-    AlertTriangle, 
-    Clock, 
-    Target, 
-    CheckCircle,
-    Zap,
-    FileQuestion
-} from 'lucide-react';
+
 import type { PMOCategory, PMOCategoryConfig } from '../../../types/myWork';
 
 interface PMOPriorityBadgeProps {
@@ -35,9 +28,9 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
             border: 'border-red-500',
             bg: 'bg-red-100 dark:bg-red-900/30',
             text: 'text-red-700 dark:text-red-300',
-            icon: 'text-red-500'
+            icon: 'text-red-500',
         },
-        priority: 1
+        priority: 1,
     },
     blocking_initiative: {
         key: 'blocking_initiative',
@@ -47,9 +40,9 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
             border: 'border-orange-500',
             bg: 'bg-orange-100 dark:bg-orange-900/30',
             text: 'text-orange-700 dark:text-orange-300',
-            icon: 'text-orange-500'
+            icon: 'text-orange-500',
         },
-        priority: 2
+        priority: 2,
     },
     decision_required: {
         key: 'decision_required',
@@ -59,9 +52,9 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
             border: 'border-amber-500',
             bg: 'bg-amber-100 dark:bg-amber-900/30',
             text: 'text-amber-700 dark:text-amber-300',
-            icon: 'text-amber-500'
+            icon: 'text-amber-500',
         },
-        priority: 3
+        priority: 3,
     },
     deadline_critical: {
         key: 'deadline_critical',
@@ -71,9 +64,9 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
             border: 'border-slate-700',
             bg: 'bg-slate-100 dark:bg-slate-800',
             text: 'text-slate-700 dark:text-slate-300',
-            icon: 'text-slate-700 dark:text-slate-300'
+            icon: 'text-slate-700 dark:text-slate-300',
         },
-        priority: 4
+        priority: 4,
     },
     high_strategic: {
         key: 'high_strategic',
@@ -83,9 +76,9 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
             border: 'border-blue-500',
             bg: 'bg-blue-100 dark:bg-blue-900/30',
             text: 'text-blue-700 dark:text-blue-300',
-            icon: 'text-blue-500'
+            icon: 'text-blue-500',
         },
-        priority: 5
+        priority: 5,
     },
     routine: {
         key: 'routine',
@@ -95,10 +88,10 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
             border: 'border-green-500',
             bg: 'bg-green-100 dark:bg-green-900/30',
             text: 'text-green-700 dark:text-green-300',
-            icon: 'text-green-500'
+            icon: 'text-green-500',
         },
-        priority: 6
-    }
+        priority: 6,
+    },
 };
 
 /**
@@ -106,7 +99,7 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
  */
 const getCategoryIcon = (category: PMOCategory, size: number) => {
     const iconProps = { size, className: 'shrink-0' };
-    
+
     switch (category) {
         case 'blocking_phase':
             return <AlertCircle {...iconProps} />;
@@ -127,7 +120,7 @@ const getCategoryIcon = (category: PMOCategory, size: number) => {
 
 /**
  * PMOPriorityBadge Component
- * 
+ *
  * Displays a badge indicating the PMO priority category of a task.
  * Used throughout the My Work module to provide consistent priority visualization.
  */
@@ -136,10 +129,10 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
     size = 'sm',
     showLabel = true,
     showIcon = true,
-    className = ''
+    className = '',
 }) => {
     const config = PMO_CATEGORY_CONFIG[category];
-    
+
     if (!config) {
         return null;
     }
@@ -147,13 +140,13 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
     const sizeClasses = {
         sm: 'text-[10px] px-1.5 py-0.5 gap-1',
         md: 'text-xs px-2 py-1 gap-1.5',
-        lg: 'text-sm px-3 py-1.5 gap-2'
+        lg: 'text-sm px-3 py-1.5 gap-2',
     };
 
     const iconSizes = {
         sm: 10,
         md: 12,
-        lg: 14
+        lg: 14,
     };
 
     return (
@@ -168,19 +161,9 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
             `}
             title={config.label}
         >
-            {showIcon && (
-                <span className={config.color.icon}>
-                    {getCategoryIcon(category, iconSizes[size])}
-                </span>
-            )}
-            {showLabel && (
-                <span className="truncate max-w-[120px]">
-                    {config.label}
-                </span>
-            )}
-            {!showLabel && !showIcon && (
-                <span>{config.emoji}</span>
-            )}
+            {showIcon && <span className={config.color.icon}>{getCategoryIcon(category, iconSizes[size])}</span>}
+            {showLabel && <span className="truncate max-w-[120px]">{config.label}</span>}
+            {!showLabel && !showIcon && <span>{config.emoji}</span>}
         </span>
     );
 };
@@ -188,16 +171,16 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
 /**
  * Compact dot indicator for category
  */
-export const PMOCategoryDot: React.FC<{ category: PMOCategory; className?: string }> = ({ 
-    category, 
-    className = '' 
+export const PMOCategoryDot: React.FC<{ category: PMOCategory; className?: string }> = ({
+    category,
+    className = '',
 }) => {
     const config = PMO_CATEGORY_CONFIG[category];
-    
+
     if (!config) return null;
 
     return (
-        <span 
+        <span
             className={`w-2 h-2 rounded-full ${config.color.bg} ${config.color.border} border ${className}`}
             title={config.label}
         />
@@ -221,7 +204,7 @@ export const getPMOCategory = (task: {
     if (task.awaitingDecision) return 'decision_required';
 
     // Check labels
-    const labelCodes = task.labels?.map(l => l.code) || [];
+    const labelCodes = task.labels?.map((l) => l.code) || [];
     if (labelCodes.includes('BLOCKING_PHASE') || labelCodes.includes('GATE_BLOCKER')) {
         return 'blocking_phase';
     }
@@ -251,16 +234,4 @@ export const getPMOCategory = (task: {
 };
 
 export default PMOPriorityBadge;
-
-
-
-
-
-
-
-
-
-
-
-
 

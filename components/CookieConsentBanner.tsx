@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Cookie, Settings, Check, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, Cookie, Settings, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface CookiePreferences {
     necessary: boolean;
@@ -13,7 +13,7 @@ const DEFAULT_PREFERENCES: CookiePreferences = {
     necessary: true, // Always true, cannot be changed
     functional: true,
     analytics: false,
-    marketing: false
+    marketing: false,
 };
 
 export const CookieConsentBanner: React.FC = () => {
@@ -66,7 +66,7 @@ export const CookieConsentBanner: React.FC = () => {
             necessary: true,
             functional: true,
             analytics: true,
-            marketing: true
+            marketing: true,
         };
         setPreferences(allAccepted);
         saveConsent(allAccepted);
@@ -77,7 +77,7 @@ export const CookieConsentBanner: React.FC = () => {
             necessary: true,
             functional: false,
             analytics: false,
-            marketing: false
+            marketing: false,
         };
         setPreferences(necessaryOnly);
         saveConsent(necessaryOnly);
@@ -89,9 +89,9 @@ export const CookieConsentBanner: React.FC = () => {
 
     const togglePreference = (key: keyof CookiePreferences) => {
         if (key === 'necessary') return; // Cannot disable necessary cookies
-        setPreferences(prev => ({
+        setPreferences((prev) => ({
             ...prev,
-            [key]: !prev[key]
+            [key]: !prev[key],
         }));
     };
 
@@ -122,8 +122,8 @@ export const CookieConsentBanner: React.FC = () => {
                                             We use cookies
                                         </h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                            We use cookies to enhance your experience, analyze traffic, and personalize content.
-                                            You can customize your preferences or accept all cookies.{' '}
+                                            We use cookies to enhance your experience, analyze traffic, and personalize
+                                            content. You can customize your preferences or accept all cookies.{' '}
                                             <a
                                                 href="/cookies"
                                                 className="text-purple-600 dark:text-purple-400 hover:underline font-medium"
@@ -251,17 +251,21 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
     enabled,
     locked = false,
     disabled = false,
-    onToggle
+    onToggle,
 }) => {
     return (
-        <div className={`flex items-center justify-between p-4 rounded-xl bg-white dark:bg-navy-900 
-                        border border-slate-200 dark:border-white/10 ${disabled ? 'opacity-50' : ''}`}>
+        <div
+            className={`flex items-center justify-between p-4 rounded-xl bg-white dark:bg-navy-900 
+                        border border-slate-200 dark:border-white/10 ${disabled ? 'opacity-50' : ''}`}
+        >
             <div className="flex-1">
                 <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-navy-900 dark:text-white">{title}</h4>
                     {locked && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-slate-100 dark:bg-white/10 
-                                         text-slate-500 rounded">
+                        <span
+                            className="px-2 py-0.5 text-[10px] font-bold uppercase bg-slate-100 dark:bg-white/10 
+                                         text-slate-500 rounded"
+                        >
                             Required
                         </span>
                     )}
@@ -273,13 +277,9 @@ const CookieCategory: React.FC<CookieCategoryProps> = ({
             <button
                 onClick={onToggle}
                 disabled={locked || disabled}
-                className={`relative w-12 h-7 rounded-full transition-colors ${locked || disabled
-                        ? 'cursor-not-allowed'
-                        : 'cursor-pointer'
-                    } ${enabled
-                        ? 'bg-purple-600'
-                        : 'bg-slate-300 dark:bg-slate-700'
-                    }`}
+                className={`relative w-12 h-7 rounded-full transition-colors ${
+                    locked || disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                } ${enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-700'}`}
             >
                 <motion.div
                     animate={{ x: enabled ? 22 : 2 }}

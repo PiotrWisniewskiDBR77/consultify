@@ -1,5 +1,5 @@
+import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Plus, X, Edit2, Check, Trash2 } from 'lucide-react';
 
 export interface DynamicListItem {
     id: string;
@@ -36,8 +36,8 @@ export const DynamicList: React.FC<DynamicListProps> = ({
     onDelete,
     title,
     description,
-    emptyStateMessage = "No items yet. Add one!",
-    onRowClick
+    emptyStateMessage = 'No items yet. Add one!',
+    onRowClick,
 }) => {
     // Safety check for undefined items
     const safeItems = items || [];
@@ -82,7 +82,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
     };
 
     const handleChange = (key: string, value: unknown) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
     return (
@@ -96,7 +96,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
 
             {/* List Header */}
             <div className="hidden md:flex gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-800 rounded-t-lg border border-slate-200 dark:border-white/5 font-medium text-xs text-slate-500 uppercase tracking-wider">
-                {columns.map(col => (
+                {columns.map((col) => (
                     <div key={col.key} className={`${col.width || 'flex-1'} px-2`}>
                         {col.label}
                     </div>
@@ -112,24 +112,33 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                     </div>
                 )}
 
-                {safeItems.map(item => {
+                {safeItems.map((item) => {
                     const isEditing = editingId === item.id;
 
                     if (isEditing) {
                         return (
-                            <div key={item.id} className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-purple-500 rounded-lg shadow-sm">
-                                {columns.map(col => (
+                            <div
+                                key={item.id}
+                                className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-purple-500 rounded-lg shadow-sm"
+                            >
+                                {columns.map((col) => (
                                     <div key={col.key} className={`${col.width || 'flex-1'}`}>
-                                        <label className="md:hidden text-xs font-bold text-slate-400 mb-1 block">{col.label}</label>
+                                        <label className="md:hidden text-xs font-bold text-slate-400 mb-1 block">
+                                            {col.label}
+                                        </label>
                                         {col.type === 'select' ? (
                                             <select
                                                 value={(formData[col.key] as string) || ''}
                                                 onChange={(e) => handleChange(col.key, e.target.value)}
                                                 className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
                                             >
-                                                <option value="" disabled>Select...</option>
-                                                {col.options?.map(opt => (
-                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                <option value="" disabled>
+                                                    Select...
+                                                </option>
+                                                {col.options?.map((opt) => (
+                                                    <option key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </option>
                                                 ))}
                                             </select>
                                         ) : (
@@ -144,8 +153,18 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                                     </div>
                                 ))}
                                 <div className="md:w-20 flex items-center justify-end gap-2 pt-2 md:pt-0">
-                                    <button onClick={handleSave} className="p-2 text-green-600 hover:bg-green-50 rounded"><Check size={18} /></button>
-                                    <button onClick={handleCancel} className="p-2 text-slate-400 hover:bg-slate-100 rounded"><X size={18} /></button>
+                                    <button
+                                        onClick={handleSave}
+                                        className="p-2 text-green-600 hover:bg-green-50 rounded"
+                                    >
+                                        <Check size={18} />
+                                    </button>
+                                    <button
+                                        onClick={handleCancel}
+                                        className="p-2 text-slate-400 hover:bg-slate-100 rounded"
+                                    >
+                                        <X size={18} />
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -157,19 +176,33 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                             onClick={() => onRowClick && onRowClick(item)}
                             className={`flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-lg hover:shadow-md transition-all group ${onRowClick ? 'cursor-pointer hover:border-purple-300 active:scale-[0.99] transition-transform' : ''}`}
                         >
-                            {columns.map(col => (
+                            {columns.map((col) => (
                                 <div key={col.key} className={`${col.width || 'flex-1'} flex items-center`}>
-                                    <span className="md:hidden text-xs font-bold text-slate-400 mr-2 min-w-[80px]">{col.label}:</span>
+                                    <span className="md:hidden text-xs font-bold text-slate-400 mr-2 min-w-[80px]">
+                                        {col.label}:
+                                    </span>
                                     {col.render ? (
                                         col.render(item)
                                     ) : (
-                                        <span className="text-sm text-navy-900 dark:text-slate-200">{String(item[col.key] ?? '')}</span>
+                                        <span className="text-sm text-navy-900 dark:text-slate-200">
+                                            {String(item[col.key] ?? '')}
+                                        </span>
                                     )}
                                 </div>
                             ))}
                             <div className="md:w-20 flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => handleStartEdit(item, e)} className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded"><Edit2 size={16} /></button>
-                                <button onClick={(e) => handleDelete(item.id, e)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                                <button
+                                    onClick={(e) => handleStartEdit(item, e)}
+                                    className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                                <button
+                                    onClick={(e) => handleDelete(item.id, e)}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         </div>
                     );
@@ -178,18 +211,24 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                 {/* Add Row */}
                 {isAdding ? (
                     <div className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-purple-50/50 dark:bg-purple-900/10 border border-purple-500 border-dashed rounded-lg">
-                        {columns.map(col => (
+                        {columns.map((col) => (
                             <div key={col.key} className={`${col.width || 'flex-1'}`}>
-                                <label className="md:hidden text-xs font-bold text-slate-400 mb-1 block">{col.label}</label>
+                                <label className="md:hidden text-xs font-bold text-slate-400 mb-1 block">
+                                    {col.label}
+                                </label>
                                 {col.type === 'select' ? (
                                     <select
                                         value={(formData[col.key] as string) || ''}
                                         onChange={(e) => handleChange(col.key, e.target.value)}
                                         className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
                                     >
-                                        <option value="" disabled>Select...</option>
-                                        {col.options?.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        <option value="" disabled>
+                                            Select...
+                                        </option>
+                                        {col.options?.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
                                         ))}
                                     </select>
                                 ) : (
@@ -204,8 +243,12 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                             </div>
                         ))}
                         <div className="md:w-20 flex items-center justify-end gap-2 pt-2 md:pt-0">
-                            <button onClick={handleSave} className="p-2 text-green-600 hover:bg-green-50 rounded"><Check size={18} /></button>
-                            <button onClick={handleCancel} className="p-2 text-slate-400 hover:bg-slate-100 rounded"><X size={18} /></button>
+                            <button onClick={handleSave} className="p-2 text-green-600 hover:bg-green-50 rounded">
+                                <Check size={18} />
+                            </button>
+                            <button onClick={handleCancel} className="p-2 text-slate-400 hover:bg-slate-100 rounded">
+                                <X size={18} />
+                            </button>
                         </div>
                     </div>
                 ) : (

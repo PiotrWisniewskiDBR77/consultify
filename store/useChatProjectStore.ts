@@ -1,12 +1,13 @@
 /**
  * Chat Project Store
- * 
+ *
  * Zustand store for managing chat projects (folders/categories).
  * Allows organizing conversations into projects like Claude AI's project feature.
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
 import { Api } from '../services/api';
 import { Conversation, useConversationStore } from './useConversationStore';
 
@@ -34,29 +35,37 @@ interface ChatProjectState {
     projects: ChatProject[];
     activeProjectId: string | null;
     expandedProjectIds: string[];
-    
+
     // UI State
     isLoading: boolean;
     error: string | null;
-    
+
     // Actions - Fetch
     fetchProjects: () => Promise<void>;
     fetchProjectWithConversations: (id: string) => Promise<ChatProjectWithConversations | null>;
-    
+
     // Actions - CRUD
-    createProject: (data: { name: string; description?: string; color?: string; icon?: string }) => Promise<ChatProject>;
-    updateProject: (id: string, updates: Partial<Pick<ChatProject, 'name' | 'description' | 'color' | 'icon'>>) => Promise<void>;
+    createProject: (data: {
+        name: string;
+        description?: string;
+        color?: string;
+        icon?: string;
+    }) => Promise<ChatProject>;
+    updateProject: (
+        id: string,
+        updates: Partial<Pick<ChatProject, 'name' | 'description' | 'color' | 'icon'>>,
+    ) => Promise<void>;
     deleteProject: (id: string) => Promise<void>;
-    
+
     // Actions - Conversation Management
     moveConversationToProject: (conversationId: string, projectId: string | null) => Promise<void>;
-    
+
     // Actions - UI
     setActiveProject: (id: string | null) => void;
     toggleProjectExpanded: (id: string) => void;
     setExpandedProjects: (ids: string[]) => void;
     clearError: () => void;
-    
+
     // Helpers
     getProjectById: (id: string) => ChatProject | undefined;
     getConversationsByProjectId: (projectId: string) => Conversation[];
@@ -95,7 +104,7 @@ export const useChatProjectStore = create<ChatProjectState>()(
                     set({ isLoading: false });
                     return {
                         ...mapApiProject(result),
-                        conversations: result.conversations?.map(mapApiConversation) || []
+                        conversations: result.conversations?.map(mapApiConversation) || [],
                     };
                 } catch (err: any) {
                     console.error('[ChatProjectStore] Fetch project error:', err);
@@ -111,12 +120,12 @@ export const useChatProjectStore = create<ChatProjectState>()(
                 try {
                     const result = await Api.createChatProject(data);
                     const project = mapApiProject(result);
-                    
+
                     set((state) => ({
                         projects: [project, ...state.projects],
-                        isLoading: false
+                        isLoading: false,
                     }));
-                    
+
                     return project;
                 } catch (err: any) {
                     console.error('[ChatProjectStore] Create error:', err);
@@ -128,11 +137,11 @@ export const useChatProjectStore = create<ChatProjectState>()(
             updateProject: async (id, updates) => {
                 try {
                     await Api.updateChatProject(id, updates);
-                    
+
                     set((state) => ({
-                        projects: state.projects.map(p =>
-                            p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p
-                        )
+                        projects: state.projects.map((p) =>
+                            p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p,
+                        ),
                     }));
                 } catch (err: any) {
                     console.error('[ChatProjectStore] Update error:', err);
@@ -144,13 +153,13 @@ export const useChatProjectStore = create<ChatProjectState>()(
             deleteProject: async (id) => {
                 try {
                     await Api.deleteChatProject(id);
-                    
+
                     set((state) => ({
-                        projects: state.projects.filter(p => p.id !== id),
+                        projects: state.projects.filter((p) => p.id !== id),
                         activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
-                        expandedProjectIds: state.expandedProjectIds.filter(eid => eid !== id)
+                        expandedProjectIds: state.expandedProjectIds.filter((eid) => eid !== id),
                     }));
-                    
+
                     // Refresh conversations to update their chat_project_id
                     useConversationStore.getState().fetchConversations();
                 } catch (err: any) {
@@ -170,16 +179,16 @@ export const useChatProjectStore = create<ChatProjectState>()(
                         // Update conversation to remove from project
                         await Api.updateConversation(conversationId, { chatProjectId: null });
                     }
-                    
+
                     // Update conversation counts
                     set((state) => {
-                        const updatedProjects = state.projects.map(p => {
+                        const updatedProjects = state.projects.map((p) => {
                             // Decrease count for old project (we don't track which one it was, so refresh will fix this)
                             return p;
                         });
                         return { projects: updatedProjects };
                     });
-                    
+
                     // Refresh both stores
                     get().fetchProjects();
                     useConversationStore.getState().fetchConversations();
@@ -199,8 +208,8 @@ export const useChatProjectStore = create<ChatProjectState>()(
             toggleProjectExpanded: (id) => {
                 set((state) => ({
                     expandedProjectIds: state.expandedProjectIds.includes(id)
-                        ? state.expandedProjectIds.filter(eid => eid !== id)
-                        : [...state.expandedProjectIds, id]
+                        ? state.expandedProjectIds.filter((eid) => eid !== id)
+                        : [...state.expandedProjectIds, id],
                 }));
             },
 
@@ -215,7 +224,7 @@ export const useChatProjectStore = create<ChatProjectState>()(
             // ==================== HELPERS ====================
 
             getProjectById: (id) => {
-                return get().projects.find(p => p.id === id);
+                return get().projects.find((p) => p.id === id);
             },
 
             getConversationsByProjectId: (projectId) => {
@@ -223,17 +232,17 @@ export const useChatProjectStore = create<ChatProjectState>()(
                 // For now, we'll use the API call
                 const conversations = useConversationStore.getState().conversations;
                 return conversations.filter((c: any) => c.chatProjectId === projectId);
-            }
+            },
         }),
         {
             name: 'consultify-chat-projects',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 activeProjectId: state.activeProjectId,
-                expandedProjectIds: state.expandedProjectIds
-            })
-        }
-    )
+                expandedProjectIds: state.expandedProjectIds,
+            }),
+        },
+    ),
 );
 
 // ==================== API MAPPERS ====================
@@ -247,7 +256,7 @@ function mapApiProject(api: any): ChatProject {
         icon: api.icon || 'folder',
         conversationCount: api.conversation_count || api.conversationCount || 0,
         createdAt: new Date(api.created_at || api.createdAt),
-        updatedAt: new Date(api.updated_at || api.updatedAt)
+        updatedAt: new Date(api.updated_at || api.updatedAt),
     };
 }
 
@@ -266,16 +275,9 @@ function mapApiConversation(api: any): Conversation {
         lastMessagePreview: api.last_message_preview,
         lastMessageAt: api.last_message_at ? new Date(api.last_message_at) : undefined,
         createdAt: new Date(api.created_at),
-        updatedAt: new Date(api.updated_at)
+        updatedAt: new Date(api.updated_at),
     };
 }
 
 export default useChatProjectStore;
-
-
-
-
-
-
-
 

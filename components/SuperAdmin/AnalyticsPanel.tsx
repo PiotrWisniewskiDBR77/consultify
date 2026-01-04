@@ -2,10 +2,11 @@
  * AnalyticsPanel - System Analytics & Reporting
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { BarChart3, TrendingUp, Activity, Loader2 } from 'lucide-react';
+import { Activity, BarChart3, Loader2, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 export const AnalyticsPanel: React.FC = () => {
     const [metrics, setMetrics] = useState<any>(null);
@@ -52,9 +53,7 @@ export const AnalyticsPanel: React.FC = () => {
                             <Activity size={20} className="text-blue-400" />
                             <span className="text-sm text-slate-400">API Requests</span>
                         </div>
-                        <div className="text-2xl font-bold text-white">
-                            {metrics.api?.total_requests || 0}
-                        </div>
+                        <div className="text-2xl font-bold text-white">{metrics.api?.total_requests || 0}</div>
                         <div className="text-xs text-slate-500 mt-1">
                             {metrics.api?.requests_last_hour || 0} in last hour
                         </div>
@@ -65,12 +64,8 @@ export const AnalyticsPanel: React.FC = () => {
                             <BarChart3 size={20} className="text-green-400" />
                             <span className="text-sm text-slate-400">AI Requests</span>
                         </div>
-                        <div className="text-2xl font-bold text-white">
-                            {metrics.ai?.total_requests || 0}
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                            Avg latency: {metrics.ai?.avg_latency || 0}ms
-                        </div>
+                        <div className="text-2xl font-bold text-white">{metrics.ai?.total_requests || 0}</div>
+                        <div className="text-xs text-slate-500 mt-1">Avg latency: {metrics.ai?.avg_latency || 0}ms</div>
                     </div>
 
                     <div className="p-4 bg-white/5 rounded-xl border border-white/10">
@@ -78,9 +73,7 @@ export const AnalyticsPanel: React.FC = () => {
                             <TrendingUp size={20} className="text-purple-400" />
                             <span className="text-sm text-slate-400">Database Queries</span>
                         </div>
-                        <div className="text-2xl font-bold text-white">
-                            {metrics.database?.total_queries || 0}
-                        </div>
+                        <div className="text-2xl font-bold text-white">{metrics.database?.total_queries || 0}</div>
                         <div className="text-xs text-slate-500 mt-1">
                             {metrics.database?.queries_last_hour || 0} in last hour
                         </div>
@@ -92,10 +85,3 @@ export const AnalyticsPanel: React.FC = () => {
 };
 
 export default AnalyticsPanel;
-
-
-
-
-
-
-

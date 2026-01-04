@@ -12,7 +12,8 @@ import { ModelRouter } from './modelRouter.js';
 import { draftService } from './draftService.js';
 import { memoryManager } from './memoryManager.js';
 import { aiLogger } from './logger.js';
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -488,6 +489,7 @@ const taskAdvisorService = new TaskAdvisorService();
 
 export { TaskAdvisorService };
 export default taskAdvisorService;
+
 
 
 

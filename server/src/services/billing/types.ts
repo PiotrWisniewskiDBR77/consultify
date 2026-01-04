@@ -1,5 +1,6 @@
 import type Stripe from 'stripe';
-import type { IDatabase } from '../database/IDatabase.js';
+
+import type { IDatabase } from '../../database/IDatabase.js';
 
 export interface BillingPlan {
     id: string;

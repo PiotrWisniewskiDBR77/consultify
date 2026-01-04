@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FullInitiative, Task, TaskStatus } from '../types';
-import { Api } from '../services/api';
-import { TaskCard } from './TaskCard';
 import { Plus } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
+import { Api } from '../services/api';
+import { FullInitiative, Task, TaskStatus } from '../types';
+import { TaskCard } from './TaskCard';
 
 interface InitiativeTaskBoardProps {
     initiative: FullInitiative;
@@ -26,21 +26,20 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
             // We might need to fetch all and filter, or update API to support initiativeId
             // The updated API supports fetching by initiativeId if we pass filtering params logic
             // But getTasks signature in client api.ts might need update to pass initiativeId
-            // For now, let's assume we can fetch all or filtered by project and then filter locally 
+            // For now, let's assume we can fetch all or filtered by project and then filter locally
             // OR use the updated backend that supports initiativeId (we updated backend route, need to check if we updated client api.ts getTasks)
             // We didn't update client api.ts getTasks signature to accept initiativeId in filters object explicitly but backend supports it?
             // Wait, backend `GET /` doesn't explicitly look for `initiativeId` in query params in the code I viewed (lines 12-15 of tasks.js).
-            // It only looks for `projectId, status, assigneeId, priority`. 
+            // It only looks for `projectId, status, assigneeId, priority`.
             // I MISSED adding `initiativeId` to the GET / route filters in backend!
-            // I will fetch all tasks for the organization (or project if linked) and filter client side for now to save a round trip of fixes. 
-            // Or better, fetch by project if initiative is linked to project. 
+            // I will fetch all tasks for the organization (or project if linked) and filter client side for now to save a round trip of fixes.
+            // Or better, fetch by project if initiative is linked to project.
 
-
-            const allTasks = await Api.getTasks({ projectId: initiative.id }); // Using initiative ID as project ID context? No. 
+            const allTasks = await Api.getTasks({ projectId: initiative.id }); // Using initiative ID as project ID context? No.
             // We need to fix backend to support filtering by initiativeId to be scalable.
             // For now, I will filter client side if I fetch all tasks, but that's bad.
-            // Let's rely on standard filtering: 
-            // Temporary: fetch all tasks and filter. 
+            // Let's rely on standard filtering:
+            // Temporary: fetch all tasks and filter.
             const res = await Api.getTasks();
             setTasks(res.filter((t: Task) => t.initiativeId === initiative.id));
         } finally {
@@ -70,13 +69,15 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
                     estimatedHours: t.estimatedHours,
                     why: t.why,
                     stepPhase: t.stepPhase as Phase, // 'design' | 'pilot' | 'rollout'
-                    checklist: t.acceptanceCriteria ? [{ id: Date.now().toString(), text: t.acceptanceCriteria, completed: false }] : [],
-                    taskType: 'execution'
+                    checklist: t.acceptanceCriteria
+                        ? [{ id: Date.now().toString(), text: t.acceptanceCriteria, completed: false }]
+                        : [],
+                    taskType: 'execution',
                 });
             }
             await loadTasks();
         } catch {
-            alert("Failed to generate tasks. Please try again.");
+            alert('Failed to generate tasks. Please try again.');
         } finally {
             setGenerating(false);
         }
@@ -85,14 +86,16 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
     const phases: Phase[] = ['design', 'pilot', 'rollout'];
     const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.DONE];
 
-    const getPhaseTasks = (phase: Phase) => tasks.filter(t => t.stepPhase === phase);
+    const getPhaseTasks = (phase: Phase) => tasks.filter((t) => t.stepPhase === phase);
 
     return (
         <div className="fixed inset-0 z-50 bg-navy-950 flex flex-col animate-in fade-in slide-in-from-bottom-10">
             {/* Header */}
             <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-navy-900">
                 <div className="flex items-center gap-4">
-                    <button onClick={onClose} className="text-slate-400 hover:text-white">Back</button>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white">
+                        Back
+                    </button>
                     <div className="h-6 w-px bg-white/10"></div>
                     <div>
                         <h2 className="text-white font-bold text-lg">{initiative.name}</h2>
@@ -104,12 +107,15 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
                 <div className="flex gap-3">
                     {/* Phase Tabs */}
                     <div className="flex bg-navy-950 rounded-lg p-1 border border-white/10">
-                        {phases.map(p => (
+                        {phases.map((p) => (
                             <button
                                 key={p}
                                 onClick={() => setActivePhase(p)}
-                                className={`px-4 py-1.5 rounded text-sm font-medium transition-all ${activePhase === p ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
-                                    }`}
+                                className={`px-4 py-1.5 rounded text-sm font-medium transition-all ${
+                                    activePhase === p
+                                        ? 'bg-blue-600 text-white shadow-lg'
+                                        : 'text-slate-400 hover:text-white'
+                                }`}
                             >
                                 {p.charAt(0).toUpperCase() + p.slice(1)}
                             </button>
@@ -136,10 +142,13 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
             {/* Canvas */}
             <div className="flex-1 overflow-x-auto p-6 bg-navy-900/50">
                 <div className="flex gap-6 h-full min-w-[1200px]">
-                    {statuses.map(status => {
-                        const phaseTasks = getPhaseTasks(activePhase).filter(t => t.status === status);
+                    {statuses.map((status) => {
+                        const phaseTasks = getPhaseTasks(activePhase).filter((t) => t.status === status);
                         return (
-                            <div key={status} className="flex-1 flex flex-col bg-navy-950/30 rounded-xl border border-white/5 min-w-[280px]">
+                            <div
+                                key={status}
+                                className="flex-1 flex flex-col bg-navy-950/30 rounded-xl border border-white/5 min-w-[280px]"
+                            >
                                 <div className="p-3 border-b border-white/5 flex justify-between items-center bg-navy-950/50 rounded-t-xl">
                                     <h4 className="text-sm font-medium text-slate-300 uppercase tracking-wider">
                                         {status.replace('_', ' ')}
@@ -149,7 +158,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({ initia
                                     </span>
                                 </div>
                                 <div className="flex-1 p-3 space-y-3 overflow-y-auto">
-                                    {phaseTasks.map(task => (
+                                    {phaseTasks.map((task) => (
                                         <TaskCard
                                             key={task.id}
                                             task={task}

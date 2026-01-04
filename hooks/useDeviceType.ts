@@ -1,11 +1,11 @@
 /**
  * useDeviceType Hook
- * 
+ *
  * Detects the current device type and provides responsive utilities
  * for mobile, tablet, and desktop layouts.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type Orientation = 'portrait' | 'landscape';
@@ -29,9 +29,9 @@ interface DeviceInfo {
 
 // Breakpoints matching tailwind.config.js
 const BREAKPOINTS = {
-    mobile: 767,    // max-width for mobile
-    tablet: 1023,   // max-width for tablet
-    desktop: 1024,  // min-width for desktop
+    mobile: 767, // max-width for mobile
+    tablet: 1023, // max-width for tablet
+    desktop: 1024, // min-width for desktop
 };
 
 /**
@@ -56,7 +56,7 @@ const getSafeAreaInsets = () => {
     }
 
     const style = getComputedStyle(document.documentElement);
-    
+
     const parseInset = (prop: string): number => {
         const value = style.getPropertyValue(prop);
         return value ? parseInt(value, 10) || 0 : 0;
@@ -133,7 +133,7 @@ export const useDeviceType = (): DeviceInfo => {
 
         // Listen for resize events
         window.addEventListener('resize', updateDeviceInfo);
-        
+
         // Listen for orientation change (mobile devices)
         const handleOrientationChange = () => {
             // Delay to allow orientation to complete
@@ -225,10 +225,3 @@ export const useKeyboardVisible = (): boolean => {
 };
 
 export default useDeviceType;
-
-
-
-
-
-
-

@@ -15,12 +15,12 @@ import * as DecisionTriggerServiceModule from '../services/decisionTriggerServic
 const DecisionTriggerService = DecisionTriggerServiceModule.default || DecisionTriggerServiceModule;
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../src/utils/asyncHandler.js';
-import * as queryHelpers from '../src/utils/queryHelpers.js';
+import { asyncHandler  } from '../dist/utils/asyncHandler.js';
+import * as queryHelpers from '../dist/utils/queryHelpers.js';
 
 router.use(verifyToken);
 

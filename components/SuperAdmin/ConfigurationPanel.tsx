@@ -2,10 +2,11 @@
  * ConfigurationPanel - System Configuration Management
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { Settings, Plus, Edit, Trash2, Save, Loader2, X } from 'lucide-react';
+import { Edit, Loader2, Plus, Save, Settings, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 export const ConfigurationPanel: React.FC = () => {
     const [configs, setConfigs] = useState<any[]>([]);
@@ -35,7 +36,7 @@ export const ConfigurationPanel: React.FC = () => {
             await (Api as any).setSystemConfig({
                 config_key: key,
                 config_value: value,
-                config_type: configType
+                config_type: configType,
             });
             toast.success('Configuration saved');
             setEditingKey(null);
@@ -68,10 +69,7 @@ export const ConfigurationPanel: React.FC = () => {
                     <div className="text-center py-12 text-slate-400">No configurations</div>
                 ) : (
                     configs.map((config) => (
-                        <div
-                            key={config.config_key}
-                            className="p-4 bg-white/5 rounded-xl border border-white/10"
-                        >
+                        <div key={config.config_key} className="p-4 bg-white/5 rounded-xl border border-white/10">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
@@ -97,7 +95,9 @@ export const ConfigurationPanel: React.FC = () => {
                                                 className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                                             />
                                             <button
-                                                onClick={() => handleSave(config.config_key, editValue, config.config_type)}
+                                                onClick={() =>
+                                                    handleSave(config.config_key, editValue, config.config_type)
+                                                }
                                                 className="p-2 bg-green-600 hover:bg-green-700 rounded-lg"
                                             >
                                                 <Save size={16} />
@@ -138,10 +138,4 @@ export const ConfigurationPanel: React.FC = () => {
 };
 
 export default ConfigurationPanel;
-
-
-
-
-
-
 

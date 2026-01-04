@@ -2,10 +2,11 @@
  * BackupPanel - Backup & Disaster Recovery Management
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { HardDrive, Plus, Trash2, Download, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, Download, HardDrive, Loader2, Plus, Trash2, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 export const BackupPanel: React.FC = () => {
     const [backups, setBackups] = useState<any[]>([]);
@@ -89,20 +90,20 @@ export const BackupPanel: React.FC = () => {
                     </div>
                 ) : (
                     backups.map((backup) => (
-                        <div
-                            key={backup.id}
-                            className="p-4 bg-white/5 rounded-xl border border-white/10"
-                        >
+                        <div key={backup.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <span className="text-white font-medium">
-                                            {backup.backup_type} Backup
-                                        </span>
-                                        <span className={`px-2 py-1 text-xs rounded ${backup.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                                            backup.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                                                'bg-yellow-500/20 text-yellow-400'
-                                            }`}>
+                                        <span className="text-white font-medium">{backup.backup_type} Backup</span>
+                                        <span
+                                            className={`px-2 py-1 text-xs rounded ${
+                                                backup.status === 'completed'
+                                                    ? 'bg-green-500/20 text-green-400'
+                                                    : backup.status === 'failed'
+                                                      ? 'bg-red-500/20 text-red-400'
+                                                      : 'bg-yellow-500/20 text-yellow-400'
+                                            }`}
+                                        >
                                             {backup.status}
                                         </span>
                                         {backup.status === 'completed' ? (
@@ -147,10 +148,4 @@ export const BackupPanel: React.FC = () => {
 };
 
 export default BackupPanel;
-
-
-
-
-
-
 

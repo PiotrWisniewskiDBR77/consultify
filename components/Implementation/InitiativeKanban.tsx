@@ -1,47 +1,47 @@
 /**
  * InitiativeKanban
- * 
+ *
  * Kanban board for managing initiatives in execution.
  * Shows initiatives by stage with SLA tracking and task breakdown.
  */
 
-import React, { useState, useCallback } from 'react';
 import {
-    DndContext,
     closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
+    defaultDropAnimationSideEffects,
+    DndContext,
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
-    defaultDropAnimationSideEffects,
     DropAnimation,
-    useDroppable
+    KeyboardSensor,
+    PointerSensor,
+    useDroppable,
+    useSensor,
+    useSensors,
 } from '@dnd-kit/core';
 import {
     SortableContext,
     sortableKeyboardCoordinates,
+    useSortable,
     verticalListSortingStrategy,
-    useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Clock,
-    User,
     AlertTriangle,
-    ListTodo,
     Calendar,
+    Clock,
+    ListTodo,
     MoreHorizontal,
-    Target,
-    Rocket,
     Package,
-    Timer
+    Rocket,
+    Target,
+    Timer,
+    User,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '../../services/api';
 import { Initiative, Task } from '../../types';
 
 interface Column {
@@ -60,10 +60,34 @@ interface InitiativeKanbanProps {
 }
 
 const EXECUTION_STAGES: Column[] = [
-    { id: 'KICKOFF', title: 'Kickoff', icon: <Rocket size={16} />, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/20' },
-    { id: 'IN_PROGRESS', title: 'In Progress', icon: <Timer size={16} />, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-900/20' },
-    { id: 'REVIEW', title: 'Under Review', icon: <Target size={16} />, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-900/20' },
-    { id: 'DELIVERY', title: 'Delivery', icon: <Package size={16} />, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/20' },
+    {
+        id: 'KICKOFF',
+        title: 'Kickoff',
+        icon: <Rocket size={16} />,
+        color: 'text-blue-600 dark:text-blue-400',
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    },
+    {
+        id: 'IN_PROGRESS',
+        title: 'In Progress',
+        icon: <Timer size={16} />,
+        color: 'text-purple-600 dark:text-purple-400',
+        bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    },
+    {
+        id: 'REVIEW',
+        title: 'Under Review',
+        icon: <Target size={16} />,
+        color: 'text-amber-600 dark:text-amber-400',
+        bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+    },
+    {
+        id: 'DELIVERY',
+        title: 'Delivery',
+        icon: <Package size={16} />,
+        color: 'text-green-600 dark:text-green-400',
+        bgColor: 'bg-green-50 dark:bg-green-900/20',
+    },
 ];
 
 // Droppable Column Component
@@ -77,10 +101,9 @@ const DroppableColumn: React.FC<{
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${isOver
-                ? 'bg-purple-50 dark:bg-purple-900/20'
-                : 'bg-slate-50 dark:bg-navy-950/50'
-                }`}
+            className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${
+                isOver ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-slate-50 dark:bg-navy-950/50'
+            }`}
         >
             {children}
         </div>
@@ -94,23 +117,16 @@ const SortableInitiativeCard: React.FC<{
     onInitiativeClick?: (initiative: Initiative) => void;
     getSLAStatus: (initiative: Initiative) => 'ok' | 'warning' | 'overdue';
 }> = ({ initiative, index, onInitiativeClick, getSLAStatus }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: initiative.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: initiative.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1
+        opacity: isDragging ? 0.5 : 1,
     };
 
     const slaStatus = getSLAStatus(initiative);
-    const completedTasks = initiative.tasks?.filter(t => t.status === 'DONE').length || 0;
+    const completedTasks = initiative.tasks?.filter((t) => t.status === 'DONE').length || 0;
     const totalTasks = initiative.tasks?.length || 0;
     const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -120,10 +136,11 @@ const SortableInitiativeCard: React.FC<{
             style={style}
             {...attributes}
             {...listeners}
-            className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${isDragging
-                ? 'shadow-lg border-purple-400 dark:border-purple-500 rotate-2'
-                : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
-                }`}
+            className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${
+                isDragging
+                    ? 'shadow-lg border-purple-400 dark:border-purple-500 rotate-2'
+                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+            }`}
             onClick={() => !isDragging && onInitiativeClick?.(initiative)}
         >
             {/* Header */}
@@ -141,9 +158,7 @@ const SortableInitiativeCard: React.FC<{
             {/* Progress bar */}
             <div className="mb-3">
                 <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                        Overall Progress
-                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Overall Progress</span>
                     <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
                         {initiative.progress || 0}%
                     </span>
@@ -160,23 +175,25 @@ const SortableInitiativeCard: React.FC<{
             {totalTasks > 0 && (
                 <div className="flex items-center gap-2 mb-3 text-xs text-slate-500 dark:text-slate-400">
                     <ListTodo size={12} />
-                    <span>{completedTasks}/{totalTasks} tasks</span>
+                    <span>
+                        {completedTasks}/{totalTasks} tasks
+                    </span>
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-green-500 rounded-full"
-                            style={{ width: `${taskProgress}%` }}
-                        />
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${taskProgress}%` }} />
                     </div>
                 </div>
             )}
 
             {/* SLA indicator */}
-            <div className={`flex items-center gap-2 p-2 rounded-lg text-xs ${slaStatus === 'overdue'
-                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                : slaStatus === 'warning'
-                    ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                    : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                }`}>
+            <div
+                className={`flex items-center gap-2 p-2 rounded-lg text-xs ${
+                    slaStatus === 'overdue'
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                        : slaStatus === 'warning'
+                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                }`}
+            >
                 {slaStatus === 'overdue' ? (
                     <AlertTriangle size={12} />
                 ) : slaStatus === 'warning' ? (
@@ -187,12 +204,9 @@ const SortableInitiativeCard: React.FC<{
                 <span>
                     {initiative.plannedEndDate
                         ? new Date(initiative.plannedEndDate).toLocaleDateString('pl-PL')
-                        : 'No deadline'
-                    }
+                        : 'No deadline'}
                 </span>
-                {slaStatus === 'overdue' && (
-                    <span className="font-medium ml-auto">OVERDUE</span>
-                )}
+                {slaStatus === 'overdue' && <span className="font-medium ml-auto">OVERDUE</span>}
             </div>
 
             {/* Footer */}
@@ -205,19 +219,21 @@ const SortableInitiativeCard: React.FC<{
                     <span>
                         {initiative.ownerExecution
                             ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
-                            : 'Unassigned'
-                        }
+                            : 'Unassigned'}
                     </span>
                 </div>
 
                 {/* Priority */}
                 {initiative.priority && (
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${initiative.priority === 'Critical'
-                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                        : initiative.priority === 'High'
-                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                        }`}>
+                    <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded ${
+                            initiative.priority === 'Critical'
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                : initiative.priority === 'High'
+                                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}
+                    >
                         {initiative.priority}
                     </span>
                 )}
@@ -230,7 +246,7 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
     initiatives,
     onInitiativeClick,
     onStageChange,
-    onStatusChange
+    onStatusChange,
 }) => {
     const [localInitiatives, setLocalInitiatives] = useState(initiatives);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -239,16 +255,14 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
-        })
+        }),
     );
 
     // Calculate SLA status
     const getSLAStatus = (initiative: Initiative): 'ok' | 'warning' | 'overdue' => {
         if (!initiative.slaDeadline && !initiative.plannedEndDate) return 'ok';
         const deadline = initiative.slaDeadline || initiative.plannedEndDate;
-        const daysToDeadline = Math.ceil(
-            (new Date(deadline!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-        );
+        const daysToDeadline = Math.ceil((new Date(deadline!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
         if (daysToDeadline < 0) return 'overdue';
         if (daysToDeadline <= 7) return 'warning';
         return 'ok';
@@ -260,47 +274,45 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
     };
 
     // Handle drag end
-    const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveId(null);
+    const handleDragEnd = useCallback(
+        async (event: DragEndEvent) => {
+            const { active, over } = event;
+            setActiveId(null);
 
-        if (!over) return;
+            if (!over) return;
 
-        const draggableId = active.id as string;
-        const newStage = over.id as string;
-        const initiative = localInitiatives.find(init => init.id === draggableId);
+            const draggableId = active.id as string;
+            const newStage = over.id as string;
+            const initiative = localInitiatives.find((init) => init.id === draggableId);
 
-        if (!initiative) return;
-        if (initiative.currentStage === newStage) return;
+            if (!initiative) return;
+            if (initiative.currentStage === newStage) return;
 
-        // Optimistic update
-        setLocalInitiatives(prev =>
-            prev.map(init =>
-                init.id === draggableId
-                    ? { ...init, currentStage: newStage }
-                    : init
-            )
-        );
+            // Optimistic update
+            setLocalInitiatives((prev) =>
+                prev.map((init) => (init.id === draggableId ? { ...init, currentStage: newStage } : init)),
+            );
 
-        // Call parent handler
-        onStageChange?.(draggableId, newStage);
+            // Call parent handler
+            onStageChange?.(draggableId, newStage);
 
-        // API call
-        try {
-            await Api.put(`/initiatives/${draggableId}`, { currentStage: newStage });
-            toast.success('Stage updated');
-        } catch (err) {
-            // Revert on error
-            setLocalInitiatives(initiatives);
-            toast.error('Failed to update stage');
-        }
-    }, [initiatives, localInitiatives, onStageChange]);
+            // API call
+            try {
+                await Api.put(`/initiatives/${draggableId}`, { currentStage: newStage });
+                toast.success('Stage updated');
+            } catch (err) {
+                // Revert on error
+                setLocalInitiatives(initiatives);
+                toast.error('Failed to update stage');
+            }
+        },
+        [initiatives, localInitiatives, onStageChange],
+    );
 
     // Group initiatives by stage
     const getInitiativesByStage = (stageId: string) => {
-        return localInitiatives.filter(init =>
-            (init.currentStage || 'KICKOFF') === stageId &&
-            init.status === 'EXECUTING'
+        return localInitiatives.filter(
+            (init) => (init.currentStage || 'KICKOFF') === stageId && init.status === 'EXECUTING',
         );
     };
 
@@ -314,7 +326,7 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
         }),
     };
 
-    const activeInitiative = activeId ? localInitiatives.find(init => init.id === activeId) : null;
+    const activeInitiative = activeId ? localInitiatives.find((init) => init.id === activeId) : null;
 
     return (
         <DndContext
@@ -324,29 +336,26 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
             onDragEnd={handleDragEnd}
         >
             <div className="flex gap-4 overflow-x-auto pb-4">
-                {EXECUTION_STAGES.map(column => {
+                {EXECUTION_STAGES.map((column) => {
                     const columnInitiatives = getInitiativesByStage(column.id);
-                    const initiativeIds = columnInitiatives.map(init => init.id);
+                    const initiativeIds = columnInitiatives.map((init) => init.id);
 
                     return (
                         <div key={column.id} className="flex-1 min-w-[280px] max-w-[320px]">
                             {/* Column Header */}
                             <div className={`flex items-center gap-2 px-3 py-2 rounded-t-lg ${column.bgColor}`}>
                                 <span className={column.color}>{column.icon}</span>
-                                <h3 className={`font-semibold text-sm ${column.color}`}>
-                                    {column.title}
-                                </h3>
-                                <span className={`ml-auto text-xs font-medium ${column.color} bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded`}>
+                                <h3 className={`font-semibold text-sm ${column.color}`}>{column.title}</h3>
+                                <span
+                                    className={`ml-auto text-xs font-medium ${column.color} bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded`}
+                                >
                                     {columnInitiatives.length}
                                 </span>
                             </div>
 
                             {/* Column Content */}
                             <DroppableColumn id={column.id} column={column}>
-                                <SortableContext
-                                    items={initiativeIds}
-                                    strategy={verticalListSortingStrategy}
-                                >
+                                <SortableContext items={initiativeIds} strategy={verticalListSortingStrategy}>
                                     {columnInitiatives.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500 text-sm">
                                             <Package size={24} className="mb-2 opacity-50" />
@@ -386,12 +395,4 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
 };
 
 export default InitiativeKanban;
-
-
-
-
-
-
-
-
 

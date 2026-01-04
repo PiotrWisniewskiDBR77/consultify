@@ -4,9 +4,17 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { attachUserState, requireState, requirePhase, requirePermission, setDependencies, type AuthRequest } from '../../../../src/middleware/userStateGuard.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    attachUserState,
+    type AuthRequest,
+    requirePermission,
+    requirePhase,
+    requireState,
+    setDependencies,
+} from '../../../../src/middleware/userStateGuard.middleware.js';
 
 describe('User State Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -121,7 +129,7 @@ describe('User State Guard Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'INVALID_USER_STATE',
-                })
+                }),
             );
         });
 
@@ -172,7 +180,4 @@ describe('User State Guard Middleware', () => {
         });
     });
 });
-
-
-
 

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { OnboardingStep } from '../../../components/Onboarding/OnboardingStep';
+import { OnboardingStep } from '../../components/Onboarding/OnboardingStep';
 
 describe('OnboardingStep Component', () => {
     it('renders onboarding step', () => {
@@ -26,6 +26,7 @@ describe('OnboardingStep Component', () => {
         expect(step.closest('div')).toHaveClass(/complete/);
     });
 });
+
 
 
 

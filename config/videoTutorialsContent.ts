@@ -1,10 +1,10 @@
 /**
  * Video Tutorials Content
- * 
+ *
  * Video tutorial entries for all modules with HeyGen script references.
  * URLs should be updated when actual videos are available.
  * Used by HelpSidePanel in the "Video" tab.
- * 
+ *
  * Script files are located in: docs/videos/scripts/
  * See docs/videos/README.md for production workflow.
  */
@@ -45,7 +45,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['introduction', 'overview', 'getting-started'],
         scriptPath: '01-consultify-welcome.md',
-        filename: '01-consultify-welcome.mp4'
+        filename: '01-consultify-welcome.mp4',
     },
     {
         id: 'onboarding-first-steps',
@@ -59,7 +59,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['profile', 'setup', 'first-steps'],
         scriptPath: '02-first-steps-profile.md',
-        filename: '02-first-steps-profile.mp4'
+        filename: '02-first-steps-profile.mp4',
     },
     {
         id: 'onboarding-navigation',
@@ -73,7 +73,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['navigation', 'modules', 'interface'],
         scriptPath: '03-platform-navigation.md',
-        filename: '03-platform-navigation.mp4'
+        filename: '03-platform-navigation.mp4',
     },
 
     // ==========================================
@@ -91,7 +91,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['dashboard', 'widgets', 'metrics'],
         scriptPath: '04-dashboard-overview.md',
-        filename: '04-dashboard-overview.mp4'
+        filename: '04-dashboard-overview.mp4',
     },
     {
         id: 'dashboard-customization',
@@ -105,7 +105,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['customization', 'widgets', 'personalization'],
         scriptPath: '05-dashboard-customization.md',
-        filename: '05-dashboard-customization.mp4'
+        filename: '05-dashboard-customization.mp4',
     },
 
     // ==========================================
@@ -123,7 +123,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['assessment', 'maturity', 'introduction'],
         scriptPath: '06-assessment-intro.md',
-        filename: '06-assessment-intro.mp4'
+        filename: '06-assessment-intro.mp4',
     },
     {
         id: 'assessment-drd-walkthrough',
@@ -137,7 +137,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['DRD', 'walkthrough', 'step-by-step'],
         scriptPath: '07-drd-walkthrough.md',
-        filename: '07-drd-walkthrough.mp4'
+        filename: '07-drd-walkthrough.mp4',
     },
     {
         id: 'assessment-evidence',
@@ -151,7 +151,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['evidence', 'documents', 'upload'],
         scriptPath: '08-assessment-evidence.md',
-        filename: '08-assessment-evidence.mp4'
+        filename: '08-assessment-evidence.mp4',
     },
     {
         id: 'assessment-gap-analysis',
@@ -165,7 +165,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['gap-analysis', 'interpretation', 'planning'],
         scriptPath: '09-gap-analysis.md',
-        filename: '09-gap-analysis.mp4'
+        filename: '09-gap-analysis.mp4',
     },
 
     // ==========================================
@@ -183,7 +183,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['AI', 'generation', 'initiatives'],
         scriptPath: '10-initiative-generation.md',
-        filename: '10-initiative-generation.mp4'
+        filename: '10-initiative-generation.mp4',
     },
     {
         id: 'initiatives-prioritization',
@@ -197,21 +197,22 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['prioritization', 'matrix', 'impact'],
         scriptPath: '11-prioritization-matrix.md',
-        filename: '11-prioritization-matrix.mp4'
+        filename: '11-prioritization-matrix.mp4',
     },
     {
         id: 'initiatives-business-case',
         title: 'Building a Compelling Business Case',
         titlePl: 'Budowanie Przekonującego Business Case',
         description: 'Create business cases that secure stakeholder buy-in and funding for your initiatives.',
-        descriptionPl: 'Twórz business case, które zapewniają poparcie interesariuszy i finansowanie dla Twoich inicjatyw.',
+        descriptionPl:
+            'Twórz business case, które zapewniają poparcie interesariuszy i finansowanie dla Twoich inicjatyw.',
         duration: '08:00',
         url: '#',
         moduleId: 'initiatives',
         difficulty: 'advanced',
         tags: ['business-case', 'stakeholders', 'funding'],
         scriptPath: '12-business-case.md',
-        filename: '12-business-case.mp4'
+        filename: '12-business-case.mp4',
     },
 
     // ==========================================
@@ -229,7 +230,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['roadmap', 'phases', 'planning'],
         scriptPath: '13-roadmap-creation.md',
-        filename: '13-roadmap-creation.mp4'
+        filename: '13-roadmap-creation.mp4',
     },
     {
         id: 'roadmap-dependencies',
@@ -243,7 +244,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'advanced',
         tags: ['dependencies', 'resources', 'capacity'],
         scriptPath: '14-dependencies-resources.md',
-        filename: '14-dependencies-resources.mp4'
+        filename: '14-dependencies-resources.mp4',
     },
 
     // ==========================================
@@ -261,7 +262,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['pilot', 'execution', 'evaluation'],
         scriptPath: '15-pilot-program.md',
-        filename: '15-pilot-program.mp4'
+        filename: '15-pilot-program.mp4',
     },
     {
         id: 'implementation-stage-gate',
@@ -275,7 +276,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['stage-gate', 'gates', 'methodology'],
         scriptPath: '16-stage-gate-process.md',
-        filename: '16-stage-gate-process.mp4'
+        filename: '16-stage-gate-process.mp4',
     },
     {
         id: 'implementation-change-management',
@@ -289,7 +290,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'advanced',
         tags: ['ADKAR', 'change-management', 'adoption'],
         scriptPath: '17-adkar-change-management.md',
-        filename: '17-adkar-change-management.mp4'
+        filename: '17-adkar-change-management.mp4',
     },
 
     // ==========================================
@@ -307,7 +308,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'intermediate',
         tags: ['ROI', 'calculator', 'value'],
         scriptPath: '18-roi-calculation.md',
-        filename: '18-roi-calculation.mp4'
+        filename: '18-roi-calculation.mp4',
     },
     {
         id: 'reports-executive',
@@ -321,7 +322,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         difficulty: 'beginner',
         tags: ['executive', 'reports', 'stakeholders'],
         scriptPath: '19-executive-reports.md',
-        filename: '19-executive-reports.mp4'
+        filename: '19-executive-reports.mp4',
     },
 
     // ==========================================
@@ -337,7 +338,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'mywork',
         difficulty: 'beginner',
-        tags: ['productivity', 'tasks', 'tips']
+        tags: ['productivity', 'tasks', 'tips'],
     },
     {
         id: 'mywork-focus',
@@ -349,7 +350,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'mywork',
         difficulty: 'beginner',
-        tags: ['focus', 'deep-work', 'distractions']
+        tags: ['focus', 'deep-work', 'distractions'],
     },
 
     // ==========================================
@@ -365,7 +366,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'organization',
         difficulty: 'intermediate',
-        tags: ['context', 'AI', 'setup']
+        tags: ['context', 'AI', 'setup'],
     },
     {
         id: 'organization-strategy',
@@ -377,7 +378,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'organization',
         difficulty: 'intermediate',
-        tags: ['strategy', 'goals', 'challenges']
+        tags: ['strategy', 'goals', 'challenges'],
     },
 
     // ==========================================
@@ -393,7 +394,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'settings',
         difficulty: 'beginner',
-        tags: ['2FA', 'security', 'authentication']
+        tags: ['2FA', 'security', 'authentication'],
     },
     {
         id: 'settings-notifications',
@@ -405,7 +406,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'settings',
         difficulty: 'beginner',
-        tags: ['notifications', 'preferences', 'email']
+        tags: ['notifications', 'preferences', 'email'],
     },
     {
         id: 'settings-integrations',
@@ -417,7 +418,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'settings',
         difficulty: 'beginner',
-        tags: ['integrations', 'Slack', 'connections']
+        tags: ['integrations', 'Slack', 'connections'],
     },
 
     // ==========================================
@@ -428,12 +429,13 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         title: 'Managing Users and Permissions',
         titlePl: 'Zarządzanie Użytkownikami i Uprawnieniami',
         description: 'Admin guide to inviting users, assigning roles, and managing access.',
-        descriptionPl: 'Przewodnik administratora do zapraszania użytkowników, przypisywania ról i zarządzania dostępem.',
+        descriptionPl:
+            'Przewodnik administratora do zapraszania użytkowników, przypisywania ról i zarządzania dostępem.',
         duration: '07:00',
         url: '#',
         moduleId: 'admin',
         difficulty: 'intermediate',
-        tags: ['users', 'permissions', 'roles']
+        tags: ['users', 'permissions', 'roles'],
     },
     {
         id: 'admin-ai-config',
@@ -445,7 +447,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'admin',
         difficulty: 'advanced',
-        tags: ['AI', 'configuration', 'limits']
+        tags: ['AI', 'configuration', 'limits'],
     },
     {
         id: 'admin-knowledge-base',
@@ -457,7 +459,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'admin',
         difficulty: 'intermediate',
-        tags: ['knowledge', 'documents', 'upload']
+        tags: ['knowledge', 'documents', 'upload'],
     },
 
     // ==========================================
@@ -473,7 +475,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'superadmin',
         difficulty: 'advanced',
-        tags: ['organizations', 'multi-tenant', 'management']
+        tags: ['organizations', 'multi-tenant', 'management'],
     },
     {
         id: 'superadmin-sso',
@@ -485,7 +487,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'superadmin',
         difficulty: 'advanced',
-        tags: ['SSO', 'SAML', 'enterprise']
+        tags: ['SSO', 'SAML', 'enterprise'],
     },
     {
         id: 'superadmin-whitelabel',
@@ -497,7 +499,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'superadmin',
         difficulty: 'advanced',
-        tags: ['whitelabel', 'branding', 'customization']
+        tags: ['whitelabel', 'branding', 'customization'],
     },
     {
         id: 'superadmin-billing',
@@ -509,7 +511,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'superadmin',
         difficulty: 'advanced',
-        tags: ['billing', 'subscriptions', 'invoices']
+        tags: ['billing', 'subscriptions', 'invoices'],
     },
 
     // ==========================================
@@ -525,7 +527,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'ai-tools',
         difficulty: 'beginner',
-        tags: ['AI', 'advisor', 'recommendations']
+        tags: ['AI', 'advisor', 'recommendations'],
     },
     {
         id: 'ai-tools-scenarios',
@@ -537,7 +539,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'ai-tools',
         difficulty: 'intermediate',
-        tags: ['scenarios', 'what-if', 'analysis']
+        tags: ['scenarios', 'what-if', 'analysis'],
     },
 
     // ==========================================
@@ -553,7 +555,7 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'knowledge',
         difficulty: 'beginner',
-        tags: ['masterclass', 'learning', 'overview']
+        tags: ['masterclass', 'learning', 'overview'],
     },
     {
         id: 'knowledge-templates',
@@ -565,22 +567,22 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
         url: '#',
         moduleId: 'knowledge',
         difficulty: 'beginner',
-        tags: ['templates', 'download', 'customization']
-    }
+        tags: ['templates', 'download', 'customization'],
+    },
 ];
 
 /**
  * Get video tutorials for a specific module
  */
 export function getVideosForModule(moduleId: HelpModuleId): VideoTutorial[] {
-    return VIDEO_TUTORIALS.filter(video => video.moduleId === moduleId);
+    return VIDEO_TUTORIALS.filter((video) => video.moduleId === moduleId);
 }
 
 /**
  * Get videos by difficulty level
  */
 export function getVideosByDifficulty(difficulty: 'beginner' | 'intermediate' | 'advanced'): VideoTutorial[] {
-    return VIDEO_TUTORIALS.filter(video => video.difficulty === difficulty);
+    return VIDEO_TUTORIALS.filter((video) => video.difficulty === difficulty);
 }
 
 /**
@@ -588,13 +590,13 @@ export function getVideosByDifficulty(difficulty: 'beginner' | 'intermediate' | 
  */
 export function searchVideos(query: string, language: 'en' | 'pl' = 'en'): VideoTutorial[] {
     const lowerQuery = query.toLowerCase();
-    return VIDEO_TUTORIALS.filter(video => {
+    return VIDEO_TUTORIALS.filter((video) => {
         const title = language === 'pl' ? video.titlePl : video.title;
         const description = language === 'pl' ? video.descriptionPl : video.description;
         return (
             title.toLowerCase().includes(lowerQuery) ||
             description.toLowerCase().includes(lowerQuery) ||
-            video.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+            video.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
         );
     });
 }
@@ -604,7 +606,7 @@ export function searchVideos(query: string, language: 'en' | 'pl' = 'en'): Video
  */
 export function getAllVideoTags(): string[] {
     const tags = new Set<string>();
-    VIDEO_TUTORIALS.forEach(video => video.tags.forEach(tag => tags.add(tag)));
+    VIDEO_TUTORIALS.forEach((video) => video.tags.forEach((tag) => tags.add(tag)));
     return Array.from(tags).sort();
 }
 
@@ -614,8 +616,8 @@ export function getAllVideoTags(): string[] {
 export function getTotalDurationForModule(moduleId: HelpModuleId): string {
     const videos = getVideosForModule(moduleId);
     let totalSeconds = 0;
-    
-    videos.forEach(video => {
+
+    videos.forEach((video) => {
         const parts = video.duration.split(':');
         if (parts.length === 2) {
             totalSeconds += parseInt(parts[0]) * 60 + parseInt(parts[1]);
@@ -623,13 +625,12 @@ export function getTotalDurationForModule(moduleId: HelpModuleId): string {
             totalSeconds += parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
         }
     });
-    
+
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
-    
+
     if (hours > 0) {
         return `${hours}h ${minutes}m`;
     }
     return `${minutes}m`;
 }
-

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { PlaybookTemplateVersion, TemplateStatus } from '../../types';
-import { Play, Clock, CheckCircle, XCircle, Pause, ChevronRight } from 'lucide-react';
+import { CheckCircle, ChevronRight, Clock, Pause, Play, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { PlaybookTemplateVersion, TemplateStatus } from '../../types';
 
 interface PlaybookRun {
     id: string;
@@ -26,7 +27,7 @@ interface PlaybookRun {
 /**
  * PlaybookRunsView
  * Step 13: Visual Playbook Editor
- * 
+ *
  * Admin view for monitoring playbook runs.
  */
 export const PlaybookRunsView: React.FC = () => {
@@ -43,7 +44,7 @@ export const PlaybookRunsView: React.FC = () => {
         try {
             setLoading(true);
             const res = await fetch('/api/ai/playbooks/templates/published', {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to load templates');
@@ -64,9 +65,9 @@ export const PlaybookRunsView: React.FC = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ templateId })
+                body: JSON.stringify({ templateId }),
             });
 
             if (!res.ok) throw new Error('Failed to start run');

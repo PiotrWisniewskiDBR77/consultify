@@ -3,7 +3,7 @@
  * Default system email templates for Consultify platform
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
@@ -366,6 +366,7 @@ seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES
 };
 
 export default { seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES };
+
 
 
 

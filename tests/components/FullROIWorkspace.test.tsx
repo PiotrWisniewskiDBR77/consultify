@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FullROIWorkspace } from '../../../components/FullROIWorkspace';
+import { FullROIWorkspace } from '../../components/FullROIWorkspace';
 
 const mockSession = {
     id: 'session-1',
@@ -48,6 +48,7 @@ describe('FullROIWorkspace Component', () => {
         }
     });
 });
+
 
 
 

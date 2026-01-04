@@ -1,6 +1,6 @@
 /**
  * EnterpriseIntegrationsHub - Comprehensive Integration Management
- * 
+ *
  * Features:
  * - Available connectors catalog
  * - OAuth flow management
@@ -9,44 +9,45 @@
  * - Integration health checks
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Webhook,
-    Plus,
-    Edit,
-    Trash2,
-    RefreshCw,
-    CheckCircle,
-    XCircle,
-    Loader2,
-    Search,
-    Settings,
     Activity,
-    Link,
-    Unlink,
-    Clock,
     AlertTriangle,
-    ExternalLink,
-    Play,
-    Pause,
-    RotateCcw,
-    ChevronRight,
-    ChevronDown,
-    Globe,
-    Database,
-    FileText,
-    MessageSquare,
     Calendar,
-    Zap,
-    Lock,
+    Check,
+    CheckCircle,
+    ChevronDown,
+    ChevronRight,
+    Clock,
+    Copy,
+    Database,
+    Edit,
+    ExternalLink,
     Eye,
     EyeOff,
-    Copy,
-    Check,
-    X
+    FileText,
+    Globe,
+    Link,
+    Loader2,
+    Lock,
+    MessageSquare,
+    Pause,
+    Play,
+    Plus,
+    RefreshCw,
+    RotateCcw,
+    Search,
+    Settings,
+    Trash2,
+    Unlink,
+    Webhook,
+    X,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface Integration {
     id: string;
@@ -99,18 +100,114 @@ interface ConnectorType {
 }
 
 const CONNECTOR_CATALOG: ConnectorType[] = [
-    { id: 'slack', name: 'Slack', description: 'Team communication & notifications', category: 'Communication', icon: '💬', auth_type: 'oauth', status: 'available' },
-    { id: 'microsoft_teams', name: 'Microsoft Teams', description: 'Team collaboration & meetings', category: 'Communication', icon: '👥', auth_type: 'oauth', status: 'available' },
-    { id: 'jira', name: 'Jira', description: 'Project & issue tracking', category: 'Project Management', icon: '📋', auth_type: 'oauth', status: 'available' },
-    { id: 'asana', name: 'Asana', description: 'Work management platform', category: 'Project Management', icon: '✅', auth_type: 'oauth', status: 'available' },
-    { id: 'google_calendar', name: 'Google Calendar', description: 'Calendar integration', category: 'Productivity', icon: '📅', auth_type: 'oauth', status: 'available' },
-    { id: 'salesforce', name: 'Salesforce', description: 'CRM integration', category: 'CRM', icon: '☁️', auth_type: 'oauth', status: 'available' },
-    { id: 'hubspot', name: 'HubSpot', description: 'Marketing & sales platform', category: 'CRM', icon: '🧲', auth_type: 'oauth', status: 'available' },
-    { id: 'zapier', name: 'Zapier', description: 'Automation workflows', category: 'Automation', icon: '⚡', auth_type: 'api_key', status: 'available' },
-    { id: 'power_automate', name: 'Power Automate', description: 'Microsoft automation', category: 'Automation', icon: '🔄', auth_type: 'oauth', status: 'beta' },
-    { id: 'github', name: 'GitHub', description: 'Code repository', category: 'Development', icon: '🐙', auth_type: 'oauth', status: 'available' },
-    { id: 'azure_devops', name: 'Azure DevOps', description: 'Development lifecycle', category: 'Development', icon: '🔷', auth_type: 'oauth', status: 'coming_soon' },
-    { id: 'aws_s3', name: 'AWS S3', description: 'Cloud storage', category: 'Storage', icon: '📦', auth_type: 'api_key', status: 'available' },
+    {
+        id: 'slack',
+        name: 'Slack',
+        description: 'Team communication & notifications',
+        category: 'Communication',
+        icon: '💬',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'microsoft_teams',
+        name: 'Microsoft Teams',
+        description: 'Team collaboration & meetings',
+        category: 'Communication',
+        icon: '👥',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'jira',
+        name: 'Jira',
+        description: 'Project & issue tracking',
+        category: 'Project Management',
+        icon: '📋',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'asana',
+        name: 'Asana',
+        description: 'Work management platform',
+        category: 'Project Management',
+        icon: '✅',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'google_calendar',
+        name: 'Google Calendar',
+        description: 'Calendar integration',
+        category: 'Productivity',
+        icon: '📅',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'salesforce',
+        name: 'Salesforce',
+        description: 'CRM integration',
+        category: 'CRM',
+        icon: '☁️',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'hubspot',
+        name: 'HubSpot',
+        description: 'Marketing & sales platform',
+        category: 'CRM',
+        icon: '🧲',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'zapier',
+        name: 'Zapier',
+        description: 'Automation workflows',
+        category: 'Automation',
+        icon: '⚡',
+        auth_type: 'api_key',
+        status: 'available',
+    },
+    {
+        id: 'power_automate',
+        name: 'Power Automate',
+        description: 'Microsoft automation',
+        category: 'Automation',
+        icon: '🔄',
+        auth_type: 'oauth',
+        status: 'beta',
+    },
+    {
+        id: 'github',
+        name: 'GitHub',
+        description: 'Code repository',
+        category: 'Development',
+        icon: '🐙',
+        auth_type: 'oauth',
+        status: 'available',
+    },
+    {
+        id: 'azure_devops',
+        name: 'Azure DevOps',
+        description: 'Development lifecycle',
+        category: 'Development',
+        icon: '🔷',
+        auth_type: 'oauth',
+        status: 'coming_soon',
+    },
+    {
+        id: 'aws_s3',
+        name: 'AWS S3',
+        description: 'Cloud storage',
+        category: 'Storage',
+        icon: '📦',
+        auth_type: 'api_key',
+        status: 'available',
+    },
 ];
 
 const WEBHOOK_EVENTS = [
@@ -265,15 +362,16 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         }
     };
 
-    const filteredCatalog = CONNECTOR_CATALOG.filter(c => {
-        const matchesSearch = !searchTerm ||
+    const filteredCatalog = CONNECTOR_CATALOG.filter((c) => {
+        const matchesSearch =
+            !searchTerm ||
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.description.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = filterCategory === 'all' || c.category === filterCategory;
         return matchesSearch && matchesCategory;
     });
 
-    const categories = [...new Set(CONNECTOR_CATALOG.map(c => c.category))];
+    const categories = [...new Set(CONNECTOR_CATALOG.map((c) => c.category))];
 
     return (
         <div className="p-6 space-y-6">
@@ -281,9 +379,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white">Integrations Hub</h2>
-                    <p className="text-slate-400 text-sm">
-                        Connect Consultify with your existing tools and workflows
-                    </p>
+                    <p className="text-slate-400 text-sm">Connect Consultify with your existing tools and workflows</p>
                 </div>
             </div>
 
@@ -292,25 +388,25 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                     <div className="text-sm text-slate-400">Connected</div>
                     <div className="text-2xl font-bold text-white">
-                        {integrations.filter(i => i.status === 'connected').length}
+                        {integrations.filter((i) => i.status === 'connected').length}
                     </div>
                 </div>
                 <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
                     <div className="text-sm text-slate-400">Active Webhooks</div>
                     <div className="text-2xl font-bold text-emerald-400">
-                        {webhooks.filter(w => w.is_active).length}
+                        {webhooks.filter((w) => w.is_active).length}
                     </div>
                 </div>
                 <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
                     <div className="text-sm text-slate-400">Errors</div>
                     <div className="text-2xl font-bold text-red-400">
-                        {integrations.filter(i => i.status === 'error').length}
+                        {integrations.filter((i) => i.status === 'error').length}
                     </div>
                 </div>
                 <div className="p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/30">
                     <div className="text-sm text-slate-400">Available</div>
                     <div className="text-2xl font-bold text-cyan-400">
-                        {CONNECTOR_CATALOG.filter(c => c.status === 'available').length}
+                        {CONNECTOR_CATALOG.filter((c) => c.status === 'available').length}
                     </div>
                 </div>
             </div>
@@ -325,10 +421,11 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
-                            ? 'bg-white/10 text-white border-b-2 border-cyan-500'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
+                            activeTab === id
+                                ? 'bg-white/10 text-white border-b-2 border-cyan-500'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -368,7 +465,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                     {integrations.map((integration) => {
                                         const statusConfig = STATUS_CONFIG[integration.status];
                                         const StatusIcon = statusConfig.icon;
-                                        const connector = CONNECTOR_CATALOG.find(c => c.id === integration.type);
+                                        const connector = CONNECTOR_CATALOG.find((c) => c.id === integration.type);
 
                                         return (
                                             <div
@@ -380,18 +477,29 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                                         <div className="text-3xl">{connector?.icon || '🔗'}</div>
                                                         <div>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="font-medium text-white">{integration.name}</span>
-                                                                <span className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded ${statusConfig.bg} ${statusConfig.color}`}>
+                                                                <span className="font-medium text-white">
+                                                                    {integration.name}
+                                                                </span>
+                                                                <span
+                                                                    className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded ${statusConfig.bg} ${statusConfig.color}`}
+                                                                >
                                                                     <StatusIcon className="w-3 h-3" />
                                                                     {integration.status}
                                                                 </span>
                                                             </div>
                                                             {integration.description && (
-                                                                <p className="text-sm text-slate-500 mt-1">{integration.description}</p>
+                                                                <p className="text-sm text-slate-500 mt-1">
+                                                                    {integration.description}
+                                                                </p>
                                                             )}
                                                             <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                                                                 {integration.last_sync_at && (
-                                                                    <span>Last sync: {new Date(integration.last_sync_at).toLocaleString()}</span>
+                                                                    <span>
+                                                                        Last sync:{' '}
+                                                                        {new Date(
+                                                                            integration.last_sync_at,
+                                                                        ).toLocaleString()}
+                                                                    </span>
                                                                 )}
                                                                 {integration.sync_frequency && (
                                                                     <span>• {integration.sync_frequency}</span>
@@ -474,19 +582,30 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                                             <XCircle className="w-4 h-4 text-red-400" />
                                                         )}
                                                     </div>
-                                                    <div className="text-sm text-slate-500 mt-1 break-all">{webhook.url}</div>
+                                                    <div className="text-sm text-slate-500 mt-1 break-all">
+                                                        {webhook.url}
+                                                    </div>
                                                     <div className="flex flex-wrap gap-1 mt-2">
                                                         {webhook.events.map((event) => (
-                                                            <span key={event} className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
-                                                                {WEBHOOK_EVENTS.find(e => e.id === event)?.label || event}
+                                                            <span
+                                                                key={event}
+                                                                className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded"
+                                                            >
+                                                                {WEBHOOK_EVENTS.find((e) => e.id === event)?.label ||
+                                                                    event}
                                                             </span>
                                                         ))}
                                                     </div>
                                                     <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
-                                                        <span className="text-emerald-400">✓ {webhook.success_count}</span>
+                                                        <span className="text-emerald-400">
+                                                            ✓ {webhook.success_count}
+                                                        </span>
                                                         <span className="text-red-400">✗ {webhook.failure_count}</span>
                                                         {webhook.last_triggered_at && (
-                                                            <span>Last: {new Date(webhook.last_triggered_at).toLocaleString()}</span>
+                                                            <span>
+                                                                Last:{' '}
+                                                                {new Date(webhook.last_triggered_at).toLocaleString()}
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -526,7 +645,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                         <div className="space-y-4">
                             <div className="flex items-center gap-4">
                                 <div className="flex-1 relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Search connectors..."
@@ -541,29 +663,34 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                     className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                                 >
                                     <option value="all">All Categories</option>
-                                    {categories.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredCatalog.map((connector) => {
-                                    const isConnected = integrations.some(i => i.type === connector.id);
+                                    const isConnected = integrations.some((i) => i.type === connector.id);
                                     return (
                                         <div
                                             key={connector.id}
-                                            className={`p-4 rounded-xl border transition-colors ${isConnected
-                                                ? 'bg-emerald-500/10 border-emerald-500/30'
-                                                : 'bg-white/5 border-white/10 hover:border-white/20'
-                                                }`}
+                                            className={`p-4 rounded-xl border transition-colors ${
+                                                isConnected
+                                                    ? 'bg-emerald-500/10 border-emerald-500/30'
+                                                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                                            }`}
                                         >
                                             <div className="flex items-start justify-between mb-3">
                                                 <div className="flex items-center gap-3">
                                                     <span className="text-3xl">{connector.icon}</span>
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-white">{connector.name}</span>
+                                                            <span className="font-medium text-white">
+                                                                {connector.name}
+                                                            </span>
                                                             {connector.status === 'beta' && (
                                                                 <span className="px-1.5 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded">
                                                                     Beta
@@ -575,27 +702,32 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="text-xs text-slate-500">{connector.category}</span>
+                                                        <span className="text-xs text-slate-500">
+                                                            {connector.category}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                {isConnected && (
-                                                    <CheckCircle className="w-5 h-5 text-emerald-400" />
-                                                )}
+                                                {isConnected && <CheckCircle className="w-5 h-5 text-emerald-400" />}
                                             </div>
                                             <p className="text-sm text-slate-400 mb-4">{connector.description}</p>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1 text-xs text-slate-500">
                                                     <Lock className="w-3 h-3" />
-                                                    {connector.auth_type === 'oauth' ? 'OAuth' :
-                                                        connector.auth_type === 'api_key' ? 'API Key' :
-                                                            connector.auth_type === 'basic' ? 'Basic Auth' : 'None'}
+                                                    {connector.auth_type === 'oauth'
+                                                        ? 'OAuth'
+                                                        : connector.auth_type === 'api_key'
+                                                          ? 'API Key'
+                                                          : connector.auth_type === 'basic'
+                                                            ? 'Basic Auth'
+                                                            : 'None'}
                                                 </div>
                                                 {connector.status === 'available' && (
                                                     <button
-                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${isConnected
-                                                            ? 'bg-slate-700 text-slate-300'
-                                                            : 'bg-cyan-600 hover:bg-cyan-700 text-white'
-                                                            }`}
+                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                                                            isConnected
+                                                                ? 'bg-slate-700 text-slate-300'
+                                                                : 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                                                        }`}
                                                         disabled={isConnected}
                                                     >
                                                         {isConnected ? 'Connected' : 'Connect'}
@@ -702,7 +834,9 @@ const WebhookModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Secret (for signature verification)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                            Secret (for signature verification)
+                        </label>
                         <input
                             type="text"
                             value={formData.secret}
@@ -724,7 +858,10 @@ const WebhookModal: React.FC<{
                                             if (e.target.checked) {
                                                 setFormData({ ...formData, events: [...formData.events, event.id] });
                                             } else {
-                                                setFormData({ ...formData, events: formData.events.filter(id => id !== event.id) });
+                                                setFormData({
+                                                    ...formData,
+                                                    events: formData.events.filter((id) => id !== event.id),
+                                                });
                                             }
                                         }}
                                         className="rounded border-slate-600 bg-slate-800 text-cyan-500"
@@ -792,8 +929,11 @@ const DeliveriesModal: React.FC<{
                                     )}
                                     <span className="text-sm text-white">{delivery.event_type}</span>
                                     {delivery.response_code && (
-                                        <span className={`text-xs ${delivery.response_code < 300 ? 'text-emerald-400' : 'text-red-400'
-                                            }`}>
+                                        <span
+                                            className={`text-xs ${
+                                                delivery.response_code < 300 ? 'text-emerald-400' : 'text-red-400'
+                                            }`}
+                                        >
                                             HTTP {delivery.response_code}
                                         </span>
                                     )}
@@ -811,10 +951,3 @@ const DeliveriesModal: React.FC<{
 );
 
 export default EnterpriseIntegrationsHub;
-
-
-
-
-
-
-

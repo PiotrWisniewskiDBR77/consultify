@@ -3,14 +3,28 @@
  * Manages DLP policies and violations
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import {
-    Shield, AlertTriangle, AlertCircle, CheckCircle, FileText,
-    Filter, RefreshCw, Loader2, Plus, Eye, Check, X, Trash2, Power, PowerOff
+    AlertCircle,
+    AlertTriangle,
+    Check,
+    CheckCircle,
+    Eye,
+    FileText,
+    Filter,
+    Loader2,
+    Plus,
+    Power,
+    PowerOff,
+    RefreshCw,
+    Shield,
+    Trash2,
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { Api } from '../../../services/api';
 
 interface DLPPolicy {
     id: string;
@@ -66,7 +80,7 @@ const POLICY_TYPES = [
     { value: 'healthcare_data', label: 'Healthcare Data' },
     { value: 'intellectual_property', label: 'Intellectual Property' },
     { value: 'credentials', label: 'Credentials' },
-    { value: 'custom', label: 'Custom' }
+    { value: 'custom', label: 'Custom' },
 ];
 
 const ENFORCEMENT_ACTIONS = [
@@ -74,7 +88,7 @@ const ENFORCEMENT_ACTIONS = [
     { value: 'block', label: 'Block' },
     { value: 'encrypt', label: 'Encrypt' },
     { value: 'mask', label: 'Mask' },
-    { value: 'log_only', label: 'Log Only' }
+    { value: 'log_only', label: 'Log Only' },
 ];
 
 const SEVERITY_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -93,13 +107,13 @@ const DLPView: React.FC = () => {
         description: '',
         policyType: 'pii_detection',
         enforcementAction: 'warn',
-        rules: [] as any[]
+        rules: [] as any[],
     });
     const [newRule, setNewRule] = useState({
         name: '',
         pattern: '',
         keywords: '',
-        severity: 'MEDIUM'
+        severity: 'MEDIUM',
     });
 
     useEffect(() => {
@@ -114,7 +128,7 @@ const DLPView: React.FC = () => {
             const [policiesData, violationsData, statsData] = await Promise.all([
                 Api.getDLPPolicies(),
                 Api.getDLPViolations({ isResolved: false }),
-                Api.getDLPStats()
+                Api.getDLPStats(),
             ]);
 
             setPolicies(policiesData);
@@ -132,12 +146,20 @@ const DLPView: React.FC = () => {
         if (!newRule.name) return;
         setFormData({
             ...formData,
-            rules: [...formData.rules, {
-                name: newRule.name,
-                pattern: newRule.pattern || undefined,
-                keywords: newRule.keywords ? newRule.keywords.split(',').map(k => k.trim()).filter(Boolean) : undefined,
-                severity: newRule.severity
-            }]
+            rules: [
+                ...formData.rules,
+                {
+                    name: newRule.name,
+                    pattern: newRule.pattern || undefined,
+                    keywords: newRule.keywords
+                        ? newRule.keywords
+                              .split(',')
+                              .map((k) => k.trim())
+                              .filter(Boolean)
+                        : undefined,
+                    severity: newRule.severity,
+                },
+            ],
         });
         setNewRule({ name: '', pattern: '', keywords: '', severity: 'MEDIUM' });
     };
@@ -145,7 +167,7 @@ const DLPView: React.FC = () => {
     const handleRemoveRule = (index: number) => {
         setFormData({
             ...formData,
-            rules: formData.rules.filter((_, i) => i !== index)
+            rules: formData.rules.filter((_, i) => i !== index),
         });
     };
 
@@ -157,7 +179,7 @@ const DLPView: React.FC = () => {
                 description: formData.description,
                 policyType: formData.policyType,
                 enforcementAction: formData.enforcementAction,
-                rules: formData.rules
+                rules: formData.rules,
             });
             toast.success('DLP policy created successfully');
             await loadData();
@@ -167,7 +189,7 @@ const DLPView: React.FC = () => {
                 description: '',
                 policyType: 'pii_detection',
                 enforcementAction: 'warn',
-                rules: []
+                rules: [],
             });
         } catch (err: any) {
             toast.error(err.message || 'Failed to create DLP policy');
@@ -180,9 +202,7 @@ const DLPView: React.FC = () => {
         try {
             await Api.toggleDLPPolicy(policyId, !isActive);
             toast.success(`Policy ${!isActive ? 'activated' : 'deactivated'} successfully`);
-            setPolicies(prev => prev.map(p =>
-                p.id === policyId ? { ...p, isActive: !isActive } : p
-            ));
+            setPolicies((prev) => prev.map((p) => (p.id === policyId ? { ...p, isActive: !isActive } : p)));
         } catch (err: any) {
             toast.error(err.message || 'Failed to toggle policy');
         }
@@ -193,7 +213,7 @@ const DLPView: React.FC = () => {
         try {
             await Api.deleteDLPPolicy(policyId);
             toast.success('Policy deleted successfully');
-            setPolicies(prev => prev.filter(p => p.id !== policyId));
+            setPolicies((prev) => prev.filter((p) => p.id !== policyId));
             loadData();
         } catch (err: any) {
             toast.error(err.message || 'Failed to delete policy');
@@ -204,7 +224,7 @@ const DLPView: React.FC = () => {
         try {
             await Api.resolveDLPViolation(violationId);
             toast.success('Violation resolved successfully');
-            setViolations(prev => prev.filter(v => v.id !== violationId));
+            setViolations((prev) => prev.filter((v) => v.id !== violationId));
             loadData();
         } catch (err: any) {
             toast.error(err.message || 'Failed to resolve violation');
@@ -245,11 +265,11 @@ const DLPView: React.FC = () => {
     };
 
     const getPolicyTypeLabel = (type: string) => {
-        return POLICY_TYPES.find(t => t.value === type)?.label || type;
+        return POLICY_TYPES.find((t) => t.value === type)?.label || type;
     };
 
     const getEnforcementLabel = (action: string) => {
-        return ENFORCEMENT_ACTIONS.find(a => a.value === action)?.label || action;
+        return ENFORCEMENT_ACTIONS.find((a) => a.value === action)?.label || action;
     };
 
     if (loading && policies.length === 0) {
@@ -397,7 +417,9 @@ const DLPView: React.FC = () => {
                                 <tr className="border-b border-slate-700">
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Name</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Type</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Enforcement</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                                        Enforcement
+                                    </th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Rules</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
                                     <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Actions</th>
@@ -412,11 +434,16 @@ const DLPView: React.FC = () => {
                                     </tr>
                                 ) : (
                                     policies.map((policy) => (
-                                        <tr key={policy.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+                                        <tr
+                                            key={policy.id}
+                                            className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                                        >
                                             <td className="py-3 px-4">
                                                 <div>
                                                     <p className="font-medium">{policy.name}</p>
-                                                    <p className="text-sm text-slate-400 truncate max-w-xs">{policy.description}</p>
+                                                    <p className="text-sm text-slate-400 truncate max-w-xs">
+                                                        {policy.description}
+                                                    </p>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
@@ -425,20 +452,28 @@ const DLPView: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                    policy.enforcementAction === 'block' ? 'bg-red-500/10 text-red-400' :
-                                                    policy.enforcementAction === 'warn' ? 'bg-amber-500/10 text-amber-400' :
-                                                    'bg-slate-500/10 text-slate-400'
-                                                }`}>
+                                                <span
+                                                    className={`px-2 py-1 rounded text-xs ${
+                                                        policy.enforcementAction === 'block'
+                                                            ? 'bg-red-500/10 text-red-400'
+                                                            : policy.enforcementAction === 'warn'
+                                                              ? 'bg-amber-500/10 text-amber-400'
+                                                              : 'bg-slate-500/10 text-slate-400'
+                                                    }`}
+                                                >
                                                     {getEnforcementLabel(policy.enforcementAction)}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm">{policy.rules?.length || 0} rules</td>
                                             <td className="py-3 px-4">
                                                 {policy.isActive ? (
-                                                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">Active</span>
+                                                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
+                                                        Active
+                                                    </span>
                                                 ) : (
-                                                    <span className="px-2 py-1 bg-slate-500/10 text-slate-400 rounded text-xs">Inactive</span>
+                                                    <span className="px-2 py-1 bg-slate-500/10 text-slate-400 rounded text-xs">
+                                                        Inactive
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4 text-right">
@@ -452,7 +487,11 @@ const DLPView: React.FC = () => {
                                                         }`}
                                                         title={policy.isActive ? 'Deactivate' : 'Activate'}
                                                     >
-                                                        {policy.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                                                        {policy.isActive ? (
+                                                            <PowerOff className="w-4 h-4" />
+                                                        ) : (
+                                                            <Power className="w-4 h-4" />
+                                                        )}
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeletePolicy(policy.id)}
@@ -481,7 +520,9 @@ const DLPView: React.FC = () => {
                                 <tr className="border-b border-slate-700">
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Policy</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Resource</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Violation</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                                        Violation
+                                    </th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Severity</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Detected</th>
                                     <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Actions</th>
@@ -496,17 +537,24 @@ const DLPView: React.FC = () => {
                                     </tr>
                                 ) : (
                                     violations.map((violation) => (
-                                        <tr key={violation.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+                                        <tr
+                                            key={violation.id}
+                                            className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                                        >
                                             <td className="py-3 px-4">
                                                 <div>
                                                     <p className="font-medium">{violation.policyName}</p>
-                                                    <p className="text-sm text-slate-400">{getPolicyTypeLabel(violation.policyType)}</p>
+                                                    <p className="text-sm text-slate-400">
+                                                        {getPolicyTypeLabel(violation.policyType)}
+                                                    </p>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div>
                                                     <p className="text-sm">{violation.resourceType}</p>
-                                                    <p className="text-xs text-slate-400 truncate max-w-[150px]">{violation.resourceId}</p>
+                                                    <p className="text-xs text-slate-400 truncate max-w-[150px]">
+                                                        {violation.resourceId}
+                                                    </p>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
@@ -560,8 +608,10 @@ const DLPView: React.FC = () => {
                                         onChange={(e) => setFormData({ ...formData, policyType: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                     >
-                                        {POLICY_TYPES.map(t => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                        {POLICY_TYPES.map((t) => (
+                                            <option key={t.value} value={t.value}>
+                                                {t.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -582,8 +632,10 @@ const DLPView: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, enforcementAction: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
-                                    {ENFORCEMENT_ACTIONS.map(a => (
-                                        <option key={a.value} value={a.value}>{a.label}</option>
+                                    {ENFORCEMENT_ACTIONS.map((a) => (
+                                        <option key={a.value} value={a.value}>
+                                            {a.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -591,12 +643,15 @@ const DLPView: React.FC = () => {
                             {/* Rules Section */}
                             <div className="border-t border-slate-700 pt-4">
                                 <h4 className="font-medium mb-3">Detection Rules</h4>
-                                
+
                                 {/* Existing Rules */}
                                 {formData.rules.length > 0 && (
                                     <div className="space-y-2 mb-4">
                                         {formData.rules.map((rule, index) => (
-                                            <div key={index} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between p-3 bg-slate-800 rounded-lg"
+                                            >
                                                 <div>
                                                     <p className="font-medium">{rule.name}</p>
                                                     <p className="text-xs text-slate-400">
@@ -635,14 +690,18 @@ const DLPView: React.FC = () => {
                                                 onChange={(e) => setNewRule({ ...newRule, severity: e.target.value })}
                                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                             >
-                                                {SEVERITY_LEVELS.map(s => (
-                                                    <option key={s} value={s}>{s}</option>
+                                                {SEVERITY_LEVELS.map((s) => (
+                                                    <option key={s} value={s}>
+                                                        {s}
+                                                    </option>
                                                 ))}
                                             </select>
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Regex Pattern (optional)</label>
+                                        <label className="block text-xs text-slate-400 mb-1">
+                                            Regex Pattern (optional)
+                                        </label>
                                         <input
                                             type="text"
                                             value={newRule.pattern}
@@ -652,7 +711,9 @@ const DLPView: React.FC = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Keywords (comma-separated, optional)</label>
+                                        <label className="block text-xs text-slate-400 mb-1">
+                                            Keywords (comma-separated, optional)
+                                        </label>
                                         <input
                                             type="text"
                                             value={newRule.keywords}
@@ -681,7 +742,7 @@ const DLPView: React.FC = () => {
                                         description: '',
                                         policyType: 'pii_detection',
                                         enforcementAction: 'warn',
-                                        rules: []
+                                        rules: [],
                                     });
                                 }}
                                 className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
@@ -705,10 +766,4 @@ const DLPView: React.FC = () => {
 };
 
 export default DLPView;
-
-
-
-
-
-
 

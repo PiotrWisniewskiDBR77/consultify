@@ -1,7 +1,7 @@
 /**
  * MyWork Routes
  * API endpoints for my-work
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript

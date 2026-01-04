@@ -2,14 +2,8 @@
  * Security Components - Export Module
  */
 
+export { IPAccessRulesPanel } from './IPAccessRulesPanel';
+export { LoginAttemptsPanel } from './LoginAttemptsPanel';
 export { SecurityPoliciesPanel } from './SecurityPoliciesPanel';
 export { SessionManagementPanel } from './SessionManagementPanel';
-export { LoginAttemptsPanel } from './LoginAttemptsPanel';
-export { IPAccessRulesPanel } from './IPAccessRulesPanel';
-
-
-
-
-
-
 

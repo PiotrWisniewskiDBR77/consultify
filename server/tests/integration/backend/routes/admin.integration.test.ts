@@ -1,11 +1,12 @@
 /**
  * Admin Routes Integration Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Integration tests for admin operations flow - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { getDatabase } from '../../../../src/database/Database.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
@@ -35,4 +36,3 @@ describe('Admin Routes Integration', () => {
         });
     });
 });
-

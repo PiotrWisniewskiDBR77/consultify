@@ -1,5 +1,6 @@
+import { Activity, AlertTriangle, CheckCircle2, Clock, HelpCircle, Shield, Target } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Activity, AlertTriangle, CheckCircle2, Clock, Shield, Target, HelpCircle } from 'lucide-react';
+
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -46,7 +47,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({ projectId, o
             setLoading(true);
             try {
                 const res = await fetch(`/api/pmo/health/${projectId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -117,9 +118,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({ projectId, o
                         <span className="text-sm font-medium text-slate-900 dark:text-white">
                             {snapshot.phase.number}/6
                         </span>
-                        <span className="text-xs text-slate-600 dark:text-slate-300">
-                            {snapshot.phase.name}
-                        </span>
+                        <span className="text-xs text-slate-600 dark:text-slate-300">{snapshot.phase.name}</span>
                     </div>
                 </div>
 
@@ -145,40 +144,58 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({ projectId, o
 
             {/* Counts Grid */}
             <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className={`rounded-lg p-2 text-center ${snapshot.tasks.overdueCount > 0
-                        ? 'bg-red-50 dark:bg-red-900/20'
-                        : 'bg-slate-50 dark:bg-navy-900'
-                    }`}>
-                    <div className={`text-lg font-bold ${snapshot.tasks.overdueCount > 0
-                            ? 'text-red-600 dark:text-red-400'
-                            : 'text-slate-900 dark:text-white'
-                        }`}>
+                <div
+                    className={`rounded-lg p-2 text-center ${
+                        snapshot.tasks.overdueCount > 0
+                            ? 'bg-red-50 dark:bg-red-900/20'
+                            : 'bg-slate-50 dark:bg-navy-900'
+                    }`}
+                >
+                    <div
+                        className={`text-lg font-bold ${
+                            snapshot.tasks.overdueCount > 0
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-slate-900 dark:text-white'
+                        }`}
+                    >
                         {snapshot.tasks.overdueCount}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">Overdue</div>
                 </div>
 
-                <div className={`rounded-lg p-2 text-center ${snapshot.decisions.pendingCount > 0
-                        ? 'bg-amber-50 dark:bg-amber-900/20'
-                        : 'bg-slate-50 dark:bg-navy-900'
-                    }`}>
-                    <div className={`text-lg font-bold ${snapshot.decisions.pendingCount > 0
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-slate-900 dark:text-white'
-                        }`}>
+                <div
+                    className={`rounded-lg p-2 text-center ${
+                        snapshot.decisions.pendingCount > 0
+                            ? 'bg-amber-50 dark:bg-amber-900/20'
+                            : 'bg-slate-50 dark:bg-navy-900'
+                    }`}
+                >
+                    <div
+                        className={`text-lg font-bold ${
+                            snapshot.decisions.pendingCount > 0
+                                ? 'text-amber-600 dark:text-amber-400'
+                                : 'text-slate-900 dark:text-white'
+                        }`}
+                    >
                         {snapshot.decisions.pendingCount}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">Pending</div>
                 </div>
 
-                <div className={`rounded-lg p-2 text-center ${snapshot.blockers.length > 0
-                        ? 'bg-purple-50 dark:bg-purple-900/20'
-                        : 'bg-slate-50 dark:bg-navy-900'
-                    }`}>
-                    <div className={`text-lg font-bold ${snapshot.blockers.length > 0
-                            ? 'text-purple-600 dark:text-purple-400'
-                            : 'text-slate-900 dark:text-white'
-                        }`}>
+                <div
+                    className={`rounded-lg p-2 text-center ${
+                        snapshot.blockers.length > 0
+                            ? 'bg-purple-50 dark:bg-purple-900/20'
+                            : 'bg-slate-50 dark:bg-navy-900'
+                    }`}
+                >
+                    <div
+                        className={`text-lg font-bold ${
+                            snapshot.blockers.length > 0
+                                ? 'text-purple-600 dark:text-purple-400'
+                                : 'text-slate-900 dark:text-white'
+                        }`}
+                    >
                         {snapshot.blockers.length}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">Blockers</div>
@@ -192,10 +209,15 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({ projectId, o
                     <div className="space-y-1">
                         {snapshot.blockers.slice(0, 3).map((blocker, idx) => (
                             <div key={idx} className="flex items-start gap-2 text-xs">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${blocker.type === 'TASK' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                        blocker.type === 'DECISION' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                                    }`}>
+                                <span
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                        blocker.type === 'TASK'
+                                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                            : blocker.type === 'DECISION'
+                                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                              : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                    }`}
+                                >
                                     {blocker.type}
                                 </span>
                                 <span className="text-slate-600 dark:text-slate-300 truncate flex-1">

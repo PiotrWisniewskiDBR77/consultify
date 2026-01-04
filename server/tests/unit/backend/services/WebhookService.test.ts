@@ -1,16 +1,40 @@
 /**
  * WebhookService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for WebhookService - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import WebhookService from '../../../../src/services/WebhookService.js';
+import DbPromise from '../../../../src/utils/DbPromise.js';
 
 describe('WebhookService', () => {
     let mockDb: IDatabase;
+
+    beforeEach(() => {});
+
+    vi.mock('../../../../src/utils/DbPromise.js', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('../../../../src/utils/DbPromise.js')>();
+        const mockRun = vi.fn();
+        const mockGet = vi.fn();
+        const mockAll = vi.fn();
+
+        return {
+            ...actual,
+            default: {
+                ...actual.default,
+                run: mockRun,
+                get: mockGet,
+                all: mockAll,
+            },
+            run: mockRun,
+            get: mockGet,
+            all: mockAll,
+        };
+    });
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -35,7 +59,8 @@ describe('WebhookService', () => {
             query: vi.fn(),
         } as unknown as IDatabase;
 
-        WebhookService.setDependencies({ db: mockDb });
+        // Inject mock DB into private _db property (workaround for singleton testing)
+        (WebhookService as any)._db = mockDb;
     });
 
     describe('createWebhook', () => {
@@ -46,6 +71,23 @@ describe('WebhookService', () => {
                 events: ['invoice.created'],
                 secret: 'secret-key',
             };
+
+            // Setup mocks for createWebhook
+            (DbPromise.run as any).mockResolvedValue({
+                success: true,
+                changes: 1,
+                lastID: 1,
+            });
+
+            // Mock get behavior for retrieving created webhook
+            (DbPromise.get as any).mockResolvedValue({
+                id: 'uuid-123',
+                ...webhookData,
+                events: JSON.stringify(webhookData.events),
+                is_active: 1,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            });
 
             const webhook = await WebhookService.createWebhook(webhookData);
 
@@ -67,17 +109,19 @@ describe('WebhookService', () => {
 
     describe('getWebhooks', () => {
         it('should return webhooks for organization', async () => {
-            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
-                callback(null, [
-                    {
-                        id: 'webhook-1',
-                        organization_id: 'org-123',
-                        url: 'https://example.com/webhook',
-                        events: JSON.stringify(['invoice.created']),
-                        is_active: 1,
-                    },
-                ]);
-            });
+            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
+                    callback(null, [
+                        {
+                            id: 'webhook-1',
+                            organization_id: 'org-123',
+                            url: 'https://example.com/webhook',
+                            events: JSON.stringify(['invoice.created']),
+                            is_active: 1,
+                        },
+                    ]);
+                },
+            );
 
             const webhooks = await WebhookService.getWebhooks('org-123');
 
@@ -92,15 +136,17 @@ describe('WebhookService', () => {
 
     describe('getWebhookById', () => {
         it('should return webhook by ID', async () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
-                callback(null, {
-                    id: 'webhook-123',
-                    organization_id: 'org-123',
-                    url: 'https://example.com/webhook',
-                    events: JSON.stringify(['invoice.created']),
-                    is_active: 1,
-                });
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
+                    callback(null, {
+                        id: 'webhook-123',
+                        organization_id: 'org-123',
+                        url: 'https://example.com/webhook',
+                        events: JSON.stringify(['invoice.created']),
+                        is_active: 1,
+                    });
+                },
+            );
 
             const webhook = await WebhookService.getWebhookById('webhook-123');
 
@@ -108,9 +154,11 @@ describe('WebhookService', () => {
         });
 
         it('should return null for non-existent webhook', async () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
-                callback(null, null);
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
+                    callback(null, null);
+                },
+            );
 
             const webhook = await WebhookService.getWebhookById('non-existent');
 
@@ -125,16 +173,48 @@ describe('WebhookService', () => {
                 enabled: false,
             };
 
-            // Test would verify webhook update
-            expect(true).toBe(true);
+            (DbPromise.run as any).mockResolvedValue({
+                success: true,
+                changes: 1,
+                lastID: 1,
+            });
+
+            // Mock get request to return existing webhook
+            (DbPromise.get as any).mockImplementation(async (sql: string) => {
+                if (sql.includes('SELECT * FROM webhooks WHERE id = ?')) {
+                    return {
+                        id: 'webhook-123',
+                        organization_id: 'org-123',
+                        url: 'https://example.com/webhook',
+                        events: JSON.stringify(['invoice.created']),
+                        is_active: 1,
+                    };
+                }
+                return null;
+            });
+
+            // We need to restore mocks as well or use dedicated mocks inside the test
+            // Since we mocked at top level, we can use the same pattern.
+            // But we have conflicting mocks from 'beforeEach' which manually creates a mockDb object
+            // vs module mock. The service uses 'DbPromise.run' wrapper so overriding mockDb alone isn't enough IF
+            // the module mock is active. The module mock REPLACES the real DbPromise usage.
+
+            const updatedWebhook = await WebhookService.updateWebhook('webhook-123', updateData);
+            expect(DbPromise.run).toHaveBeenCalled();
+            expect(updatedWebhook).toBeDefined();
         });
     });
 
     describe('deleteWebhook', () => {
         it('should delete webhook', async () => {
-            await WebhookService.deleteWebhook('webhook-123');
+            // Setup the mock result for this specific test
+            (DbPromise.run as any).mockResolvedValue({
+                success: true,
+                changes: 1,
+            });
 
-            expect(mockDb.run).toHaveBeenCalled();
+            await WebhookService.deleteWebhook('webhook-123');
+            expect(DbPromise.run).toHaveBeenCalledWith('DELETE FROM webhooks WHERE id = ?', ['webhook-123']);
         });
     });
 
@@ -159,17 +239,19 @@ describe('WebhookService', () => {
 
     describe('getDeliveries', () => {
         it('should return webhook deliveries', async () => {
-            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
-                callback(null, [
-                    {
-                        id: 'delivery-1',
-                        webhook_id: 'webhook-123',
-                        event_type: 'invoice.created',
-                        status: 'success',
-                        attempts: 1,
-                    },
-                ]);
-            });
+            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
+                    callback(null, [
+                        {
+                            id: 'delivery-1',
+                            webhook_id: 'webhook-123',
+                            event_type: 'invoice.created',
+                            status: 'success',
+                            attempts: 1,
+                        },
+                    ]);
+                },
+            );
 
             const deliveries = await WebhookService.getDeliveries('webhook-123');
 
@@ -192,4 +274,3 @@ describe('WebhookService', () => {
         });
     });
 });
-

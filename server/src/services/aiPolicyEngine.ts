@@ -12,7 +12,7 @@ export const POLICY_LEVELS: Record<string, PolicyLevel> = {
     ADVISORY: 'ADVISORY',
     ASSISTED: 'ASSISTED',
     PROACTIVE: 'PROACTIVE',
-    AUTOPILOT: 'AUTOPILOT'
+    AUTOPILOT: 'AUTOPILOT',
 };
 
 export const POLICY_HIERARCHY: PolicyLevel[] = ['ADVISORY', 'ASSISTED', 'PROACTIVE', 'AUTOPILOT'];
@@ -23,7 +23,7 @@ export const AI_ROLES: Record<string, AIRole> = {
     ADVISOR: 'ADVISOR',
     PMO_MANAGER: 'PMO_MANAGER',
     EXECUTOR: 'EXECUTOR',
-    EDUCATOR: 'EDUCATOR'
+    EDUCATOR: 'EDUCATOR',
 };
 
 export const ACTION_POLICY_REQUIREMENTS: Record<string, PolicyLevel> = {
@@ -33,7 +33,7 @@ export const ACTION_POLICY_REQUIREMENTS: Record<string, PolicyLevel> = {
     CREATE_DRAFT_TASK: 'ASSISTED',
     CREATE_DRAFT_INITIATIVE: 'ASSISTED',
     SUGGEST_ROADMAP_CHANGE: 'ASSISTED',
-    GENERATE_REPORT: 'ASSISTED'
+    GENERATE_REPORT: 'ASSISTED',
 };
 
 export interface PolicySummary {
@@ -99,7 +99,11 @@ const AIPolicyEngine = {
     /**
      * Get effective policy for a context
      */
-    getEffectivePolicy: async (organizationId: string, projectId: string | null = null, userId: string | null = null): Promise<EffectivePolicy> => {
+    getEffectivePolicy: async (
+        organizationId: string,
+        projectId: string | null = null,
+        userId: string | null = null,
+    ): Promise<EffectivePolicy> => {
         const RegulatoryModeGuard = await getRegulatoryModeGuard();
         const AIRoleGuard = await getAIRoleGuard();
 
@@ -120,20 +124,22 @@ const AIPolicyEngine = {
                     roleCapabilities: AIRoleGuard ? AIRoleGuard.getRoleCapabilities('ADVISOR') : {},
                     roleDescription: 'Regulatory Mode: Advisory-only',
                     regulatoryModeEnabled: true,
-                    regulatoryModePrompt: await RegulatoryModeGuard.getRegulatoryPrompt()
+                    regulatoryModePrompt: await RegulatoryModeGuard.getRegulatoryPrompt(),
                 };
             }
         }
 
         // 1. Get organization (tenant) policy
-        const orgPolicy: any = (await dbGet(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
+        const orgPolicy: any =
+            (await dbGet(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
 
         let effectiveLevel: PolicyLevel = (orgPolicy.policy_level as PolicyLevel) || 'ADVISORY';
-        let maxLevel: PolicyLevel = (orgPolicy.max_policy_level as PolicyLevel) || 'ASSISTED';
+        const maxLevel: PolicyLevel = (orgPolicy.max_policy_level as PolicyLevel) || 'ASSISTED';
 
         // 2. Check project-level override if exists
         if (projectId) {
-            const project: any = (await dbGet(`SELECT governance_settings FROM projects WHERE id = ?`, [projectId])) || {};
+            const project: any =
+                (await dbGet(`SELECT governance_settings FROM projects WHERE id = ?`, [projectId])) || {};
 
             try {
                 const settings = JSON.parse(project.governance_settings || '{}');
@@ -144,7 +150,7 @@ const AIPolicyEngine = {
                         effectiveLevel = settings.aiPolicyOverride;
                     }
                 }
-            } catch { }
+            } catch {}
         }
 
         // 3. Check user preferences
@@ -179,14 +185,19 @@ const AIPolicyEngine = {
             educationMode: userPreferences.education_mode === 1,
             projectAIRole,
             roleCapabilities,
-            roleDescription: AIRoleGuard ? AIRoleGuard.getRoleDescription(projectAIRole) : ''
+            roleDescription: AIRoleGuard ? AIRoleGuard.getRoleDescription(projectAIRole) : '',
         };
     },
 
     /**
      * Check if an action is allowed
      */
-    canPerformAction: async (actionType: string, organizationId: string, projectId: string | null = null, userId: string | null = null) => {
+    canPerformAction: async (
+        actionType: string,
+        organizationId: string,
+        projectId: string | null = null,
+        userId: string | null = null,
+    ) => {
         const policy = await AIPolicyEngine.getEffectivePolicy(organizationId, projectId, userId);
         const requiredLevel = ACTION_POLICY_REQUIREMENTS[actionType] || 'ADVISORY';
 
@@ -194,7 +205,8 @@ const AIPolicyEngine = {
         const currentIndex = POLICY_HIERARCHY.indexOf(policy.policyLevel);
 
         const isAllowed = currentIndex >= requiredIndex;
-        const requiresApproval = policy.policyLevel !== 'AUTOPILOT' &&
+        const requiresApproval =
+            policy.policyLevel !== 'AUTOPILOT' &&
             (actionType.startsWith('CREATE_') || actionType.startsWith('SUGGEST_'));
 
         if (policy.regulatoryModeEnabled && requiredLevel !== 'ADVISORY') {
@@ -203,7 +215,7 @@ const AIPolicyEngine = {
                 requiresApproval: false,
                 requiredLevel,
                 currentLevel: policy.policyLevel,
-                reason: `Action blocked by Regulatory Mode - only advisory actions allowed`
+                reason: `Action blocked by Regulatory Mode - only advisory actions allowed`,
             };
         }
 
@@ -214,7 +226,7 @@ const AIPolicyEngine = {
             currentLevel: policy.policyLevel,
             reason: isAllowed
                 ? `Action permitted at ${policy.policyLevel} level`
-                : `Action requires ${requiredLevel} policy level, but current is ${policy.policyLevel}`
+                : `Action requires ${requiredLevel} policy level, but current is ${policy.policyLevel}`,
         };
     },
 
@@ -244,7 +256,8 @@ const AIPolicyEngine = {
         }
 
         // Upsert
-        return dbRun(`INSERT INTO ai_policies (organization_id, policy_level, internet_enabled, audit_required, max_policy_level, default_ai_role, active_roles, updated_at)
+        return dbRun(
+            `INSERT INTO ai_policies (organization_id, policy_level, internet_enabled, audit_required, max_policy_level, default_ai_role, active_roles, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(organization_id) DO UPDATE SET
                 policy_level = COALESCE(?, policy_level),
@@ -255,12 +268,21 @@ const AIPolicyEngine = {
                 active_roles = COALESCE(?, active_roles),
                 updated_at = CURRENT_TIMESTAMP`,
             [
-                organizationId, policyLevel, internetEnabled ? 1 : 0, auditRequired ? 1 : 0,
-                maxPolicyLevel, defaultRole, JSON.stringify(activeRoles || []),
-                policyLevel, internetEnabled !== undefined ? (internetEnabled ? 1 : 0) : null,
+                organizationId,
+                policyLevel,
+                internetEnabled ? 1 : 0,
+                auditRequired ? 1 : 0,
+                maxPolicyLevel,
+                defaultRole,
+                JSON.stringify(activeRoles || []),
+                policyLevel,
+                internetEnabled !== undefined ? (internetEnabled ? 1 : 0) : null,
                 auditRequired !== undefined ? (auditRequired ? 1 : 0) : null,
-                maxPolicyLevel, defaultRole, activeRoles ? JSON.stringify(activeRoles) : null
-            ]);
+                maxPolicyLevel,
+                defaultRole,
+                activeRoles ? JSON.stringify(activeRoles) : null,
+            ],
+        );
     },
 
     /**
@@ -273,7 +295,7 @@ const AIPolicyEngine = {
             ADVISORY: 'AI provides suggestions and explanations only',
             ASSISTED: 'AI can create drafts that require your approval',
             PROACTIVE: 'AI can execute low-risk actions automatically',
-            AUTOPILOT: 'AI operates autonomously within governance rules'
+            AUTOPILOT: 'AI operates autonomously within governance rules',
         };
 
         return {
@@ -283,12 +305,12 @@ const AIPolicyEngine = {
                 canExplain: true,
                 canAnalyze: true,
                 canCreateDrafts: POLICY_HIERARCHY.indexOf(policy.policyLevel) >= 1,
-                canExecuteActions: POLICY_HIERARCHY.indexOf(policy.policyLevel) >= 2
+                canExecuteActions: POLICY_HIERARCHY.indexOf(policy.policyLevel) >= 2,
             },
             internetEnabled: policy.internetEnabled,
-            auditRequired: policy.auditRequired
+            auditRequired: policy.auditRequired,
         };
-    }
+    },
 };
 
 export default AIPolicyEngine;

@@ -1,6 +1,6 @@
 /**
  * SecurityPoliciesPanel - Organization Security Policy Management
- * 
+ *
  * Features:
  * - Password policy editor (min length, complexity rules, expiry)
  * - MFA configuration per organization
@@ -8,25 +8,26 @@
  * - Compliance presets (SOC2, HIPAA, GDPR)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Shield,
-    Key,
-    Lock,
-    Clock,
-    Users,
     AlertTriangle,
+    Building2,
     CheckCircle2,
-    Settings,
+    ChevronDown,
+    Clock,
+    Info,
+    Key,
+    Loader2,
+    Lock,
     RefreshCw,
     Save,
-    Loader2,
-    Building2,
-    ChevronDown,
-    Info
+    Settings,
+    Shield,
+    Users,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface SecurityPolicy {
     id?: string;
@@ -121,9 +122,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
     const fetchPolicy = useCallback(async (orgId: string) => {
         setLoading(true);
         try {
-            const endpoint = orgId === 'default' 
-                ? '/security-policies/defaults' 
-                : `/security-policies/${orgId}`;
+            const endpoint = orgId === 'default' ? '/security-policies/defaults' : `/security-policies/${orgId}`;
             const result = await Api.get(endpoint);
             setPolicy(result.policy || DEFAULT_POLICY);
             setHasChanges(false);
@@ -150,9 +149,8 @@ export const SecurityPoliciesPanel: React.FC = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const endpoint = selectedOrgId === 'default' 
-                ? '/security-policies/defaults' 
-                : `/security-policies/${selectedOrgId}`;
+            const endpoint =
+                selectedOrgId === 'default' ? '/security-policies/defaults' : `/security-policies/${selectedOrgId}`;
             await Api.put(endpoint, policy);
             toast.success('Security policy saved successfully');
             setHasChanges(false);
@@ -168,7 +166,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             toast.error('Cannot apply preset to default policy');
             return;
         }
-        
+
         setSaving(true);
         try {
             await Api.post(`/security-policies/${selectedOrgId}/preset`, { preset: presetId });
@@ -182,7 +180,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
     };
 
     const updatePolicy = (field: keyof SecurityPolicy, value: any) => {
-        setPolicy(prev => ({ ...prev, [field]: value }));
+        setPolicy((prev) => ({ ...prev, [field]: value }));
         setHasChanges(true);
     };
 
@@ -308,7 +306,9 @@ export const SecurityPoliciesPanel: React.FC = () => {
                         className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500/30"
                     />
                     <div>
-                        <span className="text-slate-300 group-hover:text-white transition-colors">Bind Session to Device</span>
+                        <span className="text-slate-300 group-hover:text-white transition-colors">
+                            Bind Session to Device
+                        </span>
                         <p className="text-xs text-slate-500">Sessions will be invalidated if IP or device changes</p>
                     </div>
                 </label>
@@ -376,7 +376,9 @@ export const SecurityPoliciesPanel: React.FC = () => {
                         className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500/30"
                     />
                     <div>
-                        <span className="text-slate-300 group-hover:text-white transition-colors font-medium">Require MFA for All Users</span>
+                        <span className="text-slate-300 group-hover:text-white transition-colors font-medium">
+                            Require MFA for All Users
+                        </span>
                         <p className="text-xs text-slate-500">Users must set up MFA before accessing the platform</p>
                     </div>
                 </label>
@@ -389,7 +391,10 @@ export const SecurityPoliciesPanel: React.FC = () => {
                             { id: 'sms', label: 'SMS' },
                             { id: 'email', label: 'Email' },
                         ].map(({ id, label }) => (
-                            <label key={id} className="flex items-center gap-2 px-3 py-2 bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-900 transition-colors">
+                            <label
+                                key={id}
+                                className="flex items-center gap-2 px-3 py-2 bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-900 transition-colors"
+                            >
                                 <input
                                     type="checkbox"
                                     checked={policy.mfaMethods.includes(id)}
@@ -397,7 +402,10 @@ export const SecurityPoliciesPanel: React.FC = () => {
                                         if (e.target.checked) {
                                             updatePolicy('mfaMethods', [...policy.mfaMethods, id]);
                                         } else {
-                                            updatePolicy('mfaMethods', policy.mfaMethods.filter(m => m !== id));
+                                            updatePolicy(
+                                                'mfaMethods',
+                                                policy.mfaMethods.filter((m) => m !== id),
+                                            );
                                         }
                                     }}
                                     className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500"
@@ -443,11 +451,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none min-w-[200px]"
                     >
                         <option value="default">Platform Defaults</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
-                    
+
                     {selectedOrgId !== 'default' && (
                         <select
                             value=""
@@ -455,13 +465,15 @@ export const SecurityPoliciesPanel: React.FC = () => {
                             className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                         >
                             <option value="">Apply Preset...</option>
-                            {presets.map(preset => (
-                                <option key={preset.id} value={preset.id}>{preset.name}</option>
+                            {presets.map((preset) => (
+                                <option key={preset.id} value={preset.id}>
+                                    {preset.name}
+                                </option>
                             ))}
                         </select>
                     )}
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => fetchPolicy(selectedOrgId)}
@@ -486,7 +498,8 @@ export const SecurityPoliciesPanel: React.FC = () => {
                 <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg w-fit">
                     <CheckCircle2 size={16} className="text-emerald-400" />
                     <span className="text-sm text-emerald-400">
-                        {presets.find(p => p.id === policy.compliancePreset)?.name || policy.compliancePreset} Compliance
+                        {presets.find((p) => p.id === policy.compliancePreset)?.name || policy.compliancePreset}{' '}
+                        Compliance
                     </span>
                 </div>
             )}
@@ -503,10 +516,4 @@ export const SecurityPoliciesPanel: React.FC = () => {
 };
 
 export default SecurityPoliciesPanel;
-
-
-
-
-
-
 

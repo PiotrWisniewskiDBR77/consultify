@@ -1,15 +1,31 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    CheckCircle2, Circle, AlertTriangle, ArrowRight,
-    Filter, Trash2, Plus, Calendar, User, Clock, CheckCircle, AlertCircle,
-    Layers, Target, FileQuestion, ChevronDown, ChevronUp, Pin
+    AlertCircle,
+    AlertTriangle,
+    ArrowRight,
+    Calendar,
+    CheckCircle,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Circle,
+    Clock,
+    FileQuestion,
+    Filter,
+    Layers,
+    Pin,
+    Plus,
+    Target,
+    Trash2,
+    User,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Api } from '../../services/api';
+import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Task } from '../../types';
-import { usePMOStore, PMOTaskLabel } from '../../store/usePMOStore';
 import { Virtuoso } from 'react-virtuoso';
+
+import { Api } from '../../services/api';
+import { PMOTaskLabel, usePMOStore } from '../../store/usePMOStore';
+import { Task } from '../../types';
 
 // PMO Priority Categories
 type PMOCategory = 'blocking_phase' | 'blocking_initiative' | 'awaiting_decision' | 'overdue' | 'other';
@@ -28,7 +44,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
     const [openFilter, setOpenFilter] = useState<'quick' | 'view' | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'pmo'>('pmo'); // Default to PMO view
-    const [expandedCategories, setExpandedCategories] = useState<Set<PMOCategory>>(new Set(['blocking_phase', 'blocking_initiative', 'overdue']));
+    const [expandedCategories, setExpandedCategories] = useState<Set<PMOCategory>>(
+        new Set(['blocking_phase', 'blocking_initiative', 'overdue']),
+    );
 
     // Pinned Tasks state
     const [pinnedTaskIds, setPinnedTaskIds] = useState<Set<string>>(() => {
@@ -41,10 +59,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     const [activePriority, setActivePriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
     const [activeStatus, setActiveStatus] = useState<'all' | 'todo' | 'in_progress' | 'done'>('all');
 
-    const getTaskLabel = usePMOStore(state => state.getTaskLabel);
+    const getTaskLabel = usePMOStore((state) => state.getTaskLabel);
 
     const toggleFilter = (filter: 'quick' | 'view') => {
-        setOpenFilter(prev => prev === filter ? null : filter);
+        setOpenFilter((prev) => (prev === filter ? null : filter));
     };
 
     // Quick filter labels
@@ -52,13 +70,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         all: 'All Tasks',
         overdue: 'Overdue',
         urgent: 'Urgent',
-        today: 'Due Today'
+        today: 'Due Today',
     };
 
     // Toggle pin for a task
     const togglePinTask = (taskId: string, event?: React.MouseEvent) => {
         event?.stopPropagation();
-        setPinnedTaskIds(prev => {
+        setPinnedTaskIds((prev) => {
             const next = new Set(prev);
             if (next.has(taskId)) {
                 next.delete(taskId);
@@ -93,7 +111,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         event?.stopPropagation();
         try {
             await Api.updateTask(task.id, { status: newStatus });
-            setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus as any } : t));
+            setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: newStatus as any } : t)));
             toast.success('Task updated');
         } catch (error) {
             console.error('Failed to update task', error);
@@ -106,7 +124,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         if (!confirm('Are you sure you want to delete this task?')) return;
         try {
             await Api.deleteTask(id);
-            setTasks(prev => prev.filter(t => t.id !== id));
+            setTasks((prev) => prev.filter((t) => t.id !== id));
             toast.success('Task deleted');
         } catch (error) {
             console.error('Failed to delete task', error);
@@ -117,14 +135,18 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     const getPriorityColor = (priority?: string) => {
         switch (priority?.toLowerCase()) {
             case 'urgent':
-            case 'high': return 'text-red-500 bg-red-50 dark:bg-red-900/20';
-            case 'medium': return 'text-orange-500 bg-orange-50 dark:bg-orange-900/20';
-            case 'low': return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
-            default: return 'text-slate-500 bg-slate-50 dark:bg-slate-800';
+            case 'high':
+                return 'text-red-500 bg-red-50 dark:bg-red-900/20';
+            case 'medium':
+                return 'text-orange-500 bg-orange-50 dark:bg-orange-900/20';
+            case 'low':
+                return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
+            default:
+                return 'text-slate-500 bg-slate-50 dark:bg-slate-800';
         }
     };
 
-    const filteredTasks = tasks.filter(t => {
+    const filteredTasks = tasks.filter((t) => {
         const isDone = ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '');
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -166,13 +188,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             blocking_initiative: [],
             awaiting_decision: [],
             overdue: [],
-            other: []
+            other: [],
         };
 
         // Filter out pinned tasks from PMO grouping
-        const tasksToGroup = filteredTasks.filter(t => !pinnedTaskIds.has(t.id));
+        const tasksToGroup = filteredTasks.filter((t) => !pinnedTaskIds.has(t.id));
 
-        tasksToGroup.forEach(task => {
+        tasksToGroup.forEach((task) => {
             const isDone = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
             if (isDone) {
                 groups.other.push(task);
@@ -180,7 +202,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             }
 
             const labels = getTaskLabel(task.id) || [];
-            const labelCodes = labels.map(l => l.code);
+            const labelCodes = labels.map((l) => l.code);
 
             // Check for blocking phase
             if (labelCodes.includes('BLOCKING_PHASE') || labelCodes.includes('GATE_BLOCKER')) {
@@ -215,13 +237,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
     // Separate pinned and unpinned tasks
     const { pinnedTasks, unpinnedTasks } = useMemo(() => {
-        const pinned = filteredTasks.filter(t => pinnedTaskIds.has(t.id));
-        const unpinned = filteredTasks.filter(t => !pinnedTaskIds.has(t.id));
+        const pinned = filteredTasks.filter((t) => pinnedTaskIds.has(t.id));
+        const unpinned = filteredTasks.filter((t) => !pinnedTaskIds.has(t.id));
         return { pinnedTasks: pinned, unpinnedTasks: unpinned };
     }, [filteredTasks, pinnedTaskIds]);
 
     const toggleCategory = (category: PMOCategory) => {
-        setExpandedCategories(prev => {
+        setExpandedCategories((prev) => {
             const next = new Set(prev);
             if (next.has(category)) {
                 next.delete(category);
@@ -248,11 +270,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         let borderClass = 'border-slate-100';
 
         if (priority === 'urgent' && !isDone) {
-            borderClass = 'border-l-4 border-l-red-500 border-slate-200 dark:border-white/10 bg-red-50/20 dark:bg-red-900/10';
+            borderClass =
+                'border-l-4 border-l-red-500 border-slate-200 dark:border-white/10 bg-red-50/20 dark:bg-red-900/10';
         } else if (isDone) {
             borderClass = 'border-transparent bg-transparent opacity-75 hover:bg-slate-50 dark:hover:bg-white/5';
         } else {
-            borderClass = 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-200 dark:hover:border-purple-500/30 shadow-sm dark:shadow-[0_0_15px_rgba(168,85,247,0.05)]';
+            borderClass =
+                'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-200 dark:hover:border-purple-500/30 shadow-sm dark:shadow-[0_0_15px_rgba(168,85,247,0.05)]';
         }
 
         return `group p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer relative overflow-hidden ${borderClass}`;
@@ -277,10 +301,11 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <div className="shrink-0 mt-1">
                         <button
                             onClick={(e) => handleStatusChange(task, isDone ? 'todo' : 'completed', e)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isDone
-                                ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-500 dark:bg-navy-800 dark:border-white/10'
-                                }`}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                isDone
+                                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-500 dark:bg-navy-800 dark:border-white/10'
+                            }`}
                         >
                             {isDone ? <CheckCircle size={18} /> : <Circle size={18} />}
                         </button>
@@ -294,7 +319,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                                         {task.initiativeName}
                                     </span>
                                 )}
-                                <h4 className={`text-sm font-semibold truncate ${isDone ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'}`}>
+                                <h4
+                                    className={`text-sm font-semibold truncate ${isDone ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'}`}
+                                >
                                     {task.title}
                                 </h4>
                                 {/* PMO Labels */}
@@ -303,7 +330,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                                 {warnings.length > 0 && !isDone && (
                                     <div className="flex flex-wrap gap-1 mt-1">
                                         {warnings.map((w, idx) => (
-                                            <span key={idx} className="text-[9px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded flex items-center gap-0.5">
+                                            <span
+                                                key={idx}
+                                                className="text-[9px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded flex items-center gap-0.5"
+                                            >
                                                 <AlertTriangle size={8} />
                                                 {w}
                                             </span>
@@ -312,7 +342,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                                 )}
                             </div>
                             {task.dueDate && (
-                                <div className={`flex items-center gap-1 text-[10px] whitespace-nowrap ${new Date(task.dueDate) < new Date() && !isDone ? 'text-red-500' : 'text-slate-400'}`}>
+                                <div
+                                    className={`flex items-center gap-1 text-[10px] whitespace-nowrap ${new Date(task.dueDate) < new Date() && !isDone ? 'text-red-500' : 'text-slate-400'}`}
+                                >
                                     <Calendar size={10} />
                                     {new Date(task.dueDate).toLocaleDateString()}
                                 </div>
@@ -326,7 +358,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                         {/* Metadata Row */}
                         <div className="flex items-center gap-3">
                             {/* Priority Badge */}
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1 ${getPriorityColor(task.priority)}`}>
+                            <span
+                                className={`text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1 ${getPriorityColor(task.priority)}`}
+                            >
                                 <AlertTriangle size={8} />
                                 <span className="capitalize">{task.priority || 'Normal'}</span>
                             </span>
@@ -344,10 +378,11 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <div className="shrink-0 flex flex-col justify-center items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
                         <button
                             onClick={(e) => togglePinTask(task.id, e)}
-                            className={`p-1.5 rounded transition-colors ${pinnedTaskIds.has(task.id)
-                                ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
-                                }`}
+                            className={`p-1.5 rounded transition-colors ${
+                                pinnedTaskIds.has(task.id)
+                                    ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                    : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
+                            }`}
                             title={pinnedTaskIds.has(task.id) ? 'Unpin from top' : 'Pin to top'}
                         >
                             <Pin size={14} />
@@ -411,12 +446,27 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                                     <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-white/5">
                                         Quick Filters
                                     </div>
-                                    {([
+                                    {[
                                         { id: 'all' as QuickFilter, label: 'All Tasks', icon: '📋' },
-                                        { id: 'overdue' as QuickFilter, label: 'Overdue', icon: '🔴', color: 'text-red-600' },
-                                        { id: 'urgent' as QuickFilter, label: 'Urgent', icon: '⚡', color: 'text-orange-600' },
-                                        { id: 'today' as QuickFilter, label: 'Due Today', icon: '📅', color: 'text-blue-600' },
-                                    ]).map((opt) => (
+                                        {
+                                            id: 'overdue' as QuickFilter,
+                                            label: 'Overdue',
+                                            icon: '🔴',
+                                            color: 'text-red-600',
+                                        },
+                                        {
+                                            id: 'urgent' as QuickFilter,
+                                            label: 'Urgent',
+                                            icon: '⚡',
+                                            color: 'text-orange-600',
+                                        },
+                                        {
+                                            id: 'today' as QuickFilter,
+                                            label: 'Due Today',
+                                            icon: '📅',
+                                            color: 'text-blue-600',
+                                        },
+                                    ].map((opt) => (
                                         <button
                                             key={opt.id}
                                             onClick={() => {
@@ -456,14 +506,20 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                                 <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
                                 <div className="absolute top-full right-0 mt-1 w-36 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                     <button
-                                        onClick={() => { setViewMode('pmo'); setOpenFilter(null); }}
+                                        onClick={() => {
+                                            setViewMode('pmo');
+                                            setOpenFilter(null);
+                                        }}
                                         className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'pmo' ? 'font-semibold bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-200'}`}
                                     >
                                         <Layers size={12} />
                                         PMO Priority
                                     </button>
                                     <button
-                                        onClick={() => { setViewMode('list'); setOpenFilter(null); }}
+                                        onClick={() => {
+                                            setViewMode('list');
+                                            setOpenFilter(null);
+                                        }}
                                         className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'list' ? 'font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}
                                     >
                                         <CheckCircle2 size={12} />
@@ -475,7 +531,6 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     </div>
                 </div>
             </div>
-
 
             {/* List */}
             <div className="flex-1 p-3 space-y-2 min-h-0">
@@ -490,7 +545,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 opacity-50">
                         <CheckCircle2 size={32} className="mb-3" />
                         <p className="text-sm">No tasks found</p>
-                        <button onClick={onCreateTask} className="mt-2 text-xs text-blue-500 hover:underline">Create one?</button>
+                        <button onClick={onCreateTask} className="mt-2 text-xs text-blue-500 hover:underline">
+                            Create one?
+                        </button>
                     </div>
                 )}
 
@@ -506,7 +563,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                         </div>
                         <div className="space-y-2">
                             <AnimatePresence initial={false}>
-                                {pinnedTasks.map(task => renderTaskCard(task))}
+                                {pinnedTasks.map((task) => renderTaskCard(task))}
                             </AnimatePresence>
                         </div>
                     </div>
@@ -516,36 +573,70 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 {viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
                     <div className="space-y-4 overflow-y-auto h-full custom-scrollbar pb-10">
                         {/* PMO Category Sections */}
-                        {([
-                            { key: 'blocking_phase' as PMOCategory, label: '🔴 Blokujące Fazę', color: 'border-red-500', bgColor: 'bg-red-50 dark:bg-red-900/10' },
-                            { key: 'blocking_initiative' as PMOCategory, label: '🟠 Blokujące Inicjatywy', color: 'border-orange-500', bgColor: 'bg-orange-50 dark:bg-orange-900/10' },
-                            { key: 'awaiting_decision' as PMOCategory, label: '🟡 Oczekujące na Decyzję', color: 'border-yellow-500', bgColor: 'bg-yellow-50 dark:bg-yellow-900/10' },
-                            { key: 'overdue' as PMOCategory, label: '⚫ Przeterminowane', color: 'border-slate-500', bgColor: 'bg-slate-50 dark:bg-slate-800/50' },
-                            { key: 'other' as PMOCategory, label: '✅ Pozostałe', color: 'border-green-500', bgColor: 'bg-green-50 dark:bg-green-900/10' },
-                        ]).map(category => {
+                        {[
+                            {
+                                key: 'blocking_phase' as PMOCategory,
+                                label: '🔴 Blokujące Fazę',
+                                color: 'border-red-500',
+                                bgColor: 'bg-red-50 dark:bg-red-900/10',
+                            },
+                            {
+                                key: 'blocking_initiative' as PMOCategory,
+                                label: '🟠 Blokujące Inicjatywy',
+                                color: 'border-orange-500',
+                                bgColor: 'bg-orange-50 dark:bg-orange-900/10',
+                            },
+                            {
+                                key: 'awaiting_decision' as PMOCategory,
+                                label: '🟡 Oczekujące na Decyzję',
+                                color: 'border-yellow-500',
+                                bgColor: 'bg-yellow-50 dark:bg-yellow-900/10',
+                            },
+                            {
+                                key: 'overdue' as PMOCategory,
+                                label: '⚫ Przeterminowane',
+                                color: 'border-slate-500',
+                                bgColor: 'bg-slate-50 dark:bg-slate-800/50',
+                            },
+                            {
+                                key: 'other' as PMOCategory,
+                                label: '✅ Pozostałe',
+                                color: 'border-green-500',
+                                bgColor: 'bg-green-50 dark:bg-green-900/10',
+                            },
+                        ].map((category) => {
                             const categoryTasks = pmoGroupedTasks[category.key];
                             if (categoryTasks.length === 0) return null;
 
                             const isExpanded = expandedCategories.has(category.key);
 
                             return (
-                                <div key={category.key} className={`rounded-xl border-l-4 ${category.color} ${category.bgColor} overflow-hidden`}>
+                                <div
+                                    key={category.key}
+                                    className={`rounded-xl border-l-4 ${category.color} ${category.bgColor} overflow-hidden`}
+                                >
                                     <button
                                         onClick={() => toggleCategory(category.key)}
                                         className="w-full flex items-center justify-between p-3 hover:bg-white/50 dark:hover:bg-white/5 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-bold text-navy-900 dark:text-white">{category.label}</span>
+                                            <span className="text-sm font-bold text-navy-900 dark:text-white">
+                                                {category.label}
+                                            </span>
                                             <span className="text-xs px-2 py-0.5 bg-white dark:bg-navy-800 rounded-full text-slate-600 dark:text-slate-300 font-medium">
                                                 {categoryTasks.length}
                                             </span>
                                         </div>
-                                        {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                                        {isExpanded ? (
+                                            <ChevronUp size={16} className="text-slate-400" />
+                                        ) : (
+                                            <ChevronDown size={16} className="text-slate-400" />
+                                        )}
                                     </button>
 
                                     {isExpanded && (
                                         <div className="p-2 pt-0 space-y-2">
-                                            {categoryTasks.map(task => renderTaskCard(task))}
+                                            {categoryTasks.map((task) => renderTaskCard(task))}
                                         </div>
                                     )}
                                 </div>
@@ -559,11 +650,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <Virtuoso
                         style={{ height: '100%' }}
                         data={unpinnedTasks}
-                        itemContent={(index: number, task: Task) => (
-                            <div className="pb-2">
-                                {renderTaskCard(task)}
-                            </div>
-                        )}
+                        itemContent={(index: number, task: Task) => <div className="pb-2">{renderTaskCard(task)}</div>}
                     />
                 )}
             </div>
@@ -571,12 +658,11 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     );
 };
 
-
 /**
  * PMO Task Labels Component - Shows PMO-relevant labels for a task
  */
 const PMOTaskLabels: React.FC<{ taskId: string }> = ({ taskId }) => {
-    const getTaskLabel = usePMOStore(state => state.getTaskLabel);
+    const getTaskLabel = usePMOStore((state) => state.getTaskLabel);
     const labels = getTaskLabel(taskId);
 
     if (!labels || labels.length === 0) return null;

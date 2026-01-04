@@ -5,11 +5,12 @@
 
 import { OpenAI } from 'openai';
 import { v4 as uuidv4 } from 'uuid';
+
 import * as DbPromise from '../utils/DbPromise.js';
 import { embeddingService } from './ai/embeddingService.js';
 import { aiLogger } from './ai/logger.js';
 
-type DbRow = Record<string, unknown>;
+type _DbRow = Record<string, unknown>;
 
 type RerankableChunk = {
     id?: string;
@@ -48,7 +49,7 @@ const HYBRID_CONFIG = {
     alpha: 0.6,
     minVectorScore: 0.3,
     minBm25Score: 0.1,
-    rerankerEnabled: true
+    rerankerEnabled: true,
 };
 
 const tokenize = (text: string): string[] => {
@@ -57,14 +58,19 @@ const tokenize = (text: string): string[] => {
         .toLowerCase()
         .replace(/[^\w\s]/g, ' ')
         .split(/\s+/)
-        .filter(token => token.length > 2);
+        .filter((token) => token.length > 2);
 };
 
 const termFrequency = (term: string, tokens: string[]): number => {
-    return tokens.filter(token => token === term).length;
+    return tokens.filter((token) => token === term).length;
 };
 
-const bm25Score = (queryTokens: string[], docTokens: string[], avgDocLength: number, idf: Record<string, number>): number => {
+const bm25Score = (
+    queryTokens: string[],
+    docTokens: string[],
+    avgDocLength: number,
+    idf: Record<string, number>,
+): number => {
     let score = 0;
     const docLength = docTokens.length;
 
@@ -84,7 +90,7 @@ const calculateIDF = (terms: string[], documents: string[][]): Record<string, nu
     const idf: Record<string, number> = {};
 
     for (const term of terms) {
-        const docsWithTerm = documents.filter(doc => doc.includes(term)).length;
+        const docsWithTerm = documents.filter((doc) => doc.includes(term)).length;
         idf[term] = Math.log((N - docsWithTerm + 0.5) / (docsWithTerm + 0.5) + 1);
     }
 
@@ -114,7 +120,9 @@ const parseEmbedding = (value: unknown): number[] | null => {
 };
 
 const RagService = {
-    setDependencies: (newDeps: { OpenAI?: typeof OpenAI; embeddingService?: typeof embeddingService; uuidv4?: typeof uuidv4 } = {}) => {
+    setDependencies: (
+        newDeps: { OpenAI?: typeof OpenAI; embeddingService?: typeof embeddingService; uuidv4?: typeof uuidv4 } = {},
+    ) => {
         if (newDeps.OpenAI) deps.OpenAI = newDeps.OpenAI;
         if (newDeps.embeddingService) deps.embeddingService = newDeps.embeddingService;
         if (newDeps.uuidv4) deps.uuidv4 = newDeps.uuidv4;
@@ -125,7 +133,7 @@ const RagService = {
         const provider = await DbPromise.get<{ api_key?: string }>(
             "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
             [],
-            { fallback: true }
+            { fallback: true },
         );
         if (!provider || !provider.api_key) {
             return null;
@@ -136,7 +144,7 @@ const RagService = {
             const response = await openai.embeddings.create({
                 model: 'text-embedding-3-small',
                 input: text,
-                encoding_format: 'float'
+                encoding_format: 'float',
             });
             return response.data[0]?.embedding || null;
         } catch (error: unknown) {
@@ -148,7 +156,7 @@ const RagService = {
     getContext: async (
         query: string,
         limit = 3,
-        filterOptions: { organizationId?: string; screenContext?: ScreenContext } = {}
+        filterOptions: { organizationId?: string; screenContext?: ScreenContext } = {},
     ): Promise<string> => {
         await initDeps();
         const { organizationId, screenContext } = filterOptions;
@@ -177,21 +185,19 @@ const RagService = {
             params.push(organizationId);
         }
 
-        const rows = await DbPromise.all<{ content: string; filename: string; embedding: string }>(
-            sql,
-            params,
-            { fallback: true }
-        );
+        const rows = await DbPromise.all<{ content: string; filename: string; embedding: string }>(sql, params, {
+            fallback: true,
+        });
 
         if (!rows || rows.length === 0) {
             return RagService.getContextKeyword(expandedQuery, limit, organizationId || null);
         }
 
-        const scored = rows.map(row => {
+        const scored = rows.map((row) => {
             const vec = parseEmbedding(row.embedding);
             return {
                 ...row,
-                score: vec ? cosineSimilarity(queryEmbedding, vec) : 0
+                score: vec ? cosineSimilarity(queryEmbedding, vec) : 0,
             };
         });
 
@@ -199,8 +205,8 @@ const RagService = {
         const topChunks = scored.slice(0, limit);
 
         const context = topChunks
-            .filter(chunk => chunk.score > 0.5)
-            .map(row => `[Source: ${row.filename}] (Relevance: ${Math.round(row.score * 100)}%)\n${row.content}`)
+            .filter((chunk) => chunk.score > 0.5)
+            .map((row) => `[Source: ${row.filename}] (Relevance: ${Math.round(row.score * 100)}%)\n${row.content}`)
             .join('\n\n');
 
         if (organizationId) {
@@ -212,11 +218,11 @@ const RagService = {
                     organizationId,
                     JSON.stringify({
                         query: query.substring(0, 200),
-                        resultsCount: topChunks.filter(chunk => chunk.score > 0.5).length,
-                        topScore: topChunks[0]?.score
-                    })
+                        resultsCount: topChunks.filter((chunk) => chunk.score > 0.5).length,
+                        topScore: topChunks[0]?.score,
+                    }),
                 ],
-                { fallback: true }
+                { fallback: true },
             );
         }
 
@@ -228,12 +234,12 @@ const RagService = {
         if (!query) return '';
         const keywords = query
             .split(' ')
-            .map(word => word.trim().replace(/[^\w\s]/gi, ''))
-            .filter(word => word.length > 3);
+            .map((word) => word.trim().replace(/[^\w\s]/gi, ''))
+            .filter((word) => word.length > 3);
         if (keywords.length === 0) return '';
 
         const sqlParts = keywords.map(() => 'c.content LIKE ?').join(' OR ');
-        const params: unknown[] = keywords.map(word => `%${word}%`);
+        const params: unknown[] = keywords.map((word) => `%${word}%`);
 
         let sql = `
             SELECT c.content, d.filename
@@ -250,7 +256,7 @@ const RagService = {
         sql += ` LIMIT ${limit}`;
 
         const rows = await DbPromise.all<{ content: string; filename: string }>(sql, params, { fallback: true });
-        return (rows || []).map(row => `[Source: ${row.filename}]\n${row.content}`).join('\n\n');
+        return (rows || []).map((row) => `[Source: ${row.filename}]\n${row.content}`).join('\n\n');
     },
 
     storeChunks: async (docId: string, chunks: string[]): Promise<void> => {
@@ -263,7 +269,7 @@ const RagService = {
                 `INSERT INTO knowledge_chunks (id, doc_id, content, embedding)
                  VALUES (?, ?, ?, ?)`,
                 [chunkId, docId, chunks[i], JSON.stringify(embedding || [])],
-                { fallback: true }
+                { fallback: true },
             );
         }
     },
@@ -275,8 +281,10 @@ const RagService = {
 
     searchRelevantChunks: async (
         query: string,
-        options: SearchOptions = {}
-    ): Promise<Array<{ content: string; source: string; similarity: number; documentId?: string; chunkIndex?: number }>> => {
+        options: SearchOptions = {},
+    ): Promise<
+        Array<{ content: string; source: string; similarity: number; documentId?: string; chunkIndex?: number }>
+    > => {
         await initDeps();
         const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
 
@@ -284,38 +292,44 @@ const RagService = {
             const results = await deps.embeddingService.search(query, {
                 limit,
                 organizationId,
-                minSimilarity
+                minSimilarity,
             });
 
             if (!results || results.length === 0) {
-                const legacyContext = await RagService.getContext(query, limit, { organizationId: organizationId || undefined });
+                const legacyContext = await RagService.getContext(query, limit, {
+                    organizationId: organizationId || undefined,
+                });
                 if (legacyContext) {
-                    return [{
-                        content: legacyContext,
-                        source: 'legacy_knowledge_base',
-                        similarity: 0.7
-                    }];
+                    return [
+                        {
+                            content: legacyContext,
+                            source: 'legacy_knowledge_base',
+                            similarity: 0.7,
+                        },
+                    ];
                 }
                 return [];
             }
 
-            return results.map(result => ({
+            return results.map((result) => ({
                 content: result.content || '',
                 source: (result.metadata as { filename?: string })?.filename || 'Knowledge Base',
                 similarity: result.similarity || 0,
                 documentId: result.document_id || undefined,
-                chunkIndex: result.chunk_index || undefined
+                chunkIndex: result.chunk_index || undefined,
             }));
         } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('RagService', `searchRelevantChunks error: ${err.message}`);
             const keywordContext = await RagService.getContextKeyword(query, limit, organizationId || null);
             if (keywordContext) {
-                return [{
-                    content: keywordContext,
-                    source: 'keyword_search',
-                    similarity: 0.5
-                }];
+                return [
+                    {
+                        content: keywordContext,
+                        source: 'keyword_search',
+                        similarity: 0.5,
+                    },
+                ];
             }
             return [];
         }
@@ -331,7 +345,9 @@ const RagService = {
         const { content, filename, mimeType, organizationId } = params;
         const ingestionModule = await import('./ai/ingestionPipeline.js');
         const ingestionPipeline = (ingestionModule.ingestionPipeline || ingestionModule.default) as {
-            process?: (args: Record<string, unknown>) => Promise<{ chunks: Array<{ content: string; chunkIndex: number }> }>;
+            process?: (
+                args: Record<string, unknown>,
+            ) => Promise<{ chunks: Array<{ content: string; chunkIndex: number }> }>;
         };
 
         if (!ingestionPipeline.process) {
@@ -345,7 +361,7 @@ const RagService = {
             filename,
             mimeType,
             documentId,
-            organizationId
+            organizationId,
         });
 
         let successCount = 0;
@@ -364,7 +380,7 @@ const RagService = {
             documentId,
             totalChunks: chunks.length,
             embeddedChunks: successCount,
-            success: successCount > 0
+            success: successCount > 0,
         };
     },
 
@@ -383,7 +399,9 @@ const RagService = {
             params.push(organizationId);
         }
 
-        const rows = await DbPromise.all<{ id: string; content: string; filename: string }>(sql, params, { fallback: true });
+        const rows = await DbPromise.all<{ id: string; content: string; filename: string }>(sql, params, {
+            fallback: true,
+        });
         if (!rows || rows.length === 0) {
             return [];
         }
@@ -393,7 +411,7 @@ const RagService = {
             return [];
         }
 
-        const tokenizedDocs = rows.map(row => tokenize(row.content));
+        const tokenizedDocs = rows.map((row) => tokenize(row.content));
         const totalLength = tokenizedDocs.reduce((sum, doc) => sum + doc.length, 0);
         const avgDocLength = totalLength / tokenizedDocs.length;
         const idf = calculateIDF(queryTokens, tokenizedDocs);
@@ -401,18 +419,18 @@ const RagService = {
         const scored = rows.map((row, idx) => ({
             ...row,
             bm25Score: bm25Score(queryTokens, tokenizedDocs[idx], avgDocLength, idf),
-            tokens: tokenizedDocs[idx]
+            tokens: tokenizedDocs[idx],
         }));
 
         const results = scored
-            .filter(result => (result.bm25Score || 0) > HYBRID_CONFIG.minBm25Score)
+            .filter((result) => (result.bm25Score || 0) > HYBRID_CONFIG.minBm25Score)
             .sort((a, b) => (b.bm25Score || 0) - (a.bm25Score || 0))
             .slice(0, limit);
 
         const maxBm25 = results.length > 0 ? results[0].bm25Score || 1 : 1;
-        return results.map(result => ({
+        return results.map((result) => ({
             ...result,
-            bm25ScoreNormalized: (result.bm25Score || 0) / maxBm25
+            bm25ScoreNormalized: (result.bm25Score || 0) / maxBm25,
         }));
     },
 
@@ -422,7 +440,7 @@ const RagService = {
             limit = 5,
             organizationId = null,
             alpha = HYBRID_CONFIG.alpha,
-            enableReranking = HYBRID_CONFIG.rerankerEnabled
+            enableReranking = HYBRID_CONFIG.rerankerEnabled,
         } = options;
 
         aiLogger.info('RagService', `Hybrid search: query="${query.substring(0, 50)}...", alpha=${alpha}`);
@@ -430,7 +448,7 @@ const RagService = {
         const candidateLimit = limit * 3;
         const [bm25Results, vectorResults] = await Promise.all([
             RagService.bm25Search(query, candidateLimit, organizationId),
-            RagService._vectorSearch(query, candidateLimit, organizationId)
+            RagService._vectorSearch(query, candidateLimit, organizationId),
         ]);
 
         aiLogger.info('RagService', `BM25 results: ${bm25Results.length}, Vector results: ${vectorResults.length}`);
@@ -443,14 +461,14 @@ const RagService = {
                 ...result,
                 bm25Score: result.bm25ScoreNormalized || 0,
                 vectorScore: 0,
-                source: 'bm25'
+                source: 'bm25',
             });
         }
 
         for (const result of vectorResults) {
             const key = result.id || result.content.substring(0, 100);
             const existing = resultMap.get(key);
-            const vectorScore = (result.vectorScore || 0);
+            const vectorScore = result.vectorScore || 0;
 
             if (existing) {
                 existing.vectorScore = vectorScore;
@@ -460,12 +478,12 @@ const RagService = {
                     ...result,
                     bm25Score: 0,
                     vectorScore,
-                    source: 'vector'
+                    source: 'vector',
                 });
             }
         }
 
-        const combined = Array.from(resultMap.values()).map(result => {
+        const combined = Array.from(resultMap.values()).map((result) => {
             const hybridScore = alpha * (result.vectorScore || 0) + (1 - alpha) * (result.bm25Score || 0);
             return {
                 ...result,
@@ -474,8 +492,8 @@ const RagService = {
                     vector: result.vectorScore || 0,
                     bm25: result.bm25Score || 0,
                     hybrid: hybridScore,
-                    alpha
-                }
+                    alpha,
+                },
             };
         });
 
@@ -486,7 +504,11 @@ const RagService = {
             try {
                 const rerankerModule = await import('./ai/rerankerService.js');
                 const reranker = (rerankerModule.default || rerankerModule) as {
-                    rerankDocuments: (queryText: string, docs: RerankableChunk[], topK: number) => Promise<RerankableChunk[]>;
+                    rerankDocuments: (
+                        queryText: string,
+                        docs: RerankableChunk[],
+                        topK: number,
+                    ) => Promise<RerankableChunk[]>;
                 };
                 finalResults = await reranker.rerankDocuments(query, finalResults, limit);
                 aiLogger.info('RagService', `Re-ranked ${finalResults.length} results`);
@@ -501,7 +523,7 @@ const RagService = {
             vectorCount: vectorResults.length,
             hybridCount: combined.length,
             finalCount: finalResults.length,
-            topScore: finalResults[0]?.hybridScore || 0
+            topScore: finalResults[0]?.hybridScore || 0,
         });
 
         return finalResults;
@@ -510,7 +532,7 @@ const RagService = {
     _vectorSearch: async (
         query: string,
         limit: number,
-        organizationId: string | null = null
+        organizationId: string | null = null,
     ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
         await initDeps();
         const queryEmbedding = await RagService.generateEmbedding(query);
@@ -532,19 +554,19 @@ const RagService = {
         const rows = await DbPromise.all<{ id: string; content: string; filename: string; embedding: string }>(
             sql,
             params,
-            { fallback: true }
+            { fallback: true },
         );
 
-        const scored = rows.map(row => {
+        const scored = rows.map((row) => {
             const vec = parseEmbedding(row.embedding);
             return {
                 ...row,
-                vectorScore: vec ? cosineSimilarity(queryEmbedding, vec) : 0
+                vectorScore: vec ? cosineSimilarity(queryEmbedding, vec) : 0,
             };
         });
 
         return scored
-            .filter(result => result.vectorScore > HYBRID_CONFIG.minVectorScore)
+            .filter((result) => result.vectorScore > HYBRID_CONFIG.minVectorScore)
             .sort((a, b) => b.vectorScore - a.vectorScore)
             .slice(0, limit);
     },
@@ -552,7 +574,7 @@ const RagService = {
     _logSearchMetrics: async (
         query: string,
         organizationId: string | null,
-        metrics: Record<string, unknown>
+        metrics: Record<string, unknown>,
     ): Promise<void> => {
         if (!organizationId) return;
         await initDeps();
@@ -566,16 +588,16 @@ const RagService = {
                 JSON.stringify({
                     query: query.substring(0, 200),
                     ...metrics,
-                    timestamp: new Date().toISOString()
-                })
+                    timestamp: new Date().toISOString(),
+                }),
             ],
-            { fallback: true }
+            { fallback: true },
         );
     },
 
     getContextHybrid: async (
         query: string,
-        options: { limit?: number; organizationId?: string; screenContext?: ScreenContext } = {}
+        options: { limit?: number; organizationId?: string; screenContext?: ScreenContext } = {},
     ): Promise<{
         context: string;
         sources: Array<{ filename?: string; score?: number; method?: string; breakdown?: Record<string, unknown> }>;
@@ -592,39 +614,39 @@ const RagService = {
         const results = await RagService.hybridSearch(expandedQuery, {
             limit,
             organizationId,
-            enableReranking: true
+            enableReranking: true,
         });
 
         const context = results
-            .filter(result => (result.hybridScore || 0) > 0.2)
+            .filter((result) => (result.hybridScore || 0) > 0.2)
             .map((result, idx) => {
                 const source = result.filename || 'Knowledge Base';
-                const score = Math.round(((result.hybridScore || 0) * 100));
+                const score = Math.round((result.hybridScore || 0) * 100);
                 return `[${idx + 1}] [Source: ${source}] (Relevance: ${score}%, Method: ${result.source})\n${result.content}`;
             })
             .join('\n\n---\n\n');
 
         return {
             context,
-            sources: results.map(result => ({
+            sources: results.map((result) => ({
                 filename: result.filename,
                 score: result.hybridScore,
                 method: result.source,
-                breakdown: result.scoreBreakdown
+                breakdown: result.scoreBreakdown,
             })),
             metrics: {
                 totalResults: results.length,
                 topScore: results[0]?.hybridScore || 0,
-                method: 'hybrid_bm25_vector'
-            }
+                method: 'hybrid_bm25_vector',
+            },
         };
-    }
+    },
 };
 
 const deps = {
     OpenAI,
     embeddingService,
-    uuidv4
+    uuidv4,
 };
 
 async function initDeps(): Promise<void> {

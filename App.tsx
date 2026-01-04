@@ -1,14 +1,16 @@
+import './services/tokenService'; // Initialize token service
+
+import { Loader2 } from 'lucide-react';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
+
+import { RouterSync } from './components/RouterSync';
+import { Api } from './services/api';
 import { AppProviders } from './src/providers/AppProviders';
 import { AppRoutes } from './src/routes/AppRoutes';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
-import { Api } from './services/api';
-import './services/tokenService'; // Initialize token service
 import { User } from './types';
-import { useTranslation } from 'react-i18next';
-import { RouterSync } from './components/RouterSync';
 
 // Lazy load views for public routes that might be outside main app logic if needed
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
@@ -19,7 +21,13 @@ const InviteRouteWrapper = () => {
     const navigate = useNavigate();
 
     return (
-        <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>}>
+        <React.Suspense
+            fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                </div>
+            }
+        >
             <AcceptInvitationView
                 token={token || ''}
                 onAccepted={() => navigate('/login')}
@@ -40,13 +48,7 @@ function App() {
 
 // Separated content to use hooks inside providers
 function AppContent() {
-    const {
-        setCurrentUser,
-        setCurrentOrganization,
-        logout,
-        theme,
-        currentUser
-    } = useAppStore();
+    const { setCurrentUser, setCurrentOrganization, logout, theme, currentUser } = useAppStore();
 
     const { i18n } = useTranslation();
 
@@ -114,7 +116,7 @@ function AppContent() {
                     if (user.organizationId) {
                         setCurrentOrganization({
                             id: user.organizationId,
-                            name: user.organizationName || 'Organization'
+                            name: user.organizationName || 'Organization',
                         });
                     }
                 }
@@ -131,11 +133,20 @@ function AppContent() {
             <RouterSync />
             <Routes>
                 <Route path="/invite/:token" element={<InviteRouteWrapper />} />
-                <Route path="/report/:id" element={
-                    <React.Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}>
-                        <PublicReportView />
-                    </React.Suspense>
-                } />
+                <Route
+                    path="/report/:id"
+                    element={
+                        <React.Suspense
+                            fallback={
+                                <div className="flex h-screen items-center justify-center">
+                                    <Loader2 className="animate-spin text-primary" />
+                                </div>
+                            }
+                        >
+                            <PublicReportView />
+                        </React.Suspense>
+                    }
+                />
                 <Route path="/*" element={<AppRoutes />} />
             </Routes>
         </>

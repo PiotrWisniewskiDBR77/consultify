@@ -10,7 +10,8 @@
  * - Change Management (PMBOK 7)
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 // Database helpers
@@ -469,6 +470,7 @@ const ReportVersionService = {
 };
 
 export default ReportVersionService;
+
 
 
 

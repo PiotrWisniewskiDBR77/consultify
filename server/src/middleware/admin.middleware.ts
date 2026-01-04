@@ -1,13 +1,14 @@
 /**
  * Admin Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Verifies user is an ADMIN or SUPERADMIN for their organization.
  * Use this for organization-scoped admin actions (user management, team creation, etc.)
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+
 import config from '../../config.js';
 import type { AuthRequest } from './auth.middleware.js';
 
@@ -33,7 +34,7 @@ interface Dependencies {
 
 let deps: Dependencies = {
     jwt,
-    config
+    config,
 };
 
 // ==========================================
@@ -43,11 +44,7 @@ let deps: Dependencies = {
 /**
  * Admin Middleware - Verifies user is an ADMIN or SUPERADMIN for their organization
  */
-export const verifyAdmin = (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): void => {
+export const verifyAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
     const { jwt: jwtLib, config: depsConfig } = deps;
 
     const headers = req.headers || {};
@@ -58,9 +55,7 @@ export const verifyAdmin = (
         return;
     }
 
-    const cleanToken = typeof token === 'string' && token.startsWith('Bearer ')
-        ? token.slice(7)
-        : token;
+    const cleanToken = typeof token === 'string' && token.startsWith('Bearer ') ? token.slice(7) : token;
 
     jwtLib.verify(cleanToken as string, depsConfig.JWT_SECRET, (err, decoded) => {
         if (err) {
@@ -100,35 +95,70 @@ export const checkPermission = (requiredPermission: string) => {
         // Permission matrix by role
         const permissions: Record<string, string[]> = {
             SUPERADMIN: [
-                'org:create', 'org:read', 'org:update', 'org:delete',
-                'user:create', 'user:read', 'user:update', 'user:delete', 'user:reset_password',
-                'project:create', 'project:read', 'project:update', 'project:delete',
-                'task:create', 'task:read', 'task:update', 'task:delete', 'task:assign',
-                'team:create', 'team:read', 'team:update', 'team:delete',
-                'settings:global', 'analytics:global',
-                'connectors:manage'
+                'org:create',
+                'org:read',
+                'org:update',
+                'org:delete',
+                'user:create',
+                'user:read',
+                'user:update',
+                'user:delete',
+                'user:reset_password',
+                'project:create',
+                'project:read',
+                'project:update',
+                'project:delete',
+                'task:create',
+                'task:read',
+                'task:update',
+                'task:delete',
+                'task:assign',
+                'team:create',
+                'team:read',
+                'team:update',
+                'team:delete',
+                'settings:global',
+                'analytics:global',
+                'connectors:manage',
             ],
             ADMIN: [
-                'user:create', 'user:read', 'user:update', 'user:delete',
-                'project:create', 'project:read', 'project:update', 'project:delete',
-                'task:create', 'task:read', 'task:update', 'task:delete', 'task:assign',
-                'team:create', 'team:read', 'team:update', 'team:delete',
-                'settings:org', 'analytics:org',
-                'connectors:manage'
+                'user:create',
+                'user:read',
+                'user:update',
+                'user:delete',
+                'project:create',
+                'project:read',
+                'project:update',
+                'project:delete',
+                'task:create',
+                'task:read',
+                'task:update',
+                'task:delete',
+                'task:assign',
+                'team:create',
+                'team:read',
+                'team:update',
+                'team:delete',
+                'settings:org',
+                'analytics:org',
+                'connectors:manage',
             ],
             USER: [
                 'project:read',
-                'task:create', 'task:read', 'task:update:own', 'task:delete:own',
+                'task:create',
+                'task:read',
+                'task:update:own',
+                'task:delete:own',
                 'team:read',
-                'settings:own'
-            ]
+                'settings:own',
+            ],
         };
 
         const userRole = req.userRole || req.user?.role;
         const userPermissions = permissions[userRole || ''] || [];
 
         // Check for exact match or wildcard match
-        const hasPermission = userPermissions.some(perm => {
+        const hasPermission = userPermissions.some((perm) => {
             if (perm === requiredPermission) return true;
             // Check :own suffix - if user has :own, they can do action on their own resources
             if (requiredPermission.endsWith(':own') && perm === requiredPermission) return true;
@@ -141,7 +171,7 @@ export const checkPermission = (requiredPermission: string) => {
             res.status(403).json({
                 error: 'Permission denied',
                 required: requiredPermission,
-                role: userRole
+                role: userRole,
             });
             return;
         }
@@ -157,7 +187,4 @@ export const checkPermission = (requiredPermission: string) => {
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-
-
-
 

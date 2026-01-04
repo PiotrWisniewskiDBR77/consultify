@@ -8,7 +8,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import db from '../../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import WebSearchService from '../../webSearchService.js';
 
 // Cache TTL in milliseconds (24 hours)
@@ -614,6 +615,7 @@ class IndustryIntelligenceService {
 }
 
 export default IndustryIntelligenceService;
+
 
 
 

@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/ui/BaseCard';
 import {
-    Plus,
+    Activity,
+    AlertTriangle,
+    BarChart3,
     Brain,
-    Zap,
+    CheckCircle2,
+    Database,
+    DollarSign,
+    LineChart,
+    Loader2,
+    Play,
+    Plus,
+    RefreshCw,
+    Settings,
     Target,
+    Trash2,
     TrendingUp,
     Users,
-    DollarSign,
-    Activity,
-    RefreshCw,
-    Trash2,
-    Play,
-    CheckCircle2,
-    AlertTriangle,
-    Loader2,
-    BarChart3,
-    LineChart,
-    Settings,
-    Database
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card } from '../../../components/ui/BaseCard';
 import Api from '../../../services/api';
 
 interface PredictiveModel {
@@ -69,7 +70,7 @@ const PredictiveAnalyticsView: React.FC = () => {
         description: '',
         modelType: 'churn',
         trainingData: {},
-        modelConfig: {}
+        modelConfig: {},
     });
 
     const [predictionInput, setPredictionInput] = useState('{}');
@@ -116,7 +117,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                 description: '',
                 modelType: 'churn',
                 trainingData: {},
-                modelConfig: {}
+                modelConfig: {},
             });
             fetchModels();
         } catch (error) {
@@ -149,7 +150,7 @@ const PredictiveAnalyticsView: React.FC = () => {
             if (result.accuracyScore !== undefined) {
                 setSelectedModel({
                     ...selectedModel,
-                    accuracy_score: result.accuracyScore
+                    accuracy_score: result.accuracyScore,
                 });
             }
         } catch (error) {
@@ -183,7 +184,7 @@ const PredictiveAnalyticsView: React.FC = () => {
     };
 
     const getModelTypeInfo = (type: string) => {
-        return MODEL_TYPES.find(mt => mt.id === type) || MODEL_TYPES[4];
+        return MODEL_TYPES.find((mt) => mt.id === type) || MODEL_TYPES[4];
     };
 
     const getAccuracyColor = (score?: number) => {
@@ -241,7 +242,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                     </button>
                                 </div>
                             ) : (
-                                models.map(model => {
+                                models.map((model) => {
                                     const typeInfo = getModelTypeInfo(model.model_type);
                                     const TypeIcon = typeInfo.icon;
                                     const accuracyColor = getAccuracyColor(model.accuracy_score);
@@ -250,10 +251,11 @@ const PredictiveAnalyticsView: React.FC = () => {
                                         <div
                                             key={model.id}
                                             onClick={() => handleSelectModel(model)}
-                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedModel?.id === model.id
+                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                                                selectedModel?.id === model.id
                                                     ? 'bg-blue-600/20 border border-blue-500'
                                                     : 'bg-gray-700/50 hover:bg-gray-700'
-                                                }`}
+                                            }`}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -268,9 +270,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                                             <span className="w-2 h-2 bg-green-400 rounded-full" />
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-400 text-xs mt-1">
-                                                        {typeInfo.label}
-                                                    </p>
+                                                    <p className="text-gray-400 text-xs mt-1">{typeInfo.label}</p>
                                                     {model.accuracy_score !== undefined && (
                                                         <div className="flex items-center gap-1 mt-2">
                                                             <Target className="w-3 h-3 text-gray-400" />
@@ -299,9 +299,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                     <div>
                                         <h3 className="text-xl font-bold text-white">{selectedModel.name}</h3>
                                         {selectedModel.description && (
-                                            <p className="text-gray-400 text-sm mt-1">
-                                                {selectedModel.description}
-                                            </p>
+                                            <p className="text-gray-400 text-sm mt-1">{selectedModel.description}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -344,7 +342,9 @@ const PredictiveAnalyticsView: React.FC = () => {
                                     </div>
                                     <div className="bg-gray-700/50 rounded-lg p-3">
                                         <span className="text-gray-400 text-xs">Accuracy</span>
-                                        <p className={`font-bold text-lg mt-1 text-${getAccuracyColor(selectedModel.accuracy_score)}-400`}>
+                                        <p
+                                            className={`font-bold text-lg mt-1 text-${getAccuracyColor(selectedModel.accuracy_score)}-400`}
+                                        >
                                             {selectedModel.accuracy_score !== undefined
                                                 ? `${(selectedModel.accuracy_score * 100).toFixed(1)}%`
                                                 : 'Not trained'}
@@ -352,7 +352,9 @@ const PredictiveAnalyticsView: React.FC = () => {
                                     </div>
                                     <div className="bg-gray-700/50 rounded-lg p-3">
                                         <span className="text-gray-400 text-xs">Status</span>
-                                        <p className={`font-medium mt-1 ${selectedModel.is_active ? 'text-green-400' : 'text-gray-400'}`}>
+                                        <p
+                                            className={`font-medium mt-1 ${selectedModel.is_active ? 'text-green-400' : 'text-gray-400'}`}
+                                        >
                                             {selectedModel.is_active ? 'Active' : 'Inactive'}
                                         </p>
                                     </div>
@@ -393,14 +395,16 @@ const PredictiveAnalyticsView: React.FC = () => {
                                             <div className="mt-4">
                                                 <span className="text-gray-400 text-xs">Key Factors</span>
                                                 <div className="flex flex-wrap gap-2 mt-2">
-                                                    {Object.entries(predictionResult.factors).map(([key, value]: [string, any]) => (
-                                                        <span
-                                                            key={key}
-                                                            className="px-2 py-1 bg-gray-600 rounded text-xs text-white"
-                                                        >
-                                                            {key}: {String(value)}
-                                                        </span>
-                                                    ))}
+                                                    {Object.entries(predictionResult.factors).map(
+                                                        ([key, value]: [string, any]) => (
+                                                            <span
+                                                                key={key}
+                                                                className="px-2 py-1 bg-gray-600 rounded text-xs text-white"
+                                                            >
+                                                                {key}: {String(value)}
+                                                            </span>
+                                                        ),
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -417,7 +421,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                     </p>
                                 ) : (
                                     <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                        {predictions.map(pred => {
+                                        {predictions.map((pred) => {
                                             let result;
                                             try {
                                                 result = JSON.parse(pred.prediction_result_json);
@@ -457,9 +461,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                         <Card className="bg-gray-800 p-8">
                             <div className="flex flex-col items-center justify-center h-64">
                                 <Brain className="w-16 h-16 text-gray-600 mb-4" />
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Select a Model
-                                </h3>
+                                <h3 className="text-xl font-semibold text-white mb-2">Select a Model</h3>
                                 <p className="text-gray-400 text-center">
                                     Choose a model from the list or create a new one
                                 </p>
@@ -476,9 +478,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Create New Model</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Model Name
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
                                 <input
                                     type="text"
                                     value={newModel.name}
@@ -488,9 +488,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                                 <textarea
                                     value={newModel.description}
                                     onChange={(e) => setNewModel({ ...newModel, description: e.target.value })}
@@ -499,24 +497,21 @@ const PredictiveAnalyticsView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Model Type
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Model Type</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {MODEL_TYPES.map(mt => (
+                                    {MODEL_TYPES.map((mt) => (
                                         <button
                                             key={mt.id}
                                             onClick={() => setNewModel({ ...newModel, modelType: mt.id })}
-                                            className={`p-3 rounded-lg text-left transition-colors ${newModel.modelType === mt.id
+                                            className={`p-3 rounded-lg text-left transition-colors ${
+                                                newModel.modelType === mt.id
                                                     ? 'bg-purple-600/20 border border-purple-500'
                                                     : 'bg-gray-700 hover:bg-gray-600'
-                                                }`}
+                                            }`}
                                         >
                                             <div className="flex items-center gap-2">
                                                 <mt.icon className="w-4 h-4 text-purple-400" />
-                                                <span className="text-sm font-medium text-white">
-                                                    {mt.label}
-                                                </span>
+                                                <span className="text-sm font-medium text-white">{mt.label}</span>
                                             </div>
                                             <p className="text-xs text-gray-400 mt-1">{mt.description}</p>
                                         </button>
@@ -574,11 +569,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                                 disabled={isPredicting}
                                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
                             >
-                                {isPredicting ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    'Run Prediction'
-                                )}
+                                {isPredicting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Run Prediction'}
                             </button>
                         </div>
                     </div>
@@ -589,10 +580,4 @@ const PredictiveAnalyticsView: React.FC = () => {
 };
 
 export default PredictiveAnalyticsView;
-
-
-
-
-
-
 

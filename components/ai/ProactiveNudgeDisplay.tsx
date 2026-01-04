@@ -1,6 +1,6 @@
 /**
  * Proactive Nudge Display Component
- * 
+ *
  * Displays AI-driven proactive suggestions and nudges to users.
  * Features:
  * - Toast-style notifications
@@ -9,23 +9,24 @@
  * - Priority-based display queue
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Lightbulb, 
-    X, 
-    ArrowRight, 
-    Sparkles, 
-    TrendingUp, 
+import {
     AlertCircle,
+    ArrowRight,
     CheckCircle,
-    Clock,
-    ThumbsUp,
-    ThumbsDown,
+    ChevronDown,
     ChevronUp,
-    ChevronDown
+    Clock,
+    Lightbulb,
+    Sparkles,
+    ThumbsDown,
+    ThumbsUp,
+    TrendingUp,
+    X,
 } from 'lucide-react';
-import api from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import api from '../../services/api';
 
 interface Nudge {
     id: string;
@@ -57,50 +58,50 @@ const nudgeStyles = {
         bgColor: 'bg-blue-50 dark:bg-blue-900/20',
         borderColor: 'border-blue-200 dark:border-blue-800',
         iconColor: 'text-blue-500',
-        titleColor: 'text-blue-900 dark:text-blue-100'
+        titleColor: 'text-blue-900 dark:text-blue-100',
     },
     REMINDER: {
         icon: Clock,
         bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
         borderColor: 'border-yellow-200 dark:border-yellow-800',
         iconColor: 'text-yellow-500',
-        titleColor: 'text-yellow-900 dark:text-yellow-100'
+        titleColor: 'text-yellow-900 dark:text-yellow-100',
     },
     INSIGHT: {
         icon: TrendingUp,
         bgColor: 'bg-purple-50 dark:bg-purple-900/20',
         borderColor: 'border-purple-200 dark:border-purple-800',
         iconColor: 'text-purple-500',
-        titleColor: 'text-purple-900 dark:text-purple-100'
+        titleColor: 'text-purple-900 dark:text-purple-100',
     },
     TIP: {
         icon: Sparkles,
         bgColor: 'bg-green-50 dark:bg-green-900/20',
         borderColor: 'border-green-200 dark:border-green-800',
         iconColor: 'text-green-500',
-        titleColor: 'text-green-900 dark:text-green-100'
+        titleColor: 'text-green-900 dark:text-green-100',
     },
     WARNING: {
         icon: AlertCircle,
         bgColor: 'bg-red-50 dark:bg-red-900/20',
         borderColor: 'border-red-200 dark:border-red-800',
         iconColor: 'text-red-500',
-        titleColor: 'text-red-900 dark:text-red-100'
-    }
+        titleColor: 'text-red-900 dark:text-red-100',
+    },
 };
 
 const positionStyles = {
     'bottom-right': 'bottom-4 right-4',
     'bottom-left': 'bottom-4 left-4',
     'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4'
+    'top-left': 'top-4 left-4',
 };
 
 export function ProactiveNudgeDisplay({
     projectId,
     screen,
     maxVisible = 3,
-    position = 'bottom-right'
+    position = 'bottom-right',
 }: ProactiveNudgeDisplayProps) {
     const { t } = useTranslation();
     const [nudges, setNudges] = useState<Nudge[]>([]);
@@ -115,11 +116,9 @@ export function ProactiveNudgeDisplay({
             if (screen) params.append('screen', screen);
 
             const response = await api.get(`/ai/proactive-nudges?${params.toString()}`);
-            
+
             if (response.data.success) {
-                const newNudges = (response.data.nudges || []).filter(
-                    (n: Nudge) => !dismissedIds.has(n.id)
-                );
+                const newNudges = (response.data.nudges || []).filter((n: Nudge) => !dismissedIds.has(n.id));
                 setNudges(newNudges);
             }
         } catch (err) {
@@ -129,20 +128,20 @@ export function ProactiveNudgeDisplay({
 
     useEffect(() => {
         fetchNudges();
-        
+
         // Refresh nudges every 5 minutes
         const interval = setInterval(fetchNudges, 5 * 60 * 1000);
         return () => clearInterval(interval);
     }, [fetchNudges]);
 
     const handleDismiss = async (nudgeId: string, feedback?: 'positive' | 'negative') => {
-        setDismissedIds(prev => new Set(prev).add(nudgeId));
-        setNudges(prev => prev.filter(n => n.id !== nudgeId));
+        setDismissedIds((prev) => new Set(prev).add(nudgeId));
+        setNudges((prev) => prev.filter((n) => n.id !== nudgeId));
 
         try {
             await api.post(`/ai/proactive-nudges/${nudgeId}/dismiss`, {
                 feedback,
-                dismissedAt: new Date().toISOString()
+                dismissedAt: new Date().toISOString(),
             });
         } catch (err) {
             console.error('Failed to record dismissal:', err);
@@ -150,7 +149,7 @@ export function ProactiveNudgeDisplay({
     };
 
     const handleFeedback = (nudgeId: string, feedback: 'positive' | 'negative') => {
-        setFeedbackGiven(prev => ({ ...prev, [nudgeId]: feedback }));
+        setFeedbackGiven((prev) => ({ ...prev, [nudgeId]: feedback }));
         // Auto-dismiss after feedback with a small delay
         setTimeout(() => handleDismiss(nudgeId, feedback), 500);
     };
@@ -159,7 +158,7 @@ export function ProactiveNudgeDisplay({
         try {
             await api.post(`/ai/proactive-nudges/${nudge.id}/action`, {
                 actionTaken: true,
-                actionAt: new Date().toISOString()
+                actionAt: new Date().toISOString(),
             });
         } catch (err) {
             console.error('Failed to record action:', err);
@@ -217,7 +216,7 @@ export function ProactiveNudgeDisplay({
                                     transition-all duration-300
                                 `}
                                 style={{
-                                    animationDelay: `${index * 100}ms`
+                                    animationDelay: `${index * 100}ms`,
                                 }}
                             >
                                 {/* Header */}
@@ -227,9 +226,7 @@ export function ProactiveNudgeDisplay({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between">
-                                            <h4 className={`font-medium ${style.titleColor} text-sm`}>
-                                                {nudge.title}
-                                            </h4>
+                                            <h4 className={`font-medium ${style.titleColor} text-sm`}>{nudge.title}</h4>
                                             {nudge.dismissible && (
                                                 <button
                                                     onClick={() => handleDismiss(nudge.id)}

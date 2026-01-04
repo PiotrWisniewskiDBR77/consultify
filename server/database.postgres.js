@@ -1189,6 +1189,56 @@ function initDb() {
                 console.log('[Postgres] Organization columns migration skipped (may already exist)');
             });
 
+            // ---------------------------------------------------------
+            // Phase 1.3: Performance Optimization (Missing Indexes)
+            // ---------------------------------------------------------
+            console.log('[Postgres] Verifying/Creating Indexes...');
+
+            // Users & Auth
+            await query(`CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user ON revoked_tokens(user_id)`);
+
+            // Teams & Access
+            await query(`CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_teams_lead ON teams(lead_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_inviter ON invitations(invited_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_requests_org ON access_requests(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_requests_reviewer ON access_requests(reviewed_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_org ON access_codes(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_creator ON access_codes(created_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_code_usage_code ON access_code_usage(code_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_code_usage_user ON access_code_usage(user_id)`);
+
+            // Tasks Management
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_custom_status ON tasks(custom_status_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_initiative ON tasks(initiative_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_task_comments_user ON task_comments(user_id)`);
+
+            // System Activities & Logs
+            await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_org ON activity_logs(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
+
+            // AI & Customizations
+            await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_user ON ai_feedback(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_custom_prompts_org ON custom_prompts(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_custom_prompts_creator ON custom_prompts(created_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhooks(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_creator ON webhooks(created_by)`);
+
+            // Core Modules
+            await query(`CREATE INDEX IF NOT EXISTS idx_initiatives_org ON initiatives(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`);
+
             console.log('[Postgres] Schema Check Complete.');
 
             // Note: Seeding is skipped in this simplified adapter for now to avoid complexity.

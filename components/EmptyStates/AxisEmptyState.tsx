@@ -1,10 +1,11 @@
+import { Cpu, Globe, Layers, Target, TrendingUp, Users } from 'lucide-react';
 import React from 'react';
-import { Target, Cpu, Users, TrendingUp, Globe, Layers } from 'lucide-react';
+
 import { EmptyStateWithActions } from './EmptyStateWithActions';
 
 /**
  * AxisEmptyState — Empty state for DRD Axes view
- * 
+ *
  * Shows templates for quick axis creation.
  */
 
@@ -85,10 +86,7 @@ interface AxisEmptyStateProps {
     onSelectTemplate: (template: AxisTemplate) => void;
 }
 
-export const AxisEmptyState: React.FC<AxisEmptyStateProps> = ({
-    onCreateAxis,
-    onSelectTemplate,
-}) => {
+export const AxisEmptyState: React.FC<AxisEmptyStateProps> = ({ onCreateAxis, onSelectTemplate }) => {
     return (
         <EmptyStateWithActions
             icon={Target}
@@ -101,7 +99,7 @@ export const AxisEmptyState: React.FC<AxisEmptyStateProps> = ({
                     variant: 'primary',
                 },
             ]}
-            templates={AXIS_TEMPLATES.map(template => ({
+            templates={AXIS_TEMPLATES.map((template) => ({
                 id: template.id,
                 label: template.name,
                 description: template.description,

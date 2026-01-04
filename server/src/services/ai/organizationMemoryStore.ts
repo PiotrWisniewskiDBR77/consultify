@@ -5,10 +5,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { embeddingService } from './embeddingService.js';
+
 import { aiLogger } from '../../../services/ai/logger.js';
 import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { embeddingService } from './embeddingService.js';
 
 export const ORG_MEMORY_TYPES = {
     SUCCESS_PATTERN: { weight: 1.2, minApplicability: 0.7 },
@@ -18,7 +19,7 @@ export const ORG_MEMORY_TYPES = {
     BENCHMARK: { weight: 0.8, minApplicability: 0.9 },
     TEMPLATE: { weight: 0.7, minApplicability: 0.9 },
     STANDARD: { weight: 1.0, minApplicability: 0.95 },
-    AI_INSIGHT: { weight: 0.6, minApplicability: 0.4 }
+    AI_INSIGHT: { weight: 0.6, minApplicability: 0.4 },
 } as const;
 
 type OrgMemoryType = keyof typeof ORG_MEMORY_TYPES;
@@ -136,7 +137,7 @@ export class OrganizationMemoryStore {
                     )
                 `,
                 [],
-                { fallback: true }
+                { fallback: true },
             );
         } catch (error: unknown) {
             const err = error as Error;
@@ -147,7 +148,10 @@ export class OrganizationMemoryStore {
     /**
      * Add a pattern to organization memory
      */
-    async addPattern(organizationId: string, pattern: OrgPatternInput): Promise<{ id: string; organizationId: string; type: string; title: string }> {
+    async addPattern(
+        organizationId: string,
+        pattern: OrgPatternInput,
+    ): Promise<{ id: string; organizationId: string; type: string; title: string }> {
         const {
             type,
             title,
@@ -159,7 +163,7 @@ export class OrganizationMemoryStore {
             tags = [],
             industry,
             companySize,
-            createdBy
+            createdBy,
         } = pattern;
 
         const id = uuidv4();
@@ -197,8 +201,8 @@ export class OrganizationMemoryStore {
                     JSON.stringify(tags),
                     industry ?? null,
                     companySize ?? null,
-                    createdBy ?? null
-                ]
+                    createdBy ?? null,
+                ],
             );
         } else {
             await DbPromise.run(
@@ -223,9 +227,9 @@ export class OrganizationMemoryStore {
                     JSON.stringify(tags),
                     industry ?? null,
                     companySize ?? null,
-                    createdBy ?? null
+                    createdBy ?? null,
                 ],
-                { fallback: false }
+                { fallback: false },
             );
         }
 
@@ -236,15 +240,18 @@ export class OrganizationMemoryStore {
     /**
      * Add a success pattern from a completed project
      */
-    async addSuccessPattern(organizationId: string, successData: {
-        projectId: string;
-        title?: string;
-        description: string;
-        keyFactors?: string[];
-        metrics?: Record<string, unknown>;
-        recommendations?: string[];
-        createdBy?: string;
-    }): Promise<{ id: string; organizationId: string; type: string; title: string }> {
+    async addSuccessPattern(
+        organizationId: string,
+        successData: {
+            projectId: string;
+            title?: string;
+            description: string;
+            keyFactors?: string[];
+            metrics?: Record<string, unknown>;
+            recommendations?: string[];
+            createdBy?: string;
+        },
+    ): Promise<{ id: string; organizationId: string; type: string; title: string }> {
         const { projectId, title, description, keyFactors, metrics, recommendations, createdBy } = successData;
 
         return this.addPattern(organizationId, {
@@ -255,27 +262,30 @@ export class OrganizationMemoryStore {
                 keyFactors: keyFactors || [],
                 metrics: metrics || {},
                 recommendations: recommendations || [],
-                extractedAt: new Date().toISOString()
+                extractedAt: new Date().toISOString(),
             },
             sourceProjectId: projectId,
             applicabilityScore: 0.8,
             tags: ['success', 'pattern'],
-            createdBy
+            createdBy,
         });
     }
 
     /**
      * Add a best practice
      */
-    async addBestPractice(organizationId: string, practiceData: {
-        title: string;
-        description: string;
-        steps?: string[];
-        benefits?: string[];
-        applicableContexts?: string[];
-        industry?: string;
-        createdBy?: string;
-    }): Promise<{ id: string; organizationId: string; type: string; title: string }> {
+    async addBestPractice(
+        organizationId: string,
+        practiceData: {
+            title: string;
+            description: string;
+            steps?: string[];
+            benefits?: string[];
+            applicableContexts?: string[];
+            industry?: string;
+            createdBy?: string;
+        },
+    ): Promise<{ id: string; organizationId: string; type: string; title: string }> {
         const { title, description, steps, benefits, applicableContexts, industry, createdBy } = practiceData;
 
         return this.addPattern(organizationId, {
@@ -286,12 +296,12 @@ export class OrganizationMemoryStore {
                 steps: steps || [],
                 benefits: benefits || [],
                 applicableContexts: applicableContexts || [],
-                validatedAt: new Date().toISOString()
+                validatedAt: new Date().toISOString(),
             },
             applicabilityScore: 0.9,
             tags: ['best-practice'],
             industry,
-            createdBy
+            createdBy,
         });
     }
 
@@ -325,7 +335,7 @@ export class OrganizationMemoryStore {
     private async _searchSqlite(
         organizationId: string,
         queryEmbedding: number[],
-        options: SearchOptions
+        options: SearchOptions,
     ): Promise<OrgMemoryRow[]> {
         const { types, limit = 10, minSimilarity = 0.5, includeInactive = false } = options;
 
@@ -347,7 +357,7 @@ export class OrganizationMemoryStore {
         }
 
         const results = rows
-            .map(row => {
+            .map((row) => {
                 const embedding = parseJson<number[] | null>(row.embedding, null);
                 if (!embedding || embedding.length === 0) {
                     return { ...row, similarity: 0 };
@@ -357,18 +367,18 @@ export class OrganizationMemoryStore {
                     ...row,
                     similarity,
                     content: parseJson(row.content, row.content),
-                    tags: parseJson(row.tags, [])
+                    tags: parseJson(row.tags, []),
                 };
             })
-            .filter(row => (row.similarity ?? 0) >= minSimilarity)
+            .filter((row) => (row.similarity ?? 0) >= minSimilarity)
             .sort((a, b) => {
                 const weightA = ORG_MEMORY_TYPES[a.memory_type as OrgMemoryType]?.weight || 1;
                 const weightB = ORG_MEMORY_TYPES[b.memory_type as OrgMemoryType]?.weight || 1;
-                return ((b.similarity ?? 0) * weightB) - ((a.similarity ?? 0) * weightA);
+                return (b.similarity ?? 0) * weightB - (a.similarity ?? 0) * weightA;
             })
             .slice(0, limit);
 
-        await this._updateUsageCounts(results.map(row => row.id));
+        await this._updateUsageCounts(results.map((row) => row.id));
         return results;
     }
 
@@ -378,7 +388,7 @@ export class OrganizationMemoryStore {
     private async _searchPg(
         organizationId: string,
         queryEmbedding: number[],
-        options: SearchOptions
+        options: SearchOptions,
     ): Promise<OrgMemoryRow[]> {
         const { types, limit = 10, minSimilarity = 0.5, includeInactive = false } = options;
         const vectorLiteral = `[${queryEmbedding.join(',')}]`;
@@ -408,13 +418,13 @@ export class OrganizationMemoryStore {
 
         const db = getDatabase();
         const result = await db.query<OrgMemoryRow>(sql, params);
-        const rows = (result.rows || []).map(row => ({
+        const rows = (result.rows || []).map((row) => ({
             ...row,
             content: parseJson(row.content, row.content),
-            tags: parseJson(row.tags, [])
+            tags: parseJson(row.tags, []),
         }));
 
-        await this._updateUsageCounts(rows.map(row => row.id));
+        await this._updateUsageCounts(rows.map((row) => row.id));
         return rows;
     }
 
@@ -424,7 +434,7 @@ export class OrganizationMemoryStore {
     private async _keywordSearch(
         organizationId: string,
         query: string,
-        options: SearchOptions
+        options: SearchOptions,
     ): Promise<OrgMemoryRow[]> {
         const { types, limit = 10, includeInactive = false } = options;
         const searchTerm = `%${query.toLowerCase()}%`;
@@ -453,11 +463,11 @@ export class OrganizationMemoryStore {
 
             const db = getDatabase();
             const result = await db.query<OrgMemoryRow>(sql, params);
-            return (result.rows || []).map(row => ({
+            return (result.rows || []).map((row) => ({
                 ...row,
                 similarity: 0.5,
                 content: parseJson(row.content, row.content),
-                tags: parseJson(row.tags, [])
+                tags: parseJson(row.tags, []),
             }));
         }
 
@@ -481,11 +491,11 @@ export class OrganizationMemoryStore {
         params.push(limit);
 
         const rows = await DbPromise.all<OrgMemoryRow>(sql, params, { fallback: false });
-        return (rows || []).map(row => ({
+        return (rows || []).map((row) => ({
             ...row,
             similarity: 0.5,
             content: parseJson(row.content, row.content),
-            tags: parseJson(row.tags, [])
+            tags: parseJson(row.tags, []),
         }));
     }
 
@@ -494,7 +504,7 @@ export class OrganizationMemoryStore {
      */
     async getRecentPatterns(
         organizationId: string,
-        options: { types?: string[]; limit?: number } = {}
+        options: { types?: string[]; limit?: number } = {},
     ): Promise<OrgMemoryRow[]> {
         const { types, limit = 10 } = options;
 
@@ -517,10 +527,10 @@ export class OrganizationMemoryStore {
 
             const db = getDatabase();
             const result = await db.query<OrgMemoryRow>(sql, params);
-            return (result.rows || []).map(row => ({
+            return (result.rows || []).map((row) => ({
                 ...row,
                 content: parseJson(row.content, row.content),
-                tags: parseJson(row.tags, [])
+                tags: parseJson(row.tags, []),
             }));
         }
 
@@ -539,10 +549,10 @@ export class OrganizationMemoryStore {
         params.push(limit);
 
         const rows = await DbPromise.all<OrgMemoryRow>(sql, params, { fallback: false });
-        return (rows || []).map(row => ({
+        return (rows || []).map((row) => ({
             ...row,
             content: parseJson(row.content, row.content),
-            tags: parseJson(row.tags, [])
+            tags: parseJson(row.tags, []),
         }));
     }
 
@@ -559,7 +569,7 @@ export class OrganizationMemoryStore {
             outcomes?: Record<string, unknown>;
             decisions?: unknown[];
             learnings?: unknown[];
-        }
+        },
     ): Promise<{ extracted: number; error?: string }> {
         try {
             const llmModule = await import('../../../services/ai/llmService.js');
@@ -602,7 +612,7 @@ Return JSON:
                 type: 'chat',
                 modelConfig,
                 messages: [{ role: 'user', content: prompt }],
-                stream: false
+                stream: false,
             });
 
             const patterns = parseJson<ExtractedPatterns | null>(response.content, null);
@@ -617,7 +627,7 @@ Return JSON:
                 await this.addSuccessPattern(organizationId, {
                     projectId: projectData.id,
                     ...pattern,
-                    createdBy: 'ai'
+                    createdBy: 'ai',
                 });
                 extractedCount++;
             }
@@ -631,7 +641,7 @@ Return JSON:
                     sourceProjectId: projectData.id,
                     applicabilityScore: 0.7,
                     tags: ['failure', 'warning'],
-                    createdBy: 'ai'
+                    createdBy: 'ai',
                 });
                 extractedCount++;
             }
@@ -640,7 +650,7 @@ Return JSON:
                 await this.addBestPractice(organizationId, {
                     ...practice,
                     industry: projectData.industry,
-                    createdBy: 'ai'
+                    createdBy: 'ai',
                 });
                 extractedCount++;
             }
@@ -669,7 +679,7 @@ Return JSON:
                         last_used_at = NOW()
                     WHERE id = ANY($1::text[])
                 `,
-                [ids]
+                [ids],
             );
             return;
         }
@@ -683,7 +693,7 @@ Return JSON:
                 WHERE id IN (${placeholders})
             `,
             ids,
-            { fallback: true }
+            { fallback: true },
         );
     }
 
@@ -693,7 +703,7 @@ Return JSON:
     async deactivateLowValuePatterns(
         organizationId: string,
         minUsage = 0,
-        daysOld = 180
+        daysOld = 180,
     ): Promise<{ deactivated: number }> {
         if (this.isPg) {
             const db = getDatabase();
@@ -706,7 +716,7 @@ Return JSON:
                     AND created_at < NOW() - ($3 * INTERVAL '1 day')
                     AND memory_type NOT IN ('STANDARD', 'TEMPLATE')
                 `,
-                [organizationId, minUsage, daysOld]
+                [organizationId, minUsage, daysOld],
             );
             return { deactivated: result.rowCount ?? 0 };
         }
@@ -721,7 +731,7 @@ Return JSON:
                 AND memory_type NOT IN ('STANDARD', 'TEMPLATE')
             `,
             [organizationId, minUsage, daysOld],
-            { fallback: false }
+            { fallback: false },
         );
 
         return { deactivated: result.changes ?? 0 };
@@ -753,5 +763,5 @@ export const organizationMemoryStore = new OrganizationMemoryStore();
 export default {
     OrganizationMemoryStore,
     organizationMemoryStore,
-    ORG_MEMORY_TYPES
+    ORG_MEMORY_TYPES,
 };

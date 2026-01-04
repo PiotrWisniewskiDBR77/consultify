@@ -1,7 +1,7 @@
 /**
  * Stage Gate Validators
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Zod schemas for stage gate-related API endpoints
  */
 
@@ -16,7 +16,7 @@ export const GateTypeEnum = z.enum([
     'PLANNING_TO_EXECUTION',
     'EXECUTION_TO_MONITORING',
     'MONITORING_TO_CLOSURE',
-    'CLOSURE_TO_COMPLETE'
+    'CLOSURE_TO_COMPLETE',
 ]);
 
 export const GateStatusEnum = z.enum(['not_started', 'in_progress', 'passed', 'failed']);
@@ -34,7 +34,4 @@ export const PassGateSchema = z.object({
 // ==========================================
 
 export type PassGateRequest = z.infer<typeof PassGateSchema>;
-
-
-
 

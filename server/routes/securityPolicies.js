@@ -51,8 +51,8 @@ router.put('/defaults', authMiddleware, verifySuperAdmin, async (req, res) => {
  */
 router.get('/all', authMiddleware, verifySuperAdmin, async (req, res) => {
     try {
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         
         const policies = await new Promise((resolve, reject) => {
             db.all(`
@@ -187,8 +187,8 @@ router.put('/:orgId', authMiddleware, async (req, res) => {
 router.delete('/:orgId', authMiddleware, verifySuperAdmin, async (req, res) => {
     try {
         const { orgId } = req.params;
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         
         await new Promise((resolve, reject) => {
             db.run(`DELETE FROM security_policies WHERE organization_id = ?`, [orgId], (err) => {
@@ -286,8 +286,8 @@ router.post('/unlock-account', authMiddleware, verifySuperAdmin, async (req, res
 // SESSION MANAGEMENT ROUTES
 // ==========================================
 
-const { getDatabase  } = await import('../src/database/Database.js');
-const db = getDatabase();
+const { getDatabase  } = await import('../src/database/index.js');
+
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper functions

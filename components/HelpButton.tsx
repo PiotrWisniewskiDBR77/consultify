@@ -1,16 +1,17 @@
 /**
  * Help Button Component
- * 
+ *
  * Global floating help button that opens the HelpPanel.
  * Shows badge with count of available playbooks.
  * Features animated color pulse for visibility.
- * 
+ *
  * Step 6: Enterprise+ Ready
  */
 
-import React from 'react';
-import { useHelp } from '../contexts/HelpContext';
 import { HelpCircle } from 'lucide-react';
+import React from 'react';
+
+import { useHelp } from '../contexts/HelpContext';
 
 // CSS for the playbook button animation (blue -> purple)
 const playbookAnimationStyle = `
@@ -43,7 +44,7 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
     const { playbooks, loading } = useHelp();
 
     // Count available (not completed/dismissed) playbooks
-    const availableCount = playbooks.filter(p => p.status === 'AVAILABLE').length;
+    const availableCount = playbooks.filter((p) => p.status === 'AVAILABLE').length;
 
     return (
         <>
@@ -51,16 +52,13 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
             <button
                 onClick={onClick}
                 className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800"
-                style={{ 
+                style={{
                     animation: 'playbookColorPulse 4.5s ease-in-out infinite',
                 }}
                 title="Help & Training"
                 aria-label="Open Help Panel"
             >
-                <HelpCircle 
-                    className="w-6 h-6"
-                    style={{ animation: 'playbookIconGlow 4.5s ease-in-out infinite' }}
-                />
+                <HelpCircle className="w-6 h-6" style={{ animation: 'playbookIconGlow 4.5s ease-in-out infinite' }} />
 
                 {/* Badge */}
                 {availableCount > 0 && !loading && (

@@ -5,7 +5,8 @@
  * Supports SIRI, ADMA, CMMI, and LEAN 4.0 report templates.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import multiFrameworkAuditService from './multiFrameworkAuditService.js';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateFrameworkScore } from './frameworkScoreCalculators.js';
@@ -737,6 +738,7 @@ class MultiFrameworkReportService {
 }
 
 export default MultiFrameworkReportService;
+
 
 
 

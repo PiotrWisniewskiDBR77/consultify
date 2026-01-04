@@ -1,6 +1,7 @@
 import defaultJwt from 'jsonwebtoken';
 import defaultConfig from '../config.js';
-import defaultDb from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
 import * as PermissionServiceModule from '../services/permissionService.js';
 const defaultPermissionService = PermissionServiceModule.default || PermissionServiceModule;
 

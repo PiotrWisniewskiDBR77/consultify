@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MessageBubble } from '../../../components/AIChat/Messages/MessageBubble';
+import { MessageBubble } from '../../components/AIChat/Messages/MessageBubble';
 import { ChatMessage, Artifact, ThinkingStep } from '../../../types';
 
 // Mock react-i18next

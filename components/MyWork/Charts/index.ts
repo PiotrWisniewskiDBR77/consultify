@@ -4,14 +4,6 @@
  */
 
 export { GaugeChart } from './GaugeChart';
-export { TrendAreaChart } from './TrendAreaChart';
 export { RiskRadar } from './RiskRadar';
-
-
-
-
-
-
-
-
+export { TrendAreaChart } from './TrendAreaChart';
 

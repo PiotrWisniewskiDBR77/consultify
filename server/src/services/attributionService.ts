@@ -1,21 +1,22 @@
 /**
  * Attribution Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/attributionService.js (ES Modules) to TypeScript (ES Modules)
  * Central service for recording organization acquisition sources.
  * Implements IMMUTABLE append-only audit trail for:
  * - Partner settlements
  * - Marketing analytics
  * - Campaign ROI tracking
- * 
+ *
  * CRITICAL: This table should NEVER have UPDATE or DELETE operations.
  * Follows the same pattern as organization_events, legal_events, invitation_events.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -27,10 +28,10 @@ export const SOURCE_TYPES = {
     INVITATION: 'INVITATION',
     DEMO: 'DEMO',
     SALES: 'SALES',
-    SELF_SERVE: 'SELF_SERVE'
+    SELF_SERVE: 'SELF_SERVE',
 } as const;
 
-export type SourceType = typeof SOURCE_TYPES[keyof typeof SOURCE_TYPES];
+export type SourceType = (typeof SOURCE_TYPES)[keyof typeof SOURCE_TYPES];
 
 interface RecordAttributionParams {
     organizationId: string;
@@ -134,7 +135,7 @@ export async function recordAttribution(params: RecordAttributionParams): Promis
         campaign = null,
         partnerCode = null,
         medium = null,
-        metadata = {}
+        metadata = {},
     } = params;
 
     if (!organizationId || !sourceType) {
@@ -151,10 +152,22 @@ export async function recordAttribution(params: RecordAttributionParams): Promis
         db,
         `INSERT INTO attribution_events (id, organization_id, user_id, source_type, source_id, campaign, partner_code, medium, metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [eventId, organizationId, userId, sourceType, sourceId, campaign, partnerCode, medium, JSON.stringify(metadata)]
+        [
+            eventId,
+            organizationId,
+            userId,
+            sourceType,
+            sourceId,
+            campaign,
+            partnerCode,
+            medium,
+            JSON.stringify(metadata),
+        ],
     );
 
-    console.log(`[AttributionService] Attribution recorded: ${sourceType} for org ${organizationId}${partnerCode ? ` (partner: ${partnerCode})` : ''}`);
+    console.log(
+        `[AttributionService] Attribution recorded: ${sourceType} for org ${organizationId}${partnerCode ? ` (partner: ${partnerCode})` : ''}`,
+    );
 
     return { eventId };
 }
@@ -170,10 +183,10 @@ export async function getOrganizationAttribution(organizationId: string): Promis
          LEFT JOIN users u ON u.id = ae.user_id
          WHERE ae.organization_id = ?
          ORDER BY ae.created_at ASC`,
-        [organizationId]
+        [organizationId],
     );
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         id: row.id,
         organizationId: row.organization_id,
         userId: row.user_id || null,
@@ -185,7 +198,7 @@ export async function getOrganizationAttribution(organizationId: string): Promis
         partnerCode: row.partner_code || null,
         medium: row.medium || null,
         metadata: JSON.parse(row.metadata || '{}'),
-        createdAt: row.created_at
+        createdAt: row.created_at,
     }));
 }
 
@@ -202,7 +215,7 @@ export async function getFirstAttribution(organizationId: string): Promise<Attri
          WHERE ae.organization_id = ?
          ORDER BY ae.created_at ASC
          LIMIT 1`,
-        [organizationId]
+        [organizationId],
     );
 
     if (!row) {
@@ -221,7 +234,7 @@ export async function getFirstAttribution(organizationId: string): Promise<Attri
         partnerCode: row.partner_code || null,
         medium: row.medium || null,
         metadata: JSON.parse(row.metadata || '{}'),
-        createdAt: row.created_at
+        createdAt: row.created_at,
     };
 }
 
@@ -232,7 +245,7 @@ export async function hasAttribution(organizationId: string): Promise<boolean> {
     const row = await DbPromise.get<{ count: number }>(
         db,
         `SELECT COUNT(*) as count FROM attribution_events WHERE organization_id = ?`,
-        [organizationId]
+        [organizationId],
     );
 
     return (row?.count || 0) > 0;
@@ -276,7 +289,7 @@ export async function exportAttribution(filters: ExportAttributionFilters = {}):
 
     const rows = await DbPromise.all<ExportAttributionRow>(db, query, params);
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         id: row.id,
         organizationId: row.organization_id,
         userId: row.user_id || null,
@@ -288,7 +301,7 @@ export async function exportAttribution(filters: ExportAttributionFilters = {}):
         partnerCode: row.partner_code || null,
         medium: row.medium || null,
         metadata: JSON.parse(row.metadata || '{}'),
-        createdAt: row.created_at
+        createdAt: row.created_at,
     }));
 }
 
@@ -296,7 +309,10 @@ export async function exportAttribution(filters: ExportAttributionFilters = {}):
  * Get attribution summary by partner code
  * For partner settlement calculations
  */
-export async function getPartnerSummary(startDate: string | null = null, endDate: string | null = null): Promise<PartnerSummary[]> {
+export async function getPartnerSummary(
+    startDate: string | null = null,
+    endDate: string | null = null,
+): Promise<PartnerSummary[]> {
     let query = `
         SELECT 
             ae.partner_code,
@@ -323,12 +339,12 @@ export async function getPartnerSummary(startDate: string | null = null, endDate
 
     const rows = await DbPromise.all<PartnerSummaryRow>(db, query, params);
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         partnerCode: row.partner_code,
         organizationCount: row.organization_count,
         eventCount: row.event_count,
         firstAttribution: row.first_attribution,
-        lastAttribution: row.last_attribution
+        lastAttribution: row.last_attribution,
     }));
 }
 
@@ -341,7 +357,7 @@ const AttributionService = {
     getFirstAttribution,
     hasAttribution,
     exportAttribution,
-    getPartnerSummary
+    getPartnerSummary,
 };
 
 export default AttributionService;

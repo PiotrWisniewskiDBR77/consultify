@@ -4,7 +4,8 @@
  * ETAP 10.1: Testy dla Database Layer - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createDatabase, getDatabase, type MockDatabase } from '../../../src/database/Database.js';
 import type { IDatabase } from '../../../src/database/IDatabase.js';
 
@@ -241,4 +242,3 @@ describe('Database', () => {
         });
     });
 });
-

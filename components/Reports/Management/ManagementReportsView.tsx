@@ -1,39 +1,29 @@
 /**
  * Management Reports View
  * Main view for generating and managing management reports
- * 
+ *
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  * Report Types: Team Meeting (Checkpoint), Steering Committee (Highlight)
  */
 
-import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
+import { ArrowLeft, FileBarChart2, History, Loader2, Plus, Sparkles } from 'lucide-react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { 
-    FileBarChart2, 
-    Plus, 
-    History, 
-    Sparkles,
-    Loader2,
-    ArrowLeft
-} from 'lucide-react';
-import { 
-    ManagementReportType, 
-    ManagementReportScope, 
-    ManagementReport,
-    ManagementReportStatus 
-} from '../../../types';
-import { useAppStore } from '../../../store/useAppStore';
-import { Api } from '../../../services/api';
 
-// Import sub-components
-import { ReportTypeSelector } from './ReportTypeSelector';
+import { Api } from '../../../services/api';
+import { useAppStore } from '../../../store/useAppStore';
+import { ManagementReport, ManagementReportScope, ManagementReportStatus, ManagementReportType } from '../../../types';
 import { ExportControls } from './ExportControls';
 import { ReportHistoryTable } from './ReportHistoryTable';
+// Import sub-components
+import { ReportTypeSelector } from './ReportTypeSelector';
 import { ReportSkeleton } from './shared/ReportSkeleton';
 
 // Lazy load report components for better performance
-const TeamMeetingReport = lazy(() => import('./TeamMeetingReport').then(m => ({ default: m.TeamMeetingReport })));
-const SteeringCommitteeReport = lazy(() => import('./SteeringCommitteeReport').then(m => ({ default: m.SteeringCommitteeReport })));
+const TeamMeetingReport = lazy(() => import('./TeamMeetingReport').then((m) => ({ default: m.TeamMeetingReport })));
+const SteeringCommitteeReport = lazy(() =>
+    import('./SteeringCommitteeReport').then((m) => ({ default: m.SteeringCommitteeReport })),
+);
 
 type ViewMode = 'selector' | 'preview' | 'history';
 
@@ -41,9 +31,7 @@ interface ManagementReportsViewProps {
     className?: string;
 }
 
-export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
-    className = ''
-}) => {
+export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ className = '' }) => {
     // State
     const [viewMode, setViewMode] = useState<ViewMode>('selector');
     const [reportType, setReportType] = useState<ManagementReportType>('TEAM_MEETING');
@@ -66,8 +54,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
     const [historyTotal, setHistoryTotal] = useState(0);
 
     // Store
-    const currentProjectId = useAppStore(state => state.currentProjectId);
-    const currentUser = useAppStore(state => state.currentUser);
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
+    const currentUser = useAppStore((state) => state.currentUser);
     const currentOrganizationId = currentUser?.organizationId;
 
     // Mocked projects list (replace with actual API call)
@@ -139,7 +127,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
                 periodDays,
                 includeSections: includeSections.length > 0 ? includeSections : undefined,
                 excludeSections: excludeSections.length > 0 ? excludeSections : undefined,
-                aiEnhancement: true
+                aiEnhancement: true,
             });
 
             if (response.data?.report) {
@@ -171,11 +159,11 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
     const handleShare = async () => {
         if (!currentReport) return { shareUrl: '', expiresAt: '' };
         const response = await Api.post(`/api/management-reports/${currentReport.id}/share`, {
-            expiresInDays: 7
+            expiresInDays: 7,
         });
         return {
             shareUrl: response.data?.shareUrl || '',
-            expiresAt: response.data?.expiresAt || ''
+            expiresAt: response.data?.expiresAt || '',
         };
     };
 
@@ -330,7 +318,10 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
                         {/* Export Controls */}
                         <div className="flex items-center justify-between bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4">
                             <div className="text-sm text-slate-500 dark:text-slate-400">
-                                Report ID: <code className="px-1 py-0.5 bg-slate-100 dark:bg-navy-800 rounded">{currentReport.id}</code>
+                                Report ID:{' '}
+                                <code className="px-1 py-0.5 bg-slate-100 dark:bg-navy-800 rounded">
+                                    {currentReport.id}
+                                </code>
                             </div>
                             <ExportControls
                                 reportId={currentReport.id}
@@ -367,7 +358,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
                             onDownloadPPTX={(id) => window.open(`/api/management-reports/${id}/pptx`, '_blank')}
                             onShare={(id) => {
                                 Api.post(`/api/management-reports/${id}/share`, { expiresInDays: 7 })
-                                    .then(res => {
+                                    .then((res) => {
                                         if (res.data?.shareUrl) {
                                             navigator.clipboard.writeText(window.location.origin + res.data.shareUrl);
                                             toast.success('Share link copied to clipboard');
@@ -384,4 +375,3 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({
 };
 
 export default ManagementReportsView;
-

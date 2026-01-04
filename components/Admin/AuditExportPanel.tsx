@@ -1,6 +1,6 @@
 /**
  * AuditExportPanel - Export audit logs and compliance reports
- * 
+ *
  * Features:
  * - Export audit logs to CSV/JSON
  * - Scheduled audit reports
@@ -8,14 +8,24 @@
  * - Anomaly detection alerts
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    FileText, Download, Calendar, Shield, AlertTriangle,
-    Loader2, Clock, CheckCircle, XCircle, Filter,
-    FileJson, FileSpreadsheet, Bell
+    AlertTriangle,
+    Bell,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Download,
+    FileJson,
+    FileSpreadsheet,
+    FileText,
+    Filter,
+    Loader2,
+    Shield,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface ExportJob {
     id: string;
@@ -43,7 +53,7 @@ const REPORT_TYPES = [
     { id: 'soc2', label: 'SOC 2 Type II', description: 'Security, availability, and confidentiality controls' },
     { id: 'iso27001', label: 'ISO 27001', description: 'Information security management' },
     { id: 'hipaa', label: 'HIPAA', description: 'Health information privacy (if applicable)' },
-    { id: 'custom', label: 'Custom Audit', description: 'Custom date range and filters' }
+    { id: 'custom', label: 'Custom Audit', description: 'Custom date range and filters' },
 ];
 
 export const AuditExportPanel: React.FC = () => {
@@ -53,37 +63,85 @@ export const AuditExportPanel: React.FC = () => {
     const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
     const [dateRange, setDateRange] = useState({
         start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0]
+        end: new Date().toISOString().split('T')[0],
     });
     const [selectedReportType, setSelectedReportType] = useState('gdpr');
     const [exportJobs, setExportJobs] = useState<ExportJob[]>([
-        { id: '1', type: 'audit_log', format: 'csv', status: 'completed', created_at: '2024-12-28T10:00:00Z', completed_at: '2024-12-28T10:05:00Z', download_url: '#', file_size: '2.4 MB' },
-        { id: '2', type: 'compliance_report', format: 'pdf', status: 'completed', created_at: '2024-12-27T14:00:00Z', completed_at: '2024-12-27T14:15:00Z', download_url: '#', file_size: '1.8 MB' },
-        { id: '3', type: 'audit_log', format: 'json', status: 'processing', created_at: '2024-12-28T11:30:00Z' }
+        {
+            id: '1',
+            type: 'audit_log',
+            format: 'csv',
+            status: 'completed',
+            created_at: '2024-12-28T10:00:00Z',
+            completed_at: '2024-12-28T10:05:00Z',
+            download_url: '#',
+            file_size: '2.4 MB',
+        },
+        {
+            id: '2',
+            type: 'compliance_report',
+            format: 'pdf',
+            status: 'completed',
+            created_at: '2024-12-27T14:00:00Z',
+            completed_at: '2024-12-27T14:15:00Z',
+            download_url: '#',
+            file_size: '1.8 MB',
+        },
+        { id: '3', type: 'audit_log', format: 'json', status: 'processing', created_at: '2024-12-28T11:30:00Z' },
     ]);
     const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([
-        { id: '1', name: 'Weekly Security Audit', report_type: 'soc2', frequency: 'weekly', recipients: ['admin@company.com'], next_run: '2024-12-30T09:00:00Z', enabled: true },
-        { id: '2', name: 'Monthly GDPR Report', report_type: 'gdpr', frequency: 'monthly', recipients: ['dpo@company.com', 'legal@company.com'], next_run: '2025-01-01T09:00:00Z', enabled: true }
+        {
+            id: '1',
+            name: 'Weekly Security Audit',
+            report_type: 'soc2',
+            frequency: 'weekly',
+            recipients: ['admin@company.com'],
+            next_run: '2024-12-30T09:00:00Z',
+            enabled: true,
+        },
+        {
+            id: '2',
+            name: 'Monthly GDPR Report',
+            report_type: 'gdpr',
+            frequency: 'monthly',
+            recipients: ['dpo@company.com', 'legal@company.com'],
+            next_run: '2025-01-01T09:00:00Z',
+            enabled: true,
+        },
     ]);
     const [anomalies, setAnomalies] = useState([
-        { id: '1', severity: 'high', type: 'Multiple failed logins', count: 47, time_range: 'Last 24 hours', resolved: false },
-        { id: '2', severity: 'medium', type: 'Unusual data export volume', count: 3, time_range: 'Last 7 days', resolved: true },
-        { id: '3', severity: 'low', type: 'New device login', count: 12, time_range: 'Last 30 days', resolved: true }
+        {
+            id: '1',
+            severity: 'high',
+            type: 'Multiple failed logins',
+            count: 47,
+            time_range: 'Last 24 hours',
+            resolved: false,
+        },
+        {
+            id: '2',
+            severity: 'medium',
+            type: 'Unusual data export volume',
+            count: 3,
+            time_range: 'Last 7 days',
+            resolved: true,
+        },
+        { id: '3', severity: 'low', type: 'New device login', count: 12, time_range: 'Last 30 days', resolved: true },
     ]);
 
     const handleExportAuditLog = async () => {
         try {
             setLoading(true);
             // API call would go here
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             const newJob: ExportJob = {
                 id: `job-${Date.now()}`,
                 type: 'audit_log',
                 format: exportFormat,
                 status: 'processing',
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
             };
-            setExportJobs(prev => [newJob, ...prev]);
+            setExportJobs((prev) => [newJob, ...prev]);
             toast.success(t('admin.audit.exportStarted', 'Export started. You will be notified when ready.'));
         } catch (error) {
             toast.error(t('admin.audit.exportError', 'Failed to start export'));
@@ -96,15 +154,15 @@ export const AuditExportPanel: React.FC = () => {
         try {
             setLoading(true);
             // API call would go here
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             const newJob: ExportJob = {
                 id: `job-${Date.now()}`,
                 type: 'compliance_report',
                 format: 'pdf',
                 status: 'processing',
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
             };
-            setExportJobs(prev => [newJob, ...prev]);
+            setExportJobs((prev) => [newJob, ...prev]);
             toast.success(t('admin.audit.reportStarted', 'Report generation started.'));
         } catch (error) {
             toast.error(t('admin.audit.reportError', 'Failed to generate report'));
@@ -152,7 +210,7 @@ export const AuditExportPanel: React.FC = () => {
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-slate-200 dark:border-white/10">
-                {['export', 'scheduled', 'anomalies'].map(tab => (
+                {['export', 'scheduled', 'anomalies'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
@@ -167,9 +225,9 @@ export const AuditExportPanel: React.FC = () => {
                         {tab === 'anomalies' && (
                             <span className="flex items-center gap-2">
                                 {t('admin.audit.tabs.anomalies', 'Anomalies')}
-                                {anomalies.filter(a => !a.resolved).length > 0 && (
+                                {anomalies.filter((a) => !a.resolved).length > 0 && (
                                     <span className="px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                                        {anomalies.filter(a => !a.resolved).length}
+                                        {anomalies.filter((a) => !a.resolved).length}
                                     </span>
                                 )}
                             </span>
@@ -196,7 +254,7 @@ export const AuditExportPanel: React.FC = () => {
                                 <input
                                     type="date"
                                     value={dateRange.start}
-                                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                    onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white"
                                 />
                             </div>
@@ -207,7 +265,7 @@ export const AuditExportPanel: React.FC = () => {
                                 <input
                                     type="date"
                                     value={dateRange.end}
-                                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                    onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white"
                                 />
                             </div>
@@ -247,11 +305,7 @@ export const AuditExportPanel: React.FC = () => {
                             disabled={loading}
                             className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            {loading ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Download className="w-4 h-4" />
-                            )}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                             {t('admin.audit.exportBtn', 'Export Audit Log')}
                         </button>
                     </div>
@@ -264,7 +318,7 @@ export const AuditExportPanel: React.FC = () => {
                         </h4>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {REPORT_TYPES.map(report => (
+                            {REPORT_TYPES.map((report) => (
                                 <button
                                     key={report.id}
                                     onClick={() => setSelectedReportType(report.id)}
@@ -285,11 +339,7 @@ export const AuditExportPanel: React.FC = () => {
                             disabled={loading}
                             className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            {loading ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <FileText className="w-4 h-4" />
-                            )}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                             {t('admin.audit.generateReport', 'Generate Report')}
                         </button>
                     </div>
@@ -301,7 +351,7 @@ export const AuditExportPanel: React.FC = () => {
                         </h4>
 
                         <div className="space-y-2">
-                            {exportJobs.map(job => (
+                            {exportJobs.map((job) => (
                                 <div
                                     key={job.id}
                                     className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
@@ -311,7 +361,9 @@ export const AuditExportPanel: React.FC = () => {
                                         <div>
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">
                                                 {job.type === 'audit_log' ? 'Audit Log' : 'Compliance Report'}
-                                                <span className="ml-2 text-xs text-slate-400 uppercase">{job.format}</span>
+                                                <span className="ml-2 text-xs text-slate-400 uppercase">
+                                                    {job.format}
+                                                </span>
                                             </p>
                                             <p className="text-xs text-slate-500">
                                                 {new Date(job.created_at).toLocaleString()}
@@ -340,7 +392,7 @@ export const AuditExportPanel: React.FC = () => {
                         </button>
                     </div>
 
-                    {scheduledReports.map(report => (
+                    {scheduledReports.map((report) => (
                         <div
                             key={report.id}
                             className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10"
@@ -356,21 +408,28 @@ export const AuditExportPanel: React.FC = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => setScheduledReports(prev =>
-                                        prev.map(r => r.id === report.id ? { ...r, enabled: !r.enabled } : r)
-                                    )}
+                                    onClick={() =>
+                                        setScheduledReports((prev) =>
+                                            prev.map((r) => (r.id === report.id ? { ...r, enabled: !r.enabled } : r)),
+                                        )
+                                    }
                                     className={`w-10 h-5 rounded-full transition-colors ${
                                         report.enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                 >
-                                    <div className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
-                                        report.enabled ? 'translate-x-5' : 'translate-x-0.5'
-                                    }`} />
+                                    <div
+                                        className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
+                                            report.enabled ? 'translate-x-5' : 'translate-x-0.5'
+                                        }`}
+                                    />
                                 </button>
                             </div>
                             <div className="flex gap-2">
                                 {report.recipients.map((email, idx) => (
-                                    <span key={idx} className="px-2 py-1 bg-slate-100 dark:bg-white/10 text-xs text-slate-600 dark:text-slate-400 rounded-full">
+                                    <span
+                                        key={idx}
+                                        className="px-2 py-1 bg-slate-100 dark:bg-white/10 text-xs text-slate-600 dark:text-slate-400 rounded-full"
+                                    >
                                         {email}
                                     </span>
                                 ))}
@@ -390,12 +449,15 @@ export const AuditExportPanel: React.FC = () => {
                                 {t('admin.audit.anomalyInfo', 'Anomaly Detection Active')}
                             </p>
                             <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
-                                {t('admin.audit.anomalyInfoDesc', 'AI-powered monitoring detects unusual patterns in user activity and data access.')}
+                                {t(
+                                    'admin.audit.anomalyInfoDesc',
+                                    'AI-powered monitoring detects unusual patterns in user activity and data access.',
+                                )}
                             </p>
                         </div>
                     </div>
 
-                    {anomalies.map(anomaly => (
+                    {anomalies.map((anomaly) => (
                         <div
                             key={anomaly.id}
                             className={`p-4 rounded-xl border ${
@@ -406,7 +468,9 @@ export const AuditExportPanel: React.FC = () => {
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(anomaly.severity)}`}>
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(anomaly.severity)}`}
+                                    >
                                         {anomaly.severity.toUpperCase()}
                                     </span>
                                     <div>
@@ -418,9 +482,11 @@ export const AuditExportPanel: React.FC = () => {
                                 </div>
                                 {!anomaly.resolved && (
                                     <button
-                                        onClick={() => setAnomalies(prev =>
-                                            prev.map(a => a.id === anomaly.id ? { ...a, resolved: true } : a)
-                                        )}
+                                        onClick={() =>
+                                            setAnomalies((prev) =>
+                                                prev.map((a) => (a.id === anomaly.id ? { ...a, resolved: true } : a)),
+                                            )
+                                        }
                                         className="px-3 py-1 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg"
                                     >
                                         {t('admin.audit.resolve', 'Mark Resolved')}
@@ -442,11 +508,4 @@ export const AuditExportPanel: React.FC = () => {
 };
 
 export default AuditExportPanel;
-
-
-
-
-
-
-
 

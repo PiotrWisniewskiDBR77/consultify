@@ -1,6 +1,7 @@
+import { BookOpen, CheckSquare, Flag, Lock } from 'lucide-react';
 import React from 'react';
+
 import { FullSession } from '../types';
-import { Flag, CheckSquare, BookOpen, Lock } from 'lucide-react';
 
 interface RolloutClosureTabProps {
     data: FullSession['rollout'];
@@ -9,14 +10,13 @@ interface RolloutClosureTabProps {
 }
 
 export const RolloutClosureTab: React.FC<RolloutClosureTabProps> = ({ data, onUpdate, onCloseProgram }) => {
-
     // Mock checklist logic
     const checklist = data?.closure?.checklist || [
         { item: 'All Initiatives Completed', completed: false },
         { item: 'KPI Targets Reviewed', completed: false },
         { item: 'Documentation Archived', completed: false },
         { item: 'Handover Owner Assigned', completed: false },
-        { item: 'Final Budget Reconciliation', completed: false }
+        { item: 'Final Budget Reconciliation', completed: false },
     ];
 
     const toggleCheck = (index: number) => {
@@ -24,7 +24,7 @@ export const RolloutClosureTab: React.FC<RolloutClosureTabProps> = ({ data, onUp
         newChecklist[index].completed = !newChecklist[index].completed;
         onUpdate({
             ...data,
-            closure: { ...data?.closure, checklist: newChecklist, isClosed: false, lessonsLearned: [] } // Simple update
+            closure: { ...data?.closure, checklist: newChecklist, isClosed: false, lessonsLearned: [] }, // Simple update
         });
     };
 
@@ -55,14 +55,19 @@ export const RolloutClosureTab: React.FC<RolloutClosureTabProps> = ({ data, onUp
                     </h3>
                     <div className="space-y-3">
                         {checklist.map((item, i) => (
-                            <label key={i} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+                            <label
+                                key={i}
+                                className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                            >
                                 <input
                                     type="checkbox"
                                     checked={item.completed}
                                     onChange={() => toggleCheck(i)}
                                     className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
                                 />
-                                <span className={`font-medium ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
+                                <span
+                                    className={`font-medium ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}
+                                >
                                     {item.item}
                                 </span>
                             </label>
@@ -75,9 +80,7 @@ export const RolloutClosureTab: React.FC<RolloutClosureTabProps> = ({ data, onUp
                     <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                         <BookOpen className="text-blue-500" size={20} /> Lessons Learned
                     </h3>
-                    <div className="text-center py-8 text-slate-400 italic">
-                        No lessons recorded yet.
-                    </div>
+                    <div className="text-center py-8 text-slate-400 italic">No lessons recorded yet.</div>
                     <button className="w-full py-2 border border-dashed border-slate-300 dark:border-white/20 rounded text-slate-500 hover:text-blue-500 font-bold transition-colors">
                         + Add Lesson
                     </button>

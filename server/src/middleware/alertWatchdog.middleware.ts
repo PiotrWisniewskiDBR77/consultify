@@ -1,15 +1,15 @@
 /**
  * Alert Watchdog Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Full TypeScript migration of alertWatchdog.js
  * Intercepts server errors and generates SYSTEM_ALERT notifications
  * for 500-level errors or explicit critical errors.
- * 
+ *
  * Must be placed BEFORE the final error handler.
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 // Dynamic import for NotificationService to avoid circular dependencies
 let NotificationService: {
@@ -44,7 +44,7 @@ const alertWatchdog = async (
     err: Error & { statusCode?: number; status?: number },
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
 ): Promise<void> => {
     try {
         // Determine status code (default to 500 if not specified)
@@ -62,7 +62,7 @@ const alertWatchdog = async (
 
             // Fire and forget notification
             getNotificationService()
-                .then(service => {
+                .then((service) => {
                     return service.create({
                         userId: 'system', // System-created
                         organizationId: 'system',
@@ -73,10 +73,10 @@ const alertWatchdog = async (
                         message: message.substring(0, 500), // Truncate for DB
                         relatedObjectType: 'ERROR',
                         relatedObjectId: null,
-                        isActionable: false
+                        isActionable: false,
                     });
                 })
-                .catch(noteErr => {
+                .catch((noteErr) => {
                     console.error('[AlertWatchdog] Failed to create notification:', noteErr);
                 });
         }
@@ -90,4 +90,3 @@ const alertWatchdog = async (
 };
 
 export default alertWatchdog;
-

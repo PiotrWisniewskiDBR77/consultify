@@ -1,27 +1,18 @@
 /**
  * ChangeRequestModal Component
- * 
+ *
  * PMO Scope Change Control
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Change Control (Clause 4.4.2)
  * - PMI PMBOK 7th Edition - Change Request / Change Control Board
  * - PRINCE2 - Issue and Change Control
- * 
+ *
  * PMO Domain: SCOPE_CHANGE_CONTROL
  */
 
+import { AlertTriangle, CheckCircle2, Clock, DollarSign, FileText, TrendingUp, Users, X } from 'lucide-react';
 import React, { useState } from 'react';
-import {
-    X,
-    FileText,
-    AlertTriangle,
-    Clock,
-    TrendingUp,
-    DollarSign,
-    Users,
-    CheckCircle2
-} from 'lucide-react';
 
 export type ChangeCategory = 'SCOPE' | 'SCHEDULE' | 'BUDGET' | 'QUALITY' | 'RESOURCE' | 'RISK';
 export type ChangePriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -59,7 +50,7 @@ const CATEGORY_CONFIG: Record<ChangeCategory, { label: string; icon: React.Eleme
     BUDGET: { label: 'Budget Change', icon: DollarSign, color: 'text-green-500' },
     QUALITY: { label: 'Quality Change', icon: CheckCircle2, color: 'text-purple-500' },
     RESOURCE: { label: 'Resource Change', icon: Users, color: 'text-cyan-500' },
-    RISK: { label: 'Risk Response', icon: AlertTriangle, color: 'text-red-500' }
+    RISK: { label: 'Risk Response', icon: AlertTriangle, color: 'text-red-500' },
 };
 
 export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
@@ -67,7 +58,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
     onClose,
     onSubmit,
     initiatives = [],
-    editingRequest
+    editingRequest,
 }) => {
     const [formData, setFormData] = useState<ChangeRequest>({
         title: editingRequest?.title || '',
@@ -80,7 +71,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
         impactOnSchedule: editingRequest?.impactOnSchedule || '',
         impactOnBudget: editingRequest?.impactOnBudget || '',
         impactOnScope: editingRequest?.impactOnScope || '',
-        linkedInitiativeId: editingRequest?.linkedInitiativeId || ''
+        linkedInitiativeId: editingRequest?.linkedInitiativeId || '',
     });
 
     const [step, setStep] = useState(1);
@@ -91,7 +82,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
         e.preventDefault();
         onSubmit({
             ...formData,
-            status: 'SUBMITTED'
+            status: 'SUBMITTED',
         });
         onClose();
     };
@@ -99,9 +90,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
     const renderStep1 = () => (
         <div className="space-y-6">
             <div>
-                <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                    Change Title *
-                </label>
+                <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">Change Title *</label>
                 <input
                     type="text"
                     value={formData.title}
@@ -113,36 +102,34 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                    Category *
-                </label>
+                <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">Category *</label>
                 <div className="grid grid-cols-3 gap-2">
-                    {(Object.entries(CATEGORY_CONFIG) as [ChangeCategory, typeof CATEGORY_CONFIG.SCOPE][]).map(([key, config]) => {
-                        const Icon = config.icon;
-                        return (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setFormData({ ...formData, category: key })}
-                                className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                                    formData.category === key
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
-                                }`}
-                            >
-                                <Icon size={20} className={config.color} />
-                                <span className="text-xs font-medium">{config.label}</span>
-                            </button>
-                        );
-                    })}
+                    {(Object.entries(CATEGORY_CONFIG) as [ChangeCategory, typeof CATEGORY_CONFIG.SCOPE][]).map(
+                        ([key, config]) => {
+                            const Icon = config.icon;
+                            return (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, category: key })}
+                                    className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                                        formData.category === key
+                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10'
+                                            : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                    }`}
+                                >
+                                    <Icon size={20} className={config.color} />
+                                    <span className="text-xs font-medium">{config.label}</span>
+                                </button>
+                            );
+                        },
+                    )}
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                        Priority *
-                    </label>
+                    <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">Priority *</label>
                     <select
                         value={formData.priority}
                         onChange={(e) => setFormData({ ...formData, priority: e.target.value as ChangePriority })}
@@ -181,8 +168,10 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
                         className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
                         <option value="">Select an initiative...</option>
-                        {initiatives.map(i => (
-                            <option key={i.id} value={i.id}>{i.name}</option>
+                        {initiatives.map((i) => (
+                            <option key={i.id} value={i.id}>
+                                {i.name}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -193,9 +182,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
     const renderStep2 = () => (
         <div className="space-y-6">
             <div>
-                <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                    Description *
-                </label>
+                <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">Description *</label>
                 <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -316,7 +303,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
                 {/* Progress Bar */}
                 <div className="px-6 py-3 bg-slate-50 dark:bg-navy-950">
                     <div className="flex gap-2">
-                        {[1, 2, 3].map(s => (
+                        {[1, 2, 3].map((s) => (
                             <div
                                 key={s}
                                 className={`flex-1 h-2 rounded-full transition-colors ${
@@ -338,7 +325,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
                 <div className="px-6 py-4 border-t border-slate-200 dark:border-white/10 flex justify-between">
                     <button
                         type="button"
-                        onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+                        onClick={() => (step > 1 ? setStep(step - 1) : onClose())}
                         className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg text-sm font-medium transition-colors"
                     >
                         {step === 1 ? 'Cancel' : 'Back'}
@@ -362,12 +349,4 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
         </div>
     );
 };
-
-
-
-
-
-
-
-
 

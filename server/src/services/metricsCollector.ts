@@ -1,20 +1,21 @@
 /**
  * Metrics Collector Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/metricsCollector.js (ES Modules) to TypeScript (ES Modules)
  * STEP 7: Metrics & Conversion Intelligence (Enterprise+)
- * 
+ *
  * Single point of entry for all metric event recording.
  * This service implements an APPEND-ONLY event store for business intelligence.
- * 
+ *
  * CRITICAL: This is the ONLY service that should write to metrics_events.
  * Never UPDATE or DELETE events - all analytics are derived from the event stream.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -40,10 +41,10 @@ export const EVENT_TYPES = {
     HELP_COMPLETED: 'help_completed',
 
     // Settlement events
-    SETTLEMENT_GENERATED: 'settlement_generated'
+    SETTLEMENT_GENERATED: 'settlement_generated',
 } as const;
 
-export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES];
+export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];
 
 export const SOURCE_TYPES = {
     DEMO: 'DEMO',
@@ -52,10 +53,10 @@ export const SOURCE_TYPES = {
     PROMO: 'PROMO',
     PARTNER: 'PARTNER',
     SELF_SERVE: 'SELF_SERVE',
-    HELP: 'HELP'
+    HELP: 'HELP',
 } as const;
 
-export type SourceType = typeof SOURCE_TYPES[keyof typeof SOURCE_TYPES];
+export type SourceType = (typeof SOURCE_TYPES)[keyof typeof SOURCE_TYPES];
 
 interface RecordEventPayload {
     userId?: string | null;
@@ -161,7 +162,7 @@ export async function recordEvent(eventType: EventType, payload: RecordEventPayl
         db,
         `INSERT INTO metrics_events (id, event_type, user_id, organization_id, source, context, created_at)
          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [eventId, eventType, userId, organizationId, source, JSON.stringify(context)]
+        [eventId, eventType, userId, organizationId, source, JSON.stringify(context)],
     );
 
     console.log(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
@@ -203,16 +204,19 @@ export async function getEvents(eventType: EventType, filters: GetEventsFilters 
 
     const rows = await DbPromise.all<MetricsEventRow>(db, sql, params);
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
         ...row,
-        context: row.context ? JSON.parse(row.context) : {}
+        context: row.context ? JSON.parse(row.context) : {},
     }));
 }
 
 /**
  * Get all events for a specific organization
  */
-export async function getOrganizationEvents(organizationId: string, options: GetOrganizationEventsOptions = {}): Promise<MetricsEventRow[]> {
+export async function getOrganizationEvents(
+    organizationId: string,
+    options: GetOrganizationEventsOptions = {},
+): Promise<MetricsEventRow[]> {
     const { eventTypes, startDate, endDate, limit = 100 } = options;
 
     let sql = `SELECT * FROM metrics_events WHERE organization_id = ?`;
@@ -238,9 +242,9 @@ export async function getOrganizationEvents(organizationId: string, options: Get
 
     const rows = await DbPromise.all<MetricsEventRow>(db, sql, params);
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
         ...row,
-        context: row.context ? JSON.parse(row.context) : {}
+        context: row.context ? JSON.parse(row.context) : {},
     }));
 }
 
@@ -281,7 +285,10 @@ export async function getEventCount(eventType: EventType, filters: GetEventCount
 /**
  * Get events grouped by date (for time series)
  */
-export async function getEventTimeSeries(eventType: EventType, options: GetEventTimeSeriesOptions = {}): Promise<TimeSeriesRow[]> {
+export async function getEventTimeSeries(
+    eventType: EventType,
+    options: GetEventTimeSeriesOptions = {},
+): Promise<TimeSeriesRow[]> {
     const { days = 30 } = options;
 
     const rows = await DbPromise.all<TimeSeriesRow>(
@@ -294,7 +301,7 @@ export async function getEventTimeSeries(eventType: EventType, options: GetEvent
           AND created_at >= datetime('now', ?)
         GROUP BY date(created_at)
         ORDER BY date ASC`,
-        [eventType, `-${days} days`]
+        [eventType, `-${days} days`],
     );
 
     return rows;
@@ -337,7 +344,10 @@ export async function getUniqueOrgCount(eventType: EventType, filters: GetEventC
 /**
  * Get events grouped by source (for attribution analysis)
  */
-export async function getEventsBySource(eventType: EventType, options: GetEventsBySourceOptions = {}): Promise<EventsBySourceRow[]> {
+export async function getEventsBySource(
+    eventType: EventType,
+    options: GetEventsBySourceOptions = {},
+): Promise<EventsBySourceRow[]> {
     const { startDate, endDate } = options;
 
     let sql = `
@@ -378,7 +388,7 @@ const MetricsCollector = {
     getEventCount,
     getEventTimeSeries,
     getUniqueOrgCount,
-    getEventsBySource
+    getEventsBySource,
 };
 
 export default MetricsCollector;

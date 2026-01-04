@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { RefreshCw, Save, DollarSign, Percent, AlertCircle, TrendingUp, HelpCircle } from 'lucide-react';
+import { AlertCircle, DollarSign, HelpCircle, Percent, RefreshCw, Save, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 export const AdminMarginConfig = () => {
     const [margins, setMargins] = useState<any[]>([]);
@@ -33,26 +34,28 @@ export const AdminMarginConfig = () => {
     }, []);
 
     const handleChange = (sourceType: string, field: string, value: any) => {
-        setMargins(prev => prev.map(m => {
-            if (m.source_type === sourceType) {
-                return { ...m, [field]: value };
-            }
-            return m;
-        }));
+        setMargins((prev) =>
+            prev.map((m) => {
+                if (m.source_type === sourceType) {
+                    return { ...m, [field]: value };
+                }
+                return m;
+            }),
+        );
     };
 
     const handleSave = async (sourceType: string) => {
         setSaving(true);
         setError(null);
         try {
-            const margin = margins.find(m => m.source_type === sourceType);
+            const margin = margins.find((m) => m.source_type === sourceType);
             if (!margin) return;
 
             await Api.updateBillingMargin(sourceType, {
                 baseCostPer1k: parseFloat(margin.base_cost_per_1k || 0),
                 marginPercent: parseFloat(margin.margin_percent || 0),
                 minCharge: parseFloat(margin.min_charge || 0),
-                isActive: margin.is_active ? 1 : 0
+                isActive: margin.is_active ? 1 : 0,
             });
             toast.success(`Updated ${margin.display_name}`);
         } catch (err: any) {
@@ -99,7 +102,9 @@ export const AdminMarginConfig = () => {
                     <div>
                         <p className="font-bold">Error Loading Data</p>
                         <p>{error}</p>
-                        <button onClick={loadMargins} className="text-white underline mt-2 hover:text-white/80">Try Again</button>
+                        <button onClick={loadMargins} className="text-white underline mt-2 hover:text-white/80">
+                            Try Again
+                        </button>
                     </div>
                 </div>
             )}
@@ -111,22 +116,34 @@ export const AdminMarginConfig = () => {
                     </div>
                 )}
 
-                {margins.map(margin => (
-                    <div key={margin.id} className="bg-navy-950/50 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-colors">
+                {margins.map((margin) => (
+                    <div
+                        key={margin.id}
+                        className="bg-navy-950/50 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-colors"
+                    >
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <h3 className="text-white font-bold text-sm">{margin.display_name}</h3>
-                                <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">{margin.source_type.replace('_', ' ')}</p>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
+                                    {margin.source_type.replace('_', ' ')}
+                                </p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
-                                    <div className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-slate-700'}`}>
-                                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${margin.is_active ? 'left-4.5 bg-emerald-400' : 'left-0.5 bg-slate-400'}`} style={{ left: margin.is_active ? '1.125rem' : '0.125rem' }} />
+                                    <div
+                                        className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-slate-700'}`}
+                                    >
+                                        <div
+                                            className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${margin.is_active ? 'left-4.5 bg-emerald-400' : 'left-0.5 bg-slate-400'}`}
+                                            style={{ left: margin.is_active ? '1.125rem' : '0.125rem' }}
+                                        />
                                     </div>
                                     <input
                                         type="checkbox"
                                         checked={!!margin.is_active}
-                                        onChange={(e) => handleChange(margin.source_type, 'is_active', e.target.checked)}
+                                        onChange={(e) =>
+                                            handleChange(margin.source_type, 'is_active', e.target.checked)
+                                        }
                                         className="hidden"
                                     />
                                 </label>
@@ -146,14 +163,18 @@ export const AdminMarginConfig = () => {
                                 <div>
                                     <div className="flex justify-between text-xs mb-1">
                                         <label className="text-slate-400">Base Cost / 1k</label>
-                                        <span className="text-slate-500 font-mono">${parseFloat(margin.base_cost_per_1k).toFixed(4)}</span>
+                                        <span className="text-slate-500 font-mono">
+                                            ${parseFloat(margin.base_cost_per_1k).toFixed(4)}
+                                        </span>
                                     </div>
                                     <div className="relative group">
                                         <input
                                             type="number"
                                             step="0.001"
                                             value={margin.base_cost_per_1k}
-                                            onChange={(e) => handleChange(margin.source_type, 'base_cost_per_1k', e.target.value)}
+                                            onChange={(e) =>
+                                                handleChange(margin.source_type, 'base_cost_per_1k', e.target.value)
+                                            }
                                             className="w-full bg-navy-900 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:border-blue-500 outline-none transition-colors"
                                         />
                                         <span className="absolute left-2.5 top-2 text-slate-500 text-xs">$</span>
@@ -171,7 +192,9 @@ export const AdminMarginConfig = () => {
                                         type="number"
                                         step="0.1"
                                         value={margin.margin_percent}
-                                        onChange={(e) => handleChange(margin.source_type, 'margin_percent', e.target.value)}
+                                        onChange={(e) =>
+                                            handleChange(margin.source_type, 'margin_percent', e.target.value)
+                                        }
                                         className="w-full bg-navy-900 border border-white/10 rounded-lg pr-7 pl-3 py-2 text-sm text-emerald-400 font-bold focus:border-emerald-500 outline-none transition-colors"
                                     />
                                     <span className="absolute right-2.5 top-2 text-emerald-500/50 text-xs">%</span>
@@ -184,7 +207,10 @@ export const AdminMarginConfig = () => {
 
             <div className="mt-4 pt-4 border-t border-white/5 flex items-start gap-2 text-xs text-slate-500">
                 <HelpCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                <p>These global margins apply to base infrastructure costs. For AI Models, use the specific multipliers table.</p>
+                <p>
+                    These global margins apply to base infrastructure costs. For AI Models, use the specific multipliers
+                    table.
+                </p>
             </div>
         </div>
     );

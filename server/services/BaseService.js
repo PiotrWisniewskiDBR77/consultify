@@ -26,7 +26,7 @@ class BaseService {
      */
     async init() {
         if (!this._db) {
-            const dbModule = await import('../database.js');
+            const dbModule = await import('../src/database/index.js')
             this._db = dbModule.default || dbModule;
         }
         return this;
@@ -38,6 +38,7 @@ class BaseService {
     setDependencies(deps = {}) {
         if (deps.db) this._db = deps.db;
         if (deps.cache) this._cache = deps.cache;
+        if (deps.queryHelpers) this._queryHelpers = deps.queryHelpers;
     }
 
     /**
@@ -100,6 +101,7 @@ class BaseService {
 }
 
 export default BaseService;
+
 
 
 

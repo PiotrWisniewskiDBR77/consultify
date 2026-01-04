@@ -1,55 +1,56 @@
 /**
  * ProfileModule - User Profile & Account Settings
- * 
+ *
  * Tabs: Personal Info | Avatar | Connected Accounts | Permission Requests | Activity Log | Password | Billing | Account
  */
 
-import React, { useState } from 'react';
-import { 
-    User as UserIcon, 
-    Image, 
-    ShieldCheck, 
-    Settings, 
-    CreditCard, 
-    Link2, 
+import {
     Activity,
-    Send,
-    Mail,
-    Clock,
-    FileText,
-    Eye,
     BookOpen,
+    Circle,
+    Clock,
+    CreditCard,
+    Eye,
+    FileText,
     Globe,
-    Circle
+    Image,
+    Link2,
+    Mail,
+    Send,
+    Settings,
+    ShieldCheck,
+    User as UserIcon,
 } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { ProfileSettings } from '../../components/settings/ProfileSettings';
-import { BillingSettings } from '../../components/settings/BillingSettings';
-import { AvatarUploader } from '../../components/settings/AvatarUploader';
-import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
-import { PermissionRequestSection } from '../../components/settings/PermissionRequestSection';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
 import { ActivityLog } from '../../components/settings/ActivityLog';
-import { ProfileCompleteness } from '../../components/settings/ProfileCompleteness';
-import { ProfileStatusSettings } from '../../components/settings/ProfileStatusSettings';
-import { ProfileBioSettings } from '../../components/settings/ProfileBioSettings';
-import { ProfileSocialSettings } from '../../components/settings/ProfileSocialSettings';
-import { ProfileWorkHoursSettings } from '../../components/settings/ProfileWorkHoursSettings';
-import { ProfileCompletenessIndicator } from '../../components/settings/ProfileCompletenessIndicator';
-import { ProfessionalProfileSection } from '../../components/settings/ProfessionalProfileSection';
-import { ContactInformationSection } from '../../components/settings/ContactInformationSection';
 import { AvailabilityStatusSection } from '../../components/settings/AvailabilityStatusSection';
-import { PasswordSecuritySettings } from '../../components/settings/PasswordSecuritySettings';
-import { WorkingHoursSettings } from '../../components/settings/WorkingHoursSettings';
-import { EmailSignatureSettings } from '../../components/settings/EmailSignatureSettings';
+import { AvatarUploader } from '../../components/settings/AvatarUploader';
+import { BillingSettings } from '../../components/settings/BillingSettings';
 // New extended settings components
 import { BioAboutSection } from '../../components/settings/BioAboutSection';
-import { SocialLinksSection } from '../../components/settings/SocialLinksSection';
-import { ProfileVisibilitySettings } from '../../components/settings/ProfileVisibilitySettings';
+import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
+import { ContactInformationSection } from '../../components/settings/ContactInformationSection';
 import { EmailCommunicationSettings } from '../../components/settings/EmailCommunicationSettings';
-import { useTranslation } from 'react-i18next';
-import { User } from '../../types';
+import { EmailSignatureSettings } from '../../components/settings/EmailSignatureSettings';
+import { PasswordSecuritySettings } from '../../components/settings/PasswordSecuritySettings';
+import { PermissionRequestSection } from '../../components/settings/PermissionRequestSection';
+import { ProfessionalProfileSection } from '../../components/settings/ProfessionalProfileSection';
+import { ProfileBioSettings } from '../../components/settings/ProfileBioSettings';
+import { ProfileCompleteness } from '../../components/settings/ProfileCompleteness';
+import { ProfileCompletenessIndicator } from '../../components/settings/ProfileCompletenessIndicator';
+import { ProfileSettings } from '../../components/settings/ProfileSettings';
+import { ProfileSocialSettings } from '../../components/settings/ProfileSocialSettings';
+import { ProfileStatusSettings } from '../../components/settings/ProfileStatusSettings';
+import { ProfileVisibilitySettings } from '../../components/settings/ProfileVisibilitySettings';
+import { ProfileWorkHoursSettings } from '../../components/settings/ProfileWorkHoursSettings';
+import { SocialLinksSection } from '../../components/settings/SocialLinksSection';
+import { WorkingHoursSettings } from '../../components/settings/WorkingHoursSettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
-import toast from 'react-hot-toast';
+import { User } from '../../types';
 
 interface ProfileModuleProps {
     initialTab?: string;
@@ -71,7 +72,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!currentPassword || !newPassword || !confirmPassword) {
             toast.error(t('settings.password.fillAll', 'Please fill in all fields'));
             return;
@@ -177,15 +178,20 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                         <div className="mt-2">
                             <div className="flex items-center gap-2">
                                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                         className={`h-full ${passwordStrength.color} transition-all`}
                                         style={{ width: `${passwordStrength.strength}%` }}
                                     />
                                 </div>
-                                <span className={`text-xs font-medium ${
-                                    passwordStrength.label === 'Weak' ? 'text-red-500' :
-                                    passwordStrength.label === 'Medium' ? 'text-yellow-500' : 'text-green-500'
-                                }`}>
+                                <span
+                                    className={`text-xs font-medium ${
+                                        passwordStrength.label === 'Weak'
+                                            ? 'text-red-500'
+                                            : passwordStrength.label === 'Medium'
+                                              ? 'text-yellow-500'
+                                              : 'text-green-500'
+                                    }`}
+                                >
                                     {passwordStrength.label}
                                 </span>
                             </div>
@@ -220,22 +226,12 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
             {/* Password Requirements */}
             <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg mt-6">
-                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Password Requirements
-                </h4>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Password Requirements</h4>
                 <ul className="text-xs text-slate-500 space-y-1">
-                    <li className={newPassword.length >= 8 ? 'text-green-500' : ''}>
-                        • At least 8 characters
-                    </li>
-                    <li className={/[A-Z]/.test(newPassword) ? 'text-green-500' : ''}>
-                        • One uppercase letter
-                    </li>
-                    <li className={/[a-z]/.test(newPassword) ? 'text-green-500' : ''}>
-                        • One lowercase letter
-                    </li>
-                    <li className={/[0-9]/.test(newPassword) ? 'text-green-500' : ''}>
-                        • One number
-                    </li>
+                    <li className={newPassword.length >= 8 ? 'text-green-500' : ''}>• At least 8 characters</li>
+                    <li className={/[A-Z]/.test(newPassword) ? 'text-green-500' : ''}>• One uppercase letter</li>
+                    <li className={/[a-z]/.test(newPassword) ? 'text-green-500' : ''}>• One lowercase letter</li>
+                    <li className={/[0-9]/.test(newPassword) ? 'text-green-500' : ''}>• One number</li>
                     <li className={/[^A-Za-z0-9]/.test(newPassword) ? 'text-green-500' : ''}>
                         • One special character (recommended)
                     </li>
@@ -256,8 +252,10 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
         try {
             setExporting(true);
             // In real implementation, call API to generate export
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            toast.success(t('settings.account.exportStarted', 'Data export started. You will receive an email when ready.'));
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            toast.success(
+                t('settings.account.exportStarted', 'Data export started. You will receive an email when ready.'),
+            );
         } catch (error) {
             toast.error(t('settings.account.exportError', 'Failed to start export'));
         } finally {
@@ -285,7 +283,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                     {t('settings.account.subtitle', 'Manage your account settings and data')}
                 </p>
             </div>
-            
+
             <div className="space-y-4">
                 {/* Account Status */}
                 <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-white/10">
@@ -295,7 +293,8 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                                 {t('settings.account.status', 'Account Status')}
                             </p>
                             <p className="text-sm text-slate-500 mt-0.5">
-                                Member since {currentUser.lastLogin ? new Date(currentUser.lastLogin).getFullYear() : 'N/A'}
+                                Member since{' '}
+                                {currentUser.lastLogin ? new Date(currentUser.lastLogin).getFullYear() : 'N/A'}
                             </p>
                         </div>
                         <span className="px-3 py-1 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 text-sm font-medium rounded-full">
@@ -317,11 +316,15 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                         </div>
                         <div>
                             <p className="text-slate-500 dark:text-slate-400">Organization</p>
-                            <p className="font-medium text-slate-900 dark:text-white">{currentUser.companyName || 'N/A'}</p>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                                {currentUser.companyName || 'N/A'}
+                            </p>
                         </div>
                         <div>
                             <p className="text-slate-500 dark:text-slate-400">2FA Status</p>
-                            <p className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-orange-500'}`}>
+                            <p
+                                className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-orange-500'}`}
+                            >
                                 {currentUser.mfaEnabled ? 'Enabled' : 'Disabled'}
                             </p>
                         </div>
@@ -339,7 +342,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                                 {t('settings.account.exportDesc', 'Download a copy of all your data in JSON format')}
                             </p>
                         </div>
-                        <button 
+                        <button
                             onClick={handleExportData}
                             disabled={exporting}
                             className="px-4 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-lg transition-colors disabled:opacity-50"
@@ -357,10 +360,13 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                                 {t('settings.account.deleteAccount', 'Delete Account')}
                             </p>
                             <p className="text-sm text-red-600 dark:text-red-300">
-                                {t('settings.account.deleteDesc', 'Permanently delete your account and all associated data')}
+                                {t(
+                                    'settings.account.deleteDesc',
+                                    'Permanently delete your account and all associated data',
+                                )}
                             </p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setShowDeleteConfirm(true)}
                             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                         >
@@ -407,113 +413,113 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
     );
 };
 
-export const ProfileModule: React.FC<ProfileModuleProps> = ({ 
+export const ProfileModule: React.FC<ProfileModuleProps> = ({
     initialTab,
     currentUser,
     onUpdateUser,
     theme,
-    toggleTheme
+    toggleTheme,
 }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'personal');
 
     const tabs: Tab[] = [
         // Personal Information Group
-        { 
-            id: 'personal', 
-            label: t('settings.tabs.personal', 'Personal Info'), 
-            icon: <UserIcon size={16} /> 
+        {
+            id: 'personal',
+            label: t('settings.tabs.personal', 'Personal Info'),
+            icon: <UserIcon size={16} />,
         },
-        { 
-            id: 'avatar', 
-            label: t('settings.tabs.avatar', 'Avatar'), 
-            icon: <Image size={16} /> 
+        {
+            id: 'avatar',
+            label: t('settings.tabs.avatar', 'Avatar'),
+            icon: <Image size={16} />,
         },
-        { 
-            id: 'bio-extended', 
-            label: t('settings.tabs.bioExtended', 'Bio & About'), 
-            icon: <BookOpen size={16} /> 
+        {
+            id: 'bio-extended',
+            label: t('settings.tabs.bioExtended', 'Bio & About'),
+            icon: <BookOpen size={16} />,
         },
-        { 
-            id: 'social-extended', 
-            label: t('settings.tabs.socialExtended', 'Social & Links'), 
-            icon: <Globe size={16} /> 
+        {
+            id: 'social-extended',
+            label: t('settings.tabs.socialExtended', 'Social & Links'),
+            icon: <Globe size={16} />,
         },
         // Privacy & Visibility Group
-        { 
-            id: 'visibility', 
-            label: t('settings.tabs.visibility', 'Privacy'), 
-            icon: <Eye size={16} /> 
+        {
+            id: 'visibility',
+            label: t('settings.tabs.visibility', 'Privacy'),
+            icon: <Eye size={16} />,
         },
         // Communication Group
-        { 
-            id: 'email-comm', 
-            label: t('settings.tabs.emailComm', 'Email & Comm'), 
-            icon: <Mail size={16} /> 
+        {
+            id: 'email-comm',
+            label: t('settings.tabs.emailComm', 'Email & Comm'),
+            icon: <Mail size={16} />,
         },
-        { 
-            id: 'signature', 
-            label: t('settings.tabs.signature', 'Signature'), 
-            icon: <FileText size={16} /> 
+        {
+            id: 'signature',
+            label: t('settings.tabs.signature', 'Signature'),
+            icon: <FileText size={16} />,
         },
         // Availability & Schedule
-        { 
-            id: 'status', 
-            label: t('settings.tabs.status', 'Status'), 
-            icon: <Circle size={16} /> 
+        {
+            id: 'status',
+            label: t('settings.tabs.status', 'Status'),
+            icon: <Circle size={16} />,
         },
-        { 
-            id: 'availability', 
-            label: t('settings.tabs.availability', 'Availability'), 
-            icon: <Clock size={16} /> 
+        {
+            id: 'availability',
+            label: t('settings.tabs.availability', 'Availability'),
+            icon: <Clock size={16} />,
         },
-        { 
-            id: 'schedule', 
-            label: t('settings.tabs.schedule', 'Schedule'), 
-            icon: <Clock size={16} /> 
+        {
+            id: 'schedule',
+            label: t('settings.tabs.schedule', 'Schedule'),
+            icon: <Clock size={16} />,
         },
         // Professional Profile Group
-        { 
-            id: 'professional', 
-            label: t('settings.tabs.professional', 'Professional'), 
-            icon: <UserIcon size={16} /> 
+        {
+            id: 'professional',
+            label: t('settings.tabs.professional', 'Professional'),
+            icon: <UserIcon size={16} />,
         },
-        { 
-            id: 'contact', 
-            label: t('settings.tabs.contact', 'Contact'), 
-            icon: <Mail size={16} /> 
+        {
+            id: 'contact',
+            label: t('settings.tabs.contact', 'Contact'),
+            icon: <Mail size={16} />,
         },
         // Connections & Activity
-        { 
-            id: 'connected', 
-            label: t('settings.tabs.connected', 'Connected'), 
-            icon: <Link2 size={16} /> 
+        {
+            id: 'connected',
+            label: t('settings.tabs.connected', 'Connected'),
+            icon: <Link2 size={16} />,
         },
-        { 
-            id: 'activity', 
-            label: t('settings.tabs.activity', 'Activity'), 
-            icon: <Activity size={16} /> 
+        {
+            id: 'activity',
+            label: t('settings.tabs.activity', 'Activity'),
+            icon: <Activity size={16} />,
         },
-        { 
-            id: 'permissions', 
-            label: t('settings.tabs.permissions', 'Requests'), 
-            icon: <Send size={16} /> 
+        {
+            id: 'permissions',
+            label: t('settings.tabs.permissions', 'Requests'),
+            icon: <Send size={16} />,
         },
         // Security & Account
-        { 
-            id: 'security', 
-            label: t('settings.tabs.security', 'Security'), 
-            icon: <ShieldCheck size={16} /> 
+        {
+            id: 'security',
+            label: t('settings.tabs.security', 'Security'),
+            icon: <ShieldCheck size={16} />,
         },
-        { 
-            id: 'billing', 
-            label: t('settings.tabs.billing', 'Billing'), 
-            icon: <CreditCard size={16} /> 
+        {
+            id: 'billing',
+            label: t('settings.tabs.billing', 'Billing'),
+            icon: <CreditCard size={16} />,
         },
-        { 
-            id: 'account', 
-            label: t('settings.tabs.account', 'Account'), 
-            icon: <Settings size={16} /> 
+        {
+            id: 'account',
+            label: t('settings.tabs.account', 'Account'),
+            icon: <Settings size={16} />,
         },
     ];
 
@@ -523,8 +529,8 @@ export const ProfileModule: React.FC<ProfileModuleProps> = ({
                 return (
                     <div className="space-y-6">
                         {/* Profile Completeness Indicator */}
-                        <ProfileCompletenessIndicator 
-                            currentUser={currentUser} 
+                        <ProfileCompletenessIndicator
+                            currentUser={currentUser}
                             onNavigate={setActiveTab}
                             showDetails={true}
                         />

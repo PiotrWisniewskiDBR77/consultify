@@ -450,8 +450,8 @@ router.get('/workload', verifyToken, async (req, res) => {
 router.get('/stats', verifyToken, async (req, res) => {
     try {
         const { period } = req.query; // 'week', 'month', 'quarter'
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         
         // Calculate date range based on period
         const now = new Date();
@@ -594,8 +594,8 @@ const db = getDatabase();
 router.get('/team-workload', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         
         // Get team members and their task counts
         const teamData = await new Promise((resolve, reject) => {

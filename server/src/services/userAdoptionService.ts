@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import * as DbPromise from '../utils/DbPromise.js';
 
 type FeatureRow = {
@@ -32,7 +33,7 @@ const UserAdoptionService = {
     calculateMetrics: async (
         userId: string,
         organizationId: string,
-        metricDate: string | null = null
+        metricDate: string | null = null,
     ): Promise<AdoptionMetrics> => {
         const date = metricDate || new Date().toISOString().split('T')[0];
 
@@ -40,24 +41,24 @@ const UserAdoptionService = {
             DbPromise.all<FeatureRow>(
                 `SELECT DISTINCT entity_type as feature FROM activity_logs 
                  WHERE user_id = ? AND DATE(created_at) = ?`,
-                [userId, date]
+                [userId, date],
             ),
             DbPromise.get<CountRow>(
                 `SELECT COUNT(*) as completed
                  FROM ai_playbook_runs WHERE user_id = ? AND status = 'completed'
                  AND DATE(completed_at) = ?`,
-                [userId, date]
+                [userId, date],
             ),
             DbPromise.get<CountRow>(
                 `SELECT COUNT(*) as interactions
                  FROM ai_logs WHERE user_id = ? AND DATE(created_at) = ?`,
-                [userId, date]
+                [userId, date],
             ),
             DbPromise.get<CountRow>(
                 `SELECT COUNT(*) as frequency
                  FROM users WHERE id = ? AND last_login IS NOT NULL`,
-                [userId]
-            )
+                [userId],
+            ),
         ]);
 
         const featuresUsed = features
@@ -68,11 +69,9 @@ const UserAdoptionService = {
         const interactionCount = aiInteractions?.interactions ?? 0;
         const loginFrequency = logins?.frequency ?? 0;
 
-        const engagementScore = Math.min(100,
-            (featuresUsed.length * 10) +
-            (playbooksCompleted * 15) +
-            (interactionCount * 2) +
-            (loginFrequency * 5)
+        const engagementScore = Math.min(
+            100,
+            featuresUsed.length * 10 + playbooksCompleted * 15 + interactionCount * 2 + loginFrequency * 5,
         );
 
         const id = uuidv4();
@@ -96,9 +95,9 @@ const UserAdoptionService = {
                 playbooksCompleted,
                 interactionCount,
                 loginFrequency,
-                engagementScore
+                engagementScore,
             ],
-            { fallback: false }
+            { fallback: false },
         );
 
         return {
@@ -110,7 +109,7 @@ const UserAdoptionService = {
             playbooksCompleted,
             aiInteractions: interactionCount,
             loginFrequency,
-            engagementScore
+            engagementScore,
         };
     },
 
@@ -118,15 +117,15 @@ const UserAdoptionService = {
         userId: string,
         organizationId: string,
         startDate: string,
-        endDate: string
+        endDate: string,
     ): Promise<unknown[]> => {
         return DbPromise.all(
             `SELECT * FROM user_adoption_metrics 
              WHERE user_id = ? AND organization_id = ? AND metric_date BETWEEN ? AND ?
              ORDER BY metric_date ASC`,
-            [userId, organizationId, startDate, endDate]
+            [userId, organizationId, startDate, endDate],
         );
-    }
+    },
 };
 
 export default UserAdoptionService;

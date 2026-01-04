@@ -3,22 +3,22 @@
  * BCG/McKinsey style: 4-quadrant layout, data-dense, actionable
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import {
+    AlertTriangle,
+    ArrowRight,
+    Calendar,
     CheckCircle2,
     Clock,
-    Users,
-    AlertTriangle,
-    TrendingUp,
-    TrendingDown,
-    Minus,
-    ArrowRight,
     FileQuestion,
+    Minus,
     Target,
+    TrendingDown,
+    TrendingUp,
+    Users,
     Zap,
-    Calendar
 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface KPIData {
@@ -68,21 +68,9 @@ const KPICard: React.FC<{
     details?: { label: string; value: string | number; highlight?: boolean }[];
     onClick?: () => void;
     delay?: number;
-}> = ({ 
-    title, 
-    icon, 
-    iconBg, 
-    value, 
-    subValue, 
-    trend, 
-    trendLabel,
-    status = 'neutral',
-    details,
-    onClick,
-    delay = 0
-}) => {
+}> = ({ title, icon, iconBg, value, subValue, trend, trendLabel, status = 'neutral', details, onClick, delay = 0 }) => {
     const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-    
+
     const getTrendColor = () => {
         // For some metrics, down is good (e.g., overdue, wait time)
         if (trend === 'up') return 'text-emerald-500';
@@ -92,10 +80,14 @@ const KPICard: React.FC<{
 
     const getStatusBorder = () => {
         switch (status) {
-            case 'success': return 'border-l-emerald-500';
-            case 'warning': return 'border-l-amber-500';
-            case 'danger': return 'border-l-rose-500';
-            default: return 'border-l-slate-300 dark:border-l-white/20';
+            case 'success':
+                return 'border-l-emerald-500';
+            case 'warning':
+                return 'border-l-amber-500';
+            case 'danger':
+                return 'border-l-rose-500';
+            default:
+                return 'border-l-slate-300 dark:border-l-white/20';
         }
     };
 
@@ -131,12 +123,8 @@ const KPICard: React.FC<{
 
             {/* Main Value */}
             <div className="flex items-baseline gap-2 mb-3">
-                <span className="text-3xl font-bold text-navy-900 dark:text-white tabular-nums">
-                    {value}
-                </span>
-                {subValue && (
-                    <span className="text-sm text-slate-400">{subValue}</span>
-                )}
+                <span className="text-3xl font-bold text-navy-900 dark:text-white tabular-nums">{value}</span>
+                {subValue && <span className="text-sm text-slate-400">{subValue}</span>}
             </div>
 
             {/* Details */}
@@ -145,9 +133,11 @@ const KPICard: React.FC<{
                     {details.map((detail, idx) => (
                         <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-slate-500 dark:text-slate-400">{detail.label}</span>
-                            <span className={`font-semibold tabular-nums ${
-                                detail.highlight ? 'text-rose-500' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <span
+                                className={`font-semibold tabular-nums ${
+                                    detail.highlight ? 'text-rose-500' : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {detail.value}
                             </span>
                         </div>
@@ -168,32 +158,51 @@ const KPICard: React.FC<{
 // Risk Level Badge
 const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
     const config = {
-        low: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', label: 'Low' },
-        medium: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', label: 'Medium' },
-        high: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', label: 'High' },
-        critical: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-700 dark:text-rose-300', label: 'Critical' }
+        low: {
+            bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+            text: 'text-emerald-700 dark:text-emerald-300',
+            label: 'Low',
+        },
+        medium: {
+            bg: 'bg-amber-100 dark:bg-amber-900/30',
+            text: 'text-amber-700 dark:text-amber-300',
+            label: 'Medium',
+        },
+        high: {
+            bg: 'bg-orange-100 dark:bg-orange-900/30',
+            text: 'text-orange-700 dark:text-orange-300',
+            label: 'High',
+        },
+        critical: {
+            bg: 'bg-rose-100 dark:bg-rose-900/30',
+            text: 'text-rose-700 dark:text-rose-300',
+            label: 'Critical',
+        },
     };
 
     const cfg = config[level as keyof typeof config] || config.medium;
 
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-                level === 'critical' ? 'bg-rose-500 animate-pulse' :
-                level === 'high' ? 'bg-orange-500' :
-                level === 'medium' ? 'bg-amber-500' :
-                'bg-emerald-500'
-            }`} />
+        <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text}`}
+        >
+            <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                    level === 'critical'
+                        ? 'bg-rose-500 animate-pulse'
+                        : level === 'high'
+                          ? 'bg-orange-500'
+                          : level === 'medium'
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-500'
+                }`}
+            />
             {cfg.label}
         </span>
     );
 };
 
-export const KPIGrid: React.FC<KPIGridProps> = ({
-    data,
-    loading = false,
-    onNavigate
-}) => {
+export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavigate }) => {
     const { t } = useTranslation();
 
     // Default/mock data
@@ -203,26 +212,26 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
             total: data?.tasks?.total ?? 36,
             overdueCount: data?.tasks?.overdueCount ?? 3,
             onTimeRate: data?.tasks?.onTimeRate ?? 78,
-            trend: data?.tasks?.trend ?? 'up'
+            trend: data?.tasks?.trend ?? 'up',
         },
         decisions: {
             pending: data?.decisions?.pending ?? 8,
             avgWaitDays: data?.decisions?.avgWaitDays ?? 2.4,
             critical: data?.decisions?.critical ?? 2,
-            trend: data?.decisions?.trend ?? 'stable'
+            trend: data?.decisions?.trend ?? 'stable',
         },
         team: {
             avgCapacity: data?.team?.avgCapacity ?? 82,
             overloaded: data?.team?.overloaded ?? 2,
             available: data?.team?.available ?? 1,
-            trend: data?.team?.trend ?? 'up'
+            trend: data?.team?.trend ?? 'up',
         },
         risk: {
             level: data?.risk?.level ?? 'medium',
             blockers: data?.risk?.blockers ?? 4,
             escalations: data?.risk?.escalations ?? 1,
-            trend: data?.risk?.trend ?? 'stable'
-        }
+            trend: data?.risk?.trend ?? 'stable',
+        },
     };
 
     const completionRate = Math.round((kpiData.tasks.completed / kpiData.tasks.total) * 100);
@@ -231,7 +240,10 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-5 animate-pulse">
+                    <div
+                        key={i}
+                        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-5 animate-pulse"
+                    >
                         <div className="w-11 h-11 rounded-xl bg-slate-200 dark:bg-white/10 mb-4" />
                         <div className="h-4 w-20 bg-slate-200 dark:bg-white/10 rounded mb-2" />
                         <div className="h-8 w-24 bg-slate-200 dark:bg-white/10 rounded" />
@@ -255,7 +267,11 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
                 status={completionRate >= 75 ? 'success' : completionRate >= 50 ? 'warning' : 'danger'}
                 details={[
                     { label: t('executive.kpi.onTime', 'On-time'), value: `${kpiData.tasks.onTimeRate}%` },
-                    { label: t('executive.kpi.overdue', 'Overdue'), value: kpiData.tasks.overdueCount, highlight: kpiData.tasks.overdueCount > 0 }
+                    {
+                        label: t('executive.kpi.overdue', 'Overdue'),
+                        value: kpiData.tasks.overdueCount,
+                        highlight: kpiData.tasks.overdueCount > 0,
+                    },
                 ]}
                 onClick={() => onNavigate?.('tasks')}
                 delay={0}
@@ -269,10 +285,16 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
                 value={kpiData.decisions.pending}
                 subValue={t('executive.kpi.awaiting', 'awaiting')}
                 trend={kpiData.decisions.trend}
-                status={kpiData.decisions.critical > 0 ? 'danger' : kpiData.decisions.pending > 5 ? 'warning' : 'success'}
+                status={
+                    kpiData.decisions.critical > 0 ? 'danger' : kpiData.decisions.pending > 5 ? 'warning' : 'success'
+                }
                 details={[
-                    { label: t('executive.kpi.critical', 'Critical'), value: kpiData.decisions.critical, highlight: kpiData.decisions.critical > 0 },
-                    { label: t('executive.kpi.avgWait', 'Avg wait'), value: `${kpiData.decisions.avgWaitDays}d` }
+                    {
+                        label: t('executive.kpi.critical', 'Critical'),
+                        value: kpiData.decisions.critical,
+                        highlight: kpiData.decisions.critical > 0,
+                    },
+                    { label: t('executive.kpi.avgWait', 'Avg wait'), value: `${kpiData.decisions.avgWaitDays}d` },
                 ]}
                 onClick={() => onNavigate?.('decisions')}
                 delay={1}
@@ -287,14 +309,14 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
                 subValue={t('executive.kpi.utilized', 'utilized')}
                 trend={kpiData.team.trend}
                 trendLabel={kpiData.team.trend === 'up' ? '+5%' : '-2%'}
-                status={
-                    kpiData.team.overloaded > 2 ? 'danger' : 
-                    kpiData.team.avgCapacity > 90 ? 'warning' : 
-                    'success'
-                }
+                status={kpiData.team.overloaded > 2 ? 'danger' : kpiData.team.avgCapacity > 90 ? 'warning' : 'success'}
                 details={[
-                    { label: t('executive.kpi.overloaded', 'Overloaded'), value: kpiData.team.overloaded, highlight: kpiData.team.overloaded > 0 },
-                    { label: t('executive.kpi.available', 'Available'), value: kpiData.team.available }
+                    {
+                        label: t('executive.kpi.overloaded', 'Overloaded'),
+                        value: kpiData.team.overloaded,
+                        highlight: kpiData.team.overloaded > 0,
+                    },
+                    { label: t('executive.kpi.available', 'Available'), value: kpiData.team.available },
                 ]}
                 onClick={() => onNavigate?.('team')}
                 delay={2}
@@ -305,22 +327,31 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
                 title={t('executive.kpi.riskLevel', 'Risk Level')}
                 icon={<AlertTriangle size={22} className="text-white" />}
                 iconBg={`bg-gradient-to-br ${
-                    kpiData.risk.level === 'critical' ? 'from-rose-500 to-red-600 shadow-rose-500/30' :
-                    kpiData.risk.level === 'high' ? 'from-orange-500 to-red-600 shadow-orange-500/30' :
-                    kpiData.risk.level === 'medium' ? 'from-amber-500 to-orange-600 shadow-amber-500/30' :
-                    'from-emerald-500 to-green-600 shadow-emerald-500/30'
+                    kpiData.risk.level === 'critical'
+                        ? 'from-rose-500 to-red-600 shadow-rose-500/30'
+                        : kpiData.risk.level === 'high'
+                          ? 'from-orange-500 to-red-600 shadow-orange-500/30'
+                          : kpiData.risk.level === 'medium'
+                            ? 'from-amber-500 to-orange-600 shadow-amber-500/30'
+                            : 'from-emerald-500 to-green-600 shadow-emerald-500/30'
                 }`}
                 value={kpiData.risk.level.toUpperCase()}
-                subValue={<RiskLevelBadge level={kpiData.risk.level} /> as any}
+                subValue={(<RiskLevelBadge level={kpiData.risk.level} />) as any}
                 trend={kpiData.risk.trend}
                 status={
-                    kpiData.risk.level === 'critical' ? 'danger' :
-                    kpiData.risk.level === 'high' ? 'warning' :
-                    'neutral'
+                    kpiData.risk.level === 'critical' ? 'danger' : kpiData.risk.level === 'high' ? 'warning' : 'neutral'
                 }
                 details={[
-                    { label: t('executive.kpi.blockers', 'Blockers'), value: kpiData.risk.blockers, highlight: kpiData.risk.blockers > 2 },
-                    { label: t('executive.kpi.escalations', 'Escalations'), value: kpiData.risk.escalations, highlight: kpiData.risk.escalations > 0 }
+                    {
+                        label: t('executive.kpi.blockers', 'Blockers'),
+                        value: kpiData.risk.blockers,
+                        highlight: kpiData.risk.blockers > 2,
+                    },
+                    {
+                        label: t('executive.kpi.escalations', 'Escalations'),
+                        value: kpiData.risk.escalations,
+                        highlight: kpiData.risk.escalations > 0,
+                    },
                 ]}
                 onClick={() => onNavigate?.('risks')}
                 delay={3}
@@ -330,12 +361,3 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
 };
 
 export default KPIGrid;
-
-
-
-
-
-
-
-
-

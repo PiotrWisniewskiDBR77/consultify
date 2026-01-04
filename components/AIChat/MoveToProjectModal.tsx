@@ -1,14 +1,15 @@
 /**
  * MoveToProjectModal
- * 
+ *
  * Modal for moving a conversation to a chat project (folder).
  * Supports selecting existing projects or creating new ones inline.
  */
 
-import React, { useState, useEffect } from 'react';
+import { Check, Folder, FolderPlus, FolderX, Loader2, Plus, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FolderPlus, Folder, Check, Plus, FolderX, Loader2 } from 'lucide-react';
-import { useChatProjectStore, ChatProject } from '../../store/useChatProjectStore';
+
+import { ChatProject, useChatProjectStore } from '../../store/useChatProjectStore';
 import { Conversation } from '../../store/useConversationStore';
 
 interface MoveToProjectModalProps {
@@ -32,15 +33,10 @@ const PROJECT_COLORS = [
     '#3b82f6', // Blue
 ];
 
-export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
-    isOpen,
-    onClose,
-    conversation,
-    onSuccess
-}) => {
+export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({ isOpen, onClose, conversation, onSuccess }) => {
     const { t } = useTranslation();
     const { projects, fetchProjects, createProject, moveConversationToProject, isLoading } = useChatProjectStore();
-    
+
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
@@ -58,7 +54,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
 
     const handleMove = async () => {
         if (!conversation) return;
-        
+
         setIsMoving(true);
         try {
             await moveConversationToProject(conversation.id, selectedProjectId);
@@ -73,12 +69,12 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
 
     const handleCreateAndMove = async () => {
         if (!newProjectName.trim() || !conversation) return;
-        
+
         setIsCreating(true);
         try {
             const newProject = await createProject({
                 name: newProjectName.trim(),
-                color: newProjectColor
+                color: newProjectColor,
             });
             await moveConversationToProject(conversation.id, newProject.id);
             onSuccess?.();
@@ -94,7 +90,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
 
     const handleRemoveFromProject = async () => {
         if (!conversation || !conversation.chatProjectId) return;
-        
+
         setIsMoving(true);
         try {
             await moveConversationToProject(conversation.id, null);
@@ -112,19 +108,18 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={onClose}
-            />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
-            <div className="
+            <div
+                className="
                 relative w-full max-w-md mx-4
                 bg-white dark:bg-navy-900
                 rounded-2xl shadow-2xl
                 animate-in fade-in zoom-in-95 duration-200
                 max-h-[80vh] flex flex-col
-            ">
+            "
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-800">
                     <div className="flex items-center gap-2">
@@ -153,7 +148,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                             <p className="text-sm text-slate-600 dark:text-slate-400">
                                 {t('aiChat.moveToProject.createNew', 'Utwórz nowy projekt:')}
                             </p>
-                            
+
                             {/* Project name input */}
                             <input
                                 type="text"
@@ -171,22 +166,23 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                     transition-all
                                 "
                             />
-                            
+
                             {/* Color picker */}
                             <div>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                                     {t('aiChat.moveToProject.selectColor', 'Kolor:')}
                                 </p>
                                 <div className="flex flex-wrap gap-2">
-                                    {PROJECT_COLORS.map(color => (
+                                    {PROJECT_COLORS.map((color) => (
                                         <button
                                             key={color}
                                             onClick={() => setNewProjectColor(color)}
                                             className={`
                                                 w-8 h-8 rounded-full transition-all
-                                                ${newProjectColor === color 
-                                                    ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-navy-900 ring-slate-800 dark:ring-white scale-110' 
-                                                    : 'hover:scale-105'
+                                                ${
+                                                    newProjectColor === color
+                                                        ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-navy-900 ring-slate-800 dark:ring-white scale-110'
+                                                        : 'hover:scale-105'
                                                 }
                                             `}
                                             style={{ backgroundColor: color }}
@@ -194,7 +190,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                     ))}
                                 </div>
                             </div>
-                            
+
                             {/* Buttons */}
                             <div className="flex gap-2 pt-2">
                                 <button
@@ -221,11 +217,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                         disabled:opacity-50 disabled:cursor-not-allowed
                                     "
                                 >
-                                    {isCreating ? (
-                                        <Loader2 size={18} className="animate-spin" />
-                                    ) : (
-                                        <Plus size={18} />
-                                    )}
+                                    {isCreating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                                     {t('aiChat.moveToProject.createAndMove', 'Utwórz i przenieś')}
                                 </button>
                             </div>
@@ -293,7 +285,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                 </div>
                             ) : (
                                 <div className="space-y-2 mt-3">
-                                    {projects.map(project => {
+                                    {projects.map((project) => {
                                         const isSelected = selectedProjectId === project.id;
                                         const isCurrent = conversation.chatProjectId === project.id;
 
@@ -304,24 +296,28 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                                 className={`
                                                     w-full flex items-center gap-3 p-3 rounded-xl
                                                     border-2 transition-all duration-200
-                                                    ${isSelected
-                                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                                                    ${
+                                                        isSelected
+                                                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                                            : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                                                     }
                                                 `}
                                             >
-                                                <div 
+                                                <div
                                                     className="p-2 rounded-lg"
                                                     style={{ backgroundColor: `${project.color}20` }}
                                                 >
                                                     <Folder size={20} style={{ color: project.color }} />
                                                 </div>
                                                 <div className="flex-1 text-left">
-                                                    <p className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-navy-900 dark:text-white'}`}>
+                                                    <p
+                                                        className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-navy-900 dark:text-white'}`}
+                                                    >
                                                         {project.name}
                                                     </p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {project.conversationCount} {t('aiChat.moveToProject.conversations', 'rozmów')}
+                                                        {project.conversationCount}{' '}
+                                                        {t('aiChat.moveToProject.conversations', 'rozmów')}
                                                         {isCurrent && (
                                                             <span className="ml-2 text-primary-500">
                                                                 ({t('aiChat.moveToProject.current', 'obecny')})
@@ -329,9 +325,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                                         )}
                                                     </p>
                                                 </div>
-                                                {isSelected && (
-                                                    <Check size={20} className="text-primary-500" />
-                                                )}
+                                                {isSelected && <Check size={20} className="text-primary-500" />}
                                             </button>
                                         );
                                     })}
@@ -365,11 +359,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                                 disabled:opacity-50 disabled:cursor-not-allowed
                             "
                         >
-                            {isMoving ? (
-                                <Loader2 size={18} className="animate-spin" />
-                            ) : (
-                                <FolderPlus size={18} />
-                            )}
+                            {isMoving ? <Loader2 size={18} className="animate-spin" /> : <FolderPlus size={18} />}
                             {t('aiChat.moveToProject.move', 'Przenieś')}
                         </button>
                     </div>
@@ -380,11 +370,4 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
 };
 
 export default MoveToProjectModal;
-
-
-
-
-
-
-
 

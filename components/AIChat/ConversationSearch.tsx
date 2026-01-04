@@ -1,11 +1,11 @@
 /**
  * ConversationSearch
- * 
+ *
  * Search input for filtering conversations.
  */
 
-import React from 'react';
 import { Search, X } from 'lucide-react';
+import React from 'react';
 
 interface ConversationSearchProps {
     value: string;
@@ -16,14 +16,11 @@ interface ConversationSearchProps {
 export const ConversationSearch: React.FC<ConversationSearchProps> = ({
     value,
     onChange,
-    placeholder = 'Search...'
+    placeholder = 'Search...',
 }) => {
     return (
         <div className="relative">
-            <Search 
-                size={16} 
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" 
-            />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
                 type="text"
                 value={value}
@@ -53,12 +50,4 @@ export const ConversationSearch: React.FC<ConversationSearchProps> = ({
 };
 
 export default ConversationSearch;
-
-
-
-
-
-
-
-
 

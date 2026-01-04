@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Mail, Clock, CheckCircle, XCircle, RefreshCw, AlertCircle, Trash2, Send } from 'lucide-react';
-import { Invitation, InvitationType, InvitationStatus, InvitationEvent } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
+import { AlertCircle, CheckCircle, Clock, Mail, RefreshCw, Send, Trash2, Users, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import InviteUserModal from '../../components/InviteUserModal';
+import { useAppStore } from '../../store/useAppStore';
+import { Invitation, InvitationEvent, InvitationStatus, InvitationType } from '../../types';
 
 interface InvitationsManagementProps {
     organizationId?: string;
@@ -34,9 +35,9 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
             const statusFilter = activeTab !== 'all' ? `?status=${activeTab}` : '';
             const res = await fetch(`${API_URL}/invitations/org${statusFilter}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!res.ok) {
@@ -62,9 +63,9 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
             const res = await fetch(`${API_URL}/invitations/${invitationId}/resend`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!res.ok) {
@@ -85,9 +86,9 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
             const res = await fetch(`${API_URL}/invitations/${invitationId}/revoke`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!res.ok) {
@@ -107,9 +108,9 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
         try {
             const res = await fetch(`${API_URL}/invitations/${invitation.id}/audit`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!res.ok) {
@@ -144,11 +145,13 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
             pending: 'bg-yellow-100 text-yellow-800',
             accepted: 'bg-green-100 text-green-800',
             expired: 'bg-gray-100 text-gray-800',
-            revoked: 'bg-red-100 text-red-800'
+            revoked: 'bg-red-100 text-red-800',
         };
 
         return (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}>
+            <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}
+            >
                 {getStatusIcon(status)}
                 {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
@@ -161,7 +164,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -170,7 +173,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
         { key: 'accepted', label: 'Accepted' },
         { key: 'expired', label: 'Expired' },
         { key: 'revoked', label: 'Revoked' },
-        { key: 'all', label: 'All' }
+        { key: 'all', label: 'All' },
     ];
 
     return (
@@ -182,9 +185,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                         <Users className="w-6 h-6 text-indigo-600" />
                         Invitations
                     </h1>
-                    <p className="text-gray-600 text-sm mt-1">
-                        Manage organization and project invitations
-                    </p>
+                    <p className="text-gray-600 text-sm mt-1">Manage organization and project invitations</p>
                 </div>
                 <button
                     onClick={() => setShowInviteModal(true)}
@@ -213,10 +214,11 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.key
-                                ? 'border-indigo-500 text-indigo-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                activeTab === tab.key
+                                    ? 'border-indigo-500 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
                         >
                             {tab.label}
                         </button>
@@ -274,23 +276,26 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{invitation.email}</div>
                                         {invitation.projectName && (
-                                            <div className="text-xs text-gray-500">Project: {invitation.projectName}</div>
+                                            <div className="text-xs text-gray-500">
+                                                Project: {invitation.projectName}
+                                            </div>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${invitation.invitationType === InvitationType.PROJECT
-                                            ? 'bg-blue-100 text-blue-800'
-                                            : 'bg-purple-100 text-purple-800'
-                                            }`}>
+                                        <span
+                                            className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                                                invitation.invitationType === InvitationType.PROJECT
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-purple-100 text-purple-800'
+                                            }`}
+                                        >
                                             {invitation.invitationType || 'ORG'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className="text-sm text-gray-900">{invitation.roleToAssign}</span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {getStatusBadge(invitation.status)}
-                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(invitation.status)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {invitation.invitedBy
                                             ? `${invitation.invitedBy.firstName} ${invitation.invitedBy.lastName}`

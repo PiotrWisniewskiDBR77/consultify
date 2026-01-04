@@ -1,14 +1,12 @@
 /**
  * Pdfgenerator Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadPdfgeneratorservice = createCachedLazyService('../../services/pdfGeneratorService.js');
+import service from '../../services/pdfGeneratorService.js';
 
 // Export default instance (for backward compatibility)
-export default loadPdfgeneratorservice();
+export default service;

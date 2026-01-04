@@ -1,7 +1,7 @@
 /**
  * Benchmark Cache Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * In-memory caching for benchmark data to reduce computation
  */
 
@@ -54,7 +54,7 @@ class BenchmarkCache {
     set<T = unknown>(industry: string, data: T): void {
         this.cache.set(industry, {
             data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -87,7 +87,4 @@ setInterval(() => {
 }, 600000);
 
 export default benchmarkCache;
-
-
-
 

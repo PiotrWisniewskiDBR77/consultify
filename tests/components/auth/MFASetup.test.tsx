@@ -31,7 +31,7 @@ Object.defineProperty(navigator, 'clipboard', {
     writable: true,
 });
 
-import MFASetup from '../../../components/auth/MFASetup';
+import MFASetup from '../../components/auth/MFASetup';
 
 describe('MFASetup', () => {
     const mockOnComplete = vi.fn();

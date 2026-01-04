@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - Core Type Definitions
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 // ==========================================
 // EXPRESS EXTENSIONS
@@ -24,17 +24,13 @@ export interface AuthenticatedRequest extends Request {
     correlationId?: string;
 }
 
-export type AsyncHandler = (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-) => Promise<void | Response>;
+export type AsyncHandler = (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void | Response>;
 
 // ==========================================
 // USER & ORGANIZATION
 // ==========================================
 
-export type UserRole = 
+export type UserRole =
     | 'owner'
     | 'administrator'
     | 'project_manager'
@@ -150,7 +146,7 @@ export interface Initiative {
 // PMO (ISO 21500, PMBOK, PRINCE2 Aligned)
 // ==========================================
 
-export type PMODomain = 
+export type PMODomain =
     | 'GOVERNANCE_DECISION_MAKING'
     | 'SCOPE_CHANGE_CONTROL'
     | 'SCHEDULE_MILESTONES'
@@ -350,7 +346,7 @@ export class AppError extends Error {
         public statusCode: number,
         public message: string,
         public code?: string,
-        public details?: Record<string, unknown>
+        public details?: Record<string, unknown>,
     ) {
         super(message);
         this.name = 'AppError';
@@ -398,5 +394,3 @@ export class RateLimitError extends AppError {
         this.name = 'RateLimitError';
     }
 }
-
-

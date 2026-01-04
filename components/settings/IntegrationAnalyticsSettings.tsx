@@ -1,6 +1,6 @@
 /**
  * IntegrationAnalyticsSettings - Analytics Dashboard for Integrations
- * 
+ *
  * Features:
  * - Usage statistics with charts
  * - Error logs with filtering
@@ -9,17 +9,37 @@
  * - Export to CSV
  */
 
-import React, { useState, useEffect } from 'react';
+import {
+    AlertCircle,
+    BarChart3,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Download,
+    Filter,
+    Loader2,
+    RefreshCw,
+    TrendingUp,
+    XCircle,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
-    BarChart3, TrendingUp, AlertCircle, Clock, DollarSign,
-    Download, RefreshCw, Filter, Loader2, CheckCircle, XCircle
-} from 'lucide-react';
-import {
-    LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-    Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+    Area,
+    AreaChart,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Legend,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from 'recharts';
-import toast from 'react-hot-toast';
+
 import { Api } from '../../services/api';
 
 interface IntegrationAnalyticsSettingsProps {
@@ -63,7 +83,7 @@ interface LogEntry {
 
 export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettingsProps> = ({
     className = '',
-    currentUser
+    currentUser,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
@@ -89,10 +109,10 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
     const fetchIntegrations = async () => {
         try {
             if (!currentUser?.organizationId) return;
-            
+
             const data = await Api.get(`/api/settings/integrations?organizationId=${currentUser.organizationId}`);
             setIntegrations(data || []);
-            
+
             if (data && data.length > 0 && !selectedIntegration) {
                 setSelectedIntegration(data[0].id);
             }
@@ -104,12 +124,12 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
 
     const fetchAnalytics = async () => {
         if (!selectedIntegration) return;
-        
+
         setLoading(true);
         try {
             const [analyticsData, logsData] = await Promise.all([
                 Api.get(`/api/settings/integrations/analytics?integrationId=${selectedIntegration}&period=${period}`),
-                Api.get(`/api/settings/integrations/${selectedIntegration}/logs?limit=100&type=${logFilter}`)
+                Api.get(`/api/settings/integrations/${selectedIntegration}/logs?limit=100&type=${logFilter}`),
             ]);
 
             if (analyticsData?.stats) {
@@ -138,17 +158,23 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
         setExporting(true);
         try {
             const csv = [
-                ['Timestamp', 'Endpoint', 'Method', 'Status', 'Response Time (ms)', 'Tokens', 'Cost', 'Error'].join(','),
-                ...logs.map(log => [
-                    log.created_at,
-                    log.endpoint,
-                    log.method,
-                    log.status_code,
-                    log.response_time_ms,
-                    log.tokens_used || 0,
-                    log.cost || 0,
-                    log.error_message || ''
-                ].map(field => `"${field}"`).join(','))
+                ['Timestamp', 'Endpoint', 'Method', 'Status', 'Response Time (ms)', 'Tokens', 'Cost', 'Error'].join(
+                    ',',
+                ),
+                ...logs.map((log) =>
+                    [
+                        log.created_at,
+                        log.endpoint,
+                        log.method,
+                        log.status_code,
+                        log.response_time_ms,
+                        log.tokens_used || 0,
+                        log.cost || 0,
+                        log.error_message || '',
+                    ]
+                        .map((field) => `"${field}"`)
+                        .join(','),
+                ),
             ].join('\n');
 
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -178,7 +204,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'USD',
         }).format(amount);
     };
 
@@ -200,7 +226,10 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                         {t('settings.analytics.title', 'Integration Analytics')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('settings.analytics.description', 'Monitor usage, performance, and errors for your integrations')}
+                        {t(
+                            'settings.analytics.description',
+                            'Monitor usage, performance, and errors for your integrations',
+                        )}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -235,7 +264,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                         onChange={(e) => setSelectedIntegration(e.target.value)}
                         className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand"
                     >
-                        {integrations.map(int => (
+                        {integrations.map((int) => (
                             <option key={int.id} value={int.id}>
                                 {int.provider} {int.name ? `- ${int.name}` : ''}
                             </option>
@@ -262,7 +291,10 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
                     <BarChart3 className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
                     <p className="text-slate-500 dark:text-slate-400">
-                        {t('settings.analytics.noIntegrations', 'No integrations available. Connect an integration to see analytics.')}
+                        {t(
+                            'settings.analytics.noIntegrations',
+                            'No integrations available. Connect an integration to see analytics.',
+                        )}
                     </p>
                 </div>
             )}
@@ -297,7 +329,8 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 {Math.round(stats.avg_response_time_ms)}ms
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {t('settings.analytics.range', 'Range')}: {stats.min_response_time_ms}ms - {stats.max_response_time_ms}ms
+                                {t('settings.analytics.range', 'Range')}: {stats.min_response_time_ms}ms -{' '}
+                                {stats.max_response_time_ms}ms
                             </p>
                         </div>
 
@@ -327,9 +360,10 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 {formatNumber(stats.failed_requests)}
                             </p>
                             <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                                {stats.total_requests > 0 
+                                {stats.total_requests > 0
                                     ? ((stats.failed_requests / stats.total_requests) * 100).toFixed(1)
-                                    : 0}% {t('settings.analytics.failureRate', 'failure rate')}
+                                    : 0}
+                                % {t('settings.analytics.failureRate', 'failure rate')}
                             </p>
                         </div>
                     </div>
@@ -345,27 +379,20 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 <ResponsiveContainer width="100%" height={250}>
                                     <AreaChart data={metrics}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            tick={{ fontSize: 12 }}
-                                            stroke="#64748b"
-                                        />
-                                        <YAxis 
-                                            tick={{ fontSize: 12 }}
-                                            stroke="#64748b"
-                                        />
-                                        <Tooltip 
+                                        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
+                                        <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                                        <Tooltip
                                             contentStyle={{
                                                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                                 border: '1px solid #e2e8f0',
-                                                borderRadius: '8px'
+                                                borderRadius: '8px',
                                             }}
                                         />
-                                        <Area 
-                                            type="monotone" 
-                                            dataKey="requests" 
-                                            stroke="#3b82f6" 
-                                            fill="#3b82f6" 
+                                        <Area
+                                            type="monotone"
+                                            dataKey="requests"
+                                            stroke="#3b82f6"
+                                            fill="#3b82f6"
                                             fillOpacity={0.2}
                                         />
                                     </AreaChart>
@@ -380,33 +407,26 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 <ResponsiveContainer width="100%" height={250}>
                                     <LineChart data={metrics}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            tick={{ fontSize: 12 }}
-                                            stroke="#64748b"
-                                        />
-                                        <YAxis 
-                                            tick={{ fontSize: 12 }}
-                                            stroke="#64748b"
-                                        />
-                                        <Tooltip 
+                                        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
+                                        <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                                        <Tooltip
                                             contentStyle={{
                                                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                                 border: '1px solid #e2e8f0',
-                                                borderRadius: '8px'
+                                                borderRadius: '8px',
                                             }}
                                         />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="avg_latency" 
-                                            stroke="#8b5cf6" 
+                                        <Line
+                                            type="monotone"
+                                            dataKey="avg_latency"
+                                            stroke="#8b5cf6"
                                             strokeWidth={2}
                                             dot={{ r: 4 }}
                                         />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="max_latency" 
-                                            stroke="#ef4444" 
+                                        <Line
+                                            type="monotone"
+                                            dataKey="max_latency"
+                                            stroke="#ef4444"
                                             strokeWidth={1}
                                             strokeDasharray="5 5"
                                         />
@@ -422,25 +442,26 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 <ResponsiveContainer width="100%" height={250}>
                                     <BarChart data={metrics}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            tick={{ fontSize: 12 }}
-                                            stroke="#64748b"
-                                        />
-                                        <YAxis 
-                                            tick={{ fontSize: 12 }}
-                                            stroke="#64748b"
-                                        />
-                                        <Tooltip 
+                                        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
+                                        <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                                        <Tooltip
                                             contentStyle={{
                                                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                                 border: '1px solid #e2e8f0',
-                                                borderRadius: '8px'
+                                                borderRadius: '8px',
                                             }}
                                         />
                                         <Legend />
-                                        <Bar dataKey="successes" fill="#10b981" name={t('settings.analytics.successes', 'Successes')} />
-                                        <Bar dataKey="failures" fill="#ef4444" name={t('settings.analytics.failures', 'Failures')} />
+                                        <Bar
+                                            dataKey="successes"
+                                            fill="#10b981"
+                                            name={t('settings.analytics.successes', 'Successes')}
+                                        />
+                                        <Bar
+                                            dataKey="failures"
+                                            fill="#ef4444"
+                                            name={t('settings.analytics.failures', 'Failures')}
+                                        />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -499,7 +520,10 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                                     {logs.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                                            <td
+                                                colSpan={6}
+                                                className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                                            >
                                                 {t('settings.analytics.noLogs', 'No logs found')}
                                             </td>
                                         </tr>
@@ -513,11 +537,15 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                                     {log.endpoint}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
-                                                    <span className={`px-2 py-0.5 rounded ${
-                                                        log.method === 'GET' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                        log.method === 'POST' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                                    }`}>
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded ${
+                                                            log.method === 'GET'
+                                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                                : log.method === 'POST'
+                                                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                        }`}
+                                                    >
                                                         {log.method}
                                                     </span>
                                                 </td>
@@ -528,11 +556,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                                         ) : (
                                                             <XCircle size={14} className="text-red-500" />
                                                         )}
-                                                        <span className={`font-medium ${
-                                                            log.status_code >= 200 && log.status_code < 300
-                                                                ? 'text-green-600 dark:text-green-400'
-                                                                : 'text-red-600 dark:text-red-400'
-                                                        }`}>
+                                                        <span
+                                                            className={`font-medium ${
+                                                                log.status_code >= 200 && log.status_code < 300
+                                                                    ? 'text-green-600 dark:text-green-400'
+                                                                    : 'text-red-600 dark:text-red-400'
+                                                            }`}
+                                                        >
                                                             {log.status_code}
                                                         </span>
                                                     </div>
@@ -557,10 +587,4 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
 };
 
 export default IntegrationAnalyticsSettings;
-
-
-
-
-
-
 

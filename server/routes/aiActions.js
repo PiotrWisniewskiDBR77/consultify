@@ -18,7 +18,7 @@ const getUserContext = (req) => ({
 });
 
 /**
- * POST /api/ai/actions/execute
+ * POST /a../services/ai/actions/execute
  * Execute an AI-initiated action
  */
 router.post('/execute', async (req, res) => {
@@ -55,7 +55,7 @@ router.post('/execute', async (req, res) => {
 });
 
 /**
- * POST /api/ai/actions/confirm/:actionId
+ * POST /a../services/ai/actions/confirm/:actionId
  * Confirm or reject a pending action
  */
 router.post('/confirm/:actionId', async (req, res) => {
@@ -82,7 +82,7 @@ router.post('/confirm/:actionId', async (req, res) => {
 });
 
 /**
- * GET /api/ai/actions/history
+ * GET /a../services/ai/actions/history
  * Get recent action history
  */
 router.get('/history', (req, res) => {
@@ -101,7 +101,7 @@ router.get('/history', (req, res) => {
 });
 
 /**
- * GET /api/ai/actions/pending
+ * GET /a../services/ai/actions/pending
  * Get pending actions for current user
  */
 router.get('/pending', (req, res) => {
@@ -123,7 +123,7 @@ router.get('/pending', (req, res) => {
 });
 
 /**
- * GET /api/ai/actions/types
+ * GET /a../services/ai/actions/types
  * Get available action types
  */
 router.get('/types', (req, res) => {

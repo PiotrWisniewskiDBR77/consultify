@@ -3,23 +3,15 @@
  * BCG/McKinsey style: Predictive, actionable, visual hierarchy
  */
 
-import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-    Calendar,
-    AlertTriangle,
-    TrendingUp,
-    TrendingDown,
-    Users,
-    Zap,
-    Clock
-} from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, TrendingDown, TrendingUp, Users, Zap } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface DayForecast {
     date: Date;
     dayLabel: string;
-    capacity: number;          // 0-150+ percentage
+    capacity: number; // 0-150+ percentage
     plannedTasks: number;
     estimatedHours: number;
     riskLevel: 'low' | 'medium' | 'high';
@@ -68,9 +60,11 @@ const ForecastDay: React.FC<{
             {/* Day Header */}
             <div className="flex items-center justify-between mb-2">
                 <div>
-                    <p className={`text-xs font-bold uppercase tracking-wider ${
-                        isToday ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400'
-                    }`}>
+                    <p
+                        className={`text-xs font-bold uppercase tracking-wider ${
+                            isToday ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                    >
                         {forecast.dayLabel}
                     </p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500">
@@ -78,9 +72,9 @@ const ForecastDay: React.FC<{
                     </p>
                 </div>
                 {forecast.riskLevel !== 'low' && (
-                    <AlertTriangle 
-                        size={14} 
-                        className={forecast.riskLevel === 'high' ? 'text-rose-500 animate-pulse' : 'text-amber-500'} 
+                    <AlertTriangle
+                        size={14}
+                        className={forecast.riskLevel === 'high' ? 'text-rose-500 animate-pulse' : 'text-amber-500'}
                     />
                 )}
             </div>
@@ -91,11 +85,15 @@ const ForecastDay: React.FC<{
                     <span className="text-slate-500 dark:text-slate-400">
                         {t('team.forecast.capacity', 'Capacity')}
                     </span>
-                    <span className={`font-bold ${
-                        forecast.capacity > 100 ? 'text-rose-600 dark:text-rose-400' :
-                        forecast.capacity > 85 ? 'text-amber-600 dark:text-amber-400' :
-                        'text-navy-900 dark:text-white'
-                    }`}>
+                    <span
+                        className={`font-bold ${
+                            forecast.capacity > 100
+                                ? 'text-rose-600 dark:text-rose-400'
+                                : forecast.capacity > 85
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-navy-900 dark:text-white'
+                        }`}
+                    >
                         {forecast.capacity}%
                     </span>
                 </div>
@@ -113,9 +111,7 @@ const ForecastDay: React.FC<{
             <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex items-center gap-1">
                     <Clock size={10} className="text-slate-400" />
-                    <span className="text-slate-600 dark:text-slate-400">
-                        {forecast.estimatedHours}h
-                    </span>
+                    <span className="text-slate-600 dark:text-slate-400">{forecast.estimatedHours}h</span>
                 </div>
                 <div className="flex items-center gap-1">
                     <Zap size={10} className="text-slate-400" />
@@ -142,11 +138,7 @@ const ForecastDay: React.FC<{
     );
 };
 
-export const CapacityForecast: React.FC<CapacityForecastProps> = ({
-    forecasts = [],
-    loading = false,
-    onDayClick
-}) => {
+export const CapacityForecast: React.FC<CapacityForecastProps> = ({ forecasts = [], loading = false, onDayClick }) => {
     const { t } = useTranslation();
 
     // Generate default forecast data
@@ -155,13 +147,13 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
 
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const today = new Date();
-        
+
         return Array.from({ length: 7 }, (_, i) => {
             const date = new Date(today);
             date.setDate(date.getDate() + i);
             const dayOfWeek = date.getDay();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-            
+
             // Mock capacity (higher mid-week, bottleneck on Thursday)
             const baseCapacity = isWeekend ? 20 : 75;
             const variance = i === 3 ? 45 : Math.random() * 30 - 10; // Thursday is overloaded
@@ -174,7 +166,7 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
                 plannedTasks: isWeekend ? 1 : Math.round(3 + Math.random() * 5),
                 estimatedHours: isWeekend ? 2 : Math.round(4 + Math.random() * 4),
                 riskLevel: capacity > 100 ? 'high' : capacity > 85 ? 'medium' : 'low',
-                bottlenecks: capacity > 100 ? ['Resource constraint'] : capacity > 85 ? ['High workload'] : []
+                bottlenecks: capacity > 100 ? ['Resource constraint'] : capacity > 85 ? ['High workload'] : [],
             } as DayForecast;
         });
     }, [forecasts]);
@@ -182,11 +174,9 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
     const today = new Date().toDateString();
 
     // Calculate summary stats
-    const avgCapacity = Math.round(
-        displayForecasts.reduce((sum, f) => sum + f.capacity, 0) / displayForecasts.length
-    );
-    const peakDay = displayForecasts.reduce((max, f) => f.capacity > max.capacity ? f : max, displayForecasts[0]);
-    const riskDays = displayForecasts.filter(f => f.riskLevel !== 'low').length;
+    const avgCapacity = Math.round(displayForecasts.reduce((sum, f) => sum + f.capacity, 0) / displayForecasts.length);
+    const peakDay = displayForecasts.reduce((max, f) => (f.capacity > max.capacity ? f : max), displayForecasts[0]);
+    const riskDays = displayForecasts.filter((f) => f.riskLevel !== 'low').length;
 
     if (loading) {
         return (
@@ -230,9 +220,11 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
                             <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 {t('team.forecast.avgCapacity', 'Avg')}
                             </p>
-                            <p className={`text-lg font-bold ${
-                                avgCapacity > 90 ? 'text-amber-500' : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p
+                                className={`text-lg font-bold ${
+                                    avgCapacity > 90 ? 'text-amber-500' : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {avgCapacity}%
                             </p>
                         </div>
@@ -270,7 +262,8 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
                         <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400" />
                         <div>
                             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                {t('team.forecast.peakAlert', 'Peak capacity on')} {peakDay.dayLabel} ({peakDay.capacity}%)
+                                {t('team.forecast.peakAlert', 'Peak capacity on')} {peakDay.dayLabel} (
+                                {peakDay.capacity}%)
                             </p>
                             <p className="text-xs text-amber-600 dark:text-amber-300">
                                 {t('team.forecast.peakAdvice', 'Consider redistributing tasks or adjusting deadlines')}
@@ -284,12 +277,4 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
 };
 
 export default CapacityForecast;
-
-
-
-
-
-
-
-
 

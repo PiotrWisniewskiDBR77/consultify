@@ -1,21 +1,22 @@
 /**
  * RevenueModule - Revenue & Billing Management
- * 
+ *
  * Tabs: Billing | Invoices | Usage | Pricing Plans | Subscriptions | Revenue Recognition | Forecasts | Payments
  */
 
+import { BarChart3, Calculator, CreditCard, Layers, Receipt, RefreshCw, TrendingUp, Wallet } from 'lucide-react';
 import React, { useState } from 'react';
-import { CreditCard, Receipt, BarChart3, Layers, RefreshCw, Calculator, TrendingUp, Wallet } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
+
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { UsageStatsPanel } from '../../components/SuperAdmin/UsageStatsPanel';
 import { BillingCenterView } from './BillingCenterView';
 import { InvoiceCenterView } from './InvoiceCenterView';
-import { UsageStatsPanel } from '../../components/SuperAdmin/UsageStatsPanel';
-import { 
-    PricingPlansAdvancedView, 
-    SubscriptionChangesView, 
-    RevenueRecognitionView, 
-    RevenueForecastView, 
-    PaymentMethodsView 
+import {
+    PaymentMethodsView,
+    PricingPlansAdvancedView,
+    RevenueForecastView,
+    RevenueRecognitionView,
+    SubscriptionChangesView,
 } from './revenue';
 
 interface RevenueModuleProps {
@@ -77,6 +78,3 @@ export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
 };
 
 export default RevenueModule;
-
-
-

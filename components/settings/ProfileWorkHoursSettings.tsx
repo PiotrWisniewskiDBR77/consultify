@@ -1,26 +1,19 @@
 /**
  * ProfileWorkHoursSettings - Working hours and availability
- * 
+ *
  * Features:
  * - Set working hours (start/end time)
  * - Select working days
  * - Vacation/Out of office periods
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Clock,
-    Calendar,
-    Plane,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, Calendar, CheckCircle, Clock, Loader2, Plane, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface ProfileWorkHoursSettingsProps {
     currentUser: User;
@@ -37,37 +30,33 @@ const DAYS_OF_WEEK = [
     { value: 7, label: 'Sunday', short: 'Sun' },
 ] as const;
 
-export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
-    const [workHoursStart, setWorkHoursStart] = useState(
-        currentUser.workingHours?.days?.monday?.startTime || '09:00'
-    );
-    const [workHoursEnd, setWorkHoursEnd] = useState(
-        currentUser.workingHours?.days?.monday?.endTime || '17:00'
-    );
+    const [workHoursStart, setWorkHoursStart] = useState(currentUser.workingHours?.days?.monday?.startTime || '09:00');
+    const [workHoursEnd, setWorkHoursEnd] = useState(currentUser.workingHours?.days?.monday?.endTime || '17:00');
     const [workDays, setWorkDays] = useState<number[]>(
-        currentUser.workingHours?.days 
+        currentUser.workingHours?.days
             ? Object.entries(currentUser.workingHours.days)
-                .filter(([_, day]) => day?.enabled)
-                .map(([day]) => {
-                    const dayMap: Record<string, number> = {
-                        monday: 1, tuesday: 2, wednesday: 3, thursday: 4,
-                        friday: 5, saturday: 6, sunday: 7
-                    };
-                    return dayMap[day] || 0;
-                })
-                .filter(d => d > 0)
-            : [1, 2, 3, 4, 5]
+                  .filter(([_, day]) => day?.enabled)
+                  .map(([day]) => {
+                      const dayMap: Record<string, number> = {
+                          monday: 1,
+                          tuesday: 2,
+                          wednesday: 3,
+                          thursday: 4,
+                          friday: 5,
+                          saturday: 6,
+                          sunday: 7,
+                      };
+                      return dayMap[day] || 0;
+                  })
+                  .filter((d) => d > 0)
+            : [1, 2, 3, 4, 5],
     );
     const [vacationStart, setVacationStart] = useState(
-        currentUser.outOfOfficeDates?.[0]?.startDate?.split('T')[0] || ''
+        currentUser.outOfOfficeDates?.[0]?.startDate?.split('T')[0] || '',
     );
-    const [vacationEnd, setVacationEnd] = useState(
-        currentUser.outOfOfficeDates?.[0]?.endDate?.split('T')[0] || ''
-    );
+    const [vacationEnd, setVacationEnd] = useState(currentUser.outOfOfficeDates?.[0]?.endDate?.split('T')[0] || '');
     const [outOfOffice, setOutOfOffice] = useState(currentUser.isOutOfOffice || false);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -87,7 +76,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
 
     const toggleWorkDay = (day: number) => {
         if (workDays.includes(day)) {
-            setWorkDays(workDays.filter(d => d !== day));
+            setWorkDays(workDays.filter((d) => d !== day));
         } else {
             setWorkDays([...workDays, day].sort());
         }
@@ -96,51 +85,61 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             const dayMap: Record<number, string> = {
-                1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday',
-                5: 'friday', 6: 'saturday', 7: 'sunday'
+                1: 'monday',
+                2: 'tuesday',
+                3: 'wednesday',
+                4: 'thursday',
+                5: 'friday',
+                6: 'saturday',
+                7: 'sunday',
             };
 
             const workingHours: any = {
                 timezone: currentUser.timezone || 'Europe/Warsaw',
-                days: {}
+                days: {},
             };
 
-            workDays.forEach(day => {
+            workDays.forEach((day) => {
                 const dayName = dayMap[day];
                 if (dayName) {
                     workingHours.days[dayName] = {
                         enabled: true,
                         startTime: workHoursStart,
-                        endTime: workHoursEnd
+                        endTime: workHoursEnd,
                     };
                 }
             });
 
-            const outOfOfficeDates = (vacationStart && vacationEnd) ? [{
-                id: 'current',
-                startDate: vacationStart,
-                endDate: vacationEnd,
-                isAllDay: true
-            }] : undefined;
+            const outOfOfficeDates =
+                vacationStart && vacationEnd
+                    ? [
+                          {
+                              id: 'current',
+                              startDate: vacationStart,
+                              endDate: vacationEnd,
+                              isAllDay: true,
+                          },
+                      ]
+                    : undefined;
 
             await Api.updateUser(currentUser.id, {
                 workingHours,
                 outOfOfficeDates,
-                isOutOfOffice: outOfOffice
+                isOutOfOffice: outOfOffice,
             });
-            
+
             onUpdateUser({
                 workingHours,
                 outOfOfficeDates,
-                isOutOfOffice: outOfOffice
+                isOutOfOffice: outOfOffice,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.profile.workHours.saved', 'Work hours updated successfully'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -207,9 +206,10 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
                                 onClick={() => toggleWorkDay(day.value)}
                                 className={`
                                     px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                                    ${isSelected 
-                                        ? 'border-purple-500 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300' 
-                                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                                    ${
+                                        isSelected
+                                            ? 'border-purple-500 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                                            : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
                                     }
                                 `}
                             >
@@ -226,7 +226,7 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
                     <Plane size={16} />
                     {t('settings.profile.workHours.vacation', 'Vacation / Out of Office')}
                 </label>
-                
+
                 <div className="flex items-center gap-2 mb-4">
                     <input
                         type="checkbox"
@@ -306,10 +306,4 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
 };
 
 export default ProfileWorkHoursSettings;
-
-
-
-
-
-
 

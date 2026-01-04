@@ -3,21 +3,22 @@
  * Displays version history with options to view, compare, and restore
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-    History, 
-    Eye, 
-    RotateCcw, 
-    GitCompare, 
-    Clock, 
-    User, 
-    ChevronDown, 
-    ChevronUp,
-    Check,
+import {
     AlertCircle,
-    Loader2
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Eye,
+    GitCompare,
+    History,
+    Loader2,
+    RotateCcw,
+    User,
 } from 'lucide-react';
-import { useAssessmentWorkflow, AssessmentVersion } from '../../hooks/useAssessmentWorkflow';
+import React, { useEffect, useState } from 'react';
+
+import { AssessmentVersion, useAssessmentWorkflow } from '../../hooks/useAssessmentWorkflow';
 
 interface AssessmentVersionHistoryProps {
     assessmentId: string;
@@ -30,15 +31,9 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
     assessmentId,
     onViewVersion,
     onRestoreVersion,
-    onCompareVersions
+    onCompareVersions,
 }) => {
-    const { 
-        versions, 
-        fetchVersions, 
-        restoreVersion, 
-        isLoading, 
-        error 
-    } = useAssessmentWorkflow(assessmentId);
+    const { versions, fetchVersions, restoreVersion, isLoading, error } = useAssessmentWorkflow(assessmentId);
 
     const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
     const [selectedForCompare, setSelectedForCompare] = useState<number[]>([]);
@@ -54,16 +49,16 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
         const success = await restoreVersion(version);
         setIsRestoring(null);
         setShowConfirmRestore(null);
-        
+
         if (success && onRestoreVersion) {
             onRestoreVersion(version);
         }
     };
 
     const toggleCompareSelection = (version: number) => {
-        setSelectedForCompare(prev => {
+        setSelectedForCompare((prev) => {
             if (prev.includes(version)) {
-                return prev.filter(v => v !== version);
+                return prev.filter((v) => v !== version);
             }
             if (prev.length >= 2) {
                 return [prev[1], version];
@@ -86,7 +81,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -132,9 +127,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                     </div>
                     <div>
                         <h3 className="font-bold text-navy-900 dark:text-white">Historia wersji</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {versions.length} wersji
-                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{versions.length} wersji</p>
                     </div>
                 </div>
 
@@ -158,11 +151,11 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                     const isCurrent = index === 0;
 
                     return (
-                        <div 
-                            key={version.id} 
+                        <div
+                            key={version.id}
                             className={`transition-colors ${
-                                isSelected 
-                                    ? 'bg-purple-50 dark:bg-purple-900/20' 
+                                isSelected
+                                    ? 'bg-purple-50 dark:bg-purple-900/20'
                                     : 'hover:bg-slate-50 dark:hover:bg-white/5'
                             }`}
                         >
@@ -185,11 +178,13 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                                 {/* Version Info */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <span className={`font-semibold ${
-                                            isCurrent 
-                                                ? 'text-purple-600 dark:text-purple-400' 
-                                                : 'text-navy-900 dark:text-white'
-                                        }`}>
+                                        <span
+                                            className={`font-semibold ${
+                                                isCurrent
+                                                    ? 'text-purple-600 dark:text-purple-400'
+                                                    : 'text-navy-900 dark:text-white'
+                                            }`}
+                                        >
                                             {getVersionLabel(version, index, versions.length)}
                                         </span>
                                         {isCurrent && (
@@ -266,25 +261,26 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                                             Oceny w tej wersji
                                         </h4>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                            {version.data.axes && Object.entries(version.data.axes).map(([axis, data]: [string, any]) => (
-                                                <div 
-                                                    key={axis}
-                                                    className="bg-white dark:bg-navy-900 rounded-lg p-3 border border-slate-200 dark:border-white/10"
-                                                >
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize mb-1">
-                                                        {axis.replace(/([A-Z])/g, ' $1').trim()}
-                                                    </p>
-                                                    <div className="flex items-baseline gap-2">
-                                                        <span className="text-lg font-bold text-navy-900 dark:text-white">
-                                                            {data?.actual || '-'}
-                                                        </span>
-                                                        <span className="text-sm text-slate-500">→</span>
-                                                        <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                                                            {data?.target || '-'}
-                                                        </span>
+                                            {version.data.axes &&
+                                                Object.entries(version.data.axes).map(([axis, data]: [string, any]) => (
+                                                    <div
+                                                        key={axis}
+                                                        className="bg-white dark:bg-navy-900 rounded-lg p-3 border border-slate-200 dark:border-white/10"
+                                                    >
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize mb-1">
+                                                            {axis.replace(/([A-Z])/g, ' $1').trim()}
+                                                        </p>
+                                                        <div className="flex items-baseline gap-2">
+                                                            <span className="text-lg font-bold text-navy-900 dark:text-white">
+                                                                {data?.actual || '-'}
+                                                            </span>
+                                                            <span className="text-sm text-slate-500">→</span>
+                                                            <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                                                {data?.target || '-'}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
                                         </div>
                                     </div>
                                 </div>
@@ -301,8 +297,8 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                                                     Potwierdź przywrócenie
                                                 </h4>
                                                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                                                    Czy na pewno chcesz przywrócić tę wersję? 
-                                                    Obecna wersja zostanie zapisana w historii.
+                                                    Czy na pewno chcesz przywrócić tę wersję? Obecna wersja zostanie
+                                                    zapisana w historii.
                                                 </p>
                                                 <div className="flex gap-2 mt-3">
                                                     <button
@@ -335,4 +331,3 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
         </div>
     );
 };
-

@@ -1,6 +1,6 @@
 /**
  * Prompt Management UI Component
- * 
+ *
  * Super Admin interface for managing AI prompts and templates.
  * Features:
  * - CRUD operations for prompts
@@ -10,37 +10,38 @@
  * - Variables/placeholders management
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    FileText, 
-    Plus, 
-    Search, 
-    Edit, 
-    Trash2,
-    Save,
-    X,
-    History,
-    PlayCircle,
-    Copy,
-    CheckCircle,
+import {
     AlertTriangle,
-    Loader2,
+    Blocks,
+    CheckCircle,
     ChevronDown,
     ChevronRight,
-    Tag,
-    Wand2,
-    RefreshCw,
+    Copy,
+    Edit,
     Eye,
-    Sparkles,
-    Blocks,
-    TestTube,
+    FileText,
+    History,
     Languages,
+    Loader2,
+    PanelRightClose,
     PanelRightOpen,
-    PanelRightClose
+    PlayCircle,
+    Plus,
+    RefreshCw,
+    Save,
+    Search,
+    Sparkles,
+    Tag,
+    TestTube,
+    Trash2,
+    Wand2,
+    X,
 } from 'lucide-react';
-import api from '../../services/api';
-import { useTranslation } from 'react-i18next';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import api from '../../services/api';
 import { PromptAssistantPanel } from './PromptAssistantPanel';
 import { PromptBlockBuilder } from './PromptBlockBuilder';
 import { PromptTestBench } from './PromptTestBench';
@@ -78,7 +79,7 @@ const PROMPT_CATEGORIES = [
     { id: 'assessment', name: 'Assessment AI', icon: '🎯' },
     { id: 'initiative', name: 'Initiative Generator', icon: '🚀' },
     { id: 'task', name: 'Task Advisor', icon: '📋' },
-    { id: 'system', name: 'System Prompts', icon: '⚙️' }
+    { id: 'system', name: 'System Prompts', icon: '⚙️' },
 ];
 
 export function PromptManagementUI() {
@@ -98,7 +99,7 @@ export function PromptManagementUI() {
     const [isSaving, setIsSaving] = useState(false);
     const [editForm, setEditForm] = useState<Partial<PromptTemplate>>({});
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['chat', 'analysis']));
-    
+
     // New states for enhanced features
     const [showAssistant, setShowAssistant] = useState(true);
     const [activeTab, setActiveTab] = useState<'editor' | 'blocks' | 'test'>('editor');
@@ -110,7 +111,7 @@ export function PromptManagementUI() {
 
         try {
             const response = await api.get('/ai-prompts');
-            
+
             if (response.data.success) {
                 setPrompts(response.data.prompts || []);
             } else {
@@ -151,7 +152,7 @@ export function PromptManagementUI() {
     const handleEdit = () => {
         if (selectedPrompt) {
             setEditForm({
-                ...selectedPrompt
+                ...selectedPrompt,
             });
             setIsEditing(true);
         }
@@ -159,11 +160,11 @@ export function PromptManagementUI() {
 
     const handleSave = async () => {
         if (!editForm.id) return;
-        
+
         setIsSaving(true);
         try {
             const response = await api.put(`/ai-prompts/${editForm.id}`, editForm);
-            
+
             if (response.data.success) {
                 toast.success('Prompt saved successfully');
                 setIsEditing(false);
@@ -186,7 +187,7 @@ export function PromptManagementUI() {
 
         try {
             const response = await api.delete(`/ai-prompts/${selectedPrompt.id}`);
-            
+
             if (response.data.success) {
                 toast.success('Prompt deleted');
                 setSelectedPrompt(null);
@@ -207,7 +208,7 @@ export function PromptManagementUI() {
             system_prompt: '',
             user_prompt_template: '',
             variables: [],
-            is_active: true
+            is_active: true,
         });
         setSelectedPrompt(null);
         setIsEditing(true);
@@ -215,16 +216,16 @@ export function PromptManagementUI() {
 
     const handleTestPrompt = async () => {
         if (!selectedPrompt) return;
-        
+
         setPreviewLoading(true);
         setShowPreview(true);
         setPreviewResult(null);
 
         try {
             const response = await api.post(`/ai-prompts/${selectedPrompt.id}/test`, {
-                variables: {}
+                variables: {},
             });
-            
+
             if (response.data.success) {
                 setPreviewResult(response.data.result || 'No response');
             } else {
@@ -254,17 +255,18 @@ export function PromptManagementUI() {
         setExpandedCategories(newExpanded);
     };
 
-    const filteredPrompts = prompts.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             p.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredPrompts = prompts.filter((p) => {
+        const matchesSearch =
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    const promptsByCategory = PROMPT_CATEGORIES.map(cat => ({
+    const promptsByCategory = PROMPT_CATEGORIES.map((cat) => ({
         ...cat,
-        prompts: filteredPrompts.filter(p => p.category === cat.id)
-    })).filter(cat => cat.prompts.length > 0 || selectedCategory === cat.id);
+        prompts: filteredPrompts.filter((p) => p.category === cat.id),
+    })).filter((cat) => cat.prompts.length > 0 || selectedCategory === cat.id);
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('pl-PL', {
@@ -272,7 +274,7 @@ export function PromptManagementUI() {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -295,7 +297,7 @@ export function PromptManagementUI() {
                             <Plus size={20} />
                         </button>
                     </div>
-                    
+
                     {/* Search */}
                     <div className="relative">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -317,8 +319,10 @@ export function PromptManagementUI() {
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
                     >
                         <option value="all">All Categories</option>
-                        {PROMPT_CATEGORIES.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                        {PROMPT_CATEGORIES.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.icon} {cat.name}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -341,7 +345,7 @@ export function PromptManagementUI() {
                         </div>
                     ) : (
                         <div className="py-2">
-                            {promptsByCategory.map(category => (
+                            {promptsByCategory.map((category) => (
                                 <div key={category.id}>
                                     <button
                                         onClick={() => toggleCategory(category.id)}
@@ -360,7 +364,7 @@ export function PromptManagementUI() {
                                     </button>
                                     {expandedCategories.has(category.id) && (
                                         <div className="py-1">
-                                            {category.prompts.map(prompt => (
+                                            {category.prompts.map((prompt) => (
                                                 <button
                                                     key={prompt.id}
                                                     onClick={() => handleSelectPrompt(prompt)}
@@ -371,7 +375,9 @@ export function PromptManagementUI() {
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`w-2 h-2 rounded-full ${prompt.is_active ? 'bg-green-500' : 'bg-slate-300'}`} />
+                                                        <span
+                                                            className={`w-2 h-2 rounded-full ${prompt.is_active ? 'bg-green-500' : 'bg-slate-300'}`}
+                                                        />
                                                         <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
                                                             {prompt.name}
                                                         </span>
@@ -394,412 +400,444 @@ export function PromptManagementUI() {
             <div className={`flex-1 flex ${showAssistant ? '' : ''}`}>
                 {/* Editor/Blocks/Test Area */}
                 <div className={`flex-1 flex flex-col ${showAssistant ? 'lg:w-3/5' : 'w-full'}`}>
-                {!selectedPrompt && !isEditing ? (
-                    <div className="flex-1 flex items-center justify-center text-slate-500">
-                        <div className="text-center">
-                            <Wand2 size={48} className="mx-auto mb-4 opacity-50" />
-                            <p>Select a prompt to view or edit</p>
-                            <button
-                                onClick={handleCreateNew}
-                                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 mx-auto"
-                            >
-                                <Plus size={16} />
-                                Create New Prompt
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Toolbar */}
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800">
-                            <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                    {isEditing ? (editForm.id ? 'Edit Prompt' : 'New Prompt') : selectedPrompt?.name}
-                                </h2>
-                                {selectedPrompt && !isEditing && (
-                                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                                        v{selectedPrompt.version}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {/* Assistant Toggle */}
+                    {!selectedPrompt && !isEditing ? (
+                        <div className="flex-1 flex items-center justify-center text-slate-500">
+                            <div className="text-center">
+                                <Wand2 size={48} className="mx-auto mb-4 opacity-50" />
+                                <p>Select a prompt to view or edit</p>
                                 <button
-                                    onClick={() => setShowAssistant(!showAssistant)}
-                                    className={`p-2 rounded-lg transition-colors ${
-                                        showAssistant
-                                            ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
-                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
-                                    }`}
-                                    title={showAssistant ? 'Hide AI Assistant' : 'Show AI Assistant'}
+                                    onClick={handleCreateNew}
+                                    className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 mx-auto"
                                 >
-                                    {showAssistant ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+                                    <Plus size={16} />
+                                    Create New Prompt
                                 </button>
-                                {isEditing ? (
-                                    <>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Toolbar */}
+                            <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                            {isEditing
+                                                ? editForm.id
+                                                    ? 'Edit Prompt'
+                                                    : 'New Prompt'
+                                                : selectedPrompt?.name}
+                                        </h2>
+                                        {selectedPrompt && !isEditing && (
+                                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                                                v{selectedPrompt.version}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {/* Assistant Toggle */}
                                         <button
-                                            onClick={() => {
-                                                setIsEditing(false);
-                                                if (!editForm.id) setSelectedPrompt(null);
-                                            }}
-                                            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={isSaving}
-                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-                                        >
-                                            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                            Save
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button
-                                            onClick={handleCopyPrompt}
-                                            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                                            title="Copy to clipboard"
-                                        >
-                                            <Copy size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => setShowVersions(!showVersions)}
+                                            onClick={() => setShowAssistant(!showAssistant)}
                                             className={`p-2 rounded-lg transition-colors ${
-                                                showVersions
+                                                showAssistant
                                                     ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
                                                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
                                             }`}
-                                            title="Version history"
+                                            title={showAssistant ? 'Hide AI Assistant' : 'Show AI Assistant'}
                                         >
-                                            <History size={18} />
+                                            {showAssistant ? (
+                                                <PanelRightClose size={18} />
+                                            ) : (
+                                                <PanelRightOpen size={18} />
+                                            )}
                                         </button>
-                                        <button
-                                            onClick={handleTestPrompt}
-                                            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                                            title="Test prompt"
-                                        >
-                                            <PlayCircle size={18} />
-                                        </button>
-                                        <button
-                                            onClick={handleEdit}
-                                            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Edit size={18} />
-                                        </button>
-                                        <button
-                                            onClick={handleDelete}
-                                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                            </div>
-                            
-                            {/* Tab Navigation */}
-                            <div className="flex items-center gap-1 border-t border-slate-200 dark:border-white/10 pt-3 -mb-4 -mx-6 px-6">
-                                <button
-                                    onClick={() => setActiveTab('editor')}
-                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                                        activeTab === 'editor'
-                                            ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    <Edit size={16} />
-                                    Editor
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('blocks')}
-                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                                        activeTab === 'blocks'
-                                            ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    <Blocks size={16} />
-                                    Block Builder
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('test')}
-                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                                        activeTab === 'test'
-                                            ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    <TestTube size={16} />
-                                    Test Bench
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6">
-                            {/* Block Builder Tab */}
-                            {activeTab === 'blocks' && (
-                                <PromptBlockBuilder
-                                    selectedBlocks={selectedBlocks}
-                                    onBlocksChange={setSelectedBlocks}
-                                    onPreview={(preview) => console.log('Preview:', preview)}
-                                />
-                            )}
-
-                            {/* Test Bench Tab */}
-                            {activeTab === 'test' && (
-                                <PromptTestBench
-                                    templateCode={selectedPrompt?.name || editForm.name}
-                                    onTestComplete={(results) => console.log('Test results:', results)}
-                                />
-                            )}
-
-                            {/* Editor Tab */}
-                            {activeTab === 'editor' && isEditing ? (
-                                <div className="max-w-4xl space-y-6">
-                                    {/* Name & Category */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={editForm.name || ''}
-                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                                className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                Category
-                                            </label>
-                                            <select
-                                                value={editForm.category || 'chat'}
-                                                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                                                className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-                                            >
-                                                {PROMPT_CATEGORIES.map(cat => (
-                                                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    {/* Description */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            Description
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={editForm.description || ''}
-                                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                                            placeholder="Brief description of this prompt..."
-                                            className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-
-                                    {/* System Prompt */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            System Prompt
-                                        </label>
-                                        <textarea
-                                            value={editForm.system_prompt || ''}
-                                            onChange={(e) => setEditForm({ ...editForm, system_prompt: e.target.value })}
-                                            rows={8}
-                                            placeholder="Enter the system prompt..."
-                                            className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
-                                        />
-                                    </div>
-
-                                    {/* User Prompt Template */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            User Prompt Template
-                                        </label>
-                                        <textarea
-                                            value={editForm.user_prompt_template || ''}
-                                            onChange={(e) => setEditForm({ ...editForm, user_prompt_template: e.target.value })}
-                                            rows={4}
-                                            placeholder="Enter the user prompt template with {{variables}}..."
-                                            className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
-                                        />
-                                        <p className="mt-2 text-xs text-slate-500">
-                                            Use {'{{variable_name}}'} for dynamic content
-                                        </p>
-                                    </div>
-
-                                    {/* Active Toggle */}
-                                    <div className="flex items-center gap-3">
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={editForm.is_active}
-                                                onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-                                        </label>
-                                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                                            Active
-                                        </span>
-                                    </div>
-                                </div>
-                            ) : activeTab === 'editor' && selectedPrompt && (
-                                <div className="max-w-4xl space-y-6">
-                                    {/* Metadata */}
-                                    <div className="grid grid-cols-3 gap-4 text-sm">
-                                        <div>
-                                            <p className="text-slate-500 dark:text-slate-400">Category</p>
-                                            <p className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
-                                                <Tag size={14} />
-                                                {PROMPT_CATEGORIES.find(c => c.id === selectedPrompt.category)?.name || selectedPrompt.category}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-500 dark:text-slate-400">Created</p>
-                                            <p className="text-slate-900 dark:text-white font-medium">
-                                                {formatDate(selectedPrompt.created_at)}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-500 dark:text-slate-400">Status</p>
-                                            <p className={`font-medium flex items-center gap-2 ${
-                                                selectedPrompt.is_active ? 'text-green-600' : 'text-slate-400'
-                                            }`}>
-                                                {selectedPrompt.is_active ? (
-                                                    <>
-                                                        <CheckCircle size={14} />
-                                                        Active
-                                                    </>
-                                                ) : (
-                                                    'Inactive'
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Description */}
-                                    {selectedPrompt.description && (
-                                        <div>
-                                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                Description
-                                            </h3>
-                                            <p className="text-slate-600 dark:text-slate-400">
-                                                {selectedPrompt.description}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* System Prompt */}
-                                    <div>
-                                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            System Prompt
-                                        </h3>
-                                        <div className="p-4 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
-                                            <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
-                                                {selectedPrompt.system_prompt}
-                                            </pre>
-                                        </div>
-                                    </div>
-
-                                    {/* User Prompt Template */}
-                                    {selectedPrompt.user_prompt_template && (
-                                        <div>
-                                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                User Prompt Template
-                                            </h3>
-                                            <div className="p-4 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
-                                                <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
-                                                    {selectedPrompt.user_prompt_template}
-                                                </pre>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Variables */}
-                                    {selectedPrompt.variables && selectedPrompt.variables.length > 0 && (
-                                        <div>
-                                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                Variables
-                                            </h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedPrompt.variables.map(v => (
-                                                    <span
-                                                        key={v}
-                                                        className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-mono"
-                                                    >
-                                                        {'{{'}{v}{'}}'}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Version History Panel */}
-                            {showVersions && versions.length > 0 && (
-                                <div className="mt-6 max-w-4xl">
-                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                                        <History size={16} />
-                                        Version History
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {versions.map(version => (
-                                            <div
-                                                key={version.id}
-                                                className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg"
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="font-medium text-slate-900 dark:text-white">
-                                                        Version {version.version}
-                                                    </span>
-                                                    <span className="text-sm text-slate-500">
-                                                        {formatDate(version.changed_at)}
-                                                    </span>
-                                                </div>
-                                                {version.change_reason && (
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                        {version.change_reason}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Preview Panel */}
-                            {showPreview && (
-                                <div className="mt-6 max-w-4xl">
-                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                                        <Eye size={16} />
-                                        Test Result
-                                    </h3>
-                                    <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg">
-                                        {previewLoading ? (
-                                            <div className="flex items-center justify-center py-8">
-                                                <Loader2 size={24} className="animate-spin text-purple-500" />
-                                            </div>
+                                        {isEditing ? (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsEditing(false);
+                                                        if (!editForm.id) setSelectedPrompt(null);
+                                                    }}
+                                                    className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handleSave}
+                                                    disabled={isSaving}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                                >
+                                                    {isSaving ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Save size={16} />
+                                                    )}
+                                                    Save
+                                                </button>
+                                            </>
                                         ) : (
-                                            <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
-                                                {previewResult || 'No result'}
-                                            </pre>
+                                            <>
+                                                <button
+                                                    onClick={handleCopyPrompt}
+                                                    className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                                    title="Copy to clipboard"
+                                                >
+                                                    <Copy size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowVersions(!showVersions)}
+                                                    className={`p-2 rounded-lg transition-colors ${
+                                                        showVersions
+                                                            ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
+                                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
+                                                    }`}
+                                                    title="Version history"
+                                                >
+                                                    <History size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={handleTestPrompt}
+                                                    className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                                    title="Test prompt"
+                                                >
+                                                    <PlayCircle size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={handleEdit}
+                                                    className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={handleDelete}
+                                                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    </>
-                )}
+
+                                {/* Tab Navigation */}
+                                <div className="flex items-center gap-1 border-t border-slate-200 dark:border-white/10 pt-3 -mb-4 -mx-6 px-6">
+                                    <button
+                                        onClick={() => setActiveTab('editor')}
+                                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                            activeTab === 'editor'
+                                                ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <Edit size={16} />
+                                        Editor
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('blocks')}
+                                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                            activeTab === 'blocks'
+                                                ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <Blocks size={16} />
+                                        Block Builder
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('test')}
+                                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                            activeTab === 'test'
+                                                ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <TestTube size={16} />
+                                        Test Bench
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                {/* Block Builder Tab */}
+                                {activeTab === 'blocks' && (
+                                    <PromptBlockBuilder
+                                        selectedBlocks={selectedBlocks}
+                                        onBlocksChange={setSelectedBlocks}
+                                        onPreview={(preview) => console.log('Preview:', preview)}
+                                    />
+                                )}
+
+                                {/* Test Bench Tab */}
+                                {activeTab === 'test' && (
+                                    <PromptTestBench
+                                        templateCode={selectedPrompt?.name || editForm.name}
+                                        onTestComplete={(results) => console.log('Test results:', results)}
+                                    />
+                                )}
+
+                                {/* Editor Tab */}
+                                {activeTab === 'editor' && isEditing ? (
+                                    <div className="max-w-4xl space-y-6">
+                                        {/* Name & Category */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                    Name
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.name || ''}
+                                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                    Category
+                                                </label>
+                                                <select
+                                                    value={editForm.category || 'chat'}
+                                                    onChange={(e) =>
+                                                        setEditForm({ ...editForm, category: e.target.value })
+                                                    }
+                                                    className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                                >
+                                                    {PROMPT_CATEGORIES.map((cat) => (
+                                                        <option key={cat.id} value={cat.id}>
+                                                            {cat.icon} {cat.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Description */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Description
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editForm.description || ''}
+                                                onChange={(e) =>
+                                                    setEditForm({ ...editForm, description: e.target.value })
+                                                }
+                                                placeholder="Brief description of this prompt..."
+                                                className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                                            />
+                                        </div>
+
+                                        {/* System Prompt */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                System Prompt
+                                            </label>
+                                            <textarea
+                                                value={editForm.system_prompt || ''}
+                                                onChange={(e) =>
+                                                    setEditForm({ ...editForm, system_prompt: e.target.value })
+                                                }
+                                                rows={8}
+                                                placeholder="Enter the system prompt..."
+                                                className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
+                                            />
+                                        </div>
+
+                                        {/* User Prompt Template */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                User Prompt Template
+                                            </label>
+                                            <textarea
+                                                value={editForm.user_prompt_template || ''}
+                                                onChange={(e) =>
+                                                    setEditForm({ ...editForm, user_prompt_template: e.target.value })
+                                                }
+                                                rows={4}
+                                                placeholder="Enter the user prompt template with {{variables}}..."
+                                                className="w-full px-4 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm resize-y"
+                                            />
+                                            <p className="mt-2 text-xs text-slate-500">
+                                                Use {'{{variable_name}}'} for dynamic content
+                                            </p>
+                                        </div>
+
+                                        {/* Active Toggle */}
+                                        <div className="flex items-center gap-3">
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editForm.is_active}
+                                                    onChange={(e) =>
+                                                        setEditForm({ ...editForm, is_active: e.target.checked })
+                                                    }
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                                            </label>
+                                            <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    activeTab === 'editor' &&
+                                    selectedPrompt && (
+                                        <div className="max-w-4xl space-y-6">
+                                            {/* Metadata */}
+                                            <div className="grid grid-cols-3 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-slate-500 dark:text-slate-400">Category</p>
+                                                    <p className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
+                                                        <Tag size={14} />
+                                                        {PROMPT_CATEGORIES.find((c) => c.id === selectedPrompt.category)
+                                                            ?.name || selectedPrompt.category}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-500 dark:text-slate-400">Created</p>
+                                                    <p className="text-slate-900 dark:text-white font-medium">
+                                                        {formatDate(selectedPrompt.created_at)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-500 dark:text-slate-400">Status</p>
+                                                    <p
+                                                        className={`font-medium flex items-center gap-2 ${
+                                                            selectedPrompt.is_active
+                                                                ? 'text-green-600'
+                                                                : 'text-slate-400'
+                                                        }`}
+                                                    >
+                                                        {selectedPrompt.is_active ? (
+                                                            <>
+                                                                <CheckCircle size={14} />
+                                                                Active
+                                                            </>
+                                                        ) : (
+                                                            'Inactive'
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Description */}
+                                            {selectedPrompt.description && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        Description
+                                                    </h3>
+                                                    <p className="text-slate-600 dark:text-slate-400">
+                                                        {selectedPrompt.description}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* System Prompt */}
+                                            <div>
+                                                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                    System Prompt
+                                                </h3>
+                                                <div className="p-4 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
+                                                    <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
+                                                        {selectedPrompt.system_prompt}
+                                                    </pre>
+                                                </div>
+                                            </div>
+
+                                            {/* User Prompt Template */}
+                                            {selectedPrompt.user_prompt_template && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        User Prompt Template
+                                                    </h3>
+                                                    <div className="p-4 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
+                                                        <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
+                                                            {selectedPrompt.user_prompt_template}
+                                                        </pre>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Variables */}
+                                            {selectedPrompt.variables && selectedPrompt.variables.length > 0 && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        Variables
+                                                    </h3>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {selectedPrompt.variables.map((v) => (
+                                                            <span
+                                                                key={v}
+                                                                className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-mono"
+                                                            >
+                                                                {'{{'}
+                                                                {v}
+                                                                {'}}'}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                )}
+
+                                {/* Version History Panel */}
+                                {showVersions && versions.length > 0 && (
+                                    <div className="mt-6 max-w-4xl">
+                                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                                            <History size={16} />
+                                            Version History
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {versions.map((version) => (
+                                                <div
+                                                    key={version.id}
+                                                    className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg"
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="font-medium text-slate-900 dark:text-white">
+                                                            Version {version.version}
+                                                        </span>
+                                                        <span className="text-sm text-slate-500">
+                                                            {formatDate(version.changed_at)}
+                                                        </span>
+                                                    </div>
+                                                    {version.change_reason && (
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                            {version.change_reason}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Preview Panel */}
+                                {showPreview && (
+                                    <div className="mt-6 max-w-4xl">
+                                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                                            <Eye size={16} />
+                                            Test Result
+                                        </h3>
+                                        <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg">
+                                            {previewLoading ? (
+                                                <div className="flex items-center justify-center py-8">
+                                                    <Loader2 size={24} className="animate-spin text-purple-500" />
+                                                </div>
+                                            ) : (
+                                                <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
+                                                    {previewResult || 'No result'}
+                                                </pre>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* AI Assistant Panel */}

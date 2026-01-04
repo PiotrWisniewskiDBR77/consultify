@@ -1019,6 +1019,10 @@ function initDb() {
         // Indexes for tasks
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_org_project_status ON tasks(organization_id, project_id, status)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee_status ON tasks(assignee_id, status)`);
+        // New Optimization Indexes (Phase 3.2)
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_org_assignee_status ON tasks(organization_id, assignee_id, status)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_org_initiative ON tasks(organization_id, initiative_id)`);
+
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_initiative ON tasks(initiative_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)`);

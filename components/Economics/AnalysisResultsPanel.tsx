@@ -1,19 +1,31 @@
 /**
  * Analysis Results Panel
- * 
+ *
  * Visualization of digitization analysis results
  * Features radar chart, gap analysis, and recommendations
  */
 
-import React, { useMemo, useState } from 'react';
-import { 
-    TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Target,
-    Workflow, Package, Building, Database, Users, Shield, ArrowRight,
-    BarChart2, PieChart
+import {
+    AlertTriangle,
+    ArrowRight,
+    BarChart2,
+    Building,
+    CheckCircle,
+    Database,
+    Package,
+    PieChart,
+    Shield,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Users,
+    Workflow,
 } from 'lucide-react';
-import { DigitizationAnalysis } from './types';
+import React, { useMemo, useState } from 'react';
+
 import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluationData';
 import { RadarChart, RadarDataPoint } from '../Charts';
+import { DigitizationAnalysis } from './types';
 
 interface AnalysisResultsPanelProps {
     analysis: DigitizationAnalysis;
@@ -30,7 +42,7 @@ const AXIS_ICONS: Record<string, any> = {
 
 export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ analysis }) => {
     const axisData = useMemo(() => {
-        return DIGITIZATION_AXES.map(axis => {
+        return DIGITIZATION_AXES.map((axis) => {
             const score = analysis.axisScores?.[axis.id];
             return {
                 ...axis,
@@ -45,7 +57,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
 
     const topGaps = useMemo(() => {
         return [...axisData]
-            .filter(a => a.gap > 0)
+            .filter((a) => a.gap > 0)
             .sort((a, b) => b.gap - a.gap)
             .slice(0, 3);
     }, [axisData]);
@@ -59,12 +71,12 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
 
     // Prepare data for radar chart
     const radarData: RadarDataPoint[] = useMemo(() => {
-        return axisData.map(axis => ({
+        return axisData.map((axis) => ({
             axis: axis.namePl.length > 20 ? axis.namePl.substring(0, 18) + '...' : axis.namePl,
             axisId: axis.id,
             current: axis.currentScore,
             target: axis.targetScore,
-            fullMark: 7
+            fullMark: 7,
         }));
     }, [axisData]);
 
@@ -117,19 +129,19 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
 
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-4">
-                <StatCard 
+                <StatCard
                     label="Średni poziom aktualny"
                     value={overallStats.avgCurrent.toFixed(1)}
                     icon={TrendingUp}
                     color="blue"
                 />
-                <StatCard 
+                <StatCard
                     label="Średni poziom docelowy"
                     value={overallStats.avgTarget.toFixed(1)}
                     icon={Target}
                     color="purple"
                 />
-                <StatCard 
+                <StatCard
                     label="Średnia luka"
                     value={overallStats.avgGap.toFixed(1)}
                     icon={overallStats.avgGap > 1.5 ? AlertTriangle : CheckCircle}
@@ -155,7 +167,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                         </div>
                     </div>
                 </div>
-                <RadarChart 
+                <RadarChart
                     data={radarData}
                     height={350}
                     showLegend={true}
@@ -167,28 +179,24 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
 
             {/* Axis Breakdown */}
             <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
-                    Wyniki per oś
-                </h3>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Wyniki per oś</h3>
                 <div className="space-y-4">
-                    {axisData.map(axis => {
+                    {axisData.map((axis) => {
                         const Icon = AXIS_ICONS[axis.id] || Workflow;
                         const progress = (axis.currentScore / 7) * 100;
                         const targetProgress = (axis.targetScore / 7) * 100;
-                        
+
                         return (
                             <div key={axis.id} className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div 
+                                        <div
                                             className="w-8 h-8 rounded-lg flex items-center justify-center"
                                             style={{ backgroundColor: `${axis.color}20` }}
                                         >
                                             <Icon size={16} style={{ color: axis.color }} />
                                         </div>
-                                        <span className="font-medium text-navy-900 dark:text-white">
-                                            {axis.namePl}
-                                        </span>
+                                        <span className="font-medium text-navy-900 dark:text-white">{axis.namePl}</span>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
                                         <span className="text-slate-500">
@@ -199,24 +207,22 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                                                 {axis.currentScore.toFixed(1)}
                                             </span>
                                             <ArrowRight size={14} className="text-slate-400" />
-                                            <span className="text-slate-500">
-                                                {axis.targetScore.toFixed(1)}
-                                            </span>
+                                            <span className="text-slate-500">{axis.targetScore.toFixed(1)}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="relative h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                     {/* Target marker */}
-                                    <div 
+                                    <div
                                         className="absolute top-0 bottom-0 w-1 bg-slate-400 dark:bg-white/30 z-10"
                                         style={{ left: `${targetProgress}%` }}
                                     />
                                     {/* Current progress */}
-                                    <div 
+                                    <div
                                         className="h-full rounded-full transition-all"
-                                        style={{ 
+                                        style={{
                                             width: `${progress}%`,
-                                            backgroundColor: axis.color 
+                                            backgroundColor: axis.color,
                                         }}
                                     />
                                 </div>
@@ -237,14 +243,14 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                         {topGaps.map((axis, index) => {
                             const Icon = AXIS_ICONS[axis.id] || Workflow;
                             return (
-                                <div 
+                                <div
                                     key={axis.id}
                                     className="flex items-center gap-4 p-4 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600 font-bold">
                                         {index + 1}
                                     </div>
-                                    <div 
+                                    <div
                                         className="w-10 h-10 rounded-lg flex items-center justify-center"
                                         style={{ backgroundColor: `${axis.color}20` }}
                                     >
@@ -253,13 +259,12 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                                     <div className="flex-1">
                                         <p className="font-medium text-navy-900 dark:text-white">{axis.namePl}</p>
                                         <p className="text-sm text-slate-500">
-                                            Aktualnie: {axis.currentScore.toFixed(1)} → Cel: {axis.targetScore.toFixed(1)}
+                                            Aktualnie: {axis.currentScore.toFixed(1)} → Cel:{' '}
+                                            {axis.targetScore.toFixed(1)}
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-2xl font-bold text-orange-600">
-                                            -{axis.gap.toFixed(1)}
-                                        </p>
+                                        <p className="text-2xl font-bold text-orange-600">-{axis.gap.toFixed(1)}</p>
                                         <p className="text-xs text-slate-500">poziomów luki</p>
                                     </div>
                                 </div>
@@ -271,13 +276,11 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
 
             {/* Maturity Level Legend */}
             <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
-                    Legenda poziomów dojrzałości
-                </h3>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Legenda poziomów dojrzałości</h3>
                 <div className="grid grid-cols-7 gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7].map(level => (
+                    {[1, 2, 3, 4, 5, 6, 7].map((level) => (
                         <div key={level} className="text-center">
-                            <div 
+                            <div
                                 className="w-full aspect-square rounded-xl flex items-center justify-center text-white font-bold text-lg mb-2"
                                 style={{ backgroundColor: getLevelColor(level) }}
                             >
@@ -300,11 +303,11 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
     );
 };
 
-const StatCard: React.FC<{ 
-    label: string; 
-    value: string; 
-    icon: any; 
-    color: string 
+const StatCard: React.FC<{
+    label: string;
+    value: string;
+    icon: any;
+    color: string;
 }> = ({ label, value, icon: Icon, color }) => {
     const colors: Record<string, { bg: string; text: string }> = {
         blue: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
@@ -312,7 +315,7 @@ const StatCard: React.FC<{
         green: { bg: 'bg-green-500/10', text: 'text-green-500' },
         orange: { bg: 'bg-orange-500/10', text: 'text-orange-500' },
     };
-    
+
     return (
         <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl p-4">
             <div className="flex items-center gap-3">
@@ -329,4 +332,3 @@ const StatCard: React.FC<{
 };
 
 export default AnalysisResultsPanel;
-

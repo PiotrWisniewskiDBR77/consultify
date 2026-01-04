@@ -1,16 +1,19 @@
-import React from 'react';
-import { Task, TaskStatus } from '../../types'; // Adjust legacy import path if needed
 import { AlertCircle, CheckCircle, Lock } from 'lucide-react';
+import React from 'react';
+
+import { Task, TaskStatus } from '../../types'; // Adjust legacy import path if needed
 
 interface Props {
     tasks: Task[];
     teamName?: string;
 }
 
-export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = "Team" }) => {
+export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = 'Team' }) => {
     const total = tasks.length;
-    const blocked = tasks.filter(t => t.status === TaskStatus.BLOCKED).length;
-    const overdue = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== TaskStatus.DONE).length;
+    const blocked = tasks.filter((t) => t.status === TaskStatus.BLOCKED).length;
+    const overdue = tasks.filter(
+        (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== TaskStatus.DONE,
+    ).length;
 
     // Health logic
     let healthStatus: 'Healthy' | 'At Risk' | 'Critical' = 'Healthy';
@@ -32,9 +35,7 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = "Team" }) => 
             <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
                     {teamName} Health
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full text-white ${color}`}>
-                        {healthStatus}
-                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full text-white ${color}`}>{healthStatus}</span>
                 </h4>
             </div>
 
@@ -45,7 +46,9 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = "Team" }) => 
                     </div>
                     <div>
                         <div className="text-lg font-bold text-red-700 dark:text-red-400">{overdue}</div>
-                        <div className="text-[10px] text-red-500 dark:text-red-400/70 uppercase font-medium">Overdue</div>
+                        <div className="text-[10px] text-red-500 dark:text-red-400/70 uppercase font-medium">
+                            Overdue
+                        </div>
                     </div>
                 </div>
 
@@ -55,7 +58,9 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = "Team" }) => 
                     </div>
                     <div>
                         <div className="text-lg font-bold text-orange-700 dark:text-orange-400">{blocked}</div>
-                        <div className="text-[10px] text-orange-500 dark:text-orange-400/70 uppercase font-medium">Blocked</div>
+                        <div className="text-[10px] text-orange-500 dark:text-orange-400/70 uppercase font-medium">
+                            Blocked
+                        </div>
                     </div>
                 </div>
             </div>

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FullRolloutWorkspace } from '../../../components/FullRolloutWorkspace';
+import { FullRolloutWorkspace } from '../../components/FullRolloutWorkspace';
 
 const mockSession = {
     id: 'session-1',
@@ -40,6 +40,7 @@ describe('FullRolloutWorkspace Component', () => {
         }
     });
 });
+
 
 
 

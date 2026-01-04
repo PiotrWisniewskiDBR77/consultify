@@ -1,14 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { User, UserRole } from '../../types';
-import { Api } from '../../services/api';
-import { useUserCan } from '../../hooks/useUserCan';
-import { useAppStore } from '../../store/useAppStore';
 import {
-    Search, Plus, Trash2, Edit, X, CheckCircle, AlertCircle,
-    Crown, ArrowRightLeft, Shield, MoreVertical, UserX, RefreshCw
+    AlertCircle,
+    ArrowRightLeft,
+    CheckCircle,
+    Crown,
+    Edit,
+    MoreVertical,
+    Plus,
+    RefreshCw,
+    Search,
+    Shield,
+    Trash2,
+    UserX,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useUserCan } from '../../hooks/useUserCan';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { User, UserRole } from '../../types';
 
 interface ExtendedUser extends User {
     isOwner?: boolean;
@@ -43,11 +55,16 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
 
     // Form State
     const [formData, setFormData] = useState({
-        firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active', licensePlanId: ''
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: UserRole.OTHER,
+        status: 'active',
+        licensePlanId: '',
     });
 
     // Check if current user is the owner
-    const currentUserIsOwner = users.find(u => u.id === currentUser?.id)?.isOwner || false;
+    const currentUserIsOwner = users.find((u) => u.id === currentUser?.id)?.isOwner || false;
 
     const loadUsers = useCallback(async () => {
         try {
@@ -140,12 +157,12 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     newOwnerId: transferTarget,
-                    reason: transferReason || 'Ownership transfer'
-                })
+                    reason: transferReason || 'Ownership transfer',
+                }),
             });
 
             const data = await response.json();
@@ -192,7 +209,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             email: user.email,
             role: (user.role as UserRole) || UserRole.OTHER,
             status: user.status || 'active',
-            licensePlanId: user.licensePlanId || ''
+            licensePlanId: user.licensePlanId || '',
         });
         setShowAddUserModal(true);
         setOpenMenuId(null);
@@ -200,20 +217,27 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
 
     const openAddModal = () => {
         setEditingUser(null);
-        setFormData({ firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active', licensePlanId: '' });
+        setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            role: UserRole.OTHER,
+            status: 'active',
+            licensePlanId: '',
+        });
         setShowAddUserModal(true);
     };
 
-    const filteredUsers = users.filter(u => {
+    const filteredUsers = users.filter((u) => {
         // Search filter
-        const matchesSearch = searchTerm === '' ||
+        const matchesSearch =
+            searchTerm === '' ||
             (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (u.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (u.firstName || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         // Role filter
-        const matchesRole = roleFilter === 'all' || u.role === roleFilter ||
-            (roleFilter === 'OWNER' && u.isOwner);
+        const matchesRole = roleFilter === 'all' || u.role === roleFilter || (roleFilter === 'OWNER' && u.isOwner);
 
         // Status filter
         const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
@@ -222,16 +246,16 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     });
 
     // Get eligible users for ownership transfer (Admins only)
-    const eligibleOwnerCandidates = users.filter(u =>
-        u.role === 'ADMIN' && !u.isOwner && u.id !== currentUser?.id
-    );
+    const eligibleOwnerCandidates = users.filter((u) => u.role === 'ADMIN' && !u.isOwner && u.id !== currentUser?.id);
 
     const getRoleBadgeColor = (role?: string, isOwner?: boolean) => {
         // Light mode compatible - visible badges with backgrounds
-        if (isOwner || role === 'OWNER') return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
+        if (isOwner || role === 'OWNER')
+            return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
         if (role === 'SUPERADMIN') return 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30';
         if (role === UserRole.ADMIN) return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30';
-        if (role === 'PROJECT_MANAGER') return 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30';
+        if (role === 'PROJECT_MANAGER')
+            return 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30';
         if (role === 'MANAGER') return 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30';
         return 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-white/10';
     };
@@ -342,7 +366,9 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                                 <div className="text-navy-900 dark:text-white font-medium flex items-center gap-2">
                                                     {user.firstName} {user.lastName}
                                                     {(user.isOwner || user.role === 'OWNER') && (
-                                                        <span className="text-xs text-amber-400 font-normal">(Owner)</span>
+                                                        <span className="text-xs text-amber-400 font-normal">
+                                                            (Owner)
+                                                        </span>
                                                     )}
                                                 </div>
                                                 <div className="text-xs">{user.email}</div>
@@ -350,31 +376,52 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs border ${getRoleBadgeColor(user.role, user.isOwner)}`}>
-                                            {user.isOwner ? 'Owner' : (user.role || 'USER')}
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs border ${getRoleBadgeColor(user.role, user.isOwner)}`}
+                                        >
+                                            {user.isOwner ? 'Owner' : user.role || 'USER'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
                                             <span className="text-navy-900 dark:text-white text-sm">
-                                                {userPlans.find(p => p.id === user.licensePlanId)?.name || 'Standard'}
+                                                {userPlans.find((p) => p.id === user.licensePlanId)?.name || 'Standard'}
                                             </span>
-                                            {user.licensePlanId && userPlans.find(p => p.id === user.licensePlanId) && (
-                                                <span className="text-[10px] text-slate-500">
-                                                    ${userPlans.find(p => p.id === user.licensePlanId)?.price_monthly}/mo • Budget: ${userPlans.find(p => p.id === user.licensePlanId)?.ai_budget || 0}
-                                                </span>
-                                            )}
+                                            {user.licensePlanId &&
+                                                userPlans.find((p) => p.id === user.licensePlanId) && (
+                                                    <span className="text-[10px] text-slate-500">
+                                                        $
+                                                        {
+                                                            userPlans.find((p) => p.id === user.licensePlanId)
+                                                                ?.price_monthly
+                                                        }
+                                                        /mo • Budget: $
+                                                        {userPlans.find((p) => p.id === user.licensePlanId)
+                                                            ?.ai_budget || 0}
+                                                    </span>
+                                                )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${user.status === 'active'
-                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                                            : user.status === 'suspended'
-                                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                                                : 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30'
-                                            }`}>
-                                            {user.status === 'active' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                                            {user.status === 'active' ? 'Active' : user.status === 'suspended' ? 'Suspended' : 'Inactive'}
+                                        <span
+                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                                user.status === 'active'
+                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                                    : user.status === 'suspended'
+                                                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                                      : 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30'
+                                            }`}
+                                        >
+                                            {user.status === 'active' ? (
+                                                <CheckCircle size={12} />
+                                            ) : (
+                                                <AlertCircle size={12} />
+                                            )}
+                                            {user.status === 'active'
+                                                ? 'Active'
+                                                : user.status === 'suspended'
+                                                  ? 'Suspended'
+                                                  : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -393,11 +440,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                             {canEdit && !(user.isOwner || user.role === 'OWNER') && (
                                                 <button
                                                     onClick={() => handleDeactivateUser(user)}
-                                                    className={`p-2 rounded-lg ${user.status === 'active'
-                                                        ? 'hover:bg-yellow-500/20 text-slate-400 hover:text-yellow-400'
-                                                        : 'hover:bg-green-500/20 text-slate-400 hover:text-green-400'
-                                                        }`}
-                                                    title={user.status === 'active' ? 'Deactivate user' : 'Reactivate user'}
+                                                    className={`p-2 rounded-lg ${
+                                                        user.status === 'active'
+                                                            ? 'hover:bg-yellow-500/20 text-slate-400 hover:text-yellow-400'
+                                                            : 'hover:bg-green-500/20 text-slate-400 hover:text-green-400'
+                                                    }`}
+                                                    title={
+                                                        user.status === 'active' ? 'Deactivate user' : 'Reactivate user'
+                                                    }
                                                 >
                                                     <UserX size={16} />
                                                 </button>
@@ -408,13 +458,16 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                                 <button
                                                     onClick={() => handleDeleteUser(user)}
                                                     disabled={user.isOwner || user.role === 'OWNER'}
-                                                    className={`p-2 rounded-lg ${user.isOwner || user.role === 'OWNER'
-                                                        ? 'text-slate-600 cursor-not-allowed'
-                                                        : 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
-                                                        }`}
-                                                    title={user.isOwner || user.role === 'OWNER'
-                                                        ? 'Cannot delete Account Owner. Transfer ownership first.'
-                                                        : 'Delete user'}
+                                                    className={`p-2 rounded-lg ${
+                                                        user.isOwner || user.role === 'OWNER'
+                                                            ? 'text-slate-600 cursor-not-allowed'
+                                                            : 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
+                                                    }`}
+                                                    title={
+                                                        user.isOwner || user.role === 'OWNER'
+                                                            ? 'Cannot delete Account Owner. Transfer ownership first.'
+                                                            : 'Delete user'
+                                                    }
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -440,8 +493,13 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-navy-900 dark:text-white">{editingUser ? 'Edit User' : 'Add New User'}</h2>
-                            <button onClick={() => setShowAddUserModal(false)} className="text-slate-400 hover:text-navy-900 dark:hover:text-white">
+                            <h2 className="text-xl font-bold text-navy-900 dark:text-white">
+                                {editingUser ? 'Edit User' : 'Add New User'}
+                            </h2>
+                            <button
+                                onClick={() => setShowAddUserModal(false)}
+                                className="text-slate-400 hover:text-navy-900 dark:hover:text-white"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
@@ -459,14 +517,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                 required
                                 placeholder="First Name"
                                 value={formData.firstName}
-                                onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                             />
                             <input
                                 required
                                 placeholder="Last Name"
                                 value={formData.lastName}
-                                onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                             />
                             <input
@@ -474,12 +532,12 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                 type="email"
                                 placeholder="Email"
                                 value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                             />
                             <select
                                 value={formData.role}
-                                onChange={e => setFormData({ ...formData, role: e.target.value as any })}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                                 disabled={editingUser?.isOwner}
                             >
@@ -488,7 +546,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                             </select>
                             <select
                                 value={formData.status}
-                                onChange={e => setFormData({ ...formData, status: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                                 disabled={editingUser?.isOwner}
                             >
@@ -498,11 +556,11 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                             </select>
                             <select
                                 value={formData.licensePlanId}
-                                onChange={e => setFormData({ ...formData, licensePlanId: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, licensePlanId: e.target.value })}
                                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-navy-900 dark:text-white"
                             >
                                 <option value="">Select License (Budget)...</option>
-                                {userPlans.map(p => (
+                                {userPlans.map((p) => (
                                     <option key={p.id} value={p.id}>
                                         {p.name} - ${p.price_monthly}/mo (Budget: ${p.ai_budget || 0})
                                     </option>
@@ -528,15 +586,19 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                 <Crown className="text-amber-400" size={24} />
                                 Transfer Ownership
                             </h2>
-                            <button onClick={() => setShowTransferModal(false)} className="text-slate-400 hover:text-navy-900 dark:hover:text-white">
+                            <button
+                                onClick={() => setShowTransferModal(false)}
+                                className="text-slate-400 hover:text-navy-900 dark:hover:text-white"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
 
                         <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                             <p className="text-amber-400 text-sm">
-                                <strong>Warning:</strong> Transferring ownership will give another user full control over this organization,
-                                including billing and the ability to delete the organization. This action cannot be undone by you.
+                                <strong>Warning:</strong> Transferring ownership will give another user full control
+                                over this organization, including billing and the ability to delete the organization.
+                                This action cannot be undone by you.
                             </p>
                         </div>
 
@@ -547,11 +609,11 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                 </label>
                                 <select
                                     value={transferTarget}
-                                    onChange={e => setTransferTarget(e.target.value)}
+                                    onChange={(e) => setTransferTarget(e.target.value)}
                                     className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-navy-900 dark:text-white"
                                 >
                                     <option value="">Select an Admin...</option>
-                                    {eligibleOwnerCandidates.map(u => (
+                                    {eligibleOwnerCandidates.map((u) => (
                                         <option key={u.id} value={u.id}>
                                             {u.firstName} {u.lastName} ({u.email})
                                         </option>
@@ -570,7 +632,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                                 </label>
                                 <textarea
                                     value={transferReason}
-                                    onChange={e => setTransferReason(e.target.value)}
+                                    onChange={(e) => setTransferReason(e.target.value)}
                                     placeholder="e.g., Leaving the company, Account Type change..."
                                     className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-navy-900 dark:text-white h-24 resize-none"
                                 />

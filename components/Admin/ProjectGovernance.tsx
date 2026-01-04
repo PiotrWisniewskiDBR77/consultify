@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Shield, Save, AlertTriangle, CheckCircle2, Loader2, Settings2, FileText, Lock, Zap } from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertTriangle, CheckCircle2, FileText, Loader2, Lock, Save, Settings2, Shield, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 /**
  * GAP-10: Project Governance Configuration UI
@@ -33,7 +34,7 @@ const defaultSettings: GovernanceSettings = {
     requireChangeRequestForScope: true,
     aiPolicyLevel: null,
     // AI Roles Model
-    aiRole: 'ADVISOR'
+    aiRole: 'ADVISOR',
 };
 
 export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId, onSave }) => {
@@ -56,7 +57,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
     const fetchRegulatoryMode = async () => {
         try {
             const res = await fetch(`/api/projects/${projectId}/regulatory-mode`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -71,7 +72,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
         setIsLoading(true);
         try {
             const res = await fetch(`/api/projects/${projectId}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const project = await res.json();
@@ -98,11 +99,11 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
-                    governanceSettings: JSON.stringify(settings)
-                })
+                    governanceSettings: JSON.stringify(settings),
+                }),
             });
 
             if (res.ok) {
@@ -127,16 +128,17 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ enabled: newValue })
+                body: JSON.stringify({ enabled: newValue }),
             });
 
             if (res.ok) {
                 setRegulatoryModeEnabled(newValue);
-                toast.success(newValue
-                    ? 'Regulatory Mode enabled - AI is now advisory-only'
-                    : 'Regulatory Mode disabled - AI can operate normally'
+                toast.success(
+                    newValue
+                        ? 'Regulatory Mode enabled - AI is now advisory-only'
+                        : 'Regulatory Mode disabled - AI can operate normally',
                 );
             } else {
                 throw new Error('Failed to update');
@@ -149,9 +151,9 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
     };
 
     const toggleSetting = (key: keyof GovernanceSettings) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            [key]: !prev[key]
+            [key]: !prev[key],
         }));
     };
 
@@ -168,32 +170,32 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
             key: 'stageGatesEnabled' as const,
             label: 'Stage Gates Enabled',
             description: 'Require gate criteria to be met before phase transitions',
-            icon: <Lock size={18} />
+            icon: <Lock size={18} />,
         },
         {
             key: 'requireApprovalForPhaseTransition' as const,
             label: 'Require Approval for Phase Transition',
             description: 'Decisions must be approved before moving to next phase',
-            icon: <CheckCircle2 size={18} />
+            icon: <CheckCircle2 size={18} />,
         },
         {
             key: 'allowPhaseRollback' as const,
             label: 'Allow Phase Rollback',
             description: 'Allow moving back to previous phases if needed',
-            icon: <AlertTriangle size={18} />
+            icon: <AlertTriangle size={18} />,
         },
         {
             key: 'requireChangeRequestForSchedule' as const,
             label: 'Require CR for Schedule Changes',
             description: 'Changes to baselined schedule require a change request',
-            icon: <FileText size={18} />
+            icon: <FileText size={18} />,
         },
         {
             key: 'requireChangeRequestForScope' as const,
             label: 'Require CR for Scope Changes',
             description: 'Changes to initiative scope require a change request',
-            icon: <FileText size={18} />
-        }
+            icon: <FileText size={18} />,
+        },
     ];
 
     return (
@@ -205,9 +207,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                         <Shield size={20} className="text-purple-500" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white">
-                            Governance Settings
-                        </h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Governance Settings</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Configure change control and approval rules
                         </p>
@@ -225,7 +225,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
 
             {/* Settings List */}
             <div className="divide-y divide-slate-100 dark:divide-white/5">
-                {settingsConfig.map(config => (
+                {settingsConfig.map((config) => (
                     <div
                         key={config.key}
                         className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
@@ -235,25 +235,23 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                                 {config.icon}
                             </div>
                             <div>
-                                <div className="font-medium text-slate-900 dark:text-white">
-                                    {config.label}
-                                </div>
-                                <div className="text-sm text-slate-500 dark:text-slate-400">
-                                    {config.description}
-                                </div>
+                                <div className="font-medium text-slate-900 dark:text-white">{config.label}</div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400">{config.description}</div>
                             </div>
                         </div>
 
                         {/* Toggle Switch */}
                         <button
                             onClick={() => toggleSetting(config.key)}
-                            className={`relative w-12 h-6 rounded-full transition-colors ${settings[config.key]
-                                ? 'bg-purple-600'
-                                : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${
+                                settings[config.key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                            }`}
                         >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${settings[config.key] ? 'translate-x-7' : 'translate-x-1'
-                                }`} />
+                            <div
+                                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                    settings[config.key] ? 'translate-x-7' : 'translate-x-1'
+                                }`}
+                            />
                         </button>
                     </div>
                 ))}
@@ -265,9 +263,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                             <Zap size={18} />
                         </div>
                         <div>
-                            <div className="font-medium text-slate-900 dark:text-white">
-                                AI Policy Override
-                            </div>
+                            <div className="font-medium text-slate-900 dark:text-white">AI Policy Override</div>
                             <div className="text-sm text-slate-500 dark:text-slate-400">
                                 Override organization AI policy for this project
                             </div>
@@ -275,10 +271,12 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                     </div>
                     <select
                         value={settings.aiPolicyLevel || ''}
-                        onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            aiPolicyLevel: e.target.value as any || null
-                        }))}
+                        onChange={(e) =>
+                            setSettings((prev) => ({
+                                ...prev,
+                                aiPolicyLevel: (e.target.value as any) || null,
+                            }))
+                        }
                         className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-slate-900 dark:text-white"
                     >
                         <option value="">Use Organization Default</option>
@@ -296,32 +294,30 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                             <Shield size={18} />
                         </div>
                         <div>
-                            <div className="font-medium text-slate-900 dark:text-white">
-                                AI Governance Role
-                            </div>
+                            <div className="font-medium text-slate-900 dark:text-white">AI Governance Role</div>
                             <div className="text-sm text-slate-500 dark:text-slate-400">
                                 Controls what AI is allowed to do in this project
                             </div>
                         </div>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
-                        {(['ADVISOR', 'MANAGER', 'OPERATOR'] as const).map(role => {
+                        {(['ADVISOR', 'MANAGER', 'OPERATOR'] as const).map((role) => {
                             const roleInfo = {
                                 ADVISOR: {
                                     label: 'Advisor',
                                     desc: 'Explains only, no changes',
-                                    color: 'blue'
+                                    color: 'blue',
                                 },
                                 MANAGER: {
                                     label: 'Manager',
                                     desc: 'Prepares drafts, needs approval',
-                                    color: 'amber'
+                                    color: 'amber',
                                 },
                                 OPERATOR: {
                                     label: 'Operator',
                                     desc: 'Executes within governance',
-                                    color: 'green'
-                                }
+                                    color: 'green',
+                                },
                             };
                             const info = roleInfo[role];
                             const isSelected = settings.aiRole === role;
@@ -329,27 +325,30 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                             return (
                                 <button
                                     key={role}
-                                    onClick={() => setSettings(prev => ({ ...prev, aiRole: role }))}
-                                    className={`p-4 rounded-xl border-2 text-left transition-all ${isSelected
-                                        ? `border-${info.color}-500 bg-${info.color}-500/10`
-                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-500/50'
-                                        }`}
+                                    onClick={() => setSettings((prev) => ({ ...prev, aiRole: role }))}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                                        isSelected
+                                            ? `border-${info.color}-500 bg-${info.color}-500/10`
+                                            : 'border-slate-200 dark:border-white/10 hover:border-purple-500/50'
+                                    }`}
                                 >
-                                    <div className={`font-semibold ${isSelected
-                                        ? `text-${info.color}-600 dark:text-${info.color}-400`
-                                        : 'text-slate-900 dark:text-white'
-                                        }`}>
+                                    <div
+                                        className={`font-semibold ${
+                                            isSelected
+                                                ? `text-${info.color}-600 dark:text-${info.color}-400`
+                                                : 'text-slate-900 dark:text-white'
+                                        }`}
+                                    >
                                         {info.label}
                                     </div>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                        {info.desc}
-                                    </div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{info.desc}</div>
                                 </button>
                             );
                         })}
                     </div>
                     <p className="mt-2 text-xs text-slate-400">
-                        ⚠️ Changing AI role affects what AI can do: Advisor (read-only) → Manager (drafts) → Operator (execute)
+                        ⚠️ Changing AI role affects what AI can do: Advisor (read-only) → Manager (drafts) → Operator
+                        (execute)
                     </p>
                 </div>
 
@@ -379,21 +378,26 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                         <button
                             onClick={handleToggleRegulatoryMode}
                             disabled={isSavingRegulatoryMode}
-                            className={`relative w-12 h-6 rounded-full transition-colors ${regulatoryModeEnabled
-                                ? 'bg-amber-500'
-                                : 'bg-slate-300 dark:bg-slate-600'
-                                } ${isSavingRegulatoryMode ? 'opacity-50' : ''}`}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${
+                                regulatoryModeEnabled ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
+                            } ${isSavingRegulatoryMode ? 'opacity-50' : ''}`}
                         >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${regulatoryModeEnabled ? 'translate-x-7' : 'translate-x-1'
-                                }`} />
+                            <div
+                                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                    regulatoryModeEnabled ? 'translate-x-7' : 'translate-x-1'
+                                }`}
+                            />
                         </button>
                     </div>
 
                     {/* Warning/Info Box */}
-                    <div className={`mt-3 p-3 rounded-lg text-sm ${regulatoryModeEnabled
-                        ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300'
-                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
-                        }`}>
+                    <div
+                        className={`mt-3 p-3 rounded-lg text-sm ${
+                            regulatoryModeEnabled
+                                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300'
+                                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
+                        }`}
+                    >
                         {regulatoryModeEnabled ? (
                             <>
                                 <strong>⚠️ Regulatory Mode is ON</strong>

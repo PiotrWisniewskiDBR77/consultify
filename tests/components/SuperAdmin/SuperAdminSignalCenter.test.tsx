@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SuperAdminSignalCenter } from '../../../components/SuperAdmin/SuperAdminSignalCenter';
+import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 
 // Mock Api service
 vi.mock('../../../services/api', () => ({

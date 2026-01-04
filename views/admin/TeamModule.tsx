@@ -1,32 +1,30 @@
 /**
  * TeamModule - Team & User Management
- * 
+ *
  * Tabs: Users | Invitations | Licenses | Work Mode | Consultants
  */
 
-import React, { useState, useEffect } from 'react';
-import { Users, Mail, Briefcase, UserCog, Crown, UsersRound, Shield } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { AdminUserManagement } from './AdminUserManagement';
-import { InvitationsManagement } from './InvitationsManagement';
-import { LicenseManagementPanel } from '../../components/Admin/LicenseManagementPanel';
-import { WorkModeSettings } from '../../components/Admin/WorkModeSettings';
-import { AdminSettingsConsultants } from './AdminSettingsConsultants';
-import { UserGroupsView } from './UserGroupsView';
-import { RolesManagementPanel } from '../../components/Admin/RolesManagementPanel';
+import { Briefcase, Crown, Mail, Shield, UserCog, Users, UsersRound } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LicenseManagementPanel } from '../../components/Admin/LicenseManagementPanel';
+import { RolesManagementPanel } from '../../components/Admin/RolesManagementPanel';
+import { WorkModeSettings } from '../../components/Admin/WorkModeSettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { AdminSettingsConsultants } from './AdminSettingsConsultants';
+import { AdminUserManagement } from './AdminUserManagement';
+import { InvitationsManagement } from './InvitationsManagement';
+import { UserGroupsView } from './UserGroupsView';
 
 interface TeamModuleProps {
     initialTab?: string;
     initialUsers?: User[];
 }
 
-export const TeamModule: React.FC<TeamModuleProps> = ({
-    initialTab,
-    initialUsers = []
-}) => {
+export const TeamModule: React.FC<TeamModuleProps> = ({ initialTab, initialUsers = [] }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'users');
     const [pendingInvitesCount, setPendingInvitesCount] = useState(0);
@@ -49,38 +47,38 @@ export const TeamModule: React.FC<TeamModuleProps> = ({
         {
             id: 'users',
             label: t('admin.tabs.users', 'Users'),
-            icon: <Users size={16} />
+            icon: <Users size={16} />,
         },
         {
             id: 'invitations',
             label: t('admin.tabs.invitations', 'Invitations'),
             icon: <Mail size={16} />,
-            badge: pendingInvitesCount
+            badge: pendingInvitesCount,
         },
         {
             id: 'groups',
             label: t('admin.tabs.groups', 'Groups'),
-            icon: <UsersRound size={16} />
+            icon: <UsersRound size={16} />,
         },
         {
             id: 'roles',
             label: t('admin.tabs.roles', 'Roles'),
-            icon: <Shield size={16} />
+            icon: <Shield size={16} />,
         },
         {
             id: 'licenses',
             label: t('admin.tabs.licenses', 'Licenses'),
-            icon: <Crown size={16} />
+            icon: <Crown size={16} />,
         },
         {
             id: 'work-mode',
             label: t('admin.tabs.workMode', 'Work Mode'),
-            icon: <Briefcase size={16} />
+            icon: <Briefcase size={16} />,
         },
         {
             id: 'consultants',
             label: t('admin.tabs.consultants', 'Consultants'),
-            icon: <UserCog size={16} />
+            icon: <UserCog size={16} />,
         },
     ];
 

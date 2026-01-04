@@ -11,11 +11,7 @@ interface TrialBannerProps {
  * TrialBanner - Persistent banner for Trial organizations
  * Shows days remaining and upgrade CTA
  */
-const TrialBanner: React.FC<TrialBannerProps> = ({
-    daysRemaining,
-    warningLevel,
-    onUpgradeClick
-}) => {
+const TrialBanner: React.FC<TrialBannerProps> = ({ daysRemaining, warningLevel, onUpgradeClick }) => {
     const { t } = useTranslation();
 
     if (warningLevel === 'none') return null;

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { User, AIProviderType } from '../../types';
-import { LLMProviderConfig } from '../../types/domain/ai';
+import { Activity, AlertTriangle, Brain, Check, Cpu, Lock, Monitor, Shield, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
-import { Cpu, Check, Monitor, Lock, Sparkles, Shield, Brain, Activity, AlertTriangle } from 'lucide-react';
+import { AIProviderType, User } from '../../types';
+import { LLMProviderConfig } from '../../types/domain/ai';
 
 export interface AIConfigCoreProps {
     mode: 'user' | 'org-admin' | 'platform';
@@ -36,12 +37,12 @@ export const ProviderTabs: React.FC<{
     availableProviders?: AIProviderType[];
 }> = ({ activeProvider, onProviderChange, availableProviders = ['system', 'gemini', 'openai'] }) => {
     const providerLabels: Record<string, string> = {
-        'system': 'Default (System)',
-        'gemini': 'Google Gemini',
-        'openai': 'OpenAI',
-        'ollama': 'Ollama (Local)',
-        'azure': 'Azure OpenAI',
-        'anthropic': 'Anthropic'
+        system: 'Default (System)',
+        gemini: 'Google Gemini',
+        openai: 'OpenAI',
+        ollama: 'Ollama (Local)',
+        azure: 'Azure OpenAI',
+        anthropic: 'Anthropic',
     };
 
     return (
@@ -50,10 +51,11 @@ export const ProviderTabs: React.FC<{
                 <button
                     key={provider}
                     onClick={() => onProviderChange(provider)}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeProvider === provider
-                        ? 'bg-purple-600 text-white shadow-lg'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                        }`}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                        activeProvider === provider
+                            ? 'bg-purple-600 text-white shadow-lg'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                    }`}
                 >
                     {providerLabels[provider] || provider}
                 </button>
@@ -74,7 +76,7 @@ export const ModelPreferenceList: React.FC<{
 
     return (
         <div className="space-y-2 max-h-48 overflow-y-auto">
-            {availableModels.map(model => (
+            {availableModels.map((model) => (
                 <label
                     key={model.id}
                     className="flex items-center gap-3 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded cursor-pointer group"
@@ -151,19 +153,24 @@ export const OrgAIPolicy: React.FC<{
                         className="w-full bg-navy-950 border border-white/10 rounded-lg px-4 py-2 text-white"
                     >
                         <option value="">Let Users Choose</option>
-                        {orgConfig.availableProviders.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
+                        {orgConfig.availableProviders.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name}
+                            </option>
                         ))}
                     </select>
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">
-                        AI Assertiveness Level: {
-                            orgConfig.assertivenessLevel === 1 ? 'ADVISORY (Default)' :
-                                orgConfig.assertivenessLevel === 2 ? 'MANAGER' :
-                                    orgConfig.assertivenessLevel === 3 ? 'OPERATOR' : 'ADVISORY'
-                        }
+                        AI Assertiveness Level:{' '}
+                        {orgConfig.assertivenessLevel === 1
+                            ? 'ADVISORY (Default)'
+                            : orgConfig.assertivenessLevel === 2
+                              ? 'MANAGER'
+                              : orgConfig.assertivenessLevel === 3
+                                ? 'OPERATOR'
+                                : 'ADVISORY'}
                     </label>
                     <input
                         type="range"
@@ -201,7 +208,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
     showModelPreferences = true,
     showOrgPolicy = false,
     showSystemHealth = false,
-    className = ''
+    className = '',
 }) => {
     const [configMode, setConfigMode] = useState<AIProviderType>(currentUser?.aiConfig?.provider || 'system');
     const [customKey, setCustomKey] = useState(currentUser?.aiConfig?.apiKey || '');
@@ -214,7 +221,8 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
 
     useEffect(() => {
         // Fetch public models for preference selection
-        (Api as any).getPublicLLMProviders()
+        (Api as any)
+            .getPublicLLMProviders()
             .then((data: any) => setAvailableModels(data))
             .catch((err: any) => console.error(err));
     }, []);
@@ -224,9 +232,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
         if ((mode === 'org-admin' || mode === 'platform') && isAdmin) {
             const orgId = (currentUser as any)?.organizationId || (currentUser as any)?.organization_id;
             if (orgId) {
-                (Api as any).getOrganizationLLMConfig(orgId)
-                    .then(setOrgConfig)
-                    .catch(console.error);
+                (Api as any).getOrganizationLLMConfig(orgId).then(setOrgConfig).catch(console.error);
             }
         }
     }, [mode, isAdmin, currentUser]);
@@ -236,7 +242,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
 
         const newConfig: any = {
             provider: configMode,
-            visibleModelIds: visibleModelIds
+            visibleModelIds: visibleModelIds,
         };
 
         if (configMode === 'openai' || configMode === 'gemini') {
@@ -250,7 +256,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
             setIsSaved(true);
             setTimeout(() => setIsSaved(false), 2000);
         } catch (err) {
-            alert("Failed to save AI config");
+            alert('Failed to save AI config');
         }
     };
 
@@ -270,7 +276,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
         if (checked) {
             setVisibleModelIds([...visibleModelIds, modelId]);
         } else {
-            setVisibleModelIds(visibleModelIds.filter(id => id !== modelId));
+            setVisibleModelIds(visibleModelIds.filter((id) => id !== modelId));
         }
     };
 
@@ -287,7 +293,10 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                 />
             )}
 
-            <form onSubmit={handleSaveConfig} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+            <form
+                onSubmit={handleSaveConfig}
+                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6"
+            >
                 {configMode === 'system' && (
                     <div className="text-center py-8 space-y-6">
                         <div className="w-16 h-16 bg-purple-100 dark:bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
@@ -296,8 +305,8 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                         <div>
                             <h3 className="text-slate-800 dark:text-white font-medium mb-2">System AI (Managed)</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
-                                You are using the organization's default AI provider.
-                                No configuration is needed. Usage counts towards your plan limit.
+                                You are using the organization's default AI provider. No configuration is needed. Usage
+                                counts towards your plan limit.
                             </p>
                         </div>
 
@@ -309,8 +318,12 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                                         <Sparkles size={16} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-bold text-slate-800 dark:text-white">Your Preferred Models</h4>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Select which models appear in your top bar selector.</p>
+                                        <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                                            Your Preferred Models
+                                        </h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            Select which models appear in your top bar selector.
+                                        </p>
                                     </div>
                                 </div>
                                 <ModelPreferenceList
@@ -338,7 +351,10 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                     <div className="space-y-4">
                         <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-300 text-xs flex gap-2">
                             <Monitor size={16} className="shrink-0" />
-                            <p>Your API key is stored locally in your browser and used directly. It is never sent to our servers.</p>
+                            <p>
+                                Your API key is stored locally in your browser and used directly. It is never sent to
+                                our servers.
+                            </p>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -348,7 +364,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                                 <input
                                     type="password"
                                     value={customKey}
-                                    onChange={e => setCustomKey(e.target.value)}
+                                    onChange={(e) => setCustomKey(e.target.value)}
                                     placeholder="sk-..."
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
                                 />
@@ -376,16 +392,8 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                 <div className="mt-8">
                     <h3 className="text-md font-semibold text-slate-800 dark:text-white mb-4">System Health</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <AISystemHealthCard
-                            title="OpenAI Connection"
-                            status="healthy"
-                            details="Response time: 245ms"
-                        />
-                        <AISystemHealthCard
-                            title="Gemini Connection"
-                            status="healthy"
-                            details="Response time: 312ms"
-                        />
+                        <AISystemHealthCard title="OpenAI Connection" status="healthy" details="Response time: 245ms" />
+                        <AISystemHealthCard title="Gemini Connection" status="healthy" details="Response time: 312ms" />
                     </div>
                 </div>
             )}
@@ -394,9 +402,3 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
 };
 
 export default AIConfigCore;
-
-
-
-
-
-

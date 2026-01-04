@@ -1,6 +1,6 @@
 /**
  * DataGovernancePanel - Data retention policy configuration
- * 
+ *
  * Features:
  * - Data retention policy configuration
  * - Automatic data purge rules
@@ -8,13 +8,10 @@
  * - Cross-border transfer controls
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-    Database, Trash2, Globe, Shield, Clock, Save,
-    Loader2, AlertTriangle, Info, MapPin
-} from 'lucide-react';
+import { AlertTriangle, Clock, Database, Globe, Info, Loader2, MapPin, Save, Shield, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface RetentionPolicy {
     id: string;
@@ -39,7 +36,7 @@ const DATA_TYPES = [
     { id: 'task_history', label: 'Task History', description: 'Completed and archived tasks' },
     { id: 'documents', label: 'Deleted Documents', description: 'Documents in trash' },
     { id: 'analytics', label: 'Analytics Data', description: 'Usage statistics and metrics' },
-    { id: 'exports', label: 'Data Exports', description: 'Generated export files' }
+    { id: 'exports', label: 'Data Exports', description: 'Generated export files' },
 ];
 
 const REGIONS = [
@@ -47,7 +44,7 @@ const REGIONS = [
     { code: 'eu-central', label: 'EU Central (Frankfurt)', flag: '🇩🇪' },
     { code: 'us-east', label: 'US East (Virginia)', flag: '🇺🇸' },
     { code: 'us-west', label: 'US West (Oregon)', flag: '🇺🇸' },
-    { code: 'ap-southeast', label: 'Asia Pacific (Singapore)', flag: '🇸🇬' }
+    { code: 'ap-southeast', label: 'Asia Pacific (Singapore)', flag: '🇸🇬' },
 ];
 
 export const DataGovernancePanel: React.FC = () => {
@@ -55,26 +52,26 @@ export const DataGovernancePanel: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState<DataGovernanceSettings>({
-        retention_policies: DATA_TYPES.map(dt => ({
+        retention_policies: DATA_TYPES.map((dt) => ({
             id: dt.id,
             data_type: dt.id,
             retention_days: 365,
             auto_purge: false,
-            description: dt.description
+            description: dt.description,
         })),
         data_residency: 'eu-west',
         cross_border_allowed: false,
         encryption_at_rest: true,
         encryption_in_transit: true,
-        audit_log_retention_days: 730
+        audit_log_retention_days: 730,
     });
 
     const handleUpdatePolicy = (dataType: string, field: string, value: any) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            retention_policies: prev.retention_policies.map(p =>
-                p.data_type === dataType ? { ...p, [field]: value } : p
-            )
+            retention_policies: prev.retention_policies.map((p) =>
+                p.data_type === dataType ? { ...p, [field]: value } : p,
+            ),
         }));
     };
 
@@ -82,7 +79,7 @@ export const DataGovernancePanel: React.FC = () => {
         try {
             setSaving(true);
             // API call would go here
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
             toast.success(t('admin.dataGovernance.saved', 'Data governance settings saved'));
         } catch (error) {
             toast.error(t('admin.dataGovernance.saveError', 'Failed to save settings'));
@@ -100,7 +97,10 @@ export const DataGovernancePanel: React.FC = () => {
                     {t('admin.dataGovernance.title', 'Data Governance')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t('admin.dataGovernance.description', 'Configure data retention, residency, and compliance settings')}
+                    {t(
+                        'admin.dataGovernance.description',
+                        'Configure data retention, residency, and compliance settings',
+                    )}
                 </p>
             </div>
 
@@ -121,10 +121,10 @@ export const DataGovernancePanel: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {REGIONS.map(region => (
+                    {REGIONS.map((region) => (
                         <button
                             key={region.code}
-                            onClick={() => setSettings(prev => ({ ...prev, data_residency: region.code }))}
+                            onClick={() => setSettings((prev) => ({ ...prev, data_residency: region.code }))}
                             className={`p-3 rounded-xl border transition-all text-left ${
                                 settings.data_residency === region.code
                                     ? 'bg-purple-50 dark:bg-purple-500/20 border-purple-500'
@@ -132,9 +132,7 @@ export const DataGovernancePanel: React.FC = () => {
                             }`}
                         >
                             <span className="text-2xl">{region.flag}</span>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white mt-1">
-                                {region.label}
-                            </p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white mt-1">{region.label}</p>
                         </button>
                     ))}
                 </div>
@@ -150,26 +148,36 @@ export const DataGovernancePanel: React.FC = () => {
                                 {t('admin.dataGovernance.crossBorder', 'Cross-Border Data Transfer')}
                             </p>
                             <p className="text-sm text-slate-500">
-                                {t('admin.dataGovernance.crossBorderDesc', 'Allow data processing in other regions for performance')}
+                                {t(
+                                    'admin.dataGovernance.crossBorderDesc',
+                                    'Allow data processing in other regions for performance',
+                                )}
                             </p>
                         </div>
                     </div>
                     <button
-                        onClick={() => setSettings(prev => ({ ...prev, cross_border_allowed: !prev.cross_border_allowed }))}
+                        onClick={() =>
+                            setSettings((prev) => ({ ...prev, cross_border_allowed: !prev.cross_border_allowed }))
+                        }
                         className={`w-12 h-6 rounded-full transition-colors ${
                             settings.cross_border_allowed ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
-                            settings.cross_border_allowed ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                settings.cross_border_allowed ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
                 {!settings.cross_border_allowed && (
                     <div className="mt-3 flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
                         <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
                         <p className="text-xs text-blue-700 dark:text-blue-300">
-                            {t('admin.dataGovernance.crossBorderNote', 'Data will only be stored and processed in the selected region (GDPR compliant)')}
+                            {t(
+                                'admin.dataGovernance.crossBorderNote',
+                                'Data will only be stored and processed in the selected region (GDPR compliant)',
+                            )}
                         </p>
                     </div>
                 )}
@@ -190,10 +198,16 @@ export const DataGovernancePanel: React.FC = () => {
                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">At Rest</p>
                             <p className="text-xs text-slate-500">AES-256</p>
                         </div>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            settings.encryption_at_rest ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'
-                        }`}>
-                            <Shield className={`w-4 h-4 ${settings.encryption_at_rest ? 'text-emerald-600' : 'text-red-600'}`} />
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                settings.encryption_at_rest
+                                    ? 'bg-emerald-100 dark:bg-emerald-500/20'
+                                    : 'bg-red-100 dark:bg-red-500/20'
+                            }`}
+                        >
+                            <Shield
+                                className={`w-4 h-4 ${settings.encryption_at_rest ? 'text-emerald-600' : 'text-red-600'}`}
+                            />
                         </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
@@ -201,10 +215,16 @@ export const DataGovernancePanel: React.FC = () => {
                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">In Transit</p>
                             <p className="text-xs text-slate-500">TLS 1.3</p>
                         </div>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            settings.encryption_in_transit ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'
-                        }`}>
-                            <Shield className={`w-4 h-4 ${settings.encryption_in_transit ? 'text-emerald-600' : 'text-red-600'}`} />
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                settings.encryption_in_transit
+                                    ? 'bg-emerald-100 dark:bg-emerald-500/20'
+                                    : 'bg-red-100 dark:bg-red-500/20'
+                            }`}
+                        >
+                            <Shield
+                                className={`w-4 h-4 ${settings.encryption_in_transit ? 'text-emerald-600' : 'text-red-600'}`}
+                            />
                         </div>
                     </div>
                 </div>
@@ -221,19 +241,19 @@ export const DataGovernancePanel: React.FC = () => {
                             {t('admin.dataGovernance.retention', 'Data Retention Policies')}
                         </h4>
                         <p className="text-sm text-slate-500">
-                            {t('admin.dataGovernance.retentionDesc', 'Configure how long different types of data are kept')}
+                            {t(
+                                'admin.dataGovernance.retentionDesc',
+                                'Configure how long different types of data are kept',
+                            )}
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-3">
-                    {settings.retention_policies.map(policy => {
-                        const dataType = DATA_TYPES.find(dt => dt.id === policy.data_type);
+                    {settings.retention_policies.map((policy) => {
+                        const dataType = DATA_TYPES.find((dt) => dt.id === policy.data_type);
                         return (
-                            <div
-                                key={policy.id}
-                                className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
-                            >
+                            <div key={policy.id} className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
                                         <p className="font-medium text-slate-900 dark:text-white">
@@ -244,21 +264,31 @@ export const DataGovernancePanel: React.FC = () => {
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <span className="text-xs text-slate-500">Auto-purge</span>
                                         <button
-                                            onClick={() => handleUpdatePolicy(policy.data_type, 'auto_purge', !policy.auto_purge)}
+                                            onClick={() =>
+                                                handleUpdatePolicy(policy.data_type, 'auto_purge', !policy.auto_purge)
+                                            }
                                             className={`w-10 h-5 rounded-full transition-colors ${
                                                 policy.auto_purge ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
                                             }`}
                                         >
-                                            <div className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
-                                                policy.auto_purge ? 'translate-x-5' : 'translate-x-0.5'
-                                            }`} />
+                                            <div
+                                                className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
+                                                    policy.auto_purge ? 'translate-x-5' : 'translate-x-0.5'
+                                                }`}
+                                            />
                                         </button>
                                     </label>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <select
                                         value={policy.retention_days}
-                                        onChange={(e) => handleUpdatePolicy(policy.data_type, 'retention_days', parseInt(e.target.value))}
+                                        onChange={(e) =>
+                                            handleUpdatePolicy(
+                                                policy.data_type,
+                                                'retention_days',
+                                                parseInt(e.target.value),
+                                            )
+                                        }
                                         className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
                                     >
                                         <option value={30}>30 days</option>
@@ -288,7 +318,9 @@ export const DataGovernancePanel: React.FC = () => {
                         </div>
                         <select
                             value={settings.audit_log_retention_days}
-                            onChange={(e) => setSettings(prev => ({ ...prev, audit_log_retention_days: parseInt(e.target.value) }))}
+                            onChange={(e) =>
+                                setSettings((prev) => ({ ...prev, audit_log_retention_days: parseInt(e.target.value) }))
+                            }
                             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
                         >
                             <option value={365}>1 year</option>
@@ -309,7 +341,10 @@ export const DataGovernancePanel: React.FC = () => {
                         {t('admin.dataGovernance.warning', 'Important')}
                     </p>
                     <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
-                        {t('admin.dataGovernance.warningText', 'Changing data retention policies will affect data available for compliance audits. Purged data cannot be recovered.')}
+                        {t(
+                            'admin.dataGovernance.warningText',
+                            'Changing data retention policies will affect data available for compliance audits. Purged data cannot be recovered.',
+                        )}
                     </p>
                 </div>
             </div>
@@ -339,11 +374,4 @@ export const DataGovernancePanel: React.FC = () => {
 };
 
 export default DataGovernancePanel;
-
-
-
-
-
-
-
 

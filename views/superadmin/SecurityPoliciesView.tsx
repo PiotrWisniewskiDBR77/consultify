@@ -1,6 +1,6 @@
 /**
  * SecurityPoliciesView - Super Admin Security Policies Management
- * 
+ *
  * Enterprise security configuration:
  * - Global defaults & org-specific overrides
  * - Compliance presets (SOC2, HIPAA, GDPR)
@@ -10,32 +10,33 @@
  * - MFA enforcement
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    ShieldCheck,
-    Lock,
-    Key,
-    Globe,
-    Clock,
-    Users,
     AlertTriangle,
+    Building2,
     CheckCircle2,
-    XCircle,
-    Shield,
+    ChevronRight,
+    Clock,
+    Globe,
+    Info,
+    Key,
+    Loader2,
+    Lock,
+    MapPin,
+    Plus,
     RefreshCw,
     Save,
-    Building2,
-    Loader2,
-    Info,
-    Plus,
-    Trash2,
     Settings,
+    Shield,
+    ShieldCheck,
     Smartphone,
-    MapPin,
-    ChevronRight
+    Trash2,
+    Users,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 interface SecurityPolicy {
     id: string;
@@ -123,14 +124,14 @@ export const SecurityPoliciesView: React.FC = () => {
             // Fetch organizations and all policies at once
             const [orgs, policiesResult] = await Promise.all([
                 Api.getOrganizations(),
-                Api.get('/security-policies/all')
+                Api.get('/security-policies/all'),
             ]);
-            
+
             // Map policies to organizations
             const orgPolicies = new Map((policiesResult.policies || []).map((p: any) => [p.organization_id, p]));
             const orgsWithPolicy = orgs.map((org: any) => ({
                 ...org,
-                hasCustomPolicy: orgPolicies.has(org.id)
+                hasCustomPolicy: orgPolicies.has(org.id),
             }));
             setOrganizations(orgsWithPolicy);
 
@@ -189,7 +190,10 @@ export const SecurityPoliciesView: React.FC = () => {
         }
     };
 
-    const PolicyEditor: React.FC<{ policy: SecurityPolicy; onSave: (p: SecurityPolicy) => void }> = ({ policy, onSave }) => {
+    const PolicyEditor: React.FC<{ policy: SecurityPolicy; onSave: (p: SecurityPolicy) => void }> = ({
+        policy,
+        onSave,
+    }) => {
         const [editedPolicy, setEditedPolicy] = useState(policy);
 
         const updateField = (field: keyof SecurityPolicy, value: any) => {
@@ -203,7 +207,10 @@ export const SecurityPoliciesView: React.FC = () => {
         };
 
         const removeFromList = (field: 'ipAllowlist' | 'ipBlocklist', index: number) => {
-            updateField(field, editedPolicy[field].filter((_, i) => i !== index));
+            updateField(
+                field,
+                editedPolicy[field].filter((_, i) => i !== index),
+            );
         };
 
         return (
@@ -448,9 +455,15 @@ export const SecurityPoliciesView: React.FC = () => {
                             </div>
                             <div className="space-y-1 max-h-32 overflow-y-auto">
                                 {editedPolicy.ipAllowlist.map((ip, idx) => (
-                                    <div key={idx} className="flex items-center justify-between px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded text-sm">
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded text-sm"
+                                    >
                                         <span className="text-emerald-700 dark:text-emerald-400 font-mono">{ip}</span>
-                                        <button onClick={() => removeFromList('ipAllowlist', idx)} className="text-emerald-600 hover:text-emerald-800">
+                                        <button
+                                            onClick={() => removeFromList('ipAllowlist', idx)}
+                                            className="text-emerald-600 hover:text-emerald-800"
+                                        >
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -483,9 +496,15 @@ export const SecurityPoliciesView: React.FC = () => {
                             </div>
                             <div className="space-y-1 max-h-32 overflow-y-auto">
                                 {editedPolicy.ipBlocklist.map((ip, idx) => (
-                                    <div key={idx} className="flex items-center justify-between px-3 py-1.5 bg-red-50 dark:bg-red-500/10 rounded text-sm">
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between px-3 py-1.5 bg-red-50 dark:bg-red-500/10 rounded text-sm"
+                                    >
                                         <span className="text-red-700 dark:text-red-400 font-mono">{ip}</span>
-                                        <button onClick={() => removeFromList('ipBlocklist', idx)} className="text-red-600 hover:text-red-800">
+                                        <button
+                                            onClick={() => removeFromList('ipBlocklist', idx)}
+                                            className="text-red-600 hover:text-red-800"
+                                        >
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -518,16 +537,14 @@ export const SecurityPoliciesView: React.FC = () => {
                     <div>
                         <h4 className="font-medium text-blue-900 dark:text-blue-300">Global Default Policy</h4>
                         <p className="text-sm text-blue-800 dark:text-blue-400 mt-1">
-                            These settings apply to all organizations that don't have a custom policy.
-                            Organizations can override these settings with their own policy.
+                            These settings apply to all organizations that don't have a custom policy. Organizations can
+                            override these settings with their own policy.
                         </p>
                     </div>
                 </div>
             </div>
 
-            {globalPolicy && (
-                <PolicyEditor policy={globalPolicy} onSave={handleSavePolicy} />
-            )}
+            {globalPolicy && <PolicyEditor policy={globalPolicy} onSave={handleSavePolicy} />}
         </div>
     );
 
@@ -575,7 +592,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 <div className="mt-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            Policy for {organizations.find(o => o.id === selectedOrg)?.name}
+                            Policy for {organizations.find((o) => o.id === selectedOrg)?.name}
                         </h3>
                         <button
                             onClick={() => setSelectedOrg(null)}
@@ -603,7 +620,9 @@ export const SecurityPoliciesView: React.FC = () => {
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{preset.label}</h3>
                                 <p className="text-sm text-slate-500 mt-1">{preset.description}</p>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${preset.color}-500/10 text-${preset.color}-600 dark:text-${preset.color}-400`}>
+                            <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium bg-${preset.color}-500/10 text-${preset.color}-600 dark:text-${preset.color}-400`}
+                            >
                                 {key.toUpperCase()}
                             </span>
                         </div>
@@ -611,34 +630,68 @@ export const SecurityPoliciesView: React.FC = () => {
                         <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
                             {key === 'soc2' && (
                                 <>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 12+ character passwords</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 90-day password rotation</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> MFA required</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 1-hour session timeout</div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 12+ character passwords
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 90-day password rotation
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> MFA required
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 1-hour session timeout
+                                    </div>
                                 </>
                             )}
                             {key === 'hipaa' && (
                                 <>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 14+ character passwords</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 60-day password rotation</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> MFA required</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 15-minute session timeout</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> Single session only</div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 14+ character passwords
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 60-day password rotation
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> MFA required
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 15-minute session
+                                        timeout
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> Single session only
+                                    </div>
                                 </>
                             )}
                             {key === 'gdpr' && (
                                 <>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 10+ character passwords</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 180-day password rotation</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 4-hour session timeout</div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 10+ character passwords
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 180-day password
+                                        rotation
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 4-hour session timeout
+                                    </div>
                                 </>
                             )}
                             {key === 'none' && (
                                 <>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 8+ character passwords</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> No expiration</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> MFA optional</div>
-                                    <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 8-hour session timeout</div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 8+ character passwords
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> No expiration
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> MFA optional
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={14} className="text-emerald-500" /> 8-hour session timeout
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -662,19 +715,33 @@ export const SecurityPoliciesView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Reason</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">IP Address</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Locked At</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Expires</th>
-                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                User
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Reason
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                IP Address
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Locked At
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Expires
+                            </th>
+                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                         {lockouts.map((lockout) => (
                             <tr key={lockout.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                 <td className="px-6 py-4">
-                                    <span className="font-medium text-slate-900 dark:text-white">{lockout.user_email}</span>
+                                    <span className="font-medium text-slate-900 dark:text-white">
+                                        {lockout.user_email}
+                                    </span>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
@@ -686,7 +753,9 @@ export const SecurityPoliciesView: React.FC = () => {
                                     {new Date(lockout.locked_at).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-slate-500">
-                                    {lockout.expires_at ? new Date(lockout.expires_at).toLocaleString() : 'Manual unlock required'}
+                                    {lockout.expires_at
+                                        ? new Date(lockout.expires_at).toLocaleString()
+                                        : 'Manual unlock required'}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <button
@@ -725,7 +794,13 @@ export const SecurityPoliciesView: React.FC = () => {
                     <p className="text-slate-500 mt-1">Configure security settings for organizations</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <InfoButton cardId="superadmin-security" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-security"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                     <button
                         onClick={fetchData}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
@@ -777,4 +852,3 @@ export const SecurityPoliciesView: React.FC = () => {
 };
 
 export default SecurityPoliciesView;
-

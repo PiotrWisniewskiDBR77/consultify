@@ -1,11 +1,12 @@
 /**
  * Admin Data Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles admin panel data endpoints
  */
 
 import type { Response } from 'express';
+
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -44,21 +45,23 @@ export class AdminDataController {
     /**
      * Update user tier
      */
-    static updateUserTier = asyncHandler(async (req: AuthenticatedRequest<UpdateUserTierRequest>, res: Response): Promise<void> => {
-        const { orgId, userId } = req.params;
-        const { tier } = req.body;
-        const { v4: uuidv4 } = await import('uuid');
+    static updateUserTier = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateUserTierRequest>, res: Response): Promise<void> => {
+            const { orgId, userId } = req.params;
+            const { tier } = req.body;
+            const { v4: uuidv4 } = await import('uuid');
 
-        const sql = `
+            const sql = `
             INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
             VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
             ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
         `;
 
-        await queryHelpers.queryRun(sql, [uuidv4(), orgId, userId, tier, tier]);
+            await queryHelpers.queryRun(sql, [uuidv4(), orgId, userId, tier, tier]);
 
-        res.json({ success: true, tier });
-    });
+            res.json({ success: true, tier });
+        },
+    );
 
     /**
      * Get cost attribution
@@ -67,7 +70,8 @@ export class AdminDataController {
         const { orgId } = req.params;
 
         // Get user cost attribution
-        const userCosts = await queryHelpers.queryAll(`
+        const userCosts = await queryHelpers.queryAll(
+            `
             SELECT 
                 'user' as entityType,
                 aus.user_id as entityId,
@@ -80,10 +84,13 @@ export class AdminDataController {
             WHERE aus.organization_id = ?
             GROUP BY aus.user_id
             ORDER BY cost DESC
-        `, [orgId]);
+        `,
+            [orgId],
+        );
 
         // Get project cost attribution
-        const projectCosts = await queryHelpers.queryAll(`
+        const projectCosts = await queryHelpers.queryAll(
+            `
             SELECT 
                 'project' as entityType,
                 aus.project_id as entityId,
@@ -96,7 +103,9 @@ export class AdminDataController {
             WHERE aus.organization_id = ?
             GROUP BY aus.project_id
             ORDER BY cost DESC
-        `, [orgId]);
+        `,
+            [orgId],
+        );
 
         res.json({ users: userCosts, projects: projectCosts });
     });
@@ -139,7 +148,4 @@ export class AdminDataController {
 }
 
 export default AdminDataController;
-
-
-
 

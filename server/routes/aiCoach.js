@@ -5,7 +5,7 @@ import AICoach from '../ai/aiCoach.js';
 // For this demo, we'll use a simple mock-up of auth check if not already implemented globally
 
 /**
- * @route GET /api/ai/coach/report/:orgId
+ * @route GET /a../services/ai/coach/report/:orgId
  * @desc Get full advisory report for an organization
  * @access Private (Admin / SuperAdmin)
  */
@@ -28,7 +28,7 @@ router.get('/report/:orgId', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/coach/signals/:orgId
+ * @route GET /a../services/ai/coach/signals/:orgId
  * @desc Get only signals for an organization
  */
 router.get('/signals/:orgId', async (req, res) => {

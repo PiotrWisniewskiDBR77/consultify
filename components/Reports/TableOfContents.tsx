@@ -1,6 +1,6 @@
 /**
  * TableOfContents
- * 
+ *
  * Navigation component for the Report Builder:
  * - Lists all sections with icons
  * - Scroll-to-section on click
@@ -9,30 +9,30 @@
  * - Collapsible on mobile
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    ChevronDown,
-    ChevronUp,
-    List,
-    FileText,
     BarChart3,
     BookOpen,
-    Target,
-    Layers,
-    Settings,
+    Brain,
     Briefcase,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    Cpu,
+    Database,
+    Edit3,
+    FileText,
+    Layers,
+    List,
     Map,
     Package,
-    Database,
-    Users,
+    Settings,
     Shield,
-    Brain,
-    Cpu,
-    CheckCircle,
-    Edit3,
-    Sparkles
+    Sparkles,
+    Target,
+    Users,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ReportSectionData {
     id: string;
@@ -64,7 +64,7 @@ const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>>
     next_steps: CheckCircle,
     roadmap: Map,
     appendix: FileText,
-    custom: FileText
+    custom: FileText,
 };
 
 // Axis icons
@@ -75,7 +75,7 @@ const AXIS_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
     dataManagement: Database,
     culture: Users,
     cybersecurity: Shield,
-    aiMaturity: Brain
+    aiMaturity: Brain,
 };
 
 // Section type labels
@@ -91,18 +91,18 @@ const SECTION_LABELS: Record<string, { en: string; pl: string }> = {
     initiatives: { en: 'Initiatives', pl: 'Inicjatywy' },
     roadmap: { en: 'Roadmap', pl: 'Roadmapa' },
     appendix: { en: 'Appendix', pl: 'Załączniki' },
-    custom: { en: 'Custom Section', pl: 'Sekcja Niestandardowa' }
+    custom: { en: 'Custom Section', pl: 'Sekcja Niestandardowa' },
 };
 
 export const TableOfContents: React.FC<TableOfContentsProps> = ({
     sections,
     activeSection,
     readOnly,
-    onSectionClick
+    onSectionClick,
 }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
-    
+
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -135,8 +135,8 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
             {
                 root: null,
                 rootMargin: '-20% 0px -60% 0px',
-                threshold: 0
-            }
+                threshold: 0,
+            },
         );
 
         // Observe all section elements
@@ -155,19 +155,22 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
     }, [sections]);
 
     // Get the first visible section as active (for scroll tracking)
-    const scrollActiveSection = sections.find(s => visibleSections.has(s.id))?.id || null;
+    const scrollActiveSection = sections.find((s) => visibleSections.has(s.id))?.id || null;
     const effectiveActiveSection = activeSection || scrollActiveSection;
 
     // Handle section click
-    const handleSectionClick = useCallback((sectionId: string) => {
-        onSectionClick(sectionId);
-        
-        // Scroll to section
-        const element = document.querySelector(`[data-section-id="${sectionId}"]`);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, [onSectionClick]);
+    const handleSectionClick = useCallback(
+        (sectionId: string) => {
+            onSectionClick(sectionId);
+
+            // Scroll to section
+            const element = document.querySelector(`[data-section-id="${sectionId}"]`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        },
+        [onSectionClick],
+    );
 
     // Get section icon
     const getSectionIcon = (section: ReportSectionData) => {
@@ -183,18 +186,18 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
         if (section.title && !SECTION_LABELS[section.sectionType]) {
             return section.title;
         }
-        
+
         // Use translated label for standard sections
         const labels = SECTION_LABELS[section.sectionType];
         if (labels) {
             return isPolish ? labels.pl : labels.en;
         }
-        
+
         return section.title || section.sectionType;
     };
 
     // Calculate progress (completed sections)
-    const completedCount = sections.filter(s => !s.isAiGenerated).length;
+    const completedCount = sections.filter((s) => !s.isAiGenerated).length;
     const progress = sections.length > 0 ? Math.round((completedCount / sections.length) * 100) : 0;
 
     return (
@@ -209,22 +212,18 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
                     <span className="font-medium text-navy-900 dark:text-white text-sm">
                         {t('reports.tableOfContents', 'Table of Contents')}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                        ({sections.length})
-                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">({sections.length})</span>
                 </div>
                 <div className="flex items-center gap-2">
                     {/* Progress indicator */}
                     <div className="hidden sm:flex items-center gap-2">
                         <div className="w-16 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-blue-500 rounded-full transition-all"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {progress}%
-                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{progress}%</span>
                     </div>
                     {isCollapsed ? (
                         <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -249,40 +248,46 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
                                         onClick={() => handleSectionClick(section.id)}
                                         className={`
                                             w-full flex items-center gap-3 px-4 py-2 text-left transition-all
-                                            ${isActive 
-                                                ? 'bg-blue-50 dark:bg-blue-500/10 border-l-2 border-blue-500' 
-                                                : 'hover:bg-slate-50 dark:hover:bg-white/5 border-l-2 border-transparent'
+                                            ${
+                                                isActive
+                                                    ? 'bg-blue-50 dark:bg-blue-500/10 border-l-2 border-blue-500'
+                                                    : 'hover:bg-slate-50 dark:hover:bg-white/5 border-l-2 border-transparent'
                                             }
                                         `}
                                     >
                                         {/* Number */}
-                                        <span className={`
+                                        <span
+                                            className={`
                                             flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-medium rounded
-                                            ${isActive 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                                            ${
+                                                isActive
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                                             }
-                                        `}>
+                                        `}
+                                        >
                                             {index + 1}
                                         </span>
 
                                         {/* Icon */}
-                                        <Icon className={`
+                                        <Icon
+                                            className={`
                                             w-4 h-4 flex-shrink-0
-                                            ${isActive 
-                                                ? 'text-blue-600 dark:text-blue-400' 
-                                                : 'text-slate-400'
-                                            }
-                                        `} />
+                                            ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}
+                                        `}
+                                        />
 
                                         {/* Title */}
-                                        <span className={`
+                                        <span
+                                            className={`
                                             flex-1 text-sm truncate
-                                            ${isActive 
-                                                ? 'font-medium text-blue-900 dark:text-blue-100' 
-                                                : 'text-slate-700 dark:text-slate-300'
+                                            ${
+                                                isActive
+                                                    ? 'font-medium text-blue-900 dark:text-blue-100'
+                                                    : 'text-slate-700 dark:text-slate-300'
                                             }
-                                        `}>
+                                        `}
+                                        >
                                             {title}
                                         </span>
 
@@ -307,11 +312,11 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
                         <div className="flex items-center gap-3">
                             <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400">
                                 <Sparkles className="w-3 h-3" />
-                                {sections.filter(s => s.isAiGenerated).length} {t('reports.aiGenerated', 'AI')}
+                                {sections.filter((s) => s.isAiGenerated).length} {t('reports.aiGenerated', 'AI')}
                             </span>
                             <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-400">
                                 <Edit3 className="w-3 h-3" />
-                                {sections.filter(s => !s.isAiGenerated).length} {t('reports.edited', 'edited')}
+                                {sections.filter((s) => !s.isAiGenerated).length} {t('reports.edited', 'edited')}
                             </span>
                         </div>
                         {!readOnly && (
@@ -327,4 +332,3 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
 };
 
 export default TableOfContents;
-

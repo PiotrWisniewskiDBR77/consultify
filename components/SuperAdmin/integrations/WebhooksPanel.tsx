@@ -1,6 +1,6 @@
 /**
  * WebhooksPanel - Webhook Management
- * 
+ *
  * Features:
  * - Webhook endpoints list
  * - Event type selector
@@ -8,27 +8,28 @@
  * - Test webhook button
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Webhook,
-    Plus,
-    Edit2,
-    Trash2,
-    RefreshCw,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    Search,
     Activity,
-    Send,
-    Eye,
     AlertTriangle,
-    Loader2,
+    Building2,
+    CheckCircle2,
+    Clock,
+    Edit2,
     ExternalLink,
-    Building2
+    Eye,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Search,
+    Send,
+    Trash2,
+    Webhook,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 import { WebhookDeliveriesModal } from './WebhookDeliveriesModal';
 
 interface WebhookConfig {
@@ -91,7 +92,7 @@ export const WebhooksPanel: React.FC = () => {
         secret: '',
         events: [] as string[],
         retryCount: 3,
-        timeoutMs: 30000
+        timeoutMs: 30000,
     });
     const [saving, setSaving] = useState(false);
 
@@ -100,7 +101,7 @@ export const WebhooksPanel: React.FC = () => {
         try {
             const [webhooksResult, orgsResult] = await Promise.all([
                 Api.get(`/settings/webhooks${filterOrgId ? `?organizationId=${filterOrgId}` : ''}`),
-                Api.getOrganizations()
+                Api.getOrganizations(),
             ]);
             setWebhooks(webhooksResult.webhooks || webhooksResult || []);
             setOrganizations(orgsResult || []);
@@ -142,15 +143,15 @@ export const WebhooksPanel: React.FC = () => {
     };
 
     const handleDeleteWebhook = async (webhookId: string) => {
-        setDeletingIds(prev => new Set(prev).add(webhookId));
+        setDeletingIds((prev) => new Set(prev).add(webhookId));
         try {
             await Api.delete(`/settings/webhooks/${webhookId}`);
             toast.success('Webhook deleted');
-            setWebhooks(prev => prev.filter(w => w.id !== webhookId));
+            setWebhooks((prev) => prev.filter((w) => w.id !== webhookId));
         } catch (error: any) {
             toast.error(error.message || 'Failed to delete webhook');
         } finally {
-            setDeletingIds(prev => {
+            setDeletingIds((prev) => {
                 const next = new Set(prev);
                 next.delete(webhookId);
                 return next;
@@ -159,7 +160,7 @@ export const WebhooksPanel: React.FC = () => {
     };
 
     const handleTestWebhook = async (webhookId: string) => {
-        setTestingIds(prev => new Set(prev).add(webhookId));
+        setTestingIds((prev) => new Set(prev).add(webhookId));
         try {
             await Api.post(`/settings/webhooks/${webhookId}/test`, {});
             toast.success('Test webhook sent');
@@ -167,7 +168,7 @@ export const WebhooksPanel: React.FC = () => {
             const errorMessage = error instanceof Error ? error.message : 'Failed to send test webhook';
             toast.error(errorMessage);
         } finally {
-            setTestingIds(prev => {
+            setTestingIds((prev) => {
                 const next = new Set(prev);
                 next.delete(webhookId);
                 return next;
@@ -178,9 +179,9 @@ export const WebhooksPanel: React.FC = () => {
     const handleToggleWebhook = async (webhook: WebhookConfig) => {
         try {
             await Api.put(`/settings/webhooks/${webhook.id}`, { isActive: !webhook.is_active });
-            setWebhooks(prev => prev.map(w => 
-                w.id === webhook.id ? { ...w, is_active: w.is_active ? 0 : 1 } : w
-            ));
+            setWebhooks((prev) =>
+                prev.map((w) => (w.id === webhook.id ? { ...w, is_active: w.is_active ? 0 : 1 } : w)),
+            );
             toast.success(`Webhook ${webhook.is_active ? 'disabled' : 'enabled'}`);
         } catch (error: any) {
             toast.error(error.message || 'Failed to toggle webhook');
@@ -196,7 +197,7 @@ export const WebhooksPanel: React.FC = () => {
             secret: webhook.secret || '',
             events: webhook.events || [],
             retryCount: webhook.retry_count,
-            timeoutMs: webhook.timeout_ms
+            timeoutMs: webhook.timeout_ms,
         });
         setShowCreateModal(true);
     };
@@ -209,11 +210,11 @@ export const WebhooksPanel: React.FC = () => {
             secret: '',
             events: [],
             retryCount: 3,
-            timeoutMs: 30000
+            timeoutMs: 30000,
         });
     };
 
-    const filteredWebhooks = webhooks.filter(webhook => {
+    const filteredWebhooks = webhooks.filter((webhook) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -232,7 +233,7 @@ export const WebhooksPanel: React.FC = () => {
                 </span>
             );
         }
-        
+
         if (webhook.last_delivery_status === 'success') {
             return (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
@@ -241,7 +242,7 @@ export const WebhooksPanel: React.FC = () => {
                 </span>
             );
         }
-        
+
         if (webhook.last_delivery_status === 'failed') {
             return (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
@@ -274,19 +275,21 @@ export const WebhooksPanel: React.FC = () => {
                             className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none w-64"
                         />
                     </div>
-                    
+
                     <select
                         value={filterOrgId}
                         onChange={(e) => setFilterOrgId(e.target.value)}
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                     >
                         <option value="">All Organizations</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchData}
@@ -320,7 +323,7 @@ export const WebhooksPanel: React.FC = () => {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {filteredWebhooks.map(webhook => (
+                    {filteredWebhooks.map((webhook) => (
                         <div key={webhook.id} className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-5">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
@@ -328,24 +331,24 @@ export const WebhooksPanel: React.FC = () => {
                                         <h3 className="font-semibold text-white">{webhook.name}</h3>
                                         {getStatusBadge(webhook)}
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2 text-sm text-slate-400 mb-3">
                                         <ExternalLink size={14} />
                                         <code className="px-2 py-0.5 bg-slate-900/50 rounded font-mono text-xs break-all">
                                             {webhook.url}
                                         </code>
                                     </div>
-                                    
+
                                     {webhook.organization_name && (
                                         <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
                                             <Building2 size={14} />
                                             <span>{webhook.organization_name}</span>
                                         </div>
                                     )}
-                                    
+
                                     <div className="flex flex-wrap gap-2">
-                                        {webhook.events?.map(event => (
-                                            <span 
+                                        {webhook.events?.map((event) => (
+                                            <span
                                                 key={event}
                                                 className="px-2 py-1 bg-violet-500/10 text-violet-400 rounded text-xs"
                                             >
@@ -353,14 +356,14 @@ export const WebhooksPanel: React.FC = () => {
                                             </span>
                                         ))}
                                     </div>
-                                    
+
                                     {webhook.last_delivery_at && (
                                         <p className="text-xs text-slate-500 mt-3">
                                             Last delivery: {new Date(webhook.last_delivery_at).toLocaleString()}
                                         </p>
                                     )}
                                 </div>
-                                
+
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setViewingDeliveries(webhook.id)}
@@ -425,18 +428,22 @@ export const WebhooksPanel: React.FC = () => {
                         <h3 className="text-lg font-semibold text-white mb-6">
                             {editingWebhook ? 'Edit Webhook' : 'Create Webhook'}
                         </h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Organization</label>
                                 <select
                                     value={formData.organizationId}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, organizationId: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, organizationId: e.target.value }))
+                                    }
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 >
                                     <option value="">Select organization</option>
-                                    {organizations.map(org => (
-                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    {organizations.map((org) => (
+                                        <option key={org.id} value={org.id}>
+                                            {org.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -446,7 +453,7 @@ export const WebhooksPanel: React.FC = () => {
                                 <input
                                     type="text"
                                     value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                     placeholder="My Webhook"
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                 />
@@ -457,18 +464,20 @@ export const WebhooksPanel: React.FC = () => {
                                 <input
                                     type="url"
                                     value={formData.url}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
                                     placeholder="https://example.com/webhook"
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none font-mono text-sm"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Secret (optional)</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Secret (optional)
+                                </label>
                                 <input
                                     type="password"
                                     value={formData.secret}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, secret: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, secret: e.target.value }))}
                                     placeholder="Signing secret for verification"
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                 />
@@ -477,21 +486,29 @@ export const WebhooksPanel: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Events</label>
                                 <div className="max-h-48 overflow-y-auto bg-slate-800/50 rounded-lg p-3 space-y-2">
-                                    {AVAILABLE_EVENTS.map(event => (
+                                    {AVAILABLE_EVENTS.map((event) => (
                                         <label key={event.id} className="flex items-center gap-3 cursor-pointer group">
                                             <input
                                                 type="checkbox"
                                                 checked={formData.events.includes(event.id)}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        setFormData(prev => ({ ...prev, events: [...prev.events, event.id] }));
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            events: [...prev.events, event.id],
+                                                        }));
                                                     } else {
-                                                        setFormData(prev => ({ ...prev, events: prev.events.filter(e => e !== event.id) }));
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            events: prev.events.filter((e) => e !== event.id),
+                                                        }));
                                                     }
                                                 }}
                                                 className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500"
                                             />
-                                            <span className="text-sm text-slate-300 group-hover:text-white">{event.label}</span>
+                                            <span className="text-sm text-slate-300 group-hover:text-white">
+                                                {event.label}
+                                            </span>
                                             <code className="text-xs text-slate-500 ml-auto">{event.id}</code>
                                         </label>
                                     ))}
@@ -506,19 +523,25 @@ export const WebhooksPanel: React.FC = () => {
                                         min={0}
                                         max={10}
                                         value={formData.retryCount}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, retryCount: parseInt(e.target.value) }))}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({ ...prev, retryCount: parseInt(e.target.value) }))
+                                        }
                                         className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Timeout (ms)</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Timeout (ms)
+                                    </label>
                                     <input
                                         type="number"
                                         min={1000}
                                         max={60000}
                                         step={1000}
                                         value={formData.timeoutMs}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, timeoutMs: parseInt(e.target.value) }))}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({ ...prev, timeoutMs: parseInt(e.target.value) }))
+                                        }
                                         className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                     />
                                 </div>
@@ -551,17 +574,10 @@ export const WebhooksPanel: React.FC = () => {
 
             {/* Deliveries Modal */}
             {viewingDeliveries && (
-                <WebhookDeliveriesModal
-                    webhookId={viewingDeliveries}
-                    onClose={() => setViewingDeliveries(null)}
-                />
+                <WebhookDeliveriesModal webhookId={viewingDeliveries} onClose={() => setViewingDeliveries(null)} />
             )}
         </div>
     );
 };
 
 export default WebhooksPanel;
-
-
-
-

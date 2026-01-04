@@ -5,13 +5,14 @@
 
 import * as http from 'http';
 import * as https from 'https';
+
 import aiLogger from './logger.js';
 
 export const SEVERITY = {
     INFO: 'info',
     WARNING: 'warning',
     ERROR: 'error',
-    CRITICAL: 'critical'
+    CRITICAL: 'critical',
 } as const;
 
 export const ALERT_TYPE = {
@@ -23,11 +24,11 @@ export const ALERT_TYPE = {
     PROVIDER_DOWN: 'provider_down',
     PROVIDER_RECOVERED: 'provider_recovered',
     HIGH_LATENCY: 'high_latency',
-    ERROR_SPIKE: 'error_spike'
+    ERROR_SPIKE: 'error_spike',
 } as const;
 
-type Severity = typeof SEVERITY[keyof typeof SEVERITY];
-type AlertType = typeof ALERT_TYPE[keyof typeof ALERT_TYPE];
+type Severity = (typeof SEVERITY)[keyof typeof SEVERITY];
+type AlertType = (typeof ALERT_TYPE)[keyof typeof ALERT_TYPE];
 
 type AlertData = {
     providerId?: string;
@@ -180,14 +181,14 @@ export class AlertingService {
             message,
             timestamp,
             data,
-            environment: process.env.NODE_ENV || 'development'
+            environment: process.env.NODE_ENV || 'development',
         };
     }
 
     logToConsole(alert: AlertPayload): void {
         const payload = {
             message: alert.message,
-            data: alert.data
+            data: alert.data,
         };
 
         if (alert.severity === SEVERITY.CRITICAL || alert.severity === SEVERITY.ERROR) {
@@ -207,35 +208,37 @@ export class AlertingService {
         const color = this.getSeverityColor(alert.severity);
 
         const payload = {
-            attachments: [{
-                color,
-                blocks: [
-                    {
-                        type: 'header',
-                        text: {
-                            type: 'plain_text',
-                            text: `${alert.emoji} ${alert.title}`,
-                            emoji: true
-                        }
-                    },
-                    {
-                        type: 'section',
-                        text: {
-                            type: 'mrkdwn',
-                            text: alert.message
-                        }
-                    },
-                    {
-                        type: 'context',
-                        elements: [
-                            {
+            attachments: [
+                {
+                    color,
+                    blocks: [
+                        {
+                            type: 'header',
+                            text: {
+                                type: 'plain_text',
+                                text: `${alert.emoji} ${alert.title}`,
+                                emoji: true,
+                            },
+                        },
+                        {
+                            type: 'section',
+                            text: {
                                 type: 'mrkdwn',
-                                text: `*Environment:* ${alert.environment} | *Time:* ${alert.timestamp}`
-                            }
-                        ]
-                    }
-                ]
-            }]
+                                text: alert.message,
+                            },
+                        },
+                        {
+                            type: 'context',
+                            elements: [
+                                {
+                                    type: 'mrkdwn',
+                                    text: `*Environment:* ${alert.environment} | *Time:* ${alert.timestamp}`,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
         };
 
         return this.postWebhook(this.slackWebhook, payload);
@@ -245,15 +248,17 @@ export class AlertingService {
         const color = this.getSeverityColorHex(alert.severity);
 
         const payload = {
-            embeds: [{
-                title: `${alert.emoji} ${alert.title}`,
-                description: alert.message,
-                color,
-                timestamp: alert.timestamp,
-                footer: {
-                    text: `Consultify AI | ${alert.environment}`
-                }
-            }]
+            embeds: [
+                {
+                    title: `${alert.emoji} ${alert.title}`,
+                    description: alert.message,
+                    color,
+                    timestamp: alert.timestamp,
+                    footer: {
+                        text: `Consultify AI | ${alert.environment}`,
+                    },
+                },
+            ],
         };
 
         return this.postWebhook(this.discordWebhook, payload);
@@ -267,7 +272,7 @@ export class AlertingService {
             message: alert.message,
             timestamp: alert.timestamp,
             environment: alert.environment,
-            data: alert.data
+            data: alert.data,
         };
 
         return this.postWebhook(this.genericWebhook, payload);
@@ -291,9 +296,9 @@ export class AlertingService {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(data)
+                        'Content-Length': Buffer.byteLength(data),
                     },
-                    timeout: 10000
+                    timeout: 10000,
                 };
 
                 const req = protocol.request(options, (res) => {
@@ -326,21 +331,31 @@ export class AlertingService {
 
     getSeverityColor(severity: Severity): string {
         switch (severity) {
-            case SEVERITY.CRITICAL: return '#dc3545';
-            case SEVERITY.ERROR: return '#fd7e14';
-            case SEVERITY.WARNING: return '#ffc107';
-            case SEVERITY.INFO: return '#17a2b8';
-            default: return '#6c757d';
+            case SEVERITY.CRITICAL:
+                return '#dc3545';
+            case SEVERITY.ERROR:
+                return '#fd7e14';
+            case SEVERITY.WARNING:
+                return '#ffc107';
+            case SEVERITY.INFO:
+                return '#17a2b8';
+            default:
+                return '#6c757d';
         }
     }
 
     getSeverityColorHex(severity: Severity): number {
         switch (severity) {
-            case SEVERITY.CRITICAL: return 0xdc3545;
-            case SEVERITY.ERROR: return 0xfd7e14;
-            case SEVERITY.WARNING: return 0xffc107;
-            case SEVERITY.INFO: return 0x17a2b8;
-            default: return 0x6c757d;
+            case SEVERITY.CRITICAL:
+                return 0xdc3545;
+            case SEVERITY.ERROR:
+                return 0xfd7e14;
+            case SEVERITY.WARNING:
+                return 0xffc107;
+            case SEVERITY.INFO:
+                return 0x17a2b8;
+            default:
+                return 0x6c757d;
         }
     }
 
@@ -358,9 +373,9 @@ export class AlertingService {
             channels: {
                 slack: !!this.slackWebhook,
                 discord: !!this.discordWebhook,
-                webhook: !!this.genericWebhook
+                webhook: !!this.genericWebhook,
             },
-            throttledAlerts: alertThrottle.size
+            throttledAlerts: alertThrottle.size,
         };
     }
 }
@@ -370,8 +385,7 @@ export const alertingService = new AlertingService();
 export const alerts = {
     circuitOpen: (providerId: string, failures?: number, cooldown?: number) =>
         alertingService.send(ALERT_TYPE.CIRCUIT_OPEN, { providerId, failures, cooldown }),
-    circuitClosed: (providerId: string) =>
-        alertingService.send(ALERT_TYPE.CIRCUIT_CLOSED, { providerId }),
+    circuitClosed: (providerId: string) => alertingService.send(ALERT_TYPE.CIRCUIT_CLOSED, { providerId }),
     budgetWarning: (organizationId: string, percentUsed: number) =>
         alertingService.send(ALERT_TYPE.BUDGET_WARNING, { organizationId, percentUsed }),
     budgetExceeded: (organizationId: string, percentUsed: number) =>
@@ -380,12 +394,11 @@ export const alerts = {
         alertingService.send(ALERT_TYPE.RATE_LIMIT_EXCEEDED, { userId, organizationId, capability }),
     providerDown: (providerId: string, error: string) =>
         alertingService.send(ALERT_TYPE.PROVIDER_DOWN, { providerId, error }),
-    providerRecovered: (providerId: string) =>
-        alertingService.send(ALERT_TYPE.PROVIDER_RECOVERED, { providerId }),
+    providerRecovered: (providerId: string) => alertingService.send(ALERT_TYPE.PROVIDER_RECOVERED, { providerId }),
     highLatency: (providerId: string | undefined, latencyMs: number, threshold?: number) =>
         alertingService.send(ALERT_TYPE.HIGH_LATENCY, { providerId, latencyMs, threshold }),
     errorSpike: (errorCount: number, errorRate: number, windowMinutes?: number) =>
-        alertingService.send(ALERT_TYPE.ERROR_SPIKE, { errorCount, errorRate, windowMinutes })
+        alertingService.send(ALERT_TYPE.ERROR_SPIKE, { errorCount, errorRate, windowMinutes }),
 };
 
 export default alertingService;

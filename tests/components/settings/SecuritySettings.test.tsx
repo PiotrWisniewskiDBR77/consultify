@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SecuritySettings } from '../../../components/settings/SecuritySettings';
+import { SecuritySettings } from '../../components/settings/SecuritySettings';
 import { Api } from '../../../services/api';
 
 // Mock dependencies
@@ -427,6 +427,7 @@ describe('SecuritySettings Component', () => {
         });
     });
 });
+
 
 
 

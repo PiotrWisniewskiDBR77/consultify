@@ -1,13 +1,14 @@
 /**
  * Analysis Create Modal
- * 
+ *
  * Modal for creating new digitization analyses
  */
 
-import React, { useState, useEffect } from 'react';
-import { X, FileText, Briefcase, Tag } from 'lucide-react';
-import { Api } from '../../services/api';
+import { Briefcase, FileText, Tag, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 import { DigitizationAnalysis } from './types';
 
 interface AnalysisCreateModalProps {
@@ -34,7 +35,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             toast.error('Wprowadź nazwę analizy');
             return;
         }
-        
+
         setIsSubmitting(true);
         try {
             const result = await Api.createDigitizationAnalysis({
@@ -53,8 +54,10 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
-                rounded-2xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div
+                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
+                rounded-2xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/5">
                     <div className="flex items-center gap-3">
@@ -62,18 +65,20 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                             <FileText size={24} className="text-emerald-500" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-navy-900 dark:text-white">Nowa analiza dojrzałości</h2>
+                            <h2 className="text-lg font-bold text-navy-900 dark:text-white">
+                                Nowa analiza dojrzałości
+                            </h2>
                             <p className="text-xs text-slate-400">Utwórz nową ocenę dojrzałości cyfrowej</p>
                         </div>
                     </div>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                     >
                         <X size={20} />
                     </button>
                 </div>
-                
+
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     {/* Name */}
@@ -85,32 +90,34 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                             type="text"
                             required
                             value={formData.name}
-                            onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                             placeholder="np. Ocena dojrzałości Q1 2025"
                             className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 
                                 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                         />
                     </div>
-                    
+
                     {/* Project */}
                     <div>
                         <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                            <Briefcase size={14} className="inline mr-1.5 -mt-0.5" /> 
+                            <Briefcase size={14} className="inline mr-1.5 -mt-0.5" />
                             Powiąż z projektem <span className="text-slate-400 font-normal">(opcjonalnie)</span>
                         </label>
                         <select
                             value={formData.projectId}
-                            onChange={e => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, projectId: e.target.value }))}
                             className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 
                                 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                         >
                             <option value="">Bez projektu</option>
-                            {projects.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
+                            {projects.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
                             ))}
                         </select>
                     </div>
-                    
+
                     {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
@@ -118,7 +125,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                         </label>
                         <textarea
                             value={formData.description}
-                            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                             placeholder="Krótki opis celu tej analizy..."
                             rows={3}
                             className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 
@@ -129,11 +136,11 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                     {/* Info */}
                     <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
                         <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                            Po utworzeniu analizy zostaniesz przeniesiony do narzędzia oceny, gdzie będziesz mógł 
-                            ocenić dojrzałość cyfrową w 6 głównych osiach i 32 obszarach.
+                            Po utworzeniu analizy zostaniesz przeniesiony do narzędzia oceny, gdzie będziesz mógł ocenić
+                            dojrzałość cyfrową w 6 głównych osiach i 32 obszarach.
                         </p>
                     </div>
-                    
+
                     {/* Actions */}
                     <div className="flex gap-3 pt-2">
                         <button
@@ -161,12 +168,4 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
 };
 
 export default AnalysisCreateModal;
-
-
-
-
-
-
-
-
 

@@ -1,9 +1,9 @@
-
+import { AlertTriangle, ShieldAlert, Target, TrendingUp, Zap } from 'lucide-react';
 import React from 'react';
-import { Target, ShieldAlert, Zap, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
 import { ScenarioArchetype } from '../../data/transformationScenarios';
 import { useAppStore } from '../../store/useAppStore';
-import { useTranslation } from 'react-i18next';
 
 interface DeepDivePanelProps {
     scenario: ScenarioArchetype;
@@ -35,7 +35,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                     )}
                 </div>
                 <p className="text-slate-500 text-sm line-clamp-1">
-                    {(t.deepDive.subtitle)?.replace('{name}', getName())}
+                    {t.deepDive.subtitle?.replace('{name}', getName())}
                 </p>
             </div>
 
@@ -62,13 +62,22 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                             <div className="flex gap-3">
                                 <ShieldAlert size={18} className="text-purple-400 shrink-0 mt-0.5" />
                                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                                    Addresses key hidden risks related to <strong className="text-purple-700 dark:text-purple-300">process fragmentation</strong> and <strong className="text-purple-700 dark:text-purple-300">compliance</strong> found in your profile.
+                                    Addresses key hidden risks related to{' '}
+                                    <strong className="text-purple-700 dark:text-purple-300">
+                                        process fragmentation
+                                    </strong>{' '}
+                                    and <strong className="text-purple-700 dark:text-purple-300">compliance</strong>{' '}
+                                    found in your profile.
                                 </p>
                             </div>
                             <div className="flex gap-3">
                                 <TrendingUp size={18} className="text-purple-400 shrink-0 mt-0.5" />
                                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                                    Leverages your organizational strength in <strong className="text-purple-700 dark:text-purple-300">engineering culture</strong> to drive the change via the core team.
+                                    Leverages your organizational strength in{' '}
+                                    <strong className="text-purple-700 dark:text-purple-300">
+                                        engineering culture
+                                    </strong>{' '}
+                                    to drive the change via the core team.
                                 </p>
                             </div>
                         </div>
@@ -82,7 +91,9 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-900/20">
-                            <div className="text-xs font-bold text-green-700 dark:text-green-400 mb-2 uppercase">{t.deepDive.gains}</div>
+                            <div className="text-xs font-bold text-green-700 dark:text-green-400 mb-2 uppercase">
+                                {t.deepDive.gains}
+                            </div>
                             <ul className="space-y-2">
                                 {getGains().map((gain, i) => (
                                     <li key={i} className="flex gap-2 text-xs text-navy-900 dark:text-white">
@@ -93,7 +104,9 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                             </ul>
                         </div>
                         <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/20">
-                            <div className="text-xs font-bold text-red-700 dark:text-red-400 mb-2 uppercase">{t.deepDive.sacrifices}</div>
+                            <div className="text-xs font-bold text-red-700 dark:text-red-400 mb-2 uppercase">
+                                {t.deepDive.sacrifices}
+                            </div>
                             <ul className="space-y-2">
                                 {getSacrifices().map((sac, i) => (
                                     <li key={i} className="flex gap-2 text-xs text-navy-900 dark:text-white">
@@ -108,7 +121,9 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
 
                 {/* 4. Organizational Impact */}
                 <section>
-                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">{t.deepDive.impact}</h4>
+                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
+                        {t.deepDive.impact}
+                    </h4>
                     <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/5 divide-y divide-slate-100 dark:divide-white/5">
                         {Object.entries(scenario.impact).map(([domain, impact]) => (
                             <div key={domain} className="p-3 flex justify-between items-center text-sm">

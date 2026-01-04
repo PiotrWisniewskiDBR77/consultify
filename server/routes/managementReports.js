@@ -89,7 +89,7 @@ let PptxGeneratorService;
 const getPdfGenerator = () => {
     if (!PdfGeneratorService) {
         try {
-            PdfGeneratorService = import('pdfGeneratorService.js');
+            PdfGeneratorService = import('../services/pdfGeneratorService.js');
         } catch (e) {
             console.warn('[ManagementReports] PDF Generator not available:', e.message);
         }
@@ -100,7 +100,7 @@ const getPdfGenerator = () => {
 const getPptxGenerator = () => {
     if (!PptxGeneratorService) {
         try {
-            PptxGeneratorService = import('pptxGeneratorService.js');
+            PptxGeneratorService = import('../services/pptxGeneratorService.js');
         } catch (e) {
             console.warn('[ManagementReports] PPTX Generator not available:', e.message);
         }
@@ -597,7 +597,7 @@ router.get('/types', authMiddleware, (req, res) => {
 let ReportApprovalService;
 const getApprovalService = () => {
     if (!ReportApprovalService) {
-        ReportApprovalService = import('reportApprovalService.js');
+        ReportApprovalService = import('../services/reportApprovalService.js');
     }
     return ReportApprovalService;
 };
@@ -752,7 +752,7 @@ router.get('/:id/approval-history', authMiddleware, async (req, res) => {
 let ReportVersionService;
 const getVersionService = () => {
     if (!ReportVersionService) {
-        ReportVersionService = import('reportVersionService.js');
+        ReportVersionService = import('../services/reportVersionService.js');
     }
     return ReportVersionService;
 };
@@ -911,7 +911,7 @@ router.get('/:id/verify-integrity', authMiddleware, async (req, res) => {
 let ReportAuditService;
 const getAuditService = () => {
     if (!ReportAuditService) {
-        ReportAuditService = import('reportAuditService.js');
+        ReportAuditService = import('../services/reportAuditService.js');
     }
     return ReportAuditService;
 };
@@ -993,7 +993,7 @@ router.get('/:id/activity-summary', authMiddleware, async (req, res) => {
 let ReportCommentsService;
 const getCommentsService = () => {
     if (!ReportCommentsService) {
-        ReportCommentsService = import('reportCommentsService.js');
+        ReportCommentsService = import('../services/reportCommentsService.js');
     }
     return ReportCommentsService;
 };

@@ -1,14 +1,12 @@
 /**
  * Knowledgegraph Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadKnowledgegraphservice = createCachedLazyService('../../services/knowledgeGraphService.js');
+import service from '../../services/knowledgeGraphService.js';
 
 // Export default instance (for backward compatibility)
-export default loadKnowledgegraphservice();
+export default service;

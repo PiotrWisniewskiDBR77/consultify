@@ -1,5 +1,5 @@
+import { HTMLMotionProps, motion } from 'framer-motion';
 import React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
 
 interface AnimationWrapperProps extends HTMLMotionProps<'div'> {
     children: React.ReactNode;

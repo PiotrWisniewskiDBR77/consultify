@@ -1,14 +1,15 @@
 /**
  * Help Feedback Widget Component
- * 
+ *
  * "Was this helpful?" widget for collecting user feedback on help content.
  * Includes helpful/not helpful buttons and optional comment field.
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, MessageSquare, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ThumbsUp, ThumbsDown, MessageSquare, Send, Check, X } from 'lucide-react';
+
 import { Api } from '../../services/api';
 
 type FeedbackContentType = 'module' | 'card' | 'faq' | 'video';
@@ -26,7 +27,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
     contentId,
     compact = false,
     className = '',
-    onFeedbackSubmit
+    onFeedbackSubmit,
 }) => {
     const { t, i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
@@ -48,7 +49,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
         submit: t('help.feedback.submit'),
         skip: t('help.feedback.skip'),
         thanks: t('help.feedback.thanks'),
-        error: t('help.feedback.error')
+        error: t('help.feedback.error'),
     };
 
     // Submit feedback
@@ -64,8 +65,8 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
                 comment: feedbackComment,
                 metadata: {
                     url: window.location.pathname,
-                    timestamp: new Date().toISOString()
-                }
+                    timestamp: new Date().toISOString(),
+                },
             });
 
             setSubmitted(true);
@@ -78,7 +79,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
                     eventType: 'feedback_submit',
                     contentType,
                     contentId,
-                    metadata: { isHelpful: helpful, hasComment: !!feedbackComment }
+                    metadata: { isHelpful: helpful, hasComment: !!feedbackComment },
                 });
             } catch {
                 // Ignore analytics errors
@@ -125,9 +126,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
 
         return (
             <div className={`flex items-center gap-2 ${className}`}>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                    {tTrans.title}
-                </span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{tTrans.title}</span>
                 <button
                     onClick={() => handleClick(true)}
                     disabled={isSubmitting}
@@ -163,9 +162,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
                         <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                             <Check size={18} className="text-green-600 dark:text-green-400" />
                         </div>
-                        <span className="text-green-600 dark:text-green-400 font-medium">
-                            {tTrans.thanks}
-                        </span>
+                        <span className="text-green-600 dark:text-green-400 font-medium">{tTrans.thanks}</span>
                     </motion.div>
                 ) : showComment ? (
                     <motion.div
@@ -195,9 +192,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
                             rows={3}
                         />
 
-                        {error && (
-                            <p className="text-sm text-red-500">{error}</p>
-                        )}
+                        {error && <p className="text-sm text-red-500">{error}</p>}
 
                         <div className="flex justify-end gap-2">
                             <button
@@ -249,9 +244,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
                             </button>
                         </div>
 
-                        {error && (
-                            <p className="text-center text-sm text-red-500">{error}</p>
-                        )}
+                        {error && <p className="text-center text-sm text-red-500">{error}</p>}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -260,12 +253,4 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
 };
 
 export default HelpFeedbackWidget;
-
-
-
-
-
-
-
-
 

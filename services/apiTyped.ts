@@ -1,98 +1,97 @@
 /**
  * Typed API Client
  * Enterprise SaaS Architecture - Strongly Typed API Methods
- * 
+ *
  * This file provides properly typed wrappers for API operations.
  * Use these instead of the generic Api.get/post/put/delete methods.
  */
 
-import { API_URL, getHeaders, fetchWithRetry, handleResponse, handleBlobResponse } from './apiUtils';
 import type {
-    // API Response Types
-    ApiResponse,
-    PaginatedResponse,
-    LoginResponse,
-    UserResponse,
-    ProjectResponse,
-    ProjectListResponse,
-    TaskResponse,
-    TaskListResponse,
-    InitiativeResponse,
-    InitiativeListResponse,
-    OrganizationResponse,
-    TeamResponse,
-    TeamListResponse,
-    SubscriptionResponse,
-    BillingInfoResponse,
-    InvoiceResponse,
-    InvoiceListResponse,
-    TokenBalanceResponse,
-    UsageResponse,
-    AIMessageResponse,
-    AIConversationResponse,
-    AIProviderResponse,
-    AIProviderListResponse,
-    AIStatsResponse,
-    AIHealthResponse,
-    NotificationResponse,
-    NotificationListResponse,
-    MetricsOverviewResponse,
-    AnalyticsResponse,
-    PMOContextResponse,
-    DecisionResponse,
-    StageGateResponse,
-    RAIDItemResponse,
-    AssessmentResponse,
-    IntegrationResponse,
-    WebhookResponse,
-    ApiKeyResponse,
-    KnowledgeDocumentResponse,
-    KnowledgeSearchResponse,
-    FeedbackResponse,
-    FeedbackListResponse,
-    SuperAdminDashboardResponse,
-    SystemHealthResponse,
-} from '../types/api/responses';
-
-import type {
+    CreateAIProviderRequest,
+    CreateApiKeyRequest,
+    CreateAssessmentRequest,
+    CreateDecisionRequest,
+    CreateFeedbackRequest,
+    CreateInitiativeRequest,
+    CreateIntegrationRequest,
+    CreateKnowledgeDocumentRequest,
+    CreateOrganizationRequest,
+    CreateProjectRequest,
+    CreateRAIDItemRequest,
+    CreateStageGateRequest,
+    CreateTaskRequest,
+    CreateTeamRequest,
+    CreateWebhookRequest,
+    InviteMemberRequest,
+    ListParams,
     // API Request Types
     LoginRequest,
     RegisterRequest,
-    CreateProjectRequest,
-    UpdateProjectRequest,
-    CreateTaskRequest,
-    UpdateTaskRequest,
-    TaskFilterParams,
-    CreateInitiativeRequest,
-    UpdateInitiativeRequest,
-    CreateOrganizationRequest,
-    UpdateOrganizationRequest,
-    InviteMemberRequest,
-    CreateTeamRequest,
-    UpdateTeamRequest,
-    SendAIMessageRequest,
-    CreateAIProviderRequest,
-    UpdateAIProviderRequest,
-    UpdateNotificationPreferencesRequest,
-    CreateDecisionRequest,
-    UpdateDecisionRequest,
-    CreateRAIDItemRequest,
-    UpdateRAIDItemRequest,
-    CreateStageGateRequest,
-    UpdateStageGateRequest,
-    CreateAssessmentRequest,
-    UpdateAssessmentRequest,
-    CreateIntegrationRequest,
-    CreateWebhookRequest,
-    UpdateWebhookRequest,
-    CreateApiKeyRequest,
-    CreateKnowledgeDocumentRequest,
-    UpdateKnowledgeDocumentRequest,
     SearchKnowledgeRequest,
-    CreateFeedbackRequest,
+    SendAIMessageRequest,
+    TaskFilterParams,
+    UpdateAIProviderRequest,
+    UpdateAssessmentRequest,
+    UpdateDecisionRequest,
     UpdateFeedbackStatusRequest,
-    ListParams,
+    UpdateInitiativeRequest,
+    UpdateKnowledgeDocumentRequest,
+    UpdateNotificationPreferencesRequest,
+    UpdateOrganizationRequest,
+    UpdateProjectRequest,
+    UpdateRAIDItemRequest,
+    UpdateStageGateRequest,
+    UpdateTaskRequest,
+    UpdateTeamRequest,
+    UpdateWebhookRequest,
 } from '../types/api/requests';
+import type {
+    AIConversationResponse,
+    AIHealthResponse,
+    AIMessageResponse,
+    AIProviderListResponse,
+    AIProviderResponse,
+    AIStatsResponse,
+    AnalyticsResponse,
+    ApiKeyResponse,
+    // API Response Types
+    ApiResponse,
+    AssessmentResponse,
+    BillingInfoResponse,
+    DecisionResponse,
+    FeedbackListResponse,
+    FeedbackResponse,
+    InitiativeListResponse,
+    InitiativeResponse,
+    IntegrationResponse,
+    InvoiceListResponse,
+    InvoiceResponse,
+    KnowledgeDocumentResponse,
+    KnowledgeSearchResponse,
+    LoginResponse,
+    MetricsOverviewResponse,
+    NotificationListResponse,
+    NotificationResponse,
+    OrganizationResponse,
+    PaginatedResponse,
+    PMOContextResponse,
+    ProjectListResponse,
+    ProjectResponse,
+    RAIDItemResponse,
+    StageGateResponse,
+    SubscriptionResponse,
+    SuperAdminDashboardResponse,
+    SystemHealthResponse,
+    TaskListResponse,
+    TaskResponse,
+    TeamListResponse,
+    TeamResponse,
+    TokenBalanceResponse,
+    UsageResponse,
+    UserResponse,
+    WebhookResponse,
+} from '../types/api/responses';
+import { API_URL, fetchWithRetry, getHeaders, handleBlobResponse, handleResponse } from './apiUtils';
 
 // ==========================================
 // TYPED BASE CLIENT
@@ -117,7 +116,7 @@ export const TypedApi = {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, `POST ${url} failed`);
     },
@@ -129,7 +128,7 @@ export const TypedApi = {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, `PUT ${url} failed`);
     },
@@ -141,7 +140,7 @@ export const TypedApi = {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, `PATCH ${url} failed`);
     },
@@ -152,7 +151,7 @@ export const TypedApi = {
     delete: async <T = void>(url: string): Promise<T> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, `DELETE ${url} failed`);
     },
@@ -166,7 +165,7 @@ export const TypedApi = {
         const res = await fetch(`${API_URL}${url}`, {
             method: 'POST',
             headers,
-            body: formData
+            body: formData,
         });
         return handleResponse(res, `Upload to ${url} failed`);
     },
@@ -177,7 +176,7 @@ export const TypedApi = {
     download: async (url: string): Promise<Blob> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, { headers: getHeaders() });
         return handleBlobResponse(res, `Download from ${url} failed`);
-    }
+    },
 };
 
 // ==========================================
@@ -185,26 +184,20 @@ export const TypedApi = {
 // ==========================================
 
 export const AuthApi = {
-    login: (credentials: LoginRequest): Promise<LoginResponse> =>
-        TypedApi.post('/auth/login', credentials),
+    login: (credentials: LoginRequest): Promise<LoginResponse> => TypedApi.post('/auth/login', credentials),
 
-    register: (data: RegisterRequest): Promise<LoginResponse> =>
-        TypedApi.post('/auth/register', data),
+    register: (data: RegisterRequest): Promise<LoginResponse> => TypedApi.post('/auth/register', data),
 
-    logout: (): Promise<void> =>
-        TypedApi.post('/auth/logout', {}),
+    logout: (): Promise<void> => TypedApi.post('/auth/logout', {}),
 
-    getMe: (): Promise<UserResponse | null> =>
-        TypedApi.get<UserResponse>('/auth/me').catch(() => null),
+    getMe: (): Promise<UserResponse | null> => TypedApi.get<UserResponse>('/auth/me').catch(() => null),
 
     refreshToken: (refreshToken: string): Promise<{ token: string; refreshToken: string }> =>
         TypedApi.post('/auth/refresh', { refreshToken }),
 
-    verifyEmail: (token: string): Promise<{ success: boolean }> =>
-        TypedApi.post('/auth/verify-email', { token }),
+    verifyEmail: (token: string): Promise<{ success: boolean }> => TypedApi.post('/auth/verify-email', { token }),
 
-    resetPassword: (email: string): Promise<void> =>
-        TypedApi.post('/auth/reset-password', { email }),
+    resetPassword: (email: string): Promise<void> => TypedApi.post('/auth/reset-password', { email }),
 
     changePassword: (currentPassword: string, newPassword: string): Promise<void> =>
         TypedApi.post('/auth/change-password', { currentPassword, newPassword }),
@@ -220,20 +213,15 @@ export const ProjectsApi = {
         return TypedApi.get(`/projects${query}`);
     },
 
-    get: (id: string): Promise<ProjectResponse> =>
-        TypedApi.get(`/projects/${id}`),
+    get: (id: string): Promise<ProjectResponse> => TypedApi.get(`/projects/${id}`),
 
-    create: (data: CreateProjectRequest): Promise<ProjectResponse> =>
-        TypedApi.post('/projects', data),
+    create: (data: CreateProjectRequest): Promise<ProjectResponse> => TypedApi.post('/projects', data),
 
-    update: (id: string, data: UpdateProjectRequest): Promise<ProjectResponse> =>
-        TypedApi.put(`/projects/${id}`, data),
+    update: (id: string, data: UpdateProjectRequest): Promise<ProjectResponse> => TypedApi.put(`/projects/${id}`, data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/projects/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/projects/${id}`),
 
-    getMembers: (id: string): Promise<UserResponse[]> =>
-        TypedApi.get(`/projects/${id}/members`),
+    getMembers: (id: string): Promise<UserResponse[]> => TypedApi.get(`/projects/${id}/members`),
 
     addMember: (projectId: string, userId: string, role?: string): Promise<void> =>
         TypedApi.post(`/projects/${projectId}/members`, { userId, role }),
@@ -252,17 +240,13 @@ export const TasksApi = {
         return TypedApi.get(`/tasks${query}`);
     },
 
-    get: (id: string): Promise<TaskResponse> =>
-        TypedApi.get(`/tasks/${id}`),
+    get: (id: string): Promise<TaskResponse> => TypedApi.get(`/tasks/${id}`),
 
-    create: (data: CreateTaskRequest): Promise<TaskResponse> =>
-        TypedApi.post('/tasks', data),
+    create: (data: CreateTaskRequest): Promise<TaskResponse> => TypedApi.post('/tasks', data),
 
-    update: (id: string, data: UpdateTaskRequest): Promise<TaskResponse> =>
-        TypedApi.put(`/tasks/${id}`, data),
+    update: (id: string, data: UpdateTaskRequest): Promise<TaskResponse> => TypedApi.put(`/tasks/${id}`, data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/tasks/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/tasks/${id}`),
 
     updateStatus: (id: string, status: string): Promise<TaskResponse> =>
         TypedApi.patch(`/tasks/${id}/status`, { status }),
@@ -273,8 +257,7 @@ export const TasksApi = {
     bulkUpdate: (taskIds: string[], updates: Partial<UpdateTaskRequest>): Promise<TaskResponse[]> =>
         TypedApi.post('/tasks/bulk-update', { taskIds, updates }),
 
-    getComments: (taskId: string): Promise<{ comments: unknown[] }> =>
-        TypedApi.get(`/tasks/${taskId}/comments`),
+    getComments: (taskId: string): Promise<{ comments: unknown[] }> => TypedApi.get(`/tasks/${taskId}/comments`),
 
     addComment: (taskId: string, content: string): Promise<unknown> =>
         TypedApi.post(`/tasks/${taskId}/comments`, { content }),
@@ -290,20 +273,16 @@ export const InitiativesApi = {
         return TypedApi.get(`/initiatives${query}`);
     },
 
-    get: (id: string): Promise<InitiativeResponse> =>
-        TypedApi.get(`/initiatives/${id}`),
+    get: (id: string): Promise<InitiativeResponse> => TypedApi.get(`/initiatives/${id}`),
 
-    create: (data: CreateInitiativeRequest): Promise<InitiativeResponse> =>
-        TypedApi.post('/initiatives', data),
+    create: (data: CreateInitiativeRequest): Promise<InitiativeResponse> => TypedApi.post('/initiatives', data),
 
     update: (id: string, data: UpdateInitiativeRequest): Promise<InitiativeResponse> =>
         TypedApi.put(`/initiatives/${id}`, data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/initiatives/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/initiatives/${id}`),
 
-    getTasks: (id: string): Promise<TaskListResponse> =>
-        TypedApi.get(`/initiatives/${id}/tasks`),
+    getTasks: (id: string): Promise<TaskListResponse> => TypedApi.get(`/initiatives/${id}/tasks`),
 };
 
 // ==========================================
@@ -311,17 +290,14 @@ export const InitiativesApi = {
 // ==========================================
 
 export const OrganizationsApi = {
-    get: (id: string): Promise<OrganizationResponse> =>
-        TypedApi.get(`/organizations/${id}`),
+    get: (id: string): Promise<OrganizationResponse> => TypedApi.get(`/organizations/${id}`),
 
-    create: (data: CreateOrganizationRequest): Promise<OrganizationResponse> =>
-        TypedApi.post('/organizations', data),
+    create: (data: CreateOrganizationRequest): Promise<OrganizationResponse> => TypedApi.post('/organizations', data),
 
     update: (id: string, data: UpdateOrganizationRequest): Promise<OrganizationResponse> =>
         TypedApi.put(`/organizations/${id}`, data),
 
-    getMembers: (id: string): Promise<UserResponse[]> =>
-        TypedApi.get(`/organizations/${id}/members`),
+    getMembers: (id: string): Promise<UserResponse[]> => TypedApi.get(`/organizations/${id}/members`),
 
     inviteMember: (orgId: string, data: InviteMemberRequest): Promise<void> =>
         TypedApi.post(`/organizations/${orgId}/invitations`, data),
@@ -338,23 +314,17 @@ export const OrganizationsApi = {
 // ==========================================
 
 export const TeamsApi = {
-    list: (orgId: string): Promise<TeamListResponse> =>
-        TypedApi.get(`/organizations/${orgId}/teams`),
+    list: (orgId: string): Promise<TeamListResponse> => TypedApi.get(`/organizations/${orgId}/teams`),
 
-    get: (id: string): Promise<TeamResponse> =>
-        TypedApi.get(`/teams/${id}`),
+    get: (id: string): Promise<TeamResponse> => TypedApi.get(`/teams/${id}`),
 
-    create: (data: CreateTeamRequest): Promise<TeamResponse> =>
-        TypedApi.post('/teams', data),
+    create: (data: CreateTeamRequest): Promise<TeamResponse> => TypedApi.post('/teams', data),
 
-    update: (id: string, data: UpdateTeamRequest): Promise<TeamResponse> =>
-        TypedApi.put(`/teams/${id}`, data),
+    update: (id: string, data: UpdateTeamRequest): Promise<TeamResponse> => TypedApi.put(`/teams/${id}`, data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/teams/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/teams/${id}`),
 
-    addMember: (teamId: string, userId: string): Promise<void> =>
-        TypedApi.post(`/teams/${teamId}/members`, { userId }),
+    addMember: (teamId: string, userId: string): Promise<void> => TypedApi.post(`/teams/${teamId}/members`, { userId }),
 
     removeMember: (teamId: string, userId: string): Promise<void> =>
         TypedApi.delete(`/teams/${teamId}/members/${userId}`),
@@ -368,31 +338,24 @@ export const BillingApi = {
     getSubscription: (): Promise<SubscriptionResponse | null> =>
         TypedApi.get<SubscriptionResponse>('/billing/subscription').catch(() => null),
 
-    getBillingInfo: (): Promise<BillingInfoResponse> =>
-        TypedApi.get('/billing/info'),
+    getBillingInfo: (): Promise<BillingInfoResponse> => TypedApi.get('/billing/info'),
 
     getInvoices: (params?: ListParams): Promise<InvoiceListResponse> => {
         const query = params ? `?${new URLSearchParams(params as Record<string, string>)}` : '';
         return TypedApi.get(`/billing/invoices${query}`);
     },
 
-    getInvoice: (id: string): Promise<InvoiceResponse> =>
-        TypedApi.get(`/billing/invoices/${id}`),
+    getInvoice: (id: string): Promise<InvoiceResponse> => TypedApi.get(`/billing/invoices/${id}`),
 
-    downloadInvoice: (id: string): Promise<Blob> =>
-        TypedApi.download(`/billing/invoices/${id}/download`),
+    downloadInvoice: (id: string): Promise<Blob> => TypedApi.download(`/billing/invoices/${id}/download`),
 
-    getTokenBalance: (): Promise<TokenBalanceResponse> =>
-        TypedApi.get('/billing/tokens'),
+    getTokenBalance: (): Promise<TokenBalanceResponse> => TypedApi.get('/billing/tokens'),
 
-    getUsage: (): Promise<UsageResponse> =>
-        TypedApi.get('/billing/usage'),
+    getUsage: (): Promise<UsageResponse> => TypedApi.get('/billing/usage'),
 
-    changePlan: (planId: string): Promise<SubscriptionResponse> =>
-        TypedApi.post('/billing/change-plan', { planId }),
+    changePlan: (planId: string): Promise<SubscriptionResponse> => TypedApi.post('/billing/change-plan', { planId }),
 
-    cancelSubscription: (reason?: string): Promise<void> =>
-        TypedApi.post('/billing/cancel', { reason }),
+    cancelSubscription: (reason?: string): Promise<void> => TypedApi.post('/billing/cancel', { reason }),
 };
 
 // ==========================================
@@ -400,20 +363,15 @@ export const BillingApi = {
 // ==========================================
 
 export const AIApi = {
-    chat: (message: SendAIMessageRequest): Promise<AIMessageResponse> =>
-        TypedApi.post('/ai/chat', message),
+    chat: (message: SendAIMessageRequest): Promise<AIMessageResponse> => TypedApi.post('/ai/chat', message),
 
-    getConversations: (): Promise<AIConversationResponse[]> =>
-        TypedApi.get('/ai/conversations'),
+    getConversations: (): Promise<AIConversationResponse[]> => TypedApi.get('/ai/conversations'),
 
-    getConversation: (id: string): Promise<AIConversationResponse> =>
-        TypedApi.get(`/ai/conversations/${id}`),
+    getConversation: (id: string): Promise<AIConversationResponse> => TypedApi.get(`/ai/conversations/${id}`),
 
-    deleteConversation: (id: string): Promise<void> =>
-        TypedApi.delete(`/ai/conversations/${id}`),
+    deleteConversation: (id: string): Promise<void> => TypedApi.delete(`/ai/conversations/${id}`),
 
-    getProviders: (): Promise<AIProviderListResponse> =>
-        TypedApi.get('/ai/providers'),
+    getProviders: (): Promise<AIProviderListResponse> => TypedApi.get('/ai/providers'),
 
     createProvider: (data: CreateAIProviderRequest): Promise<AIProviderResponse> =>
         TypedApi.post('/ai/providers', data),
@@ -421,17 +379,14 @@ export const AIApi = {
     updateProvider: (id: string, data: UpdateAIProviderRequest): Promise<AIProviderResponse> =>
         TypedApi.put(`/ai/providers/${id}`, data),
 
-    deleteProvider: (id: string): Promise<void> =>
-        TypedApi.delete(`/ai/providers/${id}`),
+    deleteProvider: (id: string): Promise<void> => TypedApi.delete(`/ai/providers/${id}`),
 
     testProvider: (id: string): Promise<{ success: boolean; latency?: number; error?: string }> =>
         TypedApi.post(`/ai/providers/${id}/test`, {}),
 
-    getStats: (): Promise<AIStatsResponse> =>
-        TypedApi.get('/ai/stats'),
+    getStats: (): Promise<AIStatsResponse> => TypedApi.get('/ai/stats'),
 
-    getHealth: (): Promise<AIHealthResponse> =>
-        TypedApi.get('/ai/health'),
+    getHealth: (): Promise<AIHealthResponse> => TypedApi.get('/ai/health'),
 
     submitFeedback: (messageId: string, rating: 'positive' | 'negative', comment?: string): Promise<void> =>
         TypedApi.post('/ai/feedback', { messageId, rating, comment }),
@@ -442,17 +397,13 @@ export const AIApi = {
 // ==========================================
 
 export const NotificationsApi = {
-    list: (): Promise<NotificationListResponse> =>
-        TypedApi.get('/notifications'),
+    list: (): Promise<NotificationListResponse> => TypedApi.get('/notifications'),
 
-    markRead: (id: string): Promise<void> =>
-        TypedApi.patch(`/notifications/${id}/read`, {}),
+    markRead: (id: string): Promise<void> => TypedApi.patch(`/notifications/${id}/read`, {}),
 
-    markAllRead: (): Promise<void> =>
-        TypedApi.post('/notifications/mark-all-read', {}),
+    markAllRead: (): Promise<void> => TypedApi.post('/notifications/mark-all-read', {}),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/notifications/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/notifications/${id}`),
 
     updatePreferences: (preferences: UpdateNotificationPreferencesRequest): Promise<void> =>
         TypedApi.put('/notifications/preferences', preferences),
@@ -463,8 +414,7 @@ export const NotificationsApi = {
 // ==========================================
 
 export const AnalyticsApi = {
-    getOverview: (): Promise<MetricsOverviewResponse> =>
-        TypedApi.get('/analytics/overview'),
+    getOverview: (): Promise<MetricsOverviewResponse> => TypedApi.get('/analytics/overview'),
 
     getAnalytics: (params?: { period?: string }): Promise<AnalyticsResponse> => {
         const query = params ? `?${new URLSearchParams(params)}` : '';
@@ -477,15 +427,13 @@ export const AnalyticsApi = {
 // ==========================================
 
 export const PMOApi = {
-    getContext: (projectId: string): Promise<PMOContextResponse> =>
-        TypedApi.get(`/pmo/projects/${projectId}/context`),
+    getContext: (projectId: string): Promise<PMOContextResponse> => TypedApi.get(`/pmo/projects/${projectId}/context`),
 
     // Decisions
     getDecisions: (projectId: string): Promise<DecisionResponse[]> =>
         TypedApi.get(`/pmo/projects/${projectId}/decisions`),
 
-    createDecision: (data: CreateDecisionRequest): Promise<DecisionResponse> =>
-        TypedApi.post('/pmo/decisions', data),
+    createDecision: (data: CreateDecisionRequest): Promise<DecisionResponse> => TypedApi.post('/pmo/decisions', data),
 
     updateDecision: (id: string, data: UpdateDecisionRequest): Promise<DecisionResponse> =>
         TypedApi.put(`/pmo/decisions/${id}`, data),
@@ -494,8 +442,7 @@ export const PMOApi = {
     getStageGates: (projectId: string): Promise<StageGateResponse[]> =>
         TypedApi.get(`/pmo/projects/${projectId}/gates`),
 
-    createStageGate: (data: CreateStageGateRequest): Promise<StageGateResponse> =>
-        TypedApi.post('/pmo/gates', data),
+    createStageGate: (data: CreateStageGateRequest): Promise<StageGateResponse> => TypedApi.post('/pmo/gates', data),
 
     updateStageGate: (id: string, data: UpdateStageGateRequest): Promise<StageGateResponse> =>
         TypedApi.put(`/pmo/gates/${id}`, data),
@@ -506,14 +453,12 @@ export const PMOApi = {
         return TypedApi.get(`/pmo/projects/${projectId}/raid${query}`);
     },
 
-    createRAIDItem: (data: CreateRAIDItemRequest): Promise<RAIDItemResponse> =>
-        TypedApi.post('/pmo/raid', data),
+    createRAIDItem: (data: CreateRAIDItemRequest): Promise<RAIDItemResponse> => TypedApi.post('/pmo/raid', data),
 
     updateRAIDItem: (id: string, data: UpdateRAIDItemRequest): Promise<RAIDItemResponse> =>
         TypedApi.put(`/pmo/raid/${id}`, data),
 
-    deleteRAIDItem: (id: string): Promise<void> =>
-        TypedApi.delete(`/pmo/raid/${id}`),
+    deleteRAIDItem: (id: string): Promise<void> => TypedApi.delete(`/pmo/raid/${id}`),
 };
 
 // ==========================================
@@ -526,17 +471,14 @@ export const AssessmentsApi = {
         return TypedApi.get(`/assessments${query}`);
     },
 
-    get: (id: string): Promise<AssessmentResponse> =>
-        TypedApi.get(`/assessments/${id}`),
+    get: (id: string): Promise<AssessmentResponse> => TypedApi.get(`/assessments/${id}`),
 
-    create: (data: CreateAssessmentRequest): Promise<AssessmentResponse> =>
-        TypedApi.post('/assessments', data),
+    create: (data: CreateAssessmentRequest): Promise<AssessmentResponse> => TypedApi.post('/assessments', data),
 
     update: (id: string, data: UpdateAssessmentRequest): Promise<AssessmentResponse> =>
         TypedApi.put(`/assessments/${id}`, data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/assessments/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/assessments/${id}`),
 };
 
 // ==========================================
@@ -544,18 +486,14 @@ export const AssessmentsApi = {
 // ==========================================
 
 export const IntegrationsApi = {
-    list: (orgId: string): Promise<IntegrationResponse[]> =>
-        TypedApi.get(`/integrations?organizationId=${orgId}`),
+    list: (orgId: string): Promise<IntegrationResponse[]> => TypedApi.get(`/integrations?organizationId=${orgId}`),
 
-    create: (data: CreateIntegrationRequest): Promise<IntegrationResponse> =>
-        TypedApi.post('/integrations', data),
+    create: (data: CreateIntegrationRequest): Promise<IntegrationResponse> => TypedApi.post('/integrations', data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/integrations/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/integrations/${id}`),
 
     // Webhooks
-    getWebhooks: (): Promise<WebhookResponse[]> =>
-        TypedApi.get('/integrations/webhooks'),
+    getWebhooks: (): Promise<WebhookResponse[]> => TypedApi.get('/integrations/webhooks'),
 
     createWebhook: (data: CreateWebhookRequest): Promise<WebhookResponse> =>
         TypedApi.post('/integrations/webhooks', data),
@@ -563,24 +501,20 @@ export const IntegrationsApi = {
     updateWebhook: (id: string, data: UpdateWebhookRequest): Promise<WebhookResponse> =>
         TypedApi.put(`/integrations/webhooks/${id}`, data),
 
-    deleteWebhook: (id: string): Promise<void> =>
-        TypedApi.delete(`/integrations/webhooks/${id}`),
+    deleteWebhook: (id: string): Promise<void> => TypedApi.delete(`/integrations/webhooks/${id}`),
 
     testWebhook: (id: string): Promise<{ success: boolean; error?: string }> =>
         TypedApi.post(`/integrations/webhooks/${id}/test`, {}),
 
     // API Keys
-    getApiKeys: (): Promise<ApiKeyResponse[]> =>
-        TypedApi.get('/user/api-keys'),
+    getApiKeys: (): Promise<ApiKeyResponse[]> => TypedApi.get('/user/api-keys'),
 
     createApiKey: (data: CreateApiKeyRequest): Promise<ApiKeyResponse & { key: string }> =>
         TypedApi.post('/user/api-keys', data),
 
-    deleteApiKey: (id: string): Promise<void> =>
-        TypedApi.delete(`/user/api-keys/${id}`),
+    deleteApiKey: (id: string): Promise<void> => TypedApi.delete(`/user/api-keys/${id}`),
 
-    rotateApiKey: (id: string): Promise<{ key: string }> =>
-        TypedApi.put(`/user/api-keys/${id}/rotate`, {}),
+    rotateApiKey: (id: string): Promise<{ key: string }> => TypedApi.put(`/user/api-keys/${id}/rotate`, {}),
 };
 
 // ==========================================
@@ -593,8 +527,7 @@ export const KnowledgeApi = {
         return TypedApi.get(`/knowledge/documents${query}`);
     },
 
-    get: (id: string): Promise<KnowledgeDocumentResponse> =>
-        TypedApi.get(`/knowledge/documents/${id}`),
+    get: (id: string): Promise<KnowledgeDocumentResponse> => TypedApi.get(`/knowledge/documents/${id}`),
 
     create: (data: CreateKnowledgeDocumentRequest): Promise<KnowledgeDocumentResponse> =>
         TypedApi.post('/knowledge/documents', data),
@@ -602,8 +535,7 @@ export const KnowledgeApi = {
     update: (id: string, data: UpdateKnowledgeDocumentRequest): Promise<KnowledgeDocumentResponse> =>
         TypedApi.put(`/knowledge/documents/${id}`, data),
 
-    delete: (id: string): Promise<void> =>
-        TypedApi.delete(`/knowledge/documents/${id}`),
+    delete: (id: string): Promise<void> => TypedApi.delete(`/knowledge/documents/${id}`),
 
     upload: (file: File, metadata?: Partial<CreateKnowledgeDocumentRequest>): Promise<KnowledgeDocumentResponse> => {
         const formData = new FormData();
@@ -617,8 +549,7 @@ export const KnowledgeApi = {
     search: (query: SearchKnowledgeRequest): Promise<KnowledgeSearchResponse> =>
         TypedApi.post('/knowledge/search', query),
 
-    index: (id: string): Promise<void> =>
-        TypedApi.post(`/knowledge/documents/${id}/index`, {}),
+    index: (id: string): Promise<void> => TypedApi.post(`/knowledge/documents/${id}/index`, {}),
 };
 
 // ==========================================
@@ -631,8 +562,7 @@ export const FeedbackApi = {
         return TypedApi.get(`/feedback${query}`);
     },
 
-    submit: (data: CreateFeedbackRequest): Promise<FeedbackResponse> =>
-        TypedApi.post('/feedback', data),
+    submit: (data: CreateFeedbackRequest): Promise<FeedbackResponse> => TypedApi.post('/feedback', data),
 
     updateStatus: (id: string, data: UpdateFeedbackStatusRequest): Promise<FeedbackResponse> =>
         TypedApi.patch(`/feedback/${id}/status`, data),
@@ -646,19 +576,16 @@ export const FeedbackApi = {
 // ==========================================
 
 export const AdminApi = {
-    getDashboard: (): Promise<SuperAdminDashboardResponse> =>
-        TypedApi.get('/admin/dashboard'),
+    getDashboard: (): Promise<SuperAdminDashboardResponse> => TypedApi.get('/admin/dashboard'),
 
-    getSystemHealth: (): Promise<SystemHealthResponse> =>
-        TypedApi.get('/admin/system/health'),
+    getSystemHealth: (): Promise<SystemHealthResponse> => TypedApi.get('/admin/system/health'),
 
     getUsers: (params?: ListParams): Promise<{ users: UserResponse[]; total: number }> => {
         const query = params ? `?${new URLSearchParams(params as Record<string, string>)}` : '';
         return TypedApi.get(`/admin/users${query}`);
     },
 
-    getUser: (id: string): Promise<UserResponse> =>
-        TypedApi.get(`/admin/users/${id}`),
+    getUser: (id: string): Promise<UserResponse> => TypedApi.get(`/admin/users/${id}`),
 
     updateUser: (id: string, data: Partial<UserResponse>): Promise<UserResponse> =>
         TypedApi.put(`/admin/users/${id}`, data),
@@ -666,11 +593,9 @@ export const AdminApi = {
     suspendUser: (id: string, reason?: string): Promise<void> =>
         TypedApi.post(`/admin/users/${id}/suspend`, { reason }),
 
-    unsuspendUser: (id: string): Promise<void> =>
-        TypedApi.post(`/admin/users/${id}/unsuspend`, {}),
+    unsuspendUser: (id: string): Promise<void> => TypedApi.post(`/admin/users/${id}/unsuspend`, {}),
 
-    impersonateUser: (id: string): Promise<{ token: string }> =>
-        TypedApi.post(`/admin/users/${id}/impersonate`, {}),
+    impersonateUser: (id: string): Promise<{ token: string }> => TypedApi.post(`/admin/users/${id}/impersonate`, {}),
 
     getOrganizations: (params?: ListParams): Promise<{ organizations: OrganizationResponse[]; total: number }> => {
         const query = params ? `?${new URLSearchParams(params as Record<string, string>)}` : '';
@@ -681,7 +606,3 @@ export const AdminApi = {
 // ==========================================
 // EXPORT ALL
 // ==========================================
-
-
-
-

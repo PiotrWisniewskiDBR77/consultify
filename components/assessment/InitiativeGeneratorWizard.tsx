@@ -1,6 +1,6 @@
 /**
  * InitiativeGeneratorWizard
- * 
+ *
  * Multi-step wizard for generating initiatives from assessment gaps.
  * Steps:
  * 1. Gap Selection - Select which gaps to address
@@ -11,39 +11,40 @@
  * 6. Approve & Transfer - Send to Module 3
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
 import {
-    ArrowRight,
+    AlertCircle,
     ArrowLeft,
+    ArrowRight,
+    Brain,
     Check,
+    CheckCircle2,
+    Clock,
+    DollarSign,
+    FileText,
+    Loader2,
+    Plus,
+    Send,
+    Shield,
     Sparkles,
     Target,
-    DollarSign,
-    Clock,
     Users,
-    Shield,
-    Loader2,
-    AlertCircle,
-    Plus,
-    CheckCircle2,
-    Send,
-    FileText,
-    Brain
 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import { useInitiativeGenerator } from '../../hooks/useInitiativeGenerator';
+import {
+    AIGeneratedCharter,
+    AppView,
+    DRDAxis,
+    GapForGeneration,
+    GeneratedInitiative,
+    InitiativeGeneratorConstraints,
+    InitiativeTemplate,
+} from '../../types';
+import { AICharterPreview } from './AICharterPreview';
 import { GeneratedInitiativeCard } from './GeneratedInitiativeCard';
 import { InitiativeEditor } from './InitiativeEditor';
 import { TemplateLibrary } from './TemplateLibrary';
-import { AICharterPreview } from './AICharterPreview';
-import { 
-    GapForGeneration, 
-    GeneratedInitiative, 
-    InitiativeGeneratorConstraints,
-    DRDAxis,
-    AppView,
-    InitiativeTemplate,
-    AIGeneratedCharter
-} from '../../types';
 
 type WizardStep = 'gaps' | 'template' | 'constraints' | 'ai-charter' | 'review' | 'approve';
 
@@ -60,14 +61,14 @@ const STEPS: { id: WizardStep; label: string; icon: React.ReactNode }[] = [
     { id: 'constraints', label: 'Constraints', icon: <Shield size={18} /> },
     { id: 'ai-charter', label: 'AI Charter', icon: <Brain size={18} /> },
     { id: 'review', label: 'Review', icon: <Sparkles size={18} /> },
-    { id: 'approve', label: 'Approve', icon: <Send size={18} /> }
+    { id: 'approve', label: 'Approve', icon: <Send size={18} /> },
 ];
 
 export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps> = ({
     assessmentId,
     projectId,
     onComplete,
-    onCancel
+    onCancel,
 }) => {
     // State
     const [currentStep, setCurrentStep] = useState<WizardStep>('gaps');
@@ -76,11 +77,11 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         maxTimeline: '6 months',
         teamSize: '5-10',
         riskAppetite: 'moderate',
-        focusAreas: []
+        focusAreas: [],
     });
     const [editingInitiative, setEditingInitiative] = useState<GeneratedInitiative | null>(null);
     const [transferResult, setTransferResult] = useState<{ transferred: string[]; failed: string[] } | null>(null);
-    
+
     // Template & Charter state
     const [templates, setTemplates] = useState<InitiativeTemplate[]>([]);
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
@@ -106,7 +107,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         approveAndTransfer,
         generateCharter,
         regenerateSection,
-        fetchTemplates
+        fetchTemplates,
     } = useInitiativeGenerator(assessmentId);
 
     // Fetch templates when entering template step
@@ -129,15 +130,18 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     };
 
     // Derived state
-    const selectedGapsCount = useMemo(() => gaps.filter(g => g.selected).length, [gaps]);
-    const stepIndex = STEPS.findIndex(s => s.id === currentStep);
+    const selectedGapsCount = useMemo(() => gaps.filter((g) => g.selected).length, [gaps]);
+    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
 
     // Calculate totals for selected initiatives
     const totals = useMemo(() => {
-        return generatedInitiatives.reduce((acc, init) => ({
-            budget: acc.budget + init.estimatedBudget,
-            roi: acc.roi + init.estimatedROI
-        }), { budget: 0, roi: 0 });
+        return generatedInitiatives.reduce(
+            (acc, init) => ({
+                budget: acc.budget + init.estimatedBudget,
+                roi: acc.roi + init.estimatedROI,
+            }),
+            { budget: 0, roi: 0 },
+        );
     }, [generatedInitiatives]);
 
     // Handlers
@@ -152,9 +156,9 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
             try {
                 const charter = await generateCharter({
                     sourceType: 'GAP',
-                    gaps: gaps.filter(g => g.selected),
+                    gaps: gaps.filter((g) => g.selected),
                     templateId: selectedTemplate?.id,
-                    constraints
+                    constraints,
                 });
                 setGeneratedCharter(charter);
                 setCurrentStep('ai-charter');
@@ -176,7 +180,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     };
 
     const handleBack = () => {
-        const stepIndex = STEPS.findIndex(s => s.id === currentStep);
+        const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
         if (stepIndex > 0) {
             setCurrentStep(STEPS[stepIndex - 1].id);
         }
@@ -200,8 +204,8 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     const handleRegenerateSection = async (section: string) => {
         if (generatedCharter) {
             const context = {
-                gaps: gaps.filter(g => g.selected),
-                constraints
+                gaps: gaps.filter((g) => g.selected),
+                constraints,
             };
             const newData = await regenerateSection(generatedCharter.id, section, context);
             if (newData) {
@@ -213,7 +217,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     const handleApprove = async () => {
         const result = await approveAndTransfer(projectId);
         setTransferResult(result);
-        
+
         if (result.transferred.length > 0) {
             onComplete(result.transferred);
         }
@@ -290,11 +294,16 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                         Generating Full Charter
                     </h3>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-                        AI is analyzing gaps, applying template patterns, and creating a comprehensive initiative charter...
+                        AI is analyzing gaps, applying template patterns, and creating a comprehensive initiative
+                        charter...
                     </p>
                     <div className="mt-6 flex gap-4 text-xs text-slate-400">
-                        <span className="flex items-center gap-1"><Check size={12} className="text-green-500" /> Problem Analysis</span>
-                        <span className="flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Target State</span>
+                        <span className="flex items-center gap-1">
+                            <Check size={12} className="text-green-500" /> Problem Analysis
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Loader2 size={12} className="animate-spin" /> Target State
+                        </span>
                         <span className="flex items-center gap-1 opacity-50">Tasks</span>
                         <span className="flex items-center gap-1 opacity-50">Financials</span>
                     </div>
@@ -326,9 +335,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-                        Select Gaps to Address
-                    </h3>
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Select Gaps to Address</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         Choose which maturity gaps should be addressed with new initiatives
                     </p>
@@ -359,40 +366,48 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                             onClick={() => selectGap(gap.axisId, !gap.selected)}
                             className={`
                                 p-4 rounded-xl border-2 cursor-pointer transition-all
-                                ${gap.selected 
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
-                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                ${
+                                    gap.selected
+                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                 }
                             `}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className={`
+                                    <div
+                                        className={`
                                         w-6 h-6 rounded-full flex items-center justify-center border-2
-                                        ${gap.selected 
-                                            ? 'bg-purple-600 border-purple-600' 
-                                            : 'border-slate-300 dark:border-slate-600'
+                                        ${
+                                            gap.selected
+                                                ? 'bg-purple-600 border-purple-600'
+                                                : 'border-slate-300 dark:border-slate-600'
                                         }
-                                    `}>
+                                    `}
+                                    >
                                         {gap.selected && <Check size={14} className="text-white" />}
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-navy-900 dark:text-white">
-                                            {gap.axisName}
-                                        </h4>
+                                        <h4 className="font-medium text-navy-900 dark:text-white">{gap.axisName}</h4>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {gap.currentScore} → {gap.targetScore} (gap: {gap.gap})
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`
+                                <span
+                                    className={`
                                     px-3 py-1 rounded-full text-xs font-semibold
-                                    ${gap.priority === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                      gap.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                                      gap.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                      'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                    ${
+                                        gap.priority === 'CRITICAL'
+                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                            : gap.priority === 'HIGH'
+                                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                              : gap.priority === 'MEDIUM'
+                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                                     }
-                                `}>
+                                `}
+                                >
                                     {gap.priority}
                                 </span>
                             </div>
@@ -407,9 +422,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
     const renderConstraints = () => (
         <div className="space-y-6">
             <div>
-                <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-                    Set Generation Constraints
-                </h3>
+                <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Set Generation Constraints</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                     Define parameters for AI initiative generation
                 </p>
@@ -425,10 +438,12 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     <input
                         type="number"
                         value={constraints.maxBudget || ''}
-                        onChange={(e) => setConstraints(prev => ({ 
-                            ...prev, 
-                            maxBudget: e.target.value ? parseInt(e.target.value) : undefined 
-                        }))}
+                        onChange={(e) =>
+                            setConstraints((prev) => ({
+                                ...prev,
+                                maxBudget: e.target.value ? parseInt(e.target.value) : undefined,
+                            }))
+                        }
                         placeholder="No limit"
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                     />
@@ -442,7 +457,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     </label>
                     <select
                         value={constraints.maxTimeline || ''}
-                        onChange={(e) => setConstraints(prev => ({ ...prev, maxTimeline: e.target.value }))}
+                        onChange={(e) => setConstraints((prev) => ({ ...prev, maxTimeline: e.target.value }))}
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                     >
                         <option value="3 months">3 months</option>
@@ -461,7 +476,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     </label>
                     <select
                         value={constraints.teamSize || ''}
-                        onChange={(e) => setConstraints(prev => ({ ...prev, teamSize: e.target.value }))}
+                        onChange={(e) => setConstraints((prev) => ({ ...prev, teamSize: e.target.value }))}
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                     >
                         <option value="1-5">1-5 people</option>
@@ -479,10 +494,12 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     </label>
                     <select
                         value={constraints.riskAppetite || ''}
-                        onChange={(e) => setConstraints(prev => ({ 
-                            ...prev, 
-                            riskAppetite: e.target.value as 'conservative' | 'moderate' | 'aggressive' 
-                        }))}
+                        onChange={(e) =>
+                            setConstraints((prev) => ({
+                                ...prev,
+                                riskAppetite: e.target.value as 'conservative' | 'moderate' | 'aggressive',
+                            }))
+                        }
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                     >
                         <option value="conservative">Conservative - Lower risk, smaller scope</option>
@@ -498,14 +515,16 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     Selected Gaps ({selectedGapsCount})
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                    {gaps.filter(g => g.selected).map(gap => (
-                        <span 
-                            key={gap.axisId}
-                            className="px-2 py-1 bg-white dark:bg-navy-900 rounded text-xs text-navy-900 dark:text-white"
-                        >
-                            {gap.axisName}
-                        </span>
-                    ))}
+                    {gaps
+                        .filter((g) => g.selected)
+                        .map((gap) => (
+                            <span
+                                key={gap.axisId}
+                                className="px-2 py-1 bg-white dark:bg-navy-900 rounded text-xs text-navy-900 dark:text-white"
+                            >
+                                {gap.axisName}
+                            </span>
+                        ))}
                 </div>
             </div>
         </div>
@@ -535,9 +554,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
             {isGenerating ? (
                 <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="w-10 h-10 text-purple-500 animate-spin mb-4" />
-                    <p className="text-slate-500 dark:text-slate-400">
-                        AI is generating initiatives...
-                    </p>
+                    <p className="text-slate-500 dark:text-slate-400">AI is generating initiatives...</p>
                 </div>
             ) : generatedInitiatives.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 dark:text-slate-400">
@@ -620,9 +637,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                             <div className="flex items-center gap-3">
                                 <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                                 <div>
-                                    <h4 className="font-medium text-red-900 dark:text-red-300">
-                                        Transfer Failed
-                                    </h4>
+                                    <h4 className="font-medium text-red-900 dark:text-red-300">Transfer Failed</h4>
                                     <p className="text-sm text-red-700 dark:text-red-400">
                                         {transferResult.failed.length} initiative(s) could not be transferred
                                     </p>
@@ -647,7 +662,9 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                             </div>
                             <div>
                                 <p className="text-purple-200 text-sm">Expected ROI</p>
-                                <p className="text-3xl font-bold">{(totals.roi / generatedInitiatives.length).toFixed(1)}x</p>
+                                <p className="text-3xl font-bold">
+                                    {(totals.roi / generatedInitiatives.length).toFixed(1)}x
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -655,7 +672,10 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     {/* Initiative List */}
                     <div className="divide-y divide-slate-200 dark:divide-white/10 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
                         {generatedInitiatives.map((init, idx) => (
-                            <div key={init.id} className="p-4 flex items-center justify-between bg-white dark:bg-navy-900">
+                            <div
+                                key={init.id}
+                                className="p-4 flex items-center justify-between bg-white dark:bg-navy-900"
+                            >
                                 <div className="flex items-center gap-4">
                                     <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-sm font-bold text-purple-600 dark:text-purple-400">
                                         {idx + 1}
@@ -667,13 +687,18 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`
+                                <span
+                                    className={`
                                     px-2 py-1 rounded text-xs font-medium
-                                    ${init.riskLevel === 'HIGH' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                      init.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    ${
+                                        init.riskLevel === 'HIGH'
+                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                            : init.riskLevel === 'MEDIUM'
+                                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                     }
-                                `}>
+                                `}
+                                >
                                     {init.riskLevel}
                                 </span>
                             </div>
@@ -688,9 +713,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         <div className="flex flex-col h-full bg-white dark:bg-navy-900">
             {/* Header */}
             <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-white/10">
-                <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                    Initiative Generator
-                </h2>
+                <h2 className="text-xl font-bold text-navy-900 dark:text-white">Initiative Generator</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                     Generate transformation initiatives from assessment gaps
                 </p>
@@ -706,30 +729,42 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                         return (
                             <React.Fragment key={step.id}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`
+                                    <div
+                                        className={`
                                         w-10 h-10 rounded-full flex items-center justify-center
-                                        ${isCompleted ? 'bg-green-500 text-white' :
-                                          isActive ? 'bg-purple-600 text-white' :
-                                          'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                        ${
+                                            isCompleted
+                                                ? 'bg-green-500 text-white'
+                                                : isActive
+                                                  ? 'bg-purple-600 text-white'
+                                                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                         }
-                                    `}>
+                                    `}
+                                    >
                                         {isCompleted ? <Check size={18} /> : step.icon}
                                     </div>
-                                    <span className={`
+                                    <span
+                                        className={`
                                         text-sm font-medium
-                                        ${isActive ? 'text-purple-600 dark:text-purple-400' :
-                                          isCompleted ? 'text-green-600 dark:text-green-400' :
-                                          'text-slate-500 dark:text-slate-400'
+                                        ${
+                                            isActive
+                                                ? 'text-purple-600 dark:text-purple-400'
+                                                : isCompleted
+                                                  ? 'text-green-600 dark:text-green-400'
+                                                  : 'text-slate-500 dark:text-slate-400'
                                         }
-                                    `}>
+                                    `}
+                                    >
                                         {step.label}
                                     </span>
                                 </div>
                                 {idx < STEPS.length - 1 && (
-                                    <div className={`
+                                    <div
+                                        className={`
                                         flex-1 h-0.5 mx-4
                                         ${idx < stepIndex ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}
-                                    `} />
+                                    `}
+                                    />
                                 )}
                             </React.Fragment>
                         );
@@ -846,4 +881,3 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
         </div>
     );
 };
-

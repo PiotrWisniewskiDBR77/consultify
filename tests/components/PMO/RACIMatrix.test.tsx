@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RACIMatrix } from '../../../components/PMO/RACIMatrix';
+import { RACIMatrix } from '../../components/PMO/RACIMatrix';
 import { RACIType, PMOProjectRole } from '../../../types';
 
 // Mock API
@@ -268,6 +268,7 @@ describe('RACIMatrix Component', () => {
         });
     });
 });
+
 
 
 

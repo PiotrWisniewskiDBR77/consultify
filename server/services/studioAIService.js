@@ -7,7 +7,8 @@
  * @module server/services/studioAIService
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import PromptService from './promptService.js';
 import TokenBillingService from './tokenBillingService.js';
 import { ModelRouter } from './ai/modelRouter.js';
@@ -640,6 +641,7 @@ Apply the requested changes to the diagram. Return the complete updated diagram.
 // Export singleton instance
 const studioAIServiceInstance = new StudioAIService();
 export default studioAIServiceInstance;
+
 
 
 

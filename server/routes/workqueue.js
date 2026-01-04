@@ -7,8 +7,9 @@
 import express from 'express';
 const router = express.Router();
 import auth from '../middleware/authMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 import * as WorkqueueServiceModule from '../services/workqueueService.js';
 const WorkqueueService = WorkqueueServiceModule.default || WorkqueueServiceModule;
 import * as SLAServiceModule from '../services/slaService.js';

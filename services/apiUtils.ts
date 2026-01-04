@@ -12,13 +12,13 @@ export const getHeaders = () => {
     const token = tokenService.getToken();
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'X-Correlation-ID': correlationId as string
+        Authorization: token ? `Bearer ${token}` : '',
+        'X-Correlation-ID': correlationId as string,
     };
 };
 
 export const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const headers = { ...getHeaders(), ...(options.headers as Record<string, string> || {}) };
+    const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
     let res = await fetch(url, { ...options, headers });
 
     if (res.status === 401) {
@@ -44,12 +44,14 @@ export const handleResponse = async (res: Response, defaultError: string) => {
     const data = await res.json().catch(() => ({}));
 
     if (res.status === 403 && (data.code === 'DEMO_BLOCKED' || data.errorCode === 'DEMO_ACTION_BLOCKED')) {
-        window.dispatchEvent(new CustomEvent('DEMO_ACTION_BLOCKED', {
-            detail: {
-                message: data.message || data.error,
-                action: data.action
-            }
-        }));
+        window.dispatchEvent(
+            new CustomEvent('DEMO_ACTION_BLOCKED', {
+                detail: {
+                    message: data.message || data.error,
+                    action: data.action,
+                },
+            }),
+        );
         return null;
     }
 
@@ -59,7 +61,7 @@ export const handleResponse = async (res: Response, defaultError: string) => {
         store.setAiFreezeStatus({
             isFrozen: true,
             reason: data.error,
-            scope: data.budgetStatus?.scope || 'Global'
+            scope: data.budgetStatus?.scope || 'Global',
         });
         throw new Error(data.error || 'AI Budget Exhausted');
     }

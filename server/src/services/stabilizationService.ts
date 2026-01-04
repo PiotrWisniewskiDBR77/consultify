@@ -2,16 +2,17 @@
 // Step 6: Stabilization, Reporting & Economics
 
 import { v4 as uuidv4 } from 'uuid';
+
 import * as DbPromise from '../utils/DbPromise.js';
 
 export const STABILIZATION_STATUSES = {
     STABILIZED: 'STABILIZED',
     PARTIALLY_STABILIZED: 'PARTIALLY_STABILIZED',
     UNSTABLE: 'UNSTABLE',
-    NOT_APPLICABLE: 'NOT_APPLICABLE'
+    NOT_APPLICABLE: 'NOT_APPLICABLE',
 } as const;
 
-type StabilizationStatus = typeof STABILIZATION_STATUSES[keyof typeof STABILIZATION_STATUSES];
+type StabilizationStatus = (typeof STABILIZATION_STATUSES)[keyof typeof STABILIZATION_STATUSES];
 
 type CriteriaItem = {
     criterion: string;
@@ -32,7 +33,9 @@ type ValueStats = {
 const StabilizationService = {
     STABILIZATION_STATUSES,
 
-    checkEntryCriteria: async (projectId: string): Promise<{
+    checkEntryCriteria: async (
+        projectId: string,
+    ): Promise<{
         projectId: string;
         canEnterStabilization: boolean;
         completionCriteria: CriteriaItem[];
@@ -43,28 +46,29 @@ const StabilizationService = {
         const criticalIncomplete = await DbPromise.get<{ count?: number }>(
             `SELECT COUNT(*) as count FROM initiatives 
              WHERE project_id = ? AND is_critical_path = 1 AND status NOT IN ('COMPLETED', 'CANCELLED')`,
-            [projectId]
+            [projectId],
         );
         const criticalCount = criticalIncomplete?.count || 0;
 
         criteria.push({
             criterion: 'Critical initiatives completed',
             isMet: criticalCount === 0,
-            evidence: criticalCount === 0 ? 'All critical initiatives done' : `${criticalCount} critical initiatives pending`
+            evidence:
+                criticalCount === 0 ? 'All critical initiatives done' : `${criticalCount} critical initiatives pending`,
         });
         if (criticalCount > 0) allMet = false;
 
         const blockingDecisions = await DbPromise.get<{ count?: number }>(
             `SELECT COUNT(*) as count FROM decisions 
              WHERE project_id = ? AND status = 'PENDING' AND required = 1`,
-            [projectId]
+            [projectId],
         );
         const blockingCount = blockingDecisions?.count || 0;
 
         criteria.push({
             criterion: 'No unresolved blocking decisions',
             isMet: blockingCount === 0,
-            evidence: blockingCount === 0 ? 'All required decisions resolved' : `${blockingCount} pending decisions`
+            evidence: blockingCount === 0 ? 'All required decisions resolved' : `${blockingCount} pending decisions`,
         });
         if (blockingCount > 0) allMet = false;
 
@@ -73,33 +77,31 @@ const StabilizationService = {
                 COUNT(*) as total,
                 SUM(CASE WHEN status IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) as closed
              FROM initiatives WHERE project_id = ?`,
-            [projectId]
+            [projectId],
         );
 
         const totalInitiatives = initiativeStats?.total || 0;
         const closedInitiatives = initiativeStats?.closed || 0;
-        const completionRate = totalInitiatives > 0
-            ? Math.round((closedInitiatives / totalInitiatives) * 100)
-            : 0;
+        const completionRate = totalInitiatives > 0 ? Math.round((closedInitiatives / totalInitiatives) * 100) : 0;
 
         criteria.push({
             criterion: 'Roadmap execution ≥80% complete',
             isMet: completionRate >= 80,
-            evidence: `${completionRate}% initiatives closed`
+            evidence: `${completionRate}% initiatives closed`,
         });
         if (completionRate < 80) allMet = false;
 
         return {
             projectId,
             canEnterStabilization: allMet,
-            completionCriteria: criteria
+            completionCriteria: criteria,
         };
     },
 
     setStabilizationStatus: async (
         initiativeId: string,
         status: StabilizationStatus,
-        _userId: string
+        _userId: string,
     ): Promise<{ updated: boolean; initiativeId: string; status: StabilizationStatus }> => {
         if (!Object.values(STABILIZATION_STATUSES).includes(status)) {
             throw new Error(`Invalid stabilization status: ${status}`);
@@ -109,13 +111,15 @@ const StabilizationService = {
             `UPDATE initiatives SET stabilization_status = ?, updated_at = CURRENT_TIMESTAMP 
              WHERE id = ?`,
             [status, initiativeId],
-            { fallback: false }
+            { fallback: false },
         );
 
         return { updated: (result.changes || 0) > 0, initiativeId, status };
     },
 
-    getStabilizationSummary: async (projectId: string): Promise<{
+    getStabilizationSummary: async (
+        projectId: string,
+    ): Promise<{
         stabilized: number;
         partiallyStabilized: number;
         unstable: number;
@@ -125,14 +129,14 @@ const StabilizationService = {
             `SELECT stabilization_status, COUNT(*) as count 
              FROM initiatives WHERE project_id = ? AND status = 'COMPLETED'
              GROUP BY stabilization_status`,
-            [projectId]
+            [projectId],
         );
 
         const summary = {
             stabilized: 0,
             partiallyStabilized: 0,
             unstable: 0,
-            notApplicable: 0
+            notApplicable: 0,
         };
 
         (rows || []).forEach((row) => {
@@ -154,7 +158,9 @@ const StabilizationService = {
         return summary;
     },
 
-    checkExitCriteria: async (projectId: string): Promise<{
+    checkExitCriteria: async (
+        projectId: string,
+    ): Promise<{
         projectId: string;
         canCloseProject: boolean;
         completionCriteria: CriteriaItem[];
@@ -165,21 +171,21 @@ const StabilizationService = {
         const unstableCountRow = await DbPromise.get<{ count?: number }>(
             `SELECT COUNT(*) as count FROM initiatives 
              WHERE project_id = ? AND stabilization_status = 'UNSTABLE'`,
-            [projectId]
+            [projectId],
         );
         const unstableCount = unstableCountRow?.count || 0;
 
         criteria.push({
             criterion: 'No unstable initiatives',
             isMet: unstableCount === 0,
-            evidence: unstableCount === 0 ? 'All initiatives stable' : `${unstableCount} unstable initiatives`
+            evidence: unstableCount === 0 ? 'All initiatives stable' : `${unstableCount} unstable initiatives`,
         });
         if (unstableCount > 0) allMet = false;
 
         const valueStats = await DbPromise.get<ValueStats>(
             `SELECT COUNT(*) as total, SUM(CASE WHEN is_validated = 1 THEN 1 ELSE 0 END) as validated
              FROM value_hypotheses WHERE project_id = ?`,
-            [projectId]
+            [projectId],
         );
 
         const totalHypotheses = valueStats?.total || 0;
@@ -188,14 +194,14 @@ const StabilizationService = {
         criteria.push({
             criterion: 'Value hypotheses reviewed',
             isMet: totalHypotheses === 0 || validatedHypotheses === totalHypotheses,
-            evidence: `${validatedHypotheses}/${totalHypotheses} hypotheses validated`
+            evidence: `${validatedHypotheses}/${totalHypotheses} hypotheses validated`,
         });
         if (totalHypotheses > 0 && validatedHypotheses < totalHypotheses) allMet = false;
 
         return {
             projectId,
             canCloseProject: allMet,
-            completionCriteria: criteria
+            completionCriteria: criteria,
         };
     },
 
@@ -203,7 +209,7 @@ const StabilizationService = {
         projectId: string,
         closureType: string,
         userId: string,
-        lessonsLearned: string | null = null
+        lessonsLearned: string | null = null,
     ): Promise<{
         closureId: string;
         projectId: string;
@@ -217,24 +223,24 @@ const StabilizationService = {
                 SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
              FROM initiatives WHERE project_id = ?`,
-            [projectId]
+            [projectId],
         );
 
         const valueStats = await DbPromise.get<ValueStats>(
             `SELECT COUNT(*) as total, SUM(CASE WHEN is_validated = 1 THEN 1 ELSE 0 END) as validated
              FROM value_hypotheses WHERE project_id = ?`,
-            [projectId]
+            [projectId],
         );
 
         const closureId = uuidv4();
         const initiativeStats = {
             total: stats?.total || 0,
             completed: stats?.completed || 0,
-            cancelled: stats?.cancelled || 0
+            cancelled: stats?.cancelled || 0,
         };
         const finalValueStats = {
             total: valueStats?.total || 0,
-            validated: valueStats?.validated || 0
+            validated: valueStats?.validated || 0,
         };
 
         await DbPromise.run(
@@ -254,15 +260,15 @@ const StabilizationService = {
                 initiativeStats.completed,
                 initiativeStats.cancelled,
                 finalValueStats.validated,
-                finalValueStats.total
+                finalValueStats.total,
             ],
-            { fallback: false }
+            { fallback: false },
         );
 
         await DbPromise.run(
             'UPDATE projects SET is_closed = 1, closed_at = CURRENT_TIMESTAMP, status = ? WHERE id = ?',
             [closureType, projectId],
-            { fallback: false }
+            { fallback: false },
         );
 
         return {
@@ -270,9 +276,9 @@ const StabilizationService = {
             projectId,
             closureType,
             initiativeStats,
-            valueStats: finalValueStats
+            valueStats: finalValueStats,
         };
-    }
+    },
 };
 
 export default StabilizationService;

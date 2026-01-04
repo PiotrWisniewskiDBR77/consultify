@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/Admin/shared/Card';
 import {
-    Plus,
+    AlertTriangle,
     ArrowRight,
-    Trash2,
-    Edit,
-    Users,
     Building2,
-    TrendingUp,
-    Clock,
+    CheckCircle2,
     ChevronRight,
+    Circle,
+    Clock,
+    Edit,
     Loader2,
     Move,
-    CheckCircle2,
-    AlertTriangle,
-    Circle
+    Plus,
+    Trash2,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card } from '../../../components/Admin/shared/Card';
 import Api from '../../../services/api';
 
 interface LifecycleStage {
@@ -70,14 +71,14 @@ const CustomerLifecycleView: React.FC = () => {
         name: '',
         description: '',
         orderIndex: 0,
-        color: STAGE_COLORS[0]
+        color: STAGE_COLORS[0],
     });
 
     const [newTransition, setNewTransition] = useState({
         organizationId: '',
         fromStageId: '',
         toStageId: '',
-        notes: ''
+        notes: '',
     });
 
     useEffect(() => {
@@ -90,7 +91,7 @@ const CustomerLifecycleView: React.FC = () => {
             const [stagesData, transitionsData, statsData] = await Promise.all([
                 Api.getLifecycleStages(),
                 Api.getLifecycleTransitions(),
-                Api.getLifecycleStats()
+                Api.getLifecycleStats(),
             ]);
             setStages(stagesData || []);
             setTransitions(transitionsData || []);
@@ -108,7 +109,7 @@ const CustomerLifecycleView: React.FC = () => {
         try {
             await Api.createLifecycleStage({
                 ...newStage,
-                orderIndex: stages.length
+                orderIndex: stages.length,
             });
             setShowCreateModal(false);
             setNewStage({ name: '', description: '', orderIndex: 0, color: STAGE_COLORS[0] });
@@ -127,7 +128,7 @@ const CustomerLifecycleView: React.FC = () => {
                 description: editingStage.description,
                 orderIndex: editingStage.order_index,
                 color: editingStage.color,
-                isActive: editingStage.is_active
+                isActive: editingStage.is_active,
             });
             setEditingStage(null);
             fetchData();
@@ -256,65 +257,64 @@ const CustomerLifecycleView: React.FC = () => {
                     <div className="text-center py-12">
                         <Circle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                         <p className="text-gray-400 mb-4">No lifecycle stages defined</p>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="text-blue-400 hover:text-blue-300"
-                        >
+                        <button onClick={() => setShowCreateModal(true)} className="text-blue-400 hover:text-blue-300">
                             Create your first stage
                         </button>
                     </div>
                 ) : (
                     <div className="flex items-center gap-2 overflow-x-auto pb-4">
-                        {stages.sort((a, b) => a.order_index - b.order_index).map((stage, index) => {
-                            const stageStats = stats?.stageStats?.find(s => s.stage_id === stage.id);
-                            return (
-                                <React.Fragment key={stage.id}>
-                                    <div
-                                        className="flex-shrink-0 w-48 bg-gray-700/50 rounded-lg p-4 relative group"
-                                        style={{ borderTop: `3px solid ${stage.color}` }}
-                                    >
-                                        {/* Stage Header */}
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-white font-medium truncate">{stage.name}</h4>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => setEditingStage(stage)}
-                                                    className="p-1 hover:bg-gray-600 rounded"
-                                                >
-                                                    <Edit className="w-3 h-3 text-gray-400" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteStage(stage.id)}
-                                                    className="p-1 hover:bg-red-600/20 rounded"
-                                                >
-                                                    <Trash2 className="w-3 h-3 text-red-400" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Stage Stats */}
-                                        <div className="flex items-center gap-2">
-                                            <Building2 className="w-4 h-4 text-gray-400" />
-                                            <span className="text-2xl font-bold text-white">
-                                                {stageStats?.count || 0}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-1">organizations</p>
-                                        
-                                        {/* Color indicator */}
+                        {stages
+                            .sort((a, b) => a.order_index - b.order_index)
+                            .map((stage, index) => {
+                                const stageStats = stats?.stageStats?.find((s) => s.stage_id === stage.id);
+                                return (
+                                    <React.Fragment key={stage.id}>
                                         <div
-                                            className="absolute bottom-2 right-2 w-3 h-3 rounded-full"
-                                            style={{ backgroundColor: stage.color }}
-                                        />
-                                    </div>
-                                    
-                                    {/* Arrow between stages */}
-                                    {index < stages.length - 1 && (
-                                        <ChevronRight className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
+                                            className="flex-shrink-0 w-48 bg-gray-700/50 rounded-lg p-4 relative group"
+                                            style={{ borderTop: `3px solid ${stage.color}` }}
+                                        >
+                                            {/* Stage Header */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-white font-medium truncate">{stage.name}</h4>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => setEditingStage(stage)}
+                                                        className="p-1 hover:bg-gray-600 rounded"
+                                                    >
+                                                        <Edit className="w-3 h-3 text-gray-400" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteStage(stage.id)}
+                                                        className="p-1 hover:bg-red-600/20 rounded"
+                                                    >
+                                                        <Trash2 className="w-3 h-3 text-red-400" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Stage Stats */}
+                                            <div className="flex items-center gap-2">
+                                                <Building2 className="w-4 h-4 text-gray-400" />
+                                                <span className="text-2xl font-bold text-white">
+                                                    {stageStats?.count || 0}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1">organizations</p>
+
+                                            {/* Color indicator */}
+                                            <div
+                                                className="absolute bottom-2 right-2 w-3 h-3 rounded-full"
+                                                style={{ backgroundColor: stage.color }}
+                                            />
+                                        </div>
+
+                                        {/* Arrow between stages */}
+                                        {index < stages.length - 1 && (
+                                            <ChevronRight className="w-6 h-6 text-gray-600 flex-shrink-0" />
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
                     </div>
                 )}
             </Card>
@@ -323,12 +323,10 @@ const CustomerLifecycleView: React.FC = () => {
             <Card className="bg-gray-800 p-4">
                 <h3 className="text-lg font-semibold text-white mb-4">Recent Transitions</h3>
                 {transitions.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">
-                        No transitions recorded yet
-                    </p>
+                    <p className="text-gray-500 text-sm text-center py-4">No transitions recorded yet</p>
                 ) : (
                     <div className="space-y-3">
-                        {transitions.slice(0, 10).map(transition => (
+                        {transitions.slice(0, 10).map((transition) => (
                             <div
                                 key={transition.id}
                                 className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg"
@@ -347,13 +345,9 @@ const CustomerLifecycleView: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-gray-400">
-                                        {formatDate(transition.transitioned_at)}
-                                    </p>
+                                    <p className="text-xs text-gray-400">{formatDate(transition.transitioned_at)}</p>
                                     {transition.transitioned_by_email && (
-                                        <p className="text-xs text-gray-500">
-                                            by {transition.transitioned_by_email}
-                                        </p>
+                                        <p className="text-xs text-gray-500">by {transition.transitioned_by_email}</p>
                                     )}
                                 </div>
                             </div>
@@ -369,9 +363,7 @@ const CustomerLifecycleView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Create Lifecycle Stage</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Stage Name
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Stage Name</label>
                                 <input
                                     type="text"
                                     value={newStage.name}
@@ -381,9 +373,7 @@ const CustomerLifecycleView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                                 <textarea
                                     value={newStage.description}
                                     onChange={(e) => setNewStage({ ...newStage, description: e.target.value })}
@@ -392,11 +382,9 @@ const CustomerLifecycleView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Color
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Color</label>
                                 <div className="flex gap-2">
-                                    {STAGE_COLORS.map(color => (
+                                    {STAGE_COLORS.map((color) => (
                                         <button
                                             key={color}
                                             onClick={() => setNewStage({ ...newStage, color })}
@@ -435,9 +423,7 @@ const CustomerLifecycleView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Edit Stage</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Stage Name
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Stage Name</label>
                                 <input
                                     type="text"
                                     value={editingStage.name}
@@ -446,9 +432,7 @@ const CustomerLifecycleView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                                 <textarea
                                     value={editingStage.description || ''}
                                     onChange={(e) => setEditingStage({ ...editingStage, description: e.target.value })}
@@ -457,11 +441,9 @@ const CustomerLifecycleView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Color
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Color</label>
                                 <div className="flex gap-2">
-                                    {STAGE_COLORS.map(color => (
+                                    {STAGE_COLORS.map((color) => (
                                         <button
                                             key={color}
                                             onClick={() => setEditingStage({ ...editingStage, color })}
@@ -511,13 +493,13 @@ const CustomerLifecycleView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Transition Customer</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Organization ID
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Organization ID</label>
                                 <input
                                     type="text"
                                     value={newTransition.organizationId}
-                                    onChange={(e) => setNewTransition({ ...newTransition, organizationId: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewTransition({ ...newTransition, organizationId: e.target.value })
+                                    }
                                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                     placeholder="Organization ID"
                                 />
@@ -528,34 +510,36 @@ const CustomerLifecycleView: React.FC = () => {
                                 </label>
                                 <select
                                     value={newTransition.fromStageId}
-                                    onChange={(e) => setNewTransition({ ...newTransition, fromStageId: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewTransition({ ...newTransition, fromStageId: e.target.value })
+                                    }
                                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                 >
                                     <option value="">-- Current Stage --</option>
-                                    {stages.map(stage => (
-                                        <option key={stage.id} value={stage.id}>{stage.name}</option>
+                                    {stages.map((stage) => (
+                                        <option key={stage.id} value={stage.id}>
+                                            {stage.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    To Stage
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">To Stage</label>
                                 <select
                                     value={newTransition.toStageId}
                                     onChange={(e) => setNewTransition({ ...newTransition, toStageId: e.target.value })}
                                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                 >
                                     <option value="">-- Select Stage --</option>
-                                    {stages.map(stage => (
-                                        <option key={stage.id} value={stage.id}>{stage.name}</option>
+                                    {stages.map((stage) => (
+                                        <option key={stage.id} value={stage.id}>
+                                            {stage.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Notes
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                                 <textarea
                                     value={newTransition.notes}
                                     onChange={(e) => setNewTransition({ ...newTransition, notes: e.target.value })}
@@ -588,6 +572,3 @@ const CustomerLifecycleView: React.FC = () => {
 };
 
 export default CustomerLifecycleView;
-
-
-

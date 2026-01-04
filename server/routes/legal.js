@@ -8,7 +8,7 @@ const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
 import * as LegalServiceModule from '../services/legalService.js';
 const LegalService = LegalServiceModule.default || LegalServiceModule;
-import * as ActivityServiceModule from '../services/activityService.js';
+import * as ActivityServiceModule from '../src/services/ActivityService.js';
 const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
 
 // ==========================================

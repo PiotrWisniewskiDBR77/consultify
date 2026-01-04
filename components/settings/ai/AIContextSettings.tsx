@@ -1,6 +1,6 @@
 /**
  * AIContextSettings - AI Context Configuration
- * 
+ *
  * Features:
  * - Context window size
  * - Include/exclude specific projects in context
@@ -8,26 +8,27 @@
  * - AI knowledge base preferences
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    Database,
-    FolderOpen,
-    Users,
     BookOpen,
-    Settings,
-    Save,
-    Loader2,
-    Info,
-    Plus,
-    X,
     CheckCircle,
+    Database,
+    Filter,
+    FolderOpen,
+    Info,
+    Loader2,
+    Plus,
+    Save,
     Search,
-    Filter
+    Settings,
+    Users,
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface AIContextSettingsProps {
@@ -73,14 +74,11 @@ const defaultSettings: ContextSettings = {
         projectDocs: true,
         pastConversations: true,
         industryKnowledge: false,
-        customSources: []
-    }
+        customSources: [],
+    },
 };
 
-export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const AIContextSettings: React.FC<AIContextSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -101,7 +99,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             const [settingsRes, projectsRes, membersRes] = await Promise.all([
                 Api.get('/api/user/ai-preferences/context').catch(() => ({ data: null })),
                 Api.get('/api/projects').catch(() => ({ data: [] })),
-                Api.get('/api/users').catch(() => ({ data: [] }))
+                Api.get('/api/users').catch(() => ({ data: [] })),
             ]);
 
             if (settingsRes.data) {
@@ -135,12 +133,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
     const toggleProject = (projectId: string, mode: 'include' | 'exclude') => {
         if (mode === 'include') {
             const included = settings.includedProjects.includes(projectId)
-                ? settings.includedProjects.filter(id => id !== projectId)
+                ? settings.includedProjects.filter((id) => id !== projectId)
                 : [...settings.includedProjects, projectId];
             setSettings({ ...settings, includedProjects: included });
         } else {
             const excluded = settings.excludedProjects.includes(projectId)
-                ? settings.excludedProjects.filter(id => id !== projectId)
+                ? settings.excludedProjects.filter((id) => id !== projectId)
                 : [...settings.excludedProjects, projectId];
             setSettings({ ...settings, excludedProjects: excluded });
         }
@@ -149,12 +147,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
     const toggleTeamMember = (memberId: string, mode: 'include' | 'exclude') => {
         if (mode === 'include') {
             const included = settings.includedTeamMembers.includes(memberId)
-                ? settings.includedTeamMembers.filter(id => id !== memberId)
+                ? settings.includedTeamMembers.filter((id) => id !== memberId)
                 : [...settings.includedTeamMembers, memberId];
             setSettings({ ...settings, includedTeamMembers: included });
         } else {
             const excluded = settings.excludedTeamMembers.includes(memberId)
-                ? settings.excludedTeamMembers.filter(id => id !== memberId)
+                ? settings.excludedTeamMembers.filter((id) => id !== memberId)
                 : [...settings.excludedTeamMembers, memberId];
             setSettings({ ...settings, excludedTeamMembers: excluded });
         }
@@ -166,8 +164,8 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 ...settings,
                 knowledgeBases: {
                     ...settings.knowledgeBases,
-                    customSources: [...settings.knowledgeBases.customSources, newCustomSource]
-                }
+                    customSources: [...settings.knowledgeBases.customSources, newCustomSource],
+                },
             });
             setNewCustomSource('');
         }
@@ -178,8 +176,8 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             ...settings,
             knowledgeBases: {
                 ...settings.knowledgeBases,
-                customSources: settings.knowledgeBases.customSources.filter(s => s !== source)
-            }
+                customSources: settings.knowledgeBases.customSources.filter((s) => s !== source),
+            },
         });
     };
 
@@ -191,19 +189,18 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
         );
     }
 
-    const filteredProjects = projects.filter(p => 
-        p.name.toLowerCase().includes(projectSearch.toLowerCase())
-    );
+    const filteredProjects = projects.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase()));
 
-    const filteredMembers = teamMembers.filter(m => 
-        m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
-        m.email.toLowerCase().includes(memberSearch.toLowerCase())
+    const filteredMembers = teamMembers.filter(
+        (m) =>
+            m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+            m.email.toLowerCase().includes(memberSearch.toLowerCase()),
     );
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-ai-context" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -232,14 +229,14 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                     Context Window Size
                 </h3>
                 <p className="text-sm text-slate-500">How much context AI can consider at once</p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                         { id: 'small', label: 'Small', desc: '4K tokens', icon: '📄' },
                         { id: 'medium', label: 'Medium', desc: '16K tokens', icon: '📑' },
                         { id: 'large', label: 'Large', desc: '64K tokens', icon: '📚' },
-                        { id: 'unlimited', label: 'Unlimited', desc: 'Max available', icon: '🌐' }
-                    ].map(size => (
+                        { id: 'unlimited', label: 'Unlimited', desc: 'Max available', icon: '🌐' },
+                    ].map((size) => (
                         <button
                             key={size.id}
                             onClick={() => setSettings({ ...settings, contextWindowSize: size.id as any })}
@@ -263,9 +260,9 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                     <FolderOpen size={20} className="text-amber-500" />
                     Project Context
                 </h3>
-                
+
                 <div className="flex gap-3">
-                    {(['all', 'include', 'exclude'] as const).map(mode => (
+                    {(['all', 'include', 'exclude'] as const).map((mode) => (
                         <button
                             key={mode}
                             onClick={() => setSettings({ ...settings, projectContextMode: mode })}
@@ -293,14 +290,20 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                             />
                         </div>
                         <div className="max-h-48 overflow-y-auto space-y-2">
-                            {filteredProjects.map(project => {
-                                const isSelected = settings.projectContextMode === 'include'
-                                    ? settings.includedProjects.includes(project.id)
-                                    : settings.excludedProjects.includes(project.id);
+                            {filteredProjects.map((project) => {
+                                const isSelected =
+                                    settings.projectContextMode === 'include'
+                                        ? settings.includedProjects.includes(project.id)
+                                        : settings.excludedProjects.includes(project.id);
                                 return (
                                     <button
                                         key={project.id}
-                                        onClick={() => toggleProject(project.id, settings.projectContextMode as 'include' | 'exclude')}
+                                        onClick={() =>
+                                            toggleProject(
+                                                project.id,
+                                                settings.projectContextMode as 'include' | 'exclude',
+                                            )
+                                        }
                                         className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                                             isSelected
                                                 ? 'bg-amber-100 dark:bg-amber-500/20 border-2 border-amber-500'
@@ -330,16 +333,18 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                             settings.includeTeamData ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                            settings.includeTeamData ? 'left-7' : 'left-1'
-                        }`} />
+                        <span
+                            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                settings.includeTeamData ? 'left-7' : 'left-1'
+                            }`}
+                        />
                     </button>
                 </div>
 
                 {settings.includeTeamData && (
                     <>
                         <div className="flex gap-3">
-                            {(['all', 'include', 'exclude'] as const).map(mode => (
+                            {(['all', 'include', 'exclude'] as const).map((mode) => (
                                 <button
                                     key={mode}
                                     onClick={() => setSettings({ ...settings, teamDataMode: mode })}
@@ -357,7 +362,10 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                         {settings.teamDataMode !== 'all' && (
                             <div className="space-y-3">
                                 <div className="relative">
-                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <Search
+                                        size={16}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         type="text"
                                         value={memberSearch}
@@ -367,14 +375,20 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                                     />
                                 </div>
                                 <div className="max-h-48 overflow-y-auto space-y-2">
-                                    {filteredMembers.map(member => {
-                                        const isSelected = settings.teamDataMode === 'include'
-                                            ? settings.includedTeamMembers.includes(member.id)
-                                            : settings.excludedTeamMembers.includes(member.id);
+                                    {filteredMembers.map((member) => {
+                                        const isSelected =
+                                            settings.teamDataMode === 'include'
+                                                ? settings.includedTeamMembers.includes(member.id)
+                                                : settings.excludedTeamMembers.includes(member.id);
                                         return (
                                             <button
                                                 key={member.id}
-                                                onClick={() => toggleTeamMember(member.id, settings.teamDataMode as 'include' | 'exclude')}
+                                                onClick={() =>
+                                                    toggleTeamMember(
+                                                        member.id,
+                                                        settings.teamDataMode as 'include' | 'exclude',
+                                                    )
+                                                }
                                                 className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                                                     isSelected
                                                         ? 'bg-green-100 dark:bg-green-500/20 border-2 border-green-500'
@@ -382,7 +396,9 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                                                 }`}
                                             >
                                                 <div className="text-left">
-                                                    <p className="text-sm text-slate-900 dark:text-white">{member.name}</p>
+                                                    <p className="text-sm text-slate-900 dark:text-white">
+                                                        {member.name}
+                                                    </p>
                                                     <p className="text-xs text-slate-500">{member.email}</p>
                                                 </div>
                                                 {isSelected && <CheckCircle size={16} className="text-green-600" />}
@@ -403,14 +419,14 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                     Knowledge Bases
                 </h3>
                 <p className="text-sm text-slate-500">Additional knowledge sources for AI</p>
-                
+
                 <div className="space-y-3">
                     {[
                         { key: 'companyDocs', label: 'Company Documents', desc: 'Internal policies and guides' },
                         { key: 'projectDocs', label: 'Project Documentation', desc: 'Project specs and requirements' },
                         { key: 'pastConversations', label: 'Past Conversations', desc: 'Previous AI chat history' },
-                        { key: 'industryKnowledge', label: 'Industry Knowledge', desc: 'External industry data' }
-                    ].map(kb => (
+                        { key: 'industryKnowledge', label: 'Industry Knowledge', desc: 'External industry data' },
+                    ].map((kb) => (
                         <div
                             key={kb.key}
                             className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
@@ -420,20 +436,26 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                                 <p className="text-sm text-slate-500">{kb.desc}</p>
                             </div>
                             <button
-                                onClick={() => setSettings({
-                                    ...settings,
-                                    knowledgeBases: {
-                                        ...settings.knowledgeBases,
-                                        [kb.key]: !(settings.knowledgeBases as any)[kb.key]
-                                    }
-                                })}
+                                onClick={() =>
+                                    setSettings({
+                                        ...settings,
+                                        knowledgeBases: {
+                                            ...settings.knowledgeBases,
+                                            [kb.key]: !(settings.knowledgeBases as any)[kb.key],
+                                        },
+                                    })
+                                }
                                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                                    (settings.knowledgeBases as any)[kb.key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                                    (settings.knowledgeBases as any)[kb.key]
+                                        ? 'bg-purple-600'
+                                        : 'bg-slate-300 dark:bg-slate-600'
                                 }`}
                             >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                    (settings.knowledgeBases as any)[kb.key] ? 'left-7' : 'left-1'
-                                }`} />
+                                <span
+                                    className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                        (settings.knowledgeBases as any)[kb.key] ? 'left-7' : 'left-1'
+                                    }`}
+                                />
                             </button>
                         </div>
                     ))}
@@ -459,7 +481,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {settings.knowledgeBases.customSources.map(source => (
+                        {settings.knowledgeBases.customSources.map((source) => (
                             <span
                                 key={source}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-lg text-sm"
@@ -478,10 +500,4 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
 };
 
 export default AIContextSettings;
-
-
-
-
-
-
 

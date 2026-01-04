@@ -1,6 +1,6 @@
 /**
  * BulkOperationsView - Admin Bulk Operations
- * 
+ *
  * Enterprise bulk operations:
  * - CSV user import
  * - Bulk role assignment
@@ -8,27 +8,28 @@
  * - Bulk data export
  */
 
-import React, { useState, useRef, useCallback } from 'react';
 import {
-    Upload,
-    Download,
-    Users,
-    Mail,
-    Shield,
-    FileSpreadsheet,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
-    Loader2,
-    ChevronRight,
-    FileText,
     ArrowRight,
-    RefreshCw,
+    CheckCircle2,
+    ChevronRight,
+    Download,
     Eye,
+    FileSpreadsheet,
+    FileText,
+    Loader2,
+    Mail,
+    RefreshCw,
     Send,
+    Settings,
+    Shield,
+    Upload,
     UserPlus,
-    Settings
+    Users,
+    XCircle,
 } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 interface ImportResult {
@@ -77,13 +78,13 @@ export const BulkOperationsView: React.FC = () => {
         if (!file) return;
 
         setCsvFile(file);
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
             const text = event.target?.result as string;
-            const lines = text.split('\n').filter(line => line.trim());
-            const headers = lines[0].split(',').map(h => h.trim());
-            const data = lines.slice(1).map(line => {
+            const lines = text.split('\n').filter((line) => line.trim());
+            const headers = lines[0].split(',').map((h) => h.trim());
+            const data = lines.slice(1).map((line) => {
                 const values = line.split(',');
                 const row: Record<string, string> = {};
                 headers.forEach((header, idx) => {
@@ -91,23 +92,24 @@ export const BulkOperationsView: React.FC = () => {
                 });
                 return row;
             });
-            
+
             setCsvHeaders(headers);
             setCsvData(data);
-            
+
             // Auto-map matching columns
             const autoMapping: Record<string, string> = {};
-            ALL_FIELDS.forEach(field => {
-                const matchingHeader = headers.find(h => 
-                    h.toLowerCase() === field.toLowerCase() ||
-                    h.toLowerCase().replace(/[_\s]/g, '') === field.toLowerCase()
+            ALL_FIELDS.forEach((field) => {
+                const matchingHeader = headers.find(
+                    (h) =>
+                        h.toLowerCase() === field.toLowerCase() ||
+                        h.toLowerCase().replace(/[_\s]/g, '') === field.toLowerCase(),
                 );
                 if (matchingHeader) {
                     autoMapping[field] = matchingHeader;
                 }
             });
             setColumnMapping(autoMapping);
-            
+
             setImportStep('mapping');
         };
         reader.readAsText(file);
@@ -116,9 +118,9 @@ export const BulkOperationsView: React.FC = () => {
     const handleStartImport = async () => {
         setImporting(true);
         setImportStep('importing');
-        
+
         try {
-            const mappedData = csvData.map(row => {
+            const mappedData = csvData.map((row) => {
                 const mappedRow: Record<string, string> = {};
                 Object.entries(columnMapping).forEach(([field, csvColumn]) => {
                     mappedRow[field] = row[csvColumn] || '';
@@ -175,18 +177,14 @@ export const BulkOperationsView: React.FC = () => {
     }, []);
 
     const toggleUserSelection = (userId: string) => {
-        setSelectedUsers(prev =>
-            prev.includes(userId)
-                ? prev.filter(id => id !== userId)
-                : [...prev, userId]
-        );
+        setSelectedUsers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
     };
 
     const selectAllUsers = () => {
         if (selectedUsers.length === users.length) {
             setSelectedUsers([]);
         } else {
-            setSelectedUsers(users.map(u => u.id));
+            setSelectedUsers(users.map((u) => u.id));
         }
     };
 
@@ -214,19 +212,29 @@ export const BulkOperationsView: React.FC = () => {
                     { step: 'complete', label: 'Complete' },
                 ].map((s, idx) => (
                     <React.Fragment key={s.step}>
-                        <div className={`flex items-center gap-2 ${
-                            importStep === s.step ? 'text-violet-600' :
-                            ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx ? 'text-emerald-600' :
-                            'text-slate-400'
-                        }`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                importStep === s.step ? 'bg-violet-100 dark:bg-violet-500/20' :
-                                ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx ? 'bg-emerald-100 dark:bg-emerald-500/20' :
-                                'bg-slate-100 dark:bg-navy-700'
-                            }`}>
+                        <div
+                            className={`flex items-center gap-2 ${
+                                importStep === s.step
+                                    ? 'text-violet-600'
+                                    : ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx
+                                      ? 'text-emerald-600'
+                                      : 'text-slate-400'
+                            }`}
+                        >
+                            <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                    importStep === s.step
+                                        ? 'bg-violet-100 dark:bg-violet-500/20'
+                                        : ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx
+                                          ? 'bg-emerald-100 dark:bg-emerald-500/20'
+                                          : 'bg-slate-100 dark:bg-navy-700'
+                                }`}
+                            >
                                 {['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx ? (
                                     <CheckCircle2 size={16} />
-                                ) : idx + 1}
+                                ) : (
+                                    idx + 1
+                                )}
                             </div>
                             <span className="text-sm font-medium">{s.label}</span>
                         </div>
@@ -242,9 +250,7 @@ export const BulkOperationsView: React.FC = () => {
                         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
                             <Upload className="text-violet-600" size={32} />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                            Upload CSV File
-                        </h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Upload CSV File</h3>
                         <p className="text-slate-500 mb-6">
                             Import users from a CSV file. Download our template for the correct format.
                         </p>
@@ -280,9 +286,7 @@ export const BulkOperationsView: React.FC = () => {
             {/* Mapping Step */}
             {importStep === 'mapping' && (
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        Map CSV Columns
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Map CSV Columns</h3>
                     <p className="text-slate-500 mb-6">
                         Match your CSV columns to the user fields. Required fields are marked with *.
                     </p>
@@ -293,7 +297,9 @@ export const BulkOperationsView: React.FC = () => {
                                 <div className="w-40">
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                         {field}
-                                        {REQUIRED_FIELDS.includes(field) && <span className="text-red-500 ml-1">*</span>}
+                                        {REQUIRED_FIELDS.includes(field) && (
+                                            <span className="text-red-500 ml-1">*</span>
+                                        )}
                                     </span>
                                 </div>
                                 <ArrowRight size={16} className="text-slate-400" />
@@ -304,7 +310,9 @@ export const BulkOperationsView: React.FC = () => {
                                 >
                                     <option value="">-- Select Column --</option>
                                     {csvHeaders.map((header) => (
-                                        <option key={header} value={header}>{header}</option>
+                                        <option key={header} value={header}>
+                                            {header}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -332,9 +340,7 @@ export const BulkOperationsView: React.FC = () => {
             {/* Preview Step */}
             {importStep === 'preview' && (
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        Preview Import
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Preview Import</h3>
                     <p className="text-slate-500 mb-4">
                         Review the data before importing. {csvData.length} users will be imported.
                     </p>
@@ -344,7 +350,10 @@ export const BulkOperationsView: React.FC = () => {
                             <thead className="sticky top-0 bg-slate-50 dark:bg-navy-900">
                                 <tr>
                                     {ALL_FIELDS.map((field) => (
-                                        <th key={field} className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">
+                                        <th
+                                            key={field}
+                                            className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase"
+                                        >
                                             {field}
                                         </th>
                                     ))}
@@ -354,7 +363,10 @@ export const BulkOperationsView: React.FC = () => {
                                 {csvData.slice(0, 10).map((row, idx) => (
                                     <tr key={idx}>
                                         {ALL_FIELDS.map((field) => (
-                                            <td key={field} className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">
+                                            <td
+                                                key={field}
+                                                className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300"
+                                            >
                                                 {row[columnMapping[field]] || '-'}
                                             </td>
                                         ))}
@@ -364,9 +376,7 @@ export const BulkOperationsView: React.FC = () => {
                         </table>
                     </div>
                     {csvData.length > 10 && (
-                        <p className="text-sm text-slate-500 mb-4">
-                            Showing 10 of {csvData.length} rows
-                        </p>
+                        <p className="text-sm text-slate-500 mb-4">Showing 10 of {csvData.length} rows</p>
                     )}
 
                     <div className="flex justify-between">
@@ -391,12 +401,8 @@ export const BulkOperationsView: React.FC = () => {
             {importStep === 'importing' && (
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-12 border border-slate-200 dark:border-white/10 text-center">
                     <Loader2 size={48} className="mx-auto mb-4 text-violet-600 animate-spin" />
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                        Importing Users...
-                    </h3>
-                    <p className="text-slate-500">
-                        Please wait while we import your users. This may take a moment.
-                    </p>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Importing Users...</h3>
+                    <p className="text-slate-500">Please wait while we import your users. This may take a moment.</p>
                 </div>
             )}
 
@@ -412,9 +418,7 @@ export const BulkOperationsView: React.FC = () => {
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                                     Import Complete!
                                 </h3>
-                                <p className="text-slate-500">
-                                    Successfully imported {importResult.success} users.
-                                </p>
+                                <p className="text-slate-500">Successfully imported {importResult.success} users.</p>
                             </>
                         ) : (
                             <>
@@ -469,10 +473,7 @@ export const BulkOperationsView: React.FC = () => {
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Bulk Role Assignment</h3>
                     <p className="text-slate-500">Select users and assign roles in bulk</p>
                 </div>
-                <button
-                    onClick={fetchUsers}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-                >
+                <button onClick={fetchUsers} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                     <RefreshCw size={18} className={`text-slate-400 ${loadingUsers ? 'animate-spin' : ''}`} />
                 </button>
             </div>
@@ -515,7 +516,9 @@ export const BulkOperationsView: React.FC = () => {
                             </th>
                             <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">User</th>
                             <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Role</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Status
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -543,19 +546,26 @@ export const BulkOperationsView: React.FC = () => {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        user.role === 'ADMIN' ? 'bg-violet-500/10 text-violet-600' :
-                                        user.role === 'OWNER' ? 'bg-amber-500/10 text-amber-600' :
-                                        'bg-slate-500/10 text-slate-600'
-                                    }`}>
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            user.role === 'ADMIN'
+                                                ? 'bg-violet-500/10 text-violet-600'
+                                                : user.role === 'OWNER'
+                                                  ? 'bg-amber-500/10 text-amber-600'
+                                                  : 'bg-slate-500/10 text-slate-600'
+                                        }`}
+                                    >
                                         {user.role}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        user.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
-                                        'bg-slate-500/10 text-slate-600'
-                                    }`}>
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            user.status === 'active'
+                                                ? 'bg-emerald-500/10 text-emerald-600'
+                                                : 'bg-slate-500/10 text-slate-600'
+                                        }`}
+                                    >
                                         {user.status}
                                     </span>
                                 </td>
@@ -592,9 +602,7 @@ export const BulkOperationsView: React.FC = () => {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             Recipients
                         </label>
-                        <select
-                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
-                        >
+                        <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
                             <option value="all">All Users</option>
                             <option value="admins">Admins Only</option>
                             <option value="active">Active Users</option>
@@ -606,9 +614,7 @@ export const BulkOperationsView: React.FC = () => {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             Template
                         </label>
-                        <select
-                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
-                        >
+                        <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
                             <option value="">Select a template...</option>
                             <option value="welcome">Welcome Email</option>
                             <option value="announcement">Announcement</option>
@@ -764,12 +770,4 @@ export const BulkOperationsView: React.FC = () => {
 };
 
 export default BulkOperationsView;
-
-
-
-
-
-
-
-
 

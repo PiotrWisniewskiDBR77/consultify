@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from 'react';
 import {
-    LayoutDashboard,
-    Users,
+    Activity,
+    BarChart3,
     Brain,
+    ChevronRight,
+    Code,
+    CreditCard,
+    Layers,
+    LayoutDashboard,
+    LogOut,
+    PanelLeftClose,
+    Pin,
+    Radar,
+    Server,
     Settings,
     Shield,
-    LogOut,
-    ChevronRight,
-    CreditCard,
-    Pin,
-    PanelLeftClose,
-    Activity,
-    Layers,
-    Server,
-    Code,
-    Radar,
-    BarChart3,
+    Users,
 } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
 // Modular structure with 3 AI modules (Variant A)
@@ -27,8 +28,8 @@ export type SuperAdminSection =
     | 'customers'
     | 'ai-platform' // Legacy - kept for backward compatibility
     | 'ai-infrastructure' // New: LLM Providers, Tiers, Settings, Health
-    | 'ai-development'    // New: Prompts, Intelligence, Experiments, Knowledge
-    | 'ai-operations'     // New: Mission Control, Performance, Costs, SLA, Analytics
+    | 'ai-development' // New: Prompts, Intelligence, Experiments, Knowledge
+    | 'ai-operations' // New: Mission Control, Performance, Costs, SLA, Analytics
     | 'system'
     | 'content'
     | 'revenue'
@@ -38,18 +39,18 @@ export type SuperAdminSection =
 
 // Mapping between sections and AppView
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
-    'overview': AppView.SUPERADMIN_OVERVIEW,
-    'customers': AppView.SUPERADMIN_CUSTOMERS,
+    overview: AppView.SUPERADMIN_OVERVIEW,
+    customers: AppView.SUPERADMIN_CUSTOMERS,
     'ai-platform': AppView.SUPERADMIN_AI_PLATFORM, // Legacy
     'ai-infrastructure': AppView.SUPERADMIN_AI_INFRASTRUCTURE,
     'ai-development': AppView.SUPERADMIN_AI_DEVELOPMENT,
     'ai-operations': AppView.SUPERADMIN_AI_OPERATIONS,
-    'system': AppView.SUPERADMIN_SYSTEM,
-    'content': AppView.SUPERADMIN_CONTENT,
-    'revenue': AppView.SUPERADMIN_REVENUE,
-    'security': AppView.SUPERADMIN_SECURITY,
-    'configuration': AppView.SUPERADMIN_CONFIGURATION,
-    'analytics': AppView.SUPERADMIN_ANALYTICS,
+    system: AppView.SUPERADMIN_SYSTEM,
+    content: AppView.SUPERADMIN_CONTENT,
+    revenue: AppView.SUPERADMIN_REVENUE,
+    security: AppView.SUPERADMIN_SECURITY,
+    configuration: AppView.SUPERADMIN_CONFIGURATION,
+    analytics: AppView.SUPERADMIN_ANALYTICS,
 };
 
 export const appViewToSection: Record<string, SuperAdminSection> = {
@@ -129,13 +130,16 @@ const MenuButton: React.FC<{
 }> = ({ item, activeSection, showFull, onSectionChange, badge }) => (
     <button
         onClick={() => onSectionChange(item.id)}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${activeSection === item.id
-            ? 'bg-gradient-to-r from-red-600/20 to-transparent text-red-600 dark:text-white border-l-2 border-red-500'
-            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-            }`}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+            activeSection === item.id
+                ? 'bg-gradient-to-r from-red-600/20 to-transparent text-red-600 dark:text-white border-l-2 border-red-500'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+        }`}
         title={!showFull ? item.label : undefined}
     >
-        <span className={`shrink-0 relative ${activeSection === item.id ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>
+        <span
+            className={`shrink-0 relative ${activeSection === item.id ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+        >
             {item.icon}
             {/* Badge for collapsed state */}
             {badge && badge > 0 && !showFull && (
@@ -145,16 +149,17 @@ const MenuButton: React.FC<{
             )}
         </span>
 
-        <span className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
-            }`}>
+        <span
+            className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
+            }`}
+        >
             {item.label}
         </span>
 
         {/* Badge for expanded state */}
         {showFull && badge && badge > 0 && (
-            <span className="bg-yellow-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                {badge}
-            </span>
+            <span className="bg-yellow-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge}</span>
         )}
 
         {showFull && activeSection === item.id && (
@@ -167,7 +172,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
     activeSection,
     onSectionChange,
     onLogout,
-    currentUserEmail
+    currentUserEmail,
 }) => {
     const { isSidebarCollapsed, toggleSidebarCollapse } = useAppStore();
     const [isHovered, setIsHovered] = useState(false);
@@ -208,9 +213,15 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
                     <Shield size={18} className="text-white" />
                 </div>
 
-                <div className={`overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
-                    <div className="font-bold text-slate-900 dark:text-white text-sm tracking-wide whitespace-nowrap">SUPER ADMIN</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest whitespace-nowrap">Console</div>
+                <div
+                    className={`overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}
+                >
+                    <div className="font-bold text-slate-900 dark:text-white text-sm tracking-wide whitespace-nowrap">
+                        SUPER ADMIN
+                    </div>
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                        Console
+                    </div>
                 </div>
 
                 {/* Pin/Unpin Button */}
@@ -222,7 +233,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
                             setIsHovered(false);
                         }}
                         className="absolute right-2 p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                        title={isSidebarCollapsed ? "Pin Sidebar (Keep Open)" : "Unpin Sidebar (Collapse)"}
+                        title={isSidebarCollapsed ? 'Pin Sidebar (Keep Open)' : 'Unpin Sidebar (Collapse)'}
                     >
                         {isSidebarCollapsed ? <Pin size={16} className="rotate-45" /> : <PanelLeftClose size={16} />}
                     </button>
@@ -252,12 +263,16 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
 
             {/* User / Logout Section */}
             <div className="p-3 border-t border-slate-200 dark:border-white/5 shrink-0">
-                <div className={`flex items-center gap-3 px-2 py-2 mb-1 overflow-hidden transition-all duration-300 ${showFull ? 'opacity-100' : 'opacity-0 h-0 hidden'}`}>
+                <div
+                    className={`flex items-center gap-3 px-2 py-2 mb-1 overflow-hidden transition-all duration-300 ${showFull ? 'opacity-100' : 'opacity-0 h-0 hidden'}`}
+                >
                     <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center shrink-0">
                         <Shield size={16} className="text-red-500 dark:text-red-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-slate-900 dark:text-white truncate">{currentUserEmail}</div>
+                        <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
+                            {currentUserEmail}
+                        </div>
                         <div className="text-[10px] text-red-500 dark:text-red-400 uppercase">Super Admin</div>
                     </div>
                 </div>
@@ -267,7 +282,9 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
                     title="Sign Out"
                 >
                     <LogOut size={18} className="shrink-0" />
-                    <span className={`text-sm whitespace-nowrap transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0 hidden'}`}>
+                    <span
+                        className={`text-sm whitespace-nowrap transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0 hidden'}`}
+                    >
                         Sign Out
                     </span>
                 </button>

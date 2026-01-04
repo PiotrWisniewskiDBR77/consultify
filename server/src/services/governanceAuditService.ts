@@ -1,18 +1,19 @@
 /**
  * Governance Audit Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/governanceAuditService.js (CommonJS) to TypeScript (ES Modules)
  * Step 14: Governance, Security & Enterprise Controls
- * 
+ *
  * Immutable audit logging with PII redaction and optional tamper-evident hash chain.
  * All administrative actions are logged here for SOC2/ISO compliance.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-import type { IDatabase } from '../database/IDatabase.js';
+import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // Lazy-loaded dependencies
@@ -39,10 +40,10 @@ export const AUDIT_ACTIONS = {
     GRANT_PERMISSION: 'GRANT_PERMISSION',
     REVOKE_PERMISSION: 'REVOKE_PERMISSION',
     BREAK_GLASS_START: 'BREAK_GLASS_START',
-    BREAK_GLASS_CLOSE: 'BREAK_GLASS_CLOSE'
+    BREAK_GLASS_CLOSE: 'BREAK_GLASS_CLOSE',
 } as const;
 
-export type AuditAction = typeof AUDIT_ACTIONS[keyof typeof AUDIT_ACTIONS];
+export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
 
 export const RESOURCE_TYPES = {
     POLICY_RULE: 'POLICY_RULE',
@@ -59,10 +60,10 @@ export const RESOURCE_TYPES = {
     DIGITIZATION_VERSION: 'DIGITIZATION_VERSION',
     DIGITIZATION_EVIDENCE: 'DIGITIZATION_EVIDENCE',
     DIGITIZATION_COMPARISON: 'DIGITIZATION_COMPARISON',
-    DIGITIZATION_EXPORT: 'DIGITIZATION_EXPORT'
+    DIGITIZATION_EXPORT: 'DIGITIZATION_EXPORT',
 } as const;
 
-export type ResourceType = typeof RESOURCE_TYPES[keyof typeof RESOURCE_TYPES];
+export type ResourceType = (typeof RESOURCE_TYPES)[keyof typeof RESOURCE_TYPES];
 
 interface LogAuditParams {
     actorId: string;
@@ -177,14 +178,17 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
 /**
  * Compute SHA-256 hash for tamper evidence
  */
-function computeHash(prevHash: string | null, record: {
-    id: string;
-    actor_id: string;
-    action: string;
-    resource_type: string;
-    resource_id: string | null;
-    created_at: string;
-}): string {
+function computeHash(
+    prevHash: string | null,
+    record: {
+        id: string;
+        actor_id: string;
+        action: string;
+        resource_type: string;
+        resource_id: string | null;
+        created_at: string;
+    },
+): string {
     const data = `${prevHash || ''}|${record.id}|${record.actor_id}|${record.action}|${record.resource_type}|${record.resource_id}|${record.created_at}`;
     return crypto.createHash('sha256').update(data).digest('hex');
 }
@@ -194,7 +198,17 @@ function computeHash(prevHash: string | null, record: {
  */
 export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> {
     await initDeps();
-    const { actorId, actorRole, orgId, action, resourceType, resourceId = null, before = null, after = null, correlationId = null } = params;
+    const {
+        actorId,
+        actorRole,
+        orgId,
+        action,
+        resourceType,
+        resourceId = null,
+        before = null,
+        after = null,
+        correlationId = null,
+    } = params;
 
     if (!actorId || !orgId || !action || !resourceType) {
         throw new Error('Missing required audit parameters: actorId, orgId, action, resourceType');
@@ -220,7 +234,7 @@ export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> 
             `SELECT record_hash FROM governance_audit_log 
              WHERE organization_id = ? 
              ORDER BY created_at DESC LIMIT 1`,
-            [orgId]
+            [orgId],
         );
         prevHash = prevRow?.record_hash || null;
     } catch (err: unknown) {
@@ -234,7 +248,7 @@ export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> 
         action,
         resource_type: resourceType,
         resource_id: resourceId,
-        created_at: createdAt
+        created_at: createdAt,
     };
     const recordHash = computeHash(prevHash, recordForHash);
 
@@ -244,8 +258,21 @@ export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> 
          (id, organization_id, actor_id, actor_role, action, resource_type, 
           resource_id, before_json, after_json, correlation_id, prev_hash, record_hash, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [auditId, orgId, actorId, actorRole || null, action, resourceType,
-            resourceId, beforeJson, afterJson, corrId, prevHash, recordHash, createdAt]
+        [
+            auditId,
+            orgId,
+            actorId,
+            actorRole || null,
+            action,
+            resourceType,
+            resourceId,
+            beforeJson,
+            afterJson,
+            corrId,
+            prevHash,
+            recordHash,
+            createdAt,
+        ],
     );
 
     console.log(`[GovernanceAudit] Logged: ${action} on ${resourceType}/${resourceId} by ${actorId}`);
@@ -258,7 +285,7 @@ export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> 
         resourceType,
         resourceId,
         correlationId: corrId,
-        createdAt
+        createdAt,
     };
 }
 
@@ -276,7 +303,7 @@ export async function getAuditLog(params: GetAuditLogParams): Promise<AuditLogEn
         startDate = null,
         endDate = null,
         limit = 100,
-        offset = 0
+        offset = 0,
     } = params;
 
     let sql = `SELECT * FROM governance_audit_log WHERE 1=1`;
@@ -323,7 +350,7 @@ export async function getAuditLog(params: GetAuditLogParams): Promise<AuditLogEn
 
     const rows = await DbPromise.all<AuditLogRow>(db, sql, sqlParams);
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         id: row.id,
         organizationId: row.organization_id,
         actorId: row.actor_id,
@@ -334,7 +361,7 @@ export async function getAuditLog(params: GetAuditLogParams): Promise<AuditLogEn
         before: row.before_json ? JSON.parse(row.before_json) : null,
         after: row.after_json ? JSON.parse(row.after_json) : null,
         correlationId: row.correlation_id || null,
-        createdAt: row.created_at
+        createdAt: row.created_at,
     }));
 }
 
@@ -342,39 +369,46 @@ export async function getAuditLog(params: GetAuditLogParams): Promise<AuditLogEn
  * Export audit log as CSV or JSON
  */
 export async function exportAuditLog(params: ExportAuditLogParams): Promise<ExportAuditLogResult> {
-    const {
-        orgId,
-        format = 'json',
-        superadminBypass = false,
-        startDate = null,
-        endDate = null
-    } = params;
+    const { orgId, format = 'json', superadminBypass = false, startDate = null, endDate = null } = params;
 
     const entries = await getAuditLog({
         orgId,
         superadminBypass,
         startDate,
         endDate,
-        limit: 10000 // Max export limit
+        limit: 10000, // Max export limit
     });
 
     if (format === 'csv') {
-        const headers = ['id', 'organization_id', 'actor_id', 'actor_role', 'action',
-            'resource_type', 'resource_id', 'correlation_id', 'created_at'];
+        const headers = [
+            'id',
+            'organization_id',
+            'actor_id',
+            'actor_role',
+            'action',
+            'resource_type',
+            'resource_id',
+            'correlation_id',
+            'created_at',
+        ];
         const csvRows = [headers.join(',')];
 
-        entries.forEach(entry => {
-            csvRows.push([
-                entry.id,
-                entry.organizationId,
-                entry.actorId,
-                entry.actorRole || '',
-                entry.action,
-                entry.resourceType,
-                entry.resourceId || '',
-                entry.correlationId || '',
-                entry.createdAt
-            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+        entries.forEach((entry) => {
+            csvRows.push(
+                [
+                    entry.id,
+                    entry.organizationId,
+                    entry.actorId,
+                    entry.actorRole || '',
+                    entry.action,
+                    entry.resourceType,
+                    entry.resourceId || '',
+                    entry.correlationId || '',
+                    entry.createdAt,
+                ]
+                    .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+                    .join(','),
+            );
         });
 
         return { format: 'csv', data: csvRows.join('\n') };
@@ -392,7 +426,7 @@ export async function verifyHashChain(orgId: string): Promise<VerifyHashChainRes
         `SELECT * FROM governance_audit_log 
          WHERE organization_id = ? 
          ORDER BY created_at ASC`,
-        [orgId]
+        [orgId],
     );
 
     const errors: HashChainVerificationError[] = [];
@@ -404,7 +438,7 @@ export async function verifyHashChain(orgId: string): Promise<VerifyHashChainRes
             errors.push({
                 index: idx,
                 id: row.id,
-                error: `prev_hash mismatch: expected ${expectedPrevHash}, got ${row.prev_hash}`
+                error: `prev_hash mismatch: expected ${expectedPrevHash}, got ${row.prev_hash}`,
             });
         }
 
@@ -415,14 +449,14 @@ export async function verifyHashChain(orgId: string): Promise<VerifyHashChainRes
             action: row.action,
             resource_type: row.resource_type,
             resource_id: row.resource_id || null,
-            created_at: row.created_at
+            created_at: row.created_at,
         });
 
         if (row.record_hash !== recomputed) {
             errors.push({
                 index: idx,
                 id: row.id,
-                error: `record_hash mismatch: stored ${row.record_hash}, computed ${recomputed}`
+                error: `record_hash mismatch: stored ${row.record_hash}, computed ${recomputed}`,
             });
         }
 
@@ -432,7 +466,7 @@ export async function verifyHashChain(orgId: string): Promise<VerifyHashChainRes
     return {
         valid: errors.length === 0,
         totalRecords: (rows || []).length,
-        errors
+        errors,
     };
 }
 
@@ -444,7 +478,7 @@ const GovernanceAuditService = {
     logAudit,
     getAuditLog,
     exportAuditLog,
-    verifyHashChain
+    verifyHashChain,
 };
 
 export default GovernanceAuditService;

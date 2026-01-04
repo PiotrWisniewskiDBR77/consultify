@@ -2,7 +2,7 @@ import { Tour } from '../../components/Onboarding/TourProvider';
 
 /**
  * Team Tour — Phase F
- * 
+ *
  * Triggered when user is ready to expand the team.
  * Explains multi-perspective collaboration.
  */
@@ -15,7 +15,8 @@ export const TEAM_TOUR: Tour = {
             id: 'why_team',
             targetSelector: '[data-tour="team-section"]',
             title: 'Dlaczego zespół?',
-            content: 'Niektóre decyzje wymagają wielu perspektyw. System pomaga zbierać różne punkty widzenia i wykrywać napięcia.',
+            content:
+                'Niektóre decyzje wymagają wielu perspektyw. System pomaga zbierać różne punkty widzenia i wykrywać napięcia.',
             position: 'bottom',
         },
         {
@@ -29,14 +30,16 @@ export const TEAM_TOUR: Tour = {
             id: 'multi_perspective',
             targetSelector: '[data-tour="perspective-view"]',
             title: 'Widok perspektyw',
-            content: 'Gdy masz kilka osób, system pokazuje różnice między punktami widzenia. To nie jest problem — to wartość.',
+            content:
+                'Gdy masz kilka osób, system pokazuje różnice między punktami widzenia. To nie jest problem — to wartość.',
             position: 'bottom',
         },
         {
             id: 'ai_facilitator',
             targetSelector: '[data-tour="ai-facilitation"]',
             title: 'AI jako facylitator',
-            content: 'AI teraz pomaga w dialogu zespołowym. Pokazuje gdzie są napięcia, syntetyzuje różnice, ale nigdy nie zajmuje strony.',
+            content:
+                'AI teraz pomaga w dialogu zespołowym. Pokazuje gdzie są napięcia, syntetyzuje różnice, ale nigdy nie zajmuje strony.',
             position: 'left',
         },
     ],

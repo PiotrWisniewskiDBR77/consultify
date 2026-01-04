@@ -6,6 +6,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import * as DbPromise from '../utils/DbPromise.js';
 
 type Database = {
@@ -16,7 +17,7 @@ type Database = {
 
 const deps = {
     db: null as Database | null,
-    uuidv4
+    uuidv4,
 };
 
 const getDb = (): Database | null => deps.db;
@@ -26,14 +27,14 @@ export const RISK_TYPES = {
     CAPACITY: 'capacity',
     DEPENDENCY: 'dependency',
     DECISION: 'decision',
-    CHANGE_FATIGUE: 'change_fatigue'
+    CHANGE_FATIGUE: 'change_fatigue',
 } as const;
 
 export const RISK_SEVERITY = {
     LOW: 'low',
     MEDIUM: 'medium',
     HIGH: 'high',
-    CRITICAL: 'critical'
+    CRITICAL: 'critical',
 } as const;
 
 export const CHANGE_TYPES = {
@@ -41,12 +42,12 @@ export const CHANGE_TYPES = {
     REMOVE: 'remove',
     MODIFY: 'modify',
     EXPAND: 'expand',
-    REDUCE: 'reduce'
+    REDUCE: 'reduce',
 } as const;
 
-type RiskType = typeof RISK_TYPES[keyof typeof RISK_TYPES];
-type RiskSeverity = typeof RISK_SEVERITY[keyof typeof RISK_SEVERITY];
-type ChangeType = typeof CHANGE_TYPES[keyof typeof CHANGE_TYPES];
+type RiskType = (typeof RISK_TYPES)[keyof typeof RISK_TYPES];
+type RiskSeverity = (typeof RISK_SEVERITY)[keyof typeof RISK_SEVERITY];
+type ChangeType = (typeof CHANGE_TYPES)[keyof typeof CHANGE_TYPES];
 
 type AffectedEntity = {
     type: string;
@@ -154,7 +155,7 @@ const AIRiskChangeControl = {
             await AIRiskChangeControl._registerRisk({
                 ...risk,
                 projectId,
-                organizationId: orgId
+                organizationId: orgId,
             });
         }
 
@@ -165,14 +166,17 @@ const AIRiskChangeControl = {
                 critical: risks.filter((risk) => risk.severity === RISK_SEVERITY.CRITICAL).length,
                 high: risks.filter((risk) => risk.severity === RISK_SEVERITY.HIGH).length,
                 medium: risks.filter((risk) => risk.severity === RISK_SEVERITY.MEDIUM).length,
-                low: risks.filter((risk) => risk.severity === RISK_SEVERITY.LOW).length
+                low: risks.filter((risk) => risk.severity === RISK_SEVERITY.LOW).length,
             },
-            byType: Object.values(RISK_TYPES).reduce((acc, type) => {
-                acc[type] = risks.filter((risk) => risk.riskType === type).length;
-                return acc;
-            }, {} as Record<string, number>),
+            byType: Object.values(RISK_TYPES).reduce(
+                (acc, type) => {
+                    acc[type] = risks.filter((risk) => risk.riskType === type).length;
+                    return acc;
+                },
+                {} as Record<string, number>,
+            ),
             risks,
-            requiresEscalation: risks.some((risk) => risk.severity === RISK_SEVERITY.CRITICAL)
+            requiresEscalation: risks.some((risk) => risk.severity === RISK_SEVERITY.CRITICAL),
         };
     },
 
@@ -188,13 +192,14 @@ const AIRiskChangeControl = {
                 AND t.status != 'DONE'
                 AND t.due_date < date('now')
             `,
-            [projectId]
+            [projectId],
         );
 
         if (overdueTasks.length > 0) {
-            const avgDaysOverdue = overdueTasks.reduce((sum, task) => {
-                return sum + Math.floor((Date.now() - new Date(task.due_date).getTime()) / (1000 * 60 * 60 * 24));
-            }, 0) / overdueTasks.length;
+            const avgDaysOverdue =
+                overdueTasks.reduce((sum, task) => {
+                    return sum + Math.floor((Date.now() - new Date(task.due_date).getTime()) / (1000 * 60 * 60 * 24));
+                }, 0) / overdueTasks.length;
 
             risks.push({
                 projectId,
@@ -206,8 +211,8 @@ const AIRiskChangeControl = {
                 affectedEntities: overdueTasks.map((task) => ({
                     type: 'task',
                     id: task.id,
-                    name: task.title
-                }))
+                    name: task.title,
+                })),
             });
         }
 
@@ -218,7 +223,7 @@ const AIRiskChangeControl = {
                 AND status IN ('EXECUTING', 'APPROVED')
                 AND updated_at < datetime('now', '-14 days')
             `,
-            [projectId]
+            [projectId],
         );
 
         if (stalledInitiatives.length > 0) {
@@ -232,8 +237,8 @@ const AIRiskChangeControl = {
                 affectedEntities: stalledInitiatives.map((initiative) => ({
                     type: 'initiative',
                     id: initiative.id,
-                    name: initiative.name
-                }))
+                    name: initiative.name,
+                })),
             });
         }
 
@@ -243,7 +248,12 @@ const AIRiskChangeControl = {
     _detectCapacityRisks: async (projectId: string): Promise<RiskRecord[]> => {
         const risks: RiskRecord[] = [];
 
-        const overloadedUsers = await dbAll<{ id: string; first_name?: string; last_name?: string; task_count: number }>(
+        const overloadedUsers = await dbAll<{
+            id: string;
+            first_name?: string;
+            last_name?: string;
+            task_count: number;
+        }>(
             `
                 SELECT u.id, u.first_name, u.last_name, COUNT(t.id) as task_count
                 FROM tasks t
@@ -253,22 +263,24 @@ const AIRiskChangeControl = {
                 GROUP BY u.id
                 HAVING task_count > 10
             `,
-            [projectId]
+            [projectId],
         );
 
         if (overloadedUsers.length > 0) {
             risks.push({
                 projectId,
                 riskType: RISK_TYPES.CAPACITY,
-                severity: overloadedUsers.some((user) => user.task_count > 20) ? RISK_SEVERITY.HIGH : RISK_SEVERITY.MEDIUM,
+                severity: overloadedUsers.some((user) => user.task_count > 20)
+                    ? RISK_SEVERITY.HIGH
+                    : RISK_SEVERITY.MEDIUM,
                 title: `${overloadedUsers.length} team members potentially overloaded`,
                 description: 'Users with 10+ active tasks assigned',
                 triggerConditions: 'Task count exceeds healthy threshold',
                 affectedEntities: overloadedUsers.map((user) => ({
                     type: 'user',
                     id: user.id,
-                    name: `${user.first_name || ''} ${user.last_name || ''} (${user.task_count} tasks)`.trim()
-                }))
+                    name: `${user.first_name || ''} ${user.last_name || ''} (${user.task_count} tasks)`.trim(),
+                })),
             });
         }
 
@@ -284,7 +296,7 @@ const AIRiskChangeControl = {
                 WHERE project_id = ?
                 AND status = 'BLOCKED'
             `,
-            [projectId]
+            [projectId],
         );
 
         if (blockedTasks.length > 0) {
@@ -298,8 +310,8 @@ const AIRiskChangeControl = {
                 affectedEntities: blockedTasks.map((task) => ({
                     type: 'task',
                     id: task.id,
-                    name: task.title
-                }))
+                    name: task.title,
+                })),
             });
         }
 
@@ -314,7 +326,7 @@ const AIRiskChangeControl = {
                 AND id.is_satisfied = 0
                 AND ti.status IN ('EXECUTING', 'APPROVED')
             `,
-            [projectId]
+            [projectId],
         );
 
         if (blockedDeps.length > 0) {
@@ -328,8 +340,8 @@ const AIRiskChangeControl = {
                 affectedEntities: blockedDeps.map((dependency) => ({
                     type: 'dependency',
                     id: dependency.id,
-                    name: `${dependency.to_name} waiting on ${dependency.from_name}`
-                }))
+                    name: `${dependency.to_name} waiting on ${dependency.from_name}`,
+                })),
             });
         }
 
@@ -346,13 +358,16 @@ const AIRiskChangeControl = {
                 AND status = 'PENDING'
                 AND created_at < datetime('now', '-7 days')
             `,
-            [projectId]
+            [projectId],
         );
 
         if (pendingDecisions.length > 0) {
-            const avgDays = pendingDecisions.reduce((sum, decision) => {
-                return sum + Math.floor((Date.now() - new Date(decision.created_at).getTime()) / (1000 * 60 * 60 * 24));
-            }, 0) / pendingDecisions.length;
+            const avgDays =
+                pendingDecisions.reduce((sum, decision) => {
+                    return (
+                        sum + Math.floor((Date.now() - new Date(decision.created_at).getTime()) / (1000 * 60 * 60 * 24))
+                    );
+                }, 0) / pendingDecisions.length;
 
             risks.push({
                 projectId,
@@ -364,8 +379,8 @@ const AIRiskChangeControl = {
                 affectedEntities: pendingDecisions.map((decision) => ({
                     type: 'decision',
                     id: decision.id,
-                    name: decision.title
-                }))
+                    name: decision.title,
+                })),
             });
         }
 
@@ -381,7 +396,7 @@ const AIRiskChangeControl = {
                 WHERE project_id = ?
                 AND status IN ('EXECUTING', 'APPROVED')
             `,
-            [projectId]
+            [projectId],
         );
 
         const activeCount = activeInitiatives?.count || 0;
@@ -393,7 +408,7 @@ const AIRiskChangeControl = {
                 title: `High change volume: ${activeCount} active initiatives`,
                 description: 'Too many simultaneous changes may overwhelm the organization',
                 triggerConditions: 'Active initiatives > 10',
-                affectedEntities: []
+                affectedEntities: [],
             });
         }
 
@@ -403,7 +418,7 @@ const AIRiskChangeControl = {
                 WHERE project_id = ?
                 AND changed_at > datetime('now', '-7 days')
             `,
-            [projectId]
+            [projectId],
         );
 
         const recentCount = recentChanges?.count || 0;
@@ -415,7 +430,7 @@ const AIRiskChangeControl = {
                 title: `High scope volatility: ${recentCount} changes in 7 days`,
                 description: 'Frequent scope changes may indicate instability',
                 triggerConditions: 'Scope changes > 20 per week',
-                affectedEntities: []
+                affectedEntities: [],
             });
         }
 
@@ -428,7 +443,7 @@ const AIRiskChangeControl = {
                 SELECT id FROM risk_register
                 WHERE project_id = ? AND risk_type = ? AND title = ? AND status NOT IN ('resolved', 'accepted')
             `,
-            [risk.projectId, risk.riskType, risk.title]
+            [risk.projectId, risk.riskType, risk.title],
         );
 
         if (existing) {
@@ -452,14 +467,16 @@ const AIRiskChangeControl = {
                 risk.title,
                 risk.description,
                 risk.triggerConditions,
-                JSON.stringify(risk.affectedEntities)
-            ]
+                JSON.stringify(risk.affectedEntities),
+            ],
         );
 
         return { id, ...risk };
     },
 
-    explainRisk: async (riskId: string): Promise<{
+    explainRisk: async (
+        riskId: string,
+    ): Promise<{
         riskId: string;
         type: string;
         severity: string;
@@ -492,10 +509,13 @@ const AIRiskChangeControl = {
                 why: risk.trigger_conditions,
                 impact: `Affects ${affectedEntities.length} items`,
                 affectedItems: affectedEntities.slice(0, 5),
-                suggestedAction: AIRiskChangeControl._suggestMitigation(risk.risk_type as RiskType, risk.severity as RiskSeverity)
+                suggestedAction: AIRiskChangeControl._suggestMitigation(
+                    risk.risk_type as RiskType,
+                    risk.severity as RiskSeverity,
+                ),
             },
             detectedAt: risk.detected_at,
-            status: risk.status
+            status: risk.status,
         };
     },
 
@@ -505,13 +525,15 @@ const AIRiskChangeControl = {
             [RISK_TYPES.CAPACITY]: 'Consider task reassignment or timeline extension',
             [RISK_TYPES.DEPENDENCY]: 'Escalate blocked dependencies to decision owners',
             [RISK_TYPES.DECISION]: 'Review decision backlog with governance team',
-            [RISK_TYPES.CHANGE_FATIGUE]: 'Consider phasing initiatives to reduce parallel change'
+            [RISK_TYPES.CHANGE_FATIGUE]: 'Consider phasing initiatives to reduce parallel change',
         };
 
         return mitigations[riskType] || 'Review risk details and consult with project team';
     },
 
-    preEscalationWarning: async (riskId: string): Promise<{
+    preEscalationWarning: async (
+        riskId: string,
+    ): Promise<{
         riskId: string;
         warningIssued: boolean;
         message: string;
@@ -526,8 +548,11 @@ const AIRiskChangeControl = {
             return null;
         }
 
-        const daysSinceDetection = Math.floor((Date.now() - new Date(risk.detected_at || '').getTime()) / (1000 * 60 * 60 * 24));
-        const shouldEscalate = (risk.severity === RISK_SEVERITY.CRITICAL) ||
+        const daysSinceDetection = Math.floor(
+            (Date.now() - new Date(risk.detected_at || '').getTime()) / (1000 * 60 * 60 * 24),
+        );
+        const shouldEscalate =
+            risk.severity === RISK_SEVERITY.CRITICAL ||
             (risk.severity === RISK_SEVERITY.HIGH && daysSinceDetection > 3) ||
             (risk.severity === RISK_SEVERITY.MEDIUM && daysSinceDetection > 7);
 
@@ -535,7 +560,7 @@ const AIRiskChangeControl = {
             return {
                 riskId,
                 warningIssued: false,
-                message: 'Risk does not yet require escalation'
+                message: 'Risk does not yet require escalation',
             };
         }
 
@@ -546,7 +571,7 @@ const AIRiskChangeControl = {
             severity: risk.severity,
             daysSinceDetection,
             suggestedAction: 'Acknowledge risk and assign mitigation owner',
-            escalationDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+            escalationDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
         };
     },
 
@@ -562,7 +587,7 @@ const AIRiskChangeControl = {
         isControlled,
         reason,
         changedBy,
-        approvedBy
+        approvedBy,
     }: {
         projectId: string;
         entityType: string;
@@ -576,7 +601,14 @@ const AIRiskChangeControl = {
         reason?: string | null;
         changedBy?: string | null;
         approvedBy?: string | null;
-    }): Promise<{ id: string; projectId: string; entityType: string; entityId: string; changeType: ChangeType; isControlled: boolean }> => {
+    }): Promise<{
+        id: string;
+        projectId: string;
+        entityType: string;
+        entityId: string;
+        changeType: ChangeType;
+        isControlled: boolean;
+    }> => {
         const id = deps.uuidv4();
         const orgId = await AIRiskChangeControl._getOrgId(projectId);
 
@@ -600,14 +632,17 @@ const AIRiskChangeControl = {
                 isControlled ? 1 : 0,
                 reason,
                 changedBy,
-                approvedBy
-            ]
+                approvedBy,
+            ],
         );
 
         return { id, projectId, entityType, entityId, changeType, isControlled };
     },
 
-    detectUncontrolledChanges: async (projectId: string, days = 7): Promise<{
+    detectUncontrolledChanges: async (
+        projectId: string,
+        days = 7,
+    ): Promise<{
         projectId: string;
         uncontrolledChanges: number;
         changes: unknown[];
@@ -622,7 +657,7 @@ const AIRiskChangeControl = {
                 AND changed_at > datetime('now', '-${days} days')
                 ORDER BY changed_at DESC
             `,
-            [projectId]
+            [projectId],
         );
 
         const changes = rows || [];
@@ -631,13 +666,17 @@ const AIRiskChangeControl = {
             uncontrolledChanges: changes.length,
             changes,
             scopeCreepWarning: changes.length > 5,
-            message: changes.length > 5
-                ? `⚠️ ${changes.length} uncontrolled scope changes detected in last ${days} days`
-                : 'Scope changes within normal parameters'
+            message:
+                changes.length > 5
+                    ? `⚠️ ${changes.length} uncontrolled scope changes detected in last ${days} days`
+                    : 'Scope changes within normal parameters',
         };
     },
 
-    getScopeChangeSummary: async (projectId: string, days = 30): Promise<{
+    getScopeChangeSummary: async (
+        projectId: string,
+        days = 30,
+    ): Promise<{
         projectId: string;
         periodDays: number;
         totalChanges: number;
@@ -658,7 +697,7 @@ const AIRiskChangeControl = {
                 AND changed_at > datetime('now', '-${days} days')
                 GROUP BY entity_type, change_type
             `,
-            [projectId]
+            [projectId],
         );
 
         const summary = {
@@ -668,7 +707,7 @@ const AIRiskChangeControl = {
             totalUncontrolled: 0,
             byEntityType: {} as Record<string, number>,
             byChangeType: {} as Record<string, number>,
-            controlRate: 100
+            controlRate: 100,
         };
 
         for (const row of rows || []) {
@@ -678,14 +717,17 @@ const AIRiskChangeControl = {
             summary.byChangeType[row.change_type] = (summary.byChangeType[row.change_type] || 0) + row.count;
         }
 
-        summary.controlRate = summary.totalChanges > 0
-            ? Math.round(((summary.totalChanges - summary.totalUncontrolled) / summary.totalChanges) * 100)
-            : 100;
+        summary.controlRate =
+            summary.totalChanges > 0
+                ? Math.round(((summary.totalChanges - summary.totalUncontrolled) / summary.totalChanges) * 100)
+                : 100;
 
         return summary;
     },
 
-    getOpenRisks: async (projectId: string): Promise<Array<RiskRow & { affected_entities: AffectedEntity[]; ownerName: string }>> => {
+    getOpenRisks: async (
+        projectId: string,
+    ): Promise<Array<RiskRow & { affected_entities: AffectedEntity[]; ownerName: string }>> => {
         const rows = await dbAll<RiskRow>(
             `
                 SELECT r.*, u.first_name as owner_first, u.last_name as owner_last
@@ -697,19 +739,19 @@ const AIRiskChangeControl = {
                     CASE r.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
                     r.detected_at ASC
             `,
-            [projectId]
+            [projectId],
         );
 
         return (rows || []).map((row) => ({
             ...row,
             affected_entities: parseJsonArray(row.affected_entities),
-            ownerName: row.owner_first ? `${row.owner_first} ${row.owner_last}` : 'Unassigned'
+            ownerName: row.owner_first ? `${row.owner_first} ${row.owner_last}` : 'Unassigned',
         }));
     },
 
     updateRiskStatus: async (
         riskId: string,
-        { status, notes, ownerId }: { status: string; notes?: string; ownerId?: string }
+        { status, notes, ownerId }: { status: string; notes?: string; ownerId?: string },
     ): Promise<{ riskId: string; status: string; updated: boolean }> => {
         let sql = 'UPDATE risk_register SET status = ?';
         const params: Array<string> = [status];
@@ -737,12 +779,11 @@ const AIRiskChangeControl = {
     },
 
     _getOrgId: async (projectId: string): Promise<string | null> => {
-        const row = await dbGet<{ organization_id?: string }>(
-            'SELECT organization_id FROM projects WHERE id = ?',
-            [projectId]
-        );
+        const row = await dbGet<{ organization_id?: string }>('SELECT organization_id FROM projects WHERE id = ?', [
+            projectId,
+        ]);
         return row?.organization_id || null;
-    }
+    },
 };
 
 export default AIRiskChangeControl;

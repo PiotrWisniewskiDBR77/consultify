@@ -1,13 +1,14 @@
 /**
  * Access Policy Context
- * 
+ *
  * React Context for consuming policy snapshot (single source of truth)
  * UI should ONLY use this context for gating - no local calculations
- * 
+ *
  * Step 2 Finalization: Enterprise+ Ready
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 
 interface PolicyLimits {
@@ -99,9 +100,9 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
         try {
             const response = await fetch('/api/organization/policy-snapshot', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -123,25 +124,33 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
         fetchSnapshot();
     }, [fetchSnapshot]);
 
-    const isActionBlocked = useCallback((action: string): boolean => {
-        if (!snapshot) return false;
-        return snapshot.blockedActions.includes(action);
-    }, [snapshot]);
+    const isActionBlocked = useCallback(
+        (action: string): boolean => {
+            if (!snapshot) return false;
+            return snapshot.blockedActions.includes(action);
+        },
+        [snapshot],
+    );
 
-    const isFeatureBlocked = useCallback((feature: string): boolean => {
-        if (!snapshot) return false;
-        return snapshot.blockedFeatures.includes(feature);
-    }, [snapshot]);
+    const isFeatureBlocked = useCallback(
+        (feature: string): boolean => {
+            if (!snapshot) return false;
+            return snapshot.blockedFeatures.includes(feature);
+        },
+        [snapshot],
+    );
 
     return (
-        <AccessPolicyContext.Provider value={{
-            snapshot,
-            loading,
-            error,
-            refresh: fetchSnapshot,
-            isActionBlocked,
-            isFeatureBlocked
-        }}>
+        <AccessPolicyContext.Provider
+            value={{
+                snapshot,
+                loading,
+                error,
+                refresh: fetchSnapshot,
+                isActionBlocked,
+                isFeatureBlocked,
+            }}
+        >
             {children}
         </AccessPolicyContext.Provider>
     );

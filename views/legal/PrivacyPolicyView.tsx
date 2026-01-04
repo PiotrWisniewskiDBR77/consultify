@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 
 const COMPANY = {
@@ -10,17 +11,14 @@ const COMPANY = {
     krs: '0000860440',
     email: 'privacy@dbr77.com',
     dpo: 'dpo@dbr77.com',
-    website: 'https://consultinity.com'
+    website: 'https://consultinity.com',
 };
 
 export const PrivacyPolicyView: React.FC = () => {
     const { t } = useTranslation();
 
     return (
-        <LegalPageLayout
-            title={t('legal.privacy.title', 'Privacy Policy')}
-            lastUpdated="January 1, 2025"
-        >
+        <LegalPageLayout title={t('legal.privacy.title', 'Privacy Policy')} lastUpdated="January 1, 2025">
             {/* 1. Introduction */}
             <section>
                 <h2>1. Introduction</h2>
@@ -30,7 +28,8 @@ export const PrivacyPolicyView: React.FC = () => {
                     store, and protect your information when you use our platform.
                 </p>
                 <p>
-                    By using Consultinity, you agree to the collection and use of information in accordance with this policy.
+                    By using Consultinity, you agree to the collection and use of information in accordance with this
+                    policy.
                 </p>
             </section>
 
@@ -59,26 +58,44 @@ export const PrivacyPolicyView: React.FC = () => {
 
                 <h3>3.1 Information You Provide</h3>
                 <ul>
-                    <li><strong>Account Information:</strong> Name, email address, company name, job title</li>
-                    <li><strong>Profile Information:</strong> Avatar, preferences, language settings</li>
-                    <li><strong>Organization Data:</strong> Company details, industry, size, strategic goals</li>
-                    <li><strong>Content:</strong> Documents, reports, assessments, and other content you create</li>
-                    <li><strong>Communications:</strong> Support requests, feedback, and correspondence</li>
+                    <li>
+                        <strong>Account Information:</strong> Name, email address, company name, job title
+                    </li>
+                    <li>
+                        <strong>Profile Information:</strong> Avatar, preferences, language settings
+                    </li>
+                    <li>
+                        <strong>Organization Data:</strong> Company details, industry, size, strategic goals
+                    </li>
+                    <li>
+                        <strong>Content:</strong> Documents, reports, assessments, and other content you create
+                    </li>
+                    <li>
+                        <strong>Communications:</strong> Support requests, feedback, and correspondence
+                    </li>
                 </ul>
 
                 <h3>3.2 Information Collected Automatically</h3>
                 <ul>
-                    <li><strong>Usage Data:</strong> Features used, actions taken, session duration</li>
-                    <li><strong>Device Information:</strong> Browser type, operating system, device identifiers</li>
-                    <li><strong>Log Data:</strong> IP address, access times, pages viewed</li>
-                    <li><strong>Cookies:</strong> See our <a href="/cookies">Cookie Policy</a> for details</li>
+                    <li>
+                        <strong>Usage Data:</strong> Features used, actions taken, session duration
+                    </li>
+                    <li>
+                        <strong>Device Information:</strong> Browser type, operating system, device identifiers
+                    </li>
+                    <li>
+                        <strong>Log Data:</strong> IP address, access times, pages viewed
+                    </li>
+                    <li>
+                        <strong>Cookies:</strong> See our <a href="/cookies">Cookie Policy</a> for details
+                    </li>
                 </ul>
 
                 <h3>3.3 AI Processing Data</h3>
                 <p>
                     When you use our AI-powered features, we process the prompts and data you provide to generate
-                    strategic insights. This data is processed in accordance with your selected AI provider's terms
-                    and our data protection measures.
+                    strategic insights. This data is processed in accordance with your selected AI provider's terms and
+                    our data protection measures.
                 </p>
             </section>
 
@@ -87,12 +104,24 @@ export const PrivacyPolicyView: React.FC = () => {
                 <h2>4. How We Use Your Data</h2>
                 <p>We use your personal data for the following purposes:</p>
                 <ul>
-                    <li><strong>Service Delivery:</strong> To provide and maintain Consultinity's features</li>
-                    <li><strong>Account Management:</strong> To manage your account and subscription</li>
-                    <li><strong>AI Services:</strong> To power AI-driven strategic consulting features</li>
-                    <li><strong>Communication:</strong> To send service updates, security alerts, and support messages</li>
-                    <li><strong>Improvement:</strong> To analyze usage patterns and improve our platform</li>
-                    <li><strong>Legal Compliance:</strong> To comply with legal obligations and protect our rights</li>
+                    <li>
+                        <strong>Service Delivery:</strong> To provide and maintain Consultinity's features
+                    </li>
+                    <li>
+                        <strong>Account Management:</strong> To manage your account and subscription
+                    </li>
+                    <li>
+                        <strong>AI Services:</strong> To power AI-driven strategic consulting features
+                    </li>
+                    <li>
+                        <strong>Communication:</strong> To send service updates, security alerts, and support messages
+                    </li>
+                    <li>
+                        <strong>Improvement:</strong> To analyze usage patterns and improve our platform
+                    </li>
+                    <li>
+                        <strong>Legal Compliance:</strong> To comply with legal obligations and protect our rights
+                    </li>
                 </ul>
             </section>
 
@@ -101,10 +130,20 @@ export const PrivacyPolicyView: React.FC = () => {
                 <h2>5. Legal Basis for Processing</h2>
                 <p>We process your personal data based on the following legal grounds (GDPR Article 6):</p>
                 <ul>
-                    <li><strong>Contract Performance (Art. 6(1)(b)):</strong> Processing necessary to provide our services</li>
-                    <li><strong>Legitimate Interests (Art. 6(1)(f)):</strong> Platform improvement, fraud prevention, security</li>
-                    <li><strong>Consent (Art. 6(1)(a)):</strong> Marketing communications, optional analytics</li>
-                    <li><strong>Legal Obligation (Art. 6(1)(c)):</strong> Tax records, regulatory compliance</li>
+                    <li>
+                        <strong>Contract Performance (Art. 6(1)(b)):</strong> Processing necessary to provide our
+                        services
+                    </li>
+                    <li>
+                        <strong>Legitimate Interests (Art. 6(1)(f)):</strong> Platform improvement, fraud prevention,
+                        security
+                    </li>
+                    <li>
+                        <strong>Consent (Art. 6(1)(a)):</strong> Marketing communications, optional analytics
+                    </li>
+                    <li>
+                        <strong>Legal Obligation (Art. 6(1)(c)):</strong> Tax records, regulatory compliance
+                    </li>
                 </ul>
             </section>
 
@@ -115,20 +154,27 @@ export const PrivacyPolicyView: React.FC = () => {
 
                 <h3>6.1 Service Providers</h3>
                 <ul>
-                    <li><strong>Cloud Infrastructure:</strong> Secure EU-based hosting providers</li>
-                    <li><strong>AI Providers:</strong> OpenAI, Anthropic, Google (based on your configuration)</li>
-                    <li><strong>Payment Processors:</strong> Stripe for subscription management</li>
-                    <li><strong>Analytics:</strong> Privacy-focused analytics tools</li>
+                    <li>
+                        <strong>Cloud Infrastructure:</strong> Secure EU-based hosting providers
+                    </li>
+                    <li>
+                        <strong>AI Providers:</strong> OpenAI, Anthropic, Google (based on your configuration)
+                    </li>
+                    <li>
+                        <strong>Payment Processors:</strong> Stripe for subscription management
+                    </li>
+                    <li>
+                        <strong>Analytics:</strong> Privacy-focused analytics tools
+                    </li>
                 </ul>
 
                 <h3>6.2 Legal Requirements</h3>
-                <p>
-                    We may disclose data if required by law, court order, or to protect our rights and safety.
-                </p>
+                <p>We may disclose data if required by law, court order, or to protect our rights and safety.</p>
 
                 <h3>6.3 Business Transfers</h3>
                 <p>
-                    In the event of a merger, acquisition, or sale, your data may be transferred as part of the business assets.
+                    In the event of a merger, acquisition, or sale, your data may be transferred as part of the business
+                    assets.
                 </p>
             </section>
 
@@ -156,8 +202,8 @@ export const PrivacyPolicyView: React.FC = () => {
                     <li>Resolve disputes and enforce agreements</li>
                 </ul>
                 <p>
-                    After account deletion, we anonymize or delete your data within 90 days, except where retention
-                    is required by law.
+                    After account deletion, we anonymize or delete your data within 90 days, except where retention is
+                    required by law.
                 </p>
             </section>
 
@@ -166,17 +212,32 @@ export const PrivacyPolicyView: React.FC = () => {
                 <h2>9. Your Rights (GDPR)</h2>
                 <p>Under the General Data Protection Regulation, you have the following rights:</p>
                 <ul>
-                    <li><strong>Right of Access (Art. 15):</strong> Request a copy of your personal data</li>
-                    <li><strong>Right to Rectification (Art. 16):</strong> Correct inaccurate or incomplete data</li>
-                    <li><strong>Right to Erasure (Art. 17):</strong> Request deletion of your data ("right to be forgotten")</li>
-                    <li><strong>Right to Restriction (Art. 18):</strong> Limit how we process your data</li>
-                    <li><strong>Right to Data Portability (Art. 20):</strong> Receive your data in a portable format</li>
-                    <li><strong>Right to Object (Art. 21):</strong> Object to processing based on legitimate interests</li>
-                    <li><strong>Right to Withdraw Consent (Art. 7):</strong> Withdraw consent at any time</li>
+                    <li>
+                        <strong>Right of Access (Art. 15):</strong> Request a copy of your personal data
+                    </li>
+                    <li>
+                        <strong>Right to Rectification (Art. 16):</strong> Correct inaccurate or incomplete data
+                    </li>
+                    <li>
+                        <strong>Right to Erasure (Art. 17):</strong> Request deletion of your data ("right to be
+                        forgotten")
+                    </li>
+                    <li>
+                        <strong>Right to Restriction (Art. 18):</strong> Limit how we process your data
+                    </li>
+                    <li>
+                        <strong>Right to Data Portability (Art. 20):</strong> Receive your data in a portable format
+                    </li>
+                    <li>
+                        <strong>Right to Object (Art. 21):</strong> Object to processing based on legitimate interests
+                    </li>
+                    <li>
+                        <strong>Right to Withdraw Consent (Art. 7):</strong> Withdraw consent at any time
+                    </li>
                 </ul>
                 <p>
-                    To exercise these rights, contact us at <a href={`mailto:${COMPANY.dpo}`}>{COMPANY.dpo}</a>.
-                    We will respond within 30 days.
+                    To exercise these rights, contact us at <a href={`mailto:${COMPANY.dpo}`}>{COMPANY.dpo}</a>. We will
+                    respond within 30 days.
                 </p>
             </section>
 
@@ -200,9 +261,8 @@ export const PrivacyPolicyView: React.FC = () => {
             <section>
                 <h2>11. Cookies and Tracking</h2>
                 <p>
-                    We use cookies and similar technologies to enhance your experience. For detailed information
-                    about the cookies we use and how to control them, please see our{' '}
-                    <a href="/cookies">Cookie Policy</a>.
+                    We use cookies and similar technologies to enhance your experience. For detailed information about
+                    the cookies we use and how to control them, please see our <a href="/cookies">Cookie Policy</a>.
                 </p>
             </section>
 
@@ -210,9 +270,8 @@ export const PrivacyPolicyView: React.FC = () => {
             <section>
                 <h2>12. Children's Privacy</h2>
                 <p>
-                    Consultinity is not intended for users under 18 years of age. We do not knowingly collect
-                    data from children. If you believe a child has provided us with personal data, please
-                    contact us immediately.
+                    Consultinity is not intended for users under 18 years of age. We do not knowingly collect data from
+                    children. If you believe a child has provided us with personal data, please contact us immediately.
                 </p>
             </section>
 
@@ -220,9 +279,9 @@ export const PrivacyPolicyView: React.FC = () => {
             <section>
                 <h2>13. Changes to This Policy</h2>
                 <p>
-                    We may update this Privacy Policy from time to time. We will notify you of significant changes
-                    by email or through a notice on our platform. The "Last updated" date at the top reflects
-                    the most recent revision.
+                    We may update this Privacy Policy from time to time. We will notify you of significant changes by
+                    email or through a notice on our platform. The "Last updated" date at the top reflects the most
+                    recent revision.
                 </p>
             </section>
 
@@ -231,8 +290,12 @@ export const PrivacyPolicyView: React.FC = () => {
                 <h2>14. Contact Us</h2>
                 <p>If you have questions about this Privacy Policy or wish to exercise your rights, contact us:</p>
                 <div className="bg-slate-50 dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/10 my-6">
-                    <p><strong>Email:</strong> <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></p>
-                    <p><strong>DPO:</strong> <a href={`mailto:${COMPANY.dpo}`}>{COMPANY.dpo}</a></p>
+                    <p>
+                        <strong>Email:</strong> <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
+                    </p>
+                    <p>
+                        <strong>DPO:</strong> <a href={`mailto:${COMPANY.dpo}`}>{COMPANY.dpo}</a>
+                    </p>
                     <p className="mt-4 text-sm text-slate-500">
                         You also have the right to lodge a complaint with your local data protection authority.
                     </p>

@@ -1,14 +1,15 @@
 /**
  * Seat Management Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/seatManagementService.js (CommonJS) to TypeScript (ES Modules)
  * Handles seat purchasing, auto-adding, releasing, and seat pool management
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -126,7 +127,7 @@ export async function getSeatConfiguration(orgId: string): Promise<SeatConfigura
          LEFT JOIN organization_billing ob ON os.organization_id = ob.organization_id
          LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
          WHERE os.organization_id = ?`,
-        [orgId]
+        [orgId],
     );
 
     if (!row) {
@@ -141,7 +142,7 @@ export async function getSeatConfiguration(orgId: string): Promise<SeatConfigura
         ...row,
         total_seats_available: totalAvailable,
         seats_remaining: Math.max(0, totalAvailable - (row.seats_used || 0)),
-        utilization_percent: totalAvailable > 0 ? (((row.seats_used || 0) / totalAvailable) * 100).toFixed(2) : '0'
+        utilization_percent: totalAvailable > 0 ? (((row.seats_used || 0) / totalAvailable) * 100).toFixed(2) : '0',
     };
 }
 
@@ -156,7 +157,7 @@ export async function initializeSeatConfiguration(orgId: string): Promise<void> 
          FROM organization_billing ob
          LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
          WHERE ob.organization_id = ?`,
-        [orgId]
+        [orgId],
     );
 
     const seatsIncluded = planRow?.seats_included || 0;
@@ -168,7 +169,7 @@ export async function initializeSeatConfiguration(orgId: string): Promise<void> 
     const userRow = await DbPromise.get<UserCountRow>(
         db,
         `SELECT COUNT(*) as count FROM users WHERE organization_id = ? AND status = 'active'`,
-        [orgId]
+        [orgId],
     );
 
     const seatsUsed = userRow?.count || 0;
@@ -181,7 +182,7 @@ export async function initializeSeatConfiguration(orgId: string): Promise<void> 
             total_seats_available, seats_used, billing_model, seat_price_monthly,
             auto_add_seats_on_invite, seat_pool_enabled
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, orgId, seatsIncluded, 0, seatsIncluded, seatsUsed, billingModel, seatPrice, 0, allowPooling ? 1 : 0]
+        [id, orgId, seatsIncluded, 0, seatsIncluded, seatsUsed, billingModel, seatPrice, 0, allowPooling ? 1 : 0],
     );
 }
 
@@ -192,7 +193,7 @@ export async function purchaseSeats(
     orgId: string,
     quantity: number,
     paymentMethodId: string | null,
-    triggeredByUserId: string | null = null
+    triggeredByUserId: string | null = null,
 ): Promise<PurchaseSeatsResult> {
     const config = await getSeatConfiguration(orgId);
     const seatPrice = config.seat_price_monthly || 0;
@@ -218,7 +219,19 @@ export async function purchaseSeats(
             id, organization_id, transaction_type, seats_count, unit_price, total_amount,
             billing_period_start, billing_period_end, triggered_by, triggered_by_user_id, reason
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [transactionId, orgId, 'purchase', quantity, seatPrice, totalAmount, periodStart.toISOString(), periodEnd.toISOString(), 'admin', triggeredByUserId, 'Manual seat purchase']
+        [
+            transactionId,
+            orgId,
+            'purchase',
+            quantity,
+            seatPrice,
+            totalAmount,
+            periodStart.toISOString(),
+            periodEnd.toISOString(),
+            'admin',
+            triggeredByUserId,
+            'Manual seat purchase',
+        ],
     );
 
     // Update organization_seats
@@ -229,14 +242,14 @@ export async function purchaseSeats(
             total_seats_available = total_seats_available + ?,
             updated_at = datetime('now')
         WHERE organization_id = ?`,
-        [quantity, quantity, orgId]
+        [quantity, quantity, orgId],
     );
 
     return {
         transactionId,
         seatsPurchased: quantity,
         totalAmount,
-        newTotalSeats: (config.total_seats_available || 0) + quantity
+        newTotalSeats: (config.total_seats_available || 0) + quantity,
     };
 }
 
@@ -271,7 +284,17 @@ export async function autoAddSeatOnInvite(orgId: string, userId: string): Promis
                     id, organization_id, transaction_type, seats_count, unit_price, total_amount,
                     triggered_by, triggered_by_user_id, reason
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [transactionId, orgId, 'auto_add', 1, config.seat_price_monthly || 0, config.seat_price_monthly || 0, 'auto', userId, 'Auto-added on invitation']
+                [
+                    transactionId,
+                    orgId,
+                    'auto_add',
+                    1,
+                    config.seat_price_monthly || 0,
+                    config.seat_price_monthly || 0,
+                    'auto',
+                    userId,
+                    'Auto-added on invitation',
+                ],
             );
         } catch (err: unknown) {
             console.error('Error recording auto-add transaction:', err);
@@ -301,7 +324,7 @@ export async function releaseSeat(orgId: string, userId: string): Promise<Releas
             id, organization_id, transaction_type, seats_count,
             triggered_by, triggered_by_user_id, reason
         ) VALUES(?, ?, ?, ?, ?, ?, ?)`,
-        [transactionId, orgId, 'release', -1, 'admin', userId, 'User removed']
+        [transactionId, orgId, 'release', -1, 'admin', userId, 'User removed'],
     );
 
     // Update organization_seats
@@ -312,7 +335,7 @@ export async function releaseSeat(orgId: string, userId: string): Promise<Releas
             total_seats_available = MAX(base_seats_included, total_seats_available - 1),
             updated_at = datetime('now')
         WHERE organization_id = ?`,
-        [orgId]
+        [orgId],
     );
 
     return { released: true, transactionId };
@@ -334,7 +357,7 @@ export async function updateSeatCount(orgId: string): Promise<UpdateSeatCountRes
     const userRow = await DbPromise.get<UserCountRow>(
         db,
         `SELECT COUNT(*) as count FROM users WHERE organization_id = ? AND status = 'active'`,
-        [orgId]
+        [orgId],
     );
 
     const seatsUsed = userRow?.count || 0;
@@ -342,7 +365,7 @@ export async function updateSeatCount(orgId: string): Promise<UpdateSeatCountRes
     await DbPromise.run(
         db,
         `UPDATE organization_seats SET seats_used = ?, updated_at = datetime('now') WHERE organization_id = ?`,
-        [seatsUsed, orgId]
+        [seatsUsed, orgId],
     );
 
     return { seatsUsed };
@@ -360,7 +383,7 @@ export async function getSeatHistory(orgId: string, limit: number = 50): Promise
          WHERE st.organization_id = ?
          ORDER BY st.created_at DESC
          LIMIT ?`,
-        [orgId, limit]
+        [orgId, limit],
     );
 
     return rows || [];
@@ -369,7 +392,11 @@ export async function getSeatHistory(orgId: string, limit: number = 50): Promise
 /**
  * Toggle auto-add seats on invite
  */
-export async function toggleAutoAddSeats(orgId: string, enabled: boolean, threshold: number = 80): Promise<ToggleAutoAddResult> {
+export async function toggleAutoAddSeats(
+    orgId: string,
+    enabled: boolean,
+    threshold: number = 80,
+): Promise<ToggleAutoAddResult> {
     await DbPromise.run(
         db,
         `UPDATE organization_seats SET
@@ -377,7 +404,7 @@ export async function toggleAutoAddSeats(orgId: string, enabled: boolean, thresh
             auto_add_seats_threshold = ?,
             updated_at = datetime('now')
         WHERE organization_id = ?`,
-        [enabled ? 1 : 0, threshold, orgId]
+        [enabled ? 1 : 0, threshold, orgId],
     );
 
     return { enabled, threshold };
@@ -394,7 +421,7 @@ const SeatManagementService = {
     canAddUser,
     updateSeatCount,
     getSeatHistory,
-    toggleAutoAddSeats
+    toggleAutoAddSeats,
 };
 
 export default SeatManagementService;

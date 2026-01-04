@@ -1,14 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    Shield, Key, Lock, Eye, EyeOff, CheckCircle, AlertCircle,
-    Loader2, Smartphone, LogOut, Monitor, MapPin, Clock,
-    FileText, ShieldCheck, Users, ExternalLink
+    AlertCircle,
+    CheckCircle,
+    Clock,
+    ExternalLink,
+    Eye,
+    EyeOff,
+    FileText,
+    Key,
+    Loader2,
+    Lock,
+    LogOut,
+    MapPin,
+    Monitor,
+    Shield,
+    ShieldCheck,
+    Smartphone,
+    Users,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface SecuritySettingsProps {
@@ -48,7 +63,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
         hasUppercase: /[A-Z]/.test(newPassword),
         hasLowercase: /[a-z]/.test(newPassword),
         hasNumber: /[0-9]/.test(newPassword),
-        passwordsMatch: newPassword === confirmPassword && confirmPassword.length > 0
+        passwordsMatch: newPassword === confirmPassword && confirmPassword.length > 0,
     };
 
     const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
@@ -102,7 +117,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
         setIsRevokingSession(sessionId);
         try {
             await Api.revokeSession(sessionId);
-            setSessions(sessions.filter(s => s.id !== sessionId));
+            setSessions(sessions.filter((s) => s.id !== sessionId));
             toast.success(t('settings.security.sessionRevoked', 'Session revoked successfully'));
         } catch (error) {
             toast.error(t('settings.security.sessionRevokeFailed', 'Failed to revoke session'));
@@ -112,7 +127,9 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
     };
 
     const handleRevokeAllSessions = async () => {
-        if (!confirm(t('settings.security.revokeAllConfirm', 'Are you sure you want to log out of all other devices?'))) {
+        if (
+            !confirm(t('settings.security.revokeAllConfirm', 'Are you sure you want to log out of all other devices?'))
+        ) {
             return;
         }
 
@@ -136,7 +153,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -166,7 +183,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                         {t('settings.security.changePassword', 'Change Password')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('settings.security.changePasswordDescription', 'Update your password to keep your account secure')}
+                        {t(
+                            'settings.security.changePasswordDescription',
+                            'Update your password to keep your account secure',
+                        )}
                     </p>
                 </div>
 
@@ -222,9 +242,15 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                         <div className="mt-3 grid grid-cols-2 gap-2">
                             {[
                                 { key: 'minLength', label: t('settings.security.minLength', 'At least 8 characters') },
-                                { key: 'hasUppercase', label: t('settings.security.hasUppercase', 'One uppercase letter') },
-                                { key: 'hasLowercase', label: t('settings.security.hasLowercase', 'One lowercase letter') },
-                                { key: 'hasNumber', label: t('settings.security.hasNumber', 'One number') }
+                                {
+                                    key: 'hasUppercase',
+                                    label: t('settings.security.hasUppercase', 'One uppercase letter'),
+                                },
+                                {
+                                    key: 'hasLowercase',
+                                    label: t('settings.security.hasLowercase', 'One lowercase letter'),
+                                },
+                                { key: 'hasNumber', label: t('settings.security.hasNumber', 'One number') },
                             ].map(({ key, label }) => (
                                 <div key={key} className="flex items-center gap-2 text-sm">
                                     {passwordRequirements[key as keyof typeof passwordRequirements] ? (
@@ -232,7 +258,13 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                                     ) : (
                                         <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
                                     )}
-                                    <span className={passwordRequirements[key as keyof typeof passwordRequirements] ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}>
+                                    <span
+                                        className={
+                                            passwordRequirements[key as keyof typeof passwordRequirements]
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-slate-500'
+                                        }
+                                    >
                                         {label}
                                     </span>
                                 </div>
@@ -277,7 +309,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                     {passwordSuccess && (
                         <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-sm flex items-center gap-2">
                             <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                            {t('settings.security.passwordChangedSuccess', 'Your password has been changed successfully. All other sessions have been logged out.')}
+                            {t(
+                                'settings.security.passwordChangedSuccess',
+                                'Your password has been changed successfully. All other sessions have been logged out.',
+                            )}
                         </div>
                     )}
 
@@ -311,7 +346,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                             {t('settings.security.activeSessions', 'Active Sessions')}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            {t('settings.security.activeSessionsDescription', 'Devices and browsers where you are currently logged in')}
+                            {t(
+                                'settings.security.activeSessionsDescription',
+                                'Devices and browsers where you are currently logged in',
+                            )}
                         </p>
                     </div>
                     {sessions.length > 1 && (
@@ -359,7 +397,9 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                {session.createdAt ? formatDate(session.createdAt) : t('common.unknown', 'Unknown')}
+                                                {session.createdAt
+                                                    ? formatDate(session.createdAt)
+                                                    : t('common.unknown', 'Unknown')}
                                             </span>
                                         </div>
                                     </div>
@@ -391,7 +431,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                         {t('settings.security.documents', 'Security Documentation')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('settings.security.documentsDescription', 'Learn about our security practices and compliance')}
+                        {t(
+                            'settings.security.documentsDescription',
+                            'Learn about our security practices and compliance',
+                        )}
                     </p>
                 </div>
                 <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -447,4 +490,3 @@ const SecurityDocLink: React.FC<SecurityDocLinkProps> = ({ to, icon, title, desc
 );
 
 export default SecuritySettings;
-

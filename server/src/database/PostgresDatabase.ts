@@ -1,34 +1,35 @@
 /**
  * PostgreSQL Database Implementation
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Full TypeScript migration of database.postgres.js
  * Provides SQLite-compatible interface for PostgreSQL
  */
 
-import { Pool, type PoolClient } from 'pg';
-import type { IDatabase, RunResult, QueryResult } from './IDatabase.js';
+import { Pool, type PoolClient, type PoolConfig } from 'pg';
+
 import databaseConfig from '../../config/database.config.js';
+import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
+let readPool: Pool | null = null;
+const SLOW_QUERY_THRESHOLD_MS = 1000;
 
 function getPool(): Pool {
     if (!pool) {
         console.log('[Postgres] Initializing connection pool...');
+        // Ensure config is treated as valid PoolConfig or undefined
+        const config = databaseConfig.postgres as PoolConfig | undefined;
+
         console.log('[Postgres] Config:', {
-            host: databaseConfig.postgres?.host,
-            port: databaseConfig.postgres?.port,
-            database: databaseConfig.postgres?.database,
-            user: databaseConfig.postgres?.user,
-            ssl: databaseConfig.postgres?.ssl,
-            connectionTimeoutMillis: databaseConfig.postgres?.connectionTimeoutMillis,
-            max: databaseConfig.postgres?.max
+            host: config?.host,
+            database: config?.database,
+            max: config?.max,
         });
-        pool = new Pool(databaseConfig.postgres);
+        pool = new Pool(config);
 
         pool.on('error', (err: Error, _client: PoolClient) => {
             console.error('[Postgres] Unexpected error on idle client:', err.message);
-            console.error('[Postgres] Error code:', (err as any).code);
         });
 
         pool.on('connect', (_client: PoolClient) => {
@@ -37,12 +38,67 @@ function getPool(): Pool {
 
         // Initialize schema lazily if needed
         if (process.env.NODE_ENV !== 'test') {
-            initDb().catch(err => {
-                console.error('[Postgres] Failed to initialize database:', err);
-            });
+            initDb()
+                .then(() => {
+                    console.log('[Postgres] Schema initialization completed successfully');
+                })
+                .catch((err: Error | null) => {
+                    console.error('[Postgres] Failed to initialize database:', err);
+                    // In production, this is critical - log but don't crash immediately
+                    // The DatabaseInitializer will catch this and handle it
+                    if (process.env.NODE_ENV === 'production') {
+                        console.error('[Postgres] CRITICAL: Schema initialization failed in production!');
+                    }
+                });
         }
     }
     return pool;
+}
+
+function getReadPool(): Pool {
+    if (readPool) return readPool;
+
+    // Check if read replica is configured
+    if (databaseConfig.readReplica) {
+        if (!readPool) {
+            console.log('[Postgres] Initializing READ REPLICA pool...');
+            const config = databaseConfig.readReplica as PoolConfig;
+            readPool = new Pool(config);
+
+            readPool.on('error', (err: Error) => {
+                console.error('[Postgres] Unexpected error on READ REPLICA client:', err.message);
+            });
+        }
+        return readPool;
+    }
+
+    // Fallback to primary if no read replica configured
+    return getPool();
+}
+
+async function executeWithLogging<T>(
+    poolFn: () => Pool,
+    sql: string,
+    params: unknown[],
+    method: 'RUN' | 'GET' | 'ALL' | 'QUERY'
+): Promise<{ rows: T[]; rowCount: number | null }> {
+    const start = Date.now();
+    try {
+        const pool = poolFn();
+        const res = await pool.query(sql, params);
+
+        const duration = Date.now() - start;
+        if (duration > SLOW_QUERY_THRESHOLD_MS) {
+            console.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
+        }
+
+        return { rows: res.rows as T[], rowCount: res.rowCount };
+    } catch (err) {
+        // Log query error with context
+        console.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
+        console.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
+        throw err;
+    }
 }
 
 /**
@@ -55,7 +111,7 @@ function adaptQuery(sql: string): string {
     let adapted = sql.replace(/\?/g, () => `$${paramIndex++}`);
 
     // Replace datetime('now') and datetime("now") with NOW()
-    adapted = adapted.replace(/datetime\(['"]now['"]\)/g, "NOW()");
+    adapted = adapted.replace(/datetime\(['"]now['"]\)/g, 'NOW()');
 
     // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days'
     adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi, (_match, days) => {
@@ -78,14 +134,20 @@ function adaptQuery(sql: string): string {
     });
 
     // Replace datetime(date, '+' || N || ' days') with date + INTERVAL 'N days'
-    adapted = adapted.replace(/datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi, (_match, dateExpr, daysExpr) => {
-        return `${dateExpr} + INTERVAL '${daysExpr} days'`;
-    });
+    adapted = adapted.replace(
+        /datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi,
+        (_match, dateExpr, daysExpr) => {
+            return `${dateExpr} + INTERVAL '${daysExpr} days'`;
+        },
+    );
 
     // Replace datetime(date, '+' || N || ' days') <= datetime('now') with date + INTERVAL 'N days' <= NOW()
-    adapted = adapted.replace(/datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi, (_match, dateExpr, daysExpr) => {
-        return `${dateExpr} + INTERVAL '${daysExpr} days'`;
-    });
+    adapted = adapted.replace(
+        /datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi,
+        (_match, dateExpr, daysExpr) => {
+            return `${dateExpr} + INTERVAL '${daysExpr} days'`;
+        },
+    );
 
     // Replace julianday(date1) - julianday(date2) with EXTRACT(EPOCH FROM (date1 - date2)) / 86400
     adapted = adapted.replace(/julianday\(([^)]+)\)\s*-\s*julianday\(([^)]+)\)/gi, (_match, date1, date2) => {
@@ -93,10 +155,10 @@ function adaptQuery(sql: string): string {
     });
 
     // Replace date('now') with CURRENT_DATE
-    adapted = adapted.replace(/date\(['"]now['"]\)/g, "CURRENT_DATE");
+    adapted = adapted.replace(/date\(['"]now['"]\)/g, 'CURRENT_DATE');
 
     // Replace date(column) with column::date (PostgreSQL cast)
-    adapted = adapted.replace(/date\(([^)]+)\)/g, "$1::date");
+    adapted = adapted.replace(/date\(([^)]+)\)/g, '$1::date');
 
     // Replace DATETIME column type with TIMESTAMP for PostgreSQL
     adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
@@ -108,7 +170,7 @@ function adaptQuery(sql: string): string {
         const match = adapted.match(/INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([^)]+)\)/i);
         if (match) {
             const tableName = match[1];
-            const columns = match[2].split(',').map(c => c.trim());
+            const columns = match[2].split(',').map((c) => c.trim());
             // Find primary key or first column as conflict target
             const conflictColumn = columns[0]; // Simplified - assumes first column is key
             adapted = adapted.replace(/INSERT\s+OR\s+REPLACE\s+INTO/i, 'INSERT INTO');
@@ -160,24 +222,25 @@ class PostgresDatabase implements IDatabase {
                     params = args.slice(0, -1) as unknown[];
                 }
 
-                getPool().query(adaptedSql, params)
-                    .then(res => {
+                executeWithLogging<unknown>(
+                    getPool,
+                    adaptedSql,
+                    params,
+                    'RUN'
+                )
+                    .then((res) => {
                         if (callback) callback.call({ changes: res.rowCount, lastID: null }, null);
                     })
-                    .catch(err => {
-                        console.error('[Postgres] Prepare Run Error:', err.message, adaptedSql);
+                    .catch((err: Error | null) => {
+                        // Error logged in executeWithLogging
                         if (callback) callback(err);
                     });
             },
-            finalize: () => { }
+            finalize: () => { },
         };
     }
 
-    run(
-        sql: string,
-        params?: unknown[],
-        callback?: (err: Error | null) => void
-    ): this | Promise<RunResult> {
+    run(sql: string, params?: unknown[], callback?: (err: Error | null) => void): this | Promise<RunResult> {
         if (typeof params === 'function') {
             callback = params;
             params = [];
@@ -186,15 +249,20 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = getPool().query(adaptedSql, params)
-            .then(res => {
+        const promise = executeWithLogging<unknown>(
+            getPool,
+            adaptedSql,
+            params,
+            'RUN'
+        )
+            .then((res) => {
                 const result: RunResult = { changes: res.rowCount, lastID: undefined };
                 if (callback) {
                     callback.call({ changes: res.rowCount, lastID: null }, null);
                 }
                 return result;
             })
-            .catch(err => {
+            .catch((err: Error | null) => {
                 console.error('[Postgres] Run Error:', err.message, adaptedSql);
                 if (callback) callback(err);
                 throw err;
@@ -209,7 +277,7 @@ class PostgresDatabase implements IDatabase {
     get<T = unknown>(
         sql: string,
         params?: unknown[],
-        callback?: (err: Error | null, row: T | null) => void
+        callback?: (err: Error | null, row: T | null) => void,
     ): this | Promise<T | null> {
         if (typeof params === 'function') {
             callback = params;
@@ -219,14 +287,19 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = getPool().query(adaptedSql, params)
-            .then(res => {
+        const promise = executeWithLogging<T>(
+            getReadPool,
+            adaptedSql,
+            params,
+            'GET'
+        )
+            .then((res) => {
                 const row = res.rows[0] || null;
                 if (callback) callback(null, row as T);
                 return row as T | null;
             })
-            .catch(err => {
-                console.error('[Postgres] Get Error:', err.message, adaptedSql);
+            .catch((err: Error | null) => {
+                // Error logged in executeWithLogging
                 if (callback) callback(err, null);
                 throw err;
             });
@@ -240,7 +313,7 @@ class PostgresDatabase implements IDatabase {
     all<T = unknown>(
         sql: string,
         params?: unknown[],
-        callback?: (err: Error | null, rows: T[]) => void
+        callback?: (err: Error | null, rows: T[]) => void,
     ): this | Promise<T[]> {
         if (typeof params === 'function') {
             callback = params;
@@ -250,13 +323,17 @@ class PostgresDatabase implements IDatabase {
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = getPool().query(adaptedSql, params)
-            .then(res => {
-                if (callback) callback(null, res.rows as T[]);
-                return res.rows as T[];
+        const promise = executeWithLogging<T>(
+            getReadPool,
+            adaptedSql,
+            params,
+            'ALL'
+        )
+            .then((res) => {
+                if (callback) callback(null, res.rows);
+                return res.rows;
             })
-            .catch(err => {
-                console.error('[Postgres] All Error:', err.message, adaptedSql);
+            .catch((err: Error | null) => {
                 if (callback) callback(err, []);
                 throw err;
             });
@@ -268,11 +345,11 @@ class PostgresDatabase implements IDatabase {
     }
 
     exec(sql: string, callback?: (err: Error | null) => void): this | Promise<void> {
-        const promise = getPool().query(sql)
+        const promise = executeWithLogging(getPool, sql, [], 'RUN')
             .then(() => {
                 if (callback) callback(null);
             })
-            .catch(err => {
+            .catch((err: Error | null) => {
                 if (callback) callback(err);
                 throw err;
             });
@@ -288,12 +365,21 @@ class PostgresDatabase implements IDatabase {
             if (callback) callback(null);
             return Promise.resolve();
         }
-        const promise = pool.end()
+        const promise = Promise.resolve()
+            .then(() => {
+                console.log('[Postgres] Closing connection pool...');
+                return pool?.end();
+            })
             .then(() => {
                 pool = null;
+                if (readPool) {
+                    return readPool.end().then(() => { readPool = null; });
+                }
+            })
+            .then(() => {
                 if (callback) callback(null);
             })
-            .catch(err => {
+            .catch((err: Error | null) => {
                 if (callback) callback(err);
                 throw err;
             });
@@ -307,13 +393,18 @@ class PostgresDatabase implements IDatabase {
     async query<T = unknown>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
         const adapted = adaptQuery(text);
         try {
-            const result = await getPool().query(adapted, params);
+            const result = await executeWithLogging<T>(
+                getPool, // Generic query defaults to primary often used for writes too
+                adapted,
+                params || [],
+                'QUERY'
+            );
             return {
-                rows: result.rows as T[],
-                rowCount: result.rowCount
+                rows: result.rows,
+                rowCount: result.rowCount || 0,
             };
         } catch (e: unknown) {
-            console.error('[Postgres] Query Failed:', (e as Error).message);
+            // Error already logged
             throw e;
         }
     }
@@ -331,7 +422,7 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
             console.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, (err as Error).message);
             if (i < retries - 1) {
                 console.log(`[Postgres] Retrying in ${delay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
+                await new Promise((resolve) => setTimeout(resolve, delay));
                 delay *= 2; // Exponential backoff
             } else {
                 console.error('[Postgres] All connection attempts failed');
@@ -433,25 +524,962 @@ async function initDb(): Promise<void> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Projects (must be created before sessions, which references it)
-        await query(`CREATE TABLE IF NOT EXISTS projects(
+
+
+        // Sessions (references users and projects - must come after both)
+        await query(`CREATE TABLE IF NOT EXISTS sessions(
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                project_id TEXT,
+                type TEXT,
+                data TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(project_id) REFERENCES projects(id)
+            )`);
+
+        // Knowledge Docs
+        await query(`CREATE TABLE IF NOT EXISTS knowledge_docs(
+                id TEXT PRIMARY KEY,
+                filename TEXT,
+                filepath TEXT,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+        // Knowledge Chunks
+        await query(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
+                id TEXT PRIMARY KEY,
+                doc_id TEXT,
+                content TEXT,
+                chunk_index INTEGER,
+                embedding TEXT,
+                FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
+            )`);
+
+        // LLM Providers
+        await query(`CREATE TABLE IF NOT EXISTS llm_providers(
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                provider TEXT,
+                api_key TEXT,
+                endpoint TEXT,
+                model_id TEXT,
+                cost_per_1k REAL DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                is_default INTEGER DEFAULT 0,
+                visibility TEXT DEFAULT 'admin'
+            )`);
+
+        // Teams
+        await query(`CREATE TABLE IF NOT EXISTS teams(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                lead_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(lead_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+        // Team Members
+        await query(`CREATE TABLE IF NOT EXISTS team_members(
+                team_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                role TEXT DEFAULT 'member',
+                joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(team_id, user_id),
+                FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+        // Project Users
+        await query(`CREATE TABLE IF NOT EXISTS project_users(
+                project_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                role TEXT DEFAULT 'member',
+                assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(project_id, user_id),
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+        // Custom Statuses
+        await query(`CREATE TABLE IF NOT EXISTS custom_statuses(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                color TEXT DEFAULT '#6B7280',
+                sort_order INTEGER DEFAULT 0,
+                is_default INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+        // Tasks
+        await query(`CREATE TABLE IF NOT EXISTS tasks(
+                id TEXT PRIMARY KEY,
+                project_id TEXT,
+                organization_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                status TEXT DEFAULT 'todo',
+                priority TEXT DEFAULT 'medium',
+                assignee_id TEXT,
+                reporter_id TEXT,
+                due_date TIMESTAMP,
+                estimated_hours REAL,
+                checklist TEXT,
+                attachments TEXT,
+                tags TEXT,
+                custom_status_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP,
+                task_type TEXT DEFAULT 'execution',
+                budget_allocated REAL DEFAULT 0,
+                budget_spent REAL DEFAULT 0,
+                risk_rating TEXT DEFAULT 'low',
+                acceptance_criteria TEXT DEFAULT '',
+                blocking_issues TEXT DEFAULT '',
+                step_phase TEXT DEFAULT 'design',
+                initiative_id TEXT,
+                why TEXT DEFAULT '',
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(assignee_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(custom_status_id) REFERENCES custom_statuses(id) ON DELETE SET NULL
+            )`);
+
+        // Task Comments
+        await query(`CREATE TABLE IF NOT EXISTS task_comments(
+                id TEXT PRIMARY KEY,
+                task_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+        // Notifications
+        await query(`CREATE TABLE IF NOT EXISTS notifications(
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                message TEXT,
+                data TEXT,
+                read INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+        // Activity Logs
+        await query(`CREATE TABLE IF NOT EXISTS activity_logs(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                user_id TEXT,
+                action TEXT NOT NULL,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT,
+                entity_name TEXT,
+                old_value TEXT,
+                new_value TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+        // Alter Users - Add columns if they don't exist (migration)
+        await query(`
+            DO $$
+        BEGIN
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'token_limit') THEN
+                    ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'token_used') THEN
+                    ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'token_reset_at') THEN
+                    ALTER TABLE users ADD COLUMN token_reset_at TIMESTAMP;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'avatar_url') THEN
+                    ALTER TABLE users ADD COLUMN avatar_url TEXT;
+                END IF;
+            END $$;
+        `).catch((err: Error | null) => {
+            console.log('[Postgres] User token columns migration skipped (may already exist)');
+        });
+
+        // AI Feedback
+        await query(`CREATE TABLE IF NOT EXISTS ai_feedback(
             id TEXT PRIMARY KEY,
             organization_id TEXT,
-            name TEXT,
-            description TEXT,
-            goal TEXT,
-            status TEXT DEFAULT 'active',
-            owner_id TEXT,
-            initiative_count INTEGER DEFAULT 0,
-            assessment_count INTEGER DEFAULT 0,
-            member_count INTEGER DEFAULT 0,
-            document_count INTEGER DEFAULT 0,
+            user_id TEXT,
+            context TEXT,
+            prompt TEXT,
+            response TEXT,
+            helpful INTEGER,
+            comment TEXT,
+            rating INTEGER,
+            correction TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(organization_id) REFERENCES organizations(id)
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+        // Custom Prompts
+        await query(`CREATE TABLE IF NOT EXISTS custom_prompts(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            context TEXT NOT NULL,
+            template TEXT NOT NULL,
+            variables TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Webhooks
+        await query(`CREATE TABLE IF NOT EXISTS webhooks(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            url TEXT NOT NULL,
+            events TEXT NOT NULL,
+            secret TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // AI Logs
+        await query(`CREATE TABLE IF NOT EXISTS ai_logs(
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            action TEXT,
+            model TEXT,
+            input_tokens INTEGER,
+            output_tokens INTEGER,
+            latency_ms INTEGER,
+            topic TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // System Prompts
+        await query(`CREATE TABLE IF NOT EXISTS system_prompts(
+            id TEXT PRIMARY KEY,
+            key TEXT UNIQUE,
+            content TEXT,
+            description TEXT,
+            updated_by TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Feedback
+        await query(`CREATE TABLE IF NOT EXISTS feedback(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            message TEXT NOT NULL,
+            screenshot TEXT,
+            url TEXT,
+            status TEXT DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Revoked Tokens
+        await query(`CREATE TABLE IF NOT EXISTS revoked_tokens(
+            jti TEXT PRIMARY KEY,
+            user_id TEXT,
+            expires_at TIMESTAMP NOT NULL,
+            revoked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reason TEXT DEFAULT 'logout',
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Invitations
+        await query(`CREATE TABLE IF NOT EXISTS invitations(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            email TEXT NOT NULL,
+            role TEXT DEFAULT 'USER',
+            token TEXT UNIQUE,
+            token_hash TEXT UNIQUE,
+            status TEXT DEFAULT 'pending',
+            invited_by TEXT,
+            expires_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            accepted_at TIMESTAMP,
+            invitation_type TEXT DEFAULT 'ORG',
+            project_id TEXT,
+            role_to_assign TEXT,
+            accepted_by_user_id TEXT,
+            metadata TEXT DEFAULT '{}',
+            resend_count INTEGER DEFAULT 0,
+            last_resent_at TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`);
+
+        // Access Requests
+        await query(`CREATE TABLE IF NOT EXISTS access_requests(
+            id TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            first_name TEXT,
+            last_name TEXT,
+            phone TEXT,
+            organization_id TEXT,
+            organization_name TEXT,
+            requested_role TEXT DEFAULT 'USER',
+            status TEXT DEFAULT 'pending',
+            request_type TEXT DEFAULT 'new_user',
+            metadata TEXT,
+            requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reviewed_by TEXT,
+            reviewed_at TIMESTAMP,
+            rejection_reason TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Access Codes
+        await query(`CREATE TABLE IF NOT EXISTS access_codes(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            code TEXT NOT NULL UNIQUE,
+            created_by TEXT NOT NULL,
+            role TEXT DEFAULT 'USER',
+            max_uses INTEGER DEFAULT 1,
+            current_uses INTEGER DEFAULT 0,
+            expires_at TIMESTAMP,
+            is_active INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Access Code Usage
+        await query(`CREATE TABLE IF NOT EXISTS access_code_usage(
+            id TEXT PRIMARY KEY,
+            code_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Initiatives
+        await query(`CREATE TABLE IF NOT EXISTS initiatives(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            name TEXT NOT NULL,
+            axis TEXT,
+            area TEXT,
+            summary TEXT,
+            hypothesis TEXT,
+            status TEXT DEFAULT 'step3',
+            current_stage TEXT,
+            business_value TEXT,
+            competencies_required TEXT,
+            cost_capex REAL,
+            cost_opex REAL,
+            expected_roi REAL,
+            social_impact TEXT,
+            start_date TIMESTAMP,
+            pilot_end_date TIMESTAMP,
+            end_date TIMESTAMP,
+            owner_business_id TEXT,
+            owner_execution_id TEXT,
+            sponsor_id TEXT,
+            market_context TEXT,
+            problem_statement TEXT DEFAULT '',
+            deliverables TEXT DEFAULT '[]',
+            success_criteria TEXT DEFAULT '[]',
+            scope_in TEXT DEFAULT '[]',
+            scope_out TEXT DEFAULT '[]',
+            key_risks TEXT DEFAULT '[]',
+            report_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(owner_business_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Task Dependencies
+        await query(`CREATE TABLE IF NOT EXISTS task_dependencies(
+            id TEXT PRIMARY KEY,
+            from_task_id TEXT NOT NULL,
+            to_task_id TEXT NOT NULL,
+            type TEXT DEFAULT 'hard',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(from_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+            FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        )`);
+
+        // Subscription Plans
+        await query(`CREATE TABLE IF NOT EXISTS subscription_plans(
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            price_monthly REAL NOT NULL,
+            token_limit INTEGER,
+            storage_limit_gb REAL,
+            token_overage_rate REAL,
+            storage_overage_rate REAL,
+            stripe_price_id TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Organization Billing
+        await query(`CREATE TABLE IF NOT EXISTS organization_billing(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL UNIQUE,
+            subscription_plan_id TEXT,
+            stripe_customer_id TEXT,
+            stripe_subscription_id TEXT,
+            billing_email TEXT,
+            billing_address TEXT,
+            payment_method_last4 TEXT,
+            payment_method_brand TEXT,
+            current_period_start TIMESTAMP,
+            current_period_end TIMESTAMP,
+            status TEXT DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
+        )`);
+
+        // Usage Records
+        await query(`CREATE TABLE IF NOT EXISTS usage_records(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            type TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            action TEXT,
+            metadata TEXT,
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Usage Summaries
+        await query(`CREATE TABLE IF NOT EXISTS usage_summaries(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            period_start DATE NOT NULL,
+            period_end DATE NOT NULL,
+            tokens_used INTEGER DEFAULT 0,
+            tokens_included INTEGER DEFAULT 0,
+            tokens_overage INTEGER DEFAULT 0,
+            storage_bytes_peak INTEGER DEFAULT 0,
+            storage_gb_included REAL DEFAULT 0,
+            storage_gb_overage REAL DEFAULT 0,
+            overage_amount REAL DEFAULT 0,
+            billed INTEGER DEFAULT 0,
+            stripe_invoice_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(organization_id, period_start)
+        )`);
+
+        // Invoices
+        await query(`CREATE TABLE IF NOT EXISTS invoices(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            stripe_invoice_id TEXT UNIQUE,
+            amount_due REAL,
+            amount_paid REAL,
+            currency TEXT DEFAULT 'usd',
+            status TEXT,
+            period_start DATE,
+            period_end DATE,
+            pdf_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Plan Features
+        await query(`CREATE TABLE IF NOT EXISTS plan_features(
+            id TEXT PRIMARY KEY,
+            plan_id TEXT NOT NULL,
+            feature_key TEXT NOT NULL,
+            enabled INTEGER DEFAULT 1,
+            limit_value INTEGER,
+            FOREIGN KEY(plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE
+        )`);
+
+        // Billing Margins
+        await query(`CREATE TABLE IF NOT EXISTS billing_margins(
+            id TEXT PRIMARY KEY,
+            source_type TEXT NOT NULL UNIQUE,
+            display_name TEXT,
+            base_cost_per_1k REAL DEFAULT 0,
+            margin_percent REAL NOT NULL,
+            min_charge REAL DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Token Packages
+        await query(`CREATE TABLE IF NOT EXISTS token_packages(
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            tokens INTEGER NOT NULL,
+            price_usd REAL NOT NULL,
+            stripe_price_id TEXT,
+            bonus_percent INTEGER DEFAULT 0,
+            is_popular INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            sort_order INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // User Token Balance
+        await query(`CREATE TABLE IF NOT EXISTS user_token_balance(
+            user_id TEXT PRIMARY KEY,
+            platform_tokens INTEGER DEFAULT 0,
+            platform_tokens_bonus INTEGER DEFAULT 0,
+            byok_usage_tokens INTEGER DEFAULT 0,
+            local_usage_tokens INTEGER DEFAULT 0,
+            lifetime_purchased INTEGER DEFAULT 0,
+            lifetime_used INTEGER DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Token Transactions
+        await query(`CREATE TABLE IF NOT EXISTS token_transactions(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT,
+            type TEXT NOT NULL,
+            source_type TEXT,
+            tokens INTEGER NOT NULL,
+            cost_usd REAL DEFAULT 0,
+            margin_usd REAL DEFAULT 0,
+            net_revenue_usd REAL DEFAULT 0,
+            stripe_payment_id TEXT,
+            package_id TEXT,
+            llm_provider TEXT,
+            model_used TEXT,
+            description TEXT,
+            metadata TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(package_id) REFERENCES token_packages(id) ON DELETE SET NULL
+        )`);
+
+        // User API Keys
+        await query(`CREATE TABLE IF NOT EXISTS user_api_keys(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            organization_id TEXT,
+            provider TEXT NOT NULL,
+            display_name TEXT,
+            encrypted_key TEXT NOT NULL,
+            model_preference TEXT,
+            is_active INTEGER DEFAULT 1,
+            is_default INTEGER DEFAULT 0,
+            usage_count INTEGER DEFAULT 0,
+            last_used_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // GDPR Requests
+        await query(`CREATE TABLE IF NOT EXISTS gdpr_requests(
+            id VARCHAR(36) PRIMARY KEY,
+            organization_id VARCHAR(36) NOT NULL,
+            user_id VARCHAR(36) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            status VARCHAR(50) NOT NULL,
+            result_url TEXT,
+            processed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_gdpr_requests_user ON gdpr_requests(user_id)`);
+
+        // User Consents
+        await query(`CREATE TABLE IF NOT EXISTS user_consents(
+            id VARCHAR(36) PRIMARY KEY,
+            user_id VARCHAR(36) NOT NULL REFERENCES users(id),
+            organization_id VARCHAR(36) NOT NULL REFERENCES organizations(id),
+            consent_type VARCHAR(100) NOT NULL,
+            consent_version VARCHAR(50),
+            consent_status VARCHAR(50) NOT NULL,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            granted_at TIMESTAMP,
+            withdrawn_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, organization_id, consent_type)
+        )`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_user_consents_user ON user_consents(user_id)`);
+
+        // AI Ideas Board
+        await query(`CREATE TABLE IF NOT EXISTS ai_ideas(
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            title TEXT NOT NULL,
+            description TEXT,
+            status VARCHAR(50) DEFAULT 'new',
+            priority VARCHAR(50) DEFAULT 'medium',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // AI System Observations
+        await query(`CREATE TABLE IF NOT EXISTS ai_observations(
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            content TEXT NOT NULL,
+            category VARCHAR(50),
+            confidence_score REAL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Approval Assignments
+        await query(`CREATE TABLE IF NOT EXISTS approval_assignments(
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            proposal_id TEXT NOT NULL,
+            assigned_to_user_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            sla_due_at TIMESTAMP NOT NULL,
+            escalated_to_user_id TEXT,
+            escalated_at TIMESTAMP,
+            escalation_reason TEXT,
+            acked_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(escalated_to_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Indexes for approval_assignments
+        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_org ON approval_assignments(org_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`);
+
+        // MFA Attempts
+        await query(`CREATE TABLE IF NOT EXISTS mfa_attempts(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            attempt_type TEXT NOT NULL CHECK(attempt_type IN('TOTP', 'BACKUP_CODE', 'SMS', 'EMAIL')),
+            success INTEGER NOT NULL DEFAULT 0,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        await query(`CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_time ON mfa_attempts(user_id, created_at DESC)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_mfa_attempts_ip ON mfa_attempts(ip_address, created_at DESC)`);
+
+        // Trusted Devices
+        await query(`CREATE TABLE IF NOT EXISTS trusted_devices(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            device_fingerprint TEXT NOT NULL,
+            device_name TEXT,
+            last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id, device_fingerprint)
+        )`);
+
+        await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`);
+
+        // Refresh Tokens
+        await query(`CREATE TABLE IF NOT EXISTS refresh_tokens(
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            token_family TEXT,
+            device_info TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            expires_at TIMESTAMP NOT NULL,
+            revoked_at TIMESTAMP,
+            revoked_reason TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_family)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at)`);
+
+        // Scheduled Emails
+        await query(`CREATE TABLE IF NOT EXISTS scheduled_emails(
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            recipients TEXT NOT NULL,
+            scheduled_time TIMESTAMP NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN('PENDING', 'SENT', 'FAILED')),
+            sent_at TIMESTAMP,
+            error TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status_time ON scheduled_emails(status, scheduled_time)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_report ON scheduled_emails(report_id)`);
+
+        // Add MFA columns to existing tables if they don't exist (migration)
+        await query(`
+            DO $$
+        BEGIN
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'mfa_enabled') THEN
+                    ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'mfa_secret') THEN
+                    ALTER TABLE users ADD COLUMN mfa_secret TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'mfa_backup_codes') THEN
+                    ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'mfa_verified_at') THEN
+                    ALTER TABLE users ADD COLUMN mfa_verified_at TIMESTAMP;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'users' AND column_name = 'mfa_recovery_email') THEN
+                    ALTER TABLE users ADD COLUMN mfa_recovery_email TEXT;
+                END IF;
+            END $$;
+        `).catch((err: Error | null) => {
+            console.log('[Postgres] MFA columns migration skipped (may already exist)');
+        });
+
+        // Add additional Organization columns if missing
+        await query(`
+            DO $$
+        BEGIN
+        --MFA columns
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'mfa_required') THEN
+                ALTER TABLE organizations ADD COLUMN mfa_required INTEGER DEFAULT 0;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'mfa_grace_period_days') THEN
+                ALTER TABLE organizations ADD COLUMN mfa_grace_period_days INTEGER DEFAULT 7;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'discount_percent') THEN
+                ALTER TABLE organizations ADD COLUMN discount_percent INTEGER DEFAULT 0;
+            END IF;
+        --Trial fields
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'trial_started_at') THEN
+                ALTER TABLE organizations ADD COLUMN trial_started_at TIMESTAMP;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'trial_expires_at') THEN
+                ALTER TABLE organizations ADD COLUMN trial_expires_at TIMESTAMP;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'trial_extension_count') THEN
+                ALTER TABLE organizations ADD COLUMN trial_extension_count INTEGER DEFAULT 0;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'trial_warning_sent_at') THEN
+                ALTER TABLE organizations ADD COLUMN trial_warning_sent_at TIMESTAMP;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'trial_tokens_used') THEN
+                ALTER TABLE organizations ADD COLUMN trial_tokens_used INTEGER DEFAULT 0;
+            END IF;
+        --Organization type and status
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'organization_type') THEN
+                ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL';
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'billing_status') THEN
+                ALTER TABLE organizations ADD COLUMN billing_status TEXT DEFAULT 'PENDING';
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'is_active') THEN
+                ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'token_balance') THEN
+                ALTER TABLE organizations ADD COLUMN token_balance INTEGER DEFAULT 0;
+            END IF;
+        --Attribution
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'attribution_data') THEN
+                ALTER TABLE organizations ADD COLUMN attribution_data TEXT;
+            END IF;
+        --Onboarding
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'transformation_context') THEN
+                ALTER TABLE organizations ADD COLUMN transformation_context TEXT DEFAULT '{}';
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'onboarding_status') THEN
+                ALTER TABLE organizations ADD COLUMN onboarding_status TEXT DEFAULT 'NOT_STARTED';
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'onboarding_plan_snapshot') THEN
+                ALTER TABLE organizations ADD COLUMN onboarding_plan_snapshot TEXT;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'onboarding_plan_version') THEN
+                ALTER TABLE organizations ADD COLUMN onboarding_plan_version INTEGER DEFAULT 0;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'onboarding_accepted_at') THEN
+                ALTER TABLE organizations ADD COLUMN onboarding_accepted_at TIMESTAMP;
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'onboarding_accept_idempotency_key') THEN
+                ALTER TABLE organizations ADD COLUMN onboarding_accept_idempotency_key TEXT;
+            END IF;
+        --AI Governance
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'ai_assertiveness_level') THEN
+                ALTER TABLE organizations ADD COLUMN ai_assertiveness_level TEXT DEFAULT 'MEDIUM';
+            END IF;
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'ai_autonomy_level') THEN
+                ALTER TABLE organizations ADD COLUMN ai_autonomy_level TEXT DEFAULT 'SUGGEST_ONLY';
+            END IF;
+        --Created by
+            IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                            WHERE table_name = 'organizations' AND column_name = 'created_by_user_id') THEN
+                ALTER TABLE organizations ADD COLUMN created_by_user_id TEXT;
+            END IF;
+            END $$;
+        `).catch((err: Error | null) => {
+            console.log('[Postgres] Organization columns migration skipped');
+        });
+
+        // ---------------------------------------------------------
+        // Phase 1.3: Performance Optimization (Missing Indexes)
+        // ---------------------------------------------------------
+        console.log('[Postgres] Verifying/Creating Indexes...');
+
+        // Users & Auth
+        await query(`CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_users_org_status ON users(organization_id, status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user ON revoked_tokens(user_id)`);
+
+        // Teams & Access
+        await query(`CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_teams_lead ON teams(lead_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_inviter ON invitations(invited_by)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_access_requests_org ON access_requests(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_access_requests_reviewer ON access_requests(reviewed_by)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_org ON access_codes(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_creator ON access_codes(created_by)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_access_code_usage_code ON access_code_usage(code_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_access_code_usage_user ON access_code_usage(user_id)`);
+
+        // Tasks Management
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_project_status ON tasks(project_id, status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org_status ON tasks(organization_id, status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee_status ON tasks(assignee_id, status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_custom_status ON tasks(custom_status_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_tasks_initiative ON tasks(initiative_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_task_comments_user ON task_comments(user_id)`);
+
+        // System Activities & Logs
+        await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_org ON activity_logs(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_org_time ON activity_logs(organization_id, created_at DESC)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read, created_at DESC)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
+
+        // AI & Customizations
+        await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_user ON ai_feedback(user_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_custom_prompts_org ON custom_prompts(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_custom_prompts_creator ON custom_prompts(created_by)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhooks(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_creator ON webhooks(created_by)`);
+
+        // Core Modules
+        await query(`CREATE INDEX IF NOT EXISTS idx_initiatives_org ON initiatives(organization_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`);
+
 
         console.log('[Postgres] Schema Check Complete.');
 
+        // Verify critical tables exist
+        const criticalTables = ['organizations', 'users', 'sessions', 'projects', 'tasks', 'teams', 'invitations', 'notifications', 'settings'];
+        const missingTables: string[] = [];
+        for (const table of criticalTables) {
+            try {
+                const checkResult = await getPool().query<{ count: string }>(
+                    `SELECT COUNT(*)::text as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+                    [table]
+                );
+                const count = parseInt(checkResult.rows[0]?.count || '0', 10);
+                if (count === 0) {
+                    console.error(`[Postgres] CRITICAL: Table ${table} does not exist after initialization!`);
+                    missingTables.push(table);
+                } else {
+                    console.log(`[Postgres] Verified table exists: ${table}`);
+                }
+            } catch (err: unknown) {
+                const error = err instanceof Error ? err : new Error(String(err));
+                console.error(`[Postgres] Error verifying table ${table}: ${error.message}`);
+                missingTables.push(table);
+            }
+        }
+
+        if (missingTables.length > 0) {
+            throw new Error(`Critical tables missing after initialization: ${missingTables.join(', ')}`);
+        }
     } catch (err: unknown) {
         console.error('[Postgres] InitDb Failed:', err);
         // Log detailed error information
@@ -461,6 +1489,8 @@ async function initDb(): Promise<void> {
         if ((err as Error).message) {
             console.error('[Postgres] Error message:', (err as Error).message);
         }
+        // Re-throw to ensure initialization failure is noticed
+        throw err;
     }
 }
 
@@ -468,4 +1498,3 @@ async function initDb(): Promise<void> {
 const db = new PostgresDatabase();
 
 export default db;
-

@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from 'react';
 import {
-    DndContext,
     closestCenter,
+    DndContext,
+    DragEndEvent,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
-    DragEndEvent
 } from '@dnd-kit/core';
 import {
     arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
+    useSortable,
     verticalListSortingStrategy,
-    useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Report, ReportBlock, BlockType } from '../../types';
-import { reportApi } from '../../services/reportApi';
-import { BlockRenderer } from './BlockRenderer';
 import { Loader2, Plus, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { reportApi } from '../../services/reportApi';
+import { BlockType, Report, ReportBlock } from '../../types';
+import { BlockRenderer } from './BlockRenderer';
 
 interface ReportContainerProps {
     projectId: string;
@@ -35,21 +36,17 @@ interface SortableBlockProps {
 }
 
 const SortableBlock = ({ block, onUpdate, onRegenerate, onDelete }: SortableBlockProps) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: block.id, disabled: block.locked });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: block.id,
+        disabled: block.locked,
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         zIndex: isDragging ? 50 : 'auto',
         opacity: isDragging ? 0.8 : 1,
-        position: 'relative' as const
+        position: 'relative' as const,
     };
 
     return (
@@ -75,7 +72,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
-        })
+        }),
     );
 
     useEffect(() => {
@@ -119,7 +116,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         // Optimistic update
         setReport({
             ...report,
-            blockOrder: newOrder
+            blockOrder: newOrder,
         });
 
         // API Call
@@ -152,7 +149,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         if (!report) return;
 
         // Optimistic loading state could be handled here via a local 'regeneratingBlocks' set in state
-        const toastId = toast.loading("AI is refining...");
+        const toastId = toast.loading('AI is refining...');
 
         try {
             const updatedBlock = await reportApi.regenerateBlock(report.id, blockId, instructions);
@@ -160,25 +157,24 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
             const newBlocks = { ...report.blocks, [blockId]: updatedBlock };
             setReport({ ...report, blocks: newBlocks });
 
-            toast.success("Block regenerated", { id: toastId });
+            toast.success('Block regenerated', { id: toastId });
         } catch (err) {
-            toast.error("Failed to regenerate", { id: toastId });
+            toast.error('Failed to regenerate', { id: toastId });
         }
     };
-
 
     const handleDeleteBlock = async (blockId: string) => {
         if (!report) return;
         if (!confirm('Are you sure you want to delete this block?')) return;
 
         // Optimistic
-        const newOrder = report.blockOrder.filter(id => id !== blockId);
+        const newOrder = report.blockOrder.filter((id) => id !== blockId);
         const { [blockId]: deleted, ...remainingBlocks } = report.blocks;
 
         setReport({ ...report, blockOrder: newOrder, blocks: remainingBlocks });
 
         // API (We need to add deleteBlock to reportApi but for MVP we can just reorder to exclude it or add delete endpoint)
-        // I will use updateBlock with a 'deleted' flag or just remove from list. 
+        // I will use updateBlock with a 'deleted' flag or just remove from list.
         // Proper way is delete endpoint. API logic usually needed.
         // For MVP, since I didn't create DELETE endpoint explicitly, I'll rely on reorder excluding it?
         // No, that leaves orphan blocks.
@@ -196,9 +192,9 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         try {
             // await reportApi.deleteBlock(report.id, blockId); // Missing
             // For now, just update the local state is fine for the "Concept".
-            toast.success("Block deleted");
+            toast.success('Block deleted');
         } catch (err) {
-            toast.error("Failed to delete");
+            toast.error('Failed to delete');
         }
     };
 
@@ -210,7 +206,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
             title: 'New ' + type,
             position: report.blockOrder.length,
             content: getEmptyContentForType(type),
-            module: 'Manual'
+            module: 'Manual',
         };
 
         try {
@@ -229,16 +225,25 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
 
     const getEmptyContentForType = (type: BlockType) => {
         switch (type) {
-            case 'text': return { text: 'Enter text here...' };
-            case 'table': return { headers: ['Col 1'], rows: [['Value 1']] };
-            case 'cards': return { cards: [] };
-            case 'callout': return { text: 'Important information.', level: 'info' };
-            default: return {};
+            case 'text':
+                return { text: 'Enter text here...' };
+            case 'table':
+                return { headers: ['Col 1'], rows: [['Value 1']] };
+            case 'cards':
+                return { cards: [] };
+            case 'callout':
+                return { text: 'Important information.', level: 'info' };
+            default:
+                return {};
         }
     };
 
     if (loading) {
-        return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-purple-600" /></div>;
+        return (
+            <div className="flex justify-center items-center h-full">
+                <Loader2 className="animate-spin text-purple-600" />
+            </div>
+        );
     }
 
     if (!report) {
@@ -255,7 +260,10 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
                         const block = report.blocks[id];
                         if (!block) return null;
                         return (
-                            <div key={id} className="text-sm p-2 bg-slate-100 dark:bg-navy-800 rounded truncate hover:bg-slate-200 dark:hover:bg-navy-700 cursor-pointer">
+                            <div
+                                key={id}
+                                className="text-sm p-2 bg-slate-100 dark:bg-navy-800 rounded truncate hover:bg-slate-200 dark:hover:bg-navy-700 cursor-pointer"
+                            >
                                 {index + 1}. {block.title || block.type}
                             </div>
                         );
@@ -265,7 +273,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
                 <div className="mt-8 border-t pt-4">
                     <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Add Block</h4>
                     <div className="grid grid-cols-2 gap-2">
-                        {(['text', 'table', 'cards', 'callout'] as BlockType[]).map(type => (
+                        {(['text', 'table', 'cards', 'callout'] as BlockType[]).map((type) => (
                             <button
                                 key={type}
                                 onClick={() => handleAddBlock(type)}
@@ -284,20 +292,15 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
                 <div className="max-w-4xl mx-auto space-y-6 pb-20">
                     <div className="flex items-center justify-between mb-8">
                         <h1 className="text-3xl font-bold text-slate-800 dark:text-white">{report.title}</h1>
-                        <div className="text-sm text-slate-500">v{report.version} • {report.status}</div>
+                        <div className="text-sm text-slate-500">
+                            v{report.version} • {report.status}
+                        </div>
                     </div>
 
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={report.blockOrder}
-                            strategy={verticalListSortingStrategy}
-                        >
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={report.blockOrder} strategy={verticalListSortingStrategy}>
                             <div className="space-y-6">
-                                {report.blockOrder.map(id => {
+                                {report.blockOrder.map((id) => {
                                     const block = report.blocks[id];
                                     if (!block) return null;
                                     return (

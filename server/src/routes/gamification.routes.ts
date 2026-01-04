@@ -1,12 +1,13 @@
 /**
  * Gamification Routes
  * API endpoints for gamification
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -31,31 +32,35 @@ try {
  * GET /api/gamification/me
  * Get current user's stats and achievements
  */
-router.get('/me', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
-        return res.status(503).json({ error: 'Gamification service not available' });
-    }
-
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.get(
+    '/me',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
+            return res.status(503).json({ error: 'Gamification service not available' });
         }
 
-        const profile = await GamificationService.getUserProfile(userId);
-        const achievements = await GamificationService.getUserAchievements(userId);
-
-        res.json({
-            success: true,
-            data: {
-                ...(profile as Record<string, unknown>),
-                achievements
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
             }
-        });
-    } catch (error: unknown) {
-        console.error('Gamification profile error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-    }
-}));
+
+            const profile = await GamificationService.getUserProfile(userId);
+            const achievements = await GamificationService.getUserAchievements(userId);
+
+            res.json({
+                success: true,
+                data: {
+                    ...(profile as Record<string, unknown>),
+                    achievements,
+                },
+            });
+        } catch (error: unknown) {
+            console.error('Gamification profile error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+    }),
+);
 
 export default router;

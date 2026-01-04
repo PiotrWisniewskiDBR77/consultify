@@ -1,25 +1,26 @@
 /**
  * MultiFrameworkStageGateModal
- * 
+ *
  * Stage-gate modal for multi-framework assessments.
  * Handles submission, review, and approval workflows with framework-specific validation.
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    X,
-    CheckCircle2,
-    AlertTriangle,
-    Users,
-    Shield,
-    FileCheck,
-    Send,
-    ChevronRight,
-    Loader2,
     AlertCircle,
+    AlertTriangle,
+    CheckCircle2,
+    ChevronRight,
+    FileCheck,
     Info,
+    Loader2,
+    Send,
+    Shield,
+    Users,
+    X,
 } from 'lucide-react';
-import { useMultiFrameworkStore, AssessmentFramework } from '../../../store/useMultiFrameworkStore';
+import React, { useEffect, useState } from 'react';
+
+import { AssessmentFramework, useMultiFrameworkStore } from '../../../store/useMultiFrameworkStore';
 
 // ============================================
 // TYPES
@@ -55,13 +56,16 @@ interface MultiFrameworkStageGateModalProps {
 // FRAMEWORK-SPECIFIC REQUIREMENTS
 // ============================================
 
-const FRAMEWORK_REQUIREMENTS: Record<AssessmentFramework, {
-    minCompleteness: number;
-    requiresReviewer: boolean;
-    requiredRole?: string;
-    requiredRoleLabel?: string;
-    additionalChecks: string[];
-}> = {
+const FRAMEWORK_REQUIREMENTS: Record<
+    AssessmentFramework,
+    {
+        minCompleteness: number;
+        requiresReviewer: boolean;
+        requiredRole?: string;
+        requiredRoleLabel?: string;
+        additionalChecks: string[];
+    }
+> = {
     DRD: {
         minCompleteness: 0.8,
         requiresReviewer: true,
@@ -146,9 +150,10 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                 label: `Assessment completeness (${Math.round(completeness * 100)}%)`,
                 passed: completeness >= requirements.minCompleteness,
                 severity: completeness >= requirements.minCompleteness ? 'info' : 'error',
-                message: completeness < requirements.minCompleteness
-                    ? `Minimum ${Math.round(requirements.minCompleteness * 100)}% required`
-                    : undefined,
+                message:
+                    completeness < requirements.minCompleteness
+                        ? `Minimum ${Math.round(requirements.minCompleteness * 100)}% required`
+                        : undefined,
             });
 
             // Check legal disclaimer for educational frameworks
@@ -159,9 +164,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                     label: 'Legal disclaimer accepted',
                     passed: disclaimerAccepted,
                     severity: disclaimerAccepted ? 'info' : 'error',
-                    message: !disclaimerAccepted
-                        ? 'Legal disclaimer must be accepted before submission'
-                        : undefined,
+                    message: !disclaimerAccepted ? 'Legal disclaimer must be accepted before submission' : undefined,
                 });
             }
 
@@ -215,7 +218,6 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                     message: `This approval requires a ${requirements.requiredRoleLabel}`,
                 });
             }
-
         } catch (err: any) {
             setError(err.message);
         }
@@ -266,9 +268,9 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
             const token = localStorage.getItem('token');
             const response = await fetch(
                 `/api/framework-rbac/approvers/${framework}?organizationId=${store.activeMetadata?.organizationId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${token}` } },
             );
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setAvailableReviewers(data.approvers || []);
@@ -285,7 +287,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
 
         try {
             const token = localStorage.getItem('token');
-            
+
             let endpoint = '';
             const body: any = { comment };
 
@@ -326,7 +328,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
     };
 
     // Check if can proceed
-    const canProceed = validationChecks.filter(c => c.severity === 'error' && !c.passed).length === 0;
+    const canProceed = validationChecks.filter((c) => c.severity === 'error' && !c.passed).length === 0;
 
     if (!isOpen) return null;
 
@@ -340,21 +342,33 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-navy-700">
                     <div className="flex items-center gap-3">
-                        <div className={`
+                        <div
+                            className={`
                             w-10 h-10 rounded-lg flex items-center justify-center
-                            ${targetStatus === 'IN_REVIEW' ? 'bg-blue-100 text-blue-600' :
-                              targetStatus === 'APPROVED' ? 'bg-green-100 text-green-600' :
-                              'bg-red-100 text-red-600'}
-                        `}>
-                            {targetStatus === 'IN_REVIEW' ? <Send className="w-5 h-5" /> :
-                             targetStatus === 'APPROVED' ? <CheckCircle2 className="w-5 h-5" /> :
-                             <AlertTriangle className="w-5 h-5" />}
+                            ${
+                                targetStatus === 'IN_REVIEW'
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : targetStatus === 'APPROVED'
+                                      ? 'bg-green-100 text-green-600'
+                                      : 'bg-red-100 text-red-600'
+                            }
+                        `}
+                        >
+                            {targetStatus === 'IN_REVIEW' ? (
+                                <Send className="w-5 h-5" />
+                            ) : targetStatus === 'APPROVED' ? (
+                                <CheckCircle2 className="w-5 h-5" />
+                            ) : (
+                                <AlertTriangle className="w-5 h-5" />
+                            )}
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {targetStatus === 'IN_REVIEW' ? 'Submit for Review' :
-                                 targetStatus === 'APPROVED' ? 'Approve Assessment' :
-                                 'Reject Assessment'}
+                                {targetStatus === 'IN_REVIEW'
+                                    ? 'Submit for Review'
+                                    : targetStatus === 'APPROVED'
+                                      ? 'Approve Assessment'
+                                      : 'Reject Assessment'}
                             </h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {framework} Assessment Stage Gate
@@ -377,7 +391,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                             <FileCheck className="w-4 h-4" />
                             Validation Checks
                         </h3>
-                        
+
                         {isValidating ? (
                             <div className="flex items-center justify-center py-8">
                                 <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
@@ -390,11 +404,12 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                         key={check.id}
                                         className={`
                                             flex items-center justify-between p-3 rounded-lg
-                                            ${check.passed 
-                                                ? 'bg-green-50 dark:bg-green-900/20' 
-                                                : check.severity === 'error'
-                                                    ? 'bg-red-50 dark:bg-red-900/20'
-                                                    : 'bg-yellow-50 dark:bg-yellow-900/20'
+                                            ${
+                                                check.passed
+                                                    ? 'bg-green-50 dark:bg-green-900/20'
+                                                    : check.severity === 'error'
+                                                      ? 'bg-red-50 dark:bg-red-900/20'
+                                                      : 'bg-yellow-50 dark:bg-yellow-900/20'
                                             }
                                         `}
                                     >
@@ -407,15 +422,18 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                                 <AlertTriangle className="w-5 h-5 text-yellow-500" />
                                             )}
                                             <div>
-                                                <span className={`
+                                                <span
+                                                    className={`
                                                     text-sm font-medium
-                                                    ${check.passed 
-                                                        ? 'text-green-700 dark:text-green-300' 
-                                                        : check.severity === 'error'
-                                                            ? 'text-red-700 dark:text-red-300'
-                                                            : 'text-yellow-700 dark:text-yellow-300'
+                                                    ${
+                                                        check.passed
+                                                            ? 'text-green-700 dark:text-green-300'
+                                                            : check.severity === 'error'
+                                                              ? 'text-red-700 dark:text-red-300'
+                                                              : 'text-yellow-700 dark:text-yellow-300'
                                                     }
-                                                `}>
+                                                `}
+                                                >
                                                     {check.label}
                                                 </span>
                                                 {check.message && (
@@ -436,7 +454,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                 <Users className="w-4 h-4" />
                                 Select Reviewers
                             </h3>
-                            
+
                             {availableReviewers.length > 0 ? (
                                 <div className="space-y-2">
                                     {availableReviewers.map((reviewer) => (
@@ -444,9 +462,10 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                             key={reviewer.id}
                                             className={`
                                                 flex items-center justify-between p-3 rounded-lg border cursor-pointer
-                                                ${selectedReviewers.includes(reviewer.id)
-                                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                    : 'border-gray-200 dark:border-navy-600 hover:border-blue-300'
+                                                ${
+                                                    selectedReviewers.includes(reviewer.id)
+                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                                        : 'border-gray-200 dark:border-navy-600 hover:border-blue-300'
                                                 }
                                             `}
                                         >
@@ -458,7 +477,9 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                                         if (e.target.checked) {
                                                             setSelectedReviewers([...selectedReviewers, reviewer.id]);
                                                         } else {
-                                                            setSelectedReviewers(selectedReviewers.filter(id => id !== reviewer.id));
+                                                            setSelectedReviewers(
+                                                                selectedReviewers.filter((id) => id !== reviewer.id),
+                                                            );
                                                         }
                                                     }}
                                                     className="w-4 h-4 rounded border-gray-300"
@@ -497,8 +518,8 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                         Special Approval Required
                                     </p>
                                     <p className="text-sm text-amber-600 dark:text-amber-300 mt-1">
-                                        {framework} approval requires a certified {requirements.requiredRoleLabel}.
-                                        Your credentials will be verified.
+                                        {framework} approval requires a certified {requirements.requiredRoleLabel}. Your
+                                        credentials will be verified.
                                     </p>
                                 </div>
                             </div>
@@ -513,9 +534,11 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder={targetStatus === 'REJECTED' 
-                                ? 'Please provide a reason for rejection...'
-                                : 'Add any additional notes...'}
+                            placeholder={
+                                targetStatus === 'REJECTED'
+                                    ? 'Please provide a reason for rejection...'
+                                    : 'Add any additional notes...'
+                            }
                             rows={3}
                             className="w-full px-4 py-3 border border-gray-200 dark:border-navy-600 rounded-lg
                                 bg-white dark:bg-navy-700 text-gray-900 dark:text-white
@@ -543,17 +566,18 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                     >
                         Cancel
                     </button>
-                    
+
                     <button
                         onClick={handleSubmit}
                         disabled={isLoading || isValidating || !canProceed || (targetStatus === 'REJECTED' && !comment)}
                         className={`
                             px-6 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors
-                            ${canProceed && !isLoading
-                                ? targetStatus === 'REJECTED'
-                                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            ${
+                                canProceed && !isLoading
+                                    ? targetStatus === 'REJECTED'
+                                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }
                         `}
                     >
@@ -578,6 +602,3 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
 };
 
 export default MultiFrameworkStageGateModal;
-
-
-

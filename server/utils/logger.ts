@@ -3,7 +3,7 @@
  * Outputs structured JSON logs for easy parsing by log aggregators
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -26,11 +26,11 @@ const formatLog = (level: string, message: string, meta: LogMeta = {}): LogForma
         message,
         ...meta,
     };
-    
+
     if (meta.error && !isProduction) {
         log.stack = meta.error.stack;
     }
-    
+
     return log;
 };
 
@@ -63,7 +63,7 @@ const logger: Logger = {
         const logData: LogMeta = {
             ...meta,
         };
-        
+
         if (error) {
             logData.error = error.message;
             logData.errorName = error.name;
@@ -93,7 +93,7 @@ const logger: Logger = {
                 url: req.originalUrl,
                 status: res.statusCode,
                 duration: `${duration}ms`,
-                ip: req.ip || (req.socket?.remoteAddress) || 'unknown',
+                ip: req.ip || req.socket?.remoteAddress || 'unknown',
                 userAgent: req.get('User-Agent') || 'unknown',
             };
 
@@ -105,8 +105,7 @@ const logger: Logger = {
         });
 
         next();
-    }
+    },
 };
 
 export default logger;
-

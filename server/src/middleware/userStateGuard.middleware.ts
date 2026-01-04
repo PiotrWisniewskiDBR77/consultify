@@ -1,17 +1,18 @@
 /**
  * User State Guard Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enforces UserState Machine per 01_USER_STATE_MACHINE.md
- * 
+ *
  * Usage:
  *   router.get('/endpoint', userStateGuard.requireState(['ORG_MEMBER', 'TEAM_COLLAB']), handler)
  */
 
-import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware.js';
-import UserStateMachine from '../../services/userStateMachine.js';
+import { _Request, NextFunction, Response } from 'express';
+
 import db from '../../db/sqliteAsync.js';
+import UserStateMachine from '../../services/userStateMachine.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -38,7 +39,11 @@ interface UserStateMachine {
     PHASES: Record<string, string>;
     getPermissions: (state: string) => Record<string, unknown>;
     hasPermission: (state: string, permission: string) => boolean;
-    validateTransition: (fromState: string, toState: string, context?: Record<string, unknown>) => { valid: boolean; reason?: string };
+    validateTransition: (
+        fromState: string,
+        toState: string,
+        context?: Record<string, unknown>,
+    ) => { valid: boolean; reason?: string };
     getPhase: (state: string) => string;
 }
 
@@ -53,7 +58,7 @@ interface Dependencies {
 
 let deps: Dependencies = {
     UserStateMachine,
-    db: db as unknown as Database
+    db: db as unknown as Database,
 };
 
 // ==========================================
@@ -64,11 +69,7 @@ let deps: Dependencies = {
  * Attach user state to request
  * Must be called after authentication middleware
  */
-export async function attachUserState(
-    req: UserStateRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> {
+export async function attachUserState(req: UserStateRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const { UserStateMachine, db } = deps;
 
@@ -88,10 +89,9 @@ export async function attachUserState(
             return;
         }
 
-        const user = await db.getAsync(
-            'SELECT user_journey_state, current_phase FROM users WHERE id = ?',
-            [req.user.id]
-        ) as UserRow | null;
+        const user = (await db.getAsync('SELECT user_journey_state, current_phase FROM users WHERE id = ?', [
+            req.user.id,
+        ])) as UserRow | null;
 
         if (user) {
             req.userState = user.user_journey_state || UserStateMachine.USER_STATES.ANON;
@@ -130,7 +130,7 @@ export function requireState(allowedStates: string | string[]) {
         if (!currentState) {
             res.status(401).json({
                 error: 'USER_STATE_UNKNOWN',
-                message: 'User state not determined. Are you logged in?'
+                message: 'User state not determined. Are you logged in?',
             });
             return;
         }
@@ -141,7 +141,7 @@ export function requireState(allowedStates: string | string[]) {
                 message: `This action requires state: ${states.join(' or ')}. Current state: ${currentState}`,
                 currentState,
                 requiredStates: states,
-                currentPhase: req.currentPhase
+                currentPhase: req.currentPhase,
             });
             return;
         }
@@ -166,7 +166,7 @@ export function requirePhase(allowedPhases: string | string[]) {
                 error: 'INVALID_PHASE',
                 message: `This action requires phase: ${phases.join(' or ')}. Current phase: ${currentPhase}`,
                 currentPhase,
-                requiredPhases: phases
+                requiredPhases: phases,
             });
             return;
         }
@@ -191,7 +191,7 @@ export function requirePermission(permission: string) {
                 error: 'PERMISSION_DENIED',
                 message: `Permission '${permission}' not available in state: ${req.userState}`,
                 currentState: req.userState,
-                requiredPermission: permission
+                requiredPermission: permission,
             });
             return;
         }
@@ -212,7 +212,7 @@ export async function transitionState(
     userId: string,
     fromState: string,
     toState: string,
-    context: Record<string, unknown> = {}
+    context: Record<string, unknown> = {},
 ): Promise<{ success: boolean; error?: string }> {
     const { UserStateMachine, db } = deps;
 
@@ -237,12 +237,12 @@ export async function transitionState(
                  journey_state_changed_at = datetime('now'),
                  phase_changed_at = datetime('now')
              WHERE id = ?`,
-            [toState, newPhase, userId]
+            [toState, newPhase, userId],
         );
 
         // Log to audit (if auditService available)
         try {
-            const AuditService = await import('../../services/auditService.js').then(m => m.default || m);
+            const AuditService = await import('../../services/auditService.js').then((m) => m.default || m);
             await (AuditService as any).log({
                 eventType: 'USER_STATE_TRANSITION',
                 userId,
@@ -251,8 +251,8 @@ export async function transitionState(
                     toState,
                     fromPhase: UserStateMachine.getPhase(fromState),
                     toPhase: newPhase,
-                    context: { ...context, timestamp: new Date().toISOString() }
-                }
+                    context: { ...context, timestamp: new Date().toISOString() },
+                },
             });
         } catch (auditError) {
             console.warn('Audit log failed for state transition:', (auditError as Error).message);
@@ -279,7 +279,4 @@ export const PHASES = UserStateMachine.PHASES;
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-
-
-
 

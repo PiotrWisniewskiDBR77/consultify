@@ -1,5 +1,5 @@
+import { AlertTriangle, Clock, Shield, X } from 'lucide-react';
 import React from 'react';
-import { Shield, AlertTriangle, Clock, X } from 'lucide-react';
 
 interface BreakGlassSession {
     id: string;
@@ -21,7 +21,7 @@ const scopeLabels: Record<string, string> = {
     approval_bypass: 'Approval Bypass Active',
     rate_limit_bypass: 'Rate Limiting Bypassed',
     audit_bypass: 'Reduced Audit Logging',
-    emergency_access: 'Emergency Access Mode'
+    emergency_access: 'Emergency Access Mode',
 };
 
 const scopeColors: Record<string, string> = {
@@ -29,14 +29,10 @@ const scopeColors: Record<string, string> = {
     approval_bypass: 'bg-red-500',
     rate_limit_bypass: 'bg-yellow-500',
     audit_bypass: 'bg-purple-500',
-    emergency_access: 'bg-red-600'
+    emergency_access: 'bg-red-600',
 };
 
-export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({
-    sessions,
-    onClose,
-    canClose = false
-}) => {
+export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({ sessions, onClose, canClose = false }) => {
     if (!sessions || sessions.length === 0) return null;
 
     const formatTimeRemaining = (expiresAt: string) => {
@@ -59,10 +55,7 @@ export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({
     return (
         <div className="fixed top-0 left-0 right-0 z-50">
             {sessions.map((session) => (
-                <div
-                    key={session.id}
-                    className={`${scopeColors[session.scope] || 'bg-red-500'} text-white px-4 py-2`}
-                >
+                <div key={session.id} className={`${scopeColors[session.scope] || 'bg-red-500'} text-white px-4 py-2`}>
                     <div className="max-w-7xl mx-auto flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Shield className="w-5 h-5 animate-pulse" />
@@ -78,9 +71,7 @@ export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({
                                 <span>{formatTimeRemaining(session.expiresAt)}</span>
                             </div>
 
-                            <div className="text-sm opacity-75 max-w-xs truncate">
-                                Reason: {session.reason}
-                            </div>
+                            <div className="text-sm opacity-75 max-w-xs truncate">Reason: {session.reason}</div>
 
                             {canClose && onClose && (
                                 <button

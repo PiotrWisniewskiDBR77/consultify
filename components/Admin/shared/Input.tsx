@@ -1,9 +1,9 @@
 /**
  * Admin Input Components
- * 
+ *
  * Minimalist form inputs for Admin module
  * Components: TextInput, Select, Toggle, Checkbox
- * 
+ *
  * Key principles:
  * - Subtle borders
  * - Clean focus states
@@ -21,7 +21,9 @@ const baseInputClass = `
     focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 
     transition-colors
     disabled:opacity-50 disabled:cursor-not-allowed
-`.trim().replace(/\s+/g, ' ');
+`
+    .trim()
+    .replace(/\s+/g, ' ');
 
 // Text Input
 interface TextInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -30,35 +32,33 @@ interface TextInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     hint?: string;
 }
 
-export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(({
-    label,
-    error,
-    hint,
-    className = '',
-    id,
-    ...props
-}, ref) => {
-    const generatedId = useId();
-    const inputId = id || generatedId;
-    
-    return (
-        <div className="space-y-1.5">
-            {label && (
-                <label htmlFor={inputId} className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {label}
-                </label>
-            )}
-            <input
-                ref={ref}
-                id={inputId}
-                className={`${baseInputClass} ${error ? 'border-red-500/50' : ''} ${className}`}
-                {...props}
-            />
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
-        </div>
-    );
-});
+export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
+    ({ label, error, hint, className = '', id, ...props }, ref) => {
+        const generatedId = useId();
+        const inputId = id || generatedId;
+
+        return (
+            <div className="space-y-1.5">
+                {label && (
+                    <label
+                        htmlFor={inputId}
+                        className="block text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    >
+                        {label}
+                    </label>
+                )}
+                <input
+                    ref={ref}
+                    id={inputId}
+                    className={`${baseInputClass} ${error ? 'border-red-500/50' : ''} ${className}`}
+                    {...props}
+                />
+                {error && <p className="text-xs text-red-400">{error}</p>}
+                {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
+            </div>
+        );
+    },
+);
 
 TextInput.displayName = 'TextInput';
 
@@ -69,35 +69,33 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
     hint?: string;
 }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
-    label,
-    error,
-    hint,
-    className = '',
-    id,
-    ...props
-}, ref) => {
-    const generatedId = useId();
-    const inputId = id || generatedId;
-    
-    return (
-        <div className="space-y-1.5">
-            {label && (
-                <label htmlFor={inputId} className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {label}
-                </label>
-            )}
-            <textarea
-                ref={ref}
-                id={inputId}
-                className={`${baseInputClass} min-h-[100px] resize-y ${error ? 'border-red-500/50' : ''} ${className}`}
-                {...props}
-            />
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
-        </div>
-    );
-});
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+    ({ label, error, hint, className = '', id, ...props }, ref) => {
+        const generatedId = useId();
+        const inputId = id || generatedId;
+
+        return (
+            <div className="space-y-1.5">
+                {label && (
+                    <label
+                        htmlFor={inputId}
+                        className="block text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    >
+                        {label}
+                    </label>
+                )}
+                <textarea
+                    ref={ref}
+                    id={inputId}
+                    className={`${baseInputClass} min-h-[100px] resize-y ${error ? 'border-red-500/50' : ''} ${className}`}
+                    {...props}
+                />
+                {error && <p className="text-xs text-red-400">{error}</p>}
+                {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
+            </div>
+        );
+    },
+);
 
 Textarea.displayName = 'Textarea';
 
@@ -115,29 +113,25 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
     error?: string;
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
-    label,
-    options,
-    placeholder,
-    error,
-    className = '',
-    id,
-    ...props
-}, ref) => {
-    const generatedId = useId();
-    const selectId = id || generatedId;
-    
-    return (
-        <div className="space-y-1.5">
-            {label && (
-                <label htmlFor={selectId} className="block text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {label}
-                </label>
-            )}
-            <select
-                ref={ref}
-                id={selectId}
-                className={`
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+    ({ label, options, placeholder, error, className = '', id, ...props }, ref) => {
+        const generatedId = useId();
+        const selectId = id || generatedId;
+
+        return (
+            <div className="space-y-1.5">
+                {label && (
+                    <label
+                        htmlFor={selectId}
+                        className="block text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    >
+                        {label}
+                    </label>
+                )}
+                <select
+                    ref={ref}
+                    id={selectId}
+                    className={`
                     ${baseInputClass} 
                     appearance-none cursor-pointer pr-10
                     bg-[url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")]
@@ -145,19 +139,20 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
                     ${error ? 'border-red-500/50' : ''} 
                     ${className}
                 `.trim()}
-                {...props}
-            >
-                {placeholder && <option value="">{placeholder}</option>}
-                {options.map((opt) => (
-                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-                        {opt.label}
-                    </option>
-                ))}
-            </select>
-            {error && <p className="text-xs text-red-400">{error}</p>}
-        </div>
-    );
-});
+                    {...props}
+                >
+                    {placeholder && <option value="">{placeholder}</option>}
+                    {options.map((opt) => (
+                        <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                            {opt.label}
+                        </option>
+                    ))}
+                </select>
+                {error && <p className="text-xs text-red-400">{error}</p>}
+            </div>
+        );
+    },
+);
 
 Select.displayName = 'Select';
 
@@ -182,7 +177,7 @@ export const Toggle: React.FC<ToggleProps> = ({
     const trackSize = size === 'sm' ? 'w-8 h-4' : 'w-9 h-5';
     const thumbSize = size === 'sm' ? 'w-3 h-3' : 'w-4 h-4';
     const thumbTranslate = size === 'sm' ? 'translate-x-4' : 'translate-x-4';
-    
+
     return (
         <label className={`flex items-start gap-3 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
             <div className="relative flex-shrink-0 mt-0.5">
@@ -193,16 +188,20 @@ export const Toggle: React.FC<ToggleProps> = ({
                     disabled={disabled}
                     className="sr-only peer"
                 />
-                <div className={`
+                <div
+                    className={`
                     ${trackSize} rounded-full transition-colors
                     bg-slate-700 peer-checked:bg-blue-600
                     peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50 peer-focus-visible:ring-offset-2 
                     peer-focus-visible:ring-offset-slate-900
-                `} />
-                <div className={`
+                `}
+                />
+                <div
+                    className={`
                     absolute top-0.5 left-0.5 ${thumbSize} rounded-full bg-white 
                     transition-transform peer-checked:${thumbTranslate}
-                `} />
+                `}
+                />
             </div>
             {(label || description) && (
                 <div className="flex-1">
@@ -223,13 +222,7 @@ interface CheckboxProps {
     disabled?: boolean;
 }
 
-export const Checkbox: React.FC<CheckboxProps> = ({
-    checked,
-    onChange,
-    label,
-    description,
-    disabled = false,
-}) => {
+export const Checkbox: React.FC<CheckboxProps> = ({ checked, onChange, label, description, disabled = false }) => {
     return (
         <label className={`flex items-start gap-3 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
             <div className="relative flex-shrink-0 mt-0.5">
@@ -240,12 +233,14 @@ export const Checkbox: React.FC<CheckboxProps> = ({
                     disabled={disabled}
                     className="sr-only peer"
                 />
-                <div className={`
+                <div
+                    className={`
                     w-4 h-4 rounded border transition-colors
                     border-white/20 bg-slate-800/50
                     peer-checked:bg-blue-600 peer-checked:border-blue-600
                     peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50
-                `}>
+                `}
+                >
                     <svg
                         className={`w-4 h-4 text-white transition-opacity ${checked ? 'opacity-100' : 'opacity-0'}`}
                         fill="none"
@@ -274,24 +269,12 @@ interface FormGroupProps {
 }
 
 export const FormGroup: React.FC<FormGroupProps> = ({ children, className = '' }) => (
-    <div className={`space-y-4 ${className}`}>
-        {children}
-    </div>
+    <div className={`space-y-4 ${className}`}>{children}</div>
 );
 
 // Form row for horizontal layout
 export const FormRow: React.FC<FormGroupProps> = ({ children, className = '' }) => (
-    <div className={`grid grid-cols-2 gap-4 ${className}`}>
-        {children}
-    </div>
+    <div className={`grid grid-cols-2 gap-4 ${className}`}>{children}</div>
 );
 
 export default TextInput;
-
-
-
-
-
-
-
-

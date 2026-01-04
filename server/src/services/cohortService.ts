@@ -1,14 +1,12 @@
 /**
  * Cohort Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadCohortservice = createCachedLazyService('../../services/cohortService.js');
+import service from '../../services/cohortService.js';
 
 // Export default instance (for backward compatibility)
-export default loadCohortservice();
+export default service;

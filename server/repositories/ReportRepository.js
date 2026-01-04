@@ -1,4 +1,5 @@
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 class ReportRepository {
     constructor() {

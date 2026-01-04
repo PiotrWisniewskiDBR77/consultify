@@ -1,6 +1,6 @@
 /**
  * RolesManagementPanel - Role & Permission Management
- * 
+ *
  * Features:
  * - View predefined roles
  * - Edit role permissions matrix
@@ -8,34 +8,35 @@
  * - Assign roles to users
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Shield,
-    Plus,
-    Edit,
-    Trash2,
-    Users,
-    Search,
-    X,
-    Check,
-    RefreshCw,
-    Settings,
-    Eye,
+    AlertTriangle,
     Briefcase,
-    Crown,
-    Lock,
-    Unlock,
+    Check,
     ChevronDown,
     ChevronRight,
     Copy,
+    Crown,
+    Edit,
+    Eye,
+    Lock,
+    Plus,
+    RefreshCw,
     Save,
-    AlertTriangle
+    Search,
+    Settings,
+    Shield,
+    Trash2,
+    Unlock,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../shared/InfoButton';
 
 // Role types
@@ -60,8 +61,8 @@ const PERMISSION_CATEGORIES = [
             { key: 'manage_users', label: 'Manage Users', description: 'Create, edit, and delete users' },
             { key: 'invite_users', label: 'Invite Users', description: 'Send invitations to new users' },
             { key: 'manage_roles', label: 'Manage Roles', description: 'Assign and modify user roles' },
-            { key: 'view_user_activity', label: 'View Activity', description: 'View user activity logs' }
-        ]
+            { key: 'view_user_activity', label: 'View Activity', description: 'View user activity logs' },
+        ],
     },
     {
         id: 'projects',
@@ -72,8 +73,8 @@ const PERMISSION_CATEGORIES = [
             { key: 'edit_project_settings', label: 'Edit Settings', description: 'Modify project settings' },
             { key: 'delete_project', label: 'Delete Projects', description: 'Delete existing projects' },
             { key: 'manage_project_roles', label: 'Project Roles', description: 'Manage project-level roles' },
-            { key: 'manage_workstreams', label: 'Workstreams', description: 'Create and manage workstreams' }
-        ]
+            { key: 'manage_workstreams', label: 'Workstreams', description: 'Create and manage workstreams' },
+        ],
     },
     {
         id: 'tasks',
@@ -83,8 +84,8 @@ const PERMISSION_CATEGORIES = [
             { key: 'assign_tasks', label: 'Assign Tasks', description: 'Assign tasks to team members' },
             { key: 'update_task_status', label: 'Update Status', description: 'Change task status' },
             { key: 'delete_tasks', label: 'Delete Tasks', description: 'Delete tasks' },
-            { key: 'manage_stage_gates', label: 'Stage Gates', description: 'Manage stage gate approvals' }
-        ]
+            { key: 'manage_stage_gates', label: 'Stage Gates', description: 'Manage stage gate approvals' },
+        ],
     },
     {
         id: 'governance',
@@ -94,8 +95,8 @@ const PERMISSION_CATEGORIES = [
             { key: 'approve_changes', label: 'Approve Changes', description: 'Approve change requests' },
             { key: 'view_audit_log', label: 'View Audit Log', description: 'Access audit trail' },
             { key: 'manage_risks', label: 'Manage Risks', description: 'Risk register management' },
-            { key: 'manage_compliance', label: 'Compliance', description: 'Manage compliance settings' }
-        ]
+            { key: 'manage_compliance', label: 'Compliance', description: 'Manage compliance settings' },
+        ],
     },
     {
         id: 'ai',
@@ -104,8 +105,8 @@ const PERMISSION_CATEGORIES = [
         permissions: [
             { key: 'ai_execute_actions', label: 'Execute AI Actions', description: 'Run AI-powered actions' },
             { key: 'ai_view_insights', label: 'View AI Insights', description: 'Access AI-generated insights' },
-            { key: 'manage_ai_policy', label: 'AI Policy', description: 'Configure AI policies' }
-        ]
+            { key: 'manage_ai_policy', label: 'AI Policy', description: 'Configure AI policies' },
+        ],
     },
     {
         id: 'billing',
@@ -114,9 +115,9 @@ const PERMISSION_CATEGORIES = [
         permissions: [
             { key: 'manage_billing', label: 'Manage Billing', description: 'Handle billing and payments' },
             { key: 'manage_org_settings', label: 'Org Settings', description: 'Modify organization settings' },
-            { key: 'manage_integrations', label: 'Integrations', description: 'Configure integrations' }
-        ]
-    }
+            { key: 'manage_integrations', label: 'Integrations', description: 'Configure integrations' },
+        ],
+    },
 ];
 
 // Predefined system roles
@@ -128,8 +129,8 @@ const SYSTEM_ROLES: Role[] = [
         isSystem: true,
         userCount: 0,
         color: 'violet',
-        permissions: PERMISSION_CATEGORIES.flatMap(c => c.permissions.map(p => p.key)),
-        createdAt: ''
+        permissions: PERMISSION_CATEGORIES.flatMap((c) => c.permissions.map((p) => p.key)),
+        createdAt: '',
     },
     {
         id: 'project_manager',
@@ -139,12 +140,19 @@ const SYSTEM_ROLES: Role[] = [
         userCount: 0,
         color: 'blue',
         permissions: [
-            'create_project', 'edit_project_settings', 'manage_project_roles', 'manage_workstreams',
-            'assign_tasks', 'update_task_status', 'manage_stage_gates',
-            'approve_changes', 'view_audit_log', 'manage_risks',
-            'ai_view_insights'
+            'create_project',
+            'edit_project_settings',
+            'manage_project_roles',
+            'manage_workstreams',
+            'assign_tasks',
+            'update_task_status',
+            'manage_stage_gates',
+            'approve_changes',
+            'view_audit_log',
+            'manage_risks',
+            'ai_view_insights',
         ],
-        createdAt: ''
+        createdAt: '',
     },
     {
         id: 'team_member',
@@ -154,7 +162,7 @@ const SYSTEM_ROLES: Role[] = [
         userCount: 0,
         color: 'green',
         permissions: ['update_task_status', 'ai_view_insights'],
-        createdAt: ''
+        createdAt: '',
     },
     {
         id: 'viewer',
@@ -164,8 +172,8 @@ const SYSTEM_ROLES: Role[] = [
         userCount: 0,
         color: 'slate',
         permissions: ['ai_view_insights'],
-        createdAt: ''
-    }
+        createdAt: '',
+    },
 ];
 
 // Role colors
@@ -176,7 +184,7 @@ const ROLE_COLORS = [
     { id: 'amber', bg: 'bg-amber-500', text: 'text-amber-500', light: 'bg-amber-100 dark:bg-amber-900/30' },
     { id: 'rose', bg: 'bg-rose-500', text: 'text-rose-500', light: 'bg-rose-100 dark:bg-rose-900/30' },
     { id: 'cyan', bg: 'bg-cyan-500', text: 'text-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/30' },
-    { id: 'slate', bg: 'bg-slate-500', text: 'text-slate-500', light: 'bg-slate-100 dark:bg-slate-900/30' }
+    { id: 'slate', bg: 'bg-slate-500', text: 'text-slate-500', light: 'bg-slate-100 dark:bg-slate-900/30' },
 ];
 
 interface RolesManagementPanelProps {
@@ -194,14 +202,14 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
-    const [expandedCategories, setExpandedCategories] = useState<string[]>(PERMISSION_CATEGORIES.map(c => c.id));
+    const [expandedCategories, setExpandedCategories] = useState<string[]>(PERMISSION_CATEGORIES.map((c) => c.id));
 
     // Form state for editing/creating roles
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         color: 'violet',
-        permissions: [] as string[]
+        permissions: [] as string[],
     });
 
     // Load custom roles
@@ -210,25 +218,25 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
         try {
             // Load PMO roles from API
             const response = await fetch('/api/pmo-roles?includeCustom=true', {
-                headers: { 
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
             });
-            
+
             if (response.ok) {
                 const pmoRoles = await response.json();
-                
+
                 // Merge system roles with PMO roles for user counts
-                const updatedSystemRoles = SYSTEM_ROLES.map(role => {
+                const updatedSystemRoles = SYSTEM_ROLES.map((role) => {
                     const pmoRole = pmoRoles.find((r: any) => r.name === role.name);
                     return {
                         ...role,
-                        userCount: pmoRole?.userCount || 0
+                        userCount: pmoRole?.userCount || 0,
                     };
                 });
                 setRoles(updatedSystemRoles);
-                
+
                 // Custom roles from PMO
                 const customFromPmo = pmoRoles
                     .filter((r: any) => r.isCustom)
@@ -239,23 +247,23 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                         permissions: r.permissions || [],
                         isSystem: false,
                         userCount: r.userCount || 0,
-                        color: r.color || 'violet'
+                        color: r.color || 'violet',
                     }));
                 setCustomRoles(customFromPmo);
             } else {
                 // Fallback to system roles only
-                const updatedSystemRoles = SYSTEM_ROLES.map(role => ({
+                const updatedSystemRoles = SYSTEM_ROLES.map((role) => ({
                     ...role,
-                    userCount: 0
+                    userCount: 0,
                 }));
                 setRoles(updatedSystemRoles);
             }
         } catch (error) {
             console.error('Error loading roles:', error);
             // Fallback to system roles
-            const updatedSystemRoles = SYSTEM_ROLES.map(role => ({
+            const updatedSystemRoles = SYSTEM_ROLES.map((role) => ({
                 ...role,
-                userCount: 0
+                userCount: 0,
             }));
             setRoles(updatedSystemRoles);
             toast.error(t('admin.roles.loadError', 'Failed to load roles'));
@@ -269,47 +277,46 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
     }, [loadRoles]);
 
     // Filter roles by search
-    const filteredRoles = [...roles, ...customRoles].filter(role =>
-        role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        role.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredRoles = [...roles, ...customRoles].filter(
+        (role) =>
+            role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            role.description.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     // Toggle category expansion
     const toggleCategory = (categoryId: string) => {
-        setExpandedCategories(prev =>
-            prev.includes(categoryId)
-                ? prev.filter(id => id !== categoryId)
-                : [...prev, categoryId]
+        setExpandedCategories((prev) =>
+            prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
         );
     };
 
     // Toggle permission
     const togglePermission = (permissionKey: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             permissions: prev.permissions.includes(permissionKey)
-                ? prev.permissions.filter(p => p !== permissionKey)
-                : [...prev.permissions, permissionKey]
+                ? prev.permissions.filter((p) => p !== permissionKey)
+                : [...prev.permissions, permissionKey],
         }));
     };
 
     // Select all permissions in category
     const selectAllInCategory = (categoryId: string) => {
-        const category = PERMISSION_CATEGORIES.find(c => c.id === categoryId);
+        const category = PERMISSION_CATEGORIES.find((c) => c.id === categoryId);
         if (!category) return;
-        
-        const categoryPermissions = category.permissions.map(p => p.key);
-        const allSelected = categoryPermissions.every(p => formData.permissions.includes(p));
-        
+
+        const categoryPermissions = category.permissions.map((p) => p.key);
+        const allSelected = categoryPermissions.every((p) => formData.permissions.includes(p));
+
         if (allSelected) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                permissions: prev.permissions.filter(p => !categoryPermissions.includes(p))
+                permissions: prev.permissions.filter((p) => !categoryPermissions.includes(p)),
             }));
         } else {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                permissions: [...new Set([...prev.permissions, ...categoryPermissions])]
+                permissions: [...new Set([...prev.permissions, ...categoryPermissions])],
             }));
         }
     };
@@ -321,7 +328,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             name: role.name,
             description: role.description,
             color: role.color,
-            permissions: [...role.permissions]
+            permissions: [...role.permissions],
         });
         setIsEditing(true);
         setIsCreating(false);
@@ -334,7 +341,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             name: '',
             description: '',
             color: 'violet',
-            permissions: []
+            permissions: [],
         });
         setIsCreating(true);
         setIsEditing(false);
@@ -347,7 +354,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             name: `${role.name} (Copy)`,
             description: role.description,
             color: role.color,
-            permissions: [...role.permissions]
+            permissions: [...role.permissions],
         });
         setIsCreating(true);
         setIsEditing(false);
@@ -365,19 +372,19 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                 // Create new custom role via API
                 const response = await fetch('/api/pmo-roles', {
                     method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json'
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         name: formData.name,
                         description: formData.description,
                         color: formData.color,
                         permissions: formData.permissions,
-                        isCustom: true
-                    })
+                        isCustom: true,
+                    }),
                 });
-                
+
                 if (response.ok) {
                     const createdRole = await response.json();
                     const newRole: Role = {
@@ -388,9 +395,9 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                         permissions: formData.permissions,
                         isSystem: false,
                         userCount: 0,
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
                     };
-                    setCustomRoles(prev => [...prev, newRole]);
+                    setCustomRoles((prev) => [...prev, newRole]);
                     toast.success(t('admin.roles.created', 'Role created successfully'));
                 } else {
                     throw new Error('Failed to create role');
@@ -403,24 +410,22 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                     // Update custom role via API
                     const response = await fetch(`/api/pmo-roles/${selectedRole.id}`, {
                         method: 'PUT',
-                        headers: { 
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                            'Content-Type': 'application/json'
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
                             name: formData.name,
                             description: formData.description,
                             color: formData.color,
-                            permissions: formData.permissions
-                        })
+                            permissions: formData.permissions,
+                        }),
                     });
-                    
+
                     if (response.ok) {
-                        setCustomRoles(prev => prev.map(r =>
-                            r.id === selectedRole.id
-                                ? { ...r, ...formData }
-                                : r
-                        ));
+                        setCustomRoles((prev) =>
+                            prev.map((r) => (r.id === selectedRole.id ? { ...r, ...formData } : r)),
+                        );
                         toast.success(t('admin.roles.updated', 'Role updated successfully'));
                     } else {
                         throw new Error('Failed to update role');
@@ -451,7 +456,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
 
         try {
             // In real implementation: await Api.deleteCustomRole(currentOrganization?.id, role.id);
-            setCustomRoles(prev => prev.filter(r => r.id !== role.id));
+            setCustomRoles((prev) => prev.filter((r) => r.id !== role.id));
             toast.success(t('admin.roles.deleted', 'Role deleted successfully'));
         } catch (error) {
             console.error('Error deleting role:', error);
@@ -468,13 +473,13 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
 
     // Get color classes
     const getColorClasses = (colorId: string) => {
-        return ROLE_COLORS.find(c => c.id === colorId) || ROLE_COLORS[0];
+        return ROLE_COLORS.find((c) => c.id === colorId) || ROLE_COLORS[0];
     };
 
     // Render role card
     const renderRoleCard = (role: Role) => {
         const colors = getColorClasses(role.color);
-        
+
         return (
             <motion.div
                 key={role.id}
@@ -493,18 +498,14 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-slate-900 dark:text-white">
-                                    {role.name}
-                                </h3>
+                                <h3 className="font-semibold text-slate-900 dark:text-white">{role.name}</h3>
                                 {role.isSystem && (
                                     <span className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 rounded-full">
                                         {t('admin.roles.system', 'System')}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                {role.description}
-                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{role.description}</p>
                             <div className="flex items-center gap-4 mt-3">
                                 <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
                                     <Users size={12} />
@@ -560,7 +561,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                         <input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                             disabled={selectedRole?.isSystem}
                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white disabled:opacity-50"
                             placeholder={t('admin.roles.namePlaceholder', 'Enter role name')}
@@ -571,10 +572,10 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                             {t('admin.roles.color', 'Color')}
                         </label>
                         <div className="flex gap-2">
-                            {ROLE_COLORS.map(color => (
+                            {ROLE_COLORS.map((color) => (
                                 <button
                                     key={color.id}
-                                    onClick={() => setFormData(prev => ({ ...prev, color: color.id }))}
+                                    onClick={() => setFormData((prev) => ({ ...prev, color: color.id }))}
                                     disabled={selectedRole?.isSystem}
                                     className={`w-8 h-8 rounded-full ${color.bg} ${
                                         formData.color === color.id ? 'ring-2 ring-offset-2 ring-violet-500' : ''
@@ -591,7 +592,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                     </label>
                     <textarea
                         value={formData.description}
-                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                         disabled={selectedRole?.isSystem}
                         className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white disabled:opacity-50 resize-none"
                         rows={2}
@@ -604,7 +605,10 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2">
                         <AlertTriangle className="text-amber-500 mt-0.5" size={16} />
                         <div className="text-sm text-amber-800 dark:text-amber-300">
-                            {t('admin.roles.systemWarning', 'System roles cannot be renamed or deleted. You can only customize permissions.')}
+                            {t(
+                                'admin.roles.systemWarning',
+                                'System roles cannot be renamed or deleted. You can only customize permissions.',
+                            )}
                         </div>
                     </div>
                 )}
@@ -615,15 +619,20 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                         {t('admin.roles.permissionsMatrix', 'Permissions')}
                     </label>
                     <div className="space-y-2">
-                        {PERMISSION_CATEGORIES.map(category => {
+                        {PERMISSION_CATEGORIES.map((category) => {
                             const CategoryIcon = category.icon;
                             const isExpanded = expandedCategories.includes(category.id);
-                            const categoryPermissions = category.permissions.map(p => p.key);
-                            const selectedCount = categoryPermissions.filter(p => formData.permissions.includes(p)).length;
+                            const categoryPermissions = category.permissions.map((p) => p.key);
+                            const selectedCount = categoryPermissions.filter((p) =>
+                                formData.permissions.includes(p),
+                            ).length;
                             const allSelected = selectedCount === categoryPermissions.length;
-                            
+
                             return (
-                                <div key={category.id} className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
+                                <div
+                                    key={category.id}
+                                    className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden"
+                                >
                                     <button
                                         onClick={() => toggleCategory(category.id)}
                                         className="w-full px-4 py-3 flex items-center justify-between bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
@@ -649,12 +658,14 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                                         : 'bg-slate-200 dark:bg-navy-600 text-slate-600 dark:text-slate-400'
                                                 }`}
                                             >
-                                                {allSelected ? t('admin.roles.deselectAll', 'Deselect All') : t('admin.roles.selectAll', 'Select All')}
+                                                {allSelected
+                                                    ? t('admin.roles.deselectAll', 'Deselect All')
+                                                    : t('admin.roles.selectAll', 'Select All')}
                                             </button>
                                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                         </div>
                                     </button>
-                                    
+
                                     <AnimatePresence>
                                         {isExpanded && (
                                             <motion.div
@@ -664,9 +675,11 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                                 className="overflow-hidden"
                                             >
                                                 <div className="p-4 space-y-2 bg-white dark:bg-navy-800">
-                                                    {category.permissions.map(permission => {
-                                                        const isSelected = formData.permissions.includes(permission.key);
-                                                        
+                                                    {category.permissions.map((permission) => {
+                                                        const isSelected = formData.permissions.includes(
+                                                            permission.key,
+                                                        );
+
                                                         return (
                                                             <label
                                                                 key={permission.key}
@@ -761,9 +774,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                             <Lock size={14} />
                             {t('admin.roles.systemRoles', 'System Roles')}
                         </h3>
-                        <div className="space-y-2">
-                            {filteredRoles.filter(r => r.isSystem).map(renderRoleCard)}
-                        </div>
+                        <div className="space-y-2">{filteredRoles.filter((r) => r.isSystem).map(renderRoleCard)}</div>
                     </div>
 
                     {/* Custom Roles */}
@@ -774,7 +785,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                 {t('admin.roles.customRoles', 'Custom Roles')}
                             </h3>
                             <div className="space-y-2">
-                                {filteredRoles.filter(r => !r.isSystem).map(renderRoleCard)}
+                                {filteredRoles.filter((r) => !r.isSystem).map(renderRoleCard)}
                             </div>
                         </div>
                     )}
@@ -788,14 +799,13 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
 
                 {/* Permission Editor */}
                 <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-                    {(isEditing || isCreating) ? (
+                    {isEditing || isCreating ? (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                                     {isCreating
                                         ? t('admin.roles.createNewRole', 'Create New Role')
-                                        : t('admin.roles.editRole', 'Edit Role')
-                                    }
+                                        : t('admin.roles.editRole', 'Edit Role')}
                                 </h3>
                                 <button
                                     onClick={cancelEditing}
@@ -830,7 +840,10 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                                 {t('admin.roles.selectToEdit', 'Select a Role')}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                {t('admin.roles.selectToEditDesc', 'Select a role from the list to view or edit its permissions')}
+                                {t(
+                                    'admin.roles.selectToEditDesc',
+                                    'Select a role from the list to view or edit its permissions',
+                                )}
                             </p>
                             <button
                                 onClick={startCreating}
@@ -848,4 +861,3 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
 };
 
 export default RolesManagementPanel;
-

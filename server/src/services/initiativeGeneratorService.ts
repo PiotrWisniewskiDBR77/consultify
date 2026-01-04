@@ -1,14 +1,12 @@
 /**
  * Initiativegenerator Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadInitiativegeneratorservice = createCachedLazyService('../../services/initiativeGeneratorService.js');
+import service from '../../services/initiativeGeneratorService.js';
 
 // Export default instance (for backward compatibility)
-export default loadInitiativegeneratorservice();
+export default service;

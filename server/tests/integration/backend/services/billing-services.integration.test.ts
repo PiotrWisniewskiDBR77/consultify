@@ -1,15 +1,16 @@
 /**
  * Billing Services Integration Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Integration tests for billing services interactions - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import BillingService from '../../../../src/services/BillingService.js';
-import InvoiceService from '../../../../src/services/InvoiceService.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { getDatabase } from '../../../../src/database/Database.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import BillingService from '../../../../src/services/BillingService.js';
+import InvoiceService from '../../../../src/services/InvoiceService.js';
 
 describe('Billing Services Integration', () => {
     let db: IDatabase;
@@ -35,4 +36,3 @@ describe('Billing Services Integration', () => {
         });
     });
 });
-

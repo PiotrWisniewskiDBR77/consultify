@@ -1,13 +1,14 @@
 /**
  * RAGService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for RAGService - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import RAGService from '../../../../src/services/ragService.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import RAGService from '../../../../src/services/ragService.js';
 
 describe('RAGService', () => {
     let mockDb: IDatabase;
@@ -51,4 +52,3 @@ describe('RAGService', () => {
         });
     });
 });
-

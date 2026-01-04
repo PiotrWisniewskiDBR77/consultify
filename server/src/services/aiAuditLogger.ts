@@ -4,7 +4,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { run, get, all } from '../utils/DbPromise.js';
+
+import { all, get, run } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -66,17 +67,31 @@ export const AIAuditLogger = {
     logInteraction: async (entry: AIAuditEntry) => {
         const id = uuidv4();
         const {
-            userId, organizationId, projectId,
-            actionType, actionDescription,
-            contextSnapshot, dataSourcesUsed,
-            aiRole, policyLevel, confidenceLevel,
-            aiSuggestion, userDecision, userFeedback,
-            aiProjectRole, justification, approvingUser,
-            regulatoryMode, reasoningSummary, dataUsed,
-            constraintsApplied, correlationId
+            userId,
+            organizationId,
+            projectId,
+            actionType,
+            actionDescription,
+            contextSnapshot,
+            dataSourcesUsed,
+            aiRole,
+            policyLevel,
+            confidenceLevel,
+            aiSuggestion,
+            userDecision,
+            userFeedback,
+            aiProjectRole,
+            justification,
+            approvingUser,
+            regulatoryMode,
+            reasoningSummary,
+            dataUsed,
+            constraintsApplied,
+            correlationId,
         } = entry;
 
-        const result = await run(`INSERT INTO ai_audit_logs 
+        const result = await run(
+            `INSERT INTO ai_audit_logs 
             (id, user_id, organization_id, project_id, action_type, action_description,
              context_snapshot, data_sources_used, ai_role, policy_level, confidence_level,
              ai_suggestion, user_decision, user_feedback,
@@ -84,12 +99,20 @@ export const AIAuditLogger = {
              regulatory_mode, reasoning_summary, data_used_json, constraints_applied_json, correlation_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                id, userId, organizationId, projectId,
-                actionType, actionDescription,
+                id,
+                userId,
+                organizationId,
+                projectId,
+                actionType,
+                actionDescription,
                 typeof contextSnapshot === 'string' ? contextSnapshot : JSON.stringify(contextSnapshot || {}),
                 JSON.stringify(dataSourcesUsed || []),
-                aiRole, policyLevel, confidenceLevel,
-                aiSuggestion, userDecision || null, userFeedback || null,
+                aiRole,
+                policyLevel,
+                confidenceLevel,
+                aiSuggestion,
+                userDecision || null,
+                userFeedback || null,
                 aiProjectRole || 'ADVISOR',
                 justification || null,
                 approvingUser || null,
@@ -97,8 +120,8 @@ export const AIAuditLogger = {
                 reasoningSummary || null,
                 dataUsed ? JSON.stringify(dataUsed) : null,
                 constraintsApplied ? JSON.stringify(constraintsApplied) : null,
-                correlationId || null
-            ]
+                correlationId || null,
+            ],
         );
 
         if (!result.success) {
@@ -111,7 +134,15 @@ export const AIAuditLogger = {
     /**
      * Log AI interaction with full AIExplanation object
      */
-    logWithExplanation: async ({ userId, organizationId, projectId, explanation, aiResponse, actionType = 'AI_RESPONSE', correlationId }: any) => {
+    logWithExplanation: async ({
+        userId,
+        organizationId,
+        projectId,
+        explanation,
+        aiResponse,
+        actionType = 'AI_RESPONSE',
+        correlationId,
+    }: any) => {
         return AIAuditLogger.logInteraction({
             userId,
             organizationId,
@@ -129,23 +160,32 @@ export const AIAuditLogger = {
             reasoningSummary: explanation?.reasoningSummary || null,
             dataUsed: explanation?.dataUsed || null,
             constraintsApplied: explanation?.constraintsApplied || [],
-            correlationId
+            correlationId,
         });
     },
 
     /**
      * Log AI suggestion
      */
-    logSuggestion: async (userId: string, organizationId: string, projectId: string | null, aiRole: string, suggestion: string, context: any) => {
+    logSuggestion: async (
+        userId: string,
+        organizationId: string,
+        projectId: string | null,
+        aiRole: string,
+        suggestion: string,
+        context: any,
+    ) => {
         return AIAuditLogger.logInteraction({
-            userId, organizationId, projectId,
+            userId,
+            organizationId,
+            projectId,
             actionType: 'SUGGESTION',
             actionDescription: 'AI provided suggestion',
             contextSnapshot: context,
             aiRole,
             policyLevel: 'ADVISORY',
             aiSuggestion: suggestion,
-            confidenceLevel: 'MEDIUM'
+            confidenceLevel: 'MEDIUM',
         });
     },
 
@@ -153,10 +193,11 @@ export const AIAuditLogger = {
      * Update user decision on a logged suggestion
      */
     recordUserDecision: async (auditId: string, decision: string, feedback: string | null = null) => {
-        const result = await run(`UPDATE ai_audit_logs 
+        const result = await run(
+            `UPDATE ai_audit_logs 
                 SET user_decision = ?, user_feedback = ?
                 WHERE id = ?`,
-            [decision, feedback, auditId]
+            [decision, feedback, auditId],
         );
 
         return { updated: result.success && (result.changes || 0) > 0 };
@@ -192,14 +233,16 @@ export const AIAuditLogger = {
 
         const rows = await all<AIAuditLogRecord>(sql, params);
 
-        return (rows || []).map(row => {
+        return (rows || []).map((row) => {
             try {
                 row.contextSnapshot = JSON.parse(row.context_snapshot || '{}');
                 row.dataSourcesUsed = JSON.parse(row.data_sources_used || '[]');
 
                 if (includeExplanation !== false) {
                     row.dataUsed = row.data_used_json ? JSON.parse(row.data_used_json) : null;
-                    row.constraintsApplied = row.constraints_applied_json ? JSON.parse(row.constraints_applied_json) : [];
+                    row.constraintsApplied = row.constraints_applied_json
+                        ? JSON.parse(row.constraints_applied_json)
+                        : [];
 
                     row.explanation = {
                         aiRole: row.ai_project_role || row.ai_role || row.aiRole,
@@ -208,10 +251,10 @@ export const AIAuditLogger = {
                         reasoningSummary: row.reasoning_summary || row.reasoningSummary,
                         dataUsed: row.dataUsed,
                         constraintsApplied: row.constraintsApplied,
-                        timestamp: row.created_at
+                        timestamp: row.created_at,
                     };
                 }
-            } catch (e: unknown) { }
+            } catch (e: unknown) {}
             return row;
         });
     },
@@ -247,7 +290,7 @@ export const AIAuditLogger = {
             modified: row?.modified || 0,
             ignored: row?.ignored || 0,
             pending: row?.pending || 0,
-            acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : 0
+            acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
         };
     },
 
@@ -255,10 +298,11 @@ export const AIAuditLogger = {
      * Get role distribution
      */
     getRoleDistribution: async (organizationId: string) => {
-        return all<any>(`SELECT ai_role, COUNT(*) as count 
+        return all<any>(
+            `SELECT ai_role, COUNT(*) as count 
                 FROM ai_audit_logs WHERE organization_id = ?
                 GROUP BY ai_role`,
-            [organizationId]
+            [organizationId],
         );
     },
 
@@ -266,14 +310,15 @@ export const AIAuditLogger = {
      * Clear old audit logs (retention policy)
      */
     clearOldLogs: async (organizationId: string, daysToKeep = 90) => {
-        const result = await run(`DELETE FROM ai_audit_logs 
+        const result = await run(
+            `DELETE FROM ai_audit_logs 
                 WHERE organization_id = ? 
                 AND created_at < datetime('now', '-' || ? || ' days')`,
-            [organizationId, daysToKeep]
+            [organizationId, daysToKeep],
         );
 
         return { deleted: result.changes };
-    }
+    },
 };
 
 export default AIAuditLogger;

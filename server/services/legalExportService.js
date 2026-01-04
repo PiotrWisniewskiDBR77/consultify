@@ -12,7 +12,8 @@
  * - Customer legal reviews
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { LegalEventLogger } from './legalEventLogger.js';
 
 

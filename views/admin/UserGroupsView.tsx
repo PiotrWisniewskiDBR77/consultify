@@ -1,11 +1,11 @@
 /**
  * UserGroupsView - Reusable Teams Management
- * 
+ *
  * Teams are reusable groups of users that can be assigned to projects.
  * Instead of adding users one by one to each project, you can:
  * 1. Create teams here (e.g., "Frontend Team", "PMO Office", "QA Team")
  * 2. When creating/editing a project, assign entire teams or individual users
- * 
+ *
  * Features:
  * - Create, edit, delete teams
  * - Assign members to teams
@@ -13,32 +13,33 @@
  * - Team leader designation
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    UsersRound,
-    Plus,
-    Edit,
-    Trash2,
-    Users,
-    Shield,
-    Search,
-    X,
     Check,
-    RefreshCw,
-    Crown,
     ChevronDown,
     ChevronRight,
-    Palette,
+    Crown,
+    Edit,
     FolderKanban,
-    Info
+    Info,
+    Palette,
+    Plus,
+    RefreshCw,
+    Search,
+    Shield,
+    Trash2,
+    Users,
+    UsersRound,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
-import { User, UserGroup, GroupPermission } from '../../types';
-import { Api } from '../../services/api';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { GroupPermission, User, UserGroup } from '../../types';
 
 // Group colors
 const GROUP_COLORS = [
@@ -49,7 +50,7 @@ const GROUP_COLORS = [
     { id: 'rose', bg: 'bg-rose-500', text: 'text-rose-500', light: 'bg-rose-100 dark:bg-rose-900/30' },
     { id: 'cyan', bg: 'bg-cyan-500', text: 'text-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/30' },
     { id: 'orange', bg: 'bg-orange-500', text: 'text-orange-500', light: 'bg-orange-100 dark:bg-orange-900/30' },
-    { id: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-500', light: 'bg-indigo-100 dark:bg-indigo-900/30' }
+    { id: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-500', light: 'bg-indigo-100 dark:bg-indigo-900/30' },
 ];
 
 // Permission resources
@@ -60,7 +61,7 @@ const PERMISSION_RESOURCES = [
     { id: 'decisions', label: 'Decisions', description: 'Access to decisions' },
     { id: 'knowledge', label: 'Knowledge Base', description: 'Access to documents' },
     { id: 'analytics', label: 'Analytics', description: 'Access to reports' },
-    { id: 'ai', label: 'AI Features', description: 'Access to AI capabilities' }
+    { id: 'ai', label: 'AI Features', description: 'Access to AI capabilities' },
 ];
 
 const PERMISSION_ACTIONS = ['read', 'create', 'update', 'delete', 'manage'];
@@ -92,7 +93,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         color: 'violet',
         leaderId: '',
         defaultProjectRole: 'TEAM_MEMBER', // Default role when team is added to project
-        permissions: [] as GroupPermission[]
+        permissions: [] as GroupPermission[],
     });
 
     const [saving, setSaving] = useState(false);
@@ -106,7 +107,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         try {
             // Load groups
             const groupsRes = await fetch(`/api/organizations/${currentOrganization?.id}/groups`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (groupsRes.ok) {
                 const data = await groupsRes.json();
@@ -134,7 +135,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             color: 'violet',
             leaderId: '',
             defaultProjectRole: 'TEAM_MEMBER',
-            permissions: []
+            permissions: [],
         });
         setShowCreateModal(true);
     };
@@ -147,7 +148,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             color: group.color || 'violet',
             leaderId: group.leaderId || '',
             defaultProjectRole: (group as any).defaultProjectRole || 'TEAM_MEMBER',
-            permissions: group.permissions || []
+            permissions: group.permissions || [],
         });
         setShowCreateModal(true);
     };
@@ -168,9 +169,9 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 method: editingGroup ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
             });
 
             if (res.ok) {
@@ -197,12 +198,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         try {
             const res = await fetch(`/api/organizations/${currentOrganization?.id}/groups/${groupId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
                 toast.success('Group deleted');
-                setGroups(prev => prev.filter(g => g.id !== groupId));
+                setGroups((prev) => prev.filter((g) => g.id !== groupId));
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 throw new Error(errorData.error || 'Failed to delete group');
@@ -223,7 +224,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
 
         const isMember = selectedGroupForMembers.memberIds.includes(userId);
         const newMemberIds = isMember
-            ? selectedGroupForMembers.memberIds.filter(id => id !== userId)
+            ? selectedGroupForMembers.memberIds.filter((id) => id !== userId)
             : [...selectedGroupForMembers.memberIds, userId];
 
         try {
@@ -231,74 +232,81 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ memberIds: newMemberIds })
+                body: JSON.stringify({ memberIds: newMemberIds }),
             });
         } catch (error) {
             // Continue with local update
         }
 
         // Update local state
-        setGroups(prev => prev.map(g =>
-            g.id === selectedGroupForMembers.id
-                ? { ...g, memberIds: newMemberIds }
-                : g
-        ));
-        setSelectedGroupForMembers(prev => prev ? { ...prev, memberIds: newMemberIds } : null);
+        setGroups((prev) =>
+            prev.map((g) => (g.id === selectedGroupForMembers.id ? { ...g, memberIds: newMemberIds } : g)),
+        );
+        setSelectedGroupForMembers((prev) => (prev ? { ...prev, memberIds: newMemberIds } : null));
     };
 
     const togglePermission = (resource: string, action: string) => {
-        setFormData(prev => {
-            const existingPerm = prev.permissions.find(p => p.resource === resource);
+        setFormData((prev) => {
+            const existingPerm = prev.permissions.find((p) => p.resource === resource);
 
             if (existingPerm) {
                 const hasAction = existingPerm.actions.includes(action as any);
                 const newActions = hasAction
-                    ? existingPerm.actions.filter(a => a !== action)
+                    ? existingPerm.actions.filter((a) => a !== action)
                     : [...existingPerm.actions, action as any];
 
                 if (newActions.length === 0) {
                     return {
                         ...prev,
-                        permissions: prev.permissions.filter(p => p.resource !== resource)
+                        permissions: prev.permissions.filter((p) => p.resource !== resource),
                     };
                 }
 
                 return {
                     ...prev,
-                    permissions: prev.permissions.map(p =>
-                        p.resource === resource ? { ...p, actions: newActions } : p
-                    )
+                    permissions: prev.permissions.map((p) =>
+                        p.resource === resource ? { ...p, actions: newActions } : p,
+                    ),
                 };
             } else {
                 return {
                     ...prev,
-                    permissions: [...prev.permissions, { resource: resource as any, actions: [action as any], scope: 'group' }]
+                    permissions: [
+                        ...prev.permissions,
+                        { resource: resource as any, actions: [action as any], scope: 'group' },
+                    ],
                 };
             }
         });
     };
 
     const hasPermission = (resource: string, action: string) => {
-        const perm = formData.permissions.find(p => p.resource === resource);
+        const perm = formData.permissions.find((p) => p.resource === resource);
         return perm?.actions.includes(action as any) || false;
     };
 
     const getColorClasses = (colorId: string) => {
-        return GROUP_COLORS.find(c => c.id === colorId) || GROUP_COLORS[0];
+        return GROUP_COLORS.find((c) => c.id === colorId) || GROUP_COLORS[0];
     };
 
     const getMemberNames = (memberIds: string[]) => {
-        return memberIds.map(id => {
-            const user = users.find(u => u.id === id);
-            return user ? `${user.firstName} ${user.lastName}` : 'Unknown';
-        }).slice(0, 3).join(', ') + (memberIds.length > 3 ? ` +${memberIds.length - 3} more` : '');
+        return (
+            memberIds
+                .map((id) => {
+                    const user = users.find((u) => u.id === id);
+                    return user ? `${user.firstName} ${user.lastName}` : 'Unknown';
+                })
+                .slice(0, 3)
+                .join(', ') + (memberIds.length > 3 ? ` +${memberIds.length - 3} more` : '')
+        );
     };
 
-    const filteredGroups = groups.filter(g =>
-        g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        g.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredGroups = groups.filter(
+        (g) =>
+            g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            g.description?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     if (loading) {
@@ -366,7 +374,9 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                     <UsersRound className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Teams</h3>
-                    <p className="text-slate-500 mt-1 mb-4">Create your first team to quickly assign groups of users to projects</p>
+                    <p className="text-slate-500 mt-1 mb-4">
+                        Create your first team to quickly assign groups of users to projects
+                    </p>
                     <button
                         onClick={openCreateModal}
                         className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
@@ -376,7 +386,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filteredGroups.map(group => {
+                    {filteredGroups.map((group) => {
                         const colors = getColorClasses(group.color || 'violet');
                         const isExpanded = expandedGroup === group.id;
 
@@ -389,12 +399,16 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                 <div className="p-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl ${colors.light} flex items-center justify-center`}>
+                                            <div
+                                                className={`w-12 h-12 rounded-xl ${colors.light} flex items-center justify-center`}
+                                            >
                                                 <UsersRound className={colors.text} size={24} />
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-slate-900 dark:text-white">{group.name}</h3>
+                                                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                                                        {group.name}
+                                                    </h3>
                                                     {group.isDefault && (
                                                         <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 text-xs rounded-full">
                                                             Default
@@ -411,7 +425,9 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <FolderKanban size={12} />
-                                                        Default: {(group as any).defaultProjectRole?.replace('_', ' ') || 'Team Member'}
+                                                        Default:{' '}
+                                                        {(group as any).defaultProjectRole?.replace('_', ' ') ||
+                                                            'Team Member'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -460,25 +476,32 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                             <div className="p-4 space-y-4">
                                                 {/* Members */}
                                                 <div>
-                                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Members</h4>
+                                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        Members
+                                                    </h4>
                                                     <div className="flex flex-wrap gap-2">
                                                         {group.memberIds.length === 0 ? (
-                                                            <span className="text-sm text-slate-500">No members yet</span>
+                                                            <span className="text-sm text-slate-500">
+                                                                No members yet
+                                                            </span>
                                                         ) : (
-                                                            group.memberIds.map(memberId => {
-                                                                const user = users.find(u => u.id === memberId);
+                                                            group.memberIds.map((memberId) => {
+                                                                const user = users.find((u) => u.id === memberId);
                                                                 const isLeader = group.leaderId === memberId;
                                                                 return (
                                                                     <div
                                                                         key={memberId}
-                                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isLeader
-                                                                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
-                                                                            : 'bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
-                                                                            }`}
+                                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+                                                                            isLeader
+                                                                                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
+                                                                                : 'bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                                                                        }`}
                                                                     >
                                                                         {isLeader && <Crown size={12} />}
                                                                         <span className="text-sm">
-                                                                            {user ? `${user.firstName} ${user.lastName}` : 'Unknown'}
+                                                                            {user
+                                                                                ? `${user.firstName} ${user.lastName}`
+                                                                                : 'Unknown'}
                                                                         </span>
                                                                     </div>
                                                                 );
@@ -489,10 +512,14 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
 
                                                 {/* Permissions */}
                                                 <div>
-                                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Permissions</h4>
+                                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        Permissions
+                                                    </h4>
                                                     <div className="flex flex-wrap gap-2">
                                                         {group.permissions?.length === 0 ? (
-                                                            <span className="text-sm text-slate-500">No permissions set</span>
+                                                            <span className="text-sm text-slate-500">
+                                                                No permissions set
+                                                            </span>
                                                         ) : (
                                                             group.permissions?.map((perm, idx) => (
                                                                 <span
@@ -568,13 +595,16 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                             Color
                                         </label>
                                         <div className="flex gap-2">
-                                            {GROUP_COLORS.map(color => (
+                                            {GROUP_COLORS.map((color) => (
                                                 <button
                                                     key={color.id}
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, color: color.id })}
-                                                    className={`w-8 h-8 rounded-lg ${color.bg} ${formData.color === color.id ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                                                        }`}
+                                                    className={`w-8 h-8 rounded-lg ${color.bg} ${
+                                                        formData.color === color.id
+                                                            ? 'ring-2 ring-offset-2 ring-slate-400'
+                                                            : ''
+                                                    }`}
                                                 />
                                             ))}
                                         </div>
@@ -589,7 +619,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                         >
                                             <option value="">No leader</option>
-                                            {users.map(user => (
+                                            {users.map((user) => (
                                                 <option key={user.id} value={user.id}>
                                                     {user.firstName} {user.lastName}
                                                 </option>
@@ -605,11 +635,14 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                         Default Project Role
                                     </label>
                                     <p className="text-xs text-slate-500 mb-2">
-                                        When this team is added to a project, members will be assigned this role by default.
+                                        When this team is added to a project, members will be assigned this role by
+                                        default.
                                     </p>
                                     <select
                                         value={formData.defaultProjectRole}
-                                        onChange={(e) => setFormData({ ...formData, defaultProjectRole: e.target.value })}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, defaultProjectRole: e.target.value })
+                                        }
                                         className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                     >
                                         <option value="PROJECT_EXECUTIVE">Project Executive / Sponsor (Level 0)</option>
@@ -629,32 +662,46 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                         <table className="w-full text-sm">
                                             <thead className="bg-slate-50 dark:bg-navy-900">
                                                 <tr>
-                                                    <th className="px-4 py-2 text-left text-slate-600 dark:text-slate-400 font-medium">Resource</th>
-                                                    {PERMISSION_ACTIONS.map(action => (
-                                                        <th key={action} className="px-2 py-2 text-center text-slate-600 dark:text-slate-400 font-medium capitalize">
+                                                    <th className="px-4 py-2 text-left text-slate-600 dark:text-slate-400 font-medium">
+                                                        Resource
+                                                    </th>
+                                                    {PERMISSION_ACTIONS.map((action) => (
+                                                        <th
+                                                            key={action}
+                                                            className="px-2 py-2 text-center text-slate-600 dark:text-slate-400 font-medium capitalize"
+                                                        >
                                                             {action}
                                                         </th>
                                                     ))}
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-200 dark:divide-navy-600">
-                                                {PERMISSION_RESOURCES.map(resource => (
+                                                {PERMISSION_RESOURCES.map((resource) => (
                                                     <tr key={resource.id}>
                                                         <td className="px-4 py-2">
-                                                            <div className="font-medium text-slate-900 dark:text-white">{resource.label}</div>
-                                                            <div className="text-xs text-slate-500">{resource.description}</div>
+                                                            <div className="font-medium text-slate-900 dark:text-white">
+                                                                {resource.label}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500">
+                                                                {resource.description}
+                                                            </div>
                                                         </td>
-                                                        {PERMISSION_ACTIONS.map(action => (
+                                                        {PERMISSION_ACTIONS.map((action) => (
                                                             <td key={action} className="px-2 py-2 text-center">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => togglePermission(resource.id, action)}
-                                                                    className={`w-6 h-6 rounded ${hasPermission(resource.id, action)
-                                                                        ? 'bg-violet-600 text-white'
-                                                                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
-                                                                        }`}
+                                                                    onClick={() =>
+                                                                        togglePermission(resource.id, action)
+                                                                    }
+                                                                    className={`w-6 h-6 rounded ${
+                                                                        hasPermission(resource.id, action)
+                                                                            ? 'bg-violet-600 text-white'
+                                                                            : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
+                                                                    }`}
                                                                 >
-                                                                    {hasPermission(resource.id, action) && <Check size={14} className="mx-auto" />}
+                                                                    {hasPermission(resource.id, action) && (
+                                                                        <Check size={14} className="mx-auto" />
+                                                                    )}
                                                                 </button>
                                                             </td>
                                                         ))}
@@ -709,7 +756,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                             </div>
                             <div className="p-4 max-h-[50vh] overflow-y-auto">
                                 <div className="space-y-2">
-                                    {users.map(user => {
+                                    {users.map((user) => {
                                         const isMember = selectedGroupForMembers.memberIds.includes(user.id);
                                         const isLeader = selectedGroupForMembers.leaderId === user.id;
 
@@ -717,10 +764,11 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                             <div
                                                 key={user.id}
                                                 onClick={() => toggleMember(user.id)}
-                                                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${isMember
-                                                    ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
-                                                    : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
-                                                    }`}
+                                                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                                                    isMember
+                                                        ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                                                        : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
+                                                }`}
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-sm font-medium">
@@ -731,17 +779,18 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                                             <span className="font-medium text-slate-900 dark:text-white">
                                                                 {user.firstName} {user.lastName}
                                                             </span>
-                                                            {isLeader && (
-                                                                <Crown size={14} className="text-amber-500" />
-                                                            )}
+                                                            {isLeader && <Crown size={14} className="text-amber-500" />}
                                                         </div>
                                                         <span className="text-xs text-slate-500">{user.email}</span>
                                                     </div>
                                                 </div>
-                                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isMember
-                                                    ? 'bg-violet-600 border-violet-600'
-                                                    : 'border-slate-300 dark:border-navy-600'
-                                                    }`}>
+                                                <div
+                                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                                        isMember
+                                                            ? 'bg-violet-600 border-violet-600'
+                                                            : 'border-slate-300 dark:border-navy-600'
+                                                    }`}
+                                                >
                                                     {isMember && <Check size={14} className="text-white" />}
                                                 </div>
                                             </div>
@@ -766,5 +815,3 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
 };
 
 export default UserGroupsView;
-
-

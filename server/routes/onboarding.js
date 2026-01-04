@@ -17,9 +17,10 @@ import { requireOrgAccess  } from '../middleware/rbac.js';
 import * as OnboardingServiceModule from '../services/onboardingService.js';
 const OnboardingService = OnboardingServiceModule.default || OnboardingServiceModule;
 import auditService from '../services/auditService.js';
-const { getAsync } = getDatabase();
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+const { getAsync } = db;
+
 
 // Apply auth + org context to all routes
 router.use(authenticate);

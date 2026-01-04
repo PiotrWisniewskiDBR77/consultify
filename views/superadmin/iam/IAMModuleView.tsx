@@ -1,20 +1,21 @@
 /**
  * IAM Module View
- * 
+ *
  * Advanced Identity & Access Management module for SuperAdmin
  * Features: Admin Sessions, Audit Logs, Permissions Matrix, Approval Workflows, Security Incidents, Threat Intelligence, DLP
  */
 
+import { AlertTriangle, FileText, GitBranch, Globe, Key, Loader2, Shield, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { TabLayout, Tab } from '../../../components/SuperAdmin/TabLayout';
-import { Users, Shield, Key, GitBranch, AlertTriangle, Globe, FileText, Loader2 } from 'lucide-react';
-import AdminSessionsView from './AdminSessionsView';
+
+import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import AdminAuditLogsView from './AdminAuditLogsView';
-import PermissionsMatrixView from './PermissionsMatrixView';
+import AdminSessionsView from './AdminSessionsView';
 import ApprovalWorkflowsView from './ApprovalWorkflowsView';
+import DLPView from './DLPView';
+import PermissionsMatrixView from './PermissionsMatrixView';
 import SecurityIncidentsView from './SecurityIncidentsView';
 import ThreatIntelligenceView from './ThreatIntelligenceView';
-import DLPView from './DLPView';
 
 const tabs: Tab[] = [
     { id: 'sessions', label: 'Admin Sessions', icon: <Users size={16} /> },
@@ -51,17 +52,10 @@ const IAMModuleView: React.FC = () => {
     };
 
     return (
-        <TabLayout
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-        >
-            <div className="flex-1 overflow-auto p-6">
-                {renderContent()}
-            </div>
+        <TabLayout tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
+            <div className="flex-1 overflow-auto p-6">{renderContent()}</div>
         </TabLayout>
     );
 };
 
 export default IAMModuleView;
-

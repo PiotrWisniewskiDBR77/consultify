@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const dbHelper = require('../../helpers/dbHelper.cjs');
 const { initTestDb, cleanTables, dbRun, dbAll, dbGet } = dbHelper;
-import ActivityService from '../../../server/services/activityService.js';
+import ActivityService from '../../../server/src/services/ActivityService.ts';
 const { v4: uuidv4 } = require('uuid');
 
 /**

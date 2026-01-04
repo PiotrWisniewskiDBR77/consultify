@@ -14,7 +14,7 @@ const deps = {
  */
 async function initDeps() {
     if (!deps._db) {
-        const { default: db } = await import('../database.js');
+        const { default: db } = await import('../src/database/index.js');
         deps._db = db;
     }
     if (!deps._uuidv4) {
@@ -24,6 +24,14 @@ async function initDeps() {
 }
 
 const FeedbackService = {
+    /**
+     * Dependency injection for testing
+     * @param {Object} newDeps - Mock dependencies
+     */
+    setDependencies(newDeps) {
+        Object.assign(deps, newDeps);
+    },
+
     /**
      * Saves user feedback for an AI response (The "Learning" Step).
      */

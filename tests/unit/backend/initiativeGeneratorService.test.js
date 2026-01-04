@@ -6,14 +6,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock database
-const mockDb = {
+const mockDb = vi.hoisted(() => ({
     get: vi.fn(),
     run: vi.fn(),
     all: vi.fn()
-};
+}));
 
 vi.mock('../../../server/database', () => ({
-    default: mockDb
+    default: mockDb,
+    getDatabase: () => mockDb
 }));
 
 // Mock uuid
@@ -323,7 +324,7 @@ describe('InitiativeGeneratorService', () => {
                     id: 'drd-1',
                     axis_scores: [
                         { axis: 'processes', asIs: 2, toBe: 5, gap: 3 },
-                        { axis: 'dataManagement', asIs: 3, toBe: 5, gap: 2 } // below threshold
+                        { axis: 'dataManagement', asIs: 4, toBe: 5, gap: 1 } // Gap > 0, so it IS included now
                     ]
                 },
                 lean: null,
@@ -332,7 +333,8 @@ describe('InitiativeGeneratorService', () => {
 
             const gaps = InitiativeGeneratorService.consolidateGaps(assessmentData);
 
-            expect(gaps.length).toBe(1);
+            // Both gaps are > 0, so both should be returned
+            expect(gaps.length).toBe(2);
             expect(gaps[0].source).toBe('DRD');
             expect(gaps[0].dimension).toBe('processes');
         });
@@ -377,8 +379,8 @@ describe('InitiativeGeneratorService', () => {
             const assessmentData = {
                 drd: {
                     axis_scores: [
-                        { axis: 'processes', gap: 3 },
-                        { axis: 'culture', gap: 5 }
+                        { axis: 'processes', asIs: 0, toBe: 3, gap: 3 },
+                        { axis: 'culture', asIs: 0, toBe: 5, gap: 5 }
                     ]
                 },
                 lean: null,
@@ -582,7 +584,7 @@ describe('InitiativeGeneratorService', () => {
                 targetScore: 5
             });
 
-            expect(objectives.some(o => 
+            expect(objectives.some(o =>
                 o.includes('data') || o.includes('analytics') || o.includes('governance')
             )).toBe(true);
         });
@@ -595,7 +597,7 @@ describe('InitiativeGeneratorService', () => {
                 targetScore: 5
             });
 
-            expect(objectives.some(o => 
+            expect(objectives.some(o =>
                 o.includes('AI') || o.includes('ML')
             )).toBe(true);
         });
@@ -947,6 +949,7 @@ describe('InitiativeGeneratorService', () => {
         });
     });
 });
+
 
 
 

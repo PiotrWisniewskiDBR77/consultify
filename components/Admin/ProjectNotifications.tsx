@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, Save, AlertCircle, CheckCircle, Clock, Shield, Mail, MessageSquare } from 'lucide-react';
+import { AlertCircle, Bell, CheckCircle, Clock, Mail, MessageSquare, Save, Shield } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 /**
@@ -38,7 +38,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
         setIsLoading(true);
         try {
             const res = await fetch(`/api/projects/${projectId}/notification-settings`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -51,7 +51,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
                     decision_required_enabled: !!data.decision_required_enabled,
                     escalation_enabled: !!data.escalation_enabled,
                     email_notifications: !!data.email_notifications,
-                    in_app_notifications: !!data.in_app_notifications
+                    in_app_notifications: !!data.in_app_notifications,
                 });
             }
         } catch (err) {
@@ -79,9 +79,9 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
             if (res.ok) {
                 toast.success('Notification settings saved');
@@ -109,11 +109,36 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
     }
 
     const toggles = [
-        { key: 'task_overdue_enabled' as const, label: 'Task Overdue', icon: AlertCircle, description: 'Notify when tasks become overdue' },
-        { key: 'task_due_today_enabled' as const, label: 'Task Due Today', icon: Clock, description: 'Notify about tasks due today' },
-        { key: 'blocker_detected_enabled' as const, label: 'Blocker Detected', icon: Shield, description: 'Notify when blockers are detected' },
-        { key: 'gate_ready_enabled' as const, label: 'Gate Ready', icon: CheckCircle, description: 'Notify when stage gates become passable' },
-        { key: 'decision_required_enabled' as const, label: 'Decision Required', icon: MessageSquare, description: 'Notify about pending decisions' },
+        {
+            key: 'task_overdue_enabled' as const,
+            label: 'Task Overdue',
+            icon: AlertCircle,
+            description: 'Notify when tasks become overdue',
+        },
+        {
+            key: 'task_due_today_enabled' as const,
+            label: 'Task Due Today',
+            icon: Clock,
+            description: 'Notify about tasks due today',
+        },
+        {
+            key: 'blocker_detected_enabled' as const,
+            label: 'Blocker Detected',
+            icon: Shield,
+            description: 'Notify when blockers are detected',
+        },
+        {
+            key: 'gate_ready_enabled' as const,
+            label: 'Gate Ready',
+            icon: CheckCircle,
+            description: 'Notify when stage gates become passable',
+        },
+        {
+            key: 'decision_required_enabled' as const,
+            label: 'Decision Required',
+            icon: MessageSquare,
+            description: 'Notify about pending decisions',
+        },
     ];
 
     return (
@@ -125,9 +150,14 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
 
             {/* Notification Type Toggles */}
             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Notification Types</h3>
+                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                    Notification Types
+                </h3>
                 {toggles.map(({ key, label, icon: Icon, description }) => (
-                    <div key={key} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
+                    <div
+                        key={key}
+                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg"
+                    >
                         <div className="flex items-center gap-3">
                             <Icon size={18} className="text-slate-500 dark:text-slate-400" />
                             <div>
@@ -137,11 +167,15 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
                         </div>
                         <button
                             onClick={() => handleToggle(key)}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${
+                                settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                            }`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${settings[key] ? 'translate-x-6' : 'translate-x-0.5'
-                                }`} />
+                            <div
+                                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                                    settings[key] ? 'translate-x-6' : 'translate-x-0.5'
+                                }`}
+                            />
                         </button>
                     </div>
                 ))}
@@ -149,7 +183,9 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
 
             {/* Escalation Settings */}
             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Escalation</h3>
+                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                    Escalation
+                </h3>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
                     <div>
                         <div className="text-sm font-medium text-navy-900 dark:text-white">Enable Escalation</div>
@@ -157,11 +193,15 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
                     </div>
                     <button
                         onClick={() => handleToggle('escalation_enabled')}
-                        className={`w-12 h-6 rounded-full transition-colors relative ${settings.escalation_enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-                            }`}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${
+                            settings.escalation_enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                        }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${settings.escalation_enabled ? 'translate-x-6' : 'translate-x-0.5'
-                            }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                                settings.escalation_enabled ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
                 {settings.escalation_enabled && (
@@ -182,7 +222,9 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
 
             {/* Delivery Method */}
             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Delivery</h3>
+                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                    Delivery
+                </h3>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
                     <div className="flex items-center gap-3">
                         <MessageSquare size={18} className="text-slate-500" />
@@ -190,11 +232,15 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
                     </div>
                     <button
                         onClick={() => handleToggle('in_app_notifications')}
-                        className={`w-12 h-6 rounded-full transition-colors relative ${settings.in_app_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-                            }`}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${
+                            settings.in_app_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                        }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${settings.in_app_notifications ? 'translate-x-6' : 'translate-x-0.5'
-                            }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                                settings.in_app_notifications ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
@@ -204,11 +250,15 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ proj
                     </div>
                     <button
                         onClick={() => handleToggle('email_notifications')}
-                        className={`w-12 h-6 rounded-full transition-colors relative ${settings.email_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-                            }`}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${
+                            settings.email_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                        }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${settings.email_notifications ? 'translate-x-6' : 'translate-x-0.5'
-                            }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                                settings.email_notifications ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>

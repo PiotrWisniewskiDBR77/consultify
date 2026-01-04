@@ -1,9 +1,10 @@
+import { GripVertical, Lock, Trash2, Unlock, Wand2 } from 'lucide-react';
 import React from 'react';
-import { ReportBlock, BlockType } from '../../types';
-import { GripVertical, Lock, Unlock, Wand2, Trash2 } from 'lucide-react';
-import { TextBlock } from './blocks/TextBlock';
+
+import { BlockType, ReportBlock } from '../../types';
 import { CalloutBlock } from './blocks/CalloutBlock';
 import { TableBlock } from './blocks/TableBlock';
+import { TextBlock } from './blocks/TextBlock';
 
 interface BlockRendererProps {
     block: ReportBlock;
@@ -13,8 +14,13 @@ interface BlockRendererProps {
     dragHandleProps?: any;
 }
 
-export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate, onRegenerate, onDelete, dragHandleProps }) => {
-
+export const BlockRenderer: React.FC<BlockRendererProps> = ({
+    block,
+    onUpdate,
+    onRegenerate,
+    onDelete,
+    dragHandleProps,
+}) => {
     const renderContent = () => {
         switch (block.type) {
             case 'text':
@@ -37,17 +43,20 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate, o
     };
 
     return (
-        <div className={`group relative bg-white dark:bg-navy-800 rounded-xl border transition-all ${block.locked ? 'border-amber-200 dark:border-amber-900/30' : 'border-slate-200 dark:border-white/5 hover:border-purple-200 dark:hover:border-purple-500/30'
-            } shadow-sm`}>
-
+        <div
+            className={`group relative bg-white dark:bg-navy-800 rounded-xl border transition-all ${
+                block.locked
+                    ? 'border-amber-200 dark:border-amber-900/30'
+                    : 'border-slate-200 dark:border-white/5 hover:border-purple-200 dark:hover:border-purple-500/30'
+            } shadow-sm`}
+        >
             {/* Block Header / Controls - Visible on Hover */}
             <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-navy-800/80 p-1 rounded backdrop-blur z-10">
-
                 {/* Toggle Lock */}
                 <button
                     onClick={() => onUpdate({ locked: !block.locked })}
                     className={`p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 ${block.locked ? 'text-amber-500' : 'text-slate-400'}`}
-                    title={block.locked ? "Unlock" : "Lock"}
+                    title={block.locked ? 'Unlock' : 'Lock'}
                 >
                     {block.locked ? <Lock size={14} /> : <Unlock size={14} />}
                 </button>
@@ -86,9 +95,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate, o
             )}
 
             {/* Content Area */}
-            <div className="p-1">
-                {renderContent()}
-            </div>
+            <div className="p-1">{renderContent()}</div>
         </div>
     );
 };

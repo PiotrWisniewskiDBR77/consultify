@@ -8,15 +8,26 @@
  * - Usage tracking
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
+// Type declaration for bcrypt
+declare module 'bcrypt' {
+    export function hash(data: string, saltRounds: number): Promise<string>;
+    export function compare(data: string, encrypted: string): Promise<boolean>;
+}
+
 import bcrypt from 'bcrypt';
-import db from '../database';
-import AuditService from './auditService';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database.js';
+import AuditService from './auditService.js';
 
 interface Database {
     get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    run: (sql: string, params: unknown[], callback: (this: { lastID: number; changes: number }, err: Error | null) => void) => void;
+    run: (
+        sql: string,
+        params: unknown[],
+        callback: (this: { lastID: number; changes: number }, err: Error | null) => void,
+    ) => void;
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
 }
 
@@ -168,7 +179,11 @@ export interface ApiKeyServiceInterface {
     logUsage: (keyId: string, data: UsageLogData) => Promise<void>;
     getKeys: (organizationId: string, options?: GetKeysOptions) => Promise<ApiKeyRecord[]>;
     getKeyUsage: (keyId: string, days?: number) => Promise<UsageStatistics>;
-    updateKey: (keyId: string, updates: UpdateApiKeyData, updatedBy: string) => Promise<{ success: boolean; message?: string }>;
+    updateKey: (
+        keyId: string,
+        updates: UpdateApiKeyData,
+        updatedBy: string,
+    ) => Promise<{ success: boolean; message?: string }>;
     revokeKey: (keyId: string, revokedBy: string, reason?: string | null) => Promise<{ success: boolean }>;
     regenerateKey: (keyId: string, regeneratedBy: string) => Promise<ApiKeyResult>;
 }
@@ -202,46 +217,46 @@ function dbAll(sql: string, params: unknown[] = []): Promise<unknown[]> {
 }
 
 // Available API scopes
-const API_SCOPES: ApiKeyScopes = {
+const API_SCOPES: ApiKeyScopes & { [key: string]: string } = {
     // Users
     'read:users': 'Read user information',
     'write:users': 'Create/update users',
     'delete:users': 'Delete users',
-    
+
     // Organizations
     'read:organizations': 'Read organization data',
     'write:organizations': 'Update organization settings',
-    
+
     // Projects
     'read:projects': 'Read projects',
     'write:projects': 'Create/update projects',
     'delete:projects': 'Delete projects',
-    
+
     // Assessments
     'read:assessments': 'Read assessments',
     'write:assessments': 'Create/update assessments',
-    
+
     // Initiatives
     'read:initiatives': 'Read initiatives',
     'write:initiatives': 'Create/update initiatives',
-    
+
     // Tasks
     'read:tasks': 'Read tasks',
     'write:tasks': 'Create/update tasks',
-    
+
     // Reports
     'read:reports': 'Read reports',
     'export:reports': 'Export reports to PDF/Excel',
-    
+
     // AI
     'use:ai': 'Use AI features',
     'read:ai_usage': 'Read AI usage statistics',
-    
+
     // Admin
     'admin:billing': 'Access billing data',
     'admin:audit': 'Access audit logs',
     'admin:settings': 'Modify system settings',
-    
+
     // Webhooks
     'manage:webhooks': 'Create/manage webhooks',
 };
@@ -285,7 +300,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
         const prefix = keyType === 'user' ? 'ck_user_' : keyType === 'service' ? 'ck_svc_' : 'ck_live_';
         const randomPart = crypto.randomBytes(24).toString('base64url');
         const plainKey = `${prefix}${randomPart}`;
-        
+
         // Hash the key for storage
         const keyHash = await bcrypt.hash(plainKey, 10);
         const keyPrefix = plainKey.substring(0, 12); // Store first 12 chars for identification
@@ -298,11 +313,21 @@ const ApiKeyService: ApiKeyServiceInterface = {
                 expires_at, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                keyId, organizationId, userId, name, description,
-                keyHash, keyPrefix, keyType, JSON.stringify(scopes),
-                rateLimitPerMinute, rateLimitPerDay, JSON.stringify(allowedIps),
-                expiresAt, createdBy,
-            ]
+                keyId,
+                organizationId,
+                userId,
+                name,
+                description,
+                keyHash,
+                keyPrefix,
+                keyType,
+                JSON.stringify(scopes),
+                rateLimitPerMinute,
+                rateLimitPerDay,
+                JSON.stringify(allowedIps),
+                expiresAt,
+                createdBy,
+            ],
         );
 
         AuditService.logSystemEvent('API_KEY_CREATED', 'api_key', keyId, organizationId, {
@@ -334,37 +359,34 @@ const ApiKeyService: ApiKeyServiceInterface = {
         const keyPrefix = plainKey.substring(0, 12);
 
         // Find potential matches by prefix
-        const potentialKeys = await dbAll(
-            `SELECT * FROM api_keys WHERE key_prefix = ? AND is_active = 1`,
-            [keyPrefix]
-        );
+        const potentialKeys = (await dbAll(`SELECT * FROM api_keys WHERE key_prefix = ? AND is_active = 1`, [keyPrefix])) as Array<Record<string, unknown>>;
 
         for (const keyRecord of potentialKeys) {
-            const match = await bcrypt.compare(plainKey, keyRecord.key_hash);
+            const match = await bcrypt.compare(plainKey, (keyRecord.key_hash as string));
             if (match) {
                 // Check expiration
-                if (keyRecord.expires_at && new Date(keyRecord.expires_at) < new Date()) {
+                if (keyRecord.expires_at && new Date(keyRecord.expires_at as string) < new Date()) {
                     return { valid: false, error: 'Key expired' };
                 }
 
                 // Update last used
                 await dbRun(
                     `UPDATE api_keys SET last_used_at = datetime('now'), usage_count = usage_count + 1 WHERE id = ?`,
-                    [keyRecord.id]
+                    [keyRecord.id as string],
                 );
 
                 return {
                     valid: true,
                     key: {
-                        id: keyRecord.id,
-                        organizationId: keyRecord.organization_id,
-                        userId: keyRecord.user_id,
-                        name: keyRecord.name,
-                        keyType: keyRecord.key_type,
-                        scopes: JSON.parse(keyRecord.scopes || '[]'),
-                        rateLimitPerMinute: keyRecord.rate_limit_per_minute,
-                        rateLimitPerDay: keyRecord.rate_limit_per_day,
-                        allowedIps: JSON.parse(keyRecord.allowed_ips || '[]'),
+                        id: keyRecord.id as string,
+                        organizationId: keyRecord.organization_id as string,
+                        userId: keyRecord.user_id as string | null,
+                        name: keyRecord.name as string,
+                        keyType: keyRecord.key_type as string,
+                        scopes: JSON.parse((keyRecord.scopes as string) || '[]'),
+                        rateLimitPerMinute: keyRecord.rate_limit_per_minute as number,
+                        rateLimitPerDay: keyRecord.rate_limit_per_day as number,
+                        allowedIps: JSON.parse((keyRecord.allowed_ips as string) || '[]'),
                     },
                 };
             }
@@ -388,41 +410,44 @@ const ApiKeyService: ApiKeyServiceInterface = {
         let windowStart;
 
         if (type === 'minute') {
-            windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes()).toISOString();
+            windowStart = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                now.getHours(),
+                now.getMinutes(),
+            ).toISOString();
         } else {
             windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
         }
 
         // Get or create rate limit record
-        let rateLimit = await dbGet(
+        const rateLimit = (await dbGet(
             `SELECT * FROM api_key_rate_limits WHERE api_key_id = ? AND window_start = ? AND window_type = ?`,
-            [keyId, windowStart, type]
-        );
+            [keyId, windowStart, type],
+        )) as Record<string, unknown> | undefined;
 
         if (!rateLimit) {
             await dbRun(
                 `INSERT INTO api_key_rate_limits (id, api_key_id, window_start, window_type, request_count)
                  VALUES (?, ?, ?, ?, 1)`,
-                [uuidv4(), keyId, windowStart, type]
+                [uuidv4(), keyId, windowStart, type],
             );
             return { allowed: true, remaining: 999 }; // First request in window
         }
 
         // Get key limits
-        const key = await dbGet(`SELECT rate_limit_per_minute, rate_limit_per_day FROM api_keys WHERE id = ?`, [keyId]);
-        const limit = type === 'minute' ? key.rate_limit_per_minute : key.rate_limit_per_day;
+        const key = (await dbGet(`SELECT rate_limit_per_minute, rate_limit_per_day FROM api_keys WHERE id = ?`, [keyId])) as Record<string, unknown>;
+        const limit = (type === 'minute' ? (key.rate_limit_per_minute as number) : (key.rate_limit_per_day as number));
 
-        if (rateLimit.request_count >= limit) {
+        if ((rateLimit.request_count as number) >= limit) {
             return { allowed: false, remaining: 0, retryAfter: type === 'minute' ? 60 : 86400 };
         }
 
         // Increment counter
-        await dbRun(
-            `UPDATE api_key_rate_limits SET request_count = request_count + 1 WHERE id = ?`,
-            [rateLimit.id]
-        );
+        await dbRun(`UPDATE api_key_rate_limits SET request_count = request_count + 1 WHERE id = ?`, [rateLimit.id as string]);
 
-        return { allowed: true, remaining: limit - rateLimit.request_count - 1 };
+        return { allowed: true, remaining: limit - (rateLimit.request_count as number) - 1 };
     },
 
     /**
@@ -435,9 +460,18 @@ const ApiKeyService: ApiKeyServiceInterface = {
                 ip_address, user_agent, requests_remaining, error_code, error_message
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                uuidv4(), keyId, data.endpoint, data.method, data.statusCode, data.responseTime,
-                data.ip, data.userAgent, data.requestsRemaining, data.errorCode, data.errorMessage,
-            ]
+                uuidv4(),
+                keyId,
+                data.endpoint,
+                data.method,
+                data.statusCode,
+                data.responseTime,
+                data.ip,
+                data.userAgent,
+                data.requestsRemaining,
+                data.errorCode,
+                data.errorMessage,
+            ],
         );
     },
 
@@ -462,8 +496,8 @@ const ApiKeyService: ApiKeyServiceInterface = {
 
         query += ` ORDER BY created_at DESC`;
 
-        const keys = await dbAll(query, params);
-        return keys.map(k => ({
+        const keys = (await dbAll(query, params)) as Array<Record<string, unknown>>;
+        return keys.map((k) => ({
             ...k,
             scopes: JSON.parse(k.scopes || '[]'),
             allowedIps: JSON.parse(k.allowed_ips || '[]'),
@@ -488,7 +522,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
              WHERE api_key_id = ? AND created_at >= ?
              GROUP BY date(created_at)
              ORDER BY date DESC`,
-            [keyId, since]
+            [keyId, since],
         );
 
         const totals = await dbGet(
@@ -498,7 +532,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
                 SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as total_errors
              FROM api_key_usage 
              WHERE api_key_id = ? AND created_at >= ?`,
-            [keyId, since]
+            [keyId, since],
         );
 
         const endpoints = await dbAll(
@@ -508,7 +542,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
              GROUP BY endpoint, method
              ORDER BY count DESC
              LIMIT 10`,
-            [keyId, since]
+            [keyId, since],
         );
 
         return { usage, totals, endpoints };
@@ -517,7 +551,11 @@ const ApiKeyService: ApiKeyServiceInterface = {
     /**
      * Update API key
      */
-    async updateKey(keyId: string, updates: UpdateApiKeyData, updatedBy: string): Promise<{ success: boolean; message?: string }> {
+    async updateKey(
+        keyId: string,
+        updates: UpdateApiKeyData,
+        updatedBy: string,
+    ): Promise<{ success: boolean; message?: string }> {
         const fields = [];
         const params = [];
 
@@ -568,10 +606,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
 
         params.push(keyId);
 
-        await dbRun(
-            `UPDATE api_keys SET ${fields.join(', ')} WHERE id = ?`,
-            params
-        );
+        await dbRun(`UPDATE api_keys SET ${fields.join(', ')} WHERE id = ?`, params);
 
         const key = await dbGet(`SELECT organization_id FROM api_keys WHERE id = ?`, [keyId]);
         AuditService.logSystemEvent('API_KEY_UPDATED', 'api_key', keyId, key?.organization_id, {
@@ -594,7 +629,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
         await dbRun(
             `UPDATE api_keys SET is_active = 0, revoked_at = datetime('now'), revoked_by = ?, revoke_reason = ?
              WHERE id = ?`,
-            [revokedBy, reason, keyId]
+            [revokedBy, reason, keyId],
         );
 
         AuditService.logSystemEvent('API_KEY_REVOKED', 'api_key', keyId, key.organization_id, {
@@ -636,9 +671,3 @@ const ApiKeyService: ApiKeyServiceInterface = {
 };
 
 export default ApiKeyService;
-
-
-
-
-
-

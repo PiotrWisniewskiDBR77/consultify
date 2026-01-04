@@ -1,45 +1,46 @@
 /**
  * LLM Management View
- * 
+ *
  * Redesigned with elegant technological minimalism:
  * - No colorful gradients
  * - Clean tables
  * - Subtle interactions
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    Cpu,
-    Settings,
-    BarChart3,
     Activity,
-    RefreshCw,
-    Server,
-    Plus,
-    Trash2,
-    Edit,
-    X,
+    BarChart3,
     Check,
+    Cpu,
+    Database,
+    DollarSign,
+    Edit,
     Eye,
     EyeOff,
+    Hand,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Server,
+    Settings,
+    Trash2,
+    TrendingUp,
     Wifi,
     WifiOff,
-    Database,
-    Hand,
+    X,
     Zap,
-    DollarSign,
-    TrendingUp,
-    Loader2
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { InfoButton } from '../../components/shared/InfoButton';
-import { LLMProviderConfig, LLMProvider } from '../../types/domain/ai';
-import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
-import { Card } from '../../components/Admin/shared/Card';
-import { Button, IconButton } from '../../components/Admin/shared/Button';
-import { MetricCard } from '../../components/Admin/shared/MetricCard';
+
 import { StatusBadge } from '../../components/Admin/shared/AdminTable';
+import { Button, IconButton } from '../../components/Admin/shared/Button';
+import { Card } from '../../components/Admin/shared/Card';
+import { MetricCard } from '../../components/Admin/shared/MetricCard';
+import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
+import { LLMProvider, LLMProviderConfig } from '../../types/domain/ai';
 
 type LLMConfigTab = 'providers' | 'routing' | 'usage' | 'health';
 
@@ -71,7 +72,7 @@ export const LLMManagementView: React.FC = () => {
         visibility: 'admin',
         cost_per_1k: 0,
         costPerInputToken: 0,
-        costPerOutputToken: 0
+        costPerOutputToken: 0,
     });
 
     // Ollama
@@ -96,23 +97,28 @@ export const LLMManagementView: React.FC = () => {
 
             try {
                 const usage = await fetch('/api/llm/control/usage', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setUsageStats(usage);
-            } catch (e) { console.error('Usage load failed:', e); }
+            } catch (e) {
+                console.error('Usage load failed:', e);
+            }
 
             try {
                 const costs = await fetch('/api/llm/costs', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setCostStats(costs);
-            } catch (e) { console.error('Costs load failed:', e); }
+            } catch (e) {
+                console.error('Costs load failed:', e);
+            }
 
             try {
-                const health = await fetch('/api/llm/diagnose').then(r => r.json());
+                const health = await fetch('/api/llm/diagnose').then((r) => r.json());
                 setHealthStatus(health);
-            } catch (e) { console.error('Health load failed:', e); }
-
+            } catch (e) {
+                console.error('Health load failed:', e);
+            }
         } catch (err) {
             console.error('Failed to load LLM data:', err);
             toast.error('Failed to load LLM configuration');
@@ -146,7 +152,7 @@ export const LLMManagementView: React.FC = () => {
         try {
             await Api.updateProviderTier(providerId, newTier);
             toast.success('Tier updated');
-            setProviders(prev => prev.map(p => p.id === providerId ? { ...p, tier: newTier } : p));
+            setProviders((prev) => prev.map((p) => (p.id === providerId ? { ...p, tier: newTier } : p)));
         } catch (err) {
             toast.error('Failed to update tier');
         }
@@ -162,7 +168,7 @@ export const LLMManagementView: React.FC = () => {
             is_active: true,
             visibility: 'admin',
             cost_per_1k: 0,
-            tier: 'STANDARD'
+            tier: 'STANDARD',
         });
     };
 
@@ -215,7 +221,7 @@ export const LLMManagementView: React.FC = () => {
                 is_active: true,
                 visibility: 'public',
                 cost_per_1k: 0,
-                tier: 'budget'
+                tier: 'budget',
             } as any);
             toast.success(`Added ${modelName}`);
             loadInitialData();
@@ -265,14 +271,15 @@ export const LLMManagementView: React.FC = () => {
 
             {/* Tabs */}
             <div className="shrink-0 px-8 py-3 border-b border-white/[0.04] flex gap-1">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                            ? 'bg-blue-600 text-white'
-                            : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            activeTab === tab.id
+                                ? 'bg-blue-600 text-white'
+                                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        }`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -291,7 +298,9 @@ export const LLMManagementView: React.FC = () => {
                                 <Server size={18} className="text-slate-400" />
                                 <div>
                                     <h3 className="text-base font-medium text-slate-100">Ollama Local Models</h3>
-                                    <p className="text-xs text-slate-500">Connect to local Ollama for privacy-focused AI</p>
+                                    <p className="text-xs text-slate-500">
+                                        Connect to local Ollama for privacy-focused AI
+                                    </p>
                                 </div>
                             </div>
 
@@ -315,19 +324,24 @@ export const LLMManagementView: React.FC = () => {
 
                             {ollamaConnected === true && ollamaModels.length > 0 && (
                                 <div className="border border-white/[0.04] rounded-lg p-4">
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Available Models</p>
+                                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">
+                                        Available Models
+                                    </p>
                                     <div className="flex flex-wrap gap-2">
                                         {ollamaModels.map((model) => {
-                                            const alreadyAdded = providers.some(p => p.provider === 'ollama' && p.model_id === model.name);
+                                            const alreadyAdded = providers.some(
+                                                (p) => p.provider === 'ollama' && p.model_id === model.name,
+                                            );
                                             return (
                                                 <button
                                                     key={model.name}
                                                     onClick={() => !alreadyAdded && addOllamaModel(model.name)}
                                                     disabled={alreadyAdded}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${alreadyAdded
-                                                        ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
-                                                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                                        }`}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${
+                                                        alreadyAdded
+                                                            ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
+                                                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                                    }`}
                                                 >
                                                     {alreadyAdded && <Check size={12} />}
                                                     {model.name}
@@ -375,13 +389,27 @@ export const LLMManagementView: React.FC = () => {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="border-b border-white/[0.06]">
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Provider</th>
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Model ID</th>
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Tier</th>
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Visibility</th>
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Name
+                                            </th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Provider
+                                            </th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Model ID
+                                            </th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Tier
+                                            </th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Visibility
+                                            </th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider text-right">
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -391,64 +419,85 @@ export const LLMManagementView: React.FC = () => {
                                                     <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" />
                                                 </td>
                                             </tr>
-                                        ) : providers.filter(p => showInactive || p.is_active).length === 0 ? (
-                                            <tr><td colSpan={7} className="p-8 text-center text-slate-500 text-sm">No providers configured</td></tr>
+                                        ) : providers.filter((p) => showInactive || p.is_active).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="p-8 text-center text-slate-500 text-sm">
+                                                    No providers configured
+                                                </td>
+                                            </tr>
                                         ) : (
-                                            providers.filter(p => showInactive || p.is_active).map(p => (
-                                                <tr key={p.id} className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors">
-                                                    <td className="px-4 py-3 text-sm font-medium text-slate-200">{p.name}</td>
-                                                    <td className="px-4 py-3 text-sm text-slate-400 capitalize">{p.provider}</td>
-                                                    <td className="px-4 py-3 font-mono text-xs text-slate-500">{p.model_id}</td>
-                                                    <td className="px-4 py-3">
-                                                        <select
-                                                            value={p.tier || 'STANDARD'}
-                                                            onChange={(e) => handleTierChange(p.id, e.target.value)}
-                                                            className="text-xs px-2 py-1 rounded bg-slate-800 border border-white/[0.06] text-slate-300 outline-none cursor-pointer"
-                                                        >
-                                                            <option value="BUDGET">Budget</option>
-                                                            <option value="STANDARD">Standard</option>
-                                                            <option value="PREMIUM">Premium</option>
-                                                            <option value="REASONING">Reasoning</option>
-                                                        </select>
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <StatusBadge
-                                                            variant={p.visibility === 'public' ? 'success' : p.visibility === 'beta' ? 'warning' : 'neutral'}
-                                                            label={p.visibility || 'admin'}
-                                                            dot={false}
-                                                        />
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <StatusBadge
-                                                            variant={p.is_active ? 'success' : 'neutral'}
-                                                            label={p.is_active ? 'Active' : 'Inactive'}
-                                                        />
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center justify-end gap-1">
-                                                            <IconButton
-                                                                icon={Wifi}
-                                                                onClick={() => handleTestConnection(p)}
-                                                                label="Test Connection"
-                                                                size="sm"
+                                            providers
+                                                .filter((p) => showInactive || p.is_active)
+                                                .map((p) => (
+                                                    <tr
+                                                        key={p.id}
+                                                        className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors"
+                                                    >
+                                                        <td className="px-4 py-3 text-sm font-medium text-slate-200">
+                                                            {p.name}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-slate-400 capitalize">
+                                                            {p.provider}
+                                                        </td>
+                                                        <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                                                            {p.model_id}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <select
+                                                                value={p.tier || 'STANDARD'}
+                                                                onChange={(e) => handleTierChange(p.id, e.target.value)}
+                                                                className="text-xs px-2 py-1 rounded bg-slate-800 border border-white/[0.06] text-slate-300 outline-none cursor-pointer"
+                                                            >
+                                                                <option value="BUDGET">Budget</option>
+                                                                <option value="STANDARD">Standard</option>
+                                                                <option value="PREMIUM">Premium</option>
+                                                                <option value="REASONING">Reasoning</option>
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <StatusBadge
+                                                                variant={
+                                                                    p.visibility === 'public'
+                                                                        ? 'success'
+                                                                        : p.visibility === 'beta'
+                                                                          ? 'warning'
+                                                                          : 'neutral'
+                                                                }
+                                                                label={p.visibility || 'admin'}
+                                                                dot={false}
                                                             />
-                                                            <IconButton
-                                                                icon={Edit}
-                                                                onClick={() => handleEditProvider(p)}
-                                                                label="Edit"
-                                                                size="sm"
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <StatusBadge
+                                                                variant={p.is_active ? 'success' : 'neutral'}
+                                                                label={p.is_active ? 'Active' : 'Inactive'}
                                                             />
-                                                            <IconButton
-                                                                icon={Trash2}
-                                                                onClick={() => handleDeleteProvider(p.id)}
-                                                                label="Delete"
-                                                                variant="danger"
-                                                                size="sm"
-                                                            />
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <IconButton
+                                                                    icon={Wifi}
+                                                                    onClick={() => handleTestConnection(p)}
+                                                                    label="Test Connection"
+                                                                    size="sm"
+                                                                />
+                                                                <IconButton
+                                                                    icon={Edit}
+                                                                    onClick={() => handleEditProvider(p)}
+                                                                    label="Edit"
+                                                                    size="sm"
+                                                                />
+                                                                <IconButton
+                                                                    icon={Trash2}
+                                                                    onClick={() => handleDeleteProvider(p.id)}
+                                                                    label="Delete"
+                                                                    variant="danger"
+                                                                    size="sm"
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
                                         )}
                                     </tbody>
                                 </table>
@@ -468,12 +517,27 @@ export const LLMManagementView: React.FC = () => {
                                 />
                                 <div className="space-y-3 mt-4">
                                     {[
-                                        { tier: 'BUDGET', label: 'Budget Tier', desc: 'Simple questions, fast responses' },
-                                        { tier: 'STANDARD', label: 'Standard Tier', desc: 'Most tasks (chat, magic wand)' },
+                                        {
+                                            tier: 'BUDGET',
+                                            label: 'Budget Tier',
+                                            desc: 'Simple questions, fast responses',
+                                        },
+                                        {
+                                            tier: 'STANDARD',
+                                            label: 'Standard Tier',
+                                            desc: 'Most tasks (chat, magic wand)',
+                                        },
                                         { tier: 'PREMIUM', label: 'Premium Tier', desc: 'Complex analysis, reports' },
-                                        { tier: 'REASONING', label: 'Reasoning Tier', desc: 'Deep thinking models (o1, etc.)' },
-                                    ].map(item => (
-                                        <div key={item.tier} className="flex items-center gap-4 p-4 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] transition-colors">
+                                        {
+                                            tier: 'REASONING',
+                                            label: 'Reasoning Tier',
+                                            desc: 'Deep thinking models (o1, etc.)',
+                                        },
+                                    ].map((item) => (
+                                        <div
+                                            key={item.tier}
+                                            className="flex items-center gap-4 p-4 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] transition-colors"
+                                        >
                                             <div className="flex-1">
                                                 <div className="text-sm font-medium text-slate-200">{item.label}</div>
                                                 <div className="text-xs text-slate-500 mt-0.5">{item.desc}</div>
@@ -528,14 +592,21 @@ export const LLMManagementView: React.FC = () => {
                                 <SectionHeader title="Costs per Model" />
                                 <div className="space-y-2 mt-4">
                                     {costStats.byModel.map((m: any) => (
-                                        <div key={m.model} className="flex items-center gap-4 p-3 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] transition-colors">
+                                        <div
+                                            key={m.model}
+                                            className="flex items-center gap-4 p-3 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] transition-colors"
+                                        >
                                             <div className="flex-1">
                                                 <div className="text-sm text-slate-200">{m.model}</div>
                                                 <div className="text-xs text-slate-500">{m.requests} requests</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-sm text-slate-100 tabular-nums">${(m.cost || 0).toFixed(4)}</div>
-                                                <div className="text-xs text-slate-500 tabular-nums">{(m.tokens || 0).toLocaleString()} tokens</div>
+                                                <div className="text-sm text-slate-100 tabular-nums">
+                                                    ${(m.cost || 0).toFixed(4)}
+                                                </div>
+                                                <div className="text-xs text-slate-500 tabular-nums">
+                                                    {(m.tokens || 0).toLocaleString()} tokens
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -559,11 +630,20 @@ export const LLMManagementView: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                     {healthStatus?.checks?.map((check: any, idx: number) => (
-                                        <div key={idx} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+                                        <div
+                                            key={idx}
+                                            className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0"
+                                        >
                                             <span className="text-sm text-slate-300">{check.name}</span>
-                                            <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
-                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
-                                                }`}>
+                                            <span
+                                                className={`text-sm ${
+                                                    check.status === 'OK'
+                                                        ? 'text-emerald-400'
+                                                        : check.status === 'MISSING'
+                                                          ? 'text-amber-400'
+                                                          : 'text-slate-400'
+                                                }`}
+                                            >
                                                 {check.status || check.value}
                                             </span>
                                         </div>
@@ -579,7 +659,7 @@ export const LLMManagementView: React.FC = () => {
                                         { id: 'eyes', icon: Eye, label: 'AI Eyes (Visual)' },
                                         { id: 'memory', icon: Database, label: 'AI Memory (RAG)' },
                                         { id: 'hands', icon: Hand, label: 'AI Hands (Tools)' },
-                                    ].map(cap => (
+                                    ].map((cap) => (
                                         <button
                                             key={cap.id}
                                             className="flex items-center gap-3 p-4 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] hover:border-white/[0.08] transition-colors"
@@ -603,28 +683,30 @@ export const LLMManagementView: React.FC = () => {
                             <h2 className="text-lg font-semibold text-slate-100">
                                 {editingProviderId ? 'Edit Provider' : 'Add Provider'}
                             </h2>
-                            <IconButton
-                                icon={X}
-                                onClick={() => setShowProviderModal(false)}
-                                label="Close"
-                            />
+                            <IconButton icon={X} onClick={() => setShowProviderModal(false)} label="Close" />
                         </div>
                         <form onSubmit={handleProviderSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Display Name</label>
+                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                                        Display Name
+                                    </label>
                                     <input
                                         required
                                         value={providerForm.name}
-                                        onChange={e => setProviderForm({ ...providerForm, name: e.target.value })}
+                                        onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Provider Type</label>
+                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                                        Provider Type
+                                    </label>
                                     <select
                                         value={providerForm.provider}
-                                        onChange={e => setProviderForm({ ...providerForm, provider: e.target.value as any })}
+                                        onChange={(e) =>
+                                            setProviderForm({ ...providerForm, provider: e.target.value as any })
+                                        }
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     >
                                         <optgroup label="Major Providers">
@@ -643,11 +725,13 @@ export const LLMManagementView: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">API Key</label>
+                                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                                    API Key
+                                </label>
                                 <input
                                     type="password"
                                     value={providerForm.api_key}
-                                    onChange={e => setProviderForm({ ...providerForm, api_key: e.target.value })}
+                                    onChange={(e) => setProviderForm({ ...providerForm, api_key: e.target.value })}
                                     className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     placeholder="sk-..."
                                 />
@@ -655,19 +739,23 @@ export const LLMManagementView: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Model ID</label>
+                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                                        Model ID
+                                    </label>
                                     <input
                                         required
                                         value={providerForm.model_id}
-                                        onChange={e => setProviderForm({ ...providerForm, model_id: e.target.value })}
+                                        onChange={(e) => setProviderForm({ ...providerForm, model_id: e.target.value })}
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Performance Tier</label>
+                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                                        Performance Tier
+                                    </label>
                                     <select
                                         value={providerForm.tier || 'STANDARD'}
-                                        onChange={e => setProviderForm({ ...providerForm, tier: e.target.value })}
+                                        onChange={(e) => setProviderForm({ ...providerForm, tier: e.target.value })}
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     >
                                         <option value="BUDGET">Budget</option>
@@ -680,10 +768,14 @@ export const LLMManagementView: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Visibility</label>
+                                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                                        Visibility
+                                    </label>
                                     <select
                                         value={providerForm.visibility}
-                                        onChange={e => setProviderForm({ ...providerForm, visibility: e.target.value as any })}
+                                        onChange={(e) =>
+                                            setProviderForm({ ...providerForm, visibility: e.target.value as any })
+                                        }
                                         className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                                     >
                                         <option value="admin">Admin Only</option>
@@ -696,7 +788,9 @@ export const LLMManagementView: React.FC = () => {
                                         <input
                                             type="checkbox"
                                             checked={providerForm.is_active}
-                                            onChange={e => setProviderForm({ ...providerForm, is_active: e.target.checked })}
+                                            onChange={(e) =>
+                                                setProviderForm({ ...providerForm, is_active: e.target.checked })
+                                            }
                                             className="w-4 h-4 rounded bg-slate-800 border-white/10"
                                         />
                                         <span className="text-sm text-slate-300">Active</span>

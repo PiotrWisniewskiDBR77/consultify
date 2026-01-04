@@ -1,22 +1,23 @@
-import React, { useState, useCallback } from 'react';
 import {
-    CheckSquare,
-    Square,
-    Trash2,
+    AlertTriangle,
     Archive,
-    Tag,
-    FolderOpen,
+    CheckCircle2,
+    CheckSquare,
     Copy,
     Download,
-    Send,
+    FolderOpen,
+    Globe,
     MoreHorizontal,
-    X,
-    AlertTriangle,
-    CheckCircle2,
     RefreshCw,
-    Globe
+    Send,
+    Square,
+    Tag,
+    Trash2,
+    X,
 } from 'lucide-react';
-import type { ContentTag, ContentCategory } from '../../types';
+import React, { useCallback, useState } from 'react';
+
+import type { ContentCategory, ContentTag } from '../../types';
 
 interface BulkActionsProps {
     selectedIds: string[];
@@ -37,7 +38,17 @@ interface BulkActionsProps {
     availableCategories?: ContentCategory[];
 }
 
-type BulkActionMode = null | 'delete' | 'archive' | 'publish' | 'deprecate' | 'addTags' | 'removeTags' | 'setCategory' | 'clone' | 'export';
+type BulkActionMode =
+    | null
+    | 'delete'
+    | 'archive'
+    | 'publish'
+    | 'deprecate'
+    | 'addTags'
+    | 'removeTags'
+    | 'setCategory'
+    | 'clone'
+    | 'export';
 
 export const BulkActions: React.FC<BulkActionsProps> = ({
     selectedIds,
@@ -55,7 +66,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     onExport,
     contentType,
     availableTags = [],
-    availableCategories = []
+    availableCategories = [],
 }) => {
     const [activeMode, setActiveMode] = useState<BulkActionMode>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -104,7 +115,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                             await onAddTags(selectedIds, selectedTagIds);
                             setResult({
                                 success: true,
-                                message: `Added ${selectedTagIds.length} tag(s) to ${selectedCount} items`
+                                message: `Added ${selectedTagIds.length} tag(s) to ${selectedCount} items`,
                             });
                         }
                         break;
@@ -113,7 +124,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                             await onRemoveTags(selectedIds, selectedTagIds);
                             setResult({
                                 success: true,
-                                message: `Removed ${selectedTagIds.length} tag(s) from ${selectedCount} items`
+                                message: `Removed ${selectedTagIds.length} tag(s) from ${selectedCount} items`,
                             });
                         }
                         break;
@@ -122,7 +133,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                             await onSetCategory(selectedIds, selectedCategoryId);
                             setResult({
                                 success: true,
-                                message: `Updated category for ${selectedCount} items`
+                                message: `Updated category for ${selectedCount} items`,
                             });
                         }
                         break;
@@ -145,7 +156,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             } catch (error) {
                 setResult({
                     success: false,
-                    message: error instanceof Error ? error.message : 'Operation failed'
+                    message: error instanceof Error ? error.message : 'Operation failed',
                 });
             } finally {
                 setIsProcessing(false);
@@ -164,14 +175,12 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             onRemoveTags,
             onSetCategory,
             onClone,
-            onExport
-        ]
+            onExport,
+        ],
     );
 
     const toggleTag = (tagId: string) => {
-        setSelectedTagIds((prev) =>
-            prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-        );
+        setSelectedTagIds((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]));
     };
 
     if (selectedCount === 0) {
@@ -292,10 +301,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                             />
                             {showMoreActions && (
                                 <>
-                                    <div
-                                        className="fixed inset-0 z-10"
-                                        onClick={() => setShowMoreActions(false)}
-                                    />
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowMoreActions(false)} />
                                     <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 py-1">
                                         {onRemoveTags && availableTags.length > 0 && (
                                             <button
@@ -415,7 +421,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                                         backgroundColor: `${tag.color}20`,
                                         color: tag.color,
                                         borderColor: `${tag.color}40`,
-                                        borderWidth: '1px'
+                                        borderWidth: '1px',
                                     }}
                                 >
                                     <Tag size={10} />
@@ -438,11 +444,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                                 disabled={selectedTagIds.length === 0 || isProcessing}
                                 className="flex items-center gap-2 px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 disabled:opacity-50"
                             >
-                                {isProcessing ? (
-                                    <RefreshCw size={14} className="animate-spin" />
-                                ) : (
-                                    <Tag size={14} />
-                                )}
+                                {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Tag size={14} />}
                                 Add {selectedTagIds.length} Tag(s)
                             </button>
                         </div>
@@ -452,9 +454,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                 {activeMode === 'removeTags' && (
                     <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-800/50">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="font-medium text-white">
-                                Remove Tags from {selectedCount} items
-                            </span>
+                            <span className="font-medium text-white">Remove Tags from {selectedCount} items</span>
                             <button
                                 onClick={() => {
                                     setActiveMode(null);
@@ -479,7 +479,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                                         backgroundColor: `${tag.color}20`,
                                         color: tag.color,
                                         borderColor: `${tag.color}40`,
-                                        borderWidth: '1px'
+                                        borderWidth: '1px',
                                     }}
                                 >
                                     <Tag size={10} />
@@ -502,11 +502,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                                 disabled={selectedTagIds.length === 0 || isProcessing}
                                 className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50"
                             >
-                                {isProcessing ? (
-                                    <RefreshCw size={14} className="animate-spin" />
-                                ) : (
-                                    <Tag size={14} />
-                                )}
+                                {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <Tag size={14} />}
                                 Remove {selectedTagIds.length} Tag(s)
                             </button>
                         </div>
@@ -516,9 +512,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                 {activeMode === 'setCategory' && (
                     <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-800/50">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="font-medium text-white">
-                                Set Category for {selectedCount} items
-                            </span>
+                            <span className="font-medium text-white">Set Category for {selectedCount} items</span>
                             <button
                                 onClick={() => {
                                     setActiveMode(null);
@@ -579,18 +573,12 @@ interface ActionButtonProps {
     variant?: 'default' | 'success' | 'danger' | 'warning';
 }
 
-const ActionButton: React.FC<ActionButtonProps> = ({
-    icon,
-    label,
-    onClick,
-    disabled = false,
-    variant = 'default'
-}) => {
+const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, disabled = false, variant = 'default' }) => {
     const variantStyles = {
         default: 'text-slate-400 hover:text-white hover:bg-slate-700/50',
         success: 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10',
         danger: 'text-red-400 hover:text-red-300 hover:bg-red-500/10',
-        warning: 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10'
+        warning: 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10',
     };
 
     return (
@@ -622,33 +610,33 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
     isProcessing,
     onConfirm,
     onCancel,
-    confirmLabel
+    confirmLabel,
 }) => {
     const variantStyles = {
         default: {
             bg: 'bg-slate-800/50',
             border: 'border-slate-700/50',
             button: 'bg-violet-500 hover:bg-violet-600',
-            icon: <AlertTriangle size={16} className="text-slate-400" />
+            icon: <AlertTriangle size={16} className="text-slate-400" />,
         },
         success: {
             bg: 'bg-emerald-900/20',
             border: 'border-emerald-500/20',
             button: 'bg-emerald-500 hover:bg-emerald-600',
-            icon: <CheckCircle2 size={16} className="text-emerald-400" />
+            icon: <CheckCircle2 size={16} className="text-emerald-400" />,
         },
         danger: {
             bg: 'bg-red-900/20',
             border: 'border-red-500/20',
             button: 'bg-red-500 hover:bg-red-600',
-            icon: <AlertTriangle size={16} className="text-red-400" />
+            icon: <AlertTriangle size={16} className="text-red-400" />,
         },
         warning: {
             bg: 'bg-amber-900/20',
             border: 'border-amber-500/20',
             button: 'bg-amber-500 hover:bg-amber-600',
-            icon: <AlertTriangle size={16} className="text-amber-400" />
-        }
+            icon: <AlertTriangle size={16} className="text-amber-400" />,
+        },
     };
 
     const styles = variantStyles[variant];
@@ -684,10 +672,4 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
 };
 
 export default BulkActions;
-
-
-
-
-
-
 

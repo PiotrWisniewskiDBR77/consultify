@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    PlaybookTemplateVersion,
-    PlaybookNode,
-    PlaybookEdge,
-    TemplateGraph,
-    PlaybookNodeType,
-    TemplateValidationError
-} from '../../types';
-import { PlaybookCanvas, PlaybookPropertiesPanel, PlaybookToolbar } from '../../components/PlaybookEditor';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
+
+import { PlaybookCanvas, PlaybookPropertiesPanel, PlaybookToolbar } from '../../components/PlaybookEditor';
+import {
+    PlaybookEdge,
+    PlaybookNode,
+    PlaybookNodeType,
+    PlaybookTemplateVersion,
+    TemplateGraph,
+    TemplateValidationError,
+} from '../../types';
 
 interface PlaybookEditorViewProps {
     templateId?: string;
@@ -20,13 +21,10 @@ interface PlaybookEditorViewProps {
 /**
  * PlaybookEditorView
  * Step 13: Visual Playbook Editor
- * 
+ *
  * Full-page editor for creating and editing playbook templates.
  */
-export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
-    templateId,
-    onBack
-}) => {
+export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({ templateId, onBack }) => {
     const token = localStorage.getItem('token');
     const [template, setTemplate] = useState<PlaybookTemplateVersion | null>(null);
     const [nodes, setNodes] = useState<PlaybookNode[]>([]);
@@ -52,7 +50,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
         try {
             setLoading(true);
             const res = await fetch(`/api/ai/playbooks/templates/${templateId}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to load template');
@@ -85,7 +83,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
             status: 'DRAFT' as any,
             templateGraph: null,
             estimatedDurationMins: 30,
-            isActive: true
+            isActive: true,
         });
         initializeEmptyGraph();
         setLoading(false);
@@ -101,15 +99,15 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
                 type: PlaybookNodeType.START,
                 title: 'Start',
                 data: {},
-                position: { x: 300, y: 50 }
+                position: { x: 300, y: 50 },
             },
             {
                 id: endId,
                 type: PlaybookNodeType.END,
                 title: 'End',
                 data: {},
-                position: { x: 300, y: 400 }
-            }
+                position: { x: 300, y: 400 },
+            },
         ]);
 
         setEdges([
@@ -117,8 +115,8 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
                 id: `edge-${startId}-${endId}`,
                 from: startId,
                 to: endId,
-                label: 'default'
-            }
+                label: 'default',
+            },
         ]);
     };
 
@@ -127,46 +125,42 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
         const newNode: PlaybookNode = {
             id,
             type,
-            title: type === PlaybookNodeType.BRANCH ? 'Branch' :
-                type === PlaybookNodeType.CHECK ? 'Check' : 'New Action',
+            title:
+                type === PlaybookNodeType.BRANCH ? 'Branch' : type === PlaybookNodeType.CHECK ? 'Check' : 'New Action',
             data: {
-                actionType: type === PlaybookNodeType.ACTION ? 'TASK_CREATE' : undefined
+                actionType: type === PlaybookNodeType.ACTION ? 'TASK_CREATE' : undefined,
             },
-            position: { x: 200, y: 200 } // Default position
+            position: { x: 200, y: 200 }, // Default position
         };
 
-        setNodes(prev => [...prev, newNode]);
+        setNodes((prev) => [...prev, newNode]);
         setSelectedNodeId(id);
         setIsDirty(true);
     };
 
     const handleNodeMove = (nodeId: string, position: { x: number; y: number }) => {
-        setNodes(prev => prev.map(n =>
-            n.id === nodeId ? { ...n, position } : n
-        ));
+        setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, position } : n)));
         setIsDirty(true);
     };
 
     const handleNodeUpdate = (updates: Partial<PlaybookNode>) => {
         if (!selectedNodeId || !updates.id) return;
 
-        setNodes(prev => prev.map(n =>
-            n.id === updates.id ? { ...n, ...updates } : n
-        ));
+        setNodes((prev) => prev.map((n) => (n.id === updates.id ? { ...n, ...updates } : n)));
         setIsDirty(true);
     };
 
     const handleDeleteSelected = () => {
         if (!selectedNodeId) return;
 
-        const node = nodes.find(n => n.id === selectedNodeId);
+        const node = nodes.find((n) => n.id === selectedNodeId);
         if (node?.type === PlaybookNodeType.START || node?.type === PlaybookNodeType.END) {
             toast.error('Cannot delete START or END nodes');
             return;
         }
 
-        setNodes(prev => prev.filter(n => n.id !== selectedNodeId));
-        setEdges(prev => prev.filter(e => e.from !== selectedNodeId && e.to !== selectedNodeId));
+        setNodes((prev) => prev.filter((n) => n.id !== selectedNodeId));
+        setEdges((prev) => prev.filter((e) => e.from !== selectedNodeId && e.to !== selectedNodeId));
         setSelectedNodeId(null);
         setIsDirty(true);
     };
@@ -180,22 +174,22 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
             const graph: TemplateGraph = {
                 nodes,
                 edges,
-                meta: { trigger_signal: template.triggerSignal || '' }
+                meta: { trigger_signal: template.triggerSignal || '' },
             };
 
             const res = await fetch(`/api/ai/playbooks/templates/${template.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     title: template.title,
                     description: template.description,
                     triggerSignal: template.triggerSignal,
                     templateGraph: graph,
-                    estimatedDurationMins: template.estimatedDurationMins
-                })
+                    estimatedDurationMins: template.estimatedDurationMins,
+                }),
             });
 
             if (!res.ok) throw new Error('Save failed');
@@ -217,7 +211,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
 
             const res = await fetch(`/api/ai/playbooks/templates/${template.id}/validate`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             const result = await res.json();
@@ -235,7 +229,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
         }
     };
 
-    const selectedNode = nodes.find(n => n.id === selectedNodeId) || null;
+    const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
     if (loading) {
         return (
@@ -249,10 +243,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({
         <div className="h-screen flex flex-col bg-gray-100">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4">
-                <button
-                    onClick={onBack}
-                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
-                >
+                <button onClick={onBack} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded">
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1">

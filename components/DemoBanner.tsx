@@ -1,10 +1,10 @@
+import { AlertCircle, ChevronDown, ChevronUp, Clock, Database, ExternalLink, Eye, Info, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
-import { Info, Eye, Database, Clock, ChevronDown, ChevronUp, AlertCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
  * DemoBanner — Demo Session Indicator
- * 
+ *
  * Shows when user is logged in as demo@legolex.com
  * Provides link to contact sales for commercial access
  */
@@ -18,13 +18,19 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
     const [showLimitations, setShowLimitations] = useState(false);
 
     const DEMO_LIMITATIONS = [
-        { icon: Eye, text: t('demo.banner.limitations.readOnly', 'Read-only mode — changes won\'t persist') },
-        { icon: Database, text: t('demo.banner.limitations.sampleData', 'Sample data — explore with realistic examples') },
+        { icon: Eye, text: t('demo.banner.limitations.readOnly', "Read-only mode — changes won't persist") },
+        {
+            icon: Database,
+            text: t('demo.banner.limitations.sampleData', 'Sample data — explore with realistic examples'),
+        },
         { icon: Clock, text: t('demo.banner.limitations.session', 'Session expires in 24h') },
     ];
 
     const handleContactSales = () => {
-        window.open('https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017', '_blank');
+        window.open(
+            'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
+            '_blank',
+        );
     };
 
     return (
@@ -88,4 +94,3 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
 };
 
 export default DemoBanner;
-

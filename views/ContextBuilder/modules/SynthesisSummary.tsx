@@ -1,10 +1,22 @@
 // views/ContextBuilder/modules/SynthesisSummary.tsx
 // Executive Summary Report for Strategic Synthesis
 
+import {
+    AlertTriangle,
+    Building2,
+    CheckCircle,
+    FileDown,
+    GitMerge,
+    Printer,
+    Share2,
+    Sparkles,
+    Target,
+    TrendingUp,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { FileDown, Printer, Share2, CheckCircle, AlertTriangle, TrendingUp, Target, Building2, Sparkles, GitMerge } from 'lucide-react';
-import { DynamicListItem } from '../shared/DynamicList';
+
 import { SCENARIOS } from '../../../data/transformationScenarios';
+import { DynamicListItem } from '../shared/DynamicList';
 
 interface SynthesisSummaryProps {
     companyProfile: {
@@ -34,25 +46,25 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
     goals,
     risks,
     strengths,
-    selectedScenarioId
+    selectedScenarioId,
 }) => {
     const [isExporting, setIsExporting] = useState(false);
 
-    const selectedScenario = SCENARIOS.find(s => s.id === selectedScenarioId);
+    const selectedScenario = SCENARIOS.find((s) => s.id === selectedScenarioId);
 
     const handleExportPDF = async () => {
         setIsExporting(true);
         try {
             // TODO: Implement PDF export via backend
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise((resolve) => setTimeout(resolve, 1500));
             alert('PDF export functionality coming soon!');
         } finally {
             setIsExporting(false);
         }
     };
 
-    const criticalRisks = risks.filter(r => r.severity === 'Critical' || r.severity === 'High');
-    const completedGoals = goals.strategicGoals.filter(g => g.status === 'Achieved');
+    const criticalRisks = risks.filter((r) => r.severity === 'Critical' || r.severity === 'High');
+    const completedGoals = goals.strategicGoals.filter((g) => g.status === 'Achieved');
 
     return (
         <div className="space-y-8 pb-12">
@@ -99,32 +111,41 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                                 {companyProfile.companyName || 'Company Name'}
                             </h3>
                             <p className="text-white/70">
-                                {companyProfile.industry || 'Industry'} • {companyProfile.employeeCount || '—'} employees • {companyProfile.revenue || '—'} revenue
+                                {companyProfile.industry || 'Industry'} • {companyProfile.employeeCount || '—'}{' '}
+                                employees • {companyProfile.revenue || '—'} revenue
                             </p>
                         </div>
                     </div>
                 </div>
                 <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Current Maturity</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Current Maturity
+                        </div>
                         <div className="text-2xl font-bold text-navy-900 dark:text-white">
                             {companyProfile.currentMaturityLevel || 'Level 2'}
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Target Maturity</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Target Maturity
+                        </div>
                         <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                             {companyProfile.targetMaturityLevel || 'Level 4'}
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Active Constraints</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Active Constraints
+                        </div>
                         <div className="text-2xl font-bold text-navy-900 dark:text-white">
                             {companyProfile.activeConstraints.length}
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Strategic Goals</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Strategic Goals
+                        </div>
                         <div className="text-2xl font-bold text-navy-900 dark:text-white">
                             {goals.strategicGoals.length}
                         </div>
@@ -141,7 +162,9 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                             <AlertTriangle className="text-red-500" size={18} />
                             Risk Profile
                         </h4>
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}>
+                        <span
+                            className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
+                        >
                             {criticalRisks.length > 2 ? 'High Risk' : 'Manageable'}
                         </span>
                     </div>
@@ -154,7 +177,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Top Risks</div>
                         <ul className="space-y-1">
-                            {risks.slice(0, 3).map(risk => (
+                            {risks.slice(0, 3).map((risk) => (
                                 <li key={risk.id} className="text-sm text-navy-900 dark:text-slate-200 truncate">
                                     • {risk.risk as string}
                                 </li>
@@ -181,9 +204,11 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                         Key enablers for transformation success
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Top Strengths</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                            Top Strengths
+                        </div>
                         <ul className="space-y-1">
-                            {strengths.slice(0, 3).map(s => (
+                            {strengths.slice(0, 3).map((s) => (
                                 <li key={s.id} className="text-sm text-navy-900 dark:text-slate-200 truncate">
                                     • {s.enabler as string}
                                 </li>
@@ -204,17 +229,18 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                         </span>
                     </div>
                     <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
-                        {challenges.declaredChallenges.length} <span className="text-lg font-normal text-slate-400">declared</span>
+                        {challenges.declaredChallenges.length}{' '}
+                        <span className="text-lg font-normal text-slate-400">declared</span>
                     </div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
-                        Operational pain points to address
-                    </div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Operational pain points to address</div>
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Top Challenges</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                            Top Challenges
+                        </div>
                         <ul className="space-y-1">
-                            {challenges.declaredChallenges.slice(0, 3).map(c => (
+                            {challenges.declaredChallenges.slice(0, 3).map((c) => (
                                 <li key={c.id} className="text-sm text-navy-900 dark:text-slate-200 truncate">
-                                    • {c.challenge as string || c.name as string}
+                                    • {(c.challenge as string) || (c.name as string)}
                                 </li>
                             ))}
                         </ul>
@@ -238,21 +264,31 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                                     {selectedScenario.id}
                                 </span>
                             </div>
-                            <p className="text-slate-600 dark:text-slate-300">
-                                {selectedScenario.approach}
-                            </p>
+                            <p className="text-slate-600 dark:text-slate-300">{selectedScenario.approach}</p>
                             <div className="mt-4 grid grid-cols-3 gap-4">
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Timeline</div>
-                                    <div className="font-bold text-navy-900 dark:text-white">{selectedScenario.timeline}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                        Timeline
+                                    </div>
+                                    <div className="font-bold text-navy-900 dark:text-white">
+                                        {selectedScenario.timeline}
+                                    </div>
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Investment</div>
-                                    <div className="font-bold text-navy-900 dark:text-white">{selectedScenario.investment}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                        Investment
+                                    </div>
+                                    <div className="font-bold text-navy-900 dark:text-white">
+                                        {selectedScenario.investment}
+                                    </div>
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Level</div>
-                                    <div className="font-bold text-navy-900 dark:text-white">{selectedScenario.riskLevel}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                        Risk Level
+                                    </div>
+                                    <div className="font-bold text-navy-900 dark:text-white">
+                                        {selectedScenario.riskLevel}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -278,31 +314,42 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Strategic Goals</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            Strategic Goals
+                        </div>
                         {goals.strategicGoals.length === 0 ? (
                             <p className="text-slate-500 italic">No strategic goals defined yet</p>
                         ) : (
                             <ul className="space-y-2">
-                                {goals.strategicGoals.map(goal => (
+                                {goals.strategicGoals.map((goal) => (
                                     <li key={goal.id} className="flex items-start gap-2 text-sm">
-                                        <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${goal.status === 'Achieved' ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-600'}`}>
-                                            {goal.status === 'Achieved' && <CheckCircle className="text-white" size={10} />}
+                                        <div
+                                            className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${goal.status === 'Achieved' ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-600'}`}
+                                        >
+                                            {goal.status === 'Achieved' && (
+                                                <CheckCircle className="text-white" size={10} />
+                                            )}
                                         </div>
-                                        <span className="text-navy-900 dark:text-slate-200">{goal.goal as string || goal.name as string}</span>
+                                        <span className="text-navy-900 dark:text-slate-200">
+                                            {(goal.goal as string) || (goal.name as string)}
+                                        </span>
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Success Metrics (KPIs)</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            Success Metrics (KPIs)
+                        </div>
                         {goals.successMetrics.length === 0 ? (
                             <p className="text-slate-500 italic">No success metrics defined yet</p>
                         ) : (
                             <ul className="space-y-2">
-                                {goals.successMetrics.map(metric => (
+                                {goals.successMetrics.map((metric) => (
                                     <li key={metric.id} className="text-sm text-navy-900 dark:text-slate-200">
-                                        • {metric.metric as string || metric.name as string}: <span className="font-bold">{metric.target as string || '—'}</span>
+                                        • {(metric.metric as string) || (metric.name as string)}:{' '}
+                                        <span className="font-bold">{(metric.target as string) || '—'}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -349,12 +396,4 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
 };
 
 export default SynthesisSummary;
-
-
-
-
-
-
-
-
 

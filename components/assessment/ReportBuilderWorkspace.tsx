@@ -1,11 +1,11 @@
 /**
  * ReportBuilderWorkspace
- * 
+ *
  * Main workspace for the DRD Audit Report Builder.
  * Uses SplitLayout with:
  * - Left side: Full document with all sections
  * - Right side: AI Chat for editing
- * 
+ *
  * Features:
  * - Table of Contents navigation
  * - Inline section editing
@@ -14,28 +14,36 @@
  * - Section reordering
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import {
+    AlertCircle,
+    FileWarning,
+    Loader2,
+    Maximize2,
+    MessageSquare,
+    Minimize2,
+    RefreshCw,
+    Sparkles,
+    X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { SplitLayout } from '../SplitLayout';
+import { useTranslation } from 'react-i18next';
+
+import { type AIAction, useReportSections } from '../../hooks/useReportSections';
+import { useAppStore } from '../../store/useAppStore';
+import { ChatPanel } from '../ChatPanel';
 import { ReportBuilder } from '../Reports/ReportBuilder';
-import { TableOfContents } from '../Reports/TableOfContents';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
-import { ChatPanel } from '../ChatPanel';
-import { useReportSections, type AIAction } from '../../hooks/useReportSections';
-import { useAppStore } from '../../store/useAppStore';
-import { Loader2, FileWarning, RefreshCw, Sparkles, AlertCircle, Maximize2, Minimize2, MessageSquare, X } from 'lucide-react';
+import { TableOfContents } from '../Reports/TableOfContents';
+import { SplitLayout } from '../SplitLayout';
 
 interface ReportBuilderWorkspaceProps {
     reportId: string;
     onClose: () => void;
 }
 
-export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
-    reportId,
-    onClose
-}) => {
+export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({ reportId, onClose }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
 
@@ -63,7 +71,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         exportExcel,
         setActiveSection,
         clearError,
-        markChangesSaved
+        markChangesSaved,
     } = useReportSections(reportId);
 
     // Local state
@@ -77,67 +85,86 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     // Memoize section info for StickyNavigation
     const sectionInfos = useMemo(() => {
         if (!sections) return [];
-        return sections.map(s => ({
+        return sections.map((s) => ({
             id: s.id,
             title: s.title,
             sectionType: s.sectionType,
-            orderIndex: s.orderIndex
+            orderIndex: s.orderIndex,
         }));
     }, [sections]);
 
     // Handle section update from ReportBuilder
-    const handleSectionUpdate = useCallback(async (sectionId: string, content: string, title?: string) => {
-        const success = await updateSection(sectionId, content, title);
-        if (success) {
-            toast.success(isPolish ? 'Sekcja zapisana' : 'Section saved');
-        } else {
-            toast.error(isPolish ? 'Błąd zapisu sekcji' : 'Failed to save section');
-        }
-    }, [updateSection, isPolish]);
+    const handleSectionUpdate = useCallback(
+        async (sectionId: string, content: string, title?: string) => {
+            const success = await updateSection(sectionId, content, title);
+            if (success) {
+                toast.success(isPolish ? 'Sekcja zapisana' : 'Section saved');
+            } else {
+                toast.error(isPolish ? 'Błąd zapisu sekcji' : 'Failed to save section');
+            }
+        },
+        [updateSection, isPolish],
+    );
 
     // Handle section add
-    const handleSectionAdd = useCallback(async (sectionType: string, afterIndex: number) => {
-        const newSection = await addSection(sectionType as any, {
-            orderIndex: afterIndex + 1
-        });
-        if (newSection) {
-            toast.success(isPolish ? 'Sekcja dodana' : 'Section added');
-            setFocusSectionId(newSection.id);
-        }
-        return newSection;
-    }, [addSection, isPolish]);
+    const handleSectionAdd = useCallback(
+        async (sectionType: string, afterIndex: number) => {
+            const newSection = await addSection(sectionType as any, {
+                orderIndex: afterIndex + 1,
+            });
+            if (newSection) {
+                toast.success(isPolish ? 'Sekcja dodana' : 'Section added');
+                setFocusSectionId(newSection.id);
+            }
+            return newSection;
+        },
+        [addSection, isPolish],
+    );
 
     // Handle section delete
-    const handleSectionDelete = useCallback(async (sectionId: string) => {
-        const success = await deleteSection(sectionId);
-        if (success) {
-            toast.success(isPolish ? 'Sekcja usunięta' : 'Section deleted');
-        } else {
-            toast.error(isPolish ? 'Błąd usuwania sekcji' : 'Failed to delete section');
-        }
-    }, [deleteSection, isPolish]);
+    const handleSectionDelete = useCallback(
+        async (sectionId: string) => {
+            const success = await deleteSection(sectionId);
+            if (success) {
+                toast.success(isPolish ? 'Sekcja usunięta' : 'Section deleted');
+            } else {
+                toast.error(isPolish ? 'Błąd usuwania sekcji' : 'Failed to delete section');
+            }
+        },
+        [deleteSection, isPolish],
+    );
 
     // Handle section reorder
-    const handleSectionReorder = useCallback(async (newOrder: { id: string; orderIndex: number }[]) => {
-        const sectionIds = newOrder.sort((a, b) => a.orderIndex - b.orderIndex).map(o => o.id);
-        const success = await reorderSections(sectionIds);
-        if (!success) {
-            toast.error(isPolish ? 'Błąd zmiany kolejności' : 'Failed to reorder sections');
-        }
-    }, [reorderSections, isPolish]);
+    const handleSectionReorder = useCallback(
+        async (newOrder: { id: string; orderIndex: number }[]) => {
+            const sectionIds = newOrder.sort((a, b) => a.orderIndex - b.orderIndex).map((o) => o.id);
+            const success = await reorderSections(sectionIds);
+            if (!success) {
+                toast.error(isPolish ? 'Błąd zmiany kolejności' : 'Failed to reorder sections');
+            }
+        },
+        [reorderSections, isPolish],
+    );
 
     // Handle AI action on section
-    const handleAIAction = useCallback(async (sectionId: string, action: string) => {
-        toast.loading(isPolish ? 'AI przetwarza...' : 'AI processing...', { id: 'ai-action' });
+    const handleAIAction = useCallback(
+        async (sectionId: string, action: string) => {
+            toast.loading(isPolish ? 'AI przetwarza...' : 'AI processing...', { id: 'ai-action' });
 
-        const success = await aiAction(sectionId, action as AIAction);
+            const success = await aiAction(sectionId, action as AIAction);
 
-        if (success) {
-            toast.success(isPolish ? 'Sekcja zaktualizowana przez AI' : 'Section updated by AI', { id: 'ai-action' });
-        } else {
-            toast.error(isPolish ? 'AI nie mogło przetworzyć sekcji' : 'AI failed to process section', { id: 'ai-action' });
-        }
-    }, [aiAction, isPolish]);
+            if (success) {
+                toast.success(isPolish ? 'Sekcja zaktualizowana przez AI' : 'Section updated by AI', {
+                    id: 'ai-action',
+                });
+            } else {
+                toast.error(isPolish ? 'AI nie mogło przetworzyć sekcji' : 'AI failed to process section', {
+                    id: 'ai-action',
+                });
+            }
+        },
+        [aiAction, isPolish],
+    );
 
     // Handle save
     const handleSave = useCallback(() => {
@@ -151,7 +178,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         const confirmed = window.confirm(
             isPolish
                 ? 'Czy na pewno chcesz sfinalizować raport? Po finalizacji nie będzie można go edytować.'
-                : 'Are you sure you want to finalize this report? It cannot be edited after finalization.'
+                : 'Are you sure you want to finalize this report? It cannot be edited after finalization.',
         );
 
         if (!confirmed) return;
@@ -172,7 +199,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         const confirmed = window.confirm(
             isPolish
                 ? 'Czy na pewno chcesz wygenerować raport od nowa? Wszystkie edycje zostaną utracone.'
-                : 'Are you sure you want to regenerate the report? All edits will be lost.'
+                : 'Are you sure you want to regenerate the report? All edits will be lost.',
         );
 
         if (!confirmed) return;
@@ -205,15 +232,21 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     }, [exportExcel, isPolish]);
 
     // Handle TOC section click
-    const handleTocSectionClick = useCallback((sectionId: string) => {
-        setFocusSectionId(sectionId);
-        setActiveSection(sectionId);
-    }, [setActiveSection]);
+    const handleTocSectionClick = useCallback(
+        (sectionId: string) => {
+            setFocusSectionId(sectionId);
+            setActiveSection(sectionId);
+        },
+        [setActiveSection],
+    );
 
     // Handle focus change from ReportBuilder
-    const handleFocusChange = useCallback((sectionId: string | null) => {
-        setActiveSection(sectionId);
-    }, [setActiveSection]);
+    const handleFocusChange = useCallback(
+        (sectionId: string | null) => {
+            setActiveSection(sectionId);
+        },
+        [setActiveSection],
+    );
 
     // Handle unsaved change
     const handleUnsavedChange = useCallback((hasChanges: boolean) => {
@@ -221,19 +254,22 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     }, []);
 
     // Handle sticky nav section click
-    const handleStickySectionClick = useCallback((sectionId: string) => {
-        setFocusSectionId(sectionId);
-        setActiveSection(sectionId);
-        // Scroll to section
-        const element = document.querySelector(`[data-section-id="${sectionId}"]`);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, [setActiveSection]);
+    const handleStickySectionClick = useCallback(
+        (sectionId: string) => {
+            setFocusSectionId(sectionId);
+            setActiveSection(sectionId);
+            // Scroll to section
+            const element = document.querySelector(`[data-section-id="${sectionId}"]`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        },
+        [setActiveSection],
+    );
 
     // Toggle reading mode
     const handleToggleReadingMode = useCallback(() => {
-        setIsReadingMode(prev => !prev);
+        setIsReadingMode((prev) => !prev);
         if (!isReadingMode) {
             document.body.classList.add('reading-mode');
         } else {
@@ -248,11 +284,16 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             // Check if this is an edit command
             const text = (lastMessage as any).content?.toLowerCase() || '';
             const isEditCommand =
-                text.includes('rozwiń') || text.includes('expand') ||
-                text.includes('skróć') || text.includes('summarize') ||
-                text.includes('ulepsz') || text.includes('improve') ||
-                text.includes('przetłumacz') || text.includes('translate') ||
-                text.includes('regeneruj') || text.includes('regenerate');
+                text.includes('rozwiń') ||
+                text.includes('expand') ||
+                text.includes('skróć') ||
+                text.includes('summarize') ||
+                text.includes('ulepsz') ||
+                text.includes('improve') ||
+                text.includes('przetłumacz') ||
+                text.includes('translate') ||
+                text.includes('regeneruj') ||
+                text.includes('regenerate');
 
             if (isEditCommand) {
                 // Determine action
@@ -272,7 +313,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                         role: 'ai',
                         content: isPolish
                             ? `Wykonuję akcję "${action}" na wybranej sekcji...`
-                            : `Executing "${action}" on the selected section...`
+                            : `Executing "${action}" on the selected section...`,
                     } as any);
                     setIsBotTyping(false);
                 }, 500);
@@ -303,9 +344,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                     <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
                         {isPolish ? 'Błąd ładowania raportu' : 'Error loading report'}
                     </h2>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6">
-                        {error}
-                    </p>
+                    <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
                     <div className="flex items-center justify-center gap-3">
                         <button
                             onClick={onClose}
@@ -314,7 +353,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                             {isPolish ? 'Wróć' : 'Go back'}
                         </button>
                         <button
-                            onClick={() => { clearError(); fetchReport(); }}
+                            onClick={() => {
+                                clearError();
+                                fetchReport();
+                            }}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                         >
                             <RefreshCw className="w-4 h-4" />
@@ -424,13 +466,13 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                     {/* Table of Contents */}
                     <div className="mb-6">
                         <TableOfContents
-                            sections={(sections || []).map(s => ({
+                            sections={(sections || []).map((s) => ({
                                 id: s.id,
                                 sectionType: s.sectionType,
                                 axisId: s.axisId,
                                 title: s.title,
                                 isAiGenerated: s.isAiGenerated,
-                                orderIndex: s.orderIndex
+                                orderIndex: s.orderIndex,
                             }))}
                             activeSection={focusSectionId || activeSection}
                             readOnly={readOnly}
@@ -449,7 +491,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                             projectName: report.projectName,
                             organizationName: report.organizationName,
                             axisData: report.axisData,
-                            sections: (sections || []).map(s => ({
+                            sections: (sections || []).map((s) => ({
                                 id: s.id,
                                 reportId: s.reportId,
                                 sectionType: s.sectionType,
@@ -461,11 +503,11 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
                                 orderIndex: s.orderIndex,
                                 isAiGenerated: s.isAiGenerated,
                                 version: s.version || 1,
-                                updatedAt: s.updatedAt || new Date().toISOString()
+                                updatedAt: s.updatedAt || new Date().toISOString(),
                             })),
                             templateId: report.templateId,
                             createdAt: report.createdAt || new Date().toISOString(),
-                            updatedAt: report.updatedAt || new Date().toISOString()
+                            updatedAt: report.updatedAt || new Date().toISOString(),
                         }}
                         readOnly={readOnly}
                         focusSectionId={focusSectionId}
@@ -499,63 +541,62 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     );
 
     // Fullscreen overlay (portal-like modal over existing content)
-    const fullscreenOverlay = isFullscreen && report ? (
-        <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-navy-950 flex">
-            {/* Chat sidebar - left */}
-            {showChat && (
-                <div className="w-96 border-r border-slate-200 dark:border-white/10 flex flex-col bg-white dark:bg-navy-900 flex-shrink-0">
-                    <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <MessageSquare className="w-5 h-5 text-purple-500" />
-                            <span className="font-semibold text-navy-900 dark:text-white">
-                                {isPolish ? 'Czat AI' : 'AI Chat'}
-                            </span>
+    const fullscreenOverlay =
+        isFullscreen && report ? (
+            <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-navy-950 flex">
+                {/* Chat sidebar - left */}
+                {showChat && (
+                    <div className="w-96 border-r border-slate-200 dark:border-white/10 flex flex-col bg-white dark:bg-navy-900 flex-shrink-0">
+                        <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <MessageSquare className="w-5 h-5 text-purple-500" />
+                                <span className="font-semibold text-navy-900 dark:text-white">
+                                    {isPolish ? 'Czat AI' : 'AI Chat'}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowChat(false)}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                title={isPolish ? 'Ukryj czat' : 'Hide chat'}
+                            >
+                                <X className="w-4 h-4 text-slate-500" />
+                            </button>
                         </div>
-                        <button
-                            onClick={() => setShowChat(false)}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                            title={isPolish ? 'Ukryj czat' : 'Hide chat'}
-                        >
-                            <X className="w-4 h-4 text-slate-500" />
-                        </button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                        <ChatPanel
-                            messages={activeChatMessages}
-                            onSendMessage={(text) => {
-                                addChatMessage({ role: 'user', content: text } as any);
-                            }}
-                            onOptionSelect={() => { }}
-                            isTyping={isBotTyping}
-                            title={isPolish ? 'Czat AI' : 'AI Chat'}
-                            subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Main report area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Show chat toggle if hidden */}
-                {!showChat && (
-                    <div className="absolute top-4 left-4 z-10">
-                        <button
-                            onClick={() => setShowChat(true)}
-                            className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg transition-colors"
-                        >
-                            <MessageSquare className="w-4 h-4" />
-                            <span className="text-sm font-medium">{isPolish ? 'Pokaż czat' : 'Show chat'}</span>
-                        </button>
+                        <div className="flex-1 overflow-hidden">
+                            <ChatPanel
+                                messages={activeChatMessages}
+                                onSendMessage={(text) => {
+                                    addChatMessage({ role: 'user', content: text } as any);
+                                }}
+                                onOptionSelect={() => {}}
+                                isTyping={isBotTyping}
+                                title={isPolish ? 'Czat AI' : 'AI Chat'}
+                                subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}
+                            />
+                        </div>
                     </div>
                 )}
 
-                {/* Report content - uses the same reportContent which has the ReportHeader */}
-                <div className="flex-1 overflow-auto">
-                    {reportContent}
+                {/* Main report area */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Show chat toggle if hidden */}
+                    {!showChat && (
+                        <div className="absolute top-4 left-4 z-10">
+                            <button
+                                onClick={() => setShowChat(true)}
+                                className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-lg transition-colors"
+                            >
+                                <MessageSquare className="w-4 h-4" />
+                                <span className="text-sm font-medium">{isPolish ? 'Pokaż czat' : 'Show chat'}</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Report content - uses the same reportContent which has the ReportHeader */}
+                    <div className="flex-1 overflow-auto">{reportContent}</div>
                 </div>
             </div>
-        </div>
-    ) : null;
+        ) : null;
 
     // Normal mode - fullscreen button is now in the ReportHeader
     return (
@@ -582,4 +623,3 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 };
 
 export default ReportBuilderWorkspace;
-

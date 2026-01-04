@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import request from 'supertest';
-import express from 'express';
 import bodyParser from 'body-parser';
+import express from 'express';
+import request from 'supertest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import mfaRoutes from '../routes/mfa.js';
 import MFAService from '../services/mfaService.js';
 
 vi.mock('../middleware/authMiddleware.js', () => ({
-    default: (req: any, res: any, next: any) => next()
+    default: (req: any, res: any, next: any) => next(),
 }));
 
 vi.mock('../services/mfaService.js', () => {
@@ -28,32 +29,32 @@ vi.mock('../services/mfaService.js', () => {
         sendSMSChallenge: vi.fn(),
         verifySMSCode: vi.fn(),
         setPrimaryMethod: vi.fn(),
-        disableSMSMFA: vi.fn()
+        disableSMSMFA: vi.fn(),
     };
     return {
         default: mock,
-        ...mock
+        ...mock,
     };
 });
 
 vi.mock('../services/auditService.js', () => {
     const mock = {
         logFromRequest: vi.fn(),
-        logEvent: vi.fn()
+        logEvent: vi.fn(),
     };
     return {
         default: mock,
-        ...mock
+        ...mock,
     };
 });
 
 vi.mock('../services/smsService.js', () => {
     const mock = {
-        getPhoneStatus: vi.fn()
+        getPhoneStatus: vi.fn(),
     };
     return {
         default: mock,
-        ...mock
+        ...mock,
     };
 });
 
@@ -74,7 +75,7 @@ describe('MFA API Routes', () => {
         it('should return QR code and secret', async () => {
             const mockSetup = {
                 qrCode: 'data:image/png;base64,...',
-                manualEntry: 'TESTSECRET'
+                manualEntry: 'TESTSECRET',
             };
             (MFAService.setupMFA as any).mockResolvedValue(mockSetup);
 
@@ -90,13 +91,11 @@ describe('MFA API Routes', () => {
         it('should verify token and enable MFA', async () => {
             const mockResult = {
                 success: true,
-                backupCodes: ['code1', 'code2']
+                backupCodes: ['code1', 'code2'],
             };
             (MFAService.verifyAndEnableMFA as any).mockResolvedValue(mockResult);
 
-            const res = await request(app)
-                .post('/api/mfa/verify-setup')
-                .send({ token: '123456' });
+            const res = await request(app).post('/api/mfa/verify-setup').send({ token: '123456' });
 
             expect(res.status).toBe(200);
             expect(res.body.backupCodes).toHaveLength(2);
@@ -106,12 +105,10 @@ describe('MFA API Routes', () => {
         it('should fail with invalid token', async () => {
             (MFAService.verifyAndEnableMFA as any).mockResolvedValue({
                 success: false,
-                error: 'Invalid token'
+                error: 'Invalid token',
             });
 
-            const res = await request(app)
-                .post('/api/mfa/verify-setup')
-                .send({ token: '000000' });
+            const res = await request(app).post('/api/mfa/verify-setup').send({ token: '000000' });
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('error', 'Invalid token');

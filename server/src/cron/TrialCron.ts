@@ -1,22 +1,19 @@
 /**
  * Trial/Demo Cron Jobs
- * 
+ *
  * Scheduled tasks for:
  * - Demo organization cleanup (24h expiry)
  * - Trial warning notifications (T-7 days)
  * - Trial expiration lockdown
  * - Daily usage counter resets
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
-
-
-
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -60,10 +57,10 @@ class TrialCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.demoService) {
-            this.deps.demoService = await import('../services/demoService.js').then(m => m.default || m);
+            this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
         }
         if (!this.deps.trialService) {
-            this.deps.trialService = await import('../services/trialService.js').then(m => m.default || m);
+            this.deps.trialService = await import('../services/trialService.js').then((m) => m.default || m);
         }
         return this.deps as Dependencies;
     }
@@ -110,10 +107,7 @@ class TrialCron {
         const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         try {
-            const result = await DbPromise.run(
-                `DELETE FROM usage_counters WHERE counter_date < ?`,
-                [cutoffDate]
-            );
+            const result = await DbPromise.run(`DELETE FROM usage_counters WHERE counter_date < ?`, [cutoffDate]);
 
             const deleted = result.changes || 0;
             logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
@@ -151,4 +145,3 @@ export const cleanupOldUsageCounters = async (deps?: Partial<Dependencies>): Pro
 };
 
 export default TrialCron;
-

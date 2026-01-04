@@ -3,21 +3,22 @@
  * Side-by-side comparison of two assessment versions
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-    GitCompare, 
-    ArrowRight, 
-    TrendingUp, 
-    TrendingDown, 
-    Minus,
+import {
+    AlertCircle,
+    ArrowRight,
+    ChevronDown,
+    ChevronUp,
     Clock,
+    GitCompare,
+    Loader2,
+    Minus,
+    TrendingDown,
+    TrendingUp,
     User,
     X,
-    Loader2,
-    AlertCircle,
-    ChevronDown,
-    ChevronUp
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { DRDAxis } from '../../types';
 
 interface VersionData {
@@ -28,11 +29,14 @@ interface VersionData {
     createdByName?: string;
     changeLog?: string;
     data: {
-        axes?: Record<string, {
-            actual?: number;
-            target?: number;
-            justification?: string;
-        }>;
+        axes?: Record<
+            string,
+            {
+                actual?: number;
+                target?: number;
+                justification?: string;
+            }
+        >;
     };
 }
 
@@ -64,14 +68,14 @@ const AXIS_NAMES: Record<string, string> = {
     dataManagement: 'Zarządzanie Danymi',
     culture: 'Kultura Organizacyjna',
     cybersecurity: 'Cyberbezpieczeństwo',
-    aiMaturity: 'Dojrzałość AI'
+    aiMaturity: 'Dojrzałość AI',
 };
 
 export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
     assessmentId,
     version1,
     version2,
-    onClose
+    onClose,
 }) => {
     const [v1Data, setV1Data] = useState<VersionData | null>(null);
     const [v2Data, setV2Data] = useState<VersionData | null>(null);
@@ -90,15 +94,15 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
 
             try {
                 const token = localStorage.getItem('token');
-                
+
                 // Fetch both versions
                 const [res1, res2] = await Promise.all([
                     fetch(`/api/assessment-workflow/${assessmentId}/versions/${olderVersion}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { Authorization: `Bearer ${token}` },
                     }),
                     fetch(`/api/assessment-workflow/${assessmentId}/versions/${newerVersion}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
                 ]);
 
                 if (!res1.ok || !res2.ok) {
@@ -108,7 +112,6 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                 const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
                 setV1Data(data1);
                 setV2Data(data2);
-
             } catch (err: any) {
                 console.error('[AssessmentVersionDiff] Error:', err);
                 setError(err.message);
@@ -126,12 +129,12 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
     // Calculate diffs for all axes
-    const axisDiffs: AxisDiff[] = Object.keys(AXIS_NAMES).map(axisId => {
+    const axisDiffs: AxisDiff[] = Object.keys(AXIS_NAMES).map((axisId) => {
         const v1Axis = v1Data?.data?.axes?.[axisId];
         const v2Axis = v2Data?.data?.axes?.[axisId];
 
@@ -145,9 +148,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
         const actualChange = (v2Actual ?? 0) - (v1Actual ?? 0);
         const targetChange = (v2Target ?? 0) - (v1Target ?? 0);
 
-        const hasChanges = actualChange !== 0 || 
-                          targetChange !== 0 || 
-                          v1Justification !== v2Justification;
+        const hasChanges = actualChange !== 0 || targetChange !== 0 || v1Justification !== v2Justification;
 
         return {
             axisId,
@@ -160,12 +161,12 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
             v2Justification,
             actualChange,
             targetChange,
-            hasChanges
+            hasChanges,
         };
     });
 
-    const changedAxes = axisDiffs.filter(d => d.hasChanges);
-    const unchangedAxes = axisDiffs.filter(d => !d.hasChanges);
+    const changedAxes = axisDiffs.filter((d) => d.hasChanges);
+    const unchangedAxes = axisDiffs.filter((d) => !d.hasChanges);
 
     // Summary stats
     const totalActualChange = axisDiffs.reduce((sum, d) => sum + d.actualChange, 0);
@@ -212,9 +213,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                             <GitCompare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                                Porównanie wersji
-                            </h2>
+                            <h2 className="text-xl font-bold text-navy-900 dark:text-white">Porównanie wersji</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 Wersja {olderVersion} → Wersja {newerVersion}
                             </p>
@@ -282,26 +281,46 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-slate-500 dark:text-slate-400">Ocena:</span>
-                            <span className={`font-semibold flex items-center gap-1 ${
-                                totalActualChange > 0 ? 'text-green-600' : 
-                                totalActualChange < 0 ? 'text-red-600' : 'text-slate-600'
-                            }`}>
-                                {totalActualChange > 0 ? <TrendingUp className="w-4 h-4" /> :
-                                 totalActualChange < 0 ? <TrendingDown className="w-4 h-4" /> :
-                                 <Minus className="w-4 h-4" />}
-                                {totalActualChange > 0 ? '+' : ''}{totalActualChange.toFixed(1)}
+                            <span
+                                className={`font-semibold flex items-center gap-1 ${
+                                    totalActualChange > 0
+                                        ? 'text-green-600'
+                                        : totalActualChange < 0
+                                          ? 'text-red-600'
+                                          : 'text-slate-600'
+                                }`}
+                            >
+                                {totalActualChange > 0 ? (
+                                    <TrendingUp className="w-4 h-4" />
+                                ) : totalActualChange < 0 ? (
+                                    <TrendingDown className="w-4 h-4" />
+                                ) : (
+                                    <Minus className="w-4 h-4" />
+                                )}
+                                {totalActualChange > 0 ? '+' : ''}
+                                {totalActualChange.toFixed(1)}
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-slate-500 dark:text-slate-400">Cel:</span>
-                            <span className={`font-semibold flex items-center gap-1 ${
-                                totalTargetChange > 0 ? 'text-green-600' : 
-                                totalTargetChange < 0 ? 'text-red-600' : 'text-slate-600'
-                            }`}>
-                                {totalTargetChange > 0 ? <TrendingUp className="w-4 h-4" /> :
-                                 totalTargetChange < 0 ? <TrendingDown className="w-4 h-4" /> :
-                                 <Minus className="w-4 h-4" />}
-                                {totalTargetChange > 0 ? '+' : ''}{totalTargetChange.toFixed(1)}
+                            <span
+                                className={`font-semibold flex items-center gap-1 ${
+                                    totalTargetChange > 0
+                                        ? 'text-green-600'
+                                        : totalTargetChange < 0
+                                          ? 'text-red-600'
+                                          : 'text-slate-600'
+                                }`}
+                            >
+                                {totalTargetChange > 0 ? (
+                                    <TrendingUp className="w-4 h-4" />
+                                ) : totalTargetChange < 0 ? (
+                                    <TrendingDown className="w-4 h-4" />
+                                ) : (
+                                    <Minus className="w-4 h-4" />
+                                )}
+                                {totalTargetChange > 0 ? '+' : ''}
+                                {totalTargetChange.toFixed(1)}
                             </span>
                         </div>
                     </div>
@@ -316,23 +335,23 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 Zmienione osie ({changedAxes.length})
                             </h3>
                             <div className="space-y-3">
-                                {changedAxes.map(diff => (
-                                    <div 
+                                {changedAxes.map((diff) => (
+                                    <div
                                         key={diff.axisId}
                                         className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
                                     >
                                         {/* Axis Header */}
                                         <button
-                                            onClick={() => setExpandedAxis(
-                                                expandedAxis === diff.axisId ? null : diff.axisId
-                                            )}
+                                            onClick={() =>
+                                                setExpandedAxis(expandedAxis === diff.axisId ? null : diff.axisId)
+                                            }
                                             className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                         >
                                             <div className="flex items-center gap-4">
                                                 <span className="font-semibold text-navy-900 dark:text-white">
                                                     {diff.axisName}
                                                 </span>
-                                                
+
                                                 {/* Score Changes */}
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex items-center gap-2 text-sm">
@@ -341,41 +360,52 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                                             {diff.v1Actual ?? '-'}
                                                         </span>
                                                         <ArrowRight className="w-4 h-4 text-slate-400" />
-                                                        <span className={`font-medium ${
-                                                            diff.actualChange > 0 ? 'text-green-600' :
-                                                            diff.actualChange < 0 ? 'text-red-600' :
-                                                            'text-slate-600 dark:text-slate-300'
-                                                        }`}>
+                                                        <span
+                                                            className={`font-medium ${
+                                                                diff.actualChange > 0
+                                                                    ? 'text-green-600'
+                                                                    : diff.actualChange < 0
+                                                                      ? 'text-red-600'
+                                                                      : 'text-slate-600 dark:text-slate-300'
+                                                            }`}
+                                                        >
                                                             {diff.v2Actual ?? '-'}
                                                         </span>
                                                         {diff.actualChange !== 0 && (
-                                                            <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                                                diff.actualChange > 0 
-                                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                            }`}>
-                                                                {diff.actualChange > 0 ? '+' : ''}{diff.actualChange}
+                                                            <span
+                                                                className={`text-xs px-1.5 py-0.5 rounded ${
+                                                                    diff.actualChange > 0
+                                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                                }`}
+                                                            >
+                                                                {diff.actualChange > 0 ? '+' : ''}
+                                                                {diff.actualChange}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center gap-2 text-sm">
                                                         <span className="text-slate-500">Cel:</span>
                                                         <span className="font-medium text-slate-600 dark:text-slate-300">
                                                             {diff.v1Target ?? '-'}
                                                         </span>
                                                         <ArrowRight className="w-4 h-4 text-slate-400" />
-                                                        <span className={`font-medium ${
-                                                            diff.targetChange > 0 ? 'text-green-600' :
-                                                            diff.targetChange < 0 ? 'text-red-600' :
-                                                            'text-slate-600 dark:text-slate-300'
-                                                        }`}>
+                                                        <span
+                                                            className={`font-medium ${
+                                                                diff.targetChange > 0
+                                                                    ? 'text-green-600'
+                                                                    : diff.targetChange < 0
+                                                                      ? 'text-red-600'
+                                                                      : 'text-slate-600 dark:text-slate-300'
+                                                            }`}
+                                                        >
                                                             {diff.v2Target ?? '-'}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             {expandedAxis === diff.axisId ? (
                                                 <ChevronUp className="w-5 h-5 text-slate-400" />
                                             ) : (
@@ -391,15 +421,27 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                                 </p>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-1">Wersja {olderVersion}</p>
+                                                        <p className="text-xs text-slate-400 mb-1">
+                                                            Wersja {olderVersion}
+                                                        </p>
                                                         <div className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-white/10 text-sm text-slate-600 dark:text-slate-300 min-h-[80px]">
-                                                            {diff.v1Justification || <span className="text-slate-400 italic">Brak uzasadnienia</span>}
+                                                            {diff.v1Justification || (
+                                                                <span className="text-slate-400 italic">
+                                                                    Brak uzasadnienia
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-purple-500 mb-1">Wersja {newerVersion}</p>
+                                                        <p className="text-xs text-purple-500 mb-1">
+                                                            Wersja {newerVersion}
+                                                        </p>
                                                         <div className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-purple-200 dark:border-purple-500/30 text-sm text-slate-600 dark:text-slate-300 min-h-[80px]">
-                                                            {diff.v2Justification || <span className="text-slate-400 italic">Brak uzasadnienia</span>}
+                                                            {diff.v2Justification || (
+                                                                <span className="text-slate-400 italic">
+                                                                    Brak uzasadnienia
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -418,8 +460,8 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 Bez zmian ({unchangedAxes.length})
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {unchangedAxes.map(diff => (
-                                    <div 
+                                {unchangedAxes.map((diff) => (
+                                    <div
                                         key={diff.axisId}
                                         className="p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-white/10"
                                     >
@@ -449,4 +491,3 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
         </div>
     );
 };
-

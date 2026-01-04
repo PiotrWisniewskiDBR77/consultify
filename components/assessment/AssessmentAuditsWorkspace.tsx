@@ -1,7 +1,7 @@
-
+import { FileText, Link as LinkIcon, Plus, Trash2, UploadCloud } from 'lucide-react';
 import React, { useState } from 'react';
+
 import { AdditionalAudit } from '../../types';
-import { Plus, Trash2, FileText, Link as LinkIcon, UploadCloud } from 'lucide-react';
 
 interface AssessmentAuditsWorkspaceProps {
     audits: AdditionalAudit[];
@@ -12,7 +12,7 @@ interface AssessmentAuditsWorkspaceProps {
 export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps> = ({
     audits,
     onAddAudit,
-    onRemoveAudit
+    onRemoveAudit,
 }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [newAudit, setNewAudit] = useState<Partial<AdditionalAudit>>({});
@@ -25,7 +25,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
                 date: newAudit.date || new Date().toISOString().split('T')[0],
                 score: newAudit.score,
                 fileUrl: newAudit.fileUrl,
-                mappedAxis: newAudit.mappedAxis
+                mappedAxis: newAudit.mappedAxis,
             });
             setNewAudit({});
             setIsAdding(false);
@@ -37,7 +37,9 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
             <div className="mb-8">
                 <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
                     Additional Audits
-                    <span className="text-xs font-normal text-slate-500 border border-white/10 px-2 py-0.5 rounded ml-2">ADMA, SIRI, ISO, Lean</span>
+                    <span className="text-xs font-normal text-slate-500 border border-white/10 px-2 py-0.5 rounded ml-2">
+                        ADMA, SIRI, ISO, Lean
+                    </span>
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                     Upload results from other frameworks so AI can map them to the DRD model.
@@ -46,8 +48,11 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
 
             {/* Audit List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                {audits.map(audit => (
-                    <div key={audit.id} className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-4 relative group hover:border-purple-500/30 transition-colors shadow-sm dark:shadow-none">
+                {audits.map((audit) => (
+                    <div
+                        key={audit.id}
+                        className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-4 relative group hover:border-purple-500/30 transition-colors shadow-sm dark:shadow-none"
+                    >
                         <button
                             onClick={() => onRemoveAudit(audit.id)}
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
@@ -67,7 +72,9 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
 
                         <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 rounded px-3 py-2 mb-2 border border-slate-100 dark:border-transparent">
                             <span className="text-xs text-slate-500 dark:text-slate-400">Score</span>
-                            <span className="font-mono font-bold text-purple-600 dark:text-purple-300">{audit.score}</span>
+                            <span className="font-mono font-bold text-purple-600 dark:text-purple-300">
+                                {audit.score}
+                            </span>
                         </div>
 
                         {audit.mappedAxis && (
@@ -99,21 +106,21 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
                                 placeholder="Audit Name (e.g. ADMA 2024)"
                                 className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm text-navy-900 dark:text-white focus:outline-none focus:border-purple-500"
                                 value={newAudit.name || ''}
-                                onChange={e => setNewAudit({ ...newAudit, name: e.target.value })}
+                                onChange={(e) => setNewAudit({ ...newAudit, name: e.target.value })}
                             />
                             <div className="flex gap-2">
                                 <input
                                     type="date"
                                     className="w-1/2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm text-slate-600 dark:text-slate-300 focus:outline-none"
                                     value={newAudit.date || ''}
-                                    onChange={e => setNewAudit({ ...newAudit, date: e.target.value })}
+                                    onChange={(e) => setNewAudit({ ...newAudit, date: e.target.value })}
                                 />
                                 <input
                                     type="text"
                                     placeholder="Score"
                                     className="w-1/2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded px-3 py-2 text-sm text-navy-900 dark:text-white focus:outline-none"
                                     value={newAudit.score || ''}
-                                    onChange={e => setNewAudit({ ...newAudit, score: e.target.value })}
+                                    onChange={(e) => setNewAudit({ ...newAudit, score: e.target.value })}
                                 />
                             </div>
 
@@ -126,14 +133,23 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
                             </div>
 
                             <div className="flex gap-2 pt-2">
-                                <button onClick={() => setIsAdding(false)} className="flex-1 px-3 py-2 rounded text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5">Cancel</button>
-                                <button onClick={handleAdd} className="flex-1 px-3 py-2 rounded text-xs bg-purple-600 text-white font-bold hover:bg-purple-500">Save</button>
+                                <button
+                                    onClick={() => setIsAdding(false)}
+                                    className="flex-1 px-3 py-2 rounded text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAdd}
+                                    className="flex-1 px-3 py-2 rounded text-xs bg-purple-600 text-white font-bold hover:bg-purple-500"
+                                >
+                                    Save
+                                </button>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
-
         </div>
     );
 };

@@ -17,13 +17,21 @@ export const ChatRequestSchema = z.object({
 // Chat Stream Request
 export const ChatStreamRequestSchema = z.object({
     message: z.string().min(1, 'Message is required'),
-    history: z.array(z.object({
-        role: z.enum(['user', 'assistant', 'model']),
-        content: z.string().optional(),
-        parts: z.array(z.object({
-            text: z.string(),
-        })).optional(),
-    })).optional(),
+    history: z
+        .array(
+            z.object({
+                role: z.enum(['user', 'assistant', 'model']),
+                content: z.string().optional(),
+                parts: z
+                    .array(
+                        z.object({
+                            text: z.string(),
+                        }),
+                    )
+                    .optional(),
+            }),
+        )
+        .optional(),
     systemInstruction: z.string().optional(),
     context: z.record(z.unknown()).optional(),
     roleName: z.string().optional(),
@@ -96,13 +104,17 @@ export const RecommendRequestSchema = z.object({
 
 // Roadmap Request
 export const RoadmapRequestSchema = z.object({
-    initiatives: z.array(z.object({
-        name: z.string(),
-        priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(),
-        complexity: z.string().optional(),
-        expectedRoi: z.number().optional(),
-        roi: z.number().optional(),
-    })).min(1),
+    initiatives: z
+        .array(
+            z.object({
+                name: z.string(),
+                priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(),
+                complexity: z.string().optional(),
+                expectedRoi: z.number().optional(),
+                roi: z.number().optional(),
+            }),
+        )
+        .min(1),
 });
 
 // Get Audit Logs Query
@@ -265,4 +277,3 @@ export type PatternIdParam = z.infer<typeof PatternIdParamSchema>;
 export type AuditIdParam = z.infer<typeof AuditIdParamSchema>;
 export type SessionIdParam = z.infer<typeof SessionIdParamSchema>;
 export type ActionTypeParam = z.infer<typeof ActionTypeParamSchema>;
-

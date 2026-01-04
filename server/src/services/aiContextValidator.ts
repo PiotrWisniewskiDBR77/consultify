@@ -1,14 +1,12 @@
 /**
  * Aicontextvalidator Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadAicontextvalidator = createCachedLazyService('../../services/aiContextValidator.js');
+import service from '../../services/aiContextValidator.js';
 
 // Export default instance (for backward compatibility)
-export default loadAicontextvalidator();
+export default service;

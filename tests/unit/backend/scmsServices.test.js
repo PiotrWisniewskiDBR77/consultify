@@ -224,7 +224,7 @@ describe('ReportingService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        ReportingService = require('../../../server/services/reportingService.js');
+        ReportingService = (await import('../../../server/services/reportingService.js')).default;
     });
 
     describe('Service Structure', () => {

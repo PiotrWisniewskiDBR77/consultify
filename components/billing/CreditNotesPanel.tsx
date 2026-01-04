@@ -3,22 +3,23 @@
  * Manages credit notes creation, viewing, and application to invoices
  */
 
-import React, { useState, useEffect } from 'react';
 import {
+    AlertCircle,
+    ArrowRight,
+    CheckCircle,
+    Clock,
+    CreditCard,
+    DollarSign,
     FileText,
+    Filter,
     Plus,
     RefreshCw,
-    DollarSign,
-    CheckCircle,
-    XCircle,
-    AlertCircle,
-    Clock,
-    ArrowRight,
+    RotateCcw,
     Search,
-    Filter,
-    CreditCard,
-    RotateCcw
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 interface CreditNote {
@@ -77,11 +78,31 @@ interface CreditNotesPanelProps {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
-    draft: { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-600 dark:text-slate-300', icon: <Clock className="w-3 h-3" /> },
-    issued: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', icon: <FileText className="w-3 h-3" /> },
-    applied: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400', icon: <CheckCircle className="w-3 h-3" /> },
-    voided: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400', icon: <XCircle className="w-3 h-3" /> },
-    refunded: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400', icon: <RotateCcw className="w-3 h-3" /> }
+    draft: {
+        bg: 'bg-slate-100 dark:bg-slate-700',
+        text: 'text-slate-600 dark:text-slate-300',
+        icon: <Clock className="w-3 h-3" />,
+    },
+    issued: {
+        bg: 'bg-blue-100 dark:bg-blue-900/30',
+        text: 'text-blue-600 dark:text-blue-400',
+        icon: <FileText className="w-3 h-3" />,
+    },
+    applied: {
+        bg: 'bg-green-100 dark:bg-green-900/30',
+        text: 'text-green-600 dark:text-green-400',
+        icon: <CheckCircle className="w-3 h-3" />,
+    },
+    voided: {
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        text: 'text-red-600 dark:text-red-400',
+        icon: <XCircle className="w-3 h-3" />,
+    },
+    refunded: {
+        bg: 'bg-purple-100 dark:bg-purple-900/30',
+        text: 'text-purple-600 dark:text-purple-400',
+        icon: <RotateCcw className="w-3 h-3" />,
+    },
 };
 
 const REASON_LABELS: Record<string, string> = {
@@ -91,7 +112,7 @@ const REASON_LABELS: Record<string, string> = {
     product_unsatisfactory: 'Product Unsatisfactory',
     service_issue: 'Service Issue',
     billing_error: 'Billing Error',
-    other: 'Other'
+    other: 'Other',
 };
 
 export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organizationId, isAdmin = false }) => {
@@ -121,7 +142,11 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
 
             const [notesRes, statsRes] = await Promise.all([
                 Api.get(`${endpoint}?${params.toString()}`),
-                isAdmin ? Api.get(`/billing/admin/credit-notes/stats${organizationId ? `?organizationId=${organizationId}` : ''}`) : null
+                isAdmin
+                    ? Api.get(
+                          `/billing/admin/credit-notes/stats${organizationId ? `?organizationId=${organizationId}` : ''}`,
+                      )
+                    : null,
             ]);
 
             setCreditNotes(notesRes.creditNotes || []);
@@ -137,7 +162,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency,
-            minimumFractionDigits: 2
+            minimumFractionDigits: 2,
         }).format(amount / 100);
     };
 
@@ -145,7 +170,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
         return new Date(dateStr).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -182,10 +207,11 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
         }
     };
 
-    const filteredNotes = creditNotes.filter(note =>
-        note.credit_note_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.organization_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        REASON_LABELS[note.reason]?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredNotes = creditNotes.filter(
+        (note) =>
+            note.credit_note_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            note.organization_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            REASON_LABELS[note.reason]?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     return (
@@ -311,7 +337,9 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
                         <FileText className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No Credit Notes</h3>
                         <p className="text-slate-500 dark:text-slate-400">
-                            {searchTerm || statusFilter ? 'No credit notes match your filters' : 'No credit notes have been created yet'}
+                            {searchTerm || statusFilter
+                                ? 'No credit notes match your filters'
+                                : 'No credit notes have been created yet'}
                         </p>
                     </div>
                 ) : (
@@ -370,18 +398,22 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <span className={`font-medium ${
-                                            note.amount_remaining > 0 
-                                                ? 'text-amber-600 dark:text-amber-400' 
-                                                : 'text-slate-400'
-                                        }`}>
+                                        <span
+                                            className={`font-medium ${
+                                                note.amount_remaining > 0
+                                                    ? 'text-amber-600 dark:text-amber-400'
+                                                    : 'text-slate-400'
+                                            }`}
+                                        >
                                             {formatCurrency(note.amount_remaining, note.currency)}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                            STATUS_COLORS[note.status]?.bg || ''
-                                        } ${STATUS_COLORS[note.status]?.text || ''}`}>
+                                        <span
+                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                                STATUS_COLORS[note.status]?.bg || ''
+                                            } ${STATUS_COLORS[note.status]?.text || ''}`}
+                                        >
                                             {STATUS_COLORS[note.status]?.icon}
                                             {note.status.charAt(0).toUpperCase() + note.status.slice(1)}
                                         </span>
@@ -412,15 +444,17 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
                                                     <RotateCcw className="w-4 h-4" />
                                                 </button>
                                             )}
-                                            {isAdmin && (note.status === 'draft' || note.status === 'issued') && note.amount_applied === 0 && (
-                                                <button
-                                                    onClick={() => handleVoid(note.id)}
-                                                    className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    title="Void"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
-                                            )}
+                                            {isAdmin &&
+                                                (note.status === 'draft' || note.status === 'issued') &&
+                                                note.amount_applied === 0 && (
+                                                    <button
+                                                        onClick={() => handleVoid(note.id)}
+                                                        className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                        title="Void"
+                                                    >
+                                                        <XCircle className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                         </div>
                                     </td>
                                 </tr>
@@ -495,10 +529,8 @@ const ApplyCreditModal: React.FC<ApplyCreditModalProps> = ({ creditNote, onApply
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="bg-white dark:bg-navy-800 rounded-xl shadow-xl max-w-md w-full p-6">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    Apply Credit Note
-                </h3>
-                
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Apply Credit Note</h3>
+
                 <div className="mb-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-900/50">
                     <p className="text-sm text-slate-500 dark:text-slate-400">Credit Note</p>
                     <p className="font-mono text-slate-900 dark:text-white">{creditNote.credit_note_number}</p>
@@ -579,30 +611,30 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
         reasonDetails: '',
         memo: '',
         customerMemo: '',
-        items: [{ description: '', quantity: 1, unitPrice: 0 }]
+        items: [{ description: '', quantity: 1, unitPrice: 0 }],
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const addItem = () => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            items: [...prev.items, { description: '', quantity: 1, unitPrice: 0 }]
+            items: [...prev.items, { description: '', quantity: 1, unitPrice: 0 }],
         }));
     };
 
     const updateItem = (index: number, field: string, value: any) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            items: prev.items.map((item, i) => i === index ? { ...item, [field]: value } : item)
+            items: prev.items.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
         }));
     };
 
     const removeItem = (index: number) => {
         if (formData.items.length > 1) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                items: prev.items.filter((_, i) => i !== index)
+                items: prev.items.filter((_, i) => i !== index),
             }));
         }
     };
@@ -615,11 +647,11 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
         try {
             await Api.post('/billing/credit-notes', {
                 ...formData,
-                items: formData.items.map(item => ({
+                items: formData.items.map((item) => ({
                     description: item.description,
                     quantity: item.quantity,
-                    unitPrice: Math.round(item.unitPrice * 100)
-                }))
+                    unitPrice: Math.round(item.unitPrice * 100),
+                })),
             });
             onCreated();
         } catch (err: any) {
@@ -629,14 +661,12 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
         }
     };
 
-    const totalAmount = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const totalAmount = formData.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="bg-white dark:bg-navy-800 rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    Create Credit Note
-                </h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Create Credit Note</h3>
 
                 {error && (
                     <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
@@ -653,7 +683,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                             <input
                                 type="text"
                                 value={formData.organizationId}
-                                onChange={(e) => setFormData(prev => ({ ...prev, organizationId: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, organizationId: e.target.value }))}
                                 required
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                             />
@@ -665,7 +695,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                             <input
                                 type="text"
                                 value={formData.invoiceId}
-                                onChange={(e) => setFormData(prev => ({ ...prev, invoiceId: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, invoiceId: e.target.value }))}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                             />
                         </div>
@@ -677,12 +707,14 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                         </label>
                         <select
                             value={formData.reason}
-                            onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, reason: e.target.value }))}
                             required
                             className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                         >
                             {Object.entries(REASON_LABELS).map(([value, label]) => (
-                                <option key={value} value={value}>{label}</option>
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -693,7 +725,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                         </label>
                         <textarea
                             value={formData.reasonDetails}
-                            onChange={(e) => setFormData(prev => ({ ...prev, reasonDetails: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, reasonDetails: e.target.value }))}
                             rows={2}
                             className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                         />
@@ -735,7 +767,9 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                                         type="number"
                                         placeholder="Price"
                                         value={item.unitPrice}
-                                        onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                        onChange={(e) =>
+                                            updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)
+                                        }
                                         step="0.01"
                                         min="0"
                                         className="w-28 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
@@ -783,7 +817,3 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
 };
 
 export default CreditNotesPanel;
-
-
-
-

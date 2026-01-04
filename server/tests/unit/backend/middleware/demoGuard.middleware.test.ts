@@ -4,9 +4,10 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { demoGuard, type AuthRequest } from '../../../../src/middleware/demoGuard.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { type AuthRequest, demoGuard } from '../../../../src/middleware/demoGuard.middleware.js';
 
 describe('Demo Guard Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -134,7 +135,7 @@ describe('Demo Guard Middleware', () => {
                 expect.objectContaining({
                     code: 'DEMO_BLOCKED',
                     action: 'ISOLATION_VIOLATION',
-                })
+                }),
             );
         });
 
@@ -174,7 +175,7 @@ describe('Demo Guard Middleware', () => {
                 expect.objectContaining({
                     code: 'DEMO_BLOCKED',
                     isDemoRestriction: true,
-                })
+                }),
             );
         });
 
@@ -195,7 +196,4 @@ describe('Demo Guard Middleware', () => {
         });
     });
 });
-
-
-
 

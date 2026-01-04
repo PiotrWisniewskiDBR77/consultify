@@ -1,37 +1,36 @@
 /**
  * PremiumReportEditor
- * 
+ *
  * McKinsey/BCG-grade WYSIWYG editor for DRD Assessment Reports.
  * Built on TipTap with custom blocks for charts, matrices, and recommendations.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { useEditor, EditorContent, JSONContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import './PremiumEditor.css';
+
+import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
+import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
-import Placeholder from '@tiptap/extension-placeholder';
-import Highlight from '@tiptap/extension-highlight';
+import { TableRow } from '@tiptap/extension-table-row';
 import TextAlign from '@tiptap/extension-text-align';
-import Underline from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
+import Underline from '@tiptap/extension-underline';
+import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { EditorToolbar } from './Toolbar/EditorToolbar';
-import { BlockInsertMenu } from './Toolbar/BlockInsertMenu';
-import { AIAssistantPanel } from './Toolbar/AIAssistantPanel';
-
+import { CalloutExtension } from './Extensions/Callout';
+import { ExecutiveSummaryExtension } from './Extensions/ExecutiveSummary';
+import { GapHeatmapExtension } from './Extensions/GapHeatmap';
 // Custom Extensions
 import { MaturityRadarExtension } from './Extensions/MaturityRadar';
-import { GapHeatmapExtension } from './Extensions/GapHeatmap';
-import { RecommendationCardExtension } from './Extensions/RecommendationCard';
-import { ExecutiveSummaryExtension } from './Extensions/ExecutiveSummary';
 import { MetricCardExtension } from './Extensions/MetricCard';
-import { CalloutExtension } from './Extensions/Callout';
-
-import './PremiumEditor.css';
+import { RecommendationCardExtension } from './Extensions/RecommendationCard';
+import { AIAssistantPanel } from './Toolbar/AIAssistantPanel';
+import { BlockInsertMenu } from './Toolbar/BlockInsertMenu';
+import { EditorToolbar } from './Toolbar/EditorToolbar';
 
 export interface PremiumReportEditorProps {
     initialContent?: JSONContent;
@@ -50,7 +49,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
     readOnly = false,
     onContentChange,
     onSave,
-    className = ''
+    className = '',
 }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [showBlockMenu, setShowBlockMenu] = useState(false);
@@ -61,14 +60,14 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
         extensions: [
             StarterKit.configure({
                 heading: {
-                    levels: [1, 2, 3, 4]
-                }
+                    levels: [1, 2, 3, 4],
+                },
             }),
             Table.configure({
                 resizable: true,
                 HTMLAttributes: {
-                    class: 'premium-table'
-                }
+                    class: 'premium-table',
+                },
             }),
             TableRow,
             TableCell,
@@ -79,13 +78,13 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
                         return 'Tytuł sekcji...';
                     }
                     return 'Zacznij pisać lub wpisz "/" aby wstawić blok...';
-                }
+                },
             }),
             Highlight.configure({
-                multicolor: true
+                multicolor: true,
             }),
             TextAlign.configure({
-                types: ['heading', 'paragraph']
+                types: ['heading', 'paragraph'],
             }),
             Underline,
             TextStyle,
@@ -96,7 +95,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
             RecommendationCardExtension,
             ExecutiveSummaryExtension,
             MetricCardExtension,
-            CalloutExtension
+            CalloutExtension,
         ],
         content: initialContent || getDefaultReportStructure(),
         editable: !readOnly,
@@ -106,7 +105,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
         },
         editorProps: {
             attributes: {
-                class: 'premium-editor-content prose prose-slate dark:prose-invert max-w-none focus:outline-none'
+                class: 'premium-editor-content prose prose-slate dark:prose-invert max-w-none focus:outline-none',
             },
             handleKeyDown: (view, event) => {
                 // Slash command trigger
@@ -118,8 +117,8 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
                     return false;
                 }
                 return false;
-            }
-        }
+            },
+        },
     });
 
     // Auto-save
@@ -148,83 +147,113 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
     }, [handleSave]);
 
     // Insert block handler
-    const handleInsertBlock = useCallback((blockType: string, data?: Record<string, unknown>) => {
-        if (!editor) return;
+    const handleInsertBlock = useCallback(
+        (blockType: string, data?: Record<string, unknown>) => {
+            if (!editor) return;
 
-        switch (blockType) {
-            case 'maturityRadar':
-                editor.chain().focus().insertContent({
-                    type: 'maturityRadar',
-                    attrs: { assessmentId, ...data }
-                }).run();
-                break;
-            case 'gapHeatmap':
-                editor.chain().focus().insertContent({
-                    type: 'gapHeatmap',
-                    attrs: { assessmentId, ...data }
-                }).run();
-                break;
-            case 'recommendationCard':
-                editor.chain().focus().insertContent({
-                    type: 'recommendationCard',
-                    attrs: data
-                }).run();
-                break;
-            case 'executiveSummary':
-                editor.chain().focus().insertContent({
-                    type: 'executiveSummary',
-                    attrs: { assessmentId, ...data }
-                }).run();
-                break;
-            case 'metricCard':
-                editor.chain().focus().insertContent({
-                    type: 'metricCard',
-                    attrs: data
-                }).run();
-                break;
-            case 'callout':
-                editor.chain().focus().insertContent({
-                    type: 'callout',
-                    attrs: { type: 'info', ...data },
-                    content: [{ type: 'paragraph' }]
-                }).run();
-                break;
-            case 'table':
-                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-                break;
-            default:
-                break;
-        }
+            switch (blockType) {
+                case 'maturityRadar':
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                            type: 'maturityRadar',
+                            attrs: { assessmentId, ...data },
+                        })
+                        .run();
+                    break;
+                case 'gapHeatmap':
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                            type: 'gapHeatmap',
+                            attrs: { assessmentId, ...data },
+                        })
+                        .run();
+                    break;
+                case 'recommendationCard':
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                            type: 'recommendationCard',
+                            attrs: data,
+                        })
+                        .run();
+                    break;
+                case 'executiveSummary':
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                            type: 'executiveSummary',
+                            attrs: { assessmentId, ...data },
+                        })
+                        .run();
+                    break;
+                case 'metricCard':
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                            type: 'metricCard',
+                            attrs: data,
+                        })
+                        .run();
+                    break;
+                case 'callout':
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                            type: 'callout',
+                            attrs: { type: 'info', ...data },
+                            content: [{ type: 'paragraph' }],
+                        })
+                        .run();
+                    break;
+                case 'table':
+                    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                    break;
+                default:
+                    break;
+            }
 
-        setShowBlockMenu(false);
-    }, [editor, assessmentId]);
+            setShowBlockMenu(false);
+        },
+        [editor, assessmentId],
+    );
 
     // AI content generation
-    const handleAIGenerate = useCallback(async (prompt: string, targetSection?: string) => {
-        if (!editor || !assessmentId) return;
+    const handleAIGenerate = useCallback(
+        async (prompt: string, targetSection?: string) => {
+            if (!editor || !assessmentId) return;
 
-        try {
-            const response = await fetch('/api/ai/report/generate-section', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    assessmentId,
-                    sectionType: targetSection,
-                    customPrompt: prompt
-                })
-            });
+            try {
+                const response = await fetch('/api/ai/report/generate-section', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                    body: JSON.stringify({
+                        assessmentId,
+                        sectionType: targetSection,
+                        customPrompt: prompt,
+                    }),
+                });
 
-            if (response.ok) {
-                const data = await response.json();
-                editor.chain().focus().insertContent(data.content).run();
+                if (response.ok) {
+                    const data = await response.json();
+                    editor.chain().focus().insertContent(data.content).run();
+                }
+            } catch (error) {
+                console.error('AI generation failed:', error);
             }
-        } catch (error) {
-            console.error('AI generation failed:', error);
-        }
-    }, [editor, assessmentId]);
+        },
+        [editor, assessmentId],
+    );
 
     if (!editor) {
         return (
@@ -275,11 +304,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
                 <span className="text-xs text-slate-400">
                     {isSaving ? 'Zapisywanie...' : 'Wszystkie zmiany zapisane'}
                 </span>
-                {!readOnly && (
-                    <span className="text-xs text-slate-400">
-                        Ctrl+S aby zapisać • "/" aby wstawić blok
-                    </span>
-                )}
+                {!readOnly && <span className="text-xs text-slate-400">Ctrl+S aby zapisać • "/" aby wstawić blok</span>}
             </div>
         </div>
     );
@@ -293,13 +318,18 @@ function getDefaultReportStructure(): JSONContent {
             {
                 type: 'heading',
                 attrs: { level: 1 },
-                content: [{ type: 'text', text: 'Digital Readiness Assessment Report' }]
+                content: [{ type: 'text', text: 'Digital Readiness Assessment Report' }],
             },
             {
                 type: 'paragraph',
-                content: [{ type: 'text', text: 'Rozpocznij edycję raportu. Wpisz "/" aby wstawić bloki takie jak wykresy, tabele czy karty rekomendacji.' }]
-            }
-        ]
+                content: [
+                    {
+                        type: 'text',
+                        text: 'Rozpocznij edycję raportu. Wpisz "/" aby wstawić bloki takie jak wykresy, tabele czy karty rekomendacji.',
+                    },
+                ],
+            },
+        ],
     };
 }
 

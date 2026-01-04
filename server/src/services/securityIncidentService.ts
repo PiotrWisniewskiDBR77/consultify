@@ -1,14 +1,12 @@
 /**
  * Securityincident Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadSecurityincidentservice = createCachedLazyService('../../services/securityIncidentService.js');
+import service from '../../services/securityIncidentService.js';
 
 // Export default instance (for backward compatibility)
-export default loadSecurityincidentservice();
+export default service;

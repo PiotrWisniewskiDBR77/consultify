@@ -1,5 +1,5 @@
+import { Activity, Briefcase, LayoutDashboard, Target } from 'lucide-react';
 import React from 'react';
-import { LayoutDashboard, Target, Briefcase, Activity } from 'lucide-react';
 
 export const PMODashboard: React.FC = () => {
     return (
@@ -70,18 +70,14 @@ const DashboardCard: React.FC<DashboardCardProps> = ({ title, value, icon, trend
         blue: 'bg-blue-50 text-blue-600',
         green: 'bg-green-50 text-green-600',
         purple: 'bg-purple-50 text-purple-600',
-        yellow: 'bg-yellow-50 text-yellow-600'
+        yellow: 'bg-yellow-50 text-yellow-600',
     };
 
     return (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-                    {icon}
-                </div>
-                {trend && (
-                    <span className="text-sm font-medium text-gray-500">{trend}</span>
-                )}
+                <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
+                {trend && <span className="text-sm font-medium text-gray-500">{trend}</span>}
             </div>
             <h3 className="text-sm text-gray-500 dark:text-gray-400 font-medium">{title}</h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-white mt-1">{value}</p>

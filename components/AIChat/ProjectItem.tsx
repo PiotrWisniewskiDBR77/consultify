@@ -1,20 +1,18 @@
 /**
  * ProjectItem
- * 
+ *
  * Single project row with expand/collapse and actions.
  * Displays a folder that can be expanded to show conversations inside.
  */
 
-import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Edit2, Folder, FolderOpen, Loader2, MoreHorizontal, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Folder, FolderOpen, ChevronRight, ChevronDown, 
-    MoreHorizontal, Edit2, Trash2, Loader2 
-} from 'lucide-react';
+
+import { Api } from '../../services/api';
 import { ChatProject, useChatProjectStore } from '../../store/useChatProjectStore';
 import { Conversation, useConversationStore } from '../../store/useConversationStore';
 import { ConversationItem } from './ConversationItem';
-import { Api } from '../../services/api';
 
 interface ProjectItemProps {
     project: ChatProject;
@@ -29,7 +27,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
     isExpanded,
     onToggleExpand,
     onSelectConversation,
-    activeConversationId
+    activeConversationId,
 }) => {
     const { t } = useTranslation();
     const { updateProject, deleteProject } = useChatProjectStore();
@@ -76,7 +74,14 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
     };
 
     const handleDelete = async () => {
-        if (!confirm(t('aiChat.project.deleteConfirm', 'Czy na pewno chcesz usunąć ten projekt? Rozmowy nie zostaną usunięte, tylko przeniesione poza projekt.'))) {
+        if (
+            !confirm(
+                t(
+                    'aiChat.project.deleteConfirm',
+                    'Czy na pewno chcesz usunąć ten projekt? Rozmowy nie zostaną usunięte, tylko przeniesione poza projekt.',
+                ),
+            )
+        ) {
             return;
         }
 
@@ -113,18 +118,11 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
             >
                 {/* Expand/Collapse Arrow */}
                 <div className="shrink-0 text-slate-400 dark:text-slate-500">
-                    {isExpanded ? (
-                        <ChevronDown size={14} />
-                    ) : (
-                        <ChevronRight size={14} />
-                    )}
+                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
 
                 {/* Folder Icon */}
-                <div 
-                    className="shrink-0 p-1 rounded"
-                    style={{ backgroundColor: `${project.color}15` }}
-                >
+                <div className="shrink-0 p-1 rounded" style={{ backgroundColor: `${project.color}15` }}>
                     {isExpanded ? (
                         <FolderOpen size={16} style={{ color: project.color }} />
                     ) : (
@@ -163,10 +161,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
 
                 {/* Actions */}
                 {showActions && !isRenaming && (
-                    <div 
-                        className="flex items-center gap-0.5"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={() => {
                                 setNewName(project.name);
@@ -183,11 +178,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
                             className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
                             title={t('aiChat.project.delete', 'Usuń projekt')}
                         >
-                            {isDeleting ? (
-                                <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                                <Trash2 size={14} />
-                            )}
+                            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                         </button>
                     </div>
                 )}
@@ -206,7 +197,7 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
                         </p>
                     ) : (
                         <div className="space-y-0.5 py-1">
-                            {conversations.map(conv => (
+                            {conversations.map((conv) => (
                                 <ConversationItem
                                     key={conv.id}
                                     conversation={conv}
@@ -239,16 +230,9 @@ function mapApiConversation(api: any): Conversation {
         lastMessagePreview: api.last_message_preview,
         lastMessageAt: api.last_message_at ? new Date(api.last_message_at) : undefined,
         createdAt: new Date(api.created_at),
-        updatedAt: new Date(api.updated_at)
+        updatedAt: new Date(api.updated_at),
     };
 }
 
 export default ProjectItem;
-
-
-
-
-
-
-
 

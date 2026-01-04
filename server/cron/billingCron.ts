@@ -11,20 +11,40 @@ const deps = {
     _payAsYouGoService: null,
     _seatManagementService: null,
 
-    get db() { return this._db; },
-    set db(val) { this._db = val; },
+    get db() {
+        return this._db;
+    },
+    set db(val) {
+        this._db = val;
+    },
 
-    get budgetManagementService() { return this._budgetManagementService; },
-    set budgetManagementService(val) { this._budgetManagementService = val; },
+    get budgetManagementService() {
+        return this._budgetManagementService;
+    },
+    set budgetManagementService(val) {
+        this._budgetManagementService = val;
+    },
 
-    get adminAlertService() { return this._adminAlertService; },
-    set adminAlertService(val) { this._adminAlertService = val; },
+    get adminAlertService() {
+        return this._adminAlertService;
+    },
+    set adminAlertService(val) {
+        this._adminAlertService = val;
+    },
 
-    get payAsYouGoService() { return this._payAsYouGoService; },
-    set payAsYouGoService(val) { this._payAsYouGoService = val; },
+    get payAsYouGoService() {
+        return this._payAsYouGoService;
+    },
+    set payAsYouGoService(val) {
+        this._payAsYouGoService = val;
+    },
 
-    get seatManagementService() { return this._seatManagementService; },
-    set seatManagementService(val) { this._seatManagementService = val; }
+    get seatManagementService() {
+        return this._seatManagementService;
+    },
+    set seatManagementService(val) {
+        this._seatManagementService = val;
+    },
 };
 
 /**
@@ -74,7 +94,7 @@ async function checkAndTriggerAlerts() {
     await initDeps();
     try {
         console.log('[BillingCron] Running checkAndTriggerAlerts...');
-        
+
         // Get all active organizations
         const orgs = await new Promise((resolve, reject) => {
             deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err, rows) => {
@@ -109,7 +129,7 @@ async function generatePayAsYouGoInvoices() {
     await initDeps();
     try {
         console.log('[BillingCron] Running generatePayAsYouGoInvoices...');
-        
+
         const now = new Date();
         const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
@@ -124,7 +144,7 @@ async function generatePayAsYouGoInvoices() {
                 (err, rows) => {
                     if (err) reject(err);
                     else resolve(rows || []);
-                }
+                },
             );
         });
 
@@ -134,7 +154,7 @@ async function generatePayAsYouGoInvoices() {
                 const result = await deps.payAsYouGoService.generatePayAsYouGoInvoice(
                     org.organization_id,
                     lastMonthStart,
-                    lastMonthEnd
+                    lastMonthEnd,
                 );
                 if (result.invoiced) {
                     invoicesGenerated++;
@@ -158,7 +178,7 @@ async function updateSeatCounts() {
     await initDeps();
     try {
         console.log('[BillingCron] Running updateSeatCounts...');
-        
+
         const orgs = await new Promise((resolve, reject) => {
             deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err, rows) => {
                 if (err) reject(err);
@@ -202,7 +222,7 @@ export default {
     checkAndTriggerAlerts,
     generatePayAsYouGoInvoices,
     updateSeatCounts,
-    calculateMonthlyUsage
+    calculateMonthlyUsage,
 };
 
 // If run directly, execute all tasks (for testing)
@@ -216,7 +236,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(0);
     })();
 }
-
-
-
-

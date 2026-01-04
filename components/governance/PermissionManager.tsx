@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-    Shield, Users, Key, Check, X,
-    ChevronDown, ChevronRight, Search, Save
-} from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Key, Save, Search, Shield, Users, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface Permission {
     key: string;
@@ -27,18 +24,16 @@ interface PermissionManagerProps {
     onSave?: () => void;
 }
 
-export const PermissionManager: React.FC<PermissionManagerProps> = ({
-    userId,
-    organizationId,
-    onSave
-}) => {
+export const PermissionManager: React.FC<PermissionManagerProps> = ({ userId, organizationId, onSave }) => {
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['POLICY', 'PLAYBOOK', 'GOVERNANCE']));
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+        new Set(['POLICY', 'PLAYBOOK', 'GOVERNANCE']),
+    );
     const [pendingChanges, setPendingChanges] = useState<Map<string, 'grant' | 'revoke' | 'reset'>>(new Map());
 
     useEffect(() => {
@@ -52,7 +47,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/governance/permissions', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) throw new Error('Failed to fetch permissions');
             const data = await response.json();
@@ -69,7 +64,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/governance/users/${userId}/permissions`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) throw new Error('Failed to fetch user permissions');
             const data = await response.json();
@@ -106,9 +101,11 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
 
     const hasOverride = (key: string): boolean => {
         if (!userPermissions) return false;
-        return userPermissions.overrides.granted.includes(key) ||
+        return (
+            userPermissions.overrides.granted.includes(key) ||
             userPermissions.overrides.revoked.includes(key) ||
-            pendingChanges.has(key);
+            pendingChanges.has(key)
+        );
     };
 
     const cyclePermission = (key: string) => {
@@ -146,10 +143,10 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                 await fetch(`/api/governance/users/${userId}/permissions`, {
                     method: 'PATCH',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ permissionKey, action })
+                    body: JSON.stringify({ permissionKey, action }),
                 });
             }
 
@@ -163,17 +160,21 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
         }
     };
 
-    const groupedPermissions = permissions.reduce((acc, perm) => {
-        if (!acc[perm.category]) acc[perm.category] = [];
-        acc[perm.category].push(perm);
-        return acc;
-    }, {} as Record<string, Permission[]>);
+    const groupedPermissions = permissions.reduce(
+        (acc, perm) => {
+            if (!acc[perm.category]) acc[perm.category] = [];
+            acc[perm.category].push(perm);
+            return acc;
+        },
+        {} as Record<string, Permission[]>,
+    );
 
     const filteredCategories = Object.entries(groupedPermissions).filter(([category, perms]) => {
         if (!searchTerm) return true;
-        return perms.some(p =>
-            p.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchTerm.toLowerCase())
+        return perms.some(
+            (p) =>
+                p.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.description.toLowerCase().includes(searchTerm.toLowerCase()),
         );
     });
 
@@ -184,9 +185,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <Shield className="w-5 h-5 text-purple-500" />
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Permission Manager
-                        </h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Permission Manager</h2>
                         {userPermissions && (
                             <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
                                 {userPermissions.role}
@@ -220,11 +219,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
             </div>
 
             {/* Error */}
-            {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                    {error}
-                </div>
-            )}
+            {error && <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">{error}</div>}
 
             {/* Permissions List */}
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -241,18 +236,15 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                                     <ChevronRight className="w-4 h-4 text-gray-400" />
                                 )}
                                 <Key className="w-4 h-4 text-gray-500" />
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                    {category}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                    ({categoryPerms.length})
-                                </span>
+                                <span className="font-medium text-gray-900 dark:text-white">{category}</span>
+                                <span className="text-sm text-gray-500">({categoryPerms.length})</span>
                             </div>
 
                             {userPermissions && (
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                     <span className="text-green-600">
-                                        {categoryPerms.filter(p => getPermissionStatus(p.key) === 'granted').length} granted
+                                        {categoryPerms.filter((p) => getPermissionStatus(p.key) === 'granted').length}{' '}
+                                        granted
                                     </span>
                                 </div>
                             )}
@@ -261,9 +253,11 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                         {expandedCategories.has(category) && (
                             <div className="bg-gray-50 dark:bg-gray-700/20">
                                 {categoryPerms
-                                    .filter(p => !searchTerm ||
-                                        p.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+                                    .filter(
+                                        (p) =>
+                                            !searchTerm ||
+                                            p.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            p.description.toLowerCase().includes(searchTerm.toLowerCase()),
                                     )
                                     .map((perm) => {
                                         const status = getPermissionStatus(perm.key);
@@ -290,19 +284,20 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm text-gray-500 mt-0.5">
-                                                        {perm.description}
-                                                    </p>
+                                                    <p className="text-sm text-gray-500 mt-0.5">{perm.description}</p>
                                                 </div>
 
                                                 {userId && (
                                                     <button
                                                         onClick={() => cyclePermission(perm.key)}
-                                                        className={`p-2 rounded-lg transition-colors ${status === 'granted'
+                                                        className={`p-2 rounded-lg transition-colors ${
+                                                            status === 'granted'
                                                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200'
                                                                 : 'bg-red-100 dark:bg-red-900/30 text-red-600 hover:bg-red-200'
-                                                            }`}
-                                                        title={status === 'granted' ? 'Click to revoke' : 'Click to grant'}
+                                                        }`}
+                                                        title={
+                                                            status === 'granted' ? 'Click to revoke' : 'Click to grant'
+                                                        }
                                                     >
                                                         {status === 'granted' ? (
                                                             <Check className="w-4 h-4" />

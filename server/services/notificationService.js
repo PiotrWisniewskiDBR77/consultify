@@ -58,6 +58,7 @@ class NotificationService extends BaseService {
      */
     async init() {
         await super.init();
+        this.setupEventSubscriptions();
         if (!this._slackService) {
             const { default: slackService } = await import('./slackService.js');
             this._slackService = slackService;
@@ -87,6 +88,36 @@ class NotificationService extends BaseService {
             }
         }
         return this;
+    }
+
+    /**
+     * Subscribe to global events
+     */
+    setupEventSubscriptions() {
+        // Lazy import to avoid circular dependency issues during init if any
+        import('../src/services/event/EventBus.js').then(({ eventBus }) => {
+            eventBus.subscribe('billing.subscription.created', async (payload) => {
+                try {
+                    console.log('[NotificationService] Handling billing.subscription.created event');
+                    // Notify the user about their new subscription
+                    // payload usually has: userId, planId, subscriptionId
+                    if (payload && payload.userId) {
+                        await this.create({
+                            userId: payload.userId,
+                            organizationId: payload.orgId, // Assuming check for orgId
+                            type: 'SYSTEM_ALERT', // Or a new BILLING type
+                            title: 'Subscription Created',
+                            message: 'Your new subscription has been successfully created.',
+                            severity: 'INFO',
+                            isActionable: true,
+                            actionUrl: '/settings/billing'
+                        });
+                    }
+                } catch (error) {
+                    console.error('[NotificationService] Error handling billing event:', error);
+                }
+            });
+        }).catch(err => console.error('[NotificationService] Failed to import EventBus:', err));
     }
 
     /**

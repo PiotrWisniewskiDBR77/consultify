@@ -1,14 +1,12 @@
 /**
  * Branding Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadBrandingservice = createCachedLazyService('../../services/brandingService.js');
+import service from '../../services/brandingService.js';
 
 // Export default instance (for backward compatibility)
-export default loadBrandingservice();
+export default service;

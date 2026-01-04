@@ -1,14 +1,15 @@
 /**
  * Permissions Matrix View
- * 
+ *
  * Displays and manages granular permissions across roles.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
-import { Key, Plus, Edit2, Trash2, RefreshCw, Loader2, Check, X, AlertTriangle, Copy, BarChart3 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import { AlertTriangle, BarChart3, Check, Copy, Edit2, Key, Loader2, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { Api } from '../../../services/api';
 
 interface Permission {
     key: string;
@@ -55,7 +56,7 @@ const PermissionsMatrixView: React.FC = () => {
             const [permsData, matrixData, statsData] = await Promise.all([
                 Api.getAdminPermissions(),
                 Api.getPermissionsMatrix(),
-                Api.getPermissionsStats()
+                Api.getPermissionsStats(),
             ]);
             setPermissions(permsData);
             setMatrix(matrixData);
@@ -74,7 +75,7 @@ const PermissionsMatrixView: React.FC = () => {
             await Api.toggleRolePermission(role, permissionKey, !currentValue);
 
             // Update local state
-            setMatrix(prev => {
+            setMatrix((prev) => {
                 if (!prev) return prev;
                 return {
                     ...prev,
@@ -82,9 +83,9 @@ const PermissionsMatrixView: React.FC = () => {
                         ...prev.matrix,
                         [role]: {
                             ...prev.matrix[role],
-                            [permissionKey]: !currentValue
-                        }
-                    }
+                            [permissionKey]: !currentValue,
+                        },
+                    },
                 };
             });
 
@@ -131,7 +132,7 @@ const PermissionsMatrixView: React.FC = () => {
             setSaving(true);
             await Api.updateAdminPermission(editingPermission.key, {
                 description: formData.description,
-                category: formData.category
+                category: formData.category,
             });
             await loadData();
             setEditingPermission(null);
@@ -158,7 +159,7 @@ const PermissionsMatrixView: React.FC = () => {
         setFormData({
             key: permission.key,
             description: permission.description,
-            category: permission.category
+            category: permission.category,
         });
     };
 
@@ -207,7 +208,9 @@ const PermissionsMatrixView: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-slate-400">Categories</p>
-                            <p className="text-xl font-semibold">{Object.keys(stats?.categoryBreakdown || matrix?.categories || {}).length}</p>
+                            <p className="text-xl font-semibold">
+                                {Object.keys(stats?.categoryBreakdown || matrix?.categories || {}).length}
+                            </p>
                         </div>
                     </div>
                 </Card>
@@ -274,11 +277,16 @@ const PermissionsMatrixView: React.FC = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-700">
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Permission</th>
-                                    {matrix.roles.map(role => {
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                                        Permission
+                                    </th>
+                                    {matrix.roles.map((role) => {
                                         const roleName = typeof role === 'string' ? role : role.name;
                                         return (
-                                            <th key={roleName} className="text-center py-3 px-4 text-sm font-medium text-slate-400">
+                                            <th
+                                                key={roleName}
+                                                className="text-center py-3 px-4 text-sm font-medium text-slate-400"
+                                            >
                                                 <div>
                                                     <span>{roleName}</span>
                                                     {stats?.roleAssignments?.[roleName] !== undefined && (
@@ -296,31 +304,44 @@ const PermissionsMatrixView: React.FC = () => {
                                 {Object.entries(matrix.categories).map(([category, perms]) => (
                                     <React.Fragment key={category}>
                                         <tr className="bg-slate-800/50">
-                                            <td colSpan={matrix.roles.length + 1} className="py-2 px-4 text-sm font-medium text-indigo-400 uppercase">
+                                            <td
+                                                colSpan={matrix.roles.length + 1}
+                                                className="py-2 px-4 text-sm font-medium text-indigo-400 uppercase"
+                                            >
                                                 {category}
                                             </td>
                                         </tr>
-                                        {perms.map(perm => (
-                                            <tr key={perm.key} className="border-b border-slate-700/50 hover:bg-slate-800/30">
+                                        {perms.map((perm) => (
+                                            <tr
+                                                key={perm.key}
+                                                className="border-b border-slate-700/50 hover:bg-slate-800/30"
+                                            >
                                                 <td className="py-2 px-4">
                                                     <div>
                                                         <p className="text-sm font-mono">{perm.key}</p>
                                                         <p className="text-xs text-slate-400">{perm.description}</p>
                                                     </div>
                                                 </td>
-                                                {matrix.roles.map(role => {
+                                                {matrix.roles.map((role) => {
                                                     const roleName = typeof role === 'string' ? role : role.name;
                                                     const isEnabled = matrix.matrix[roleName]?.[perm.key];
                                                     const toggleKey = `${roleName}-${perm.key}`;
                                                     return (
                                                         <td key={toggleKey} className="text-center py-2 px-4">
                                                             <button
-                                                                onClick={() => handleTogglePermission(roleName, perm.key, isEnabled)}
+                                                                onClick={() =>
+                                                                    handleTogglePermission(
+                                                                        roleName,
+                                                                        perm.key,
+                                                                        isEnabled,
+                                                                    )
+                                                                }
                                                                 disabled={toggling === toggleKey}
-                                                                className={`p-1 rounded-lg transition-all ${isEnabled
-                                                                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
-                                                                    : 'bg-slate-700/50 hover:bg-slate-700'
-                                                                    }`}
+                                                                className={`p-1 rounded-lg transition-all ${
+                                                                    isEnabled
+                                                                        ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
+                                                                        : 'bg-slate-700/50 hover:bg-slate-700'
+                                                                }`}
                                                                 title={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
                                                             >
                                                                 {toggling === toggleKey ? (
@@ -440,8 +461,10 @@ const PermissionsMatrixView: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
-                                    {categories.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -462,11 +485,7 @@ const PermissionsMatrixView: React.FC = () => {
                                 disabled={saving || (!editingPermission && !formData.key)}
                                 className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 rounded-lg disabled:opacity-50"
                             >
-                                {saving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Check className="w-4 h-4" />
-                                )}
+                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                 {editingPermission ? 'Update' : 'Create'}
                             </button>
                         </div>
@@ -480,7 +499,8 @@ const PermissionsMatrixView: React.FC = () => {
                     <Card variant="elevated" className="w-full max-w-md p-6">
                         <h3 className="text-lg font-semibold mb-4">Copy Permissions Between Roles</h3>
                         <p className="text-sm text-slate-400 mb-4">
-                            Copy all permissions from one role to another. This will replace the target role's permissions.
+                            Copy all permissions from one role to another. This will replace the target role's
+                            permissions.
                         </p>
                         <div className="space-y-4">
                             <div>
@@ -491,10 +511,12 @@ const PermissionsMatrixView: React.FC = () => {
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
                                     <option value="">Select source role...</option>
-                                    {matrix?.roles?.map(role => {
+                                    {matrix?.roles?.map((role) => {
                                         const roleName = typeof role === 'string' ? role : role.name;
                                         return (
-                                            <option key={roleName} value={roleName}>{roleName}</option>
+                                            <option key={roleName} value={roleName}>
+                                                {roleName}
+                                            </option>
                                         );
                                     })}
                                 </select>
@@ -507,10 +529,14 @@ const PermissionsMatrixView: React.FC = () => {
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
                                     <option value="">Select target role...</option>
-                                    {matrix?.roles?.map(role => {
+                                    {matrix?.roles?.map((role) => {
                                         const roleName = typeof role === 'string' ? role : role.name;
                                         return (
-                                            <option key={roleName} value={roleName} disabled={roleName === copyFormData.sourceRole}>
+                                            <option
+                                                key={roleName}
+                                                value={roleName}
+                                                disabled={roleName === copyFormData.sourceRole}
+                                            >
                                                 {roleName}
                                             </option>
                                         );
@@ -533,11 +559,7 @@ const PermissionsMatrixView: React.FC = () => {
                                 disabled={saving || !copyFormData.sourceRole || !copyFormData.targetRole}
                                 className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-500 hover:bg-violet-600 rounded-lg disabled:opacity-50"
                             >
-                                {saving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Copy className="w-4 h-4" />
-                                )}
+                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
                                 Copy Permissions
                             </button>
                         </div>
@@ -549,4 +571,3 @@ const PermissionsMatrixView: React.FC = () => {
 };
 
 export default PermissionsMatrixView;
-

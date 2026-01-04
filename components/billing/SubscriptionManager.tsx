@@ -1,6 +1,6 @@
 /**
  * SubscriptionManager - Full subscription management with plan comparison
- * 
+ *
  * Features:
  * - Current plan display
  * - Plan comparison table
@@ -9,15 +9,27 @@
  * - Discount code input
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Crown, Check, X, Zap, HardDrive, Users, Clock, 
-    TrendingUp, TrendingDown, Loader2, Tag, AlertTriangle,
-    Sparkles, Shield
+    AlertTriangle,
+    Check,
+    Clock,
+    Crown,
+    HardDrive,
+    Loader2,
+    Shield,
+    Sparkles,
+    Tag,
+    TrendingDown,
+    TrendingUp,
+    Users,
+    X,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 interface SubscriptionPlan {
     id: string;
@@ -81,10 +93,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [plansData, billingData] = await Promise.all([
-                Api.getSubscriptionPlans(),
-                Api.getCurrentBilling()
-            ]);
+            const [plansData, billingData] = await Promise.all([Api.getSubscriptionPlans(), Api.getCurrentBilling()]);
             setPlans(plansData.filter((p: SubscriptionPlan) => p.is_active));
             setCurrentBilling(billingData);
         } catch (error) {
@@ -100,7 +109,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
     }, [fetchData]);
 
     const currentPlanId = currentBilling?.billing?.subscription_plan_id;
-    const currentPlan = plans.find(p => p.id === currentPlanId);
+    const currentPlan = plans.find((p) => p.id === currentPlanId);
     const trialEndsAt = currentBilling?.billing?.trial_ends_at;
     const isTrialing = trialEndsAt && new Date(trialEndsAt) > new Date();
 
@@ -112,7 +121,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
 
     const handleValidateDiscount = async () => {
         if (!discountCode.trim()) return;
-        
+
         try {
             setValidatingDiscount(true);
             const result = await Api.validateDiscountCode(discountCode, selectedPlan?.id);
@@ -133,7 +142,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
 
         try {
             setProcessing(true);
-            
+
             if (currentPlanId) {
                 await Api.changePlan(selectedPlan.id);
             } else {
@@ -202,9 +211,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                             )}
                         </div>
                         <h2 className="text-3xl font-bold mb-2">{currentPlan.name}</h2>
-                        <p className="text-white/80 text-lg">
-                            ${currentPlan.price_monthly}/month
-                        </p>
+                        <p className="text-white/80 text-lg">${currentPlan.price_monthly}/month</p>
                         <div className="flex gap-6 mt-4 text-sm text-white/70">
                             <span className="flex items-center gap-1">
                                 <Zap className="w-4 h-4" />
@@ -218,7 +225,8 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                         {isTrialing && trialEndsAt && (
                             <div className="mt-4 pt-4 border-t border-white/20">
                                 <p className="text-sm text-white/80">
-                                    {t('billing.subscription.trialEnds', 'Trial ends')}: {new Date(trialEndsAt).toLocaleDateString()}
+                                    {t('billing.subscription.trialEnds', 'Trial ends')}:{' '}
+                                    {new Date(trialEndsAt).toLocaleDateString()}
                                 </p>
                             </div>
                         )}
@@ -246,8 +254,8 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                                     isCurrent
                                         ? 'bg-purple-50 dark:bg-purple-500/10 border-2 border-purple-500 shadow-lg shadow-purple-500/20'
                                         : isPopular
-                                            ? 'bg-white dark:bg-white/5 border-2 border-amber-400 shadow-lg'
-                                            : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
+                                          ? 'bg-white dark:bg-white/5 border-2 border-amber-400 shadow-lg'
+                                          : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
                                 }`}
                             >
                                 {/* Popular Badge */}
@@ -293,20 +301,31 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                                         <HardDrive className="w-4 h-4 text-emerald-500" />
                                         {plan.storage_limit_gb} GB storage
                                     </li>
-                                    {Object.entries(features).slice(0, 4).map(([key, value]) => (
-                                        <li key={key} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                                            {value === true || value === 'true' ? (
-                                                <Check className="w-4 h-4 text-green-500" />
-                                            ) : value === false || value === 'false' ? (
-                                                <X className="w-4 h-4 text-slate-300" />
-                                            ) : (
-                                                <Shield className="w-4 h-4 text-blue-500" />
-                                            )}
-                                            <span className={value === false || value === 'false' ? 'text-slate-400 line-through' : ''}>
-                                                {key.replace(/_/g, ' ')}
-                                            </span>
-                                        </li>
-                                    ))}
+                                    {Object.entries(features)
+                                        .slice(0, 4)
+                                        .map(([key, value]) => (
+                                            <li
+                                                key={key}
+                                                className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                                            >
+                                                {value === true || value === 'true' ? (
+                                                    <Check className="w-4 h-4 text-green-500" />
+                                                ) : value === false || value === 'false' ? (
+                                                    <X className="w-4 h-4 text-slate-300" />
+                                                ) : (
+                                                    <Shield className="w-4 h-4 text-blue-500" />
+                                                )}
+                                                <span
+                                                    className={
+                                                        value === false || value === 'false'
+                                                            ? 'text-slate-400 line-through'
+                                                            : ''
+                                                    }
+                                                >
+                                                    {key.replace(/_/g, ' ')}
+                                                </span>
+                                            </li>
+                                        ))}
                                 </ul>
 
                                 {/* Overage Info */}
@@ -331,9 +350,8 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                                         {currentPlan && plan.price_monthly > currentPlan.price_monthly
                                             ? t('billing.subscription.upgrade', 'Upgrade')
                                             : currentPlan
-                                                ? t('billing.subscription.switch', 'Switch')
-                                                : t('billing.subscription.select', 'Select')
-                                        }
+                                              ? t('billing.subscription.switch', 'Switch')
+                                              : t('billing.subscription.select', 'Select')}
                                     </button>
                                 )}
                             </div>
@@ -361,8 +379,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                         {getChangeType(selectedPlan) === 'upgrade'
                                             ? t('billing.subscription.confirmUpgrade', 'Confirm Upgrade')
-                                            : t('billing.subscription.confirmChange', 'Confirm Plan Change')
-                                        }
+                                            : t('billing.subscription.confirmChange', 'Confirm Plan Change')}
                                     </h3>
                                     <p className="text-sm text-slate-500">
                                         {currentPlan?.name} → {selectedPlan.name}
@@ -424,10 +441,9 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                                 </div>
                                 {discount && (
                                     <p className={`text-sm mt-1 ${discount.valid ? 'text-green-600' : 'text-red-500'}`}>
-                                        {discount.valid 
+                                        {discount.valid
                                             ? `${discount.discount?.type === 'percent' ? `${discount.discount.value}% off` : `$${discount.discount?.value} off`}`
-                                            : discount.error
-                                        }
+                                            : discount.error}
                                     </p>
                                 )}
                             </div>
@@ -437,9 +453,14 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                                 <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5" />
                                 <p className="text-sm text-amber-700 dark:text-amber-300">
                                     {getChangeType(selectedPlan) === 'upgrade'
-                                        ? t('billing.subscription.proratedNote', 'You will be charged the prorated difference immediately.')
-                                        : t('billing.subscription.downgradeNote', 'Changes will take effect at the end of your current billing period.')
-                                    }
+                                        ? t(
+                                              'billing.subscription.proratedNote',
+                                              'You will be charged the prorated difference immediately.',
+                                          )
+                                        : t(
+                                              'billing.subscription.downgradeNote',
+                                              'Changes will take effect at the end of your current billing period.',
+                                          )}
                                 </p>
                             </div>
                         </div>
@@ -479,11 +500,4 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
 };
 
 export default SubscriptionManager;
-
-
-
-
-
-
-
 

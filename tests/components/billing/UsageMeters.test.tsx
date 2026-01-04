@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { UsageMeters } from '../../../components/billing/UsageMeters';
+import { UsageMeters } from '../../components/billing/UsageMeters';
 
 const mockUsageNormal = {
     tokens: {
@@ -264,6 +264,7 @@ describe('UsageMeters Component', () => {
         });
     });
 });
+
 
 
 

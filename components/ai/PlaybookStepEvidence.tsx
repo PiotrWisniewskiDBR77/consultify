@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { GitBranch, CheckCircle2, AlertCircle, Loader2, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, FileText, GitBranch, Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import ConfidenceBadge from './ConfidenceBadge';
 
 interface BranchTrace {
@@ -30,7 +31,7 @@ interface PlaybookStepEvidenceProps {
 
 /**
  * PlaybookStepEvidence Component
- * 
+ *
  * Displays evidence and reasoning for a specific playbook step.
  * For BRANCH/CHECK steps, also shows the evaluation trace.
  */
@@ -39,7 +40,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
     stepType,
     decisionId,
     executionId,
-    token
+    token,
 }) => {
     const [evidence, setEvidence] = useState<StepEvidence | null>(null);
     const [loading, setLoading] = useState(true);
@@ -69,9 +70,9 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
 
                 const response = await fetch(`/api/ai/explain/${entityType}/${entityId}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
                 });
 
                 if (!response.ok) {
@@ -87,7 +88,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
                     assumptions: latestReasoning?.assumptions || [],
                     confidence: data.confidence || 0,
                     evidences: data.evidences || [],
-                    branch_trace: data.branch_trace
+                    branch_trace: data.branch_trace,
                 });
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load evidence');
@@ -141,9 +142,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
 
             {/* Reasoning Summary */}
             <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {evidence.reasoning_summary}
-                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{evidence.reasoning_summary}</p>
 
                 {evidence.assumptions.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
@@ -181,7 +180,10 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
                         <div className="flex items-center gap-2 mb-2">
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                                Matched: <code className="text-xs bg-purple-100 dark:bg-purple-800 px-1.5 py-0.5 rounded">{evidence.branch_trace.matched_rule}</code>
+                                Matched:{' '}
+                                <code className="text-xs bg-purple-100 dark:bg-purple-800 px-1.5 py-0.5 rounded">
+                                    {evidence.branch_trace.matched_rule}
+                                </code>
                             </span>
                         </div>
                     )}

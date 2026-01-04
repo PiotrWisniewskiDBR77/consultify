@@ -1,24 +1,24 @@
 /**
  * AIAssistantPanel
- * 
+ *
  * Side panel for AI-powered content generation with section-specific prompts
  * and one-click generation for report sections.
  */
 
-import React, { useState } from 'react';
 import {
-    X,
-    Sparkles,
-    FileText,
-    Target,
-    Lightbulb,
-    Map,
-    TrendingUp,
     AlertTriangle,
-    Loader2,
     ChevronRight,
-    Wand2
+    FileText,
+    Lightbulb,
+    Loader2,
+    Map,
+    Sparkles,
+    Target,
+    TrendingUp,
+    Wand2,
+    X,
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface AIAssistantPanelProps {
     assessmentId?: string;
@@ -41,50 +41,50 @@ const QUICK_ACTIONS: QuickAction[] = [
         label: 'Executive Summary',
         description: 'Podsumowanie dla zarządu z kluczowymi wnioskami',
         icon: FileText,
-        sectionType: 'executiveSummary'
+        sectionType: 'executiveSummary',
     },
     {
         id: 'gap-analysis',
         label: 'Analiza Luk',
         description: 'Szczegółowa analiza luk w dojrzałości',
         icon: Target,
-        sectionType: 'gapAnalysis'
+        sectionType: 'gapAnalysis',
     },
     {
         id: 'recommendations',
         label: 'Rekomendacje',
         description: 'Top 10 rekomendacji z priorytyzacją',
         icon: Lightbulb,
-        sectionType: 'recommendations'
+        sectionType: 'recommendations',
     },
     {
         id: 'roadmap',
         label: 'Roadmapa Transformacji',
         description: 'Plan wdrożenia w fazach',
         icon: Map,
-        sectionType: 'roadmap'
+        sectionType: 'roadmap',
     },
     {
         id: 'roi-analysis',
         label: 'Analiza ROI',
         description: 'Szacowany zwrot z inwestycji',
         icon: TrendingUp,
-        sectionType: 'roiAnalysis'
+        sectionType: 'roiAnalysis',
     },
     {
         id: 'risk-assessment',
         label: 'Ocena Ryzyka',
         description: 'Identyfikacja i mitygacja ryzyk',
         icon: AlertTriangle,
-        sectionType: 'riskAssessment'
-    }
+        sectionType: 'riskAssessment',
+    },
 ];
 
 export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     assessmentId,
     onGenerate,
     onInsertBlock,
-    onClose
+    onClose,
 }) => {
     const [customPrompt, setCustomPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState<string | null>(null);
@@ -122,12 +122,8 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                         <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h2 className="font-semibold text-slate-900 dark:text-white">
-                            Asystent AI
-                        </h2>
-                        <p className="text-xs text-slate-500">
-                            Generuj treści klasy McKinsey
-                        </p>
+                        <h2 className="font-semibold text-slate-900 dark:text-white">Asystent AI</h2>
+                        <p className="text-xs text-slate-500">Generuj treści klasy McKinsey</p>
                     </div>
                 </div>
                 <button
@@ -142,19 +138,21 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             <div className="flex border-b border-slate-200 dark:border-slate-700">
                 <button
                     onClick={() => setActiveTab('quick')}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'quick'
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                        activeTab === 'quick'
                             ? 'text-blue-600 border-b-2 border-blue-600'
                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                        }`}
+                    }`}
                 >
                     Szybkie akcje
                 </button>
                 <button
                     onClick={() => setActiveTab('custom')}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'custom'
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                        activeTab === 'custom'
                             ? 'text-blue-600 border-b-2 border-blue-600'
                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                        }`}
+                    }`}
                 >
                     Custom prompt
                 </button>
@@ -181,20 +179,24 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                                     disabled={!assessmentId || isGenerating !== null}
                                     className={`
                     w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left
-                    ${isLoading
-                                            ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
-                                        }
+                    ${
+                        isLoading
+                            ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
+                    }
                     disabled:opacity-50 disabled:cursor-not-allowed
                   `}
                                 >
-                                    <div className={`
+                                    <div
+                                        className={`
                     p-3 rounded-lg
-                    ${isLoading
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                                        }
-                  `}>
+                    ${
+                        isLoading
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }
+                  `}
+                                    >
                                         {isLoading ? (
                                             <Loader2 className="w-5 h-5 animate-spin" />
                                         ) : (
@@ -202,9 +204,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <div className="font-medium text-slate-900 dark:text-white">
-                                            {action.label}
-                                        </div>
+                                        <div className="font-medium text-slate-900 dark:text-white">{action.label}</div>
                                         <div className="text-sm text-slate-500 dark:text-slate-400">
                                             {action.description}
                                         </div>
@@ -257,8 +257,8 @@ Przykłady:
             {/* Footer Tips */}
             <div className="p-4 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                    <strong className="text-slate-700 dark:text-slate-300">Pro tip:</strong> AI generuje treści
-                    w stylu raportów konsultingowych Big 4 (McKinsey, BCG) z użyciem Pyramid Principle.
+                    <strong className="text-slate-700 dark:text-slate-300">Pro tip:</strong> AI generuje treści w stylu
+                    raportów konsultingowych Big 4 (McKinsey, BCG) z użyciem Pyramid Principle.
                 </div>
             </div>
         </div>

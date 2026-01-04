@@ -1,38 +1,39 @@
 /**
  * AIMemoryMetricsDashboard
- * 
+ *
  * Admin dashboard component for viewing AI memory usage, performance,
  * and efficiency metrics. Part of Enterprise AI Readiness initiative.
- * 
+ *
  * Features:
  * - Memory usage trends chart
  * - Token efficiency metrics
  * - Latency percentiles (P50, P95, P99)
  * - Cost savings from trimming
  * - Real-time memory state
- * 
+ *
  * @version 1.0.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Brain,
-    TrendingUp,
-    TrendingDown,
-    Clock,
-    Zap,
-    Database,
-    RefreshCw,
-    AlertTriangle,
-    CheckCircle,
-    BarChart2,
     Activity,
+    AlertTriangle,
+    BarChart2,
+    Brain,
+    CheckCircle,
+    Clock,
+    Database,
     DollarSign,
     Gauge,
     HardDrive,
-    Layers
+    Layers,
+    RefreshCw,
+    TrendingDown,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 
 // ============================================================================
@@ -114,7 +115,7 @@ const MetricCard: React.FC<{
         primary: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400',
         success: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400',
         warning: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-        danger: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+        danger: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
     };
 
     return (
@@ -124,26 +125,24 @@ const MetricCard: React.FC<{
                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {title}
                     </p>
-                    <p className="text-2xl font-bold text-navy-900 dark:text-white mt-1">
-                        {value}
-                    </p>
-                    {subtitle && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            {subtitle}
-                        </p>
-                    )}
+                    <p className="text-2xl font-bold text-navy-900 dark:text-white mt-1">{value}</p>
+                    {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
                     {trend && trendValue && (
-                        <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${
-                            trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-red-600' : 'text-slate-500'
-                        }`}>
+                        <div
+                            className={`flex items-center gap-1 mt-2 text-xs font-medium ${
+                                trend === 'up'
+                                    ? 'text-emerald-600'
+                                    : trend === 'down'
+                                      ? 'text-red-600'
+                                      : 'text-slate-500'
+                            }`}
+                        >
                             {trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                             {trendValue}
                         </div>
                     )}
                 </div>
-                <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>
-                    {icon}
-                </div>
+                <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>{icon}</div>
             </div>
         </div>
     );
@@ -160,7 +159,7 @@ const ProgressBar: React.FC<{
         primary: 'bg-indigo-500',
         success: 'bg-emerald-500',
         warning: 'bg-amber-500',
-        danger: 'bg-red-500'
+        danger: 'bg-red-500',
     };
 
     return (
@@ -172,7 +171,7 @@ const ProgressBar: React.FC<{
                 </div>
             )}
             <div className="h-2 bg-slate-100 dark:bg-navy-700 rounded-full overflow-hidden">
-                <div 
+                <div
                     className={`h-full ${colorClasses[color]} transition-all duration-500`}
                     style={{ width: `${percentage}%` }}
                 />
@@ -186,19 +185,17 @@ const SimpleBarChart: React.FC<{
     maxValue?: number;
     color?: string;
 }> = ({ data, maxValue, color = 'indigo' }) => {
-    const max = maxValue || Math.max(...data.map(d => d.value)) || 1;
-    
+    const max = maxValue || Math.max(...data.map((d) => d.value)) || 1;
+
     return (
         <div className="flex items-end gap-1 h-20">
             {data.map((item, idx) => (
                 <div key={idx} className="flex-1 flex flex-col items-center">
-                    <div 
+                    <div
                         className={`w-full bg-${color}-500 dark:bg-${color}-400 rounded-t transition-all duration-300`}
                         style={{ height: `${(item.value / max) * 100}%`, minHeight: '2px' }}
                     />
-                    <span className="text-[8px] text-slate-400 mt-1 truncate w-full text-center">
-                        {item.label}
-                    </span>
+                    <span className="text-[8px] text-slate-400 mt-1 truncate w-full text-center">{item.label}</span>
                 </div>
             ))}
         </div>
@@ -209,12 +206,9 @@ const SimpleBarChart: React.FC<{
 // Main Component
 // ============================================================================
 
-export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> = ({
-    projectId,
-    className = ''
-}) => {
+export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> = ({ projectId, className = '' }) => {
     const { t } = useTranslation();
-    
+
     const [loading, setLoading] = useState(true);
     const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
     const [summary, setSummary] = useState<MetricsSummary | null>(null);
@@ -226,30 +220,30 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
     const fetchMetrics = useCallback(async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
             // Fetch all metrics in parallel
             const [metricsRes, stateRes, latencyRes] = await Promise.all([
                 fetch(`/api/ai/memory/metrics?period=${period}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json()),
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json()),
                 fetch(`/api/ai/memory/current?projectId=${projectId || ''}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json()),
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json()),
                 fetch('/api/ai/memory/latency?hours=24', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json())
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json()),
             ]);
 
             if (metricsRes.success) {
                 setDailyMetrics(metricsRes.daily || []);
                 setSummary(metricsRes.summary || null);
             }
-            
+
             if (stateRes.success) {
                 setMemoryState(stateRes);
             }
-            
+
             if (latencyRes.success) {
                 setLatencyMetrics(latencyRes);
             }
@@ -263,7 +257,7 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
 
     useEffect(() => {
         fetchMetrics();
-        
+
         // Auto-refresh every 60 seconds
         const interval = setInterval(fetchMetrics, 60000);
         return () => clearInterval(interval);
@@ -303,9 +297,9 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
-                    <select 
+                    <select
                         value={period}
                         onChange={(e) => setPeriod(parseInt(e.target.value, 10))}
                         className="text-xs px-2 py-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-200"
@@ -373,16 +367,18 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
                             {t('ai.memory.currentState', 'Current Memory State')}
                         </h3>
                     </div>
-                    
+
                     {memoryState && (
                         <div className="space-y-4">
                             <ProgressBar
                                 value={memoryState.totalTokens}
                                 max={memoryState.efficiency.recommendedLimit}
                                 label={`Memory Utilization (${memoryState.totalTokens} / ${memoryState.efficiency.recommendedLimit} tokens)`}
-                                color={parseFloat(memoryState.efficiency.utilizationPercent) > 80 ? 'warning' : 'primary'}
+                                color={
+                                    parseFloat(memoryState.efficiency.utilizationPercent) > 80 ? 'warning' : 'primary'
+                                }
                             />
-                            
+
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="space-y-2">
                                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -400,7 +396,7 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
                                         <p>• {memoryState.projectMemory.recommendations} recommendations</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-2">
                                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                         Organization Memory
@@ -429,30 +425,38 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
                             {t('ai.memory.latencyDistribution', 'Latency Distribution')} (24h)
                         </h3>
                     </div>
-                    
+
                     {latencyMetrics && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-3 gap-4 text-center">
                                 <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                                     <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">P50</p>
-                                    <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{latencyMetrics.p50}ms</p>
+                                    <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                                        {latencyMetrics.p50}ms
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                                     <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">P95</p>
-                                    <p className="text-lg font-bold text-amber-700 dark:text-amber-300">{latencyMetrics.p95}ms</p>
+                                    <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                                        {latencyMetrics.p95}ms
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                                     <p className="text-xs text-red-600 dark:text-red-400 font-medium">P99</p>
-                                    <p className="text-lg font-bold text-red-700 dark:text-red-300">{latencyMetrics.p99}ms</p>
+                                    <p className="text-lg font-bold text-red-700 dark:text-red-300">
+                                        {latencyMetrics.p99}ms
+                                    </p>
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-navy-700">
                                 <span>Samples: {latencyMetrics.count}</span>
                                 <span>Avg: {Math.round(latencyMetrics.avg || 0)}ms</span>
-                                <span className={`flex items-center gap-1 ${
-                                    latencyMetrics.p95 < 100 ? 'text-emerald-600' : 'text-amber-600'
-                                }`}>
+                                <span
+                                    className={`flex items-center gap-1 ${
+                                        latencyMetrics.p95 < 100 ? 'text-emerald-600' : 'text-amber-600'
+                                    }`}
+                                >
                                     {latencyMetrics.p95 < 100 ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
                                     {latencyMetrics.p95 < 100 ? 'Healthy' : 'Review Needed'}
                                 </span>
@@ -486,7 +490,7 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
                         </span>
                     </div>
                 </div>
-                
+
                 {dailyMetrics.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs">
@@ -503,19 +507,35 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
                             </thead>
                             <tbody>
                                 {dailyMetrics.slice(0, 7).map((metric, idx) => (
-                                    <tr 
+                                    <tr
                                         key={metric.date}
                                         className="border-b border-slate-50 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800/50"
                                     >
                                         <td className="py-2 px-2 text-slate-700 dark:text-slate-300">
-                                            {new Date(metric.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                            {new Date(metric.date).toLocaleDateString('en-US', {
+                                                weekday: 'short',
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })}
                                         </td>
-                                        <td className="text-right py-2 px-2 text-indigo-600">{formatNumber(metric.total_reads)}</td>
-                                        <td className="text-right py-2 px-2 text-emerald-600">{formatNumber(metric.total_writes)}</td>
-                                        <td className="text-right py-2 px-2 text-amber-600">{formatNumber(metric.total_trims)}</td>
-                                        <td className="text-right py-2 px-2 text-slate-600">{formatNumber(metric.peak_tokens)}</td>
-                                        <td className="text-right py-2 px-2 text-green-600">{formatNumber(metric.tokens_saved)}</td>
-                                        <td className="text-right py-2 px-2 text-slate-600">{Math.round(metric.avg_latency || 0)}ms</td>
+                                        <td className="text-right py-2 px-2 text-indigo-600">
+                                            {formatNumber(metric.total_reads)}
+                                        </td>
+                                        <td className="text-right py-2 px-2 text-emerald-600">
+                                            {formatNumber(metric.total_writes)}
+                                        </td>
+                                        <td className="text-right py-2 px-2 text-amber-600">
+                                            {formatNumber(metric.total_trims)}
+                                        </td>
+                                        <td className="text-right py-2 px-2 text-slate-600">
+                                            {formatNumber(metric.peak_tokens)}
+                                        </td>
+                                        <td className="text-right py-2 px-2 text-green-600">
+                                            {formatNumber(metric.tokens_saved)}
+                                        </td>
+                                        <td className="text-right py-2 px-2 text-slate-600">
+                                            {Math.round(metric.avg_latency || 0)}ms
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -532,8 +552,4 @@ export const AIMemoryMetricsDashboard: React.FC<AIMemoryMetricsDashboardProps> =
 };
 
 export default AIMemoryMetricsDashboard;
-
-
-
-
 

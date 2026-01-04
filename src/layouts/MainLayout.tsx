@@ -1,24 +1,25 @@
+import { ChevronRight, Menu, Sparkles } from 'lucide-react';
 import React from 'react';
-import { Sidebar } from '../../components/Sidebar';
-import { BottomNavigation } from '../../components/navigation';
-import { AIFreezeBanner } from '../../components/AIFreezeBanner';
-import { TrialBanner } from '../../components/Trial/TrialBanner';
-import { PMOStatusBar } from '../../components/PMO';
-import { SystemHealth } from '../../components/SystemHealth';
-import { LLMSelector } from '../../components/LLMSelector';
-import { NotificationDropdown } from '../../components/NotificationDropdown';
-import { TaskDropdown } from '../../components/TaskDropdown';
-import { UserProfileMenu } from '../../components/UserProfileMenu';
-import { Menu, ChevronRight, Sparkles } from 'lucide-react';
-import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from 'react-i18next';
-import { HelpToggleButton } from '../../components/Help/HelpToggleButton';
+
+import { AIFreezeBanner } from '../../components/AIFreezeBanner';
+import { DocumentSidePanel } from '../../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../../components/documents/DocumentToggleButton';
+import { FeedbackSidePanel } from '../../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../../components/Feedback/FeedbackToggleButton';
 import { HelpSidePanel } from '../../components/Help/HelpSidePanel';
-import { DocumentSidePanel } from '../../components/documents/DocumentSidePanel';
-import { FeedbackSidePanel } from '../../components/Feedback/FeedbackSidePanel';
+import { HelpToggleButton } from '../../components/Help/HelpToggleButton';
+import { LLMSelector } from '../../components/LLMSelector';
+import { BottomNavigation } from '../../components/navigation';
+import { NotificationDropdown } from '../../components/NotificationDropdown';
+import { PMOStatusBar } from '../../components/PMO';
+import { Sidebar } from '../../components/Sidebar';
+import { SystemHealth } from '../../components/SystemHealth';
+import { TaskDropdown } from '../../components/TaskDropdown';
+import { TrialBanner } from '../../components/Trial/TrialBanner';
 import { TrialExpiredGate } from '../../components/Trial/TrialExpiredGate';
+import { UserProfileMenu } from '../../components/UserProfileMenu';
+import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
 interface MainLayoutProps {
@@ -27,25 +28,24 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs }) => {
-    const {
-        isSidebarCollapsed,
-        setIsSidebarOpen,
-        isChatCollapsed,
-        toggleChatCollapse,
-        currentUser
-    } = useAppStore();
+    const { isSidebarCollapsed, setIsSidebarOpen, isChatCollapsed, toggleChatCollapse, currentUser } = useAppStore();
 
     // Only show sidebar/header for actual app views, not Welcome/Auth
     const isSessionView = true; // MainLayout is only used for session views
 
     return (
         <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
-
             {/* Global Floating Help Buttons */}
             <div className="fixed right-0 top-[66%] z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
-                <div className="pointer-events-auto"><HelpToggleButton /></div>
-                <div className="pointer-events-auto"><DocumentToggleButton /></div>
-                <div className="pointer-events-auto"><FeedbackToggleButton /></div>
+                <div className="pointer-events-auto">
+                    <HelpToggleButton />
+                </div>
+                <div className="pointer-events-auto">
+                    <DocumentToggleButton />
+                </div>
+                <div className="pointer-events-auto">
+                    <FeedbackToggleButton />
+                </div>
             </div>
             <HelpSidePanel />
             <DocumentSidePanel />
@@ -61,7 +61,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
                 </div>
             )}
 
-            <div className={currentUser?.isDemo ? "pt-10" : ""}>
+            <div className={currentUser?.isDemo ? 'pt-10' : ''}>
                 <Sidebar />
             </div>
 
@@ -82,11 +82,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
 
                     <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
                         <div className="flex items-center gap-3">
-                            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-navy-700 dark:text-white mr-2">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="lg:hidden text-navy-700 dark:text-white mr-2"
+                            >
                                 <Menu />
                             </button>
                             <div className="flex items-center text-sm font-medium text-slate-400">
-                                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">{breadcrumbs[0]}</span>
+                                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
+                                    {breadcrumbs[0]}
+                                </span>
                                 <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
                                 <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
                             </div>
@@ -101,9 +106,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
                             <button
                                 onClick={() => toggleChatCollapse()}
                                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-medium text-xs transition-all
-                                    ${isChatCollapsed
-                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30'
-                                        : 'text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                                    ${
+                                        isChatCollapsed
+                                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30'
+                                            : 'text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                                     }`}
                                 title={isChatCollapsed ? 'Show AI Chat' : 'Hide AI Chat'}
                             >
@@ -125,9 +131,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
 
                 <TrialExpiredGate>
                     <PMOStatusBar />
-                    <div className="flex-1 overflow-hidden relative flex flex-col">
-                        {children}
-                    </div>
+                    <div className="flex-1 overflow-hidden relative flex flex-col">{children}</div>
                 </TrialExpiredGate>
             </main>
         </div>

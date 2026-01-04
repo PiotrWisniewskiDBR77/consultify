@@ -35,7 +35,7 @@ const startHealthCheck = () => {
                         <p><strong>Error:</strong> ${err.message}</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
                         <p>Please investigate immediately.</p>
-                        `
+                        `,
                     );
                 }
             } else {
@@ -50,7 +50,7 @@ const startHealthCheck = () => {
                         <h1>System Recovered</h1>
                         <p>The Consultify database is back online.</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-                        `
+                        `,
                     );
                     isSystemHealthy = true;
                     consecutiveFailures = 0;

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ConversionModal from '../../../components/ConversionModal';
+import ConversionModal from '../../components/ConversionModal';
 
 vi.mock('react-router-dom', () => ({
     useNavigate: () => vi.fn()
@@ -50,6 +50,7 @@ describe('ConversionModal Component', () => {
         expect(onClose).toHaveBeenCalled();
     });
 });
+
 
 
 

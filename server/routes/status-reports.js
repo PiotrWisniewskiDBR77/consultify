@@ -14,7 +14,7 @@ const router = express.Router();
 import * as StatusReportServiceModule from '../services/statusReportService.js';
 const StatusReportService = StatusReportServiceModule.default || StatusReportServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../src/utils/asyncHandler.js';
+import { asyncHandler  } from '../dist/utils/asyncHandler.js';
 
 router.use(verifyToken);
 
@@ -244,6 +244,7 @@ router.get('/initiative/:initiativeId/latest', asyncHandler(async (req, res) => 
 }));
 
 export default router;
+
 
 
 

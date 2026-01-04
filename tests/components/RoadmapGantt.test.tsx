@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RoadmapGantt } from '../../../components/RoadmapGantt';
+import { RoadmapGantt } from '../../components/RoadmapGantt';
 
 const mockInitiatives = [
     { id: 'init-1', name: 'Initiative 1', startDate: '2024-01-01', endDate: '2024-03-31' }
@@ -22,6 +22,7 @@ describe('RoadmapGantt Component', () => {
         expect(screen.getByText('Initiative 1')).toBeInTheDocument();
     });
 });
+
 
 
 

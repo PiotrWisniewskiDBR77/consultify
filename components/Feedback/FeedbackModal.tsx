@@ -1,6 +1,7 @@
+import { Bug, Lightbulb, Loader2, Send, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { X, Send, Bug, Lightbulb, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../../store/useAppStore';
 
 interface FeedbackModalProps {
@@ -28,14 +29,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     userId: currentUser?.id || 'anonymous',
                     userEmail: currentUser?.email || 'anonymous',
                     type,
-                    message
-                })
+                    message,
+                }),
             });
 
             if (response.ok) {
@@ -58,14 +59,20 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-navy-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-navy-700 flex flex-col">
-
                 {/* Header */}
                 <div className="px-6 py-4 bg-slate-50 dark:bg-navy-900 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between">
                     <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        {type === 'BUG' ? <Bug size={20} className="text-red-500" /> : <Lightbulb size={20} className="text-amber-500" />}
+                        {type === 'BUG' ? (
+                            <Bug size={20} className="text-red-500" />
+                        ) : (
+                            <Lightbulb size={20} className="text-amber-500" />
+                        )}
                         {showSuccess ? 'Dziękujemy!' : 'Prześlij Feedback'}
                     </h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <button
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    >
                         <X size={20} />
                     </button>
                 </div>
@@ -77,7 +84,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 text-green-600 dark:text-green-400">
                                 <Send size={32} />
                             </div>
-                            <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Wiadomość wysłana!</h4>
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                                Wiadomość wysłana!
+                            </h4>
                             <p className="text-slate-500 dark:text-slate-400 text-sm">
                                 Dziękujemy za Twoją opinię. Przeanalizujemy ją najszybciej jak to możliwe.
                             </p>
@@ -89,10 +98,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                                 <button
                                     type="button"
                                     onClick={() => setType('BUG')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${type === 'BUG'
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                                        type === 'BUG'
                                             ? 'bg-white dark:bg-navy-800 text-red-600 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                        }`}
+                                    }`}
                                 >
                                     <Bug size={16} />
                                     Błąd
@@ -100,10 +110,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                                 <button
                                     type="button"
                                     onClick={() => setType('IDEA')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${type === 'IDEA'
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                                        type === 'IDEA'
                                             ? 'bg-white dark:bg-navy-800 text-amber-600 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                        }`}
+                                    }`}
                                 >
                                     <Lightbulb size={16} />
                                     Pomysł
@@ -117,7 +128,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                                 </label>
                                 <textarea
                                     className="w-full h-32 px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-slate-800 dark:text-slate-200 placeholder-slate-400"
-                                    placeholder={type === 'BUG' ? "Opisz co nie działa i jak to odtworzyć..." : "Opisz swój pomysł na usprawnienie..."}
+                                    placeholder={
+                                        type === 'BUG'
+                                            ? 'Opisz co nie działa i jak to odtworzyć...'
+                                            : 'Opisz swój pomysł na usprawnienie...'
+                                    }
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     required

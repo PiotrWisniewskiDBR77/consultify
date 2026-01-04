@@ -1,28 +1,40 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-const require = createRequire(import.meta.url);
 
 describe('Ingestion Service', () => {
     let IngestionService;
     let mockDb;
     let mockRagService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.resetModules();
 
+        // 1. Setup mocks
         mockDb = createMockDb();
         mockRagService = {
             storeChunks: vi.fn().mockResolvedValue({})
         };
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('../../../server/services/ragService', () => ({ default: mockRagService }));
+        // 2. Register mocks for subsequent imports
+        vi.doMock('../../../server/database.js', () => ({ default: mockDb }));
+        vi.doMock('../../../server/services/ragService.js', () => ({ default: mockRagService }));
 
-        IngestionService = require('../../../server/services/ingestionService.js');
-        
-        // Inject mock dependencies
+        // Mock fs and pdf-parse just in case they are used or cause issues
+        vi.doMock('fs', () => ({
+            default: {
+                readFileSync: vi.fn(),
+                unlinkSync: vi.fn()
+            },
+            readFileSync: vi.fn(),
+            unlinkSync: vi.fn()
+        }));
+        vi.doMock('pdf-parse', () => ({ default: vi.fn() }));
+
+        // 3. Dynamic import of the system under test
+        const module = await import('../../../server/services/ingestionService.js');
+        IngestionService = module.default;
+
+        // 4. Manual injection (redundant but safe)
         IngestionService.setDependencies({
             db: mockDb,
             RagService: mockRagService
@@ -31,15 +43,15 @@ describe('Ingestion Service', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
-        vi.doUnmock('../../../server/services/ragService');
+        vi.doUnmock('../../../server/database.js');
+        vi.doUnmock('../../../server/services/ragService.js');
     });
 
     describe('chunkText', () => {
         it('should split text into chunks', () => {
             const text = 'a'.repeat(2000);
             const chunks = IngestionService.chunkText(text, 1000, 200);
-            
+
             expect(chunks.length).toBeGreaterThan(1);
             expect(chunks[0].length).toBeLessThanOrEqual(1000);
         });
@@ -62,22 +74,21 @@ describe('Ingestion Service', () => {
             };
             const content = 'Test content';
 
-            const mockStmt = {
-                run: vi.fn((...args) => {
-                    const callback = args[args.length - 1];
-                    if (typeof callback === 'function') {
-                        callback(null);
-                    }
-                }),
-                finalize: vi.fn()
-            };
+            // Spy on statement run
+            const mockStmtRun = vi.fn((...args) => {
+                const cb = args.length > 0 && typeof args[args.length - 1] === 'function' ? args[args.length - 1] : null;
+                if (cb) cb(null);
+            });
 
-            mockDb.prepare.mockReturnValue(mockStmt);
+            mockDb.prepare.mockReturnValue({
+                run: mockStmtRun,
+                finalize: vi.fn()
+            });
 
             await IngestionService.storeDocument(docId, organizationId, metadata, content);
 
             expect(mockDb.prepare).toHaveBeenCalled();
-            expect(mockStmt.run).toHaveBeenCalled();
+            expect(mockStmtRun).toHaveBeenCalled();
         });
     });
 });

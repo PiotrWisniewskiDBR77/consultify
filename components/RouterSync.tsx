@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+
 import { useAppStore } from '../store/useAppStore';
-import { AppView, SessionMode, AuthStep } from '../types';
+import { AppView, AuthStep, SessionMode } from '../types';
 
 /**
  * RouterSync
- * 
+ *
  * Bridges React Router (URL) with Global State (Zustand).
  * - Listens for URL changes -> Updates App State
  * - Captures attribution parameters (?ref=, ?invite=)
@@ -15,13 +16,7 @@ export const RouterSync: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    const {
-        setCurrentView,
-        setSessionMode,
-        setAuthInitialStep,
-        currentView,
-        currentUser
-    } = useAppStore();
+    const { setCurrentView, setSessionMode, setAuthInitialStep, currentView, currentUser } = useAppStore();
 
     // 1. Attribution Capture
     useEffect(() => {
@@ -105,7 +100,7 @@ export const RouterSync: React.FC = () => {
             // b) We just loaded URL (Store stale, URL correct) -> UPDATE STORE
 
             // To distinguish, we need to know if this is a "popstate" or "pushState" vs internal update.
-            // OR simpler: `RouterSync` handles URL -> State. 
+            // OR simpler: `RouterSync` handles URL -> State.
             // We need a separate effect for State -> URL (Step 3).
 
             if (currentView !== AppView.STUDIO) {
@@ -123,13 +118,28 @@ export const RouterSync: React.FC = () => {
             }
             // Don't override Admin/SuperAdmin/Settings/etc views - they share /chat URL
             const preservedViews = [
-                'ADMIN_', 'SUPERADMIN_', 'SETTINGS_', 'CONTEXT_BUILDER_',
-                'MY_WORK', 'PORTFOLIO_', 'IMPLEMENTATION', 'BENEFITS_',
-                'ECONOMICS', 'ASSESSMENT_', 'AI_ACTION_', 'KPI_OKR_', 'STUDIO',
-                'PROJECT_INTELLIGENCE', 'FULL_', 'AFFILIATE_', 'DRD_', 'ONBOARDING_',
-                'CONSULTANT_', 'ORG_SETUP_'
+                'ADMIN_',
+                'SUPERADMIN_',
+                'SETTINGS_',
+                'CONTEXT_BUILDER_',
+                'MY_WORK',
+                'PORTFOLIO_',
+                'IMPLEMENTATION',
+                'BENEFITS_',
+                'ECONOMICS',
+                'ASSESSMENT_',
+                'AI_ACTION_',
+                'KPI_OKR_',
+                'STUDIO',
+                'PROJECT_INTELLIGENCE',
+                'FULL_',
+                'AFFILIATE_',
+                'DRD_',
+                'ONBOARDING_',
+                'CONSULTANT_',
+                'ORG_SETUP_',
             ];
-            const shouldPreserve = preservedViews.some(prefix => currentView.startsWith(prefix));
+            const shouldPreserve = preservedViews.some((prefix) => currentView.startsWith(prefix));
             if (!shouldPreserve && currentView !== AppView.AI_CHAT) {
                 console.log('[RouterSync] Navigating to AI Chat');
                 setCurrentView(AppView.AI_CHAT);
@@ -145,7 +155,6 @@ export const RouterSync: React.FC = () => {
                 setCurrentView(AppView.WELCOME);
             }
         }
-
     }, [location, setCurrentView, setSessionMode, setAuthInitialStep, currentUser, currentView]);
 
     // 3. State -> URL Sync (Escape Traps)

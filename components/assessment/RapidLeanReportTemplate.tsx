@@ -1,7 +1,7 @@
 /**
  * RapidLean Report Template - DBR77 Standard Format
  * Standardized report view for RapidLean assessments
- * 
+ *
  * Sections:
  * 1. Executive Summary
  * 2. Lean Dimensions Breakdown
@@ -11,19 +11,19 @@
  * 6. Appendix
  */
 
-import React from 'react';
 import {
-    TrendingUp,
-    TrendingDown,
     AlertTriangle,
-    CheckCircle,
-    Target,
     BarChart3,
+    CheckCircle,
+    Download,
     FileText,
     Lightbulb,
-    Download,
-    Printer
+    Printer,
+    Target,
+    TrendingDown,
+    TrendingUp,
 } from 'lucide-react';
+import React from 'react';
 
 interface DimensionScore {
     name: string;
@@ -80,26 +80,35 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
     reportData,
     onDownloadPDF,
     onDownloadExcel,
-    onPrint
+    onPrint,
 }) => {
     const { summary, dimensions, drdMapping, recommendations, observations } = reportData;
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'excellent': return 'text-green-600 bg-green-100';
-            case 'good': return 'text-blue-600 bg-blue-100';
-            case 'needs_improvement': return 'text-yellow-600 bg-yellow-100';
-            case 'critical': return 'text-red-600 bg-red-100';
-            default: return 'text-gray-600 bg-gray-100';
+            case 'excellent':
+                return 'text-green-600 bg-green-100';
+            case 'good':
+                return 'text-blue-600 bg-blue-100';
+            case 'needs_improvement':
+                return 'text-yellow-600 bg-yellow-100';
+            case 'critical':
+                return 'text-red-600 bg-red-100';
+            default:
+                return 'text-gray-600 bg-gray-100';
         }
     };
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case 'HIGH': return 'bg-red-500 text-white';
-            case 'MEDIUM': return 'bg-yellow-500 text-white';
-            case 'LOW': return 'bg-green-500 text-white';
-            default: return 'bg-gray-500 text-white';
+            case 'HIGH':
+                return 'bg-red-500 text-white';
+            case 'MEDIUM':
+                return 'bg-yellow-500 text-white';
+            case 'LOW':
+                return 'bg-green-500 text-white';
+            default:
+                return 'bg-gray-500 text-white';
         }
     };
 
@@ -161,26 +170,42 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl p-6 text-center">
                         <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Overall Score</p>
-                        <p className={`text-5xl font-bold mt-2 ${summary.overallScore >= summary.benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        <p
+                            className={`text-5xl font-bold mt-2 ${summary.overallScore >= summary.benchmark ? 'text-green-600' : 'text-red-600'}`}
+                        >
                             {summary.overallScore.toFixed(1)}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">out of 5.0</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 text-center">
                         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Industry Benchmark</p>
-                        <p className="text-5xl font-bold mt-2 text-gray-700 dark:text-gray-300">{summary.benchmark.toFixed(1)}</p>
+                        <p className="text-5xl font-bold mt-2 text-gray-700 dark:text-gray-300">
+                            {summary.benchmark.toFixed(1)}
+                        </p>
                         <p className="text-sm text-gray-500 mt-1">average</p>
                     </div>
-                    <div className={`rounded-xl p-6 text-center ${summary.overallScore >= summary.benchmark ? 'bg-green-50 dark:bg-green-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}>
+                    <div
+                        className={`rounded-xl p-6 text-center ${summary.overallScore >= summary.benchmark ? 'bg-green-50 dark:bg-green-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}
+                    >
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Gap Analysis</p>
-                        <p className={`text-5xl font-bold mt-2 flex items-center justify-center ${summary.overallScore >= summary.benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        <p
+                            className={`text-5xl font-bold mt-2 flex items-center justify-center ${summary.overallScore >= summary.benchmark ? 'text-green-600' : 'text-red-600'}`}
+                        >
                             {summary.overallScore >= summary.benchmark ? (
-                                <><TrendingUp className="w-8 h-8 mr-2" />+{(summary.overallScore - summary.benchmark).toFixed(1)}</>
+                                <>
+                                    <TrendingUp className="w-8 h-8 mr-2" />+
+                                    {(summary.overallScore - summary.benchmark).toFixed(1)}
+                                </>
                             ) : (
-                                <><TrendingDown className="w-8 h-8 mr-2" />-{(summary.benchmark - summary.overallScore).toFixed(1)}</>
+                                <>
+                                    <TrendingDown className="w-8 h-8 mr-2" />-
+                                    {(summary.benchmark - summary.overallScore).toFixed(1)}
+                                </>
                             )}
                         </p>
-                        <p className="text-sm text-gray-500 mt-1">{summary.overallScore >= summary.benchmark ? 'Above benchmark' : 'Below benchmark'}</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {summary.overallScore >= summary.benchmark ? 'Above benchmark' : 'Below benchmark'}
+                        </p>
                     </div>
                 </div>
 
@@ -194,7 +219,11 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
                         <ul className="mt-2 space-y-1">
                             {summary.topGaps.map((gap, i) => (
                                 <li key={i} className="text-red-700 dark:text-red-300 text-sm">
-                                    • {gap.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                    •{' '}
+                                    {gap
+                                        .split('_')
+                                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                        .join(' ')}
                                 </li>
                             ))}
                         </ul>
@@ -215,7 +244,9 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
                             <div className="flex items-center justify-between mb-2">
                                 <span className="font-medium text-gray-800 dark:text-white">{dim.name}</span>
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(dim.status)}`}>
+                                    <span
+                                        className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(dim.status)}`}
+                                    >
                                         {dim.status.replace(/_/g, ' ').toUpperCase()}
                                     </span>
                                     <span className="font-bold text-lg">{dim.score.toFixed(1)}</span>
@@ -224,10 +255,15 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
                             {/* Progress Bar */}
                             <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div
-                                    className={`h-full transition-all ${dim.status === 'excellent' ? 'bg-green-500' :
-                                            dim.status === 'good' ? 'bg-blue-500' :
-                                                dim.status === 'needs_improvement' ? 'bg-yellow-500' : 'bg-red-500'
-                                        }`}
+                                    className={`h-full transition-all ${
+                                        dim.status === 'excellent'
+                                            ? 'bg-green-500'
+                                            : dim.status === 'good'
+                                              ? 'bg-blue-500'
+                                              : dim.status === 'needs_improvement'
+                                                ? 'bg-yellow-500'
+                                                : 'bg-red-500'
+                                    }`}
                                     style={{ width: `${(dim.score / 5) * 100}%` }}
                                 />
                             </div>
@@ -259,7 +295,9 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
                                 <span className="font-medium text-gray-800 dark:text-white">
                                     {mapping.axis === 'processes' ? 'DRD Axis 1 - Processes' : 'DRD Axis 5 - Culture'}
                                 </span>
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(mapping.priority)}`}>
+                                <span
+                                    className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(mapping.priority)}`}
+                                >
                                     {mapping.priority}
                                 </span>
                             </div>
@@ -288,11 +326,16 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
 
                 <div className="space-y-4">
                     {recommendations.map((rec, index) => (
-                        <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500">
+                        <div
+                            key={index}
+                            className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500"
+                        >
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${getPriorityColor(rec.priority)}`}>
+                                        <span
+                                            className={`px-2 py-1 rounded text-xs font-bold ${getPriorityColor(rec.priority)}`}
+                                        >
                                             {rec.priority}
                                         </span>
                                         <span className="font-semibold text-gray-800 dark:text-white">{rec.area}</span>

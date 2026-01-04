@@ -5,12 +5,13 @@
  * Generate and store vector embeddings using OpenAI text-embedding-3-small.
  */
 
-import { z } from 'zod';
 import { createOpenAI } from '@ai-sdk/openai';
-import * as DbPromise from '../../utils/DbPromise.js';
-import { getDatabase } from '../../database/Database.js';
-import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
+
+import { getDatabase } from '../../database/Database.js';
+import * as DbPromise from '../../utils/DbPromise.js';
+import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
 
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -47,9 +48,9 @@ type EmbeddingRow = {
 const EmbeddingResponseSchema = z.object({
     data: z.array(
         z.object({
-            embedding: z.array(z.number())
-        })
-    )
+            embedding: z.array(z.number()),
+        }),
+    ),
 });
 
 const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
@@ -72,7 +73,7 @@ export class EmbeddingService {
     private initProvider(): void {
         if (process.env.OPENAI_API_KEY) {
             createOpenAI({
-                apiKey: process.env.OPENAI_API_KEY
+                apiKey: process.env.OPENAI_API_KEY,
             });
         }
     }
@@ -90,22 +91,19 @@ export class EmbeddingService {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     model: EMBEDDING_MODEL,
-                    input: text.substring(0, 8000)
-                })
+                    input: text.substring(0, 8000),
+                }),
             });
 
             if (!response.ok) {
                 throw new Error(`Embedding API error: ${response.status}`);
             }
 
-            const data = validateExternalServiceResponse(
-                await response.json(),
-                EmbeddingResponseSchema
-            );
+            const data = validateExternalServiceResponse(await response.json(), EmbeddingResponseSchema);
             return data.data[0]?.embedding ?? [];
         } catch (error: unknown) {
             const err = error as Error;
@@ -127,10 +125,7 @@ export class EmbeddingService {
         return this.storeChunkSqlite(chunk, embedding);
     }
 
-    private async storeChunkSqlite(
-        chunk: EmbeddingChunk,
-        embedding: number[]
-    ): Promise<{ id?: string | number }> {
+    private async storeChunkSqlite(chunk: EmbeddingChunk, embedding: number[]): Promise<{ id?: string | number }> {
         const { content, chunkIndex, documentId, organizationId, metadata } = chunk;
         const id = uuidv4();
         await DbPromise.run(
@@ -144,18 +139,15 @@ export class EmbeddingService {
                 chunkIndex ?? 0,
                 content,
                 JSON.stringify(embedding),
-                JSON.stringify(metadata || {})
+                JSON.stringify(metadata || {}),
             ],
-            { fallback: false }
+            { fallback: false },
         );
 
         return { id };
     }
 
-    private async storeChunkPg(
-        chunk: EmbeddingChunk,
-        embedding: number[]
-    ): Promise<{ id?: string | number }> {
+    private async storeChunkPg(chunk: EmbeddingChunk, embedding: number[]): Promise<{ id?: string | number }> {
         const { content, chunkIndex, documentId, metadata, sourceType } = chunk;
         const vectorLiteral = `[${embedding.join(',')}]`;
         const db = getDatabase();
@@ -170,8 +162,8 @@ export class EmbeddingService {
                 content,
                 vectorLiteral,
                 JSON.stringify(metadata || {}),
-                sourceType || 'project'
-            ]
+                sourceType || 'project',
+            ],
         );
 
         return { id: result.rows[0]?.id };
@@ -193,10 +185,7 @@ export class EmbeddingService {
     /**
      * SQLite search - compute cosine similarity in JS
      */
-    private async searchSqlite(
-        queryEmbedding: number[],
-        options: EmbeddingSearchOptions
-    ): Promise<EmbeddingRow[]> {
+    private async searchSqlite(queryEmbedding: number[], options: EmbeddingSearchOptions): Promise<EmbeddingRow[]> {
         const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
 
         let sql = `SELECT * FROM ai_knowledge_embeddings`;
@@ -213,18 +202,19 @@ export class EmbeddingService {
         }
 
         const results = rows
-            .map(row => {
+            .map((row) => {
                 const embedding = parseJson<number[]>(row.embedding ?? '[]', []);
                 const similarity = this.cosineSimilarity(queryEmbedding, embedding);
                 return {
                     ...row,
                     similarity,
-                    metadata: typeof row.metadata === 'string'
-                        ? parseJson<Record<string, unknown>>(row.metadata, {})
-                        : row.metadata
+                    metadata:
+                        typeof row.metadata === 'string'
+                            ? parseJson<Record<string, unknown>>(row.metadata, {})
+                            : row.metadata,
                 };
             })
-            .filter(result => (result.similarity ?? 0) >= minSimilarity)
+            .filter((result) => (result.similarity ?? 0) >= minSimilarity)
             .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
             .slice(0, limit);
 
@@ -234,10 +224,7 @@ export class EmbeddingService {
     /**
      * PostgreSQL search - use pgvector operators
      */
-    private async searchPg(
-        queryEmbedding: number[],
-        options: EmbeddingSearchOptions
-    ): Promise<EmbeddingRow[]> {
+    private async searchPg(queryEmbedding: number[], options: EmbeddingSearchOptions): Promise<EmbeddingRow[]> {
         const { limit = 5, minSimilarity = 0.5, sourceType } = options;
         const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
@@ -267,11 +254,12 @@ export class EmbeddingService {
         try {
             const db = getDatabase();
             const result = await db.query<EmbeddingRow>(sql, params);
-            return (result.rows || []).map(row => ({
+            return (result.rows || []).map((row) => ({
                 ...row,
-                metadata: typeof row.metadata === 'string'
-                    ? parseJson<Record<string, unknown>>(row.metadata, {})
-                    : row.metadata
+                metadata:
+                    typeof row.metadata === 'string'
+                        ? parseJson<Record<string, unknown>>(row.metadata, {})
+                        : row.metadata,
             }));
         } catch (error: unknown) {
             const err = error as Error;
@@ -325,7 +313,7 @@ export class EmbeddingService {
                 )
             `,
             [],
-            { fallback: false }
+            { fallback: false },
         );
     }
 }
@@ -336,5 +324,5 @@ export default {
     EmbeddingService,
     embeddingService,
     EMBEDDING_MODEL,
-    EMBEDDING_DIMENSIONS
+    EMBEDDING_DIMENSIONS,
 };

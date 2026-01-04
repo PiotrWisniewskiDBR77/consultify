@@ -1,10 +1,10 @@
 /**
  * Tax Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles tax calculations, VAT validation, and Stripe Tax integration.
  * Fully migrated from server/services/taxService.js
- * 
+ *
  * Features:
  * - Tax rate management (CRUD)
  * - Tax calculation based on customer location
@@ -13,10 +13,11 @@
  * - Supports EU VAT, US Sales Tax, and other jurisdictions
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import Stripe from 'stripe';
-import type { IDatabase } from '../database/IDatabase.js';
+import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -161,7 +162,11 @@ class TaxServiceClass {
 
     constructor(deps?: TaxServiceDependencies) {
         this.db = deps?.db || getDatabase();
-        this.stripe = deps?.stripe || (process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' }) : null);
+        this.stripe =
+            deps?.stripe ||
+            (process.env.STRIPE_SECRET_KEY
+                ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
+                : null);
     }
 
     /**
@@ -207,27 +212,29 @@ class TaxServiceClass {
     /**
      * Get all tax rates
      */
-    async getTaxRates(options: { country?: string; taxType?: string; isActive?: boolean | null } = {}): Promise<TaxRate[]> {
+    async getTaxRates(
+        options: { country?: string; taxType?: string; isActive?: boolean | null } = {},
+    ): Promise<TaxRate[]> {
         const { country, taxType, isActive = true } = options;
-        
+
         let query = 'SELECT * FROM tax_rates WHERE 1=1';
         const params: unknown[] = [];
-        
+
         if (isActive !== null) {
             query += ' AND is_active = ?';
             params.push(isActive ? 1 : 0);
         }
-        
+
         if (country) {
             query += ' AND country = ?';
             params.push(country);
         }
-        
+
         if (taxType) {
             query += ' AND tax_type = ?';
             params.push(taxType);
         }
-        
+
         query += ' ORDER BY country, percentage DESC';
 
         return await this.dbAll<TaxRate>(query, params);
@@ -269,8 +276,8 @@ class TaxServiceClass {
                 data.effective_from || null,
                 data.effective_until || null,
                 data.stripe_tax_code || null,
-                data.automatic_tax ? 1 : 0
-            ]
+                data.automatic_tax ? 1 : 0,
+            ],
         );
 
         return { id, ...data } as TaxRate & TaxRateCreateData;
@@ -279,18 +286,33 @@ class TaxServiceClass {
     /**
      * Update tax rate
      */
-    async updateTaxRate(taxRateId: string, updates: TaxRateUpdateData): Promise<{ id: string; changes: number } | null> {
+    async updateTaxRate(
+        taxRateId: string,
+        updates: TaxRateUpdateData,
+    ): Promise<{ id: string; changes: number } | null> {
         const fields: string[] = [];
         const values: unknown[] = [];
-        
+
         const allowedFields: Array<keyof TaxRateUpdateData> = [
-            'display_name', 'description', 'jurisdiction', 'jurisdiction_level',
-            'percentage', 'inclusive', 'tax_type', 'country', 'state',
-            'postal_codes', 'product_categories', 'is_active', 'effective_from',
-            'effective_until', 'stripe_tax_code', 'automatic_tax'
+            'display_name',
+            'description',
+            'jurisdiction',
+            'jurisdiction_level',
+            'percentage',
+            'inclusive',
+            'tax_type',
+            'country',
+            'state',
+            'postal_codes',
+            'product_categories',
+            'is_active',
+            'effective_from',
+            'effective_until',
+            'stripe_tax_code',
+            'automatic_tax',
         ];
 
-        allowedFields.forEach(field => {
+        allowedFields.forEach((field) => {
             if (updates[field] !== undefined) {
                 fields.push(`${field} = ?`);
                 if (field === 'postal_codes' || field === 'product_categories') {
@@ -308,10 +330,7 @@ class TaxServiceClass {
         fields.push('updated_at = datetime("now")');
         values.push(taxRateId);
 
-        const result = await this.dbRun(
-            `UPDATE tax_rates SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
+        const result = await this.dbRun(`UPDATE tax_rates SET ${fields.join(', ')} WHERE id = ?`, values);
 
         return { id: taxRateId, changes: result.changes };
     }
@@ -333,7 +352,7 @@ class TaxServiceClass {
              AND (effective_from IS NULL OR effective_from <= datetime('now'))
              AND (effective_until IS NULL OR effective_until >= datetime('now'))
              ORDER BY percentage DESC`,
-            [countryCode]
+            [countryCode],
         );
     }
 
@@ -352,7 +371,7 @@ class TaxServiceClass {
             state = null,
             postalCode = null,
             taxIdNumber = null,
-            useStripeTax = false
+            useStripeTax = false,
         } = options;
 
         // If tax ID is provided, validate it first
@@ -366,11 +385,13 @@ class TaxServiceClass {
                     taxType: 'vat',
                     taxBehavior: 'reverse_charge',
                     description: 'EU Reverse Charge (B2B)',
-                    breakdown: [{
-                        name: 'EU Reverse Charge',
-                        rate: 0,
-                        amount: 0
-                    }]
+                    breakdown: [
+                        {
+                            name: 'EU Reverse Charge',
+                            rate: 0,
+                            amount: 0,
+                        },
+                    ],
                 };
             }
         }
@@ -380,18 +401,20 @@ class TaxServiceClass {
             try {
                 const taxCalc = await this.stripe.tax.calculations.create({
                     currency,
-                    line_items: [{
-                        amount,
-                        reference: 'calculation'
-                    }],
+                    line_items: [
+                        {
+                            amount,
+                            reference: 'calculation',
+                        },
+                    ],
                     customer_details: {
                         address: {
                             country,
                             state: state || undefined,
-                            postal_code: postalCode || undefined
+                            postal_code: postalCode || undefined,
                         },
-                        address_source: 'billing'
-                    }
+                        address_source: 'billing',
+                    },
                 });
 
                 return {
@@ -400,20 +423,23 @@ class TaxServiceClass {
                     taxType: taxCalc.tax_breakdown?.[0]?.tax_rate_details?.tax_type || 'sales_tax',
                     taxBehavior: 'exclusive',
                     stripeTaxCalculationId: taxCalc.id,
-                    breakdown: (taxCalc.tax_breakdown || []).map(tb => ({
+                    breakdown: (taxCalc.tax_breakdown || []).map((tb) => ({
                         name: tb.tax_rate_details?.display_name,
                         rate: (tb.tax_rate_details?.percentage_decimal || 0) * 100,
-                        amount: tb.amount
-                    }))
+                        amount: tb.amount,
+                    })),
                 };
             } catch (e: unknown) {
-                logger.warn('[Tax] Stripe Tax calculation failed, falling back to local:', e instanceof Error ? e.message : String(e));
+                logger.warn(
+                    '[Tax] Stripe Tax calculation failed, falling back to local:',
+                    e instanceof Error ? e.message : String(e),
+                );
             }
         }
 
         // Local tax calculation
         const applicableRate = await this.findApplicableTaxRate(country, state, postalCode);
-        
+
         if (!applicableRate) {
             return {
                 taxAmount: 0,
@@ -421,12 +447,12 @@ class TaxServiceClass {
                 taxType: null,
                 taxBehavior: 'none',
                 description: 'No applicable tax',
-                breakdown: []
+                breakdown: [],
             };
         }
 
         const taxAmount = applicableRate.inclusive
-            ? Math.round(amount - (amount / (1 + applicableRate.percentage / 100)))
+            ? Math.round(amount - amount / (1 + applicableRate.percentage / 100))
             : Math.round(amount * (applicableRate.percentage / 100));
 
         return {
@@ -436,18 +462,24 @@ class TaxServiceClass {
             taxBehavior: applicableRate.inclusive ? 'inclusive' : 'exclusive',
             taxRateId: applicableRate.id,
             description: applicableRate.display_name,
-            breakdown: [{
-                name: applicableRate.display_name,
-                rate: applicableRate.percentage,
-                amount: taxAmount
-            }]
+            breakdown: [
+                {
+                    name: applicableRate.display_name,
+                    rate: applicableRate.percentage,
+                    amount: taxAmount,
+                },
+            ],
         };
     }
 
     /**
      * Find applicable tax rate for location
      */
-    private async findApplicableTaxRate(country: string, state: string | null = null, postalCode: string | null = null): Promise<TaxRate | null> {
+    private async findApplicableTaxRate(
+        country: string,
+        _state: string | null = null,
+        _postalCode: string | null = null,
+    ): Promise<TaxRate | null> {
         // Try to find most specific match first
         let query = `
             SELECT * FROM tax_rates 
@@ -481,7 +513,7 @@ class TaxServiceClass {
     async validateVATNumber(vatNumber: string, countryCode: string): Promise<VATValidationResult> {
         // Clean the VAT number
         const cleanedNumber = vatNumber.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-        
+
         // Check cache first
         const cached = await this.getCachedValidation(cleanedNumber, countryCode);
         if (cached && new Date(cached.expires_at) > new Date()) {
@@ -489,7 +521,7 @@ class TaxServiceClass {
                 is_valid: cached.is_valid === 1,
                 company_name: cached.company_name,
                 company_address: cached.company_address,
-                cached: true
+                cached: true,
             };
         }
 
@@ -498,14 +530,14 @@ class TaxServiceClass {
             try {
                 const validation = await this.stripe.tax.validations.create({
                     type: this.mapCountryToTaxIdType(countryCode),
-                    value: cleanedNumber
+                    value: cleanedNumber,
                 });
 
                 const result: VATValidationResult = {
                     is_valid: validation.status === 'valid',
                     company_name: validation.owner?.name || null,
                     company_address: validation.owner?.address?.line1 || null,
-                    validation_source: 'stripe'
+                    validation_source: 'stripe',
                 };
 
                 await this.cacheValidation(cleanedNumber, countryCode, result);
@@ -530,7 +562,7 @@ class TaxServiceClass {
         return {
             is_valid: false,
             error: 'Could not validate VAT number',
-            validation_source: 'none'
+            validation_source: 'none',
         };
     }
 
@@ -541,15 +573,15 @@ class TaxServiceClass {
         // In production, this would call the actual VIES SOAP service
         // For now, return a mock response
         logger.info(`[Tax] VIES validation for ${countryCode}${vatNumber}`);
-        
+
         // Basic format validation
         const formatValid = /^[A-Z0-9]{8,12}$/.test(vatNumber);
-        
+
         return {
             is_valid: formatValid,
             company_name: formatValid ? 'Company Name (VIES lookup required)' : null,
             company_address: formatValid ? 'Address (VIES lookup required)' : null,
-            validation_source: 'vies_mock'
+            validation_source: 'vies_mock',
         };
     }
 
@@ -574,15 +606,18 @@ class TaxServiceClass {
                 result.company_address,
                 expiresAt.toISOString(),
                 result.validation_source,
-                JSON.stringify(result)
-            ]
+                JSON.stringify(result),
+            ],
         );
     }
 
     /**
      * Get cached validation
      */
-    private async getCachedValidation(vatNumber: string, countryCode: string): Promise<{
+    private async getCachedValidation(
+        vatNumber: string,
+        countryCode: string,
+    ): Promise<{
         is_valid: number;
         company_name?: string | null;
         company_address?: string | null;
@@ -593,10 +628,7 @@ class TaxServiceClass {
             company_name?: string | null;
             company_address?: string | null;
             expires_at: string;
-        }>(
-            'SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ?',
-            [vatNumber, countryCode]
-        );
+        }>('SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ?', [vatNumber, countryCode]);
     }
 
     // ==========================================
@@ -610,7 +642,7 @@ class TaxServiceClass {
         const {
             startDate,
             endDate,
-            groupBy = 'country' // country, tax_type, month
+            groupBy = 'country', // country, tax_type, month
         } = options;
 
         let query: string;
@@ -688,25 +720,30 @@ class TaxServiceClass {
             period: { startDate, endDate },
             groupBy,
             data: rows,
-            totals: this.calculateTotals(rows)
+            totals: this.calculateTotals(rows),
         };
     }
 
     /**
      * Calculate totals from report data
      */
-    private calculateTotals(rows: Array<{ invoice_count?: number; subtotal?: number; tax_collected?: number; total?: number }>): {
+    private calculateTotals(
+        rows: Array<{ invoice_count?: number; subtotal?: number; tax_collected?: number; total?: number }>,
+    ): {
         invoice_count: number;
         subtotal: number;
         tax_collected: number;
         total: number;
     } {
-        return rows.reduce((acc, row) => ({
-            invoice_count: acc.invoice_count + (row.invoice_count || 0),
-            subtotal: acc.subtotal + (row.subtotal || 0),
-            tax_collected: acc.tax_collected + (row.tax_collected || 0),
-            total: acc.total + (row.total || 0)
-        }), { invoice_count: 0, subtotal: 0, tax_collected: 0, total: 0 });
+        return rows.reduce(
+            (acc, row) => ({
+                invoice_count: acc.invoice_count + (row.invoice_count || 0),
+                subtotal: acc.subtotal + (row.subtotal || 0),
+                tax_collected: acc.tax_collected + (row.tax_collected || 0),
+                total: acc.total + (row.total || 0),
+            }),
+            { invoice_count: 0, subtotal: 0, tax_collected: 0, total: 0 },
+        );
     }
 
     // ==========================================
@@ -718,9 +755,33 @@ class TaxServiceClass {
      */
     isEUCountry(countryCode: string | null | undefined): boolean {
         const euCountries = [
-            'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
-            'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
-            'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'
+            'AT',
+            'BE',
+            'BG',
+            'HR',
+            'CY',
+            'CZ',
+            'DK',
+            'EE',
+            'FI',
+            'FR',
+            'DE',
+            'GR',
+            'HU',
+            'IE',
+            'IT',
+            'LV',
+            'LT',
+            'LU',
+            'MT',
+            'NL',
+            'PL',
+            'PT',
+            'RO',
+            'SK',
+            'SI',
+            'ES',
+            'SE',
         ];
         return euCountries.includes(countryCode?.toUpperCase() || '');
     }
@@ -730,19 +791,39 @@ class TaxServiceClass {
      */
     mapCountryToTaxIdType(countryCode: string | null | undefined): string {
         const mapping: Record<string, string> = {
-            'AT': 'eu_vat', 'BE': 'eu_vat', 'BG': 'eu_vat', 'HR': 'eu_vat',
-            'CY': 'eu_vat', 'CZ': 'eu_vat', 'DK': 'eu_vat', 'EE': 'eu_vat',
-            'FI': 'eu_vat', 'FR': 'eu_vat', 'DE': 'eu_vat', 'GR': 'eu_vat',
-            'HU': 'eu_vat', 'IE': 'eu_vat', 'IT': 'eu_vat', 'LV': 'eu_vat',
-            'LT': 'eu_vat', 'LU': 'eu_vat', 'MT': 'eu_vat', 'NL': 'eu_vat',
-            'PL': 'eu_vat', 'PT': 'eu_vat', 'RO': 'eu_vat', 'SK': 'eu_vat',
-            'SI': 'eu_vat', 'ES': 'eu_vat', 'SE': 'eu_vat',
-            'GB': 'gb_vat',
-            'CH': 'ch_vat',
-            'US': 'us_ein',
-            'CA': 'ca_bn',
-            'AU': 'au_abn',
-            'NZ': 'nz_gst'
+            AT: 'eu_vat',
+            BE: 'eu_vat',
+            BG: 'eu_vat',
+            HR: 'eu_vat',
+            CY: 'eu_vat',
+            CZ: 'eu_vat',
+            DK: 'eu_vat',
+            EE: 'eu_vat',
+            FI: 'eu_vat',
+            FR: 'eu_vat',
+            DE: 'eu_vat',
+            GR: 'eu_vat',
+            HU: 'eu_vat',
+            IE: 'eu_vat',
+            IT: 'eu_vat',
+            LV: 'eu_vat',
+            LT: 'eu_vat',
+            LU: 'eu_vat',
+            MT: 'eu_vat',
+            NL: 'eu_vat',
+            PL: 'eu_vat',
+            PT: 'eu_vat',
+            RO: 'eu_vat',
+            SK: 'eu_vat',
+            SI: 'eu_vat',
+            ES: 'eu_vat',
+            SE: 'eu_vat',
+            GB: 'gb_vat',
+            CH: 'ch_vat',
+            US: 'us_ein',
+            CA: 'ca_bn',
+            AU: 'au_abn',
+            NZ: 'nz_gst',
         };
         return mapping[countryCode?.toUpperCase() || ''] || 'eu_vat';
     }
@@ -762,15 +843,20 @@ export { TaxServiceClass };
 export default taxService;
 
 // Export individual methods for backward compatibility
-export const getTaxRates = (options?: { country?: string; taxType?: string; isActive?: boolean | null }) => taxService.getTaxRates(options);
+export const getTaxRates = (options?: { country?: string; taxType?: string; isActive?: boolean | null }) =>
+    taxService.getTaxRates(options);
 export const getTaxRateById = (taxRateId: string) => taxService.getTaxRateById(taxRateId);
 export const createTaxRate = (data: TaxRateCreateData) => taxService.createTaxRate(data);
-export const updateTaxRate = (taxRateId: string, updates: TaxRateUpdateData) => taxService.updateTaxRate(taxRateId, updates);
+export const updateTaxRate = (taxRateId: string, updates: TaxRateUpdateData) =>
+    taxService.updateTaxRate(taxRateId, updates);
 export const deleteTaxRate = (taxRateId: string) => taxService.deleteTaxRate(taxRateId);
 export const getTaxRatesForCountry = (countryCode: string) => taxService.getTaxRatesForCountry(countryCode);
 export const calculateTax = (options: TaxCalculationOptions) => taxService.calculateTax(options);
-export const findApplicableTaxRate = (country: string, state?: string | null, postalCode?: string | null) => taxService['findApplicableTaxRate'](country, state, postalCode);
-export const validateVATNumber = (vatNumber: string, countryCode: string) => taxService.validateVATNumber(vatNumber, countryCode);
+export const findApplicableTaxRate = (country: string, state?: string | null, postalCode?: string | null) =>
+    taxService['findApplicableTaxRate'](country, state, postalCode);
+export const validateVATNumber = (vatNumber: string, countryCode: string) =>
+    taxService.validateVATNumber(vatNumber, countryCode);
 export const getTaxReport = (options?: TaxReportOptions) => taxService.getTaxReport(options);
 export const isEUCountry = (countryCode: string | null | undefined) => taxService.isEUCountry(countryCode);
-export const mapCountryToTaxIdType = (countryCode: string | null | undefined) => taxService.mapCountryToTaxIdType(countryCode);
+export const mapCountryToTaxIdType = (countryCode: string | null | undefined) =>
+    taxService.mapCountryToTaxIdType(countryCode);

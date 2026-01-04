@@ -1,33 +1,34 @@
 /**
  * Global Help Search Component
- * 
+ *
  * Cmd+K / Ctrl+K activated modal for searching all help content.
  * Enterprise-grade search with real-time results, keyboard navigation,
  * and category filtering.
  */
 
-import React, { useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import DOMPurify from 'dompurify';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Search,
-    X,
+    ArrowRight,
+    Clock,
     Command,
     FileText,
+    Hash,
     HelpCircle,
-    Video,
     Layout,
-    Clock,
-    TrendingUp,
-    ArrowRight,
     Loader2,
-    Hash
+    Search,
+    TrendingUp,
+    Video,
+    X,
 } from 'lucide-react';
-import DOMPurify from 'dompurify';
+import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { HelpModuleId, MODULE_HELP_CONTENT } from '../../config/moduleHelpContent';
 import { useGlobalHelpSearch } from '../../hooks/useGlobalHelpSearch';
 import { SearchResult, SearchResultType } from '../../services/helpSearchService';
 import { highlightQuery } from '../../services/helpSearchService';
-import { MODULE_HELP_CONTENT, HelpModuleId } from '../../config/moduleHelpContent';
 import DynamicIcon from '../shared/DynamicIcon';
 
 interface GlobalHelpSearchProps {
@@ -39,7 +40,7 @@ const TYPE_ICONS: Record<SearchResultType, React.ComponentType<{ size?: number; 
     module: Layout,
     card: FileText,
     faq: HelpCircle,
-    video: Video
+    video: Video,
 };
 
 export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }) => {
@@ -51,7 +52,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
         module: t('help.search.types.module'),
         card: t('help.search.types.card'),
         faq: t('help.search.types.faq'),
-        video: t('help.search.types.video')
+        video: t('help.search.types.video'),
     };
 
     const filterTabs: { id: SearchResultType | 'all'; label: string }[] = [
@@ -59,7 +60,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
         { id: 'module', label: t('help.search.filters.module') },
         { id: 'card', label: t('help.search.filters.card') },
         { id: 'faq', label: t('help.search.filters.faq') },
-        { id: 'video', label: t('help.search.filters.video') }
+        { id: 'video', label: t('help.search.filters.video') },
     ];
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +81,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
         clearQuery,
         selectResult,
         clearRecent,
-        setFilter
+        setFilter,
     } = useGlobalHelpSearch({
         language: lang,
         onSelect: (result) => {
@@ -95,7 +96,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                     console.log('Navigate to:', result.moduleId, result.id);
                 }
             }
-        }
+        },
     });
 
     // Focus input when open
@@ -179,14 +180,15 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 
                     {/* Filter Tabs */}
                     <div className="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                        {filterTabs.map(tab => (
+                        {filterTabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setFilter(tab.id as any)}
-                                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${activeFilter === tab.id
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                    }`}
+                                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                                    activeFilter === tab.id
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
+                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
                             >
                                 {tab.label}
                             </button>
@@ -214,16 +216,20 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                                             key={`${result.type}-${result.id}`}
                                             data-index={index}
                                             onClick={() => handleResultClick(result)}
-                                            className={`w-full flex items-start gap-3 px-5 py-3 text-left transition-colors ${isSelected
-                                                ? 'bg-purple-50 dark:bg-purple-900/20'
-                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                                }`}
+                                            className={`w-full flex items-start gap-3 px-5 py-3 text-left transition-colors ${
+                                                isSelected
+                                                    ? 'bg-purple-50 dark:bg-purple-900/20'
+                                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                            }`}
                                         >
                                             {/* Icon */}
-                                            <div className={`p-2 rounded-lg flex-shrink-0 ${isSelected
-                                                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400'
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                                                }`}>
+                                            <div
+                                                className={`p-2 rounded-lg flex-shrink-0 ${
+                                                    isSelected
+                                                        ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                                }`}
+                                            >
                                                 {result.icon ? (
                                                     <DynamicIcon name={result.icon} size={18} />
                                                 ) : (
@@ -237,7 +243,10 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                                                     <span
                                                         className="font-medium text-slate-900 dark:text-white truncate"
                                                         dangerouslySetInnerHTML={{
-                                                            __html: DOMPurify.sanitize(highlightQuery(result.title, query), { ALLOWED_TAGS: ['mark'] })
+                                                            __html: DOMPurify.sanitize(
+                                                                highlightQuery(result.title, query),
+                                                                { ALLOWED_TAGS: ['mark'] },
+                                                            ),
                                                         }}
                                                     />
                                                     <span className="text-xs px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded">
@@ -247,7 +256,10 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                                                 <p
                                                     className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5"
                                                     dangerouslySetInnerHTML={{
-                                                        __html: DOMPurify.sanitize(highlightQuery(result.excerpt, query), { ALLOWED_TAGS: ['mark'] })
+                                                        __html: DOMPurify.sanitize(
+                                                            highlightQuery(result.excerpt, query),
+                                                            { ALLOWED_TAGS: ['mark'] },
+                                                        ),
                                                     }}
                                                 />
                                             </div>
@@ -375,3 +387,4 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 };
 
 export default GlobalHelpSearch;
+

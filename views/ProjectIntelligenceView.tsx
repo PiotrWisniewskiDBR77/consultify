@@ -1,9 +1,9 @@
 /**
  * ProjectIntelligenceView
- * 
+ *
  * Module: Project Intelligence Hub
  * AI-powered knowledge capture and organization for projects.
- * 
+ *
  * Features:
  * - AI Interview mode for structured knowledge gathering
  * - Auto-detection of project insights from conversations
@@ -12,41 +12,47 @@
  * - Session history tracking
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Project } from '../types';
 import {
+    AlertTriangle,
+    Award,
     Brain,
-    MessageSquare,
+    CheckCircle,
+    ChevronRight,
     Database,
+    Download,
+    Eye,
+    FolderOpen,
     History,
+    Info,
+    Lightbulb,
+    Link,
+    Loader2,
+    Lock,
+    MessageSquare,
+    Play,
     Plus,
+    RefreshCw,
+    Settings,
     Sparkles,
     Target,
-    Users,
-    AlertTriangle,
-    Lightbulb,
-    Lock,
-    CheckCircle,
-    Link,
-    Award,
-    Loader2,
-    RefreshCw,
-    Play,
-    FolderOpen,
-    ChevronRight,
-    Info,
     Trash2,
-    Eye,
-    Settings,
-    Download
+    Users,
 } from 'lucide-react';
-import { SplitLayout } from '../components/SplitLayout';
-import { useAppStore } from '../store/useAppStore';
-import { Api } from '../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CategoryIcon, getCategoryLabel, CATEGORY_CONFIG, type InsightCategory } from '../components/Intelligence/CategoryIcon';
+
+import {
+    CATEGORY_CONFIG,
+    CategoryIcon,
+    getCategoryLabel,
+    type InsightCategory,
+} from '../components/Intelligence/CategoryIcon';
 import { InsightDetectionCard } from '../components/Intelligence/InsightDetectionCard';
 import { InterviewProgress } from '../components/Intelligence/InterviewProgress';
+import { SplitLayout } from '../components/SplitLayout';
+import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+import { Project } from '../types';
 
 // Types
 interface ProjectInsight {
@@ -92,7 +98,7 @@ const CATEGORY_ORDER: InsightCategory[] = [
     'constraint',
     'decision',
     'dependency',
-    'success_criteria'
+    'success_criteria',
 ];
 
 export const ProjectIntelligenceView: React.FC = () => {
@@ -107,7 +113,7 @@ export const ProjectIntelligenceView: React.FC = () => {
     const [isSeeding, setIsSeeding] = useState(false);
 
     // Get current project name
-    const currentProject = projects?.find(p => p.id === currentProjectId);
+    const currentProject = projects?.find((p) => p.id === currentProjectId);
 
     // Load projects
     useEffect(() => {
@@ -137,7 +143,7 @@ export const ProjectIntelligenceView: React.FC = () => {
         try {
             const [insightsRes, sessionsRes] = await Promise.all([
                 Api.get(`/intelligence/projects/${currentProjectId}/insights`),
-                Api.get(`/intelligence/projects/${currentProjectId}/sessions`)
+                Api.get(`/intelligence/projects/${currentProjectId}/sessions`),
             ]);
             setInsights(insightsRes || []);
             setSessions(sessionsRes || []);
@@ -177,9 +183,7 @@ export const ProjectIntelligenceView: React.FC = () => {
     const handleConfirmInsight = async (insight: ProjectInsight) => {
         try {
             await Api.patch(`/intelligence/insights/${insight.id}`, { status: 'confirmed' });
-            setInsights(prev => prev.map(i =>
-                i.id === insight.id ? { ...i, status: 'confirmed' } : i
-            ));
+            setInsights((prev) => prev.map((i) => (i.id === insight.id ? { ...i, status: 'confirmed' } : i)));
             toast.success('Insight confirmed');
         } catch (error) {
             toast.error('Failed to confirm insight');
@@ -190,7 +194,7 @@ export const ProjectIntelligenceView: React.FC = () => {
     const handleDeleteInsight = async (insightId: string) => {
         try {
             await Api.delete(`/intelligence/insights/${insightId}`);
-            setInsights(prev => prev.filter(i => i.id !== insightId));
+            setInsights((prev) => prev.filter((i) => i.id !== insightId));
             toast.success('Insight deleted');
         } catch (error) {
             toast.error('Failed to delete insight');
@@ -198,15 +202,17 @@ export const ProjectIntelligenceView: React.FC = () => {
     };
 
     // Filter insights by category
-    const filteredInsights = selectedCategory === 'all'
-        ? insights
-        : insights.filter(i => i.category === selectedCategory);
+    const filteredInsights =
+        selectedCategory === 'all' ? insights : insights.filter((i) => i.category === selectedCategory);
 
     // Group insights by category for stats
-    const insightStats = CATEGORY_ORDER.reduce((acc, cat) => {
-        acc[cat] = insights.filter(i => i.category === cat).length;
-        return acc;
-    }, {} as Record<InsightCategory, number>);
+    const insightStats = CATEGORY_ORDER.reduce(
+        (acc, cat) => {
+            acc[cat] = insights.filter((i) => i.category === cat).length;
+            return acc;
+        },
+        {} as Record<InsightCategory, number>,
+    );
 
     // No project selected state
     if (!currentProjectId) {
@@ -224,12 +230,10 @@ export const ProjectIntelligenceView: React.FC = () => {
                     <div className="w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-6">
                         <FolderOpen className="w-10 h-10 text-purple-500" />
                     </div>
-                    <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-                        Select a Project
-                    </h2>
+                    <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Select a Project</h2>
                     <p className="text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
-                        Choose a project from the sidebar to start capturing project intelligence.
-                        The AI will help you organize knowledge about objectives, stakeholders, risks, and more.
+                        Choose a project from the sidebar to start capturing project intelligence. The AI will help you
+                        organize knowledge about objectives, stakeholders, risks, and more.
                     </p>
                     <div className="flex items-center gap-2 text-sm text-slate-400">
                         <Info size={14} />
@@ -292,20 +296,22 @@ export const ProjectIntelligenceView: React.FC = () => {
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-950 rounded-lg p-1 w-fit">
                         <button
                             onClick={() => setActiveTab('interview')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'interview'
-                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'interview'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                             <MessageSquare size={16} />
                             Interview
                         </button>
                         <button
                             onClick={() => setActiveTab('knowledge')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'knowledge'
-                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'knowledge'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                             <Database size={16} />
                             Knowledge Base
@@ -317,10 +323,11 @@ export const ProjectIntelligenceView: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('sessions')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'sessions'
-                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'sessions'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                             <History size={16} />
                             Sessions
@@ -340,10 +347,7 @@ export const ProjectIntelligenceView: React.FC = () => {
                             <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
                         </div>
                     ) : activeTab === 'interview' ? (
-                        <InterviewTabContent
-                            projectId={currentProjectId}
-                            onInsightCreated={fetchData}
-                        />
+                        <InterviewTabContent projectId={currentProjectId} onInsightCreated={fetchData} />
                     ) : activeTab === 'knowledge' ? (
                         <KnowledgeTabContent
                             insights={filteredInsights}
@@ -387,12 +391,12 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                             Start an AI Interview
                         </h3>
                         <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                            Use the chat panel on the left to have a conversation with the AI.
-                            As you discuss your project, the AI will automatically detect and extract
-                            key insights like objectives, risks, stakeholders, and decisions.
+                            Use the chat panel on the left to have a conversation with the AI. As you discuss your
+                            project, the AI will automatically detect and extract key insights like objectives, risks,
+                            stakeholders, and decisions.
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            {CATEGORY_ORDER.slice(0, 4).map(cat => {
+                            {CATEGORY_ORDER.slice(0, 4).map((cat) => {
                                 const config = CATEGORY_CONFIG[cat];
                                 const IconComponent = config.icon;
                                 return (
@@ -405,9 +409,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                                     </span>
                                 );
                             })}
-                            <span className="text-xs text-slate-400 dark:text-slate-500 py-1">
-                                +4 more categories
-                            </span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 py-1">+4 more categories</span>
                         </div>
                     </div>
                 </div>
@@ -415,7 +417,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
 
             {/* Category Overview Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {CATEGORY_ORDER.map(category => {
+                {CATEGORY_ORDER.map((category) => {
                     const config = CATEGORY_CONFIG[category];
                     const IconComponent = config.icon;
                     return (
@@ -423,12 +425,12 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                             key={category}
                             className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4 hover:shadow-md transition-shadow"
                         >
-                            <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center mb-3`}>
+                            <div
+                                className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center mb-3`}
+                            >
                                 <IconComponent size={20} className={config.color} />
                             </div>
-                            <h4 className="font-medium text-navy-900 dark:text-white text-sm">
-                                {config.label}
-                            </h4>
+                            <h4 className="font-medium text-navy-900 dark:text-white text-sm">{config.label}</h4>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
                                 {getCategoryDescription(category)}
                             </p>
@@ -442,8 +444,8 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({ projectId, on
                 <Info size={18} className="text-slate-400 shrink-0 mt-0.5" />
                 <div>
                     <p className="text-sm text-slate-600 dark:text-slate-300">
-                        All captured insights are aligned with <strong>ISO 21500</strong>, <strong>PMBOK 7</strong>,
-                        and <strong>PRINCE2</strong> standards for full PMO compliance and auditability.
+                        All captured insights are aligned with <strong>ISO 21500</strong>, <strong>PMBOK 7</strong>, and{' '}
+                        <strong>PRINCE2</strong> standards for full PMO compliance and auditability.
                     </p>
                 </div>
             </div>
@@ -471,7 +473,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
     onConfirmInsight,
     onDeleteInsight,
     selectedInsight,
-    onSelectInsight
+    onSelectInsight,
 }) => {
     if (insights.length === 0) {
         return (
@@ -479,12 +481,10 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
                 <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
                     <Database className="w-8 h-8 text-slate-400" />
                 </div>
-                <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    No insights captured yet
-                </p>
+                <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">No insights captured yet</p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-                    Start a conversation with the AI to capture project knowledge.
-                    Insights will appear here as they are detected.
+                    Start a conversation with the AI to capture project knowledge. Insights will appear here as they are
+                    detected.
                 </p>
             </div>
         );
@@ -499,10 +499,11 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
 
                     <button
                         onClick={() => onCategorySelect('all')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${selectedCategory === 'all'
-                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
-                            }`}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${
+                            selectedCategory === 'all'
+                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                        }`}
                     >
                         <span className="text-sm font-medium">All Insights</span>
                         <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
@@ -511,7 +512,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
                     </button>
 
                     <div className="space-y-1">
-                        {CATEGORY_ORDER.map(cat => {
+                        {CATEGORY_ORDER.map((cat) => {
                             const config = CATEGORY_CONFIG[cat];
                             const IconComponent = config.icon;
                             const count = stats[cat];
@@ -520,10 +521,11 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
                                 <button
                                     key={cat}
                                     onClick={() => onCategorySelect(cat)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${selectedCategory === cat
-                                        ? `${config.bgColor} ${config.color}`
-                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
-                                        }`}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                                        selectedCategory === cat
+                                            ? `${config.bgColor} ${config.color}`
+                                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                                    }`}
                                 >
                                     <IconComponent size={16} />
                                     <span className="text-sm font-medium flex-1 text-left">{config.label}</span>
@@ -541,7 +543,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
 
             {/* Insights List */}
             <div className="lg:col-span-2 space-y-4">
-                {insights.map(insight => (
+                {insights.map((insight) => (
                     <InsightCard
                         key={insight.id}
                         insight={insight}
@@ -565,21 +567,16 @@ interface InsightCardProps {
     onDelete: () => void;
 }
 
-const InsightCard: React.FC<InsightCardProps> = ({
-    insight,
-    isSelected,
-    onSelect,
-    onConfirm,
-    onDelete
-}) => {
+const InsightCard: React.FC<InsightCardProps> = ({ insight, isSelected, onSelect, onConfirm, onDelete }) => {
     const config = CATEGORY_CONFIG[insight.category];
 
     return (
         <div
-            className={`bg-white dark:bg-navy-900 rounded-xl border ${isSelected
-                ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800'
-                : 'border-slate-200 dark:border-white/10'
-                } p-4 hover:shadow-md transition-all cursor-pointer`}
+            className={`bg-white dark:bg-navy-900 rounded-xl border ${
+                isSelected
+                    ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800'
+                    : 'border-slate-200 dark:border-white/10'
+            } p-4 hover:shadow-md transition-all cursor-pointer`}
             onClick={onSelect}
         >
             <div className="flex items-start gap-4">
@@ -590,25 +587,29 @@ const InsightCard: React.FC<InsightCardProps> = ({
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                             {getCategoryLabel(insight.category)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${insight.status === 'confirmed'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            }`}>
+                        <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                insight.status === 'confirmed'
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}
+                        >
                             {String(insight.status)}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${insight.confidence === 'high'
-                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                            : insight.confidence === 'medium'
-                                ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
-                                : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                            }`}>
+                        <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${
+                                insight.confidence === 'high'
+                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                    : insight.confidence === 'medium'
+                                      ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
+                                      : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            }`}
+                        >
                             {String(insight.confidence)} confidence
                         </span>
                     </div>
 
-                    <h4 className="font-semibold text-navy-900 dark:text-white mb-2">
-                        {insight.title}
-                    </h4>
+                    <h4 className="font-semibold text-navy-900 dark:text-white mb-2">{insight.title}</h4>
 
                     {(insight.content as any).description && (
                         <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
@@ -627,7 +628,10 @@ const InsightCard: React.FC<InsightCardProps> = ({
                 <div className="flex items-center gap-1 shrink-0">
                     {insight.status === 'draft' && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onConfirm(); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onConfirm();
+                            }}
                             className="p-1.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                             title="Confirm insight"
                         >
@@ -635,7 +639,10 @@ const InsightCard: React.FC<InsightCardProps> = ({
                         </button>
                     )}
                     <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete();
+                        }}
                         className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         title="Delete insight"
                     >
@@ -660,9 +667,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                 <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
                     <History className="w-8 h-8 text-slate-400" />
                 </div>
-                <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    No interview sessions yet
-                </p>
+                <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">No interview sessions yet</p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
                     Your AI interview sessions will appear here. Start a conversation to create your first session.
                 </p>
@@ -672,7 +677,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
 
     return (
         <div className="space-y-4">
-            {sessions.map(session => (
+            {sessions.map((session) => (
                 <div
                     key={session.id}
                     onClick={() => onSessionSelect(session)}
@@ -680,19 +685,20 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                 >
                     <div className="flex items-start justify-between">
                         <div>
-                            <h4 className="font-semibold text-navy-900 dark:text-white">
-                                {session.topic}
-                            </h4>
+                            <h4 className="font-semibold text-navy-900 dark:text-white">{session.topic}</h4>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Started {new Date(session.started_at).toLocaleDateString()}
                             </p>
                         </div>
-                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${session.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : session.status === 'active'
-                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                            }`}>
+                        <span
+                            className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                                session.status === 'completed'
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : session.status === 'active'
+                                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                            }`}
+                        >
                             {session.status}
                         </span>
                     </div>
@@ -703,7 +709,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                             <div
                                 className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full"
                                 style={{
-                                    width: `${(session.progress.completed.length / 8) * 100}%`
+                                    width: `${(session.progress.completed.length / 8) * 100}%`,
                                 }}
                             />
                         </div>
@@ -727,7 +733,7 @@ function getCategoryDescription(category: InsightCategory): string {
         constraint: 'Fixed boundaries, limitations, and requirements',
         decision: 'Key choices made and their rationale',
         dependency: 'Internal and external dependencies',
-        success_criteria: 'How success will be measured and validated'
+        success_criteria: 'How success will be measured and validated',
     };
     return descriptions[category];
 }

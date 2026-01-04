@@ -1,6 +1,6 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Loader2, Shield, Sparkles, Users, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, Users, Shield, ArrowRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface DemoModeModalProps {
@@ -10,12 +10,7 @@ interface DemoModeModalProps {
     mode: 'demo' | 'trial';
 }
 
-export const DemoModeModal: React.FC<DemoModeModalProps> = ({
-    isOpen,
-    onClose,
-    onStartDemo,
-    mode
-}) => {
+export const DemoModeModal: React.FC<DemoModeModalProps> = ({ isOpen, onClose, onStartDemo, mode }) => {
     const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -67,10 +62,9 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
 
                             {/* Title */}
                             <h2 className="text-2xl font-bold text-white mb-2">
-                                {mode === 'demo' 
+                                {mode === 'demo'
                                     ? t('demo.modal.title', 'Experience Consultinity')
-                                    : t('demo.modal.titleTrial', 'Start Your Trial')
-                                }
+                                    : t('demo.modal.titleTrial', 'Start Your Trial')}
                             </h2>
                             <p className="text-white/80 text-sm">
                                 {t('demo.modal.subtitle', 'Explore our AI-powered consulting platform')}
@@ -90,7 +84,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                                             {t('demo.modal.demoMode', 'Demo Environment')}
                                         </h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                                            {t('demo.modal.demoDescription', 'You\'ll be logged in as a demo user with full access to explore all features. This is a shared environment for evaluation purposes.')}
+                                            {t(
+                                                'demo.modal.demoDescription',
+                                                "You'll be logged in as a demo user with full access to explore all features. This is a shared environment for evaluation purposes.",
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -104,7 +101,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                                             {t('demo.modal.commercialAccess', 'Want Full Commercial Access?')}
                                         </h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                                            {t('demo.modal.commercialDescription', 'For production use with your own data and team, please contact our sales team to set up your dedicated environment.')}
+                                            {t(
+                                                'demo.modal.commercialDescription',
+                                                'For production use with your own data and team, please contact our sales team to set up your dedicated environment.',
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -113,9 +113,13 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                             {/* Demo Credentials Info */}
                             <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-xl p-4 mb-6 border border-indigo-200 dark:border-indigo-500/20">
                                 <p className="text-sm text-indigo-800 dark:text-indigo-300 text-center">
-                                    <span className="font-medium">{t('demo.modal.loginAs', 'You will be logged in as:')}</span>
+                                    <span className="font-medium">
+                                        {t('demo.modal.loginAs', 'You will be logged in as:')}
+                                    </span>
                                     <br />
-                                    <code className="text-indigo-600 dark:text-indigo-400 font-mono">demo@legolex.com</code>
+                                    <code className="text-indigo-600 dark:text-indigo-400 font-mono">
+                                        demo@legolex.com
+                                    </code>
                                 </p>
                             </div>
 
@@ -151,7 +155,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
 
                             {/* Footer Note */}
                             <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-4">
-                                {t('demo.modal.footerNote', 'By entering the demo, you agree to our Terms of Service and Privacy Policy.')}
+                                {t(
+                                    'demo.modal.footerNote',
+                                    'By entering the demo, you agree to our Terms of Service and Privacy Policy.',
+                                )}
                             </p>
                         </div>
                     </motion.div>
@@ -160,12 +167,4 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
         </AnimatePresence>
     );
 };
-
-
-
-
-
-
-
-
 

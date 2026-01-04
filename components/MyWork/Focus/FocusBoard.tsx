@@ -1,7 +1,7 @@
 /**
  * FocusBoard - Daily focus task management
  * Part of My Work Module PMO Upgrade
- * 
+ *
  * Features:
  * - Time blocks (morning/afternoon/buffer)
  * - Max 5 tasks enforcement
@@ -10,36 +10,37 @@
  * - One-click completion
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
 import {
-    Target,
-    Sun,
-    Moon,
-    Clock,
-    Plus,
-    Sparkles,
+    Brain,
     CheckCircle,
     CheckCircle2,
-    Circle,
-    GripVertical,
-    ChevronUp,
     ChevronDown,
-    X,
-    Loader2,
-    Flame,
-    Inbox,
-    Brain,
+    ChevronUp,
+    Circle,
+    Clock,
     Coffee,
-    Zap
+    Flame,
+    GripVertical,
+    Inbox,
+    Loader2,
+    Moon,
+    Plus,
+    Sparkles,
+    Sun,
+    Target,
+    X,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { FocusTask, TimeBlock, FocusBoardProps, FocusSuggestion } from '../../../types/myWork';
-import { PMOPriorityBadge, getPMOCategory } from '../shared/PMOPriorityBadge';
+
+import { Api } from '../../../services/api';
+import type { FocusBoardProps, FocusSuggestion, FocusTask, TimeBlock } from '../../../types/myWork';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
-import { Api } from '../../../services/api';
-import toast from 'react-hot-toast';
+import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
 
 interface ExtendedFocusBoardProps extends Partial<FocusBoardProps> {
     onTaskClick?: (taskId: string) => void;
@@ -63,7 +64,7 @@ const DailyStatCard: React.FC<{
         blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/30',
         orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800/30',
         slate: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/30',
-        purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/30'
+        purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/30',
     };
 
     const iconBgClasses = {
@@ -71,7 +72,7 @@ const DailyStatCard: React.FC<{
         blue: 'bg-blue-100 dark:bg-blue-900/30',
         orange: 'bg-orange-100 dark:bg-orange-900/30',
         slate: 'bg-slate-100 dark:bg-slate-700/30',
-        purple: 'bg-purple-100 dark:bg-purple-900/30'
+        purple: 'bg-purple-100 dark:bg-purple-900/30',
     };
 
     return (
@@ -81,9 +82,7 @@ const DailyStatCard: React.FC<{
             className={`p-4 rounded-xl border ${colorClasses[color]} transition-all hover:shadow-md`}
         >
             <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${iconBgClasses[color]}`}>
-                    {icon}
-                </div>
+                <div className={`p-2 rounded-lg ${iconBgClasses[color]}`}>{icon}</div>
                 <div>
                     <p className="text-2xl font-bold text-navy-900 dark:text-white">
                         {value}
@@ -100,39 +99,42 @@ const DailyStatCard: React.FC<{
  * Focus Tips for empty state
  */
 const focusTips = [
-    { icon: Brain, tip: "Start with your hardest task when your energy is highest", color: 'text-purple-500' },
-    { icon: Target, tip: "Limit yourself to 3-5 important tasks per day", color: 'text-blue-500' },
-    { icon: Coffee, tip: "Take breaks every 90 minutes to maintain focus", color: 'text-orange-500' },
-    { icon: Zap, tip: "Group similar tasks together to minimize context switching", color: 'text-yellow-500' }
+    { icon: Brain, tip: 'Start with your hardest task when your energy is highest', color: 'text-purple-500' },
+    { icon: Target, tip: 'Limit yourself to 3-5 important tasks per day', color: 'text-blue-500' },
+    { icon: Coffee, tip: 'Take breaks every 90 minutes to maintain focus', color: 'text-orange-500' },
+    { icon: Zap, tip: 'Group similar tasks together to minimize context switching', color: 'text-yellow-500' },
 ];
 
 /**
  * Time block configuration
  */
-const timeBlockConfig: Record<TimeBlock, { 
-    label: string; 
-    icon: React.ReactNode; 
-    gradient: string;
-    time: string;
-}> = {
+const timeBlockConfig: Record<
+    TimeBlock,
+    {
+        label: string;
+        icon: React.ReactNode;
+        gradient: string;
+        time: string;
+    }
+> = {
     morning: {
         label: 'Rano',
         icon: <Sun size={16} />,
         gradient: 'time-block-morning',
-        time: '8:00 - 12:00'
+        time: '8:00 - 12:00',
     },
     afternoon: {
         label: 'Popołudnie',
         icon: <Moon size={16} />,
         gradient: 'time-block-afternoon',
-        time: '12:00 - 17:00'
+        time: '12:00 - 17:00',
     },
     buffer: {
         label: 'Bufor',
         icon: <Clock size={16} />,
         gradient: 'time-block-buffer',
-        time: 'Elastyczny'
-    }
+        time: 'Elastyczny',
+    },
 };
 
 /**
@@ -146,10 +148,12 @@ const FocusTaskCard: React.FC<{
     isDragging?: boolean;
 }> = ({ task, onComplete, onRemove, onClick, isDragging }) => {
     const { t } = useTranslation();
-    const pmoCategory = task.pmoCategory || getPMOCategory({
-        dueDate: task.dueDate,
-        priority: task.priority
-    });
+    const pmoCategory =
+        task.pmoCategory ||
+        getPMOCategory({
+            dueDate: task.dueDate,
+            priority: task.priority,
+        });
 
     return (
         <motion.div
@@ -159,9 +163,10 @@ const FocusTaskCard: React.FC<{
             exit={{ opacity: 0, x: -20, height: 0 }}
             className={`
                 group relative bg-white dark:bg-navy-900 rounded-xl border
-                ${task.isCompleted 
-                    ? 'border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10' 
-                    : 'border-slate-200 dark:border-white/10 hover:border-brand/30 dark:hover:border-brand/20'
+                ${
+                    task.isCompleted
+                        ? 'border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10'
+                        : 'border-slate-200 dark:border-white/10 hover:border-brand/30 dark:hover:border-brand/20'
                 }
                 ${isDragging ? 'focus-task-dragging shadow-xl ring-2 ring-brand' : 'shadow-sm'}
                 transition-all duration-200 cursor-pointer
@@ -189,10 +194,7 @@ const FocusTaskCard: React.FC<{
                 </button>
 
                 {/* Content */}
-                <div 
-                    className="flex-1 min-w-0"
-                    onClick={() => onClick(task.taskId)}
-                >
+                <div className="flex-1 min-w-0" onClick={() => onClick(task.taskId)}>
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                             {/* Initiative */}
@@ -201,13 +203,13 @@ const FocusTaskCard: React.FC<{
                                     {task.initiativeName}
                                 </span>
                             )}
-                            
+
                             {/* Title */}
-                            <h4 className={`text-sm font-semibold truncate ${
-                                task.isCompleted 
-                                    ? 'text-slate-400 line-through' 
-                                    : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <h4
+                                className={`text-sm font-semibold truncate ${
+                                    task.isCompleted ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {task.title}
                             </h4>
                         </div>
@@ -228,8 +230,8 @@ const FocusTaskCard: React.FC<{
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <PMOPriorityBadge category={pmoCategory} size="sm" showLabel={false} />
                         {task.dueDate && (
-                            <DueDateIndicator 
-                                dueDate={task.dueDate} 
+                            <DueDateIndicator
+                                dueDate={task.dueDate}
                                 dueTime={task.dueTime}
                                 isCompleted={task.isCompleted}
                                 size="sm"
@@ -263,7 +265,7 @@ const TimeBlockSection: React.FC<{
 }> = ({ block, tasks, onComplete, onRemove, onClick, onReorder, isExpanded, onToggle }) => {
     const { t } = useTranslation();
     const config = timeBlockConfig[block];
-    const completedCount = tasks.filter(t => t.isCompleted).length;
+    const completedCount = tasks.filter((t) => t.isCompleted).length;
 
     return (
         <div className={`rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 ${config.gradient}`}>
@@ -273,15 +275,11 @@ const TimeBlockSection: React.FC<{
                 className="w-full flex items-center justify-between p-3 hover:bg-white/50 dark:hover:bg-white/5 transition-colors"
             >
                 <div className="flex items-center gap-2">
-                    <span className="text-slate-600 dark:text-slate-300">
-                        {config.icon}
-                    </span>
+                    <span className="text-slate-600 dark:text-slate-300">{config.icon}</span>
                     <span className="font-semibold text-navy-900 dark:text-white">
                         {t(`myWork.focus.timeBlock.${block}`, config.label)}
                     </span>
-                    <span className="text-xs text-slate-400">
-                        {config.time}
-                    </span>
+                    <span className="text-xs text-slate-400">{config.time}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500">
@@ -302,12 +300,7 @@ const TimeBlockSection: React.FC<{
                     >
                         <div className="p-3 pt-0 space-y-2">
                             {tasks.length > 0 ? (
-                                <Reorder.Group 
-                                    axis="y" 
-                                    values={tasks} 
-                                    onReorder={onReorder}
-                                    className="space-y-2"
-                                >
+                                <Reorder.Group axis="y" values={tasks} onReorder={onReorder} className="space-y-2">
                                     {tasks.map((task) => (
                                         <Reorder.Item key={task.taskId} value={task}>
                                             <FocusTaskCard
@@ -343,24 +336,22 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
     onAddToFocus,
     onRemoveFromFocus,
     onRequestAISuggestion,
-    onNavigateToInbox
+    onNavigateToInbox,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [tasks, setTasks] = useState<FocusTask[]>([]);
     const [executionScore, setExecutionScore] = useState(0);
-    const [expandedBlocks, setExpandedBlocks] = useState<Set<TimeBlock>>(
-        new Set(['morning', 'afternoon'])
-    );
+    const [expandedBlocks, setExpandedBlocks] = useState<Set<TimeBlock>>(new Set(['morning', 'afternoon']));
     const [aiSuggesting, setAiSuggesting] = useState(false);
     const [suggestions, setSuggestions] = useState<FocusSuggestion | null>(null);
-    
+
     // Daily stats state
     const [dailyStats, setDailyStats] = useState({
         completedToday: 0,
         focusHours: 0,
         streak: 0,
-        backlogCount: 0
+        backlogCount: 0,
     });
 
     const currentDate = date || new Date();
@@ -384,14 +375,14 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                     completedToday: res.stats.completedToday || 0,
                     focusHours: res.stats.focusHours || 0,
                     streak: res.stats.streak || 0,
-                    backlogCount: res.stats.backlogCount || 0
+                    backlogCount: res.stats.backlogCount || 0,
                 });
             } else {
                 // Fallback: calculate from tasks
                 const completed = (res?.board?.tasks || []).filter((t: FocusTask) => t.isCompleted).length;
-                setDailyStats(prev => ({
+                setDailyStats((prev) => ({
                     ...prev,
-                    completedToday: completed
+                    completedToday: completed,
                 }));
             }
         } catch (error) {
@@ -407,31 +398,33 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
 
     // Group tasks by time block
     const tasksByBlock: Record<TimeBlock, FocusTask[]> = {
-        morning: tasks.filter(t => t.timeBlock === 'morning'),
-        afternoon: tasks.filter(t => t.timeBlock === 'afternoon'),
-        buffer: tasks.filter(t => t.timeBlock === 'buffer')
+        morning: tasks.filter((t) => t.timeBlock === 'morning'),
+        afternoon: tasks.filter((t) => t.timeBlock === 'afternoon'),
+        buffer: tasks.filter((t) => t.timeBlock === 'buffer'),
     };
 
     // Handle task completion
     const handleComplete = async (taskId: string) => {
         try {
-            const task = tasks.find(t => t.taskId === taskId);
+            const task = tasks.find((t) => t.taskId === taskId);
             if (!task) return;
 
             const newCompleted = !task.isCompleted;
-            
+
             // Optimistic update
-            setTasks(prev => prev.map(t => 
-                t.taskId === taskId ? { ...t, isCompleted: newCompleted } : t
-            ));
+            setTasks((prev) => prev.map((t) => (t.taskId === taskId ? { ...t, isCompleted: newCompleted } : t)));
 
             // Call API
-            await Api.updateTask(taskId, { 
-                status: newCompleted ? 'completed' : 'todo' 
+            await Api.updateTask(taskId, {
+                status: newCompleted ? 'completed' : 'todo',
             });
 
             onTaskComplete?.(taskId);
-            toast.success(newCompleted ? t('myWork.focus.taskCompleted', 'Task completed!') : t('myWork.focus.taskReopened', 'Task reopened'));
+            toast.success(
+                newCompleted
+                    ? t('myWork.focus.taskCompleted', 'Task completed!')
+                    : t('myWork.focus.taskReopened', 'Task reopened'),
+            );
         } catch (error) {
             console.error('Failed to complete task:', error);
             loadFocus(); // Revert on error
@@ -442,7 +435,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
     // Handle task removal from focus
     const handleRemove = async (taskId: string) => {
         try {
-            const newTasks = tasks.filter(t => t.taskId !== taskId);
+            const newTasks = tasks.filter((t) => t.taskId !== taskId);
             setTasks(newTasks);
 
             await Api.put('/my-work/focus', {
@@ -450,8 +443,8 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                 tasks: newTasks.map((t, idx) => ({
                     taskId: t.taskId,
                     timeBlock: t.timeBlock,
-                    position: idx
-                }))
+                    position: idx,
+                })),
             });
 
             onRemoveFromFocus?.(taskId);
@@ -465,7 +458,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
 
     // Handle reorder within a block
     const handleBlockReorder = (block: TimeBlock, newBlockTasks: FocusTask[]) => {
-        const otherTasks = tasks.filter(t => t.timeBlock !== block);
+        const otherTasks = tasks.filter((t) => t.timeBlock !== block);
         const newTasks = [...otherTasks, ...newBlockTasks];
         setTasks(newTasks);
 
@@ -475,14 +468,14 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             tasks: newTasks.map((t, idx) => ({
                 taskId: t.taskId,
                 timeBlock: t.timeBlock,
-                position: idx
-            }))
+                position: idx,
+            })),
         }).catch(console.error);
     };
 
     // Toggle block expansion
     const toggleBlock = (block: TimeBlock) => {
-        setExpandedBlocks(prev => {
+        setExpandedBlocks((prev) => {
             const next = new Set(prev);
             if (next.has(block)) {
                 next.delete(block);
@@ -512,7 +505,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
     };
 
     // Calculate completion stats
-    const completedCount = tasks.filter(t => t.isCompleted).length;
+    const completedCount = tasks.filter((t) => t.isCompleted).length;
     const totalCount = tasks.length;
     const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
@@ -537,10 +530,10 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                             {t('myWork.focus.title', "Today's Focus")}
                         </h2>
                         <p className="text-xs text-slate-500">
-                            {new Date().toLocaleDateString('pl-PL', { 
-                                weekday: 'long', 
-                                day: 'numeric', 
-                                month: 'long' 
+                            {new Date().toLocaleDateString('pl-PL', {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
                             })}
                         </p>
                     </div>
@@ -551,7 +544,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                     {/* Progress */}
                     <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-lg">
                         <div className="w-16 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-green-500 transition-all duration-500"
                                 style={{ width: `${progressPercent}%` }}
                             />
@@ -567,14 +560,8 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                         disabled={aiSuggesting || tasks.length >= MAX_FOCUS_TASKS}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-medium shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {aiSuggesting ? (
-                            <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                            <Sparkles size={16} />
-                        )}
-                        <span className="hidden sm:inline">
-                            {t('myWork.focus.aiSuggest', 'AI Suggest')}
-                        </span>
+                        {aiSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                        <span className="hidden sm:inline">{t('myWork.focus.aiSuggest', 'AI Suggest')}</span>
                     </button>
                 </div>
             </div>
@@ -648,9 +635,12 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                             {t('myWork.focus.empty.title', 'Plan Your Focus')}
                         </h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                            {t('myWork.focus.empty.description', 'Select up to 5 tasks to focus on today. AI can help you prioritize based on deadlines and importance.')}
+                            {t(
+                                'myWork.focus.empty.description',
+                                'Select up to 5 tasks to focus on today. AI can help you prioritize based on deadlines and importance.',
+                            )}
                         </p>
-                        
+
                         {/* Action Buttons */}
                         <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
                             <button
@@ -658,11 +648,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                                 disabled={aiSuggesting}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50"
                             >
-                                {aiSuggesting ? (
-                                    <Loader2 size={18} className="animate-spin" />
-                                ) : (
-                                    <Sparkles size={18} />
-                                )}
+                                {aiSuggesting ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
                                 {t('myWork.focus.aiSuggest', 'AI Suggest')}
                             </button>
                             <button
@@ -721,12 +707,10 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                                 {t('myWork.focus.aiSuggestions', 'AI Suggestions')}
                             </h3>
                         </div>
-                        <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
-                            {suggestions.reasoning}
-                        </p>
+                        <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">{suggestions.reasoning}</p>
                         <div className="space-y-2">
                             {suggestions.suggestedTasks.slice(0, 3).map((suggestion) => (
-                                <div 
+                                <div
                                     key={suggestion.taskId}
                                     className="flex items-center justify-between p-3 bg-white dark:bg-navy-900 rounded-lg border border-purple-200 dark:border-purple-800/30"
                                 >
@@ -734,9 +718,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                                         <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
                                             {suggestion.title}
                                         </p>
-                                        <p className="text-xs text-slate-500 truncate">
-                                            {suggestion.reason}
-                                        </p>
+                                        <p className="text-xs text-slate-500 truncate">{suggestion.reason}</p>
                                     </div>
                                     <button
                                         onClick={() => onAddToFocus?.(suggestion.taskId, suggestion.suggestedTimeBlock)}
@@ -760,13 +742,11 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                             {t('myWork.focus.executionScore', 'Execution Score')}
                         </p>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-bold text-navy-900 dark:text-white">
-                                {executionScore}
-                            </span>
+                            <span className="text-3xl font-bold text-navy-900 dark:text-white">{executionScore}</span>
                             <span className="text-sm text-slate-400">/ 100</span>
                         </div>
                     </div>
-                    <div 
+                    <div
                         className="w-16 h-16 execution-score-ring flex items-center justify-center"
                         style={{ '--score-percent': `${executionScore}%` } as React.CSSProperties}
                     >
@@ -781,8 +761,3 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
 };
 
 export default FocusBoard;
-
-
-
-
-

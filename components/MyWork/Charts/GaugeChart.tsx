@@ -3,22 +3,22 @@
  * BCG/McKinsey style: Clean, prominent, with animated fill
  */
 
-import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 
 interface GaugeChartProps {
-    value: number;          // 0-100
+    value: number; // 0-100
     maxValue?: number;
-    size?: number;          // Width/height in pixels
+    size?: number; // Width/height in pixels
     strokeWidth?: number;
     showValue?: boolean;
     showLabel?: boolean;
     label?: string;
     animate?: boolean;
     thresholds?: {
-        excellent: number;  // >= this is excellent
-        good: number;       // >= this is good
-        warning: number;    // >= this is warning
+        excellent: number; // >= this is excellent
+        good: number; // >= this is good
+        warning: number; // >= this is warning
         // Below warning is critical
     };
     colors?: {
@@ -33,17 +33,17 @@ interface GaugeChartProps {
 
 // Default colors (BCG style)
 const defaultColors = {
-    excellent: '#10B981',  // Emerald
-    good: '#06B6D4',       // Cyan
-    warning: '#F59E0B',    // Amber
-    critical: '#F43F5E',   // Rose
-    background: 'rgba(255, 255, 255, 0.1)'
+    excellent: '#10B981', // Emerald
+    good: '#06B6D4', // Cyan
+    warning: '#F59E0B', // Amber
+    critical: '#F43F5E', // Rose
+    background: 'rgba(255, 255, 255, 0.1)',
 };
 
 const defaultThresholds = {
     excellent: 80,
     good: 60,
-    warning: 40
+    warning: 40,
 };
 
 // Animated number counter
@@ -57,7 +57,7 @@ const AnimatedValue: React.FC<{ value: number; duration?: number }> = ({ value, 
         const animate = (timestamp: number) => {
             if (!startTime) startTime = timestamp;
             const progress = Math.min((timestamp - startTime) / duration, 1);
-            
+
             // Easing
             const eased = 1 - Math.pow(1 - progress, 4);
             setDisplayValue(Math.floor(eased * value));
@@ -85,11 +85,11 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
     animate = true,
     thresholds = defaultThresholds,
     colors = defaultColors,
-    className = ''
+    className = '',
 }) => {
     const normalizedValue = Math.min(Math.max(value, 0), maxValue);
     const percentage = (normalizedValue / maxValue) * 100;
-    
+
     // Calculate arc properties (270 degrees total, starting from bottom-left)
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * Math.PI * 1.5; // 270 degrees = 1.5π radians
@@ -120,23 +120,20 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
     // SVG path for arc (270 degrees, starting from 135° and ending at 45°)
     const startAngle = 135;
     const endAngle = 45;
-    
+
     const describeArc = (cx: number, cy: number, r: number, startAngle: number, sweepAngle: number) => {
         const start = polarToCartesian(cx, cy, r, startAngle);
         const end = polarToCartesian(cx, cy, r, startAngle + sweepAngle);
         const largeArcFlag = sweepAngle > 180 ? 1 : 0;
-        
-        return [
-            'M', start.x, start.y,
-            'A', r, r, 0, largeArcFlag, 1, end.x, end.y
-        ].join(' ');
+
+        return ['M', start.x, start.y, 'A', r, r, 0, largeArcFlag, 1, end.x, end.y].join(' ');
     };
 
     const polarToCartesian = (cx: number, cy: number, r: number, angle: number) => {
-        const angleInRadians = (angle - 90) * Math.PI / 180;
+        const angleInRadians = ((angle - 90) * Math.PI) / 180;
         return {
             x: cx + r * Math.cos(angleInRadians),
-            y: cy + r * Math.sin(angleInRadians)
+            y: cy + r * Math.sin(angleInRadians),
         };
     };
 
@@ -145,12 +142,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
 
     return (
         <div className={`relative inline-flex flex-col items-center ${className}`}>
-            <svg 
-                width={size} 
-                height={size * 0.85} 
-                viewBox={`0 0 ${size} ${size * 0.85}`}
-                className="overflow-visible"
-            >
+            <svg width={size} height={size * 0.85} viewBox={`0 0 ${size} ${size * 0.85}`} className="overflow-visible">
                 {/* Background arc */}
                 <path
                     d={backgroundPath}
@@ -160,7 +152,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
                     strokeLinecap="round"
                     className="text-slate-200 dark:text-white/10"
                 />
-                
+
                 {/* Value arc */}
                 <motion.path
                     d={describeArc(center, center, radius, startAngle, (percentage / 100) * 270)}
@@ -172,7 +164,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
                     animate={{ pathLength: 1, opacity: 1 }}
                     transition={{ duration: 1.5, ease: 'easeOut' }}
                     style={{
-                        filter: `drop-shadow(0 0 8px ${strokeColor}40)`
+                        filter: `drop-shadow(0 0 8px ${strokeColor}40)`,
                     }}
                 />
 
@@ -183,7 +175,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
                     const outerRadius = radius - strokeWidth / 2 - 10;
                     const inner = polarToCartesian(center, center, innerRadius, tickAngle);
                     const outer = polarToCartesian(center, center, outerRadius, tickAngle);
-                    
+
                     return (
                         <line
                             key={tick}
@@ -201,15 +193,18 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
 
             {/* Center content */}
             {showValue && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ paddingTop: size * 0.1 }}>
-                    <span 
+                <div
+                    className="absolute inset-0 flex flex-col items-center justify-center"
+                    style={{ paddingTop: size * 0.1 }}
+                >
+                    <span
                         className="font-bold tabular-nums text-navy-900 dark:text-white"
                         style={{ fontSize: size * 0.25 }}
                     >
                         {animate ? <AnimatedValue value={normalizedValue} /> : normalizedValue}
                     </span>
                     {showLabel && (
-                        <span 
+                        <span
                             className="text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                             style={{ fontSize: size * 0.08 }}
                         >
@@ -220,11 +215,11 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
             )}
 
             {/* Status label below */}
-            <div 
+            <div
                 className="mt-2 px-3 py-1 rounded-full text-xs font-bold"
                 style={{
                     backgroundColor: `${strokeColor}20`,
-                    color: strokeColor
+                    color: strokeColor,
                 }}
             >
                 {getLabel()}
@@ -234,12 +229,4 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
 };
 
 export default GaugeChart;
-
-
-
-
-
-
-
-
 

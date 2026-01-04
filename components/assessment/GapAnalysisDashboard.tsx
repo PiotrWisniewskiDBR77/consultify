@@ -3,9 +3,10 @@
  * Analyzes cross-framework inconsistencies and generates initiatives
  */
 
-import React, { useState, useEffect } from 'react';
-import { Target, TrendingDown, Zap, AlertCircle, PlusCircle, Activity, Sparkles, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { Activity, AlertCircle, ArrowRight, PlusCircle, Sparkles, Target, TrendingDown, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { AppView } from '../../types';
 
 interface GapAnalysisDashboardProps {
@@ -17,7 +18,7 @@ interface GapAnalysisDashboardProps {
 export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
     projectId,
     organizationId,
-    onNavigateToGenerator
+    onNavigateToGenerator,
 }) => {
     const [overview, setOverview] = useState<any>(null);
     const [generatedInitiatives, setGeneratedInitiatives] = useState<any[]>([]);
@@ -45,7 +46,7 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
                 organizationId,
                 drdAssessmentId: null, // TODO: get from overview
                 leanAssessmentId: null,
-                externalAssessmentIds: []
+                externalAssessmentIds: [],
             });
 
             setGeneratedInitiatives(response.data.initiatives || []);
@@ -75,19 +76,27 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
                 <h3 className="text-xl font-semibold mb-4">Assessment Coverage</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className={`p-4 rounded-lg ${overview.drd.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}>
+                    <div
+                        className={`p-4 rounded-lg ${overview.drd.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}
+                    >
                         <div className="text-sm text-gray-600 dark:text-gray-400">DRD</div>
                         <div className="text-2xl font-bold">{overview.drd.exists ? '✓' : '—'}</div>
                     </div>
-                    <div className={`p-4 rounded-lg ${overview.rapidLean.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}>
+                    <div
+                        className={`p-4 rounded-lg ${overview.rapidLean.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}
+                    >
                         <div className="text-sm text-gray-600 dark:text-gray-400">RapidLean</div>
                         <div className="text-2xl font-bold">{overview.rapidLean.exists ? '✓' : '—'}</div>
                     </div>
-                    <div className={`p-4 rounded-lg ${overview.externalDigital.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}>
+                    <div
+                        className={`p-4 rounded-lg ${overview.externalDigital.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}
+                    >
                         <div className="text-sm text-gray-600 dark:text-gray-400">External</div>
                         <div className="text-2xl font-bold">{overview.externalDigital.totalCount || '—'}</div>
                     </div>
-                    <div className={`p-4 rounded-lg ${overview.genericReports.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}>
+                    <div
+                        className={`p-4 rounded-lg ${overview.genericReports.exists ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'}`}
+                    >
                         <div className="text-sm text-gray-600 dark:text-gray-400">Reports</div>
                         <div className="text-2xl font-bold">{overview.genericReports.totalCount || '—'}</div>
                     </div>
@@ -103,9 +112,9 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
                             AI Initiative Generator
                         </h3>
                         <p className="text-green-100 mt-2 max-w-xl">
-                            Transform assessment gaps into actionable transformation initiatives. 
-                            Our AI will analyze your maturity gaps and generate prioritized initiatives 
-                            with estimated ROI, budgets, and timelines.
+                            Transform assessment gaps into actionable transformation initiatives. Our AI will analyze
+                            your maturity gaps and generate prioritized initiatives with estimated ROI, budgets, and
+                            timelines.
                         </p>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -149,10 +158,15 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
                             <div key={index} className="border dark:border-gray-700 rounded-lg p-4">
                                 <div className="flex items-start justify-between mb-2">
                                     <h4 className="font-semibold text-lg">{initiative.name}</h4>
-                                    <span className={`px-3 py-1 rounded-full text-sm ${initiative.priority === 'Critical' ? 'bg-red-100 text-red-700' :
-                                        initiative.priority === 'High' ? 'bg-orange-100 text-orange-700' :
-                                            'bg-blue-100 text-blue-700'
-                                        }`}>
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-sm ${
+                                            initiative.priority === 'Critical'
+                                                ? 'bg-red-100 text-red-700'
+                                                : initiative.priority === 'High'
+                                                  ? 'bg-orange-100 text-orange-700'
+                                                  : 'bg-blue-100 text-blue-700'
+                                        }`}
+                                    >
                                         {initiative.priority}
                                     </span>
                                 </div>
@@ -160,13 +174,18 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
 
                                 <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mb-3">
                                     <div className="text-sm font-medium mb-1">Gap Justification:</div>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">{initiative.gap_justification}</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        {initiative.gap_justification}
+                                    </p>
                                 </div>
 
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs text-gray-500">Sources:</span>
                                     {initiative.derived_from_assessments?.map((source: any, i: number) => (
-                                        <span key={i} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded">
+                                        <span
+                                            key={i}
+                                            className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded"
+                                        >
                                             {source.source} ({source.dimension})
                                         </span>
                                     ))}

@@ -1,28 +1,29 @@
 /**
  * VersionHistory Component
- * 
+ *
  * Version control panel for Management Reports.
  * Shows version history, allows comparison and restoration.
- * 
+ *
  * PMO Standards: Configuration Management (PRINCE2)
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { 
-    History, 
-    GitBranch, 
-    RotateCcw, 
-    Eye,
+import {
+    ArrowLeftRight,
     ChevronDown,
     ChevronUp,
     Clock,
-    User,
+    Edit3,
+    Eye,
     FileText,
-    ArrowLeftRight,
-    Plus,
+    GitBranch,
+    History,
     Minus,
-    Edit3
+    Plus,
+    RotateCcw,
+    User,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { ReportVersion, VersionComparisonResult } from '../../../types';
 
 interface VersionHistoryProps {
@@ -43,10 +44,10 @@ const ChangeTypeBadge: React.FC<{ type: 'added' | 'removed' | 'modified' }> = ({
     const config = {
         added: { icon: Plus, color: 'text-emerald-500 bg-emerald-500/10', label: 'Added' },
         removed: { icon: Minus, color: 'text-red-500 bg-red-500/10', label: 'Removed' },
-        modified: { icon: Edit3, color: 'text-amber-500 bg-amber-500/10', label: 'Modified' }
+        modified: { icon: Edit3, color: 'text-amber-500 bg-amber-500/10', label: 'Modified' },
     };
     const { icon: Icon, color, label } = config[type];
-    
+
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
             <Icon size={12} />
@@ -66,25 +67,29 @@ const VersionItem: React.FC<{
     onCompare: () => void;
 }> = ({ version, isCurrent, isSelected, isComparing, onSelect, onView, onCompare }) => {
     return (
-        <div 
+        <div
             className={`
                 p-3 rounded-lg border transition-all cursor-pointer
-                ${isSelected 
-                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20' 
-                    : 'border-slate-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50'
+                ${
+                    isSelected
+                        ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+                        : 'border-slate-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50'
                 }
             `}
             onClick={onSelect}
         >
             <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                    <div className={`
+                    <div
+                        className={`
                         w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
-                        ${isCurrent 
-                            ? 'bg-violet-500 text-white' 
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'
+                        ${
+                            isCurrent
+                                ? 'bg-violet-500 text-white'
+                                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'
                         }
-                    `}>
+                    `}
+                    >
                         v{version.versionLabel}
                     </div>
                     <div>
@@ -99,9 +104,7 @@ const VersionItem: React.FC<{
                             )}
                         </div>
                         {version.changeSummary && (
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                                {version.changeSummary}
-                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{version.changeSummary}</p>
                         )}
                         <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
                             <span className="flex items-center gap-1">
@@ -117,7 +120,10 @@ const VersionItem: React.FC<{
                 </div>
                 <div className="flex items-center gap-1">
                     <button
-                        onClick={(e) => { e.stopPropagation(); onView(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onView();
+                        }}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                         title="View version"
                     >
@@ -125,7 +131,10 @@ const VersionItem: React.FC<{
                     </button>
                     {isComparing && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onCompare(); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCompare();
+                            }}
                             className="p-2 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 rounded-lg transition-colors"
                             title="Compare with selected"
                         >
@@ -150,32 +159,22 @@ const ComparisonView: React.FC<{
                     <ArrowLeftRight size={18} className="text-violet-500" />
                     Comparing v{comparison.version1.versionLabel} → v{comparison.version2.versionLabel}
                 </h4>
-                <button
-                    onClick={onClose}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                >
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                     ✕
                 </button>
             </div>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                {comparison.summary}
-            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{comparison.summary}</p>
 
             {comparison.changes.length === 0 ? (
                 <p className="text-center text-slate-400 py-4">No changes detected between versions</p>
             ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                     {comparison.changes.map((change, index) => (
-                        <div 
-                            key={index}
-                            className="flex items-start gap-3 p-2 bg-white dark:bg-navy-900 rounded-lg"
-                        >
+                        <div key={index} className="flex items-start gap-3 p-2 bg-white dark:bg-navy-900 rounded-lg">
                             <ChangeTypeBadge type={change.type} />
                             <div className="flex-1 min-w-0">
-                                <span className="font-mono text-sm text-navy-900 dark:text-white">
-                                    {change.field}
-                                </span>
+                                <span className="font-mono text-sm text-navy-900 dark:text-white">{change.field}</span>
                                 {change.type === 'modified' && (
                                     <div className="mt-1 text-xs">
                                         <div className="text-red-500 line-through truncate">
@@ -205,7 +204,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
     onViewVersion,
     onCompareVersions,
     onRestoreVersion,
-    className = ''
+    className = '',
 }) => {
     const [expanded, setExpanded] = useState(false);
     const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
@@ -223,39 +222,47 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
     }, [expanded, onLoadVersions, versions.length]);
 
     // Handle compare
-    const handleCompare = useCallback(async (v2: number) => {
-        if (!selectedVersion || !onCompareVersions) return;
-        
-        setComparing(true);
-        try {
-            const result = await onCompareVersions(selectedVersion, v2);
-            setComparison(result);
-            setCompareMode(false);
-        } catch (error) {
-            console.error('Compare failed:', error);
-        } finally {
-            setComparing(false);
-        }
-    }, [selectedVersion, onCompareVersions]);
+    const handleCompare = useCallback(
+        async (v2: number) => {
+            if (!selectedVersion || !onCompareVersions) return;
+
+            setComparing(true);
+            try {
+                const result = await onCompareVersions(selectedVersion, v2);
+                setComparison(result);
+                setCompareMode(false);
+            } catch (error) {
+                console.error('Compare failed:', error);
+            } finally {
+                setComparing(false);
+            }
+        },
+        [selectedVersion, onCompareVersions],
+    );
 
     // Handle restore
-    const handleRestore = useCallback(async (versionNumber: number) => {
-        if (!onRestoreVersion) return;
-        
-        setRestoring(true);
-        try {
-            await onRestoreVersion(versionNumber);
-            setConfirmRestore(null);
-            onLoadVersions?.();
-        } catch (error) {
-            console.error('Restore failed:', error);
-        } finally {
-            setRestoring(false);
-        }
-    }, [onRestoreVersion, onLoadVersions]);
+    const handleRestore = useCallback(
+        async (versionNumber: number) => {
+            if (!onRestoreVersion) return;
+
+            setRestoring(true);
+            try {
+                await onRestoreVersion(versionNumber);
+                setConfirmRestore(null);
+                onLoadVersions?.();
+            } catch (error) {
+                console.error('Restore failed:', error);
+            } finally {
+                setRestoring(false);
+            }
+        },
+        [onRestoreVersion, onLoadVersions],
+    );
 
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}
+        >
             {/* Header */}
             <button
                 onClick={() => setExpanded(!expanded)}
@@ -268,13 +275,18 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                     <div className="text-left">
                         <h3 className="font-semibold text-navy-900 dark:text-white">Version History</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {versions.length} version{versions.length !== 1 ? 's' : ''} • Current: v{currentVersion || '1.0'}
+                            {versions.length} version{versions.length !== 1 ? 's' : ''} • Current: v
+                            {currentVersion || '1.0'}
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <GitBranch size={18} className="text-slate-400" />
-                    {expanded ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                    {expanded ? (
+                        <ChevronUp size={20} className="text-slate-400" />
+                    ) : (
+                        <ChevronDown size={20} className="text-slate-400" />
+                    )}
                 </div>
             </button>
 
@@ -291,9 +303,10 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                                 }}
                                 className={`
                                     flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                                    ${compareMode 
-                                        ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' 
-                                        : 'hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300'
+                                    ${
+                                        compareMode
+                                            ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                                            : 'hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300'
                                     }
                                 `}
                             >
@@ -308,14 +321,15 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
                             >
                                 <RotateCcw size={14} />
-                                Restore v{versions.find(v => v.versionNumber === selectedVersion)?.versionLabel}
+                                Restore v{versions.find((v) => v.versionNumber === selectedVersion)?.versionLabel}
                             </button>
                         )}
                     </div>
 
                     {compareMode && selectedVersion && (
                         <div className="mb-3 p-2 bg-violet-50 dark:bg-violet-900/20 rounded-lg text-sm text-violet-700 dark:text-violet-300">
-                            Select another version to compare with v{versions.find(v => v.versionNumber === selectedVersion)?.versionLabel}
+                            Select another version to compare with v
+                            {versions.find((v) => v.versionNumber === selectedVersion)?.versionLabel}
                         </div>
                     )}
 
@@ -337,7 +351,11 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                                     version={version}
                                     isCurrent={version.versionNumber === currentVersion}
                                     isSelected={version.versionNumber === selectedVersion}
-                                    isComparing={compareMode && selectedVersion !== null && version.versionNumber !== selectedVersion}
+                                    isComparing={
+                                        compareMode &&
+                                        selectedVersion !== null &&
+                                        version.versionNumber !== selectedVersion
+                                    }
                                     onSelect={() => setSelectedVersion(version.versionNumber)}
                                     onView={() => onViewVersion?.(version.versionNumber)}
                                     onCompare={() => handleCompare(version.versionNumber)}
@@ -347,12 +365,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                     )}
 
                     {/* Comparison view */}
-                    {comparison && (
-                        <ComparisonView
-                            comparison={comparison}
-                            onClose={() => setComparison(null)}
-                        />
-                    )}
+                    {comparison && <ComparisonView comparison={comparison} onClose={() => setComparison(null)} />}
 
                     {/* Locked notice */}
                     {isLocked && (
@@ -368,13 +381,11 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
             {confirmRestore !== null && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-navy-900 rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
-                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-                            Restore Version?
-                        </h3>
+                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Restore Version?</h3>
                         <p className="text-slate-600 dark:text-slate-300 mb-4">
                             This will create a new version with the content from v
-                            {versions.find(v => v.versionNumber === confirmRestore)?.versionLabel}.
-                            The current version will not be deleted.
+                            {versions.find((v) => v.versionNumber === confirmRestore)?.versionLabel}. The current
+                            version will not be deleted.
                         </p>
                         <div className="flex items-center gap-3">
                             <button
@@ -399,12 +410,4 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
 };
 
 export default VersionHistory;
-
-
-
-
-
-
-
-
 

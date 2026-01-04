@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TodayDashboard } from '../../../components/MyWork/TodayDashboard';
+import { TodayDashboard } from '../../components/MyWork/TodayDashboard';
 import { Api } from '../../../services/api';
 
 // Mock dependencies
@@ -499,6 +499,7 @@ describe('TodayDashboard without PMO Phase', () => {
         // For now, we test the conditional rendering logic
     });
 });
+
 
 
 

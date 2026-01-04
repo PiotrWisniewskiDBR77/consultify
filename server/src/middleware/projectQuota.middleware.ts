@@ -1,14 +1,15 @@
 /**
  * Project Quota Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enforces storage limits per project
  */
 
-import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware.js';
-import usageService from '../../services/usageService.js';
+import { NextFunction, Request, Response } from 'express';
 import * as fs from 'fs';
+
+import usageService from '../../services/usageService.js';
+import type { _AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -52,11 +53,7 @@ let deps: Dependencies = { usageService };
 /**
  * Enforce project storage quota
  */
-export async function enforceProjectQuota(
-    req: FileRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> {
+export async function enforceProjectQuota(req: FileRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const { usageService } = deps;
 
@@ -86,9 +83,9 @@ export async function enforceProjectQuota(
                 usage: {
                     usedGB: (quota.used / (1024 * 1024 * 1024)).toFixed(2),
                     limitGB: (quota.limit / (1024 * 1024 * 1024)).toFixed(2),
-                    percentage: quota.percentage.toFixed(1)
+                    percentage: quota.percentage.toFixed(1),
                 },
-                message: 'This project has exceeded its storage limit.'
+                message: 'This project has exceeded its storage limit.',
             });
             return;
         }
@@ -108,4 +105,3 @@ export async function enforceProjectQuota(
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-

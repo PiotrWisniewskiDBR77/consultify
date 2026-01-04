@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SecurityPoliciesPanel } from '../../../components/SuperAdmin/security/SecurityPoliciesPanel';
+import { SecurityPoliciesPanel } from '../../components/SuperAdmin/security/SecurityPoliciesPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -175,6 +175,7 @@ describe('SecurityPoliciesPanel', () => {
         });
     });
 });
+
 
 
 

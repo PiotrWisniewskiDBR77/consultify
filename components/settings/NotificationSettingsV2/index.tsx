@@ -1,6 +1,6 @@
 /**
  * NotificationSettingsV2
- * 
+ *
  * Comprehensive notification settings component with tabs for:
  * - Overview (summary of all settings)
  * - Channels (which channels are enabled)
@@ -8,27 +8,36 @@
  * - Schedule (quiet hours, DND)
  * - Watching (watched objects)
  * - Digests (daily/weekly summary)
- * 
+ *
  * Part of: User-Level Notifications & Integrations System
  */
 
+import {
+    AlertCircle,
+    Bell,
+    Calendar,
+    Check,
+    ChevronRight,
+    Clock,
+    Eye,
+    Loader2,
+    Mail,
+    Settings,
+    Smartphone,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Bell, Mail, Smartphone, Clock, Eye, Calendar,
-    Settings, ChevronRight, Check, AlertCircle, Loader2
-} from 'lucide-react';
-import { useUserNotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
-import { useUserIntegrations } from '../../../hooks/useUserIntegrations';
-import { InfoButton } from '../../shared/InfoButton';
 
+import { useUserIntegrations } from '../../../hooks/useUserIntegrations';
+import { useUserNotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
+import { InfoButton } from '../../shared/InfoButton';
+import CategoriesTab from './CategoriesTab';
+import ChannelsTab from './ChannelsTab';
+import DigestsTab from './DigestsTab';
 // Tab components
 import OverviewTab from './OverviewTab';
-import ChannelsTab from './ChannelsTab';
-import CategoriesTab from './CategoriesTab';
 import ScheduleTab from './ScheduleTab';
 import WatchingTab from './WatchingTab';
-import DigestsTab from './DigestsTab';
 
 interface NotificationSettingsV2Props {
     className?: string;
@@ -44,29 +53,29 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-    { 
-        id: 'overview', 
-        label: 'All', 
-        icon: Bell, 
-        description: 'Overview of notification settings' 
+    {
+        id: 'overview',
+        label: 'All',
+        icon: Bell,
+        description: 'Overview of notification settings',
     },
-    { 
-        id: 'channels', 
-        label: 'Email', 
-        icon: Mail, 
-        description: 'Email notification preferences' 
+    {
+        id: 'channels',
+        label: 'Email',
+        icon: Mail,
+        description: 'Email notification preferences',
     },
-    { 
-        id: 'categories', 
-        label: 'Push', 
-        icon: Smartphone, 
-        description: 'Push notification preferences' 
+    {
+        id: 'categories',
+        label: 'Push',
+        icon: Smartphone,
+        description: 'Push notification preferences',
     },
-    { 
-        id: 'schedule', 
-        label: 'Schedule', 
-        icon: Clock, 
-        description: 'Quiet hours and schedule' 
+    {
+        id: 'schedule',
+        label: 'Schedule',
+        icon: Clock,
+        description: 'Quiet hours and schedule',
     },
 ];
 
@@ -74,7 +83,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({ 
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-    
+
     const {
         preferences,
         watchers,
@@ -92,14 +101,10 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({ 
         removeWatcher,
         isWatching,
         updatePreferences,
-        refresh
+        refresh,
     } = useUserNotificationPreferences();
 
-    const { 
-        integrations, 
-        providers, 
-        isConnected 
-    } = useUserIntegrations();
+    const { integrations, providers, isConnected } = useUserIntegrations();
 
     // Handle save success/error messages
     const showSaveSuccess = () => {
@@ -108,7 +113,10 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({ 
     };
 
     const showSaveError = (msg?: string) => {
-        setSaveMessage({ type: 'error', text: msg || t('settings.notifications.saveError', 'Failed to save preferences') });
+        setSaveMessage({
+            type: 'error',
+            text: msg || t('settings.notifications.saveError', 'Failed to save preferences'),
+        });
         setTimeout(() => setSaveMessage(null), 5000);
     };
 
@@ -281,11 +289,13 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({ 
 
             {/* Save Message */}
             {saveMessage && (
-                <div className={`p-3 rounded-lg flex items-center gap-2 ${
-                    saveMessage.type === 'success' 
-                        ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                }`}>
+                <div
+                    className={`p-3 rounded-lg flex items-center gap-2 ${
+                        saveMessage.type === 'success'
+                            ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                    }`}
+                >
                     {saveMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
                     {saveMessage.text}
                 </div>
@@ -296,7 +306,7 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({ 
                 {TABS.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
-                    
+
                     return (
                         <button
                             key={tab.id}
@@ -315,19 +325,10 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({ 
             </div>
 
             {/* Tab Content */}
-            <div className="min-h-[400px]">
-                {renderTabContent()}
-            </div>
+            <div className="min-h-[400px]">{renderTabContent()}</div>
         </div>
     );
 };
 
 export default NotificationSettingsV2;
-
-
-
-
-
-
-
 

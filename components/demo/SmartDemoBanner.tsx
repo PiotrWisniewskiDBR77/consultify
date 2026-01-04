@@ -1,16 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Sparkles, 
-    ChevronDown, 
-    ChevronUp, 
-    Clock, 
-    Eye, 
-    Database, 
-    ArrowRight,
-    X,
-    Calendar
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Calendar, ChevronDown, ChevronUp, Clock, Database, Eye, Sparkles, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface SmartDemoBannerProps {
@@ -24,7 +14,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
     sessionStartTime = new Date(),
     onUpgradeClick,
     onContactSales,
-    demoEmail = 'demo@legolex.com'
+    demoEmail = 'demo@legolex.com',
 }) => {
     const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -37,13 +27,13 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
             const now = new Date();
             const elapsed = now.getTime() - sessionStartTime.getTime();
             const remaining = Math.max(0, 24 * 60 * 60 * 1000 - elapsed);
-            
+
             const hours = Math.floor(remaining / (60 * 60 * 1000));
             const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
             const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
-            
+
             setTimeRemaining(
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
             );
         };
 
@@ -53,13 +43,19 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
     }, [sessionStartTime]);
 
     const handleContactSales = () => {
-        window.open('https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017', '_blank');
+        window.open(
+            'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
+            '_blank',
+        );
         onContactSales?.();
     };
 
     const LIMITATIONS = [
-        { icon: Eye, text: t('demo.banner.limitations.readOnly', 'Read-only mode — changes won\'t persist') },
-        { icon: Database, text: t('demo.banner.limitations.sampleData', 'Sample data — explore with realistic examples') },
+        { icon: Eye, text: t('demo.banner.limitations.readOnly', "Read-only mode — changes won't persist") },
+        {
+            icon: Database,
+            text: t('demo.banner.limitations.sampleData', 'Sample data — explore with realistic examples'),
+        },
         { icon: Clock, text: t('demo.banner.limitations.session', 'Session expires in 24h') },
     ];
 
@@ -94,15 +90,11 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                                 <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
                                     <Sparkles size={14} className="text-white" />
                                 </div>
-                                <span className="font-semibold text-sm">
-                                    {t('demo.banner.title', 'Demo Mode')}
-                                </span>
+                                <span className="font-semibold text-sm">{t('demo.banner.title', 'Demo Mode')}</span>
                             </div>
-                            
+
                             <div className="hidden sm:flex items-center gap-2 text-white/70 text-xs">
-                                <code className="px-2 py-0.5 bg-white/10 rounded font-mono">
-                                    {demoEmail}
-                                </code>
+                                <code className="px-2 py-0.5 bg-white/10 rounded font-mono">{demoEmail}</code>
                                 <span>•</span>
                                 <span>{t('demo.banner.exploring', 'Exploring with sample data')}</span>
                             </div>
@@ -123,12 +115,16 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                             >
                                 {isExpanded ? (
                                     <>
-                                        <span className="hidden sm:inline">{t('demo.banner.hideLimitations', 'Hide')}</span>
+                                        <span className="hidden sm:inline">
+                                            {t('demo.banner.hideLimitations', 'Hide')}
+                                        </span>
                                         <ChevronUp size={14} />
                                     </>
                                 ) : (
                                     <>
-                                        <span className="hidden sm:inline">{t('demo.banner.showLimitations', 'Limitations')}</span>
+                                        <span className="hidden sm:inline">
+                                            {t('demo.banner.showLimitations', 'Limitations')}
+                                        </span>
                                         <ChevronDown size={14} />
                                     </>
                                 )}
@@ -140,7 +136,9 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-purple-700 text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors"
                             >
                                 <Calendar size={12} />
-                                <span className="hidden sm:inline">{t('demo.banner.getFullAccess', 'Get Full Access')}</span>
+                                <span className="hidden sm:inline">
+                                    {t('demo.banner.getFullAccess', 'Get Full Access')}
+                                </span>
                                 <span className="sm:hidden">{t('demo.banner.upgrade', 'Upgrade')}</span>
                                 <ArrowRight size={12} />
                             </button>
@@ -183,7 +181,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                                 {/* CTA */}
                                 <div className="text-xs text-white/60">
                                     {t('demo.banner.readyForMore', 'Ready for your own data?')}{' '}
-                                    <button 
+                                    <button
                                         onClick={handleContactSales}
                                         className="text-white underline hover:no-underline"
                                     >
@@ -198,12 +196,4 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
         </motion.div>
     );
 };
-
-
-
-
-
-
-
-
 

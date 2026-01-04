@@ -4,10 +4,17 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { errorHandler, notFoundHandler, validationErrorHandler } from '../../../../src/middleware/errorHandler.js';
-import { AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError } from '../../../../src/types/index.js';
+import {
+    AppError,
+    AuthenticationError,
+    AuthorizationError,
+    NotFoundError,
+    ValidationError,
+} from '../../../../src/types/index.js';
 
 describe('Error Handler Middleware', () => {
     let mockReq: Partial<Request>;
@@ -179,4 +186,3 @@ describe('Error Handler Middleware', () => {
         });
     });
 });
-

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { Bar, BarChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+
 import { FullInitiative, Quarter } from '../types';
 
 interface WorkloadChartProps {
@@ -10,8 +11,8 @@ interface WorkloadChartProps {
 export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quarters }) => {
     // 1. Process Data
     const data = useMemo(() => {
-        return quarters.map(q => {
-            const inits = initiatives.filter(i => i.quarter === q);
+        return quarters.map((q) => {
+            const inits = initiatives.filter((i) => i.quarter === q);
 
             // Calculate total effort of each type
             // Assuming effortProfile is populated. If not, fallback to default (e.g. 1 per initiative)
@@ -19,7 +20,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
             let operational = 0;
             let change = 0;
 
-            inits.forEach(i => {
+            inits.forEach((i) => {
                 // If effortProfile exists
                 if (i.effortProfile) {
                     analytical += i.effortProfile.analytical || 0;
@@ -45,7 +46,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
                 operational,
                 change,
                 total,
-                status
+                status,
             };
         });
     }, [initiatives, quarters]);
@@ -60,21 +61,33 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                            <span className="text-slate-500 dark:text-slate-400">Analytical: {dataPoint.analytical}</span>
+                            <span className="text-slate-500 dark:text-slate-400">
+                                Analytical: {dataPoint.analytical}
+                            </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                            <span className="text-slate-500 dark:text-slate-400">Operational: {dataPoint.operational}</span>
+                            <span className="text-slate-500 dark:text-slate-400">
+                                Operational: {dataPoint.operational}
+                            </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-rose-500"></div>
                             <span className="text-slate-500 dark:text-slate-400">Change: {dataPoint.change}</span>
                         </div>
                         <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 font-semibold">
-                            Status: <span className={
-                                dataPoint.status === 'Overload' ? 'text-red-500' :
-                                    dataPoint.status === 'High' ? 'text-amber-500' : 'text-green-500'
-                            }>{dataPoint.status}</span>
+                            Status:{' '}
+                            <span
+                                className={
+                                    dataPoint.status === 'Overload'
+                                        ? 'text-red-500'
+                                        : dataPoint.status === 'High'
+                                          ? 'text-amber-500'
+                                          : 'text-green-500'
+                                }
+                            >
+                                {dataPoint.status}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -88,19 +101,20 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
             <div className="flex justify-between items-center mb-1">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Workload Distribution</h4>
                 <div className="flex gap-3 text-[10px] text-slate-400">
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div>Analytical</div>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div>Operational</div>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-rose-500"></div>Change</div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>Analytical
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>Operational
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-rose-500"></div>Change
+                    </div>
                 </div>
             </div>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} barSize={12}>
-                    <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: '#94a3b8' }}
-                    />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                     <Bar dataKey="analytical" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} />
                     <Bar dataKey="operational" stackId="a" fill="#10b981" />

@@ -1,6 +1,6 @@
 /**
  * FinancialImpact
- * 
+ *
  * ROI calculator and financial projections section:
  * - Investment required (ranges)
  * - ROI timeline
@@ -8,30 +8,22 @@
  * - NPV/IRR estimates
  */
 
+import { motion } from 'framer-motion';
+import { AlertCircle, Calculator, ChevronDown, ChevronUp, Clock, DollarSign, TrendingUp } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
 import {
-    LineChart,
+    Area,
+    AreaChart,
+    CartesianGrid,
+    Legend,
     Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    Area,
-    AreaChart
 } from 'recharts';
-import {
-    DollarSign,
-    TrendingUp,
-    Clock,
-    Calculator,
-    AlertCircle,
-    ChevronDown,
-    ChevronUp
-} from 'lucide-react';
 
 interface InvestmentItem {
     category: string;
@@ -59,7 +51,7 @@ const DEFAULT_INVESTMENTS: InvestmentItem[] = [
         minAmount: 200000,
         maxAmount: 500000,
         description: 'Cloud, systems, integrations',
-        descriptionPl: 'Chmura, systemy, integracje'
+        descriptionPl: 'Chmura, systemy, integracje',
     },
     {
         category: 'Training & Change Management',
@@ -67,7 +59,7 @@ const DEFAULT_INVESTMENTS: InvestmentItem[] = [
         minAmount: 50000,
         maxAmount: 150000,
         description: 'Upskilling, workshops, communication',
-        descriptionPl: 'Podnoszenie kwalifikacji, warsztaty, komunikacja'
+        descriptionPl: 'Podnoszenie kwalifikacji, warsztaty, komunikacja',
     },
     {
         category: 'External Consulting',
@@ -75,7 +67,7 @@ const DEFAULT_INVESTMENTS: InvestmentItem[] = [
         minAmount: 100000,
         maxAmount: 300000,
         description: 'Strategy, implementation support',
-        descriptionPl: 'Strategia, wsparcie wdrożenia'
+        descriptionPl: 'Strategia, wsparcie wdrożenia',
     },
     {
         category: 'Data & Analytics',
@@ -83,7 +75,7 @@ const DEFAULT_INVESTMENTS: InvestmentItem[] = [
         minAmount: 80000,
         maxAmount: 200000,
         description: 'Data platform, BI tools, AI pilots',
-        descriptionPl: 'Platforma danych, narzędzia BI, piloty AI'
+        descriptionPl: 'Platforma danych, narzędzia BI, piloty AI',
     },
     {
         category: 'Cybersecurity',
@@ -91,8 +83,8 @@ const DEFAULT_INVESTMENTS: InvestmentItem[] = [
         minAmount: 50000,
         maxAmount: 150000,
         description: 'Security tools, audits, compliance',
-        descriptionPl: 'Narzędzia bezpieczeństwa, audyty, zgodność'
-    }
+        descriptionPl: 'Narzędzia bezpieczeństwa, audyty, zgodność',
+    },
 ];
 
 // Format currency
@@ -112,7 +104,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
     currency = 'PLN',
     currencySymbol = 'zł',
     customInvestments,
-    className = ''
+    className = '',
 }) => {
     const { i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -128,7 +120,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
         const avgTotal = (minTotal + maxTotal) / 2;
 
         // Estimate based on gap (more gap = more investment needed)
-        const gapMultiplier = 1 + (totalGap / 20);
+        const gapMultiplier = 1 + totalGap / 20;
         const adjustedMin = Math.round(minTotal * gapMultiplier);
         const adjustedMax = Math.round(maxTotal * gapMultiplier);
         const adjustedAvg = Math.round(avgTotal * gapMultiplier);
@@ -159,7 +151,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                 year: `${isPolish ? 'Rok' : 'Year'} ${year}`,
                 investment: -cumulativeInvestment,
                 returns: cumulativeReturns,
-                net: cumulativeReturns - cumulativeInvestment
+                net: cumulativeReturns - cumulativeInvestment,
             });
         }
 
@@ -168,7 +160,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
 
     // Calculate key metrics
     const metrics = useMemo(() => {
-        const paybackYear = roiData.findIndex(d => d.net >= 0);
+        const paybackYear = roiData.findIndex((d) => d.net >= 0);
         const year5Net = roiData[5]?.net || 0;
         const roi = ((year5Net + totals.avgTotal) / totals.avgTotal - 1) * 100;
 
@@ -176,7 +168,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
             paybackPeriod: paybackYear >= 0 ? `${paybackYear} ${isPolish ? 'lata' : 'years'}` : '> 5 years',
             roi5Year: Math.round(roi),
             npv: year5Net,
-            monthlyBreakdown: Math.round(totals.avgTotal / 24)
+            monthlyBreakdown: Math.round(totals.avgTotal / 24),
         };
     }, [roiData, totals, isPolish]);
 
@@ -192,8 +184,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                     <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                         {isPolish
                             ? 'Poniższe wartości są szacunkowe i mogą różnić się w zależności od specyfiki organizacji. Szczegółowe budżetowanie powinno być przeprowadzone w ramach planowania projektu.'
-                            : 'The values below are estimates and may vary based on organization specifics. Detailed budgeting should be conducted during project planning.'
-                        }
+                            : 'The values below are estimates and may vary based on organization specifics. Detailed budgeting should be conducted during project planning.'}
                     </p>
                 </div>
             </div>
@@ -222,9 +213,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                             {isPolish ? 'Okres Zwrotu' : 'Payback Period'}
                         </span>
                     </div>
-                    <div className="text-2xl font-bold text-navy-900 dark:text-white">
-                        {metrics.paybackPeriod}
-                    </div>
+                    <div className="text-2xl font-bold text-navy-900 dark:text-white">{metrics.paybackPeriod}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         {isPolish ? 'Od początku wdrożenia' : 'From implementation start'}
                     </div>
@@ -238,7 +227,8 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                         </span>
                     </div>
                     <div className={`text-2xl font-bold ${metrics.roi5Year > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {metrics.roi5Year > 0 ? '+' : ''}{metrics.roi5Year}%
+                        {metrics.roi5Year > 0 ? '+' : ''}
+                        {metrics.roi5Year}%
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         {isPolish ? 'Skumulowany zwrot' : 'Cumulative return'}
@@ -252,14 +242,15 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                             {isPolish ? 'NPV (5 lat)' : 'NPV (5 years)'}
                         </span>
                     </div>
-                    <div className="text-2xl font-bold">
-                        {formatCurrency(Math.abs(metrics.npv), currency)}
-                    </div>
+                    <div className="text-2xl font-bold">{formatCurrency(Math.abs(metrics.npv), currency)}</div>
                     <div className="text-xs opacity-75 mt-2">
                         {metrics.npv >= 0
-                            ? (isPolish ? 'Dodatnia wartość netto' : 'Positive net value')
-                            : (isPolish ? 'Ujemna wartość netto' : 'Negative net value')
-                        }
+                            ? isPolish
+                                ? 'Dodatnia wartość netto'
+                                : 'Positive net value'
+                            : isPolish
+                              ? 'Ujemna wartość netto'
+                              : 'Negative net value'}
                     </div>
                 </div>
             </div>
@@ -272,10 +263,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                 <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={roiData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-white/10" />
-                        <XAxis
-                            dataKey="year"
-                            tick={{ fill: '#64748b', fontSize: 12 }}
-                        />
+                        <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: 12 }} />
                         <YAxis
                             tick={{ fill: '#64748b', fontSize: 12 }}
                             tickFormatter={(value) => formatCurrency(Math.abs(value), '')}
@@ -286,7 +274,7 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                                 backgroundColor: 'white',
                                 border: '1px solid #e2e8f0',
                                 borderRadius: '12px',
-                                padding: '12px'
+                                padding: '12px',
                             }}
                         />
                         <Legend />
@@ -338,7 +326,8 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                     <div className="px-6 pb-6">
                         <div className="space-y-4">
                             {investments.map((investment, index) => {
-                                const percentage = ((investment.minAmount + investment.maxAmount) / 2) / totals.avgTotal * 100;
+                                const percentage =
+                                    ((investment.minAmount + investment.maxAmount) / 2 / totals.avgTotal) * 100;
 
                                 return (
                                     <motion.div
@@ -360,7 +349,8 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                                                 )}
                                             </div>
                                             <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                                                {formatCurrency(investment.minAmount, currency)} - {formatCurrency(investment.maxAmount, currency)}
+                                                {formatCurrency(investment.minAmount, currency)} -{' '}
+                                                {formatCurrency(investment.maxAmount, currency)}
                                             </span>
                                         </div>
 
@@ -374,9 +364,16 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                                             />
                                         </div>
                                         <div className="flex justify-between mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                            <span>{percentage.toFixed(0)}% {isPolish ? 'budżetu' : 'of budget'}</span>
                                             <span>
-                                                ~{formatCurrency(Math.round((investment.minAmount + investment.maxAmount) / 24), currency)}/{isPolish ? 'mies.' : 'mo.'}
+                                                {percentage.toFixed(0)}% {isPolish ? 'budżetu' : 'of budget'}
+                                            </span>
+                                            <span>
+                                                ~
+                                                {formatCurrency(
+                                                    Math.round((investment.minAmount + investment.maxAmount) / 24),
+                                                    currency,
+                                                )}
+                                                /{isPolish ? 'mies.' : 'mo.'}
                                             </span>
                                         </div>
                                     </motion.div>
@@ -391,12 +388,13 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                                     {isPolish ? 'RAZEM' : 'TOTAL'}
                                 </span>
                                 <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                                    {formatCurrency(totals.minTotal, currency)} - {formatCurrency(totals.maxTotal, currency)}
+                                    {formatCurrency(totals.minTotal, currency)} -{' '}
+                                    {formatCurrency(totals.maxTotal, currency)}
                                 </span>
                             </div>
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                {isPolish ? 'Średnio' : 'Average'}: {formatCurrency(totals.avgTotal, currency)}
-                                ({formatCurrency(metrics.monthlyBreakdown, currency)}/{isPolish ? 'miesiąc' : 'month'})
+                                {isPolish ? 'Średnio' : 'Average'}: {formatCurrency(totals.avgTotal, currency)}(
+                                {formatCurrency(metrics.monthlyBreakdown, currency)}/{isPolish ? 'miesiąc' : 'month'})
                             </p>
                         </div>
                     </div>
@@ -408,7 +406,11 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
                 <p className="font-medium">{isPolish ? 'Założenia:' : 'Assumptions:'}</p>
                 <ul className="list-disc list-inside space-y-0.5 ml-2">
                     <li>{isPolish ? 'Stopa dyskontowa: 10%' : 'Discount rate: 10%'}</li>
-                    <li>{isPolish ? 'Roczne korzyści z transformacji: 15% wartości inwestycji' : 'Annual transformation benefits: 15% of investment value'}</li>
+                    <li>
+                        {isPolish
+                            ? 'Roczne korzyści z transformacji: 15% wartości inwestycji'
+                            : 'Annual transformation benefits: 15% of investment value'}
+                    </li>
                     <li>{isPolish ? 'Okres wdrożenia: 18-24 miesiące' : 'Implementation period: 18-24 months'}</li>
                     <li>{isPolish ? 'Korzyści zaczynają się od roku 2' : 'Benefits start from year 2'}</li>
                 </ul>
@@ -418,4 +420,3 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
 };
 
 export default FinancialImpact;
-

@@ -1,6 +1,6 @@
 /**
  * ProfileBioSettings - User bio/about me section
- * 
+ *
  * Features:
  * - Bio/About me text area
  * - Skills/tags management
@@ -8,23 +8,24 @@
  * - Birthday and location
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    User as UserIcon,
-    MapPin,
+    AlertCircle,
     Calendar,
-    Tag,
-    Save,
-    Loader2,
-    X,
-    Plus,
     CheckCircle,
-    AlertCircle
+    Loader2,
+    MapPin,
+    Plus,
+    Save,
+    Tag,
+    User as UserIcon,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface ProfileBioSettingsProps {
     currentUser: User;
@@ -38,16 +39,11 @@ const PRONOUN_OPTIONS = [
     { value: 'other', label: 'Other' },
 ] as const;
 
-export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [bio, setBio] = useState(currentUser.bio || '');
     const [pronouns, setPronouns] = useState(currentUser.pronouns || '');
-    const [birthday, setBirthday] = useState(
-        currentUser.birthday ? currentUser.birthday.split('T')[0] : ''
-    );
+    const [birthday, setBirthday] = useState(currentUser.birthday ? currentUser.birthday.split('T')[0] : '');
     const [location, setLocation] = useState(currentUser.location || '');
     const [skills, setSkills] = useState<string[]>(currentUser.skills || []);
     const [newSkill, setNewSkill] = useState('');
@@ -70,7 +66,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
     };
 
     const handleRemoveSkill = (skillToRemove: string) => {
-        setSkills(skills.filter(s => s !== skillToRemove));
+        setSkills(skills.filter((s) => s !== skillToRemove));
     };
 
     const handleSave = async () => {
@@ -83,7 +79,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
                 pronouns: pronouns || undefined,
                 birthday: birthday || undefined,
                 location: location.trim() || undefined,
-                skills: skills.length > 0 ? skills : undefined
+                skills: skills.length > 0 ? skills : undefined,
             } as any);
 
             onUpdateUser({
@@ -91,7 +87,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
                 pronouns: pronouns || undefined,
                 birthday: birthday || undefined,
                 location: location.trim() || undefined,
-                skills: skills.length > 0 ? skills : undefined
+                skills: skills.length > 0 ? skills : undefined,
             } as any);
 
             setSaveStatus('success');
@@ -148,7 +144,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
                 >
                     <option value="">{t('settings.profile.bio.selectPronouns', 'Select pronouns')}</option>
-                    {PRONOUN_OPTIONS.map(option => (
+                    {PRONOUN_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                             {option.label}
                         </option>
@@ -275,10 +271,4 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
 };
 
 export default ProfileBioSettings;
-
-
-
-
-
-
 

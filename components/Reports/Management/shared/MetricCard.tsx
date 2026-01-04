@@ -3,8 +3,9 @@
  * Displays a single KPI/metric with value, target, and trend
  */
 
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+
 import { RAGStatus } from '../../../../types';
 
 interface MetricCardProps {
@@ -23,13 +24,13 @@ const statusColors = {
     GREEN: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5',
     AMBER: 'text-amber-500 border-amber-500/20 bg-amber-500/5',
     RED: 'text-red-500 border-red-500/20 bg-red-500/5',
-    GREY: 'text-slate-400 border-slate-400/20 bg-slate-400/5'
+    GREY: 'text-slate-400 border-slate-400/20 bg-slate-400/5',
 };
 
 const trendIcons = {
     IMPROVING: { icon: TrendingUp, color: 'text-emerald-500' },
     STABLE: { icon: Minus, color: 'text-slate-400' },
-    DECLINING: { icon: TrendingDown, color: 'text-red-500' }
+    DECLINING: { icon: TrendingDown, color: 'text-red-500' },
 };
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -41,7 +42,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     trend,
     variance,
     size = 'md',
-    className = ''
+    className = '',
 }) => {
     const statusStyle = statusColors[status] || statusColors.GREY;
     const TrendIcon = trend ? trendIcons[trend]?.icon : null;
@@ -50,7 +51,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     const sizeStyles = {
         sm: { container: 'p-3', value: 'text-2xl', label: 'text-xs' },
         md: { container: 'p-4', value: 'text-3xl', label: 'text-sm' },
-        lg: { container: 'p-6', value: 'text-4xl', label: 'text-base' }
+        lg: { container: 'p-6', value: 'text-4xl', label: 'text-base' },
     };
 
     const styles = sizeStyles[size];
@@ -58,31 +59,27 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     return (
         <div className={`rounded-xl border ${statusStyle} ${styles.container} ${className}`}>
             <div className="flex items-center justify-between mb-2">
-                <span className={`font-medium text-slate-500 dark:text-slate-400 ${styles.label}`}>
-                    {label}
-                </span>
-                {TrendIcon && (
-                    <TrendIcon size={16} className={trendColor} />
-                )}
+                <span className={`font-medium text-slate-500 dark:text-slate-400 ${styles.label}`}>{label}</span>
+                {TrendIcon && <TrendIcon size={16} className={trendColor} />}
             </div>
-            
+
             <div className="flex items-baseline gap-1">
-                <span className={`font-bold ${styles.value} text-navy-900 dark:text-white`}>
-                    {value}
-                </span>
-                {unit && (
-                    <span className="text-slate-400 text-sm">{unit}</span>
-                )}
+                <span className={`font-bold ${styles.value} text-navy-900 dark:text-white`}>{value}</span>
+                {unit && <span className="text-slate-400 text-sm">{unit}</span>}
             </div>
 
             {(target !== undefined || variance !== undefined) && (
                 <div className="mt-2 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                     {target !== undefined && (
-                        <span>Target: {target}{unit}</span>
+                        <span>
+                            Target: {target}
+                            {unit}
+                        </span>
                     )}
                     {variance !== undefined && (
                         <span className={variance >= 0 ? 'text-emerald-500' : 'text-red-500'}>
-                            {variance >= 0 ? '+' : ''}{variance}%
+                            {variance >= 0 ? '+' : ''}
+                            {variance}%
                         </span>
                     )}
                 </div>
@@ -107,15 +104,11 @@ interface MetricCardsGridProps {
     className?: string;
 }
 
-export const MetricCardsGrid: React.FC<MetricCardsGridProps> = ({
-    metrics,
-    columns = 4,
-    className = ''
-}) => {
+export const MetricCardsGrid: React.FC<MetricCardsGridProps> = ({ metrics, columns = 4, className = '' }) => {
     const gridCols = {
         2: 'grid-cols-2',
         3: 'grid-cols-3',
-        4: 'grid-cols-2 md:grid-cols-4'
+        4: 'grid-cols-2 md:grid-cols-4',
     };
 
     return (
@@ -128,12 +121,4 @@ export const MetricCardsGrid: React.FC<MetricCardsGridProps> = ({
 };
 
 export default MetricCard;
-
-
-
-
-
-
-
-
 

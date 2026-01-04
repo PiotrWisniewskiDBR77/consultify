@@ -1,6 +1,6 @@
 /**
  * AIModelSelectionSettings - AI Model Selection & Configuration
- * 
+ *
  * Features:
  * - Choose AI model (GPT-4, Claude, Gemini)
  * - Model per use case (chat, code, analysis)
@@ -9,28 +9,29 @@
  * - Cost tracking per model
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    Bot,
-    Zap,
-    Brain,
-    Sparkles,
-    MessageSquare,
-    Code,
     BarChart3,
-    FileSearch,
-    DollarSign,
-    Sliders,
-    Save,
-    Loader2,
-    Info,
+    Bot,
+    Brain,
     CheckCircle,
-    Clock
+    Clock,
+    Code,
+    DollarSign,
+    FileSearch,
+    Info,
+    Loader2,
+    MessageSquare,
+    Save,
+    Sliders,
+    Sparkles,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface AIModelSelectionSettingsProps {
@@ -73,7 +74,7 @@ const availableModels: AIModel[] = [
         maxTokens: 128000,
         costPer1kTokens: 0.01,
         speed: 'medium',
-        quality: 'premium'
+        quality: 'premium',
     },
     {
         id: 'gpt-4o',
@@ -85,7 +86,7 @@ const availableModels: AIModel[] = [
         maxTokens: 128000,
         costPer1kTokens: 0.005,
         speed: 'fast',
-        quality: 'premium'
+        quality: 'premium',
     },
     {
         id: 'gpt-3.5-turbo',
@@ -97,7 +98,7 @@ const availableModels: AIModel[] = [
         maxTokens: 16385,
         costPer1kTokens: 0.0005,
         speed: 'fast',
-        quality: 'standard'
+        quality: 'standard',
     },
     {
         id: 'claude-3-opus',
@@ -109,7 +110,7 @@ const availableModels: AIModel[] = [
         maxTokens: 200000,
         costPer1kTokens: 0.015,
         speed: 'medium',
-        quality: 'premium'
+        quality: 'premium',
     },
     {
         id: 'claude-3-sonnet',
@@ -121,33 +122,30 @@ const availableModels: AIModel[] = [
         maxTokens: 200000,
         costPer1kTokens: 0.003,
         speed: 'fast',
-        quality: 'high'
+        quality: 'high',
     },
     {
         id: 'gemini-pro',
         name: 'Gemini Pro',
         provider: 'Google',
         icon: '💎',
-        description: 'Google\'s advanced multimodal AI',
+        description: "Google's advanced multimodal AI",
         capabilities: ['chat', 'code', 'analysis'],
         maxTokens: 32000,
         costPer1kTokens: 0.001,
         speed: 'fast',
-        quality: 'high'
-    }
+        quality: 'high',
+    },
 ];
 
 const useCases = [
     { id: 'chat', label: 'Chat / Conversation', icon: MessageSquare, description: 'General Q&A and discussions' },
     { id: 'code', label: 'Code Generation', icon: Code, description: 'Writing and reviewing code' },
     { id: 'analysis', label: 'Analysis & Reasoning', icon: BarChart3, description: 'Data analysis and complex tasks' },
-    { id: 'document', label: 'Document Processing', icon: FileSearch, description: 'Summarization and extraction' }
+    { id: 'document', label: 'Document Processing', icon: FileSearch, description: 'Summarization and extraction' },
 ];
 
-export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -159,7 +157,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         documentModel: 'gpt-4o',
         temperature: 0.7,
         maxTokens: 4096,
-        streamResponse: true
+        streamResponse: true,
     });
     const [costEstimate, setCostEstimate] = useState({ monthly: 0, daily: 0 });
     const [activeTab, setActiveTab] = useState<'models' | 'usecases' | 'advanced'>('models');
@@ -195,7 +193,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         }
     };
 
-    const getSelectedModel = (modelId: string) => availableModels.find(m => m.id === modelId);
+    const getSelectedModel = (modelId: string) => availableModels.find((m) => m.id === modelId);
 
     if (loading) {
         return (
@@ -208,7 +206,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-ai-model-selection" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -252,8 +250,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 {[
                     { id: 'models', label: 'Default Model', icon: Bot },
                     { id: 'usecases', label: 'By Use Case', icon: Zap },
-                    { id: 'advanced', label: 'Advanced', icon: Sliders }
-                ].map(tab => {
+                    { id: 'advanced', label: 'Advanced', icon: Sliders },
+                ].map((tab) => {
                     const Icon = tab.icon;
                     return (
                         <button
@@ -276,9 +274,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             {activeTab === 'models' && (
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-4">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Select Default AI Model</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {availableModels.map(model => (
+                        {availableModels.map((model) => (
                             <button
                                 key={model.id}
                                 onClick={() => setSettings({ ...settings, defaultModel: model.id })}
@@ -302,11 +300,15 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                                 </div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{model.description}</p>
                                 <div className="flex items-center gap-4 mt-3 text-xs">
-                                    <span className={`px-2 py-0.5 rounded ${
-                                        model.speed === 'fast' ? 'bg-green-100 text-green-700' :
-                                        model.speed === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-red-100 text-red-700'
-                                    }`}>
+                                    <span
+                                        className={`px-2 py-0.5 rounded ${
+                                            model.speed === 'fast'
+                                                ? 'bg-green-100 text-green-700'
+                                                : model.speed === 'medium'
+                                                  ? 'bg-yellow-100 text-yellow-700'
+                                                  : 'bg-red-100 text-red-700'
+                                        }`}
+                                    >
                                         <Clock size={10} className="inline mr-1" />
                                         {model.speed}
                                     </span>
@@ -323,11 +325,11 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Model per Use Case</h3>
                     <p className="text-sm text-slate-500">Select different models for specific tasks</p>
-                    
-                    {useCases.map(useCase => {
+
+                    {useCases.map((useCase) => {
                         const Icon = useCase.icon;
                         const settingKey = `${useCase.id}Model` as keyof ModelSettings;
-                        
+
                         return (
                             <div key={useCase.id} className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                                 <div className="flex items-center gap-3 mb-3">
@@ -346,13 +348,12 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                                 >
                                     <option value="">Use Default Model</option>
                                     {availableModels
-                                        .filter(m => m.capabilities.includes(useCase.id))
-                                        .map(model => (
+                                        .filter((m) => m.capabilities.includes(useCase.id))
+                                        .map((model) => (
                                             <option key={model.id} value={model.id}>
                                                 {model.icon} {model.name} ({model.provider})
                                             </option>
-                                        ))
-                                    }
+                                        ))}
                                 </select>
                             </div>
                         );
@@ -364,12 +365,14 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             {activeTab === 'advanced' && (
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Advanced Settings</h3>
-                    
+
                     {/* Temperature Slider */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <label className="font-medium text-slate-900 dark:text-white">Temperature / Creativity</label>
+                                <label className="font-medium text-slate-900 dark:text-white">
+                                    Temperature / Creativity
+                                </label>
                                 <p className="text-sm text-slate-500">Higher = more creative, Lower = more focused</p>
                             </div>
                             <span className="text-lg font-mono text-violet-600">{settings.temperature.toFixed(1)}</span>
@@ -394,10 +397,14 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <label className="font-medium text-slate-900 dark:text-white">Max Response Tokens</label>
+                                <label className="font-medium text-slate-900 dark:text-white">
+                                    Max Response Tokens
+                                </label>
                                 <p className="text-sm text-slate-500">Maximum length of AI responses</p>
                             </div>
-                            <span className="text-lg font-mono text-violet-600">{settings.maxTokens.toLocaleString()}</span>
+                            <span className="text-lg font-mono text-violet-600">
+                                {settings.maxTokens.toLocaleString()}
+                            </span>
                         </div>
                         <input
                             type="range"
@@ -427,9 +434,11 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                                 settings.streamResponse ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'
                             }`}
                         >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                settings.streamResponse ? 'left-7' : 'left-1'
-                            }`} />
+                            <span
+                                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                    settings.streamResponse ? 'left-7' : 'left-1'
+                                }`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -455,10 +464,4 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 };
 
 export default AIModelSelectionSettings;
-
-
-
-
-
-
 

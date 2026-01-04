@@ -1,18 +1,29 @@
 /**
  * Version History Panel
- * 
+ *
  * Panel for viewing and managing version history of digitization analyses.
  * Supports creating snapshots, comparing versions, and restoring.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    X, History, Plus, GitCompare, RotateCcw, 
-    Loader2, Calendar, User, Bookmark, 
-    ChevronDown, ChevronUp, Flag, Clock
+import {
+    Bookmark,
+    Calendar,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Flag,
+    GitCompare,
+    History,
+    Loader2,
+    Plus,
+    RotateCcw,
+    User,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 import { DigitizationAnalysis } from './types';
 
 interface Version {
@@ -35,11 +46,7 @@ interface VersionHistoryPanelProps {
     onRestore?: (version: Version) => void;
 }
 
-export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
-    analysis,
-    onClose,
-    onRestore
-}) => {
+export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ analysis, onClose, onRestore }) => {
     const [versions, setVersions] = useState<Version[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -76,7 +83,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             await Api.createDigitizationVersion(analysis.id, {
                 versionName: versionName || undefined,
                 versionType,
-                notes: notes || undefined
+                notes: notes || undefined,
             });
             toast.success('Wersja utworzona');
             setShowCreateForm(false);
@@ -91,7 +98,11 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
     };
 
     const handleRestore = async (version: Version) => {
-        if (!confirm(`Czy na pewno chcesz przywrócić analizę do wersji "${version.version_name}"? Obecny stan zostanie zapisany jako nowa wersja.`)) {
+        if (
+            !confirm(
+                `Czy na pewno chcesz przywrócić analizę do wersji "${version.version_name}"? Obecny stan zostanie zapisany jako nowa wersja.`,
+            )
+        ) {
             return;
         }
 
@@ -126,7 +137,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             const result = await Api.compareDigitizationVersions(
                 analysis.id,
                 selectedForCompare[0],
-                selectedForCompare[1]
+                selectedForCompare[1],
             );
             setComparisonResult(result);
         } catch (err: any) {
@@ -138,7 +149,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
     const toggleVersionSelect = (versionId: string) => {
         if (selectedForCompare.includes(versionId)) {
-            setSelectedForCompare(selectedForCompare.filter(id => id !== versionId));
+            setSelectedForCompare(selectedForCompare.filter((id) => id !== versionId));
         } else if (selectedForCompare.length < 2) {
             setSelectedForCompare([...selectedForCompare, versionId]);
         }
@@ -146,17 +157,23 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
     const getVersionTypeIcon = (type: string) => {
         switch (type) {
-            case 'baseline': return <Bookmark size={14} className="text-amber-500" />;
-            case 'milestone': return <Flag size={14} className="text-emerald-500" />;
-            default: return <Clock size={14} className="text-slate-400" />;
+            case 'baseline':
+                return <Bookmark size={14} className="text-amber-500" />;
+            case 'milestone':
+                return <Flag size={14} className="text-emerald-500" />;
+            default:
+                return <Clock size={14} className="text-slate-400" />;
         }
     };
 
     const getVersionTypeLabel = (type: string) => {
         switch (type) {
-            case 'baseline': return 'Baseline';
-            case 'milestone': return 'Kamień milowy';
-            default: return 'Snapshot';
+            case 'baseline':
+                return 'Baseline';
+            case 'milestone':
+                return 'Kamień milowy';
+            default:
+                return 'Snapshot';
         }
     };
 
@@ -173,7 +190,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         <p className="text-xs text-slate-500">{analysis.name}</p>
                     </div>
                 </div>
-                <button 
+                <button
                     onClick={onClose}
                     className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                 >
@@ -218,7 +235,9 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-xl p-4 border border-emerald-200 dark:border-emerald-500/20">
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <span className="font-medium text-emerald-700 dark:text-emerald-400">Stan aktualny</span>
+                                <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                                    Stan aktualny
+                                </span>
                             </div>
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-slate-600 dark:text-slate-400">
@@ -233,9 +252,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         {/* Create version form */}
                         {showCreateForm && (
                             <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
-                                <h4 className="font-medium text-navy-900 dark:text-white mb-4">
-                                    Utwórz nową wersję
-                                </h4>
+                                <h4 className="font-medium text-navy-900 dark:text-white mb-4">Utwórz nową wersję</h4>
                                 <div className="space-y-3">
                                     <input
                                         type="text"
@@ -245,7 +262,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                         className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm"
                                     />
                                     <div className="flex gap-2">
-                                        {(['snapshot', 'baseline', 'milestone'] as const).map(type => (
+                                        {(['snapshot', 'baseline', 'milestone'] as const).map((type) => (
                                             <button
                                                 key={type}
                                                 onClick={() => setVersionType(type)}
@@ -280,7 +297,11 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                         disabled={isCreating}
                                         className="flex items-center gap-2 px-4 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-lg text-sm font-medium"
                                     >
-                                        {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                        {isCreating ? (
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            <Plus size={14} />
+                                        )}
                                         Utwórz
                                     </button>
                                 </div>
@@ -295,7 +316,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                         Porównanie wersji
                                     </h4>
                                     <button
-                                        onClick={() => { setComparisonResult(null); setSelectedForCompare([]); }}
+                                        onClick={() => {
+                                            setComparisonResult(null);
+                                            setSelectedForCompare([]);
+                                        }}
                                         className="p-1 hover:bg-purple-200 dark:hover:bg-purple-500/20 rounded"
                                     >
                                         <X size={16} className="text-purple-500" />
@@ -321,7 +345,8 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                 </div>
                                 <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-500/20">
                                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                                        <span className="font-medium">{comparisonResult.summary.totalChanges}</span> zmian w ocenach
+                                        <span className="font-medium">{comparisonResult.summary.totalChanges}</span>{' '}
+                                        zmian w ocenach
                                         {comparisonResult.summary.improved > 0 && (
                                             <span className="text-emerald-500 ml-2">
                                                 +{comparisonResult.summary.improved} poprawionych
@@ -335,7 +360,15 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                     </p>
                                     <div className="mt-2 text-sm">
                                         <span className="text-slate-500">Zmiana wyniku: </span>
-                                        <span className={comparisonResult.metricsDiff.overallScore.change > 0 ? 'text-emerald-500' : comparisonResult.metricsDiff.overallScore.change < 0 ? 'text-red-500' : 'text-slate-500'}>
+                                        <span
+                                            className={
+                                                comparisonResult.metricsDiff.overallScore.change > 0
+                                                    ? 'text-emerald-500'
+                                                    : comparisonResult.metricsDiff.overallScore.change < 0
+                                                      ? 'text-red-500'
+                                                      : 'text-slate-500'
+                                            }
+                                        >
                                             {comparisonResult.metricsDiff.overallScore.change > 0 ? '+' : ''}
                                             {comparisonResult.metricsDiff.overallScore.change.toFixed(2)}
                                         </span>
@@ -360,10 +393,12 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
                                 <div className="space-y-4">
                                     {versions.map((version, index) => (
-                                        <div 
+                                        <div
                                             key={version.id}
                                             className={`relative pl-12 ${
-                                                selectedForCompare.includes(version.id) ? 'bg-blue-50 dark:bg-blue-500/10 -ml-2 pl-14 py-2 rounded-xl' : ''
+                                                selectedForCompare.includes(version.id)
+                                                    ? 'bg-blue-50 dark:bg-blue-500/10 -ml-2 pl-14 py-2 rounded-xl'
+                                                    : ''
                                             }`}
                                         >
                                             {/* Timeline dot */}
@@ -373,10 +408,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                     selectedForCompare.includes(version.id)
                                                         ? 'bg-blue-500 border-blue-500'
                                                         : version.version_type === 'baseline'
-                                                        ? 'bg-amber-500 border-amber-500'
-                                                        : version.version_type === 'milestone'
-                                                        ? 'bg-emerald-500 border-emerald-500'
-                                                        : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-white/20 hover:border-blue-500'
+                                                          ? 'bg-amber-500 border-amber-500'
+                                                          : version.version_type === 'milestone'
+                                                            ? 'bg-emerald-500 border-emerald-500'
+                                                            : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-white/20 hover:border-blue-500'
                                                 }`}
                                             />
 
@@ -398,7 +433,9 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                         <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
                                                             <span className="flex items-center gap-1">
                                                                 <Calendar size={12} />
-                                                                {new Date(version.created_at).toLocaleDateString('pl-PL')}
+                                                                {new Date(version.created_at).toLocaleDateString(
+                                                                    'pl-PL',
+                                                                )}
                                                             </span>
                                                             <span className="flex items-center gap-1">
                                                                 <User size={12} />
@@ -425,10 +462,18 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
                                                     {version.notes && (
                                                         <button
-                                                            onClick={() => setExpandedVersion(expandedVersion === version.id ? null : version.id)}
+                                                            onClick={() =>
+                                                                setExpandedVersion(
+                                                                    expandedVersion === version.id ? null : version.id,
+                                                                )
+                                                            }
                                                             className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded"
                                                         >
-                                                            {expandedVersion === version.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                            {expandedVersion === version.id ? (
+                                                                <ChevronUp size={12} />
+                                                            ) : (
+                                                                <ChevronDown size={12} />
+                                                            )}
                                                             Notatki
                                                         </button>
                                                     )}
@@ -476,12 +521,4 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 };
 
 export default VersionHistoryPanel;
-
-
-
-
-
-
-
-
 

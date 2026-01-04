@@ -7,11 +7,11 @@
  * - Rate limiting
  * - Usage tracking
  */
-import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import db from '../database.js';
-import AuditService from './auditService';
+import AuditService from './auditService.js';
 // Database helpers
 function dbGet(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -112,10 +112,20 @@ const ApiKeyService = {
                 rate_limit_per_minute, rate_limit_per_day, allowed_ips,
                 expires_at, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-            keyId, organizationId, userId, name, description,
-            keyHash, keyPrefix, keyType, JSON.stringify(scopes),
-            rateLimitPerMinute, rateLimitPerDay, JSON.stringify(allowedIps),
-            expiresAt, createdBy,
+            keyId,
+            organizationId,
+            userId,
+            name,
+            description,
+            keyHash,
+            keyPrefix,
+            keyType,
+            JSON.stringify(scopes),
+            rateLimitPerMinute,
+            rateLimitPerDay,
+            JSON.stringify(allowedIps),
+            expiresAt,
+            createdBy,
         ]);
         AuditService.logSystemEvent('API_KEY_CREATED', 'api_key', keyId, organizationId, {
             name,
@@ -142,7 +152,7 @@ const ApiKeyService = {
         }
         const keyPrefix = plainKey.substring(0, 12);
         // Find potential matches by prefix
-        const potentialKeys = await dbAll(`SELECT * FROM api_keys WHERE key_prefix = ? AND is_active = 1`, [keyPrefix]);
+        const potentialKeys = (await dbAll(`SELECT * FROM api_keys WHERE key_prefix = ? AND is_active = 1`, [keyPrefix]));
         for (const keyRecord of potentialKeys) {
             const match = await bcrypt.compare(plainKey, keyRecord.key_hash);
             if (match) {
@@ -189,15 +199,15 @@ const ApiKeyService = {
             windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
         }
         // Get or create rate limit record
-        let rateLimit = await dbGet(`SELECT * FROM api_key_rate_limits WHERE api_key_id = ? AND window_start = ? AND window_type = ?`, [keyId, windowStart, type]);
+        const rateLimit = (await dbGet(`SELECT * FROM api_key_rate_limits WHERE api_key_id = ? AND window_start = ? AND window_type = ?`, [keyId, windowStart, type]));
         if (!rateLimit) {
             await dbRun(`INSERT INTO api_key_rate_limits (id, api_key_id, window_start, window_type, request_count)
                  VALUES (?, ?, ?, ?, 1)`, [uuidv4(), keyId, windowStart, type]);
             return { allowed: true, remaining: 999 }; // First request in window
         }
         // Get key limits
-        const key = await dbGet(`SELECT rate_limit_per_minute, rate_limit_per_day FROM api_keys WHERE id = ?`, [keyId]);
-        const limit = type === 'minute' ? key.rate_limit_per_minute : key.rate_limit_per_day;
+        const key = (await dbGet(`SELECT rate_limit_per_minute, rate_limit_per_day FROM api_keys WHERE id = ?`, [keyId]));
+        const limit = (type === 'minute' ? key.rate_limit_per_minute : key.rate_limit_per_day);
         if (rateLimit.request_count >= limit) {
             return { allowed: false, remaining: 0, retryAfter: type === 'minute' ? 60 : 86400 };
         }
@@ -213,8 +223,17 @@ const ApiKeyService = {
                 id, api_key_id, endpoint, method, status_code, response_time_ms,
                 ip_address, user_agent, requests_remaining, error_code, error_message
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-            uuidv4(), keyId, data.endpoint, data.method, data.statusCode, data.responseTime,
-            data.ip, data.userAgent, data.requestsRemaining, data.errorCode, data.errorMessage,
+            uuidv4(),
+            keyId,
+            data.endpoint,
+            data.method,
+            data.statusCode,
+            data.responseTime,
+            data.ip,
+            data.userAgent,
+            data.requestsRemaining,
+            data.errorCode,
+            data.errorMessage,
         ]);
     },
     /**
@@ -234,8 +253,8 @@ const ApiKeyService = {
             query += ` AND is_active = 1`;
         }
         query += ` ORDER BY created_at DESC`;
-        const keys = await dbAll(query, params);
-        return keys.map(k => ({
+        const keys = (await dbAll(query, params));
+        return keys.map((k) => ({
             ...k,
             scopes: JSON.parse(k.scopes || '[]'),
             allowedIps: JSON.parse(k.allowed_ips || '[]'),

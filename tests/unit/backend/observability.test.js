@@ -1,6 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 
 // Mock dependencies
 vi.mock('../../../server/services/ai/logger', () => ({
@@ -22,7 +20,7 @@ describe('AI Observability Service', () => {
     let observability;
     let originalEnv;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         originalEnv = { ...process.env };
         delete process.env.LANGFUSE_PUBLIC_KEY;
         delete process.env.LANGFUSE_SECRET_KEY;
@@ -30,7 +28,8 @@ describe('AI Observability Service', () => {
         
         // Clear module cache to get fresh instance
         vi.resetModules();
-        observability = require('../../../server/services/ai/observability');
+        // Dynamic import for ESM compatibility
+        observability = await import('../../../server/services/ai/observability');
     });
 
     afterEach(() => {

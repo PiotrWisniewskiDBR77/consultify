@@ -1,6 +1,6 @@
 /**
  * WorkspaceDefaultsPanel - Workspace Default Settings
- * 
+ *
  * Features:
  * - Default project settings
  * - Default task priorities
@@ -8,31 +8,32 @@
  * - Time zone settings for workspace
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-    Settings,
-    FolderOpen,
-    ListTodo,
-    Clock,
-    Globe,
-    Calendar,
-    Tag,
-    Palette,
-    Save,
-    RefreshCw,
-    Plus,
-    Trash2,
-    GripVertical,
-    ChevronDown,
     AlertTriangle,
+    Calendar,
     Check,
-    X
+    ChevronDown,
+    Clock,
+    FolderOpen,
+    Globe,
+    GripVertical,
+    ListTodo,
+    Palette,
+    Plus,
+    RefreshCw,
+    Save,
+    Settings,
+    Tag,
+    Trash2,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../shared/InfoButton';
 
 // Types
@@ -87,7 +88,7 @@ const DEFAULT_WORKFLOW_STATES: WorkflowState[] = [
     { id: 'in_progress', name: 'In Progress', color: 'amber', type: 'in_progress', isDefault: false },
     { id: 'review', name: 'Review', color: 'violet', type: 'in_progress', isDefault: false },
     { id: 'done', name: 'Done', color: 'green', type: 'done', isDefault: false },
-    { id: 'blocked', name: 'Blocked', color: 'red', type: 'blocked', isDefault: false }
+    { id: 'blocked', name: 'Blocked', color: 'red', type: 'blocked', isDefault: false },
 ];
 
 // Default priorities
@@ -95,7 +96,7 @@ const DEFAULT_PRIORITIES: TaskPriority[] = [
     { id: 'urgent', name: 'Urgent', color: 'red', value: 4, icon: '🔴' },
     { id: 'high', name: 'High', color: 'orange', value: 3, icon: '🟠' },
     { id: 'medium', name: 'Medium', color: 'amber', value: 2, icon: '🟡' },
-    { id: 'low', name: 'Low', color: 'green', value: 1, icon: '🟢' }
+    { id: 'low', name: 'Low', color: 'green', value: 1, icon: '🟢' },
 ];
 
 // Color options
@@ -107,7 +108,7 @@ const COLOR_OPTIONS = [
     { id: 'green', bg: 'bg-green-500', light: 'bg-green-100' },
     { id: 'blue', bg: 'bg-blue-500', light: 'bg-blue-100' },
     { id: 'violet', bg: 'bg-violet-500', light: 'bg-violet-100' },
-    { id: 'pink', bg: 'bg-pink-500', light: 'bg-pink-100' }
+    { id: 'pink', bg: 'bg-pink-500', light: 'bg-pink-100' },
 ];
 
 // Timezone options (simplified)
@@ -122,7 +123,7 @@ const TIMEZONE_OPTIONS = [
     'America/Los_Angeles',
     'Asia/Tokyo',
     'Asia/Singapore',
-    'Australia/Sydney'
+    'Australia/Sydney',
 ];
 
 interface WorkspaceDefaultsPanelProps {
@@ -144,13 +145,13 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
             defaultPrivacy: 'team',
             enableTimeTracking: true,
             enableDependencies: true,
-            defaultEstimationUnit: 'hours'
+            defaultEstimationUnit: 'hours',
         },
         taskDefaults: {
             defaultPriority: 'medium',
             defaultDueOffset: 7,
             defaultAssignee: 'creator',
-            autoAddToMyWork: true
+            autoAddToMyWork: true,
         },
         workflowStates: DEFAULT_WORKFLOW_STATES,
         priorities: DEFAULT_PRIORITIES,
@@ -161,27 +162,27 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
         workingDays: [1, 2, 3, 4, 5],
         workingHours: {
             start: '09:00',
-            end: '17:00'
-        }
+            end: '17:00',
+        },
     });
 
     // Load settings
     const loadSettings = useCallback(async () => {
         if (!currentOrganization?.id) return;
-        
+
         setLoading(true);
         try {
             const response = await fetch(`/api/workspace-defaults/${currentOrganization.id}`, {
-                headers: { 
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.exists && data.settings) {
-                    setSettings(prev => ({ ...prev, ...data.settings }));
+                    setSettings((prev) => ({ ...prev, ...data.settings }));
                 }
             }
         } catch (error) {
@@ -198,16 +199,16 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
 
     // Update settings
     const updateSettings = (path: string, value: any) => {
-        setSettings(prev => {
+        setSettings((prev) => {
             const newSettings = { ...prev };
             const keys = path.split('.');
             let current: any = newSettings;
-            
+
             for (let i = 0; i < keys.length - 1; i++) {
                 current = current[keys[i]];
             }
             current[keys[keys.length - 1]] = value;
-            
+
             return newSettings;
         });
         setHasChanges(true);
@@ -216,18 +217,18 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
     // Save settings
     const saveSettings = async () => {
         if (!currentOrganization?.id) return;
-        
+
         setSaving(true);
         try {
             const response = await fetch(`/api/workspace-defaults/${currentOrganization.id}`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
-            
+
             if (response.ok) {
                 toast.success(t('admin.defaults.saved', 'Settings saved successfully'));
                 setHasChanges(false);
@@ -250,42 +251,40 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
             name: 'New State',
             color: 'blue',
             type: 'in_progress',
-            isDefault: false
+            isDefault: false,
         };
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            workflowStates: [...prev.workflowStates, newState]
+            workflowStates: [...prev.workflowStates, newState],
         }));
         setHasChanges(true);
     };
 
     // Remove workflow state
     const removeWorkflowState = (stateId: string) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            workflowStates: prev.workflowStates.filter(s => s.id !== stateId)
+            workflowStates: prev.workflowStates.filter((s) => s.id !== stateId),
         }));
         setHasChanges(true);
     };
 
     // Update workflow state
     const updateWorkflowState = (stateId: string, field: keyof WorkflowState, value: any) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            workflowStates: prev.workflowStates.map(s =>
-                s.id === stateId ? { ...s, [field]: value } : s
-            )
+            workflowStates: prev.workflowStates.map((s) => (s.id === stateId ? { ...s, [field]: value } : s)),
         }));
         setHasChanges(true);
     };
 
     // Toggle working day
     const toggleWorkingDay = (day: number) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
             workingDays: prev.workingDays.includes(day)
-                ? prev.workingDays.filter(d => d !== day)
-                : [...prev.workingDays, day].sort()
+                ? prev.workingDays.filter((d) => d !== day)
+                : [...prev.workingDays, day].sort(),
         }));
         setHasChanges(true);
     };
@@ -297,7 +296,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
         { value: 3, label: 'Wed' },
         { value: 4, label: 'Thu' },
         { value: 5, label: 'Fri' },
-        { value: 6, label: 'Sat' }
+        { value: 6, label: 'Sat' },
     ];
 
     return (
@@ -395,7 +394,9 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             >
                                 <option value="public">{t('admin.defaults.public', 'Public (visible to all)')}</option>
-                                <option value="team">{t('admin.defaults.team', 'Team (visible to team members)')}</option>
+                                <option value="team">
+                                    {t('admin.defaults.team', 'Team (visible to team members)')}
+                                </option>
                                 <option value="private">{t('admin.defaults.private', 'Private (invite only)')}</option>
                             </select>
                         </div>
@@ -407,7 +408,9 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                             </label>
                             <select
                                 value={settings.projectDefaults.defaultEstimationUnit}
-                                onChange={(e) => updateSettings('projectDefaults.defaultEstimationUnit', e.target.value)}
+                                onChange={(e) =>
+                                    updateSettings('projectDefaults.defaultEstimationUnit', e.target.value)
+                                }
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             >
                                 <option value="hours">{t('admin.defaults.hours', 'Hours')}</option>
@@ -425,7 +428,9 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 <input
                                     type="checkbox"
                                     checked={settings.projectDefaults.autoAssignCreator}
-                                    onChange={(e) => updateSettings('projectDefaults.autoAssignCreator', e.target.checked)}
+                                    onChange={(e) =>
+                                        updateSettings('projectDefaults.autoAssignCreator', e.target.checked)
+                                    }
                                     className="w-4 h-4 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
                                 />
                             </label>
@@ -436,7 +441,9 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 <input
                                     type="checkbox"
                                     checked={settings.projectDefaults.enableTimeTracking}
-                                    onChange={(e) => updateSettings('projectDefaults.enableTimeTracking', e.target.checked)}
+                                    onChange={(e) =>
+                                        updateSettings('projectDefaults.enableTimeTracking', e.target.checked)
+                                    }
                                     className="w-4 h-4 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
                                 />
                             </label>
@@ -447,7 +454,9 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 <input
                                     type="checkbox"
                                     checked={settings.projectDefaults.enableDependencies}
-                                    onChange={(e) => updateSettings('projectDefaults.enableDependencies', e.target.checked)}
+                                    onChange={(e) =>
+                                        updateSettings('projectDefaults.enableDependencies', e.target.checked)
+                                    }
                                     className="w-4 h-4 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
                                 />
                             </label>
@@ -482,8 +491,10 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 onChange={(e) => updateSettings('taskDefaults.defaultPriority', e.target.value)}
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             >
-                                {settings.priorities.map(p => (
-                                    <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                                {settings.priorities.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.icon} {p.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -497,7 +508,9 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 <input
                                     type="number"
                                     value={settings.taskDefaults.defaultDueOffset}
-                                    onChange={(e) => updateSettings('taskDefaults.defaultDueOffset', parseInt(e.target.value) || 0)}
+                                    onChange={(e) =>
+                                        updateSettings('taskDefaults.defaultDueOffset', parseInt(e.target.value) || 0)
+                                    }
                                     className="w-24 px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                     min={0}
                                 />
@@ -568,19 +581,21 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-700 rounded-lg group"
                             >
                                 <GripVertical className="text-slate-400 cursor-move" size={16} />
-                                
+
                                 {/* Color picker */}
                                 <div className="relative">
                                     <button
-                                        className={`w-4 h-4 rounded-full ${COLOR_OPTIONS.find(c => c.id === state.color)?.bg || 'bg-slate-400'}`}
+                                        className={`w-4 h-4 rounded-full ${COLOR_OPTIONS.find((c) => c.id === state.color)?.bg || 'bg-slate-400'}`}
                                     />
                                     <select
                                         value={state.color}
                                         onChange={(e) => updateWorkflowState(state.id, 'color', e.target.value)}
                                         className="absolute inset-0 opacity-0 cursor-pointer"
                                     >
-                                        {COLOR_OPTIONS.map(c => (
-                                            <option key={c.id} value={c.id}>{c.id}</option>
+                                        {COLOR_OPTIONS.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.id}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -641,8 +656,10 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 onChange={(e) => updateSettings('timezone', e.target.value)}
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             >
-                                {TIMEZONE_OPTIONS.map(tz => (
-                                    <option key={tz} value={tz}>{tz}</option>
+                                {TIMEZONE_OPTIONS.map((tz) => (
+                                    <option key={tz} value={tz}>
+                                        {tz}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -727,7 +744,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
                                 {t('admin.defaults.workingDays', 'Working Days')}
                             </label>
                             <div className="flex gap-1">
-                                {DAYS_OF_WEEK.map(day => (
+                                {DAYS_OF_WEEK.map((day) => (
                                     <button
                                         key={day.value}
                                         onClick={() => toggleWorkingDay(day.value)}
@@ -772,4 +789,3 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({ 
 };
 
 export default WorkspaceDefaultsPanel;
-

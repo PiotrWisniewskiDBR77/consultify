@@ -1,14 +1,15 @@
 /**
  * Initiative Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles all initiative-related business logic
  */
 
 import type { Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { v4 as uuidv4 } from 'uuid';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
     CreateInitiativeRequest,
@@ -90,18 +91,22 @@ export class InitiativeController {
             scopeIn: safeJsonParse(i.scope_in as string, []),
             scopeOut: safeJsonParse(i.scope_out as string, []),
             keyRisks: safeJsonParse(i.key_risks as string, []),
-            ownerBusiness: i.owner_business_id ? {
-                id: i.owner_business_id,
-                firstName: i.ob_first_name,
-                lastName: i.ob_last_name,
-                avatarUrl: i.ob_avatar
-            } : null,
-            ownerExecution: i.owner_execution_id ? {
-                id: i.owner_execution_id,
-                firstName: i.oe_first_name,
-                lastName: i.oe_last_name,
-                avatarUrl: i.oe_avatar
-            } : null,
+            ownerBusiness: i.owner_business_id
+                ? {
+                      id: i.owner_business_id,
+                      firstName: i.ob_first_name,
+                      lastName: i.ob_last_name,
+                      avatarUrl: i.ob_avatar,
+                  }
+                : null,
+            ownerExecution: i.owner_execution_id
+                ? {
+                      id: i.owner_execution_id,
+                      firstName: i.oe_first_name,
+                      lastName: i.oe_last_name,
+                      avatarUrl: i.oe_avatar,
+                  }
+                : null,
         }));
 
         res.json(initiatives);
@@ -150,33 +155,51 @@ export class InitiativeController {
     /**
      * Create a new initiative
      */
-    static createInitiative = asyncHandler(async (req: AuthenticatedRequest<CreateInitiativeRequest>, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static createInitiative = asyncHandler(
+        async (req: AuthenticatedRequest<CreateInitiativeRequest>, res: Response): Promise<void> => {
+            const orgId = req.user?.organizationId;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        const {
-            projectId, title, axis, area, summary, hypothesis,
-            businessValue, costCapex, costOpex, expectedRoi,
-            valueDriver, confidenceLevel, valueTiming,
-            plannedStartDate, plannedEndDate,
-            ownerBusinessId, ownerExecutionId,
-            problemStatement, deliverables, successCriteria, scopeIn, scopeOut, keyRisks,
-        } = req.body;
+            const {
+                projectId,
+                title,
+                axis,
+                area,
+                summary,
+                hypothesis,
+                businessValue,
+                costCapex,
+                costOpex,
+                expectedRoi,
+                valueDriver,
+                confidenceLevel,
+                valueTiming,
+                plannedStartDate,
+                plannedEndDate,
+                ownerBusinessId,
+                ownerExecutionId,
+                problemStatement,
+                deliverables,
+                successCriteria,
+                scopeIn,
+                scopeOut,
+                keyRisks,
+            } = req.body;
 
-        if (!title) {
-            res.status(400).json({ error: 'Title is required' });
-            return;
-        }
+            if (!title) {
+                res.status(400).json({ error: 'Title is required' });
+                return;
+            }
 
-        // TODO: Check access policy when AccessPolicyService is migrated
+            // TODO: Check access policy when AccessPolicyService is migrated
 
-        const id = uuidv4();
-        const now = new Date().toISOString();
+            const id = uuidv4();
+            const now = new Date().toISOString();
 
-        const sql = `
+            const sql = `
             INSERT INTO initiatives (
                 id, organization_id, project_id, title, axis, area, summary, hypothesis,
                 business_value, cost_capex, cost_opex, expected_roi,
@@ -188,59 +211,78 @@ export class InitiativeController {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        await queryHelpers.queryRun(sql, [
-            id, orgId, projectId, title, axis ?? null, area ?? null, summary ?? null, hypothesis ?? null,
-            businessValue ?? null, costCapex ?? null, costOpex ?? null, expectedRoi ?? null,
-            valueDriver ?? null, confidenceLevel ?? null, valueTiming ?? null,
-            plannedStartDate ?? null, plannedEndDate ?? null,
-            ownerBusinessId ?? null, ownerExecutionId ?? null,
-            problemStatement ?? null,
-            JSON.stringify(deliverables || []),
-            JSON.stringify(successCriteria || []),
-            JSON.stringify(scopeIn || []),
-            JSON.stringify(scopeOut || []),
-            JSON.stringify(keyRisks || []),
-            now, now
-        ]);
+            await queryHelpers.queryRun(sql, [
+                id,
+                orgId,
+                projectId,
+                title,
+                axis ?? null,
+                area ?? null,
+                summary ?? null,
+                hypothesis ?? null,
+                businessValue ?? null,
+                costCapex ?? null,
+                costOpex ?? null,
+                expectedRoi ?? null,
+                valueDriver ?? null,
+                confidenceLevel ?? null,
+                valueTiming ?? null,
+                plannedStartDate ?? null,
+                plannedEndDate ?? null,
+                ownerBusinessId ?? null,
+                ownerExecutionId ?? null,
+                problemStatement ?? null,
+                JSON.stringify(deliverables || []),
+                JSON.stringify(successCriteria || []),
+                JSON.stringify(scopeIn || []),
+                JSON.stringify(scopeOut || []),
+                JSON.stringify(keyRisks || []),
+                now,
+                now,
+            ]);
 
-        res.json({ id, name: title, message: 'Initiative created' });
-    });
+            res.json({ id, name: title, message: 'Initiative created' });
+        },
+    );
 
     /**
      * Update initiative
      */
-    static updateInitiative = asyncHandler(async (req: AuthenticatedRequest<UpdateInitiativeRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateInitiative = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateInitiativeRequest>, res: Response): Promise<void> => {
+            const { _id } = req.params;
+            const orgId = req.user?.organizationId;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        // TODO: Implement full update logic with field mapping
-        // For now, return success
-        res.json({ message: 'Initiative updated' });
-    });
+            // TODO: Implement full update logic with field mapping
+            // For now, return success
+            res.json({ message: 'Initiative updated' });
+        },
+    );
 
     /**
      * Update initiative status
      */
-    static updateInitiativeStatus = asyncHandler(async (req: AuthenticatedRequest<UpdateInitiativeStatusRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const { status, reason } = req.body;
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateInitiativeStatus = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateInitiativeStatusRequest>, res: Response): Promise<void> => {
+            const { id } = req.params;
+            const { status, _reason } = req.body;
+            const orgId = req.user?.organizationId;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        // TODO: Use InitiativeStatusService when migrated
-        const sql = `UPDATE initiatives SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
-        await queryHelpers.queryRun(sql, [status, new Date().toISOString(), id, orgId]);
+            // TODO: Use InitiativeStatusService when migrated
+            const sql = `UPDATE initiatives SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
+            await queryHelpers.queryRun(sql, [status, new Date().toISOString(), id, orgId]);
 
-        res.json({ id, status, message: 'Status updated' });
-    });
+            res.json({ id, status, message: 'Status updated' });
+        },
+    );
 }
 
 export default InitiativeController;
-

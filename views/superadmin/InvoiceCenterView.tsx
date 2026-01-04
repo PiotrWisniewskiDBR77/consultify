@@ -1,6 +1,6 @@
 /**
  * InvoiceCenterView - Super Admin Invoice & Billing Management
- * 
+ *
  * Enterprise billing management:
  * - Invoice generation and management
  * - Credit notes
@@ -9,36 +9,37 @@
  * - Subscription management
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Receipt,
-    Download,
-    Send,
-    RefreshCw,
-    Loader2,
-    Search,
-    Filter,
-    Calendar,
-    DollarSign,
-    CreditCard,
-    FileText,
-    Building2,
-    CheckCircle2,
-    XCircle,
-    Clock,
     AlertTriangle,
-    Plus,
-    Eye,
-    MoreVertical,
-    TrendingUp,
-    TrendingDown,
-    ArrowUpRight,
     ArrowDownRight,
-    Printer
+    ArrowUpRight,
+    Building2,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    CreditCard,
+    DollarSign,
+    Download,
+    Eye,
+    FileText,
+    Filter,
+    Loader2,
+    MoreVertical,
+    Plus,
+    Printer,
+    Receipt,
+    RefreshCw,
+    Search,
+    Send,
+    TrendingDown,
+    TrendingUp,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { CreditNotesPanel, InvoiceTemplateEditor, TaxSettingsPanel } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
-import { CreditNotesPanel, TaxSettingsPanel, InvoiceTemplateEditor } from '../../components/billing';
+import { Api } from '../../services/api';
 
 interface Invoice {
     id: string;
@@ -103,7 +104,7 @@ export const InvoiceCenterView: React.FC = () => {
                 pendingInvoices: 0,
                 overdueInvoices: 0,
                 overdueAmount: 0,
-                monthlyGrowth: 0
+                monthlyGrowth: 0,
             });
         } finally {
             setLoading(false);
@@ -114,7 +115,7 @@ export const InvoiceCenterView: React.FC = () => {
         fetchData();
     }, [fetchData]);
 
-    const filteredInvoices = invoices.filter(invoice => {
+    const filteredInvoices = invoices.filter((invoice) => {
         const matchesSearch =
             invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
             invoice.organizationName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -175,7 +176,9 @@ export const InvoiceCenterView: React.FC = () => {
             refunded: <ArrowDownRight size={12} />,
         };
         return (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
+            <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}
+            >
                 {icons[status]}
                 {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
@@ -197,7 +200,9 @@ export const InvoiceCenterView: React.FC = () => {
                         <div className="text-2xl font-bold text-slate-900 dark:text-white">
                             {formatCurrency(stats.totalRevenue)}
                         </div>
-                        <div className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        <div
+                            className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                        >
                             {stats.monthlyGrowth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                             {Math.abs(stats.monthlyGrowth)}% vs last month
                         </div>
@@ -210,9 +215,7 @@ export const InvoiceCenterView: React.FC = () => {
                                 <CheckCircle2 className="text-blue-500" size={20} />
                             </div>
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                            {stats.paidInvoices}
-                        </div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.paidInvoices}</div>
                         <div className="mt-1 text-sm text-slate-500">This period</div>
                     </div>
 
@@ -223,9 +226,7 @@ export const InvoiceCenterView: React.FC = () => {
                                 <Clock className="text-amber-500" size={20} />
                             </div>
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                            {stats.pendingInvoices}
-                        </div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.pendingInvoices}</div>
                         <div className="mt-1 text-sm text-slate-500">Awaiting payment</div>
                     </div>
 
@@ -236,9 +237,7 @@ export const InvoiceCenterView: React.FC = () => {
                                 <AlertTriangle className="text-red-500" size={20} />
                             </div>
                         </div>
-                        <div className="text-2xl font-bold text-red-600">
-                            {stats.overdueInvoices}
-                        </div>
+                        <div className="text-2xl font-bold text-red-600">{stats.overdueInvoices}</div>
                         <div className="mt-1 text-sm text-red-500">
                             {formatCurrency(stats.overdueAmount)} outstanding
                         </div>
@@ -292,13 +291,25 @@ export const InvoiceCenterView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Invoice</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Organization</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Invoice
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Organization
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Amount
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Status
+                            </th>
                             <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Due Date</th>
-                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Due Date
+                            </th>
+                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -314,7 +325,9 @@ export const InvoiceCenterView: React.FC = () => {
                                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
                                             {invoice.organizationName.charAt(0)}
                                         </div>
-                                        <span className="text-slate-700 dark:text-slate-300">{invoice.organizationName}</span>
+                                        <span className="text-slate-700 dark:text-slate-300">
+                                            {invoice.organizationName}
+                                        </span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
@@ -327,15 +340,16 @@ export const InvoiceCenterView: React.FC = () => {
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-6 py-4">
-                                    {getStatusBadge(invoice.status)}
-                                </td>
+                                <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
                                 <td className="px-6 py-4 text-sm text-slate-500">
                                     {new Date(invoice.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`text-sm ${invoice.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'
-                                        }`}>
+                                    <span
+                                        className={`text-sm ${
+                                            invoice.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'
+                                        }`}
+                                    >
                                         {new Date(invoice.dueDate).toLocaleDateString()}
                                     </span>
                                 </td>
@@ -383,17 +397,11 @@ export const InvoiceCenterView: React.FC = () => {
         </div>
     );
 
-    const renderCreditsTab = () => (
-        <CreditNotesPanel isAdmin={true} />
-    );
+    const renderCreditsTab = () => <CreditNotesPanel isAdmin={true} />;
 
-    const renderTaxTab = () => (
-        <TaxSettingsPanel isAdmin={true} />
-    );
+    const renderTaxTab = () => <TaxSettingsPanel isAdmin={true} />;
 
-    const renderTemplatesTab = () => (
-        <InvoiceTemplateEditor />
-    );
+    const renderTemplatesTab = () => <InvoiceTemplateEditor />;
 
     const renderUsageTab = () => (
         <div className="space-y-6">
@@ -447,7 +455,11 @@ export const InvoiceCenterView: React.FC = () => {
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Usage Alerts</h3>
 
                 <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-slate-300 text-violet-600" />
+                    <input
+                        type="checkbox"
+                        defaultChecked
+                        className="w-4 h-4 rounded border-slate-300 text-violet-600"
+                    />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                         Send email alerts when organizations reach 80% of their usage limits
                     </span>
@@ -519,7 +531,9 @@ export const InvoiceCenterView: React.FC = () => {
                                 {selectedInvoice.items.map((item, idx) => (
                                     <tr key={idx} className="border-b border-slate-100 dark:border-white/5">
                                         <td className="py-3 text-slate-900 dark:text-white">{item.description}</td>
-                                        <td className="py-3 text-right text-slate-600 dark:text-slate-400">{item.quantity}</td>
+                                        <td className="py-3 text-right text-slate-600 dark:text-slate-400">
+                                            {item.quantity}
+                                        </td>
                                         <td className="py-3 text-right text-slate-600 dark:text-slate-400">
                                             {formatCurrency(item.unitPrice, selectedInvoice.currency)}
                                         </td>
@@ -557,7 +571,10 @@ export const InvoiceCenterView: React.FC = () => {
                                 Send Reminder
                             </button>
                             <button
-                                onClick={() => { handleMarkPaid(selectedInvoice.id); setSelectedInvoice(null); }}
+                                onClick={() => {
+                                    handleMarkPaid(selectedInvoice.id);
+                                    setSelectedInvoice(null);
+                                }}
                                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium flex items-center gap-2"
                             >
                                 <CheckCircle2 size={16} />
@@ -580,11 +597,14 @@ export const InvoiceCenterView: React.FC = () => {
                     <p className="text-slate-500 mt-1">Manage invoices and billing</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <InfoButton cardId="superadmin-invoices" position="header-inline" size="md" showLabel label="Help" />
-                    <button
-                        onClick={fetchData}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-                    >
+                    <InfoButton
+                        cardId="superadmin-invoices"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
+                    <button onClick={fetchData} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                         <RefreshCw size={18} className={`text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                     </button>
                 </div>
@@ -602,10 +622,11 @@ export const InvoiceCenterView: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as TabType)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            activeTab === tab.id
                                 ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                        }`}
                     >
                         {tab.icon}
                         {tab.label}
@@ -635,4 +656,3 @@ export const InvoiceCenterView: React.FC = () => {
 };
 
 export default InvoiceCenterView;
-

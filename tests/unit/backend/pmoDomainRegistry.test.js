@@ -13,7 +13,7 @@ describe('PMODomainRegistry', () => {
             all: vi.fn(),
             get: vi.fn()
         };
-        PMODomainRegistry._setDb(dbMock);
+        PMODomainRegistry.setDependencies({ db: dbMock });
     });
 
     describe('getAllDomains', () => {

@@ -4,27 +4,28 @@
  * Pokazuje insighty, sugestie i szybkie akcje AI
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Sparkles, 
-    Brain, 
-    TrendingUp, 
-    AlertTriangle, 
-    CheckCircle2, 
-    ChevronRight,
-    ChevronDown,
-    Lightbulb,
-    Target,
-    FileText,
+import {
+    AlertTriangle,
+    ArrowUpRight,
     BarChart3,
-    RefreshCw,
+    Brain,
+    CheckCircle2,
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    Lightbulb,
     Loader2,
+    MessageSquare,
+    RefreshCw,
+    Sparkles,
+    Target,
+    TrendingUp,
     X,
     Zap,
-    ArrowUpRight,
-    MessageSquare
 } from 'lucide-react';
-import { useAssessmentAI, AIInsight, AIGapAnalysis } from '../../hooks/useAssessmentAI';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { AIGapAnalysis, AIInsight, useAssessmentAI } from '../../hooks/useAssessmentAI';
 import { DRDAxis } from '../../types';
 
 interface AIAssessmentSidebarProps {
@@ -40,31 +41,31 @@ interface AIAssessmentSidebarProps {
 
 // Insight type icons and colors
 const insightConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-    STRENGTH: { 
-        icon: <CheckCircle2 size={16} />, 
+    STRENGTH: {
+        icon: <CheckCircle2 size={16} />,
         color: 'text-green-600 dark:text-green-400',
-        bgColor: 'bg-green-50 dark:bg-green-900/20'
+        bgColor: 'bg-green-50 dark:bg-green-900/20',
     },
-    PRIORITY_GAP: { 
-        icon: <AlertTriangle size={16} />, 
+    PRIORITY_GAP: {
+        icon: <AlertTriangle size={16} />,
         color: 'text-amber-600 dark:text-amber-400',
-        bgColor: 'bg-amber-50 dark:bg-amber-900/20'
+        bgColor: 'bg-amber-50 dark:bg-amber-900/20',
     },
-    RISK: { 
-        icon: <AlertTriangle size={16} />, 
+    RISK: {
+        icon: <AlertTriangle size={16} />,
         color: 'text-red-600 dark:text-red-400',
-        bgColor: 'bg-red-50 dark:bg-red-900/20'
+        bgColor: 'bg-red-50 dark:bg-red-900/20',
     },
-    OPPORTUNITY: { 
-        icon: <Lightbulb size={16} />, 
+    OPPORTUNITY: {
+        icon: <Lightbulb size={16} />,
         color: 'text-blue-600 dark:text-blue-400',
-        bgColor: 'bg-blue-50 dark:bg-blue-900/20'
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     },
-    SUMMARY: { 
-        icon: <BarChart3 size={16} />, 
+    SUMMARY: {
+        icon: <BarChart3 size={16} />,
         color: 'text-purple-600 dark:text-purple-400',
-        bgColor: 'bg-purple-50 dark:bg-purple-900/20'
-    }
+        bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    },
 };
 
 export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
@@ -75,10 +76,10 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
     isOpen,
     onClose,
     onApplySuggestion,
-    onNavigateToAxis
+    onNavigateToAxis,
 }) => {
     const ai = useAssessmentAI(projectId);
-    
+
     // State
     const [activeTab, setActiveTab] = useState<'insights' | 'suggestions' | 'gap'>('insights');
     const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -117,7 +118,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
 
     const loadGapAnalysis = useCallback(async () => {
         if (!currentAxis || !currentScore || !targetScore) return;
-        
+
         setIsLoadingGap(true);
         try {
             const result = await ai.generateGapAnalysis(currentAxis, currentScore, targetScore);
@@ -131,7 +132,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
 
     const handleSuggestJustification = useCallback(async () => {
         if (!currentAxis || !currentScore) return;
-        
+
         setIsLoadingSuggestion(true);
         try {
             const result = await ai.suggestJustification(currentAxis, currentScore);
@@ -168,7 +169,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                         <p className="text-xs text-slate-500 dark:text-slate-400">Assessment Partner</p>
                     </div>
                 </div>
-                <button 
+                <button
                     onClick={onClose}
                     className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                 >
@@ -181,8 +182,8 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                 {[
                     { id: 'insights', label: 'Insighty', icon: <Lightbulb size={14} /> },
                     { id: 'suggestions', label: 'Sugestie', icon: <Sparkles size={14} /> },
-                    { id: 'gap', label: 'Gap', icon: <TrendingUp size={14} /> }
-                ].map(tab => (
+                    { id: 'gap', label: 'Gap', icon: <TrendingUp size={14} /> },
+                ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as typeof activeTab)}
@@ -225,7 +226,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                             insights.map((insight, idx) => {
                                 const config = insightConfig[insight.type] || insightConfig.SUMMARY;
                                 const isExpanded = expandedInsight === idx;
-                                
+
                                 return (
                                     <div
                                         key={idx}
@@ -235,9 +236,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                             onClick={() => setExpandedInsight(isExpanded ? null : idx)}
                                             className="w-full p-3 flex items-start gap-3 text-left"
                                         >
-                                            <div className={config.color}>
-                                                {config.icon}
-                                            </div>
+                                            <div className={config.color}>{config.icon}</div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-navy-900 dark:text-white line-clamp-2">
                                                     {insight.title}
@@ -254,7 +253,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                                 <ChevronRight size={14} className="text-slate-400 shrink-0" />
                                             )}
                                         </button>
-                                        
+
                                         {isExpanded && (
                                             <div className="px-3 pb-3 pt-0">
                                                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -275,7 +274,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                 );
                             })
                         )}
-                        
+
                         {insights.length > 0 && (
                             <button
                                 onClick={loadInsights}
@@ -325,7 +324,9 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                 </button>
 
                                 <button
-                                    onClick={() => currentAxis && currentScore && ai.suggestEvidence(currentAxis, currentScore)}
+                                    onClick={() =>
+                                        currentAxis && currentScore && ai.suggestEvidence(currentAxis, currentScore)
+                                    }
                                     disabled={!currentAxis || !currentScore}
                                     className="w-full p-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-500/30 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
@@ -343,7 +344,9 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                 </button>
 
                                 <button
-                                    onClick={() => currentAxis && currentScore && ai.suggestTarget(currentAxis, currentScore)}
+                                    onClick={() =>
+                                        currentAxis && currentScore && ai.suggestTarget(currentAxis, currentScore)
+                                    }
                                     disabled={!currentAxis || !currentScore}
                                     className="w-full p-3 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200 dark:border-green-500/30 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
@@ -399,16 +402,22 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                 <div className="bg-slate-50 dark:bg-navy-950/50 rounded-xl p-3 space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500 dark:text-slate-400">Oś:</span>
-                                        <span className="font-medium text-navy-900 dark:text-white capitalize">{currentAxis}</span>
+                                        <span className="font-medium text-navy-900 dark:text-white capitalize">
+                                            {currentAxis}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-500 dark:text-slate-400">Ocena:</span>
-                                        <span className="font-medium text-navy-900 dark:text-white">{currentScore}/7</span>
+                                        <span className="font-medium text-navy-900 dark:text-white">
+                                            {currentScore}/7
+                                        </span>
                                     </div>
                                     {targetScore && (
                                         <div className="flex justify-between text-sm">
                                             <span className="text-slate-500 dark:text-slate-400">Cel:</span>
-                                            <span className="font-medium text-navy-900 dark:text-white">{targetScore}/7</span>
+                                            <span className="font-medium text-navy-900 dark:text-white">
+                                                {targetScore}/7
+                                            </span>
                                         </div>
                                     )}
                                 </div>
@@ -439,43 +448,52 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Gap Summary
                                         </span>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                            gapAnalysis.gapSeverity === 'LOW' 
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                : gapAnalysis.gapSeverity === 'MEDIUM'
-                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                        }`}>
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                                gapAnalysis.gapSeverity === 'LOW'
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    : gapAnalysis.gapSeverity === 'MEDIUM'
+                                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                            }`}
+                                        >
                                             {gapAnalysis.gapSeverity}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className="text-center">
-                                            <p className="text-2xl font-bold text-navy-900 dark:text-white">{gapAnalysis.currentScore}</p>
+                                            <p className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {gapAnalysis.currentScore}
+                                            </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">Obecny</p>
                                         </div>
                                         <div className="flex-1 flex items-center">
                                             <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                                                <div 
+                                                <div
                                                     className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
                                                     style={{ width: `${(gapAnalysis.currentScore / 7) * 100}%` }}
                                                 />
                                             </div>
                                             <ChevronRight size={16} className="text-slate-400 mx-2" />
                                             <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                                                <div 
+                                                <div
                                                     className="h-full bg-gradient-to-r from-green-400 to-green-500"
                                                     style={{ width: `${(gapAnalysis.targetScore / 7) * 100}%` }}
                                                 />
                                             </div>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-2xl font-bold text-navy-900 dark:text-white">{gapAnalysis.targetScore}</p>
+                                            <p className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {gapAnalysis.targetScore}
+                                            </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">Cel</p>
                                         </div>
                                     </div>
                                     <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
-                                        Szacowany czas: <span className="font-semibold">{gapAnalysis.estimatedTotalMonths} miesięcy</span>
+                                        Szacowany czas:{' '}
+                                        <span className="font-semibold">
+                                            {gapAnalysis.estimatedTotalMonths} miesięcy
+                                        </span>
                                     </p>
                                 </div>
 
@@ -487,7 +505,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                         </h4>
                                         <div className="space-y-3">
                                             {gapAnalysis.pathway.map((step, idx) => (
-                                                <div 
+                                                <div
                                                     key={idx}
                                                     className="bg-slate-50 dark:bg-navy-950/50 rounded-xl p-3 border border-slate-200 dark:border-white/10"
                                                 >
@@ -505,7 +523,10 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                                     {step.keyActivities && step.keyActivities.length > 0 && (
                                                         <ul className="ml-9 space-y-1">
                                                             {step.keyActivities.map((activity, aIdx) => (
-                                                                <li key={aIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5">
+                                                                <li
+                                                                    key={aIdx}
+                                                                    className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5"
+                                                                >
                                                                     <span className="text-purple-400">•</span>
                                                                     {activity}
                                                                 </li>
@@ -526,7 +547,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                         </h4>
                                         <div className="space-y-2">
                                             {gapAnalysis.aiRecommendations.map((rec, idx) => (
-                                                <div 
+                                                <div
                                                     key={idx}
                                                     className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-500/30"
                                                 >
@@ -540,13 +561,15 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                                                 {rec.description}
                                                             </p>
                                                             <div className="flex gap-2 mt-2">
-                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                                                    rec.priority === 'HIGH' 
-                                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                                        : rec.priority === 'MEDIUM'
-                                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                                }`}>
+                                                                <span
+                                                                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                                                        rec.priority === 'HIGH'
+                                                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                                            : rec.priority === 'MEDIUM'
+                                                                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                                    }`}
+                                                                >
                                                                     {rec.priority}
                                                                 </span>
                                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -608,4 +631,3 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
         </div>
     );
 };
-

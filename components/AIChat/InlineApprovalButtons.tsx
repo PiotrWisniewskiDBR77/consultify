@@ -1,9 +1,9 @@
 /**
  * InlineApprovalButtons Component
- * 
+ *
  * Displays inline approval/rejection buttons in chat messages
  * when AI mentions pending proposals.
- * 
+ *
  * Features:
  * - Approve/Reject buttons with loading states
  * - "Always approve similar" checkbox for pattern learning
@@ -11,8 +11,9 @@
  * - Voice command hints
  */
 
+import { Brain, CheckCircle, Info, Loader2, Repeat, XCircle } from 'lucide-react';
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, Repeat, Info, Loader2, Brain } from 'lucide-react';
+
 import api from '../../services/api';
 
 export interface PendingAction {
@@ -41,7 +42,7 @@ interface InlineApprovalButtonsProps {
 const RISK_COLORS = {
     LOW: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     MEDIUM: 'text-amber-600 bg-amber-50 border-amber-200',
-    HIGH: 'text-red-600 bg-red-50 border-red-200'
+    HIGH: 'text-red-600 bg-red-50 border-red-200',
 };
 
 export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
@@ -51,7 +52,7 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
     onSkip,
     compact = false,
     showVoiceHints = false,
-    language = 'pl'
+    language = 'pl',
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingAction, setLoadingAction] = useState<'approve' | 'reject' | null>(null);
@@ -62,31 +63,32 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
     const handleApprove = async () => {
         setIsLoading(true);
         setLoadingAction('approve');
-        
+
         try {
             const response = await api.post(`/ai/actions/${action.id}/approve`, {
-                alwaysApprove: alwaysApply
+                alwaysApprove: alwaysApply,
             });
-            
+
             if (response.data?.success) {
                 setResult({
                     success: true,
-                    message: language === 'pl' 
-                        ? `Zatwierdzono${response.data?.patternLearned ? '. Wzorzec zapamiętany.' : '.'}`
-                        : `Approved${response.data?.patternLearned ? '. Pattern learned.' : '.'}`
+                    message:
+                        language === 'pl'
+                            ? `Zatwierdzono${response.data?.patternLearned ? '. Wzorzec zapamiętany.' : '.'}`
+                            : `Approved${response.data?.patternLearned ? '. Pattern learned.' : '.'}`,
                 });
                 setCompleted(true);
                 onApprove?.(action.id, response.data?.patternLearned);
             } else {
                 setResult({
                     success: false,
-                    message: response.data?.error || 'Failed to approve'
+                    message: response.data?.error || 'Failed to approve',
                 });
             }
         } catch (error: any) {
             setResult({
                 success: false,
-                message: error.message || 'Failed to approve'
+                message: error.message || 'Failed to approve',
             });
         } finally {
             setIsLoading(false);
@@ -97,31 +99,32 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
     const handleReject = async () => {
         setIsLoading(true);
         setLoadingAction('reject');
-        
+
         try {
             const response = await api.post(`/ai/actions/${action.id}/reject`, {
-                alwaysReject: alwaysApply
+                alwaysReject: alwaysApply,
             });
-            
+
             if (response.data?.success) {
                 setResult({
                     success: true,
-                    message: language === 'pl' 
-                        ? `Odrzucono${response.data?.patternLearned ? '. Wzorzec zapamiętany.' : '.'}`
-                        : `Rejected${response.data?.patternLearned ? '. Pattern learned.' : '.'}`
+                    message:
+                        language === 'pl'
+                            ? `Odrzucono${response.data?.patternLearned ? '. Wzorzec zapamiętany.' : '.'}`
+                            : `Rejected${response.data?.patternLearned ? '. Pattern learned.' : '.'}`,
                 });
                 setCompleted(true);
                 onReject?.(action.id, response.data?.patternLearned);
             } else {
                 setResult({
                     success: false,
-                    message: response.data?.error || 'Failed to reject'
+                    message: response.data?.error || 'Failed to reject',
                 });
             }
         } catch (error: any) {
             setResult({
                 success: false,
-                message: error.message || 'Failed to reject'
+                message: error.message || 'Failed to reject',
             });
         } finally {
             setIsLoading(false);
@@ -131,11 +134,13 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
 
     if (completed && result) {
         return (
-            <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${
-                result.success 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                    : 'bg-red-50 text-red-700 border border-red-200'
-            }`}>
+            <div
+                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${
+                    result.success
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+            >
                 {result.success ? <CheckCircle size={16} /> : <XCircle size={16} />}
                 <span className="text-sm font-medium">{result.message}</span>
             </div>
@@ -143,7 +148,9 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
     }
 
     return (
-        <div className={`${compact ? 'inline-flex items-center gap-2' : 'flex flex-col gap-3'} p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-white/10`}>
+        <div
+            className={`${compact ? 'inline-flex items-center gap-2' : 'flex flex-col gap-3'} p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-white/10`}
+        >
             {/* Action Info */}
             <div className="flex items-center gap-2 flex-wrap">
                 <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${RISK_COLORS[action.riskLevel]}`}>
@@ -212,9 +219,7 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
                     />
                     <Repeat size={12} className="group-hover:text-indigo-500" />
                     <span className="group-hover:text-slate-700 dark:group-hover:text-slate-300">
-                        {language === 'pl' 
-                            ? 'Zawsze tak postępuj z podobnymi' 
-                            : 'Always handle similar this way'}
+                        {language === 'pl' ? 'Zawsze tak postępuj z podobnymi' : 'Always handle similar this way'}
                     </span>
                 </label>
             )}
@@ -224,8 +229,8 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
                 <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
                     <Info size={10} />
                     <span>
-                        {language === 'pl' 
-                            ? 'Powiedz: "akceptuj", "odrzuć" lub "zawsze akceptuj takie"' 
+                        {language === 'pl'
+                            ? 'Powiedz: "akceptuj", "odrzuć" lub "zawsze akceptuj takie"'
                             : 'Say: "approve", "reject" or "always approve this"'}
                     </span>
                 </div>
@@ -236,7 +241,7 @@ export const InlineApprovalButtons: React.FC<InlineApprovalButtonsProps> = ({
 
 /**
  * PendingApprovalsNotice Component
- * 
+ *
  * Displays a notice about pending approvals in chat
  */
 interface PendingApprovalsNoticeProps {
@@ -254,7 +259,7 @@ export const PendingApprovalsNotice: React.FC<PendingApprovalsNoticeProps> = ({
     onShowDetails,
     onApprove,
     onReject,
-    language = 'pl'
+    language = 'pl',
 }) => {
     if (count === 0) return null;
 
@@ -267,18 +272,18 @@ export const PendingApprovalsNotice: React.FC<PendingApprovalsNoticeProps> = ({
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {language === 'pl' 
+                            {language === 'pl'
                                 ? `${count} ${count === 1 ? 'propozycja AI' : 'propozycji AI'} do zatwierdzenia`
                                 : `${count} AI ${count === 1 ? 'proposal' : 'proposals'} pending approval`}
                         </p>
                         <p className="text-xs text-slate-500">
-                            {language === 'pl' 
+                            {language === 'pl'
                                 ? 'Powiedz "akceptuj" lub "odrzuć" aby kontynuować'
                                 : 'Say "approve" or "reject" to continue'}
                         </p>
                     </div>
                 </div>
-                
+
                 {onShowDetails && (
                     <button
                         onClick={onShowDetails}
@@ -303,12 +308,4 @@ export const PendingApprovalsNotice: React.FC<PendingApprovalsNoticeProps> = ({
 };
 
 export default InlineApprovalButtons;
-
-
-
-
-
-
-
-
 

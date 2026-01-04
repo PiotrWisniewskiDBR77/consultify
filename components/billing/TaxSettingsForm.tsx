@@ -2,14 +2,12 @@
  * TaxSettingsForm - VAT/Tax ID and billing address configuration
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-    Receipt, Building2, MapPin, Mail, FileText,
-    Loader2, Save, AlertCircle, Check
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, Building2, Check, FileText, Loader2, Mail, MapPin, Receipt, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 interface TaxSettings {
     tax_id: string | null;
@@ -41,7 +39,7 @@ const TAX_ID_TYPES = [
     { value: 'mx_rfc', label: 'Mexican RFC' },
     { value: 'nz_gst', label: 'New Zealand GST' },
     { value: 'sg_uen', label: 'Singapore UEN' },
-    { value: 'other', label: 'Other' }
+    { value: 'other', label: 'Other' },
 ];
 
 const COUNTRIES = [
@@ -64,7 +62,7 @@ const COUNTRIES = [
     { code: 'SE', name: 'Sweden' },
     { code: 'NO', name: 'Norway' },
     { code: 'DK', name: 'Denmark' },
-    { code: 'FI', name: 'Finland' }
+    { code: 'FI', name: 'Finland' },
 ];
 
 interface TaxSettingsFormProps {
@@ -88,7 +86,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
         billing_postal_code: null,
         billing_country: null,
         invoice_prefix: null,
-        po_number: null
+        po_number: null,
     });
 
     const fetchSettings = useCallback(async () => {
@@ -111,9 +109,9 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
     }, [fetchSettings]);
 
     const handleChange = (field: keyof TaxSettings, value: string | number | null) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            [field]: value === '' ? null : value
+            [field]: value === '' ? null : value,
         }));
     };
 
@@ -170,8 +168,10 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                             className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
                             <option value="">{t('billing.tax.selectType', 'Select type...')}</option>
-                            {TAX_ID_TYPES.map(type => (
-                                <option key={type.value} value={type.value}>{type.label}</option>
+                            {TAX_ID_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                    {type.label}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -206,9 +206,11 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                             settings.tax_exempt ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
-                            settings.tax_exempt ? 'translate-x-5' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
+                                settings.tax_exempt ? 'translate-x-5' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>
@@ -325,8 +327,10 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             >
                                 <option value="">{t('billing.tax.selectCountry', 'Select...')}</option>
-                                {COUNTRIES.map(country => (
-                                    <option key={country.code} value={country.code}>{country.name}</option>
+                                {COUNTRIES.map((country) => (
+                                    <option key={country.code} value={country.code}>
+                                        {country.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -396,11 +400,4 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
 };
 
 export default TaxSettingsForm;
-
-
-
-
-
-
-
 

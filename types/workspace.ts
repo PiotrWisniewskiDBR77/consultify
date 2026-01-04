@@ -1,6 +1,6 @@
 /**
  * Workspace Types for Unified AI Chat System
- * 
+ *
  * Defines types for workspace context that AI uses to understand
  * what the user is currently viewing/working on in split-screen mode.
  */
@@ -10,12 +10,12 @@ import { AppView } from '../types';
 /**
  * Types of workspace content that can be displayed alongside chat
  */
-export type WorkspaceType = 
-    | 'task' 
-    | 'initiative' 
-    | 'assessment' 
-    | 'roadmap' 
-    | 'artifact' 
+export type WorkspaceType =
+    | 'task'
+    | 'initiative'
+    | 'assessment'
+    | 'roadmap'
+    | 'artifact'
     | 'document'
     | 'decision'
     | 'report'
@@ -37,23 +37,23 @@ export type ChatDisplayMode = 'full' | 'split' | 'collapsed';
 export interface WorkspaceContext {
     /** Current AppView being displayed */
     view: AppView;
-    
+
     /** Type of content in workspace */
     type: WorkspaceType;
-    
+
     /** ID of the specific entity being viewed (if any) */
     entityId?: string;
-    
+
     /** Name/title of the entity for AI context */
     entityName?: string;
-    
+
     /** Additional data about the entity */
     entityData?: Record<string, unknown>;
-    
+
     /** PMO project context if applicable */
     projectId?: string;
     projectName?: string;
-    
+
     /** Timestamp when context was set */
     timestamp: Date;
 }
@@ -64,13 +64,13 @@ export interface WorkspaceContext {
 export interface NavigationOptions {
     /** Preserve active conversation (default: true) */
     preserveChat?: boolean;
-    
+
     /** Workspace context to set for the target view */
     workspaceContext?: Partial<WorkspaceContext>;
-    
+
     /** Show "Back to Chat" option in new view */
     showReturnOption?: boolean;
-    
+
     /** Entity to highlight/select in the target view */
     highlightEntityId?: string;
 }
@@ -92,13 +92,13 @@ export interface AINavigationAction {
 export function createWorkspaceContext(
     view: AppView,
     type: WorkspaceType,
-    options?: Partial<Omit<WorkspaceContext, 'view' | 'type' | 'timestamp'>>
+    options?: Partial<Omit<WorkspaceContext, 'view' | 'type' | 'timestamp'>>,
 ): WorkspaceContext {
     return {
         view,
         type,
         timestamp: new Date(),
-        ...options
+        ...options,
     };
 }
 
@@ -118,9 +118,8 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
         [AppView.DASHBOARD]: 'dashboard',
         [AppView.USER_DASHBOARD]: 'dashboard',
     };
-    
+
     return viewTypeMap[view] || 'empty';
 }
 
 export default WorkspaceContext;
-

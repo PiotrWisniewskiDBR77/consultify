@@ -1,6 +1,6 @@
 /**
  * ContactInformationSection - Multiple Contact Methods
- * 
+ *
  * Features:
  * - Multiple email addresses (work, personal, other) with verification
  * - Multiple phone numbers (work, mobile, home)
@@ -9,28 +9,29 @@
  * - Preferred contact method selector
  */
 
-import React, { useState, useEffect } from 'react';
-import { User, ContactEmail, ContactPhone, Address, EmergencyContact } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    Mail,
-    Phone,
-    MapPin,
-    UserPlus,
-    Plus,
-    Trash2,
-    Edit2,
-    Save,
-    X,
-    Loader2,
-    CheckCircle,
     AlertCircle,
+    CheckCircle,
+    Edit2,
+    Globe,
+    Loader2,
+    Mail,
+    MapPin,
+    Phone,
+    Plus,
+    Save,
     Send,
     Star,
-    Globe
+    Trash2,
+    UserPlus,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { Address, ContactEmail, ContactPhone, EmergencyContact, User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface ContactInformationSectionProps {
@@ -38,10 +39,7 @@ interface ContactInformationSectionProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
-export const ContactInformationSection: React.FC<ContactInformationSectionProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const ContactInformationSection: React.FC<ContactInformationSectionProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -90,7 +88,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                 phones,
                 addresses,
                 emergencyContacts,
-                preferredContactMethod
+                preferredContactMethod,
             });
             toast.success(t('settings.contact.saved', 'Contact information saved'));
             onUpdateUser({ preferredContactMethod });
@@ -107,32 +105,34 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
             email: '',
             type: 'work',
             isPrimary: emails.length === 0,
-            isVerified: false
+            isVerified: false,
         };
         setEmails([...emails, newEmail]);
         setEditingEmail(newEmail.id);
     };
 
     const updateEmail = (id: string, updates: Partial<ContactEmail>) => {
-        setEmails(emails => emails.map(e => {
-            if (e.id === id) {
-                const updated = { ...e, ...updates };
-                // If setting as primary, unset others
-                if (updates.isPrimary) {
+        setEmails((emails) =>
+            emails.map((e) => {
+                if (e.id === id) {
+                    const updated = { ...e, ...updates };
+                    // If setting as primary, unset others
+                    if (updates.isPrimary) {
+                        return updated;
+                    }
                     return updated;
                 }
-                return updated;
-            }
-            // Unset primary if another is being set as primary
-            if (updates.isPrimary) {
-                return { ...e, isPrimary: false };
-            }
-            return e;
-        }));
+                // Unset primary if another is being set as primary
+                if (updates.isPrimary) {
+                    return { ...e, isPrimary: false };
+                }
+                return e;
+            }),
+        );
     };
 
     const removeEmail = (id: string) => {
-        setEmails(emails => emails.filter(e => e.id !== id));
+        setEmails((emails) => emails.filter((e) => e.id !== id));
         setEditingEmail(null);
     };
 
@@ -151,27 +151,29 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
             phone: '',
             type: 'mobile',
             isPrimary: phones.length === 0,
-            countryCode: '+1'
+            countryCode: '+1',
         };
         setPhones([...phones, newPhone]);
         setEditingPhone(newPhone.id);
     };
 
     const updatePhone = (id: string, updates: Partial<ContactPhone>) => {
-        setPhones(phones => phones.map(p => {
-            if (p.id === id) {
-                const updated = { ...p, ...updates };
-                return updated;
-            }
-            if (updates.isPrimary) {
-                return { ...p, isPrimary: false };
-            }
-            return p;
-        }));
+        setPhones((phones) =>
+            phones.map((p) => {
+                if (p.id === id) {
+                    const updated = { ...p, ...updates };
+                    return updated;
+                }
+                if (updates.isPrimary) {
+                    return { ...p, isPrimary: false };
+                }
+                return p;
+            }),
+        );
     };
 
     const removePhone = (id: string) => {
-        setPhones(phones => phones.filter(p => p.id !== id));
+        setPhones((phones) => phones.filter((p) => p.id !== id));
         setEditingPhone(null);
     };
 
@@ -191,23 +193,25 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
             city: '',
             state: '',
             postalCode: '',
-            country: ''
+            country: '',
         };
         setAddresses([...addresses, newAddress]);
         setEditingAddress(newAddress.id ?? null);
     };
 
     const updateAddress = (id: string, updates: Partial<Address>) => {
-        setAddresses(addresses => addresses.map(a => {
-            if (a.id === id) {
-                return { ...a, ...updates };
-            }
-            return a;
-        }));
+        setAddresses((addresses) =>
+            addresses.map((a) => {
+                if (a.id === id) {
+                    return { ...a, ...updates };
+                }
+                return a;
+            }),
+        );
     };
 
     const removeAddress = (id: string) => {
-        setAddresses(addresses => addresses.filter(a => a.id !== id));
+        setAddresses((addresses) => addresses.filter((a) => a.id !== id));
         setEditingAddress(null);
     };
 
@@ -217,23 +221,25 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
             name: '',
             relationship: '',
             phone: '',
-            email: ''
+            email: '',
         };
         setEmergencyContacts([...emergencyContacts, newContact]);
         setEditingEmergency(newContact.id ?? null);
     };
 
     const updateEmergencyContact = (id: string, updates: Partial<EmergencyContact>) => {
-        setEmergencyContacts(contacts => contacts.map(c => {
-            if (c.id === id) {
-                return { ...c, ...updates };
-            }
-            return c;
-        }));
+        setEmergencyContacts((contacts) =>
+            contacts.map((c) => {
+                if (c.id === id) {
+                    return { ...c, ...updates };
+                }
+                return c;
+            }),
+        );
     };
 
     const removeEmergencyContact = (id: string) => {
-        setEmergencyContacts(contacts => contacts.filter(c => c.id !== id));
+        setEmergencyContacts((contacts) => contacts.filter((c) => c.id !== id));
         setEditingEmergency(null);
     };
 
@@ -276,14 +282,15 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                     {t('settings.contact.preferredMethod', 'Preferred Contact Method')}
                 </h3>
                 <div className="flex gap-4">
-                    {(['email', 'phone', 'in-app'] as const).map(method => (
+                    {(['email', 'phone', 'in-app'] as const).map((method) => (
                         <button
                             key={method}
                             onClick={() => setPreferredContactMethod(method)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${preferredContactMethod === method
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
-                                }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                                preferredContactMethod === method
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                            }`}
                         >
                             {method === 'email' && <Mail size={18} />}
                             {method === 'phone' && <Phone size={18} />}
@@ -477,7 +484,7 @@ const EmailCard: React.FC<EmailCardProps> = ({
     onCancel,
     onUpdate,
     onDelete,
-    onVerify
+    onVerify,
 }) => {
     const { t } = useTranslation();
 
@@ -515,7 +522,10 @@ const EmailCard: React.FC<EmailCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         {t('common.save', 'Save')}
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         {t('common.cancel', 'Cancel')}
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -543,7 +553,10 @@ const EmailCard: React.FC<EmailCardProps> = ({
                     <div className="flex gap-4 mt-1 text-xs text-slate-500">
                         <span className="capitalize">{email.type}</span>
                         {!email.isVerified && (
-                            <button onClick={onVerify} className="text-blue-600 hover:underline flex items-center gap-1">
+                            <button
+                                onClick={onVerify}
+                                className="text-blue-600 hover:underline flex items-center gap-1"
+                            >
                                 <Send size={12} />
                                 {t('settings.contact.verify', 'Verify')}
                             </button>
@@ -577,7 +590,7 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
     onCancel,
     onUpdate,
     onDelete,
-    onVerify
+    onVerify,
 }) => {
     const { t } = useTranslation();
 
@@ -623,7 +636,10 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         {t('common.save', 'Save')}
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         {t('common.cancel', 'Cancel')}
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -674,7 +690,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
     onSave,
     onCancel,
     onUpdate,
-    onDelete
+    onDelete,
 }) => {
     const { t } = useTranslation();
 
@@ -733,7 +749,10 @@ const AddressCard: React.FC<AddressCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         {t('common.save', 'Save')}
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         {t('common.cancel', 'Cancel')}
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -744,8 +763,15 @@ const AddressCard: React.FC<AddressCardProps> = ({
         );
     }
 
-    const formatted = address.formatted ||
-        [address.street, address.city, address.state, (address as any).postalCode || (address as any).postal_code, address.country]
+    const formatted =
+        address.formatted ||
+        [
+            address.street,
+            address.city,
+            address.state,
+            (address as any).postalCode || (address as any).postal_code,
+            address.country,
+        ]
             .filter(Boolean)
             .join(', ');
 
@@ -789,7 +815,7 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
     onSave,
     onCancel,
     onUpdate,
-    onDelete
+    onDelete,
 }) => {
     const { t } = useTranslation();
 
@@ -830,7 +856,10 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         {t('common.save', 'Save')}
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         {t('common.cancel', 'Cancel')}
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -864,4 +893,3 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
 };
 
 export default ContactInformationSection;
-

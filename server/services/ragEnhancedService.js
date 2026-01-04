@@ -16,7 +16,8 @@
 
 import RagService from './ragService.js';
 import KnowledgeGraphService from './knowledgeGraphService.js';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { embeddingService } from './ai/embeddingService.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -485,6 +486,7 @@ const RagEnhancedService = {
 };
 
 export default RagEnhancedService;
+
 
 
 

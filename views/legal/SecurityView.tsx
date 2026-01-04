@@ -1,16 +1,17 @@
+import { motion } from 'framer-motion';
+import { AlertTriangle, CheckCircle, Eye, Key, Lock, Server, Shield, Users } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Shield, Lock, Server, Key, Eye, Users, CheckCircle, AlertTriangle } from 'lucide-react';
-import { EntryTopBar } from '../../components/Landing/EntryTopBar';
+
 import { EntryFooter } from '../../components/Landing/EntryFooter';
+import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 
 // Company data - UPDATE THESE VALUES
 const COMPANY = {
     name: 'DBR77 Sp. z o.o.',
     securityEmail: 'security@dbr77.com',
-    website: 'https://consultinity.com'
+    website: 'https://consultinity.com',
 };
 
 export const SecurityView: React.FC = () => {
@@ -89,8 +90,10 @@ export const SecurityView: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 
-                                         text-green-600 dark:text-green-400 text-sm font-semibold mb-6">
+                        <span
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 
+                                         text-green-600 dark:text-green-400 text-sm font-semibold mb-6"
+                        >
                             <Shield size={16} />
                             Security & Compliance
                         </span>
@@ -103,7 +106,7 @@ export const SecurityView: React.FC = () => {
                         </h1>
 
                         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                            Consultinity is built with security at its core. We protect your strategic data with 
+                            Consultinity is built with security at its core. We protect your strategic data with
                             industry-leading security practices and compliance standards.
                         </p>
                     </motion.div>
@@ -128,7 +131,9 @@ export const SecurityView: React.FC = () => {
                                     transition={{ delay: idx * 0.1, duration: 0.5 }}
                                     className="p-6 bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-lg transition-shadow"
                                 >
-                                    <div className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}>
+                                    <div
+                                        className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}
+                                    >
                                         <Icon size={24} className={feature.color} />
                                     </div>
                                     <h3 className="text-lg font-bold text-navy-950 dark:text-white mb-2">
@@ -168,35 +173,34 @@ export const SecurityView: React.FC = () => {
             {/* Data Protection */}
             <section className="py-20 px-6">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-8">
-                        Data Protection Measures
-                    </h2>
-                    
+                    <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-8">Data Protection Measures</h2>
+
                     <div className="prose prose-slate dark:prose-invert max-w-none">
                         <h3>Encryption</h3>
                         <p>
-                            All customer data is encrypted at rest using AES-256 encryption. Data in transit is protected 
-                            using TLS 1.3 with perfect forward secrecy. Encryption keys are managed using industry-standard 
-                            key management practices with regular rotation.
+                            All customer data is encrypted at rest using AES-256 encryption. Data in transit is
+                            protected using TLS 1.3 with perfect forward secrecy. Encryption keys are managed using
+                            industry-standard key management practices with regular rotation.
                         </p>
 
                         <h3>Access Controls</h3>
                         <p>
-                            We implement strict role-based access control (RBAC) throughout our platform. Access to 
-                            production systems is limited to authorized personnel only, with all access logged and 
-                            regularly audited. Multi-factor authentication (MFA) is mandatory for all administrative access.
+                            We implement strict role-based access control (RBAC) throughout our platform. Access to
+                            production systems is limited to authorized personnel only, with all access logged and
+                            regularly audited. Multi-factor authentication (MFA) is mandatory for all administrative
+                            access.
                         </p>
 
                         <h3>Data Isolation</h3>
                         <p>
-                            Each organization's data is logically isolated using tenant-level encryption keys. This ensures 
-                            that your strategic data remains completely separate from other customers' data.
+                            Each organization's data is logically isolated using tenant-level encryption keys. This
+                            ensures that your strategic data remains completely separate from other customers' data.
                         </p>
 
                         <h3>Backup & Recovery</h3>
                         <p>
-                            We perform daily encrypted backups with point-in-time recovery capabilities. Backups are stored 
-                            in geographically separate EU data centers to ensure business continuity.
+                            We perform daily encrypted backups with point-in-time recovery capabilities. Backups are
+                            stored in geographically separate EU data centers to ensure business continuity.
                         </p>
                     </div>
                 </div>
@@ -215,8 +219,8 @@ export const SecurityView: React.FC = () => {
                                     Responsible Disclosure
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 mb-4">
-                                    We take security vulnerabilities seriously. If you discover a security issue, please report 
-                                    it to us responsibly. We commit to:
+                                    We take security vulnerabilities seriously. If you discover a security issue, please
+                                    report it to us responsibly. We commit to:
                                 </p>
                                 <ul className="list-disc list-inside text-slate-600 dark:text-slate-300 space-y-1 mb-4">
                                     <li>Acknowledge receipt within 24 hours</li>
@@ -226,7 +230,10 @@ export const SecurityView: React.FC = () => {
                                 </ul>
                                 <p className="text-slate-600 dark:text-slate-300">
                                     Report security issues to:{' '}
-                                    <a href={`mailto:${COMPANY.securityEmail}`} className="text-purple-600 dark:text-purple-400 font-semibold">
+                                    <a
+                                        href={`mailto:${COMPANY.securityEmail}`}
+                                        className="text-purple-600 dark:text-purple-400 font-semibold"
+                                    >
                                         {COMPANY.securityEmail}
                                     </a>
                                 </p>
@@ -239,20 +246,18 @@ export const SecurityView: React.FC = () => {
             {/* CTA */}
             <section className="py-20 px-6">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-4">
-                        Need More Information?
-                    </h2>
+                    <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-4">Need More Information?</h2>
                     <p className="text-slate-600 dark:text-slate-300 mb-8">
                         For detailed security documentation or to request our SOC2 report, please contact us.
                     </p>
                     <div className="flex flex-wrap justify-center gap-4">
-                        <a 
+                        <a
                             href={`mailto:${COMPANY.securityEmail}`}
                             className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors"
                         >
                             Contact Security Team
                         </a>
-                        <a 
+                        <a
                             href="/privacy"
                             className="px-6 py-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-navy-950 dark:text-white font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                         >

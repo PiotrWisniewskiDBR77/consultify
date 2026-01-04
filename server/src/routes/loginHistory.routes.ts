@@ -1,15 +1,16 @@
 /**
  * LoginHistory Routes
  * API endpoints for login history tracking
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
-import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
@@ -37,7 +38,7 @@ function parseUserAgent(userAgent: string | null | undefined): string {
         return 'Safari on MacOS';
     }
     if (userAgent.includes('Edge')) return 'Edge';
-    
+
     return 'Unknown Browser';
 }
 
@@ -45,109 +46,120 @@ function parseUserAgent(userAgent: string | null | undefined): string {
  * GET /api/auth/login-history
  * Get login history for current user
  */
-router.get('/', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+router.get(
+    '/',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ success: false, error: 'Unauthorized' });
+            }
 
-        const limit = parseInt((req.query.limit as string) || '50', 10);
+            const limit = parseInt((req.query.limit as string) || '50', 10);
 
-        const history = await dbAll(
-            `SELECT id, ip_address, user_agent, location, status, created_at
+            const history = (await dbAll(
+                `SELECT id, ip_address, user_agent, location, status, created_at
              FROM login_history 
              WHERE user_id = ?
              ORDER BY created_at DESC
              LIMIT ?`,
-            [userId, limit]
-        ) as Array<{
-            id: string;
-            ip_address: string | null;
-            user_agent: string | null;
-            location: string | null;
-            status: string;
-            created_at: string;
-        }>;
+                [userId, limit],
+            )) as Array<{
+                id: string;
+                ip_address: string | null;
+                user_agent: string | null;
+                location: string | null;
+                status: string;
+                created_at: string;
+            }>;
 
-        // Parse user_agent to get device info
-        const formattedHistory = history.map(entry => ({
-            ...entry,
-            device: parseUserAgent(entry.user_agent),
-            time: entry.created_at
-        }));
+            // Parse user_agent to get device info
+            const formattedHistory = history.map((entry) => ({
+                ...entry,
+                device: parseUserAgent(entry.user_agent),
+                time: entry.created_at,
+            }));
 
-        res.json({
-            success: true,
-            data: formattedHistory
-        });
-    } catch (error: unknown) {
-        console.error('Error fetching login history:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch login history' });
-    }
-}));
+            res.json({
+                success: true,
+                data: formattedHistory,
+            });
+        } catch (error: unknown) {
+            console.error('Error fetching login history:', error);
+            res.status(500).json({ success: false, error: 'Failed to fetch login history' });
+        }
+    }),
+);
 
 /**
  * POST /api/auth/login-history
  * Record a login attempt (called by auth middleware)
  */
-router.post('/', asyncHandler(async (req, res: Response) => {
-    try {
-        const { userId, ipAddress, userAgent, location, status } = req.body;
+router.post(
+    '/',
+    asyncHandler(async (req, res: Response) => {
+        try {
+            const { userId, ipAddress, userAgent, location, status } = req.body;
 
-        if (!userId) {
-            return res.status(400).json({ success: false, error: 'User ID is required' });
-        }
+            if (!userId) {
+                return res.status(400).json({ success: false, error: 'User ID is required' });
+            }
 
-        const id = uuidv4();
-        const runResult = await dbRun(
-            `INSERT INTO login_history (id, user_id, ip_address, user_agent, location, status, created_at)
+            const id = uuidv4();
+            const runResult = await dbRun(
+                `INSERT INTO login_history (id, user_id, ip_address, user_agent, location, status, created_at)
              VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-            [id, userId, ipAddress, userAgent, location, status || 'success']
-        );
+                [id, userId, ipAddress, userAgent, location, status || 'success'],
+            );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to record login');
+            if (!runResult.success) {
+                throw new Error(runResult.error || 'Failed to record login');
+            }
+
+            res.json({
+                success: true,
+                data: { id },
+            });
+        } catch (error: unknown) {
+            console.error('Error recording login history:', error);
+            res.status(500).json({ success: false, error: 'Failed to record login' });
         }
-
-        res.json({
-            success: true,
-            data: { id }
-        });
-    } catch (error: unknown) {
-        console.error('Error recording login history:', error);
-        res.status(500).json({ success: false, error: 'Failed to record login' });
-    }
-}));
+    }),
+);
 
 /**
  * GET /api/auth/login-history/suspicious
  * Get suspicious login attempts
  */
-router.get('/suspicious', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+router.get(
+    '/suspicious',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ success: false, error: 'Unauthorized' });
+            }
 
-        const suspicious = await dbAll(
-            `SELECT id, ip_address, user_agent, location, status, created_at
+            const suspicious = await dbAll(
+                `SELECT id, ip_address, user_agent, location, status, created_at
              FROM login_history 
              WHERE user_id = ? AND status = 'failed'
              ORDER BY created_at DESC
              LIMIT 10`,
-            [userId]
-        );
+                [userId],
+            );
 
-        res.json({
-            success: true,
-            data: suspicious
-        });
-    } catch (error: unknown) {
-        console.error('Error fetching suspicious logins:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch suspicious logins' });
-    }
-}));
+            res.json({
+                success: true,
+                data: suspicious,
+            });
+        } catch (error: unknown) {
+            console.error('Error fetching suspicious logins:', error);
+            res.status(500).json({ success: false, error: 'Failed to fetch suspicious logins' });
+        }
+    }),
+);
 
 export default router;

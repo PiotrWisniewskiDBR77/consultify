@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RadarChart } from '../../../components/RadarChart';
+import { RadarChart } from '../../components/RadarChart';
 
 const mockData = [
     { label: 'Processes', value: 3 },
@@ -33,6 +33,7 @@ describe('RadarChart Component', () => {
         expect(polygons.length).toBeGreaterThan(0);
     });
 });
+
 
 
 

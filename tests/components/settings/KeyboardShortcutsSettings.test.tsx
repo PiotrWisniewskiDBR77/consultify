@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { KeyboardShortcutsSettings } from '../../../components/settings/KeyboardShortcutsSettings';
+import { KeyboardShortcutsSettings } from '../../components/settings/KeyboardShortcutsSettings';
 import { Api } from '../../../services/api';
 
 // Mock API

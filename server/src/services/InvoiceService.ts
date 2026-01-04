@@ -1,13 +1,13 @@
 /**
  * Invoice Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Invoice generation and management with PDF support.
  * Fully migrated from server/services/invoiceService.js
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -120,14 +120,14 @@ export class InvoiceServiceClass {
             const [uuidModule, currencyModule, emailModule] = await Promise.all([
                 import('uuid'),
                 import('./currencyService.js'),
-                import('./emailService.js')
+                import('./emailService.js'),
             ]);
 
             this.#deps = {
                 db: getDatabase(),
                 uuidv4: uuidModule.v4,
                 CurrencyService: currencyModule.default || currencyModule,
-                EmailService: emailModule.default || emailModule
+                EmailService: emailModule.default || emailModule,
             };
             this.#initialized = true;
         })();
@@ -150,7 +150,7 @@ export class InvoiceServiceClass {
         const result = await DbPromise.run(this.#deps!.db, sql, params);
         return {
             lastID: result.lastID,
-            changes: result.changes || 0
+            changes: result.changes || 0,
         };
     }
 
@@ -166,7 +166,7 @@ export class InvoiceServiceClass {
         const result = await this.dbGet<{ count: number }>(
             `SELECT COUNT(*) as count FROM invoices 
              WHERE invoice_number LIKE ?`,
-            [`INV-${year}${month}-%`]
+            [`INV-${year}${month}-%`],
         );
 
         const sequence = String((result?.count || 0) + 1).padStart(4, '0');
@@ -223,19 +223,30 @@ export class InvoiceServiceClass {
               due_date, billing_period_start, billing_period_end, notes)
              VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, 'USD', ?, ?, ?, ?, ?, ?, ?)`,
             [
-                invoiceId, organizationId, invoiceNumber,
-                subtotal, taxAmount, total, total,
-                currency, exchangeRate, baseTotal,
-                taxRate, taxType,
-                dueDate || defaultDueDate, billingPeriodStart, billingPeriodEnd, notes
-            ]
+                invoiceId,
+                organizationId,
+                invoiceNumber,
+                subtotal,
+                taxAmount,
+                total,
+                total,
+                currency,
+                exchangeRate,
+                baseTotal,
+                taxRate,
+                taxType,
+                dueDate || defaultDueDate,
+                billingPeriodStart,
+                billingPeriodEnd,
+                notes,
+            ],
         );
 
         for (const item of items) {
             await this.dbRun(
                 `INSERT INTO invoice_items (id, invoice_id, description, quantity, unit_price, amount)
                  VALUES (?, ?, ?, ?, ?, ?)`,
-                [uuidv4(), invoiceId, item.description, item.quantity, item.unitPrice, item.quantity * item.unitPrice]
+                [uuidv4(), invoiceId, item.description, item.quantity, item.unitPrice, item.quantity * item.unitPrice],
             );
         }
 
@@ -272,7 +283,10 @@ export class InvoiceServiceClass {
     /**
      * Get invoices for organization
      */
-    async getInvoices(organizationId: string, options: { status?: string; limit?: number; offset?: number } = {}): Promise<Invoice[]> {
+    async getInvoices(
+        organizationId: string,
+        options: { status?: string; limit?: number; offset?: number } = {},
+    ): Promise<Invoice[]> {
         await this.#initDeps();
         const { CurrencyService } = this.#deps!;
 
@@ -291,15 +305,21 @@ export class InvoiceServiceClass {
 
         const invoices = await this.dbAll<Invoice>(query, params);
 
-        return invoices.map(inv => ({
-            ...inv,
-            invoice_number: inv.invoice_number || `INV-${inv.id?.slice(0, 8) || 'UNKNOWN'}`,
-            invoice_date: inv.created_at,
-            due_date: (inv as any).period_end || inv.due_date,
-            total: (inv as any).amount_paid || inv.amount_due || 0,
-            currency: inv.currency || 'USD',
-            formattedTotal: CurrencyService.formatAmount((inv as any).total || (inv as any).amount_paid || inv.amount_due || 0, inv.currency || 'USD'),
-        } as Invoice));
+        return invoices.map(
+            (inv) =>
+                ({
+                    ...inv,
+                    invoice_number: inv.invoice_number || `INV-${inv.id?.slice(0, 8) || 'UNKNOWN'}`,
+                    invoice_date: inv.created_at,
+                    due_date: (inv as any).period_end || inv.due_date,
+                    total: (inv as any).amount_paid || inv.amount_due || 0,
+                    currency: inv.currency || 'USD',
+                    formattedTotal: CurrencyService.formatAmount(
+                        (inv as any).total || (inv as any).amount_paid || inv.amount_due || 0,
+                        inv.currency || 'USD',
+                    ),
+                }) as Invoice,
+        );
     }
 
     /**
@@ -309,7 +329,7 @@ export class InvoiceServiceClass {
         await this.dbRun(
             `UPDATE invoices SET status = 'paid', amount_paid = total, amount_due = 0, paid_at = datetime('now')
              WHERE id = ?`,
-            [invoiceId]
+            [invoiceId],
         );
     }
 
@@ -331,7 +351,7 @@ export class InvoiceServiceClass {
         const admin = await this.dbGet<{ email: string; first_name: string }>(
             `SELECT email, first_name FROM users 
              WHERE organization_id = ? AND role IN ('ADMIN', 'OWNER') LIMIT 1`,
-            [invoice.organization_id]
+            [invoice.organization_id],
         );
 
         if (!admin) {
@@ -367,7 +387,7 @@ export class InvoiceServiceClass {
         await this.dbRun(
             `UPDATE invoices SET status = 'void', notes = COALESCE(notes, '') || '\nVoided: ' || ?
              WHERE id = ?`,
-            [reason, invoiceId]
+            [reason, invoiceId],
         );
     }
 
@@ -392,7 +412,7 @@ export class InvoiceServiceClass {
 
         const org = await this.dbGet<{ id: string }>(
             `SELECT id, billing_currency FROM organizations WHERE stripe_customer_id = ?`,
-            [customer]
+            [customer],
         );
 
         if (!org) {
@@ -400,7 +420,7 @@ export class InvoiceServiceClass {
             return null;
         }
 
-        const items = lines.data.map(line => ({
+        const items = lines.data.map((line) => ({
             description: line.description || line.plan?.nickname || 'Subscription',
             quantity: line.quantity || 1,
             unitPrice: line.amount,
@@ -410,7 +430,7 @@ export class InvoiceServiceClass {
             organizationId: org.id,
             items,
             currency: currency.toUpperCase(),
-            taxRate: tax ? (tax / amount_due * 100) : 0,
+            taxRate: tax ? (tax / amount_due) * 100 : 0,
             billingPeriodStart: period_start ? new Date(period_start * 1000).toISOString() : null,
             billingPeriodEnd: period_end ? new Date(period_end * 1000).toISOString() : null,
         });
@@ -418,7 +438,7 @@ export class InvoiceServiceClass {
         await this.dbRun(
             `UPDATE invoices SET stripe_invoice_id = ?, status = ?, amount_paid = ?
              WHERE id = ?`,
-            [stripeId, status === 'paid' ? 'paid' : 'open', amount_paid, invoice.id]
+            [stripeId, status === 'paid' ? 'paid' : 'open', amount_paid, invoice.id],
         );
 
         return invoice;

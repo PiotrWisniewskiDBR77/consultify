@@ -4,10 +4,11 @@
  * Fully migrated from server/services/dunningService.js to TypeScript.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import Stripe from 'stripe';
-import type { IDatabase } from '../database/IDatabase.js';
+import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
 const DUNNING_SCHEDULE = {
@@ -15,7 +16,7 @@ const DUNNING_SCHEDULE = {
     RETRY_2: 7,
     RETRY_3: 14,
     FINAL_NOTICE: 21,
-    SUSPENSION: 28
+    SUSPENSION: 28,
 } as const;
 
 const DUNNING_STAGES = {
@@ -25,7 +26,7 @@ const DUNNING_STAGES = {
     RETRY_2: 3,
     RETRY_3: 4,
     FINAL_NOTICE: 5,
-    SUSPENDED: 6
+    SUSPENDED: 6,
 } as const;
 
 type DunningStageKey = keyof typeof DUNNING_STAGES;
@@ -52,7 +53,7 @@ interface OrganizationRecord {
     last_payment_attempt_at?: string | null;
 }
 
-interface StripeInvoiceItem {
+interface _StripeInvoiceItem {
     description?: string;
     quantity?: number | null;
     amount?: number | null;
@@ -75,7 +76,7 @@ interface AuditServiceInterface {
         entityType: string,
         entityId: string,
         orgId?: string | null,
-        metadata?: Record<string, unknown>
+        metadata?: Record<string, unknown>,
     ) => Promise<void>;
 }
 
@@ -136,8 +137,8 @@ export class DunningService {
                 paymentIntent.amount || 0,
                 paymentIntent.currency || 'usd',
                 paymentIntent.last_payment_error?.code || 'unknown',
-                paymentIntent.last_payment_error?.message || 'Payment failed'
-            ]
+                paymentIntent.last_payment_error?.message || 'Payment failed',
+            ],
         );
 
         const org = await this.getOrganization(orgId);
@@ -164,7 +165,7 @@ export class DunningService {
             `INSERT INTO payment_attempts 
              (id, organization_id, stripe_payment_intent_id, amount, currency, status)
              VALUES (?, ?, ?, ?, ?, 'succeeded')`,
-            [uuidv4(), orgId, paymentIntent.id, paymentIntent.amount || 0, paymentIntent.currency || 'usd']
+            [uuidv4(), orgId, paymentIntent.id, paymentIntent.amount || 0, paymentIntent.currency || 'usd'],
         );
 
         const org = await this.getOrganization(orgId);
@@ -172,10 +173,9 @@ export class DunningService {
             await this.exitDunning(orgId, 'payment_recovered');
         }
 
-        await this.db.run(
-            `UPDATE organizations SET last_successful_payment_at = datetime('now') WHERE id = ?`,
-            [orgId]
-        );
+        await this.db.run(`UPDATE organizations SET last_successful_payment_at = datetime('now') WHERE id = ?`, [
+            orgId,
+        ]);
     }
 
     public async processScheduledRetries(): Promise<void> {
@@ -187,7 +187,7 @@ export class DunningService {
              WHERE o.dunning_stage > 0 
                AND o.dunning_stage < ?
                AND o.status = 'active'`,
-            [DUNNING_STAGES.SUSPENDED]
+            [DUNNING_STAGES.SUSPENDED],
         );
 
         for (const org of orgs) {
@@ -204,7 +204,13 @@ export class DunningService {
     public async getDunningStatus(orgId: string): Promise<DunningStatus> {
         const org = await this.getOrganization(orgId);
         if (!org || org.dunning_stage === 0) {
-            return { inDunning: false, status: 'current', stage: 0, daysSinceStart: 0, daysUntilSuspension: DUNNING_SCHEDULE.SUSPENSION };
+            return {
+                inDunning: false,
+                status: 'current',
+                stage: 0,
+                daysSinceStart: 0,
+                daysUntilSuspension: DUNNING_SCHEDULE.SUSPENSION,
+            };
         }
 
         const daysSinceStart = org.dunning_started_at
@@ -219,7 +225,7 @@ export class DunningService {
             stageName: this.getStageName(org.dunning_stage),
             daysSinceStart,
             daysUntilSuspension,
-            suspensionScheduledAt: org.suspension_scheduled_at
+            suspensionScheduledAt: org.suspension_scheduled_at,
         };
     }
 
@@ -235,7 +241,7 @@ export class DunningService {
         const invoices = await stripe.invoices.list({
             customer: org.stripe_customer_id,
             status: 'open',
-            limit: 1
+            limit: 1,
         });
 
         if (invoices.data.length === 0) {
@@ -258,7 +264,7 @@ export class DunningService {
                 dunning_stage = ?,
                 suspension_reason = ?
              WHERE id = ?`,
-            [DUNNING_STAGES.SUSPENDED, reason, orgId]
+            [DUNNING_STAGES.SUSPENDED, reason, orgId],
         );
 
         await this.logSubscriptionHistory(orgId, 'suspended', null, null, reason, 'system');
@@ -276,7 +282,7 @@ export class DunningService {
                 suspension_reason = NULL,
                 suspension_scheduled_at = NULL
              WHERE id = ?`,
-            [orgId]
+            [orgId],
         );
 
         await this.logSubscriptionHistory(orgId, 'reactivated', null, null, 'payment_recovered', 'system');
@@ -295,7 +301,7 @@ export class DunningService {
                 last_payment_attempt_at = datetime('now'),
                 suspension_scheduled_at = ?
              WHERE id = ?`,
-            [DUNNING_STAGES.INITIAL_FAILURE, suspensionDate.toISOString(), orgId]
+            [DUNNING_STAGES.INITIAL_FAILURE, suspensionDate.toISOString(), orgId],
         );
 
         await this.sendDunningEmail(orgId, 'initial_failure');
@@ -311,7 +317,7 @@ export class DunningService {
                 dunning_started_at = NULL,
                 suspension_scheduled_at = NULL
              WHERE id = ?`,
-            [orgId]
+            [orgId],
         );
 
         await this.sendDunningEmail(orgId, 'recovery');
@@ -353,10 +359,10 @@ export class DunningService {
     }
 
     private async advanceStage(orgId: string, stage: number, notificationType: string): Promise<void> {
-        await this.db.run(
-            `UPDATE organizations SET dunning_stage = ?, payment_status = 'unpaid' WHERE id = ?`,
-            [stage, orgId]
-        );
+        await this.db.run(`UPDATE organizations SET dunning_stage = ?, payment_status = 'unpaid' WHERE id = ?`, [
+            stage,
+            orgId,
+        ]);
 
         await this.sendDunningEmail(orgId, notificationType);
         await this.logAudit('DUNNING_STAGE_ADVANCED', 'organization', orgId, undefined, { stage });
@@ -375,7 +381,7 @@ export class DunningService {
         try {
             const admin = await this.db.get<{ email: string; first_name?: string }>(
                 `SELECT email, first_name FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'OWNER') LIMIT 1`,
-                [orgId]
+                [orgId],
             );
             if (!admin) {
                 logger.warn(`[Dunning] No admin found for org ${orgId}`);
@@ -397,25 +403,32 @@ export class DunningService {
                     firstName: admin.first_name ?? 'Team',
                     organizationName: org?.name,
                     suspensionDate: org?.suspension_scheduled_at,
-                    updatePaymentUrl: `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/settings/billing`
-                }
+                    updatePaymentUrl: `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/settings/billing`,
+                },
             });
 
             await this.db.run(
                 `INSERT INTO dunning_notifications (id, organization_id, notification_type, email_to)
                  VALUES (?, ?, ?, ?)`,
-                [uuidv4(), orgId, notificationType, admin.email]
+                [uuidv4(), orgId, notificationType, admin.email],
             );
         } catch (error: unknown) {
             logger.error('[Dunning] Email send failed:', (error as Error).message);
         }
     }
 
-    private async logSubscriptionHistory(orgId: string, action: string, fromPlan: string | null, toPlan: string | null, reason: string, performedBy: string): Promise<void> {
+    private async logSubscriptionHistory(
+        orgId: string,
+        action: string,
+        fromPlan: string | null,
+        toPlan: string | null,
+        reason: string,
+        performedBy: string,
+    ): Promise<void> {
         await this.db.run(
             `INSERT INTO subscription_history (id, organization_id, action, from_plan, to_plan, reason, performed_by)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), orgId, action, fromPlan, toPlan, reason, performedBy]
+            [uuidv4(), orgId, action, fromPlan, toPlan, reason, performedBy],
         );
     }
 
@@ -427,19 +440,25 @@ export class DunningService {
             retry_3: '🚨 Third payment attempt failed - Action required urgently',
             final_notice: '🚨 FINAL NOTICE: Your account will be suspended',
             suspension: '❌ Your account has been suspended',
-            recovery: '✅ Payment received - Your account is restored'
+            recovery: '✅ Payment received - Your account is restored',
         };
         return subjects[notificationType] ?? 'Payment notification';
     }
 
-    private async logAudit(actionType: string, entityType: string, entityId: string, orgId?: string | null, metadata?: Record<string, unknown>): Promise<void> {
+    private async logAudit(
+        actionType: string,
+        entityType: string,
+        entityId: string,
+        orgId?: string | null,
+        metadata?: Record<string, unknown>,
+    ): Promise<void> {
         const audit = await getAuditService();
         if (!audit) return;
         await audit.logSystemEvent(actionType, entityType, entityId, orgId ?? null, metadata ?? {});
     }
 
     private getStageName(stage: number): DunningStageKey | undefined {
-        return (Object.keys(DUNNING_STAGES) as Array<DunningStageKey>).find(key => DUNNING_STAGES[key] === stage);
+        return (Object.keys(DUNNING_STAGES) as Array<DunningStageKey>).find((key) => DUNNING_STAGES[key] === stage);
     }
 
     private async getOrganization(orgId: string): Promise<OrganizationRecord | null> {

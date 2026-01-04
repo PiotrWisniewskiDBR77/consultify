@@ -1,14 +1,25 @@
+import {
+    AlertTriangle,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    MessageSquare,
+    Scale,
+    Target,
+    User,
+    Users,
+    X,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { Users, User, MessageSquare, AlertTriangle, Check, X, ChevronDown, ChevronUp, Target, Scale } from 'lucide-react';
 
 /**
  * MultiPerspectiveView — Phase F: Team Expansion
- * 
+ *
  * ENTERPRISE SPEC COMPLIANCE:
  * - EPIC-F2: Show different viewpoints side-by-side
  * - EPIC-F3: Highlight tensions, don't smooth them
  * - AI FACILITATOR mode: "Shows disagreements, never takes sides"
- * 
+ *
  * PURPOSE:
  * When multiple team members have input on the same decision axis,
  * display their perspectives simultaneously so patterns emerge.
@@ -54,7 +65,7 @@ const getUserColor = (index: number) => USER_COLORS[index % USER_COLORS.length];
 const detectTension = (perspectives: Perspective[]): 'none' | 'low' | 'medium' | 'high' => {
     if (perspectives.length < 2) return 'none';
 
-    const ratings = perspectives.filter(p => p.rating !== undefined).map(p => p.rating!);
+    const ratings = perspectives.filter((p) => p.rating !== undefined).map((p) => p.rating!);
     if (ratings.length < 2) return 'low';
 
     const max = Math.max(...ratings);
@@ -82,7 +93,9 @@ const TensionBadge: React.FC<{ level: 'none' | 'low' | 'medium' | 'high' }> = ({
     };
 
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[level]}`}>
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[level]}`}
+        >
             {level === 'high' && <AlertTriangle size={12} />}
             {level === 'low' && <Check size={12} />}
             {labels[level]}
@@ -101,30 +114,26 @@ const PerspectiveCard: React.FC<{
         <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-navy-900">
             {/* User Header */}
             <div className="flex items-center gap-3 mb-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${colorClass}`}>
+                <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${colorClass}`}
+                >
                     {perspective.userName.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="font-medium text-navy-900 dark:text-white text-sm truncate">
                         {perspective.userName}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {perspective.userRole}
-                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{perspective.userRole}</div>
                 </div>
                 {showRating && perspective.rating !== undefined && (
                     <div className="text-right">
-                        <div className="text-lg font-bold text-navy-900 dark:text-white">
-                            {perspective.rating}/5
-                        </div>
+                        <div className="text-lg font-bold text-navy-900 dark:text-white">{perspective.rating}/5</div>
                     </div>
                 )}
             </div>
 
             {/* Comment */}
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                "{perspective.comment}"
-            </p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">"{perspective.comment}"</p>
 
             {/* Timestamp */}
             <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
@@ -142,9 +151,7 @@ const AxisView: React.FC<{
     const tension = detectTension(axis.perspectives);
 
     // Sort perspectives by rating (descending) to show range
-    const sortedPerspectives = [...axis.perspectives].sort((a, b) =>
-        (b.rating ?? 0) - (a.rating ?? 0)
-    );
+    const sortedPerspectives = [...axis.perspectives].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
 
     return (
         <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
@@ -156,9 +163,7 @@ const AxisView: React.FC<{
                 <div className="flex items-center gap-3">
                     <Target size={18} className="text-purple-500" />
                     <div className="text-left">
-                        <h3 className="font-semibold text-navy-900 dark:text-white">
-                            {axis.axisName}
-                        </h3>
+                        <h3 className="font-semibold text-navy-900 dark:text-white">{axis.axisName}</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {axis.perspectives.length} perspektyw
                         </p>
@@ -201,11 +206,7 @@ const AxisView: React.FC<{
 
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {sortedPerspectives.map((perspective, idx) => (
-                                    <PerspectiveCard
-                                        key={perspective.id}
-                                        perspective={perspective}
-                                        userIndex={idx}
-                                    />
+                                    <PerspectiveCard key={perspective.id} perspective={perspective} userIndex={idx} />
                                 ))}
                             </div>
                         </>
@@ -229,8 +230,8 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
                     Jeszcze nie ma perspektyw do porównania
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    Zaproś członków zespołu i poproś ich o ocenę wybranych osi decyzyjnych.
-                    Różne punkty widzenia wzbogacą analizę.
+                    Zaproś członków zespołu i poproś ich o ocenę wybranych osi decyzyjnych. Różne punkty widzenia
+                    wzbogacą analizę.
                 </p>
             </div>
         );
@@ -238,7 +239,7 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
 
     // Count total perspectives and high-tension axes
     const totalPerspectives = axes.reduce((sum, a) => sum + a.perspectives.length, 0);
-    const highTensionAxes = axes.filter(a => detectTension(a.perspectives) === 'high').length;
+    const highTensionAxes = axes.filter((a) => detectTension(a.perspectives) === 'high').length;
 
     return (
         <div className={className}>
@@ -263,11 +264,7 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
             {/* Axes List */}
             <div className="space-y-4">
                 {axes.map((axis, idx) => (
-                    <AxisView
-                        key={axis.axisId}
-                        axis={axis}
-                        initialExpanded={idx === 0}
-                    />
+                    <AxisView key={axis.axisId} axis={axis} initialExpanded={idx === 0} />
                 ))}
             </div>
         </div>

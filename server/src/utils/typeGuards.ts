@@ -1,7 +1,7 @@
 /**
  * Type Guards and Runtime Validation
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Type guards for database results, API responses, and external service responses
  */
 
@@ -51,7 +51,7 @@ export function validateDatabaseRows<T>(rows: unknown, schema: z.ZodSchema<T>): 
     if (!Array.isArray(rows)) {
         throw new Error('Expected array of database rows');
     }
-    return rows.map(row => schema.parse(row));
+    return rows.map((row) => schema.parse(row));
 }
 
 // ============================================================================
@@ -328,7 +328,4 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
             totalPages: z.number().int().nonnegative(),
         }),
     });
-
-
-
 

@@ -1,12 +1,12 @@
 /**
  * DiffView Component
- * 
+ *
  * Displays side-by-side or inline diff between original and suggested content.
  * Highlights additions, deletions, and modifications.
  */
 
+import { ArrowRight, Equal, Minus, Plus } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { ArrowRight, Plus, Minus, Equal } from 'lucide-react';
 
 interface DiffViewProps {
     original: string | object;
@@ -40,27 +40,27 @@ function computeDiff(original: string, suggested: string): DiffLine[] {
             diff.push({
                 type: 'added',
                 suggestedLine: suggLine,
-                lineNumber: i + 1
+                lineNumber: i + 1,
             });
         } else if (suggLine === undefined) {
             diff.push({
                 type: 'removed',
                 originalLine: origLine,
-                lineNumber: i + 1
+                lineNumber: i + 1,
             });
         } else if (origLine === suggLine) {
             diff.push({
                 type: 'unchanged',
                 originalLine: origLine,
                 suggestedLine: suggLine,
-                lineNumber: i + 1
+                lineNumber: i + 1,
             });
         } else {
             diff.push({
                 type: 'modified',
                 originalLine: origLine,
                 suggestedLine: suggLine,
-                lineNumber: i + 1
+                lineNumber: i + 1,
             });
         }
     }
@@ -73,43 +73,44 @@ export function DiffView({
     suggested,
     mode = 'side-by-side',
     showLineNumbers = true,
-    className = ''
+    className = '',
 }: DiffViewProps) {
-    const originalStr = useMemo(() => 
-        typeof original === 'string' ? original : JSON.stringify(original, null, 2),
-        [original]
+    const originalStr = useMemo(
+        () => (typeof original === 'string' ? original : JSON.stringify(original, null, 2)),
+        [original],
     );
 
-    const suggestedStr = useMemo(() =>
-        typeof suggested === 'string' ? suggested : JSON.stringify(suggested, null, 2),
-        [suggested]
+    const suggestedStr = useMemo(
+        () => (typeof suggested === 'string' ? suggested : JSON.stringify(suggested, null, 2)),
+        [suggested],
     );
 
     const diff = useMemo(() => computeDiff(originalStr, suggestedStr), [originalStr, suggestedStr]);
 
     const stats = useMemo(() => {
-        const added = diff.filter(d => d.type === 'added').length;
-        const removed = diff.filter(d => d.type === 'removed').length;
-        const modified = diff.filter(d => d.type === 'modified').length;
+        const added = diff.filter((d) => d.type === 'added').length;
+        const removed = diff.filter((d) => d.type === 'removed').length;
+        const modified = diff.filter((d) => d.type === 'modified').length;
         return { added, removed, modified };
     }, [diff]);
 
     const renderInlineDiff = () => (
         <div className="font-mono text-sm">
             {diff.map((line, idx) => (
-                <div 
+                <div
                     key={idx}
                     className={`flex items-start px-2 py-0.5 ${
-                        line.type === 'added' ? 'bg-green-100 dark:bg-green-900/30' :
-                        line.type === 'removed' ? 'bg-red-100 dark:bg-red-900/30' :
-                        line.type === 'modified' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                        ''
+                        line.type === 'added'
+                            ? 'bg-green-100 dark:bg-green-900/30'
+                            : line.type === 'removed'
+                              ? 'bg-red-100 dark:bg-red-900/30'
+                              : line.type === 'modified'
+                                ? 'bg-yellow-100 dark:bg-yellow-900/30'
+                                : ''
                     }`}
                 >
                     {showLineNumbers && (
-                        <span className="w-8 text-gray-400 text-xs flex-shrink-0">
-                            {line.lineNumber}
-                        </span>
+                        <span className="w-8 text-gray-400 text-xs flex-shrink-0">{line.lineNumber}</span>
                     )}
                     <span className="w-6 flex-shrink-0">
                         {line.type === 'added' && <Plus className="w-4 h-4 text-green-600" />}
@@ -144,7 +145,7 @@ export function DiffView({
                 </div>
                 <div className="max-h-96 overflow-auto">
                     {diff.map((line, idx) => (
-                        <div 
+                        <div
                             key={idx}
                             className={`flex items-start px-2 py-0.5 ${
                                 line.type === 'removed' || line.type === 'modified'
@@ -157,11 +158,15 @@ export function DiffView({
                                     {line.originalLine !== undefined ? line.lineNumber : ''}
                                 </span>
                             )}
-                            <span className={`flex-1 ${
-                                line.type === 'removed' ? 'text-red-600 line-through' :
-                                line.type === 'modified' ? 'text-red-600' :
-                                'text-gray-700 dark:text-gray-300'
-                            }`}>
+                            <span
+                                className={`flex-1 ${
+                                    line.type === 'removed'
+                                        ? 'text-red-600 line-through'
+                                        : line.type === 'modified'
+                                          ? 'text-red-600'
+                                          : 'text-gray-700 dark:text-gray-300'
+                                }`}
+                            >
                                 {line.originalLine || '\u00A0'}
                             </span>
                         </div>
@@ -176,7 +181,7 @@ export function DiffView({
                 </div>
                 <div className="max-h-96 overflow-auto">
                     {diff.map((line, idx) => (
-                        <div 
+                        <div
                             key={idx}
                             className={`flex items-start px-2 py-0.5 ${
                                 line.type === 'added' || line.type === 'modified'
@@ -189,11 +194,15 @@ export function DiffView({
                                     {line.suggestedLine !== undefined ? line.lineNumber : ''}
                                 </span>
                             )}
-                            <span className={`flex-1 ${
-                                line.type === 'added' ? 'text-green-600' :
-                                line.type === 'modified' ? 'text-green-600' :
-                                'text-gray-700 dark:text-gray-300'
-                            }`}>
+                            <span
+                                className={`flex-1 ${
+                                    line.type === 'added'
+                                        ? 'text-green-600'
+                                        : line.type === 'modified'
+                                          ? 'text-green-600'
+                                          : 'text-gray-700 dark:text-gray-300'
+                                }`}
+                            >
                                 {line.suggestedLine || '\u00A0'}
                             </span>
                         </div>
@@ -230,12 +239,4 @@ export function DiffView({
 }
 
 export default DiffView;
-
-
-
-
-
-
-
-
 

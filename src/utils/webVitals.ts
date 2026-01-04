@@ -1,7 +1,7 @@
 /**
  * Web Vitals Tracking
  * Enterprise SaaS Architecture - Core Web Vitals Monitoring
- * 
+ *
  * Tracks LCP, FID, CLS, FCP, TTFB for performance monitoring.
  * Google-level quality standards.
  */
@@ -50,12 +50,12 @@ export interface ConnectionInfo {
 // ==========================================
 
 const THRESHOLDS: Record<WebVitalName, { good: number; poor: number }> = {
-    LCP: { good: 2500, poor: 4000 },     // Largest Contentful Paint (ms)
-    FID: { good: 100, poor: 300 },        // First Input Delay (ms)
-    CLS: { good: 0.1, poor: 0.25 },       // Cumulative Layout Shift (score)
-    FCP: { good: 1800, poor: 3000 },      // First Contentful Paint (ms)
-    TTFB: { good: 800, poor: 1800 },      // Time to First Byte (ms)
-    INP: { good: 200, poor: 500 },        // Interaction to Next Paint (ms)
+    LCP: { good: 2500, poor: 4000 }, // Largest Contentful Paint (ms)
+    FID: { good: 100, poor: 300 }, // First Input Delay (ms)
+    CLS: { good: 0.1, poor: 0.25 }, // Cumulative Layout Shift (score)
+    FCP: { good: 1800, poor: 3000 }, // First Contentful Paint (ms)
+    TTFB: { good: 800, poor: 1800 }, // Time to First Byte (ms)
+    INP: { good: 200, poor: 500 }, // Interaction to Next Paint (ms)
 };
 
 // ==========================================
@@ -135,11 +135,7 @@ let callbacks: MetricCallback[] = [];
 /**
  * Report a metric
  */
-const reportMetric = (
-    name: WebVitalName,
-    value: number,
-    entries: PerformanceEntry[] = []
-): void => {
+const reportMetric = (name: WebVitalName, value: number, entries: PerformanceEntry[] = []): void => {
     const metric: WebVitalMetric = {
         name,
         value,
@@ -151,7 +147,7 @@ const reportMetric = (
     };
 
     collectedMetrics[name] = metric;
-    callbacks.forEach(cb => cb(metric));
+    callbacks.forEach((cb) => cb(metric));
 };
 
 /**
@@ -261,7 +257,9 @@ const observeFCP = (): void => {
     try {
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
-            const fcpEntry = entries.find(e => e.name === 'first-contentful-paint') as PerformanceEntry & { startTime: number };
+            const fcpEntry = entries.find((e) => e.name === 'first-contentful-paint') as PerformanceEntry & {
+                startTime: number;
+            };
             if (fcpEntry) {
                 reportMetric('FCP', fcpEntry.startTime, entries);
                 observer.disconnect();
@@ -328,7 +326,7 @@ export const onWebVital = (callback: MetricCallback): (() => void) => {
 
     // Return unsubscribe function
     return () => {
-        callbacks = callbacks.filter(cb => cb !== callback);
+        callbacks = callbacks.filter((cb) => cb !== callback);
     };
 };
 
@@ -463,5 +461,3 @@ export default {
     areMetricsGood,
     getPerformanceScore,
 };
-
-

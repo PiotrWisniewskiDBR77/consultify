@@ -1,4 +1,4 @@
-import { FullSession, FullInitiative, AxisId, InitiativeStatus } from '../types';
+import { AxisId, FullInitiative, FullSession, InitiativeStatus } from '../types';
 import { DRD_STRUCTURE } from './drdStructure';
 
 export const generateInitiatives = (session: FullSession): FullInitiative[] => {
@@ -10,21 +10,21 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
         4: 'dataManagement',
         5: 'culture',
         6: 'cybersecurity',
-        7: 'aiMaturity'
+        7: 'aiMaturity',
     };
 
-    DRD_STRUCTURE.forEach(axis => {
+    DRD_STRUCTURE.forEach((axis) => {
         const axisKey = axisMap[axis.id];
         if (!axisKey) return;
 
         const axisData = session.assessment[axisKey];
         if (!axisData || !axisData.actual) return;
 
-        axis.areas.forEach(area => {
+        axis.areas.forEach((area) => {
             const currentLevel = axisData.actual || 0;
 
             // Find levels above current
-            const nextLevels = area.levels.filter(l => l.level > currentLevel);
+            const nextLevels = area.levels.filter((l) => l.level > currentLevel);
 
             // Strategy: Suggest the IMMEDIATE next level as the initiative.
             // We could suggest all gaps, but usually you plan for the next step.
@@ -36,12 +36,12 @@ export const generateInitiatives = (session: FullSession): FullInitiative[] => {
                     name: `Advance ${area.name} to Level ${nextLevel.level}`,
                     description: `${nextLevel.title}. ${nextLevel.description} (Generated based on current level ${currentLevel}.)`,
                     axis: axisKey,
-                    priority: (!currentLevel || currentLevel === 1) ? 'High' : (currentLevel < 3 ? 'Medium' : 'Low'),
-                    complexity: nextLevel.level > 4 ? 'High' : (nextLevel.level > 2 ? 'Medium' : 'Low'),
+                    priority: !currentLevel || currentLevel === 1 ? 'High' : currentLevel < 3 ? 'Medium' : 'Low',
+                    complexity: nextLevel.level > 4 ? 'High' : nextLevel.level > 2 ? 'Medium' : 'Low',
                     status: InitiativeStatus.DRAFT,
                     estimatedCost: nextLevel.level * 10000,
                     estimatedAnnualBenefit: nextLevel.level * 20000,
-                    projectId: '' // Required field
+                    projectId: '', // Required field
                 } as any);
             }
         });

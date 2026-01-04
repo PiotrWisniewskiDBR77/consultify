@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ConfidenceBadge from '../../../components/ai/ConfidenceBadge';
+import ConfidenceBadge from '../../components/ai/ConfidenceBadge';
 
 describe('ConfidenceBadge Component', () => {
     describe('Percentage Display', () => {
@@ -258,6 +258,7 @@ describe('ConfidenceBadge Component', () => {
         });
     });
 });
+
 
 
 

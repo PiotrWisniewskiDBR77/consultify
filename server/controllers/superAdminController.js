@@ -1,9 +1,9 @@
-import { AppError, asyncHandler: catchAsync } from '../utils/errorHandler.js';
+import { AppError, asyncHandler: catchAsync } from '../src/utils/errorHandler.js';
 
 // Default Dependencies
 const deps = {
     db: require('../database'),
-    ActivityService: import('activityService.js'),
+    ActivityService: import('../src/services/ActivityService.js'),
     BillingService: null, // Lazy loaded
     UsageService: import('usageService.js'),
     RealtimeService: import('realtimeService.js'),
@@ -24,7 +24,7 @@ const deps = {
     OrganizationRelationshipService: import('organizationRelationshipService.js'),
     OrganizationSegmentService: import('organizationSegmentService.js'),
     OrganizationAnalyticsService: import('organizationAnalyticsService.js'),
-    UserActivityService: import('userActivityService.js'),
+    UserActivityService: import('../src/services/userActivityService.js'),
     UserSessionService: import('userSessionService.js'),
     UserGroupService: import('userGroupService.js'),
     UserLicenseService: import('userLicenseService.js'),

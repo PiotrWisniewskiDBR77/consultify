@@ -4,31 +4,22 @@
  * PRINCE2: Checkpoint Report
  */
 
+import { AlertTriangle, CalendarDays, CheckCircle2, Clock, HelpCircle, Sparkles } from 'lucide-react';
 import React from 'react';
-import {
-    CheckCircle2,
-    Clock,
-    AlertTriangle,
-    HelpCircle,
-    CalendarDays,
-    Sparkles
-} from 'lucide-react';
+
 import { ManagementReport, TeamMeetingReportContent } from '../../../types';
-import { ReportHeader } from './shared/ReportHeader';
-import { ReportFooter } from './shared/ReportFooter';
 import { MetricCardsGrid } from './shared/MetricCard';
-import { TaskListSection } from './shared/TaskListSection';
 import { RAGIndicator } from './shared/RAGIndicator';
+import { ReportFooter } from './shared/ReportFooter';
+import { ReportHeader } from './shared/ReportHeader';
+import { TaskListSection } from './shared/TaskListSection';
 
 interface TeamMeetingReportProps {
     report: ManagementReport;
     className?: string;
 }
 
-export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
-    report,
-    className = ''
-}) => {
+export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, className = '' }) => {
     const content = report.content as TeamMeetingReportContent;
     const summary = content.statusSummary;
 
@@ -38,23 +29,33 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
             label: 'Progress',
             value: summary.progressPercent,
             unit: '%',
-            status: summary.healthStatus
+            status: summary.healthStatus,
         },
         {
             label: 'Tasks Completed',
             value: `${summary.tasksCompleted}/${summary.tasksTotal}`,
-            status: summary.tasksCompleted >= summary.tasksTotal * 0.7 ? 'GREEN' as const : 'AMBER' as const
+            status: summary.tasksCompleted >= summary.tasksTotal * 0.7 ? ('GREEN' as const) : ('AMBER' as const),
         },
         {
             label: 'Blocked',
             value: summary.tasksBlocked,
-            status: summary.tasksBlocked === 0 ? 'GREEN' as const : summary.tasksBlocked > 5 ? 'RED' as const : 'AMBER' as const
+            status:
+                summary.tasksBlocked === 0
+                    ? ('GREEN' as const)
+                    : summary.tasksBlocked > 5
+                      ? ('RED' as const)
+                      : ('AMBER' as const),
         },
         {
             label: 'Pending Decisions',
             value: summary.decisionsPending,
-            status: summary.decisionsPending === 0 ? 'GREEN' as const : summary.decisionsPending > 3 ? 'RED' as const : 'AMBER' as const
-        }
+            status:
+                summary.decisionsPending === 0
+                    ? ('GREEN' as const)
+                    : summary.decisionsPending > 3
+                      ? ('RED' as const)
+                      : ('AMBER' as const),
+        },
     ];
 
     return (
@@ -76,13 +77,9 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                 <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-500/20 p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <Sparkles size={16} className="text-violet-500" />
-                        <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">
-                            AI Summary
-                        </span>
+                        <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">AI Summary</span>
                     </div>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {report.aiNarrative}
-                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{report.aiNarrative}</p>
                 </div>
             )}
 
@@ -130,12 +127,12 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                 title="Completed This Period"
                 icon={<CheckCircle2 size={16} className="text-emerald-500" />}
                 variant="completed"
-                items={content.completedWork.map(item => ({
+                items={content.completedWork.map((item) => ({
                     id: item.id,
                     title: item.title,
                     assignee: item.completedByName,
                     projectName: item.projectName,
-                    meta: item.initiativeTitle ? `Initiative: ${item.initiativeTitle}` : undefined
+                    meta: item.initiativeTitle ? `Initiative: ${item.initiativeTitle}` : undefined,
                 }))}
                 emptyMessage="No tasks completed in this period."
                 maxItems={10}
@@ -146,14 +143,14 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                 title="Work In Progress"
                 icon={<Clock size={16} className="text-blue-500" />}
                 variant="default"
-                items={content.workInProgress.map(item => ({
+                items={content.workInProgress.map((item) => ({
                     id: item.id,
                     title: item.title,
                     status: item.status,
                     assignee: item.assigneeName,
                     dueDate: item.dueDate,
                     projectName: item.projectName,
-                    meta: `${item.progressPercent}% complete`
+                    meta: `${item.progressPercent}% complete`,
                 }))}
                 emptyMessage="No tasks in progress."
                 maxItems={10}
@@ -165,14 +162,14 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                     title="Blockers & Issues"
                     icon={<AlertTriangle size={16} className="text-red-500" />}
                     variant="blocked"
-                    items={content.blockers.map(item => ({
+                    items={content.blockers.map((item) => ({
                         id: item.id,
                         title: item.title,
                         assignee: item.ownerName,
                         projectName: item.projectName,
                         severity: item.severity,
                         daysInfo: `${item.daysBlocked} days blocked`,
-                        meta: item.blockedReason
+                        meta: item.blockedReason,
                     }))}
                     emptyMessage="No blocked items."
                 />
@@ -184,13 +181,13 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                     title="Pending Decisions"
                     icon={<HelpCircle size={16} className="text-amber-500" />}
                     variant="pending"
-                    items={content.pendingDecisions.map(item => ({
+                    items={content.pendingDecisions.map((item) => ({
                         id: item.id,
                         title: item.title,
                         assignee: item.ownerName,
                         projectName: item.projectName,
                         daysInfo: `${item.daysWaiting} days waiting`,
-                        severity: item.urgency
+                        severity: item.urgency,
                     }))}
                     emptyMessage="No pending decisions."
                 />
@@ -201,13 +198,13 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                 title="Plan for Next Period"
                 icon={<CalendarDays size={16} className="text-violet-500" />}
                 variant="default"
-                items={content.nextPeriodPlan.map(item => ({
+                items={content.nextPeriodPlan.map((item) => ({
                     id: item.id,
                     title: item.title,
                     assignee: item.assigneeName,
                     dueDate: item.plannedDate,
                     projectName: item.projectName,
-                    severity: item.priority
+                    severity: item.priority,
                 }))}
                 emptyMessage="No tasks planned for next period."
                 maxItems={10}
@@ -217,19 +214,27 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
             {content.projectBreakdown && content.projectBreakdown.length > 0 && (
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5">
-                        <h3 className="font-semibold text-navy-900 dark:text-white">
-                            Project Breakdown
-                        </h3>
+                        <h3 className="font-semibold text-navy-900 dark:text-white">Project Breakdown</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-navy-800/50">
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Project</th>
-                                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tasks</th>
-                                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Blockers</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Highlights</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Project
+                                    </th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Tasks
+                                    </th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Blockers
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Highlights
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -245,10 +250,13 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
                                             {project.tasksCompleted}/{project.tasksTotal}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${project.blockers > 0
-                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                }`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                                    project.blockers > 0
+                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                }`}
+                                            >
                                                 {project.blockers}
                                             </span>
                                         </td>
@@ -275,12 +283,3 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({
 };
 
 export default TeamMeetingReport;
-
-
-
-
-
-
-
-
-

@@ -1,14 +1,12 @@
 /**
  * Pdfparser Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadPdfparserservice = createCachedLazyService('../../services/pdfParserService.js');
+import service from '../../services/pdfParserService.js';
 
 // Export default instance (for backward compatibility)
-export default loadPdfparserservice();
+export default service;

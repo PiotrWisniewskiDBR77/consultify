@@ -12,14 +12,14 @@
 //   • Documents & Evidence – list of attached files/links, AI can re‑score after upload
 // ---------------------------------------------------------------
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 // Expected shape of a megatrend – matches backend model
 export interface MegatrendDetail {
     id: string;
     label: string;
     shortDescription: string; // 2‑3 sentences, no buzzwords
-    type: "Technology" | "Business" | "Societal";
+    type: 'Technology' | 'Business' | 'Societal';
     industryImpact: string; // why it matters for the industry
     companyImpact: string; // personalised for the user's company
     impactScore: number; // 1‑7 economic impact
@@ -27,7 +27,7 @@ export interface MegatrendDetail {
     unavoidability: string; // e.g. "Medium"
     competitivePressure: string; // e.g. "Low"
     aiSuggestion?: {
-        ring: "Now" | "Watch Closely" | "On the Horizon";
+        ring: 'Now' | 'Watch Closely' | 'On the Horizon';
         risks: string[];
         opportunities: string[];
         actions: string[];
@@ -56,7 +56,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
             setError(null);
             try {
                 const res = await fetch(`/api/megatrends/${encodeURIComponent(trendId)}`);
-                if (!res.ok) throw new Error("Failed to load trend detail");
+                if (!res.ok) throw new Error('Failed to load trend detail');
                 const json: MegatrendDetail = await res.json();
                 setTrend(json);
             } catch (e: unknown) {
@@ -72,8 +72,20 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
         return (
             <div className="flex items-center justify-center p-12 text-gray-600 dark:text-gray-300">
                 <div className="flex items-center space-x-2">
-                    <svg className="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <svg
+                        className="animate-spin h-5 w-5 text-indigo-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        ></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                     </svg>
                     <span>Loading trend details…</span>
@@ -100,12 +112,24 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
         return <p className="text-gray-500 dark:text-gray-400">No trend selected.</p>;
     }
 
-    const { label, shortDescription, type, industryImpact, companyImpact, impactScore, likelihood, unavoidability, competitivePressure, aiSuggestion, documents } = trend;
+    const {
+        label,
+        shortDescription,
+        type,
+        industryImpact,
+        companyImpact,
+        impactScore,
+        likelihood,
+        unavoidability,
+        competitivePressure,
+        aiSuggestion,
+        documents,
+    } = trend;
 
     const typeEmoji = {
-        Technology: "🔵",
-        Business: "🟣",
-        Societal: "🟠",
+        Technology: '🔵',
+        Business: '🟣',
+        Societal: '🟠',
     }[type];
 
     // Helper to render a heading with an icon
@@ -118,7 +142,6 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
 
     return (
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg w-full overflow-hidden border border-slate-200 dark:border-white/10 relative">
-
             {/* Close button */}
             <button
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-navy-800 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
@@ -131,9 +154,13 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
             <div className="p-6 md:p-8 space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 border-b border-slate-100 dark:border-white/5 pb-6">
-                    <span className="text-4xl shadow-sm rounded-full bg-slate-50 dark:bg-navy-800 p-2">{typeEmoji}</span>
+                    <span className="text-4xl shadow-sm rounded-full bg-slate-50 dark:bg-navy-800 p-2">
+                        {typeEmoji}
+                    </span>
                     <div>
-                        <div className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">{type} Trend</div>
+                        <div className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">
+                            {type} Trend
+                        </div>
                         <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{label}</h2>
                     </div>
                 </div>
@@ -144,7 +171,9 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
                         {/* What is it */}
                         <section className="bg-slate-50 dark:bg-navy-800/50 p-6 rounded-lg">
                             <SectionHeader icon={<span>📄</span>} title="What is it" />
-                            <p className="mt-2 text-gray-600 dark:text-gray-200 leading-relaxed text-lg text-justify">{shortDescription}</p>
+                            <p className="mt-2 text-gray-600 dark:text-gray-200 leading-relaxed text-lg text-justify">
+                                {shortDescription}
+                            </p>
                         </section>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,27 +196,43 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
                                 <SectionHeader icon={<span>🤖</span>} title="AI Insight" />
                                 <div className="mt-4 space-y-4 text-gray-600 dark:text-gray-300">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300">Suggested Ring:</span>
-                                        <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">{aiSuggestion.ring}</span>
+                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300">
+                                            Suggested Ring:
+                                        </span>
+                                        <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">
+                                            {aiSuggestion.ring}
+                                        </span>
                                     </div>
 
                                     <div className="grid md:grid-cols-3 gap-4 text-sm">
                                         <div>
-                                            <span className="font-semibold text-red-600/80 dark:text-red-400 block mb-2">Risks</span>
+                                            <span className="font-semibold text-red-600/80 dark:text-red-400 block mb-2">
+                                                Risks
+                                            </span>
                                             <ul className="list-disc list-inside space-y-1">
-                                                {aiSuggestion.risks.map((r, i) => (<li key={i}>{r}</li>))}
+                                                {aiSuggestion.risks.map((r, i) => (
+                                                    <li key={i}>{r}</li>
+                                                ))}
                                             </ul>
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-emerald-600/80 dark:text-emerald-400 block mb-2">Opportunities</span>
+                                            <span className="font-semibold text-emerald-600/80 dark:text-emerald-400 block mb-2">
+                                                Opportunities
+                                            </span>
                                             <ul className="list-disc list-inside space-y-1">
-                                                {aiSuggestion.opportunities.map((o, i) => (<li key={i}>{o}</li>))}
+                                                {aiSuggestion.opportunities.map((o, i) => (
+                                                    <li key={i}>{o}</li>
+                                                ))}
                                             </ul>
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-blue-600/80 dark:text-blue-400 block mb-2">Actions</span>
+                                            <span className="font-semibold text-blue-600/80 dark:text-blue-400 block mb-2">
+                                                Actions
+                                            </span>
                                             <ul className="list-disc list-inside space-y-1">
-                                                {aiSuggestion.actions.map((a, i) => (<li key={i}>{a}</li>))}
+                                                {aiSuggestion.actions.map((a, i) => (
+                                                    <li key={i}>{a}</li>
+                                                ))}
                                             </ul>
                                         </div>
                                     </div>
@@ -208,7 +253,10 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
                                         <span className="font-bold">{impactScore}/7</span>
                                     </div>
                                     <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-blue-500" style={{ width: `${(impactScore / 7) * 100}%` }}></div>
+                                        <div
+                                            className="h-full bg-blue-500"
+                                            style={{ width: `${(impactScore / 7) * 100}%` }}
+                                        ></div>
                                     </div>
                                 </div>
                                 <div className="pt-2 border-t border-slate-100 dark:border-white/5 space-y-3">
@@ -236,7 +284,12 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({ trendId, trend
                                     {documents.map((doc, i) => (
                                         <li key={i} className="flex items-start gap-2 text-sm">
                                             <span className="text-slate-400 mt-0.5">•</span>
-                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline leading-tight">
+                                            <a
+                                                href={doc.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-600 dark:text-indigo-400 hover:underline leading-tight"
+                                            >
                                                 {doc.title}
                                             </a>
                                         </li>

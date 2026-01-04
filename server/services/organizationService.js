@@ -6,12 +6,12 @@
  * - Billing status & Token balance management
  * - Organization details
  */
-import db from '../database.js';
 import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
 // Dependency injection for testing
 const deps = {
     db: db,
-    uuidv4
+    uuidv4,
 };
 const OrganizationService = {
     // For testing: allow overriding dependencies
@@ -26,12 +26,12 @@ const OrganizationService = {
         OWNER: 'OWNER',
         ADMIN: 'ADMIN',
         MEMBER: 'MEMBER',
-        CONSULTANT: 'CONSULTANT'
+        CONSULTANT: 'CONSULTANT',
     },
     /**
      * Create a new organization with an initial OWNER
      */
-    createOrganization: async ({ userId, name, email, attribution = null }) => {
+    createOrganization: async ({ userId, name, _email, attribution = null, }) => {
         await initDeps();
         const orgId = deps.uuidv4();
         const now = new Date().toISOString();
@@ -186,22 +186,34 @@ const OrganizationService = {
                             return reject(commitErr);
                         // Log the credit via TokenBillingService (post-commit)
                         try {
-                            const { default: TokenBillingService } = await import('./tokenBillingService.js');
+                            const { default: _TokenBillingService } = await import('./tokenBillingService.js');
                             // We already added balance, so we just want to log the transaction?
                             // Actually TokenBillingService.creditTokens adds balance. Double adding?
                             // Let's NOT add balance in the SQL above if we use creditTokens.
-                            // RE-PLAN: Use raw SQL above for atomicity of Status change, 
+                            // RE-PLAN: Use raw SQL above for atomicity of Status change,
                             // then use creditTokens for Ledger?
                             // Or do it all here. I'll do it all here to ensure atomic upgrade.
                             // Actually, let's just log the event.
                             const { default: OrganizationEventService } = await import('./organizationEventService.js');
-                            await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
-                            resolve({ success: true, billingStatus: 'ACTIVE', organizationType: 'PAID', tokensAdded: INITIAL_TOKENS });
+                            await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, {
+                                initialTokens: INITIAL_TOKENS,
+                            });
+                            resolve({
+                                success: true,
+                                billingStatus: 'ACTIVE',
+                                organizationType: 'PAID',
+                                tokensAdded: INITIAL_TOKENS,
+                            });
                         }
                         catch (e) {
                             // Event logging failed, but billing is active. Acceptable.
-                            console.error("Post-billing activation error", e);
-                            resolve({ success: true, billingStatus: 'ACTIVE', organizationType: 'PAID', tokensAdded: INITIAL_TOKENS });
+                            console.error('Post-billing activation error', e);
+                            resolve({
+                                success: true,
+                                billingStatus: 'ACTIVE',
+                                organizationType: 'PAID',
+                                tokensAdded: INITIAL_TOKENS,
+                            });
                         }
                     });
                 });
@@ -246,7 +258,7 @@ const OrganizationService = {
                     return reject(err);
                 resolve(row || {
                     ai_assertiveness_level: 'MEDIUM',
-                    ai_autonomy_level: 'SUGGEST_ONLY'
+                    ai_autonomy_level: 'SUGGEST_ONLY',
                 });
             });
         });
@@ -271,7 +283,7 @@ const OrganizationService = {
     /**
      * Update a member's role in the organization
      */
-    updateMemberRole: async ({ organizationId, userId, role }) => {
+    updateMemberRole: async ({ organizationId, userId, role, }) => {
         await initDeps();
         if (!Object.values(OrganizationService.ROLES).includes(role)) {
             throw new Error('Invalid role');
@@ -302,7 +314,7 @@ const OrganizationService = {
                 resolve(row ? row.role : null);
             });
         });
-    }
+    },
 };
 export default OrganizationService;
 //# sourceMappingURL=organizationService.js.map

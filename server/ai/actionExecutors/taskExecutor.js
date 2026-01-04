@@ -1,6 +1,6 @@
 import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-import ActivityService from '../../services/activityService.js';
+import ActivityService from '../../src/services/ActivityService.js';
 import InitiativeService from '../../services/initiativeService.js';
 
 /**

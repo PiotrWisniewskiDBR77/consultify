@@ -37,7 +37,8 @@ export const RefreshTokenRequestSchema = z.object({
 // Change Password Request
 export const ChangePasswordRequestSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string()
+    newPassword: z
+        .string()
         .min(8, 'Password must be at least 8 characters')
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
         .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
@@ -47,7 +48,8 @@ export const ChangePasswordRequestSchema = z.object({
 // Reset Password Request
 export const ResetPasswordRequestSchema = z.object({
     token: z.string().min(1, 'Token is required'),
-    newPassword: z.string()
+    newPassword: z
+        .string()
         .min(8, 'Password must be at least 8 characters')
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
         .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
@@ -96,7 +98,4 @@ export type MFAEnableRequest = z.infer<typeof MFAEnableRequestSchema>;
 export type MFADisableRequest = z.infer<typeof MFADisableRequestSchema>;
 export type RevokeAllTokensRequest = z.infer<typeof RevokeAllTokensRequestSchema>;
 export type SessionIdParam = z.infer<typeof SessionIdParamSchema>;
-
-
-
 

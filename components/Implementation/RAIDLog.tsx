@@ -1,30 +1,31 @@
 /**
  * RAIDLog
- * 
+ *
  * Risks, Assumptions, Issues, Dependencies log for initiative execution.
  * Professional PMO tool for tracking project health indicators.
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    AlertTriangle,
-    HelpCircle,
     AlertCircle,
-    Link2,
-    Plus,
-    Filter,
+    AlertTriangle,
     ArrowUpDown,
-    MoreHorizontal,
     Calendar,
-    User,
-    ChevronDown,
-    Trash2,
-    Edit2,
     CheckCircle2,
-    XCircle
+    ChevronDown,
+    Edit2,
+    Filter,
+    HelpCircle,
+    Link2,
+    MoreHorizontal,
+    Plus,
+    Trash2,
+    User,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 type RAIDType = 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY';
 type RAIDStatus = 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED';
@@ -55,23 +56,40 @@ interface RAIDLogProps {
 }
 
 const RAID_TYPES = {
-    RISK: { label: 'Risk', icon: AlertTriangle, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
-    ASSUMPTION: { label: 'Assumption', icon: HelpCircle, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-    ISSUE: { label: 'Issue', icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-100 dark:bg-red-900/30' },
-    DEPENDENCY: { label: 'Dependency', icon: Link2, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
+    RISK: {
+        label: 'Risk',
+        icon: AlertTriangle,
+        color: 'text-amber-600 dark:text-amber-400',
+        bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    },
+    ASSUMPTION: {
+        label: 'Assumption',
+        icon: HelpCircle,
+        color: 'text-blue-600 dark:text-blue-400',
+        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    },
+    ISSUE: {
+        label: 'Issue',
+        icon: AlertCircle,
+        color: 'text-red-600 dark:text-red-400',
+        bgColor: 'bg-red-100 dark:bg-red-900/30',
+    },
+    DEPENDENCY: {
+        label: 'Dependency',
+        icon: Link2,
+        color: 'text-purple-600 dark:text-purple-400',
+        bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    },
 };
 
-export const RAIDLog: React.FC<RAIDLogProps> = ({
-    initiativeId,
-    onItemClick
-}) => {
+export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) => {
     const [items, setItems] = useState<RAIDItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<RAIDType | 'ALL'>('ALL');
     const [showAddModal, setShowAddModal] = useState(false);
     const [newItem, setNewItem] = useState<Partial<RAIDItem>>({
         type: 'RISK',
-        status: 'OPEN'
+        status: 'OPEN',
     });
 
     useEffect(() => {
@@ -81,9 +99,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
     const fetchItems = async () => {
         setIsLoading(true);
         try {
-            const url = initiativeId 
-                ? `/raid?initiativeId=${initiativeId}`
-                : '/raid';
+            const url = initiativeId ? `/raid?initiativeId=${initiativeId}` : '/raid';
             const response = await Api.get(url);
             setItems(response.items || []);
         } catch (err) {
@@ -100,7 +116,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                     impact: 'HIGH',
                     mitigationPlan: 'Knowledge transfer sessions scheduled',
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
                 },
                 {
                     id: '2',
@@ -110,7 +126,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                     status: 'OPEN',
                     impact: 'HIGH',
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
                 },
                 {
                     id: '3',
@@ -120,7 +136,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                     status: 'OPEN',
                     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
                 },
                 {
                     id: '4',
@@ -130,8 +146,8 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                     status: 'OPEN',
                     probability: 'HIGH',
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
+                    updatedAt: new Date().toISOString(),
+                },
             ]);
         } finally {
             setIsLoading(false);
@@ -147,7 +163,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
         try {
             await Api.post('/raid', {
                 ...newItem,
-                initiativeId
+                initiativeId,
             });
             toast.success('Item added');
             setShowAddModal(false);
@@ -161,25 +177,21 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
     const handleStatusChange = async (item: RAIDItem, newStatus: RAIDStatus) => {
         try {
             await Api.patch(`/raid/${item.id}`, { status: newStatus });
-            setItems(prev => prev.map(i => 
-                i.id === item.id ? { ...i, status: newStatus } : i
-            ));
+            setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: newStatus } : i)));
             toast.success('Status updated');
         } catch (err) {
             toast.error('Failed to update status');
         }
     };
 
-    const filteredItems = items.filter(item => 
-        activeTab === 'ALL' || item.type === activeTab
-    );
+    const filteredItems = items.filter((item) => activeTab === 'ALL' || item.type === activeTab);
 
     const getCounts = () => ({
-        ALL: items.filter(i => i.status === 'OPEN').length,
-        RISK: items.filter(i => i.type === 'RISK' && i.status === 'OPEN').length,
-        ISSUE: items.filter(i => i.type === 'ISSUE' && i.status === 'OPEN').length,
-        ASSUMPTION: items.filter(i => i.type === 'ASSUMPTION' && i.status === 'OPEN').length,
-        DEPENDENCY: items.filter(i => i.type === 'DEPENDENCY' && i.status === 'OPEN').length,
+        ALL: items.filter((i) => i.status === 'OPEN').length,
+        RISK: items.filter((i) => i.type === 'RISK' && i.status === 'OPEN').length,
+        ISSUE: items.filter((i) => i.type === 'ISSUE' && i.status === 'OPEN').length,
+        ASSUMPTION: items.filter((i) => i.type === 'ASSUMPTION' && i.status === 'OPEN').length,
+        DEPENDENCY: items.filter((i) => i.type === 'DEPENDENCY' && i.status === 'OPEN').length,
     });
 
     const counts = getCounts();
@@ -203,7 +215,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
         const riskScore = item.type === 'RISK' ? getRiskScore(item) : null;
 
         return (
-            <div 
+            <div
                 key={item.id}
                 className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-white/10 p-4 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
             >
@@ -216,42 +228,48 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded ${typeConfig.bgColor} ${typeConfig.color}`}>
+                            <span
+                                className={`text-xs font-medium px-2 py-0.5 rounded ${typeConfig.bgColor} ${typeConfig.color}`}
+                            >
                                 {typeConfig.label}
                             </span>
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                                item.status === 'OPEN' 
-                                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                                    : item.status === 'MITIGATED'
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                        : item.status === 'REALIZED'
+                            <span
+                                className={`text-xs font-medium px-2 py-0.5 rounded ${
+                                    item.status === 'OPEN'
+                                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                                        : item.status === 'MITIGATED'
+                                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                          : item.status === 'REALIZED'
                                             ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                                             : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                            }`}>
+                                }`}
+                            >
                                 {item.status}
                             </span>
                             {riskScore !== null && (
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded ${getRiskScoreColor(riskScore)}`}>
+                                <span
+                                    className={`text-xs font-bold px-2 py-0.5 rounded ${getRiskScoreColor(riskScore)}`}
+                                >
                                     Score: {riskScore}
                                 </span>
                             )}
                         </div>
 
-                        <h4 className="font-medium text-navy-900 dark:text-white mb-1">
-                            {item.title}
-                        </h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                            {item.description}
-                        </p>
+                        <h4 className="font-medium text-navy-900 dark:text-white mb-1">{item.title}</h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{item.description}</p>
 
                         {/* Risk/Issue details */}
                         {(item.probability || item.impact) && (
                             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
                                 {item.probability && (
-                                    <span>Probability: <strong>{item.probability}</strong></span>
+                                    <span>
+                                        Probability: <strong>{item.probability}</strong>
+                                    </span>
                                 )}
                                 {item.impact && (
-                                    <span>Impact: <strong>{item.impact}</strong></span>
+                                    <span>
+                                        Impact: <strong>{item.impact}</strong>
+                                    </span>
                                 )}
                             </div>
                         )}
@@ -278,7 +296,9 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                         {item.status === 'OPEN' && (
                             <>
                                 <button
-                                    onClick={() => handleStatusChange(item, item.type === 'RISK' ? 'MITIGATED' : 'CLOSED')}
+                                    onClick={() =>
+                                        handleStatusChange(item, item.type === 'RISK' ? 'MITIGATED' : 'CLOSED')
+                                    }
                                     className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
                                     title={item.type === 'RISK' ? 'Mark Mitigated' : 'Close'}
                                 >
@@ -306,7 +326,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
             {/* Header with tabs */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
-                    {(['ALL', 'RISK', 'ISSUE', 'ASSUMPTION', 'DEPENDENCY'] as const).map(tab => {
+                    {(['ALL', 'RISK', 'ISSUE', 'ASSUMPTION', 'DEPENDENCY'] as const).map((tab) => {
                         const config = tab === 'ALL' ? null : RAID_TYPES[tab];
                         const Icon = config?.icon || AlertTriangle;
                         const count = counts[tab];
@@ -323,11 +343,13 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                             >
                                 {tab === 'ALL' ? 'All' : <Icon size={14} className={config?.color} />}
                                 {count > 0 && (
-                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                        tab === 'ISSUE' && count > 0
-                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                                            : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
-                                    }`}>
+                                    <span
+                                        className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                            tab === 'ISSUE' && count > 0
+                                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                                        }`}
+                                    >
                                         {count}
                                     </span>
                                 )}
@@ -348,9 +370,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
             {/* Items list */}
             <div className="space-y-3">
                 {isLoading ? (
-                    <div className="flex items-center justify-center h-32 text-slate-400">
-                        Loading...
-                    </div>
+                    <div className="flex items-center justify-center h-32 text-slate-400">Loading...</div>
                 ) : filteredItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-32 text-slate-400">
                         <CheckCircle2 size={24} className="mb-2 text-green-500" />
@@ -365,9 +385,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
-                            Add RAID Item
-                        </h3>
+                        <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Add RAID Item</h3>
 
                         <div className="space-y-4">
                             {/* Type selector */}
@@ -376,20 +394,23 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                     Type
                                 </label>
                                 <div className="grid grid-cols-4 gap-2">
-                                    {(Object.keys(RAID_TYPES) as RAIDType[]).map(type => {
+                                    {(Object.keys(RAID_TYPES) as RAIDType[]).map((type) => {
                                         const config = RAID_TYPES[type];
                                         const Icon = config.icon;
                                         return (
                                             <button
                                                 key={type}
-                                                onClick={() => setNewItem(prev => ({ ...prev, type }))}
+                                                onClick={() => setNewItem((prev) => ({ ...prev, type }))}
                                                 className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
                                                     newItem.type === type
                                                         ? `${config.bgColor} border-current ${config.color}`
                                                         : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
                                                 }`}
                                             >
-                                                <Icon size={20} className={newItem.type === type ? config.color : 'text-slate-400'} />
+                                                <Icon
+                                                    size={20}
+                                                    className={newItem.type === type ? config.color : 'text-slate-400'}
+                                                />
                                                 <span className="text-xs mt-1">{config.label}</span>
                                             </button>
                                         );
@@ -405,7 +426,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                 <input
                                     type="text"
                                     value={newItem.title || ''}
-                                    onChange={(e) => setNewItem(prev => ({ ...prev, title: e.target.value }))}
+                                    onChange={(e) => setNewItem((prev) => ({ ...prev, title: e.target.value }))}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                     placeholder="Brief title..."
                                 />
@@ -418,7 +439,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                 </label>
                                 <textarea
                                     value={newItem.description || ''}
-                                    onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                                    onChange={(e) => setNewItem((prev) => ({ ...prev, description: e.target.value }))}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                     rows={3}
                                     placeholder="Detailed description..."
@@ -434,7 +455,12 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                         </label>
                                         <select
                                             value={newItem.probability || 'MEDIUM'}
-                                            onChange={(e) => setNewItem(prev => ({ ...prev, probability: e.target.value as RAIDProbability }))}
+                                            onChange={(e) =>
+                                                setNewItem((prev) => ({
+                                                    ...prev,
+                                                    probability: e.target.value as RAIDProbability,
+                                                }))
+                                            }
                                             className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                         >
                                             <option value="LOW">Low</option>
@@ -448,7 +474,12 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                         </label>
                                         <select
                                             value={newItem.impact || 'MEDIUM'}
-                                            onChange={(e) => setNewItem(prev => ({ ...prev, impact: e.target.value as RAIDImpact }))}
+                                            onChange={(e) =>
+                                                setNewItem((prev) => ({
+                                                    ...prev,
+                                                    impact: e.target.value as RAIDImpact,
+                                                }))
+                                            }
                                             className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                         >
                                             <option value="LOW">Low</option>
@@ -468,7 +499,9 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                     </label>
                                     <textarea
                                         value={newItem.mitigationPlan || ''}
-                                        onChange={(e) => setNewItem(prev => ({ ...prev, mitigationPlan: e.target.value }))}
+                                        onChange={(e) =>
+                                            setNewItem((prev) => ({ ...prev, mitigationPlan: e.target.value }))
+                                        }
                                         className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                         rows={2}
                                         placeholder="How will we mitigate this?"
@@ -484,7 +517,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
                                 <input
                                     type="date"
                                     value={newItem.dueDate ? new Date(newItem.dueDate).toISOString().split('T')[0] : ''}
-                                    onChange={(e) => setNewItem(prev => ({ ...prev, dueDate: e.target.value }))}
+                                    onChange={(e) => setNewItem((prev) => ({ ...prev, dueDate: e.target.value }))}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                 />
                             </div>
@@ -515,12 +548,4 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({
 };
 
 export default RAIDLog;
-
-
-
-
-
-
-
-
 

@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface SelectOption {
     value: string;
@@ -24,7 +24,7 @@ export const Select: React.FC<SelectProps> = ({
     placeholder = 'Select...',
     label,
     className = '',
-    disabled = false
+    disabled = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -40,7 +40,7 @@ export const Select: React.FC<SelectProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const selectedOption = options.find(opt => opt.value === value);
+    const selectedOption = options.find((opt) => opt.value === value);
 
     const handleSelect = (optionValue: string) => {
         onChange(optionValue);
@@ -49,11 +49,7 @@ export const Select: React.FC<SelectProps> = ({
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
-            {label && (
-                <label className="block text-xs uppercase text-slate-500 font-bold mb-1">
-                    {label}
-                </label>
-            )}
+            {label && <label className="block text-xs uppercase text-slate-500 font-bold mb-1">{label}</label>}
 
             <button
                 type="button"
@@ -93,24 +89,26 @@ export const Select: React.FC<SelectProps> = ({
                                         className={`
                                             w-full flex items-center justify-between px-3 py-2 text-sm
                                             transition-colors text-left
-                                            ${isSelected
-                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'}
+                                            ${
+                                                isSelected
+                                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'
+                                            }
                                         `}
                                     >
                                         <div className="flex items-center gap-2 truncate">
                                             {option.icon}
                                             <span>{option.label}</span>
                                         </div>
-                                        {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                                        {isSelected && (
+                                            <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                        )}
                                     </button>
                                 );
                             })}
                         </div>
                     ) : (
-                        <div className="p-3 text-center text-xs text-slate-500">
-                            No options available
-                        </div>
+                        <div className="p-3 text-center text-xs text-slate-500">No options available</div>
                     )}
                 </div>
             )}

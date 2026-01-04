@@ -1,12 +1,12 @@
 /**
  * UserContact Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for user-contact routes - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('UserContact Routes', () => {
     let mockReq: Partial<Request>;

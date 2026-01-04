@@ -1,18 +1,19 @@
+import { AlertTriangle, ArrowRight, Brain, CheckCircle, Clock, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle, Clock, Users, Brain, ArrowRight } from 'lucide-react';
-import { useAppStore } from '../../store/useAppStore';
-import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
 /**
  * TrialTransitionConfirmation — Phase C → D Gate
- * 
+ *
  * ENTERPRISE SPEC COMPLIANCE:
  * - EPIC-C3: No Opt-Out by Accident
  * - Three explicit confirmations required
  * - Communicates organizational scope
- * 
+ *
  * PURPOSE:
  * Prevent accidental organization creation.
  * Requires conscious acknowledgment of:
@@ -33,10 +34,7 @@ interface TrialTransitionConfirmationProps {
     onConfirm?: () => void;
 }
 
-export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationProps> = ({
-    onCancel,
-    onConfirm
-}) => {
+export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationProps> = ({ onCancel, onConfirm }) => {
     const { setCurrentView } = useAppStore();
 
     const [state, setState] = useState<ConfirmationState>({
@@ -51,7 +49,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
     const handleProceed = async () => {
         if (!allConfirmed) return;
 
-        setState(prev => ({ ...prev, isSubmitting: true }));
+        setState((prev) => ({ ...prev, isSubmitting: true }));
 
         try {
             // Record consent in audit log
@@ -74,7 +72,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
         } catch (error: any) {
             toast.error(error.message || 'Błąd podczas przejścia');
         } finally {
-            setState(prev => ({ ...prev, isSubmitting: false }));
+            setState((prev) => ({ ...prev, isSubmitting: false }));
         }
     };
 
@@ -89,7 +87,6 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-navy-900 rounded-2xl max-w-lg w-full shadow-2xl">
-
                 {/* Header */}
                 <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-3 mb-2">
@@ -107,19 +104,21 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
 
                 {/* Confirmations */}
                 <div className="p-6 space-y-4">
-
                     {/* Time Commitment */}
-                    <label className={`
+                    <label
+                        className={`
                         flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all
-                        ${state.timeCommitment
-                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        ${
+                            state.timeCommitment
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                         }
-                    `}>
+                    `}
+                    >
                         <input
                             type="checkbox"
                             checked={state.timeCommitment}
-                            onChange={(e) => setState(prev => ({ ...prev, timeCommitment: e.target.checked }))}
+                            onChange={(e) => setState((prev) => ({ ...prev, timeCommitment: e.target.checked }))}
                             className="mt-1 w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
                         />
                         <div className="flex-1">
@@ -130,24 +129,27 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                                 </span>
                             </div>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                                Praca z systemem to nie szybkie rozwiązanie. Wymaga zaangażowania
-                                i regularnej pracy z zespołem.
+                                Praca z systemem to nie szybkie rozwiązanie. Wymaga zaangażowania i regularnej pracy z
+                                zespołem.
                             </p>
                         </div>
                     </label>
 
                     {/* Team Scope */}
-                    <label className={`
+                    <label
+                        className={`
                         flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all
-                        ${state.teamScope
-                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        ${
+                            state.teamScope
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                         }
-                    `}>
+                    `}
+                    >
                         <input
                             type="checkbox"
                             checked={state.teamScope}
-                            onChange={(e) => setState(prev => ({ ...prev, teamScope: e.target.checked }))}
+                            onChange={(e) => setState((prev) => ({ ...prev, teamScope: e.target.checked }))}
                             className="mt-1 w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
                         />
                         <div className="flex-1">
@@ -158,24 +160,27 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                                 </span>
                             </div>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                                System jest zaprojektowany dla organizacji. Największą wartość
-                                przynosi, gdy pracuje z nim więcej niż jedna osoba.
+                                System jest zaprojektowany dla organizacji. Największą wartość przynosi, gdy pracuje z
+                                nim więcej niż jedna osoba.
                             </p>
                         </div>
                     </label>
 
                     {/* Memory Awareness */}
-                    <label className={`
+                    <label
+                        className={`
                         flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all
-                        ${state.memoryAware
-                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        ${
+                            state.memoryAware
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                         }
-                    `}>
+                    `}
+                    >
                         <input
                             type="checkbox"
                             checked={state.memoryAware}
-                            onChange={(e) => setState(prev => ({ ...prev, memoryAware: e.target.checked }))}
+                            onChange={(e) => setState((prev) => ({ ...prev, memoryAware: e.target.checked }))}
                             className="mt-1 w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
                         />
                         <div className="flex-1">
@@ -186,8 +191,8 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                                 </span>
                             </div>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                                Każda decyzja, dyskusja i wniosek zostanie zapisany.
-                                To tworzy ciągłość, ale oznacza też odpowiedzialność.
+                                Każda decyzja, dyskusja i wniosek zostanie zapisany. To tworzy ciągłość, ale oznacza też
+                                odpowiedzialność.
                             </p>
                         </div>
                     </label>
@@ -207,9 +212,10 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                         disabled={!allConfirmed || state.isSubmitting}
                         className={`
                             flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all
-                            ${allConfirmed && !state.isSubmitting
-                                ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                            ${
+                                allConfirmed && !state.isSubmitting
+                                    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                             }
                         `}
                     >
@@ -239,7 +245,8 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                             </>
                         ) : (
                             <span className="text-slate-400">
-                                {3 - [state.timeCommitment, state.teamScope, state.memoryAware].filter(Boolean).length} pozostało
+                                {3 - [state.timeCommitment, state.teamScope, state.memoryAware].filter(Boolean).length}{' '}
+                                pozostało
                             </span>
                         )}
                     </div>

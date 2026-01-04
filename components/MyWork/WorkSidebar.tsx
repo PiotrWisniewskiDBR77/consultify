@@ -3,20 +3,20 @@
  * ClickUp-style minimalist design with collapsible sections
  */
 
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    CheckSquare,
-    FileQuestion,
-    FolderKanban,
-    ChevronDown,
-    ChevronRight,
     AlertCircle,
     Calendar,
     CalendarDays,
+    CheckSquare,
+    ChevronDown,
+    ChevronRight,
+    CircleDashed,
     Clock,
-    CircleDashed
+    FileQuestion,
+    FolderKanban,
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type WorkSection = 'tasks' | 'decisions' | 'projects';
 export type TaskTimeGroup = 'all' | 'overdue' | 'today' | 'week' | 'later' | 'no-date';
@@ -56,15 +56,13 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     decisionGroup,
     onDecisionGroupChange,
     taskCounts,
-    decisionCounts
+    decisionCounts,
 }) => {
     const { t } = useTranslation();
-    const [expandedSections, setExpandedSections] = useState<Set<WorkSection>>(
-        new Set(['tasks', 'decisions'])
-    );
+    const [expandedSections, setExpandedSections] = useState<Set<WorkSection>>(new Set(['tasks', 'decisions']));
 
     const toggleSection = (section: WorkSection) => {
-        setExpandedSections(prev => {
+        setExpandedSections((prev) => {
             const next = new Set(prev);
             if (next.has(section)) {
                 next.delete(section);
@@ -76,16 +74,50 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     };
 
     const taskSubItems = [
-        { key: 'overdue' as TaskTimeGroup, label: t('myWork.timeGroup.overdue', 'Overdue'), count: taskCounts.overdue, icon: AlertCircle, color: 'text-red-500' },
-        { key: 'today' as TaskTimeGroup, label: t('myWork.timeGroup.today', 'Today'), count: taskCounts.today, icon: Calendar, color: 'text-blue-500' },
-        { key: 'week' as TaskTimeGroup, label: t('myWork.timeGroup.thisWeek', 'This Week'), count: taskCounts.week, icon: CalendarDays, color: 'text-slate-500' },
-        { key: 'later' as TaskTimeGroup, label: t('myWork.timeGroup.later', 'Later'), count: taskCounts.later, icon: Clock, color: 'text-slate-400' },
-        { key: 'no-date' as TaskTimeGroup, label: t('myWork.timeGroup.noDate', 'No Date'), count: taskCounts.noDate, icon: CircleDashed, color: 'text-slate-300' },
+        {
+            key: 'overdue' as TaskTimeGroup,
+            label: t('myWork.timeGroup.overdue', 'Overdue'),
+            count: taskCounts.overdue,
+            icon: AlertCircle,
+            color: 'text-red-500',
+        },
+        {
+            key: 'today' as TaskTimeGroup,
+            label: t('myWork.timeGroup.today', 'Today'),
+            count: taskCounts.today,
+            icon: Calendar,
+            color: 'text-blue-500',
+        },
+        {
+            key: 'week' as TaskTimeGroup,
+            label: t('myWork.timeGroup.thisWeek', 'This Week'),
+            count: taskCounts.week,
+            icon: CalendarDays,
+            color: 'text-slate-500',
+        },
+        {
+            key: 'later' as TaskTimeGroup,
+            label: t('myWork.timeGroup.later', 'Later'),
+            count: taskCounts.later,
+            icon: Clock,
+            color: 'text-slate-400',
+        },
+        {
+            key: 'no-date' as TaskTimeGroup,
+            label: t('myWork.timeGroup.noDate', 'No Date'),
+            count: taskCounts.noDate,
+            icon: CircleDashed,
+            color: 'text-slate-300',
+        },
     ];
 
     const decisionSubItems = [
         { key: 'my' as DecisionGroup, label: t('myWork.decisions.my', 'My Decisions'), count: decisionCounts.my },
-        { key: 'awaiting' as DecisionGroup, label: t('myWork.decisions.awaiting', 'Awaiting Others'), count: decisionCounts.awaiting },
+        {
+            key: 'awaiting' as DecisionGroup,
+            label: t('myWork.decisions.awaiting', 'Awaiting Others'),
+            count: decisionCounts.awaiting,
+        },
     ];
 
     return (
@@ -129,11 +161,13 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                             <CheckSquare size={16} />
                             <span className="font-medium">{t('myWork.sections.tasks', 'My Tasks')}</span>
                         </div>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            activeSection === 'tasks'
-                                ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-200'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                        }`}>
+                        <span
+                            className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                activeSection === 'tasks'
+                                    ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-200'
+                                    : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                            }`}
+                        >
                             {taskCounts.total}
                         </span>
                     </button>
@@ -159,11 +193,13 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                                         <span>{item.label}</span>
                                     </div>
                                     {item.count > 0 && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                                            item.key === 'overdue' && item.count > 0
-                                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                                        }`}>
+                                        <span
+                                            className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                                item.key === 'overdue' && item.count > 0
+                                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                    : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                                            }`}
+                                        >
                                             {item.count}
                                         </span>
                                     )}
@@ -203,11 +239,13 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                             <FileQuestion size={16} />
                             <span className="font-medium">{t('myWork.sections.decisions', 'Decisions')}</span>
                         </div>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            activeSection === 'decisions'
-                                ? 'bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-200'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                        }`}>
+                        <span
+                            className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                activeSection === 'decisions'
+                                    ? 'bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-200'
+                                    : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                            }`}
+                        >
                             {decisionCounts.total}
                         </span>
                     </button>
@@ -266,12 +304,4 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
 };
 
 export default WorkSidebar;
-
-
-
-
-
-
-
-
 

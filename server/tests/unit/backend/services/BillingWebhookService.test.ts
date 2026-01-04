@@ -1,11 +1,12 @@
 /**
  * BillingWebhookService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for BillingWebhookService - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import BillingWebhookService from '../../../../src/services/BillingWebhookService.js';
 
@@ -34,25 +35,23 @@ describe('BillingWebhookService', () => {
             BillingWebhookService.setDependencies({
                 db: mockDb,
                 uuidv4: () => 'uuid-123',
-                webhookService: { trigger: vi.fn() }
+                webhookService: { trigger: vi.fn() },
             });
         }
     });
 
     describe('Service Methods', () => {
         it('should record a billing webhook event', async () => {
-            const result = await BillingWebhookService.recordBillingWebhookEvent(
-                'org-1',
-                'invoice.paid',
-                { id: 'inv-123' }
-            );
+            const result = await BillingWebhookService.recordBillingWebhookEvent('org-1', 'invoice.paid', {
+                id: 'inv-123',
+            });
 
             expect(result.id).toBe('uuid-123');
             expect(result.status).toBe('pending');
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO billing_webhook_events'),
                 expect.arrayContaining(['org-1', 'invoice.paid']),
-                expect.any(Function)
+                expect.any(Function),
             );
         });
 
@@ -63,16 +62,18 @@ describe('BillingWebhookService', () => {
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('UPDATE billing_webhook_events SET status = ?'),
                 expect.arrayContaining(['sent', 'uuid-123']),
-                expect.any(Function)
+                expect.any(Function),
             );
         });
     });
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

@@ -12,7 +12,7 @@ import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

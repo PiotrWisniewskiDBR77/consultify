@@ -1,6 +1,6 @@
 /**
  * PaymentMethodsPanel - Manage payment methods with Stripe Elements
- * 
+ *
  * Features:
  * - List saved payment methods
  * - Add new card via Stripe Elements
@@ -8,14 +8,12 @@
  * - Remove payment methods
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-    CreditCard, Plus, Trash2, Check, AlertCircle, Loader2,
-    Shield, Star
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, Check, CreditCard, Loader2, Plus, Shield, Star, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { AddCardModal } from './AddCardModal';
 
 interface PaymentMethod {
@@ -56,15 +54,12 @@ const getBrandColor = (brand: string): string => {
         mastercard: 'bg-orange-500',
         amex: 'bg-indigo-500',
         discover: 'bg-amber-500',
-        default: 'bg-slate-500'
+        default: 'bg-slate-500',
     };
     return brandColors[brand?.toLowerCase()] || brandColors.default;
 };
 
-export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
-    onPaymentMethodAdded,
-    compact = false
-}) => {
+export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({ onPaymentMethodAdded, compact = false }) => {
     const { t } = useTranslation();
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
@@ -104,7 +99,9 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
     };
 
     const handleRemove = async (paymentMethodId: string) => {
-        if (!confirm(t('billing.paymentMethods.removeConfirm', 'Are you sure you want to remove this payment method?'))) {
+        if (
+            !confirm(t('billing.paymentMethods.removeConfirm', 'Are you sure you want to remove this payment method?'))
+        ) {
             return;
         }
 
@@ -164,7 +161,10 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                 <div className="flex items-start gap-3 p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
                     <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                        {t('billing.paymentMethods.securityNote', 'Your payment information is securely processed by Stripe. We never store your full card details.')}
+                        {t(
+                            'billing.paymentMethods.securityNote',
+                            'Your payment information is securely processed by Stripe. We never store your full card details.',
+                        )}
                     </p>
                 </div>
             )}
@@ -197,10 +197,12 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     {/* Card Brand Icon */}
-                                    <div className={`w-12 h-8 ${getBrandColor(pm.brand)} rounded-md flex items-center justify-center text-white text-xs font-bold uppercase`}>
+                                    <div
+                                        className={`w-12 h-8 ${getBrandColor(pm.brand)} rounded-md flex items-center justify-center text-white text-xs font-bold uppercase`}
+                                    >
                                         {pm.brand?.slice(0, 4) || 'CARD'}
                                     </div>
-                                    
+
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <p className="font-medium text-slate-900 dark:text-white">
@@ -215,7 +217,8 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                                         </div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {pm.holder_name && `${pm.holder_name} • `}
-                                            {t('billing.paymentMethods.expires', 'Expires')} {pm.exp_month?.toString().padStart(2, '0')}/{pm.exp_year}
+                                            {t('billing.paymentMethods.expires', 'Expires')}{' '}
+                                            {pm.exp_month?.toString().padStart(2, '0')}/{pm.exp_year}
                                         </p>
                                     </div>
                                 </div>
@@ -253,22 +256,10 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
             )}
 
             {/* Add Card Modal */}
-            {showAddModal && (
-                <AddCardModal
-                    onClose={() => setShowAddModal(false)}
-                    onSuccess={handleCardAdded}
-                />
-            )}
+            {showAddModal && <AddCardModal onClose={() => setShowAddModal(false)} onSuccess={handleCardAdded} />}
         </div>
     );
 };
 
 export default PaymentMethodsPanel;
-
-
-
-
-
-
-
 

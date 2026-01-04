@@ -1,6 +1,6 @@
 /**
  * AvatarUploader - Advanced avatar upload component
- * 
+ *
  * Features:
  * - Drag & drop support
  * - File picker fallback
@@ -10,24 +10,25 @@
  * - Integration with existing API
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Upload, 
-    X, 
-    Camera, 
-    Loader2, 
-    Check, 
+import {
     AlertCircle,
-    ZoomIn,
-    ZoomOut,
+    Camera,
+    Check,
+    Loader2,
     RotateCw,
     Trash2,
-    User as UserIcon
+    Upload,
+    User as UserIcon,
+    X,
+    ZoomIn,
+    ZoomOut,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import toast from 'react-hot-toast';
 
 interface AvatarUploaderProps {
     currentUser: User;
@@ -67,56 +68,65 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
         };
     }, [previewUrl]);
 
-    const validateFile = useCallback((file: File): string | null => {
-        if (!ACCEPTED_TYPES.includes(file.type)) {
-            return t('settings.avatar.errorType', 'Please upload a JPEG, PNG, or WebP image');
-        }
-        if (file.size > MAX_FILE_SIZE) {
-            return t('settings.avatar.errorSize', 'File size must be less than 5MB');
-        }
-        return null;
-    }, [t]);
+    const validateFile = useCallback(
+        (file: File): string | null => {
+            if (!ACCEPTED_TYPES.includes(file.type)) {
+                return t('settings.avatar.errorType', 'Please upload a JPEG, PNG, or WebP image');
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                return t('settings.avatar.errorSize', 'File size must be less than 5MB');
+            }
+            return null;
+        },
+        [t],
+    );
 
-    const handleFileSelect = useCallback((file: File) => {
-        const error = validateFile(file);
-        if (error) {
-            setErrorMessage(error);
-            setUploadState('error');
-            toast.error(error);
-            return;
-        }
+    const handleFileSelect = useCallback(
+        (file: File) => {
+            const error = validateFile(file);
+            if (error) {
+                setErrorMessage(error);
+                setUploadState('error');
+                toast.error(error);
+                return;
+            }
 
-        setErrorMessage(null);
-        setSelectedFile(file);
-        
-        // Create preview
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setUploadState('cropping');
-        
-        // Reset crop controls
-        setZoom(1);
-        setRotation(0);
-        setPosition({ x: 0, y: 0 });
+            setErrorMessage(null);
+            setSelectedFile(file);
 
-        // Load image for canvas operations
-        const img = new Image();
-        img.onload = () => {
-            imageRef.current = img;
-        };
-        img.src = url;
-    }, [validateFile]);
+            // Create preview
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+            setUploadState('cropping');
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setUploadState('idle');
+            // Reset crop controls
+            setZoom(1);
+            setRotation(0);
+            setPosition({ x: 0, y: 0 });
 
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
-        }
-    }, [handleFileSelect]);
+            // Load image for canvas operations
+            const img = new Image();
+            img.onload = () => {
+                imageRef.current = img;
+            };
+            img.src = url;
+        },
+        [validateFile],
+    );
+
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setUploadState('idle');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        },
+        [handleFileSelect],
+    );
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -130,12 +140,15 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
         setUploadState('idle');
     }, []);
 
-    const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            handleFileSelect(files[0]);
-        }
-    }, [handleFileSelect]);
+    const handleFileInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        },
+        [handleFileSelect],
+    );
 
     const openFilePicker = useCallback(() => {
         fileInputRef.current?.click();
@@ -188,7 +201,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
             // Calculate dimensions to center crop
             const aspectRatio = img.width / img.height;
             let drawWidth, drawHeight;
-            
+
             if (aspectRatio > 1) {
                 drawHeight = size;
                 drawWidth = size * aspectRatio;
@@ -197,27 +210,17 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                 drawHeight = size / aspectRatio;
             }
 
-            ctx.drawImage(
-                img,
-                -drawWidth / 2,
-                -drawHeight / 2,
-                drawWidth,
-                drawHeight
-            );
+            ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
             ctx.restore();
 
             // Simulate progress for better UX
             const progressInterval = setInterval(() => {
-                setUploadProgress(prev => Math.min(prev + 10, 90));
+                setUploadProgress((prev) => Math.min(prev + 10, 90));
             }, 100);
 
             // Convert canvas to blob
             const blob = await new Promise<Blob>((resolve, reject) => {
-                canvas.toBlob(
-                    (b) => b ? resolve(b) : reject(new Error('Failed to create blob')),
-                    'image/jpeg',
-                    0.9
-                );
+                canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Failed to create blob'))), 'image/jpeg', 0.9);
             });
 
             // Create file from blob
@@ -225,13 +228,13 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
 
             // Upload to server
             const result = await Api.uploadAvatar(currentUser.id, croppedFile);
-            
+
             clearInterval(progressInterval);
             setUploadProgress(100);
 
             // Update user with new avatar URL
             onUpdateUser({ avatarUrl: result.avatarUrl });
-            
+
             setUploadState('success');
             toast.success(t('settings.avatar.uploadSuccess', 'Avatar uploaded successfully!'));
 
@@ -239,7 +242,6 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
             setTimeout(() => {
                 cancelUpload();
             }, 1500);
-
         } catch (error) {
             console.error('Avatar upload failed:', error);
             setUploadState('error');
@@ -260,19 +262,25 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
     }, [currentUser.id, onUpdateUser, t]);
 
     // Image drag handlers for positioning
-    const handleImageMouseDown = useCallback((e: React.MouseEvent) => {
-        if (uploadState !== 'cropping') return;
-        setIsDraggingImage(true);
-        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-    }, [uploadState, position]);
+    const handleImageMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            if (uploadState !== 'cropping') return;
+            setIsDraggingImage(true);
+            setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        },
+        [uploadState, position],
+    );
 
-    const handleImageMouseMove = useCallback((e: React.MouseEvent) => {
-        if (!isDraggingImage) return;
-        setPosition({
-            x: e.clientX - dragStart.x,
-            y: e.clientY - dragStart.y
-        });
-    }, [isDraggingImage, dragStart]);
+    const handleImageMouseMove = useCallback(
+        (e: React.MouseEvent) => {
+            if (!isDraggingImage) return;
+            setPosition({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y,
+            });
+        },
+        [isDraggingImage, dragStart],
+    );
 
     const handleImageMouseUp = useCallback(() => {
         setIsDraggingImage(false);
@@ -296,9 +304,9 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                     <div className="relative group">
                         <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white dark:border-navy-800 shadow-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30">
                             {currentUser.avatarUrl ? (
-                                <img 
-                                    src={currentUser.avatarUrl} 
-                                    alt="Current avatar" 
+                                <img
+                                    src={currentUser.avatarUrl}
+                                    alt="Current avatar"
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
@@ -307,7 +315,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* Quick action overlay */}
                         <button
                             onClick={openFilePicker}
@@ -340,9 +348,10 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                             onClick={openFilePicker}
                             className={`
                                 relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200
-                                ${uploadState === 'dragging' 
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 scale-[1.02]' 
-                                    : 'border-slate-200 dark:border-white/10 hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/5'
+                                ${
+                                    uploadState === 'dragging'
+                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 scale-[1.02]'
+                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/5'
                                 }
                                 ${uploadState === 'error' ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : ''}
                             `}
@@ -363,13 +372,12 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                                         <Upload className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                                     </div>
                                 )}
-                                
+
                                 <div>
                                     <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                        {uploadState === 'error' 
-                                            ? errorMessage 
-                                            : t('settings.avatar.dragDrop', 'Drag & drop your photo here')
-                                        }
+                                        {uploadState === 'error'
+                                            ? errorMessage
+                                            : t('settings.avatar.dragDrop', 'Drag & drop your photo here')}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1">
                                         {t('settings.avatar.orClick', 'or click to browse')}
@@ -386,7 +394,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                     {/* Crop Preview */}
                     {uploadState === 'cropping' && previewUrl && (
                         <div className="space-y-4">
-                            <div 
+                            <div
                                 className="relative w-64 h-64 mx-auto rounded-xl overflow-hidden bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-white/10 cursor-move"
                                 onMouseDown={handleImageMouseDown}
                                 onMouseMove={handleImageMouseMove}
@@ -394,19 +402,14 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                                 onMouseLeave={handleImageMouseUp}
                             >
                                 {/* Preview image with transforms */}
-                                <div 
+                                <div
                                     className="absolute inset-0 flex items-center justify-center"
                                     style={{
                                         transform: `scale(${zoom}) rotate(${rotation}deg) translate(${position.x}px, ${position.y}px)`,
-                                        transition: isDraggingImage ? 'none' : 'transform 0.1s ease'
+                                        transition: isDraggingImage ? 'none' : 'transform 0.1s ease',
                                     }}
                                 >
-                                    <img 
-                                        src={previewUrl} 
-                                        alt="Preview" 
-                                        className="max-w-none"
-                                        draggable={false}
-                                    />
+                                    <img src={previewUrl} alt="Preview" className="max-w-none" draggable={false} />
                                 </div>
 
                                 {/* Circular crop overlay */}
@@ -418,19 +421,19 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                                                 <circle cx="50%" cy="50%" r="45%" fill="black" />
                                             </mask>
                                         </defs>
-                                        <rect 
-                                            width="100%" 
-                                            height="100%" 
-                                            fill="rgba(0,0,0,0.5)" 
-                                            mask="url(#crop-mask)" 
+                                        <rect
+                                            width="100%"
+                                            height="100%"
+                                            fill="rgba(0,0,0,0.5)"
+                                            mask="url(#crop-mask)"
                                         />
-                                        <circle 
-                                            cx="50%" 
-                                            cy="50%" 
-                                            r="45%" 
-                                            fill="none" 
-                                            stroke="white" 
-                                            strokeWidth="2" 
+                                        <circle
+                                            cx="50%"
+                                            cy="50%"
+                                            r="45%"
+                                            fill="none"
+                                            stroke="white"
+                                            strokeWidth="2"
                                             strokeDasharray="4 4"
                                         />
                                     </svg>
@@ -441,8 +444,8 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                             <div className="flex items-center justify-center gap-4">
                                 {/* Zoom */}
                                 <div className="flex items-center gap-2">
-                                    <button 
-                                        onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
+                                    <button
+                                        onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
                                         className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                                         title="Zoom out"
                                     >
@@ -457,8 +460,8 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                                         onChange={(e) => setZoom(parseFloat(e.target.value))}
                                         className="w-24 accent-purple-600"
                                     />
-                                    <button 
-                                        onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+                                    <button
+                                        onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
                                         className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                                         title="Zoom in"
                                     >
@@ -467,8 +470,8 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                                 </div>
 
                                 {/* Rotate */}
-                                <button 
-                                    onClick={() => setRotation(r => (r + 90) % 360)}
+                                <button
+                                    onClick={() => setRotation((r) => (r + 90) % 360)}
                                     className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                                     title="Rotate"
                                 >
@@ -501,7 +504,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
                             <Loader2 className="w-10 h-10 text-purple-600 animate-spin" />
                             <div className="w-full max-w-xs">
                                 <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                         className="h-full bg-purple-600 transition-all duration-300"
                                         style={{ width: `${uploadProgress}%` }}
                                     />
@@ -547,11 +550,4 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ currentUser, onU
 };
 
 export default AvatarUploader;
-
-
-
-
-
-
-
 

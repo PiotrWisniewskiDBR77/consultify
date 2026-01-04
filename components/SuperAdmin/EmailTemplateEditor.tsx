@@ -1,25 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 import {
-    X,
+    AlertCircle,
+    CheckCircle2,
+    ChevronDown,
+    Code,
+    Eye,
+    History,
+    Monitor,
+    Plus,
+    RefreshCw,
     Save,
     Send,
-    Eye,
-    Code,
+    Smartphone,
+    Sparkles,
+    Tablet,
     Type,
     Variable,
-    CheckCircle2,
-    AlertCircle,
-    History,
-    ChevronDown,
-    Plus,
-    Smartphone,
-    Monitor,
-    Tablet,
-    RefreshCw,
-    Sparkles
+    X,
 } from 'lucide-react';
-import DOMPurify from 'dompurify';
-import type { EmailTemplate, ContentCategory, ContentTag, EmailTemplateStatus } from '../../types';
+import React, { useEffect, useRef, useState } from 'react';
+
+import type { ContentCategory, ContentTag, EmailTemplate, EmailTemplateStatus } from '../../types';
 
 interface EmailTemplateEditorProps {
     template: EmailTemplate | null;
@@ -37,7 +38,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     categories,
     tags,
     onClose,
-    onSave
+    onSave,
 }) => {
     const token = localStorage.getItem('token');
     const isNew = !template;
@@ -51,11 +52,11 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         htmlContent: template?.htmlContent || getDefaultHtmlTemplate(),
         textContent: template?.textContent || '',
         categoryId: template?.categoryId || '',
-        languageCode: template?.languageCode || 'en'
+        languageCode: template?.languageCode || 'en',
     });
 
     const [availableVariables, setAvailableVariables] = useState<string[]>(
-        template?.availableVariables || ['firstName', 'lastName', 'email']
+        template?.availableVariables || ['firstName', 'lastName', 'email'],
     );
 
     // UI state
@@ -64,7 +65,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     const [testData, setTestData] = useState<Record<string, string>>({
         firstName: 'John',
         lastName: 'Doe',
-        email: 'john.doe@example.com'
+        email: 'john.doe@example.com',
     });
     const [previewHtml, setPreviewHtml] = useState('');
     const [previewSubject, setPreviewSubject] = useState('');
@@ -89,11 +90,14 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     useEffect(() => {
         const resolveVariables = (content: string) => {
             return content.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
-                const value = path.split('.').reduce((obj: Record<string, unknown>, key: string) => {
-                    return obj && (obj as Record<string, unknown>)[key] !== undefined
-                        ? (obj as Record<string, unknown>)[key]
-                        : null;
-                }, testData as Record<string, unknown>);
+                const value = path.split('.').reduce(
+                    (obj: Record<string, unknown>, key: string) => {
+                        return obj && (obj as Record<string, unknown>)[key] !== undefined
+                            ? (obj as Record<string, unknown>)[key]
+                            : null;
+                    },
+                    testData as Record<string, unknown>,
+                );
                 return value !== null ? String(value) : match;
             });
         };
@@ -120,21 +124,19 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         setErrors([]);
 
         try {
-            const url = isNew
-                ? '/api/content/emails/templates'
-                : `/api/content/emails/templates/${template.id}`;
+            const url = isNew ? '/api/content/emails/templates' : `/api/content/emails/templates/${template.id}`;
             const method = isNew ? 'POST' : 'PUT';
 
             const res = await fetch(url, {
                 method,
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     ...formData,
-                    availableVariables
-                })
+                    availableVariables,
+                }),
             });
 
             if (!res.ok) {
@@ -184,12 +186,12 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     recipientEmails: emails,
-                    testData
-                })
+                    testData,
+                }),
             });
 
             if (!res.ok) {
@@ -290,11 +292,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                         disabled={saving}
                         className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-rose-700 transition-all disabled:opacity-50"
                     >
-                        {saving ? (
-                            <RefreshCw size={16} className="animate-spin" />
-                        ) : (
-                            <Save size={16} />
-                        )}
+                        {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
                         {saving ? 'Saving...' : 'Save'}
                     </button>
                 </div>
@@ -340,7 +338,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                                     onChange={(e) =>
                                         setFormData((prev) => ({
                                             ...prev,
-                                            templateKey: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')
+                                            templateKey: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
                                         }))
                                     }
                                     placeholder="welcome-email"
@@ -350,29 +348,21 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                    Name *
-                                </label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Name *</label>
                                 <input
                                     type="text"
                                     value={formData.name}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, name: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                     placeholder="Welcome Email"
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
                                 <textarea
                                     value={formData.description}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, description: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                                     placeholder="Brief description of this template..."
                                     rows={2}
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
@@ -393,9 +383,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                                 <input
                                     type="text"
                                     value={formData.subject}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, subject: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                                     placeholder="Welcome to {{organizationName}}, {{firstName}}!"
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                                 />
@@ -405,14 +393,10 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                    Category
-                                </label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Category</label>
                                 <select
                                     value={formData.categoryId}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, categoryId: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                                 >
                                     <option value="">No category</option>
@@ -425,14 +409,10 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                    Language
-                                </label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Language</label>
                                 <select
                                     value={formData.languageCode}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, languageCode: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, languageCode: e.target.value }))}
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                                 >
                                     <option value="en">English</option>
@@ -499,7 +479,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                                             onChange={(e) =>
                                                 setTestData((prev) => ({
                                                     ...prev,
-                                                    [varName]: e.target.value
+                                                    [varName]: e.target.value,
                                                 }))
                                             }
                                             className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/50"
@@ -518,30 +498,33 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                         <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
                             <button
                                 onClick={() => setViewMode('html')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'html'
-                                    ? 'bg-pink-500/20 text-pink-400'
-                                    : 'text-slate-400 hover:text-white'
-                                    }`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                    viewMode === 'html'
+                                        ? 'bg-pink-500/20 text-pink-400'
+                                        : 'text-slate-400 hover:text-white'
+                                }`}
                             >
                                 <Type size={14} />
                                 HTML
                             </button>
                             <button
                                 onClick={() => setViewMode('preview')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'preview'
-                                    ? 'bg-pink-500/20 text-pink-400'
-                                    : 'text-slate-400 hover:text-white'
-                                    }`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                    viewMode === 'preview'
+                                        ? 'bg-pink-500/20 text-pink-400'
+                                        : 'text-slate-400 hover:text-white'
+                                }`}
                             >
                                 <Eye size={14} />
                                 Preview
                             </button>
                             <button
                                 onClick={() => setViewMode('code')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'code'
-                                    ? 'bg-pink-500/20 text-pink-400'
-                                    : 'text-slate-400 hover:text-white'
-                                    }`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                    viewMode === 'code'
+                                        ? 'bg-pink-500/20 text-pink-400'
+                                        : 'text-slate-400 hover:text-white'
+                                }`}
                             >
                                 <Code size={14} />
                                 Code
@@ -552,30 +535,33 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
                                 <button
                                     onClick={() => setPreviewDevice('desktop')}
-                                    className={`p-2 rounded-md transition-colors ${previewDevice === 'desktop'
-                                        ? 'bg-pink-500/20 text-pink-400'
-                                        : 'text-slate-400 hover:text-white'
-                                        }`}
+                                    className={`p-2 rounded-md transition-colors ${
+                                        previewDevice === 'desktop'
+                                            ? 'bg-pink-500/20 text-pink-400'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
                                     title="Desktop"
                                 >
                                     <Monitor size={14} />
                                 </button>
                                 <button
                                     onClick={() => setPreviewDevice('tablet')}
-                                    className={`p-2 rounded-md transition-colors ${previewDevice === 'tablet'
-                                        ? 'bg-pink-500/20 text-pink-400'
-                                        : 'text-slate-400 hover:text-white'
-                                        }`}
+                                    className={`p-2 rounded-md transition-colors ${
+                                        previewDevice === 'tablet'
+                                            ? 'bg-pink-500/20 text-pink-400'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
                                     title="Tablet"
                                 >
                                     <Tablet size={14} />
                                 </button>
                                 <button
                                     onClick={() => setPreviewDevice('mobile')}
-                                    className={`p-2 rounded-md transition-colors ${previewDevice === 'mobile'
-                                        ? 'bg-pink-500/20 text-pink-400'
-                                        : 'text-slate-400 hover:text-white'
-                                        }`}
+                                    className={`p-2 rounded-md transition-colors ${
+                                        previewDevice === 'mobile'
+                                            ? 'bg-pink-500/20 text-pink-400'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
                                     title="Mobile"
                                 >
                                     <Smartphone size={14} />
@@ -591,9 +577,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                                 <textarea
                                     ref={editorRef}
                                     value={formData.htmlContent}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, htmlContent: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, htmlContent: e.target.value }))}
                                     className="flex-1 w-full p-4 bg-slate-950 text-slate-300 font-mono text-sm resize-none focus:outline-none"
                                     placeholder="Enter your HTML email content here..."
                                     spellCheck={false}
@@ -642,9 +626,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             <div className="px-4 pb-4">
                                 <textarea
                                     value={formData.textContent}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, textContent: e.target.value }))
-                                    }
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, textContent: e.target.value }))}
                                     className="w-full h-32 p-3 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                                     placeholder="Plain text fallback for email clients that don't support HTML..."
                                 />
@@ -691,11 +673,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                                 disabled={sendingTest || !testEmails.trim()}
                                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-rose-700 transition-all disabled:opacity-50"
                             >
-                                {sendingTest ? (
-                                    <RefreshCw size={16} className="animate-spin" />
-                                ) : (
-                                    <Send size={16} />
-                                )}
+                                {sendingTest ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
                                 {sendingTest ? 'Sending...' : 'Send Test'}
                             </button>
                         </div>
@@ -736,10 +714,4 @@ function getDefaultHtmlTemplate(): string {
 }
 
 export default EmailTemplateEditor;
-
-
-
-
-
-
 

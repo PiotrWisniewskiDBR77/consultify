@@ -1,11 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
+import {
+    Activity,
+    BrainCircuit,
+    Check,
+    Edit2,
+    FileText,
+    Lightbulb,
+    MessageSquare,
+    Plus,
+    Power,
+    RefreshCw,
+    Tag,
+    Target,
+    Trash2,
+    Upload,
+    X,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Lightbulb, Target, Check, X, MessageSquare, Plus, Trash2, Power, BrainCircuit, Activity, FileText, Upload, RefreshCw, Edit2, Tag } from 'lucide-react';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 export const AdminKnowledgeView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'candidates' | 'strategies' | 'documents' | 'observations'>('candidates');
+    const [activeTab, setActiveTab] = useState<'candidates' | 'strategies' | 'documents' | 'observations'>(
+        'candidates',
+    );
     const [candidates, setCandidates] = useState<any[]>([]);
     const [strategies, setStrategies] = useState<any[]>([]);
     const [documents, setDocuments] = useState<any[]>([]);
@@ -13,20 +32,22 @@ export const AdminKnowledgeView: React.FC = () => {
     const [uploading, setUploading] = useState(false);
 
     // Filter State
-    const [candidateFilter, setCandidateFilter] = useState<'pending' | 'approved' | 'rejected' | 'implemented' | 'all'>('pending');
+    const [candidateFilter, setCandidateFilter] = useState<'pending' | 'approved' | 'rejected' | 'implemented' | 'all'>(
+        'pending',
+    );
     const [documentCategoryFilter, setDocumentCategoryFilter] = useState<string>('');
     const [ideaCategoryFilter, setIdeaCategoryFilter] = useState<string>('');
     const [showApprovedLibrary, setShowApprovedLibrary] = useState(false);
 
     // Forms
     const [showStrategyModal, setShowStrategyModal] = useState(false);
-    const [strategyForm, setStrategyForm] = useState({ 
-        title: '', 
-        description: '', 
-        success_metrics: [] as string[], 
+    const [strategyForm, setStrategyForm] = useState({
+        title: '',
+        description: '',
+        success_metrics: [] as string[],
         priority: 'medium' as 'low' | 'medium' | 'high',
         target_date: '',
-        progress_percentage: 0
+        progress_percentage: 0,
     });
     const [editingStrategy, setEditingStrategy] = useState<any | null>(null);
     const [linkingStrategy, setLinkingStrategy] = useState<any | null>(null);
@@ -83,7 +104,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         Api.getKnowledgeCandidates('pending'),
                         Api.getKnowledgeCandidates('approved'),
                         Api.getKnowledgeCandidates('rejected'),
-                        Api.getKnowledgeCandidates('implemented')
+                        Api.getKnowledgeCandidates('implemented'),
                     ]);
                     setCandidates([...pending, ...approved, ...rejected, ...implemented]);
                 } else {
@@ -110,7 +131,7 @@ export const AdminKnowledgeView: React.FC = () => {
         try {
             await Api.updateCandidateStatus(id, action);
             toast.success(`Idea ${action}`);
-            setCandidates(candidates.filter(c => c.id !== id));
+            setCandidates(candidates.filter((c) => c.id !== id));
         } catch (err) {
             toast.error('Action failed');
         }
@@ -119,11 +140,14 @@ export const AdminKnowledgeView: React.FC = () => {
     const handleApproveWithDetails = async () => {
         if (!approvingIdea) return;
         try {
-            const tagsArray = approveIdeaTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            const tagsArray = approveIdeaTags
+                .split(',')
+                .map((t) => t.trim())
+                .filter((t) => t.length > 0);
             await Api.updateKnowledgeCandidate(approvingIdea.id, {
                 status: 'approved',
                 category: approveIdeaCategory || undefined,
-                tags: tagsArray.length > 0 ? tagsArray : undefined
+                tags: tagsArray.length > 0 ? tagsArray : undefined,
             });
             toast.success('Idea approved and added to library');
             setApprovingIdea(null);
@@ -140,11 +164,11 @@ export const AdminKnowledgeView: React.FC = () => {
         if (!linkingIdea || !linkProjectId) return;
         try {
             await Api.updateKnowledgeCandidate(linkingIdea.id, {
-                implementation_notes: linkProjectNotes || undefined
+                implementation_notes: linkProjectNotes || undefined,
             });
             // Link idea to project - using updateKnowledgeCandidate with project reference
             await Api.updateKnowledgeCandidate(linkingIdea.id, {
-                implementation_notes: linkProjectNotes || undefined
+                implementation_notes: linkProjectNotes || undefined,
             });
             toast.success('Idea linked to project');
             setLinkingIdea(null);
@@ -165,11 +189,18 @@ export const AdminKnowledgeView: React.FC = () => {
                 success_metrics: strategyForm.success_metrics,
                 priority: strategyForm.priority,
                 target_date: strategyForm.target_date || undefined,
-                progress_percentage: strategyForm.progress_percentage
+                progress_percentage: strategyForm.progress_percentage,
             });
             toast.success('Strategy Added');
             setShowStrategyModal(false);
-            setStrategyForm({ title: '', description: '', success_metrics: [], priority: 'medium', target_date: '', progress_percentage: 0 });
+            setStrategyForm({
+                title: '',
+                description: '',
+                success_metrics: [],
+                priority: 'medium',
+                target_date: '',
+                progress_percentage: 0,
+            });
             loadData();
         } catch (err: any) {
             toast.error(err.message || 'Failed to add strategy');
@@ -235,8 +266,15 @@ export const AdminKnowledgeView: React.FC = () => {
 
         setUploading(true);
         try {
-            const tagsArray = uploadTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-            const result = await Api.uploadKnowledgeDocument(uploadFile, uploadCategory || undefined, tagsArray.length > 0 ? tagsArray : undefined);
+            const tagsArray = uploadTags
+                .split(',')
+                .map((t) => t.trim())
+                .filter((t) => t.length > 0);
+            const result = await Api.uploadKnowledgeDocument(
+                uploadFile,
+                uploadCategory || undefined,
+                tagsArray.length > 0 ? tagsArray : undefined,
+            );
             toast.success(`Uploaded & Indexed! (${result.chunkCount} chunks)`);
             setUploadFile(null);
             setUploadCategory('');
@@ -251,10 +289,13 @@ export const AdminKnowledgeView: React.FC = () => {
 
     const handleUpdateDocument = async (docId: string) => {
         try {
-            const tagsArray = editDocTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            const tagsArray = editDocTags
+                .split(',')
+                .map((t) => t.trim())
+                .filter((t) => t.length > 0);
             await Api.updateKnowledgeDocument(docId, {
                 category: editDocCategory || undefined,
-                tags: tagsArray.length > 0 ? tagsArray : undefined
+                tags: tagsArray.length > 0 ? tagsArray : undefined,
             });
             toast.success('Document updated');
             setEditingDoc(null);
@@ -266,12 +307,12 @@ export const AdminKnowledgeView: React.FC = () => {
         }
     };
 
-    const filteredDocuments = documentCategoryFilter 
-        ? documents.filter(doc => doc.category === documentCategoryFilter)
+    const filteredDocuments = documentCategoryFilter
+        ? documents.filter((doc) => doc.category === documentCategoryFilter)
         : documents;
 
     // Observations State
-    const [observations, setObservations] = useState<{ app_improvements: any[], content_gaps: any[] } | null>(null);
+    const [observations, setObservations] = useState<{ app_improvements: any[]; content_gaps: any[] } | null>(null);
 
     const generateObservations = async () => {
         setLoading(true);
@@ -303,7 +344,8 @@ export const AdminKnowledgeView: React.FC = () => {
                 {activeTab === 'strategies' && (
                     <button
                         onClick={() => setShowStrategyModal(true)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium text-xs">
+                        className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium text-xs"
+                    >
                         <Plus size={14} /> Add Strategic Direction
                     </button>
                 )}
@@ -334,7 +376,9 @@ export const AdminKnowledgeView: React.FC = () => {
             {/* CONTENT AREA */}
             <div className="min-h-[400px]">
                 {loading ? (
-                    <div className="flex justify-center py-20 text-slate-500 animate-pulse">Accessing Global Brain...</div>
+                    <div className="flex justify-center py-20 text-slate-500 animate-pulse">
+                        Accessing Global Brain...
+                    </div>
                 ) : (
                     <>
                         {/* --- IDEA CANDIDATES --- */}
@@ -372,8 +416,10 @@ export const AdminKnowledgeView: React.FC = () => {
                                             className="bg-navy-950 border border-white/10 rounded px-3 py-1 text-white text-xs focus:border-purple-500 outline-none"
                                         >
                                             <option value="">All Categories</option>
-                                            {IDEA_CATEGORIES.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
+                                            {IDEA_CATEGORIES.map((cat) => (
+                                                <option key={cat} value={cat}>
+                                                    {cat}
+                                                </option>
                                             ))}
                                         </select>
                                     )}
@@ -386,13 +432,18 @@ export const AdminKnowledgeView: React.FC = () => {
                                 ) : (
                                     <div className="grid grid-cols-1 gap-4">
                                         {candidates.map((c) => (
-                                            <div key={c.id} className="bg-navy-900 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all group">
+                                            <div
+                                                key={c.id}
+                                                className="bg-navy-900 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all group"
+                                            >
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div className="flex items-center gap-2">
                                                         <span className="px-2 py-1 bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold rounded tracking-wider">
                                                             {c.source || 'Unknown'}
                                                         </span>
-                                                        <span className="text-xs text-slate-500">{new Date(c.created_at).toLocaleDateString()}</span>
+                                                        <span className="text-xs text-slate-500">
+                                                            {new Date(c.created_at).toLocaleDateString()}
+                                                        </span>
                                                     </div>
                                                     {c.status === 'pending' && (
                                                         <div className="flex gap-2">
@@ -416,7 +467,10 @@ export const AdminKnowledgeView: React.FC = () => {
 
                                                 <h3 className="font-semibold text-white mb-2 text-lg">{c.content}</h3>
                                                 <p className="text-slate-400 text-sm mb-3 bg-navy-950/50 p-3 rounded-lg flex gap-3">
-                                                    <MessageSquare size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                                                    <MessageSquare
+                                                        size={16}
+                                                        className="text-purple-500 shrink-0 mt-0.5"
+                                                    />
                                                     {c.reasoning || 'No reasoning provided.'}
                                                 </p>
 
@@ -426,11 +480,16 @@ export const AdminKnowledgeView: React.FC = () => {
                                                             {c.category}
                                                         </span>
                                                     )}
-                                                    {c.tags && Array.isArray(c.tags) && c.tags.map((tag: string, idx: number) => (
-                                                        <span key={idx} className="text-xs px-2 py-1 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1">
-                                                            <Tag size={10} /> {tag}
-                                                        </span>
-                                                    ))}
+                                                    {c.tags &&
+                                                        Array.isArray(c.tags) &&
+                                                        c.tags.map((tag: string, idx: number) => (
+                                                            <span
+                                                                key={idx}
+                                                                className="text-xs px-2 py-1 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1"
+                                                            >
+                                                                <Tag size={10} /> {tag}
+                                                            </span>
+                                                        ))}
                                                     {c.impact_score && (
                                                         <span className="text-xs px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded">
                                                             Impact: {c.impact_score}/5
@@ -440,15 +499,18 @@ export const AdminKnowledgeView: React.FC = () => {
 
                                                 {c.related_axis && (
                                                     <div className="text-xs text-slate-500 flex items-center gap-2 mb-2">
-                                                        <Activity size={12} /> Related to: <span className="text-slate-300">{c.related_axis}</span>
+                                                        <Activity size={12} /> Related to:{' '}
+                                                        <span className="text-slate-300">{c.related_axis}</span>
                                                     </div>
                                                 )}
 
-                                                {c.related_project_ids && Array.isArray(c.related_project_ids) && c.related_project_ids.length > 0 && (
-                                                    <div className="text-xs text-slate-500 flex items-center gap-2 mb-2">
-                                                        Applied in {c.related_project_ids.length} project(s)
-                                                    </div>
-                                                )}
+                                                {c.related_project_ids &&
+                                                    Array.isArray(c.related_project_ids) &&
+                                                    c.related_project_ids.length > 0 && (
+                                                        <div className="text-xs text-slate-500 flex items-center gap-2 mb-2">
+                                                            Applied in {c.related_project_ids.length} project(s)
+                                                        </div>
+                                                    )}
 
                                                 {c.status === 'approved' && (
                                                     <button
@@ -474,7 +536,10 @@ export const AdminKnowledgeView: React.FC = () => {
                         {activeTab === 'documents' && (
                             <div className="space-y-6">
                                 {/* Upload Box */}
-                                <form onSubmit={handleUpload} className="bg-navy-900 border border-white/10 rounded-xl p-6">
+                                <form
+                                    onSubmit={handleUpload}
+                                    className="bg-navy-900 border border-white/10 rounded-xl p-6"
+                                >
                                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                         <Upload size={18} className="text-blue-400" />
                                         Upload Knowledge Document
@@ -486,7 +551,9 @@ export const AdminKnowledgeView: React.FC = () => {
                                                 <input
                                                     type="file"
                                                     accept=".pdf,.txt,.md"
-                                                    onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
+                                                    onChange={(e) =>
+                                                        setUploadFile(e.target.files ? e.target.files[0] : null)
+                                                    }
                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                 />
                                                 <div className="bg-navy-950 border border-dashed border-slate-600 rounded-lg p-3 text-center transition-colors hover:bg-navy-800 hover:border-blue-500">
@@ -495,7 +562,9 @@ export const AdminKnowledgeView: React.FC = () => {
                                                             <FileText size={16} /> {uploadFile.name}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-slate-400 text-sm">Drag & drop PDF, TXT, MD here or click to select</span>
+                                                        <span className="text-slate-400 text-sm">
+                                                            Drag & drop PDF, TXT, MD here or click to select
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -504,11 +573,15 @@ export const AdminKnowledgeView: React.FC = () => {
                                                 disabled={!uploadFile || uploading}
                                                 className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center gap-2"
                                             >
-                                                {uploading ? <RefreshCw className="animate-spin" size={18} /> : <Upload size={18} />}
+                                                {uploading ? (
+                                                    <RefreshCw className="animate-spin" size={18} />
+                                                ) : (
+                                                    <Upload size={18} />
+                                                )}
                                                 {uploading ? 'Processing...' : 'Upload & Index'}
                                             </button>
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs text-slate-400 mb-1">Category</label>
@@ -518,13 +591,17 @@ export const AdminKnowledgeView: React.FC = () => {
                                                     className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
                                                 >
                                                     <option value="">Select category...</option>
-                                                    {DOCUMENT_CATEGORIES.map(cat => (
-                                                        <option key={cat} value={cat}>{cat}</option>
+                                                    {DOCUMENT_CATEGORIES.map((cat) => (
+                                                        <option key={cat} value={cat}>
+                                                            {cat}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-xs text-slate-400 mb-1">Tags (comma-separated)</label>
+                                                <label className="block text-xs text-slate-400 mb-1">
+                                                    Tags (comma-separated)
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={uploadTags}
@@ -536,66 +613,96 @@ export const AdminKnowledgeView: React.FC = () => {
                                         </div>
                                     </div>
                                     <p className="text-slate-500 text-xs mt-2">
-                                        Files are automatically chunked, embedded, and added to the "Collective Intelligence" vector store.
+                                        Files are automatically chunked, embedded, and added to the "Collective
+                                        Intelligence" vector store.
                                     </p>
                                 </form>
 
                                 {/* List of Docs */}
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
-                                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Indexed Documents</h3>
+                                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                                            Indexed Documents
+                                        </h3>
                                         <select
                                             value={documentCategoryFilter}
                                             onChange={(e) => setDocumentCategoryFilter(e.target.value)}
                                             className="bg-navy-950 border border-white/10 rounded px-3 py-1 text-white text-xs focus:border-purple-500 outline-none"
                                         >
                                             <option value="">All Categories</option>
-                                            {DOCUMENT_CATEGORIES.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
+                                            {DOCUMENT_CATEGORIES.map((cat) => (
+                                                <option key={cat} value={cat}>
+                                                    {cat}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
 
                                     {filteredDocuments.length === 0 ? (
-                                        <div className="text-center py-10 text-slate-500">No documents indexed yet.</div>
+                                        <div className="text-center py-10 text-slate-500">
+                                            No documents indexed yet.
+                                        </div>
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {filteredDocuments.map((doc) => (
-                                                <div key={doc.id} className="bg-navy-900 border border-white/5 rounded-lg p-4 group">
+                                                <div
+                                                    key={doc.id}
+                                                    className="bg-navy-900 border border-white/5 rounded-lg p-4 group"
+                                                >
                                                     <div className="flex justify-between items-start mb-2">
                                                         <div className="flex items-center gap-3 overflow-hidden flex-1">
                                                             <div className="p-2 bg-navy-950 rounded-lg shrink-0">
                                                                 <FileText className="text-purple-400" size={20} />
                                                             </div>
                                                             <div className="min-w-0 flex-1">
-                                                                <h4 className="text-white text-sm font-medium truncate">{doc.filename}</h4>
-                                                                <p className="text-slate-500 text-xs">{new Date(doc.created_at).toLocaleDateString()}</p>
+                                                                <h4 className="text-white text-sm font-medium truncate">
+                                                                    {doc.filename}
+                                                                </h4>
+                                                                <p className="text-slate-500 text-xs">
+                                                                    {new Date(doc.created_at).toLocaleDateString()}
+                                                                </p>
                                                                 {doc.category && (
                                                                     <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded">
                                                                         {doc.category}
                                                                     </span>
                                                                 )}
-                                                                {doc.tags && Array.isArray(doc.tags) && doc.tags.length > 0 && (
-                                                                    <div className="flex flex-wrap gap-1 mt-1">
-                                                                        {doc.tags.map((tag: string, idx: number) => (
-                                                                            <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1">
-                                                                                <Tag size={10} /> {tag}
-                                                                            </span>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
+                                                                {doc.tags &&
+                                                                    Array.isArray(doc.tags) &&
+                                                                    doc.tags.length > 0 && (
+                                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                                            {doc.tags.map(
+                                                                                (tag: string, idx: number) => (
+                                                                                    <span
+                                                                                        key={idx}
+                                                                                        className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1"
+                                                                                    >
+                                                                                        <Tag size={10} /> {tag}
+                                                                                    </span>
+                                                                                ),
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2 shrink-0">
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${doc.status === 'indexed' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-500'
-                                                                }`}>
+                                                            <span
+                                                                className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
+                                                                    doc.status === 'indexed'
+                                                                        ? 'bg-green-500/10 text-green-400'
+                                                                        : 'bg-yellow-500/10 text-yellow-500'
+                                                                }`}
+                                                            >
                                                                 {doc.status}
                                                             </span>
                                                             <button
                                                                 onClick={() => {
                                                                     setEditingDoc(doc);
                                                                     setEditDocCategory(doc.category || '');
-                                                                    setEditDocTags(Array.isArray(doc.tags) ? doc.tags.join(', ') : '');
+                                                                    setEditDocTags(
+                                                                        Array.isArray(doc.tags)
+                                                                            ? doc.tags.join(', ')
+                                                                            : '',
+                                                                    );
                                                                 }}
                                                                 className="text-slate-600 hover:text-blue-400 transition-colors"
                                                                 title="Edit"
@@ -622,10 +729,16 @@ export const AdminKnowledgeView: React.FC = () => {
                         {activeTab === 'strategies' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {strategies.map((s) => (
-                                    <div key={s.id} className={`bg-navy-900 border rounded-xl p-6 transition-all ${s.is_active ? 'border-purple-500/50 shadow-lg shadow-purple-900/10' : 'border-white/5 opacity-75'}`}>
+                                    <div
+                                        key={s.id}
+                                        className={`bg-navy-900 border rounded-xl p-6 transition-all ${s.is_active ? 'border-purple-500/50 shadow-lg shadow-purple-900/10' : 'border-white/5 opacity-75'}`}
+                                    >
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="p-3 rounded-lg bg-navy-950 border border-white/5">
-                                                <Target className={s.is_active ? "text-purple-400" : "text-slate-600"} size={24} />
+                                                <Target
+                                                    className={s.is_active ? 'text-purple-400' : 'text-slate-600'}
+                                                    size={24}
+                                                />
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
@@ -637,7 +750,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                                             success_metrics: s.success_metrics || [],
                                                             priority: s.priority || 'medium',
                                                             target_date: s.target_date || '',
-                                                            progress_percentage: s.progress_percentage || 0
+                                                            progress_percentage: s.progress_percentage || 0,
                                                         });
                                                     }}
                                                     className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
@@ -648,7 +761,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                                 <button
                                                     onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
                                                     className={`p-2 rounded-lg transition-colors ${s.is_active ? 'bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400' : 'bg-slate-700 text-slate-400 hover:bg-green-500/20 hover:text-green-400'}`}
-                                                    title={s.is_active ? "Click to Deactivate" : "Click to Activate"}
+                                                    title={s.is_active ? 'Click to Deactivate' : 'Click to Activate'}
                                                 >
                                                     <Power size={18} />
                                                 </button>
@@ -659,18 +772,26 @@ export const AdminKnowledgeView: React.FC = () => {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h3 className="text-xl font-bold text-white">{s.title}</h3>
                                                 {s.priority && (
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
-                                                        s.priority === 'high' ? 'bg-red-500/10 text-red-400' :
-                                                        s.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-400' :
-                                                        'bg-blue-500/10 text-blue-400'
-                                                    }`}>
+                                                    <span
+                                                        className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
+                                                            s.priority === 'high'
+                                                                ? 'bg-red-500/10 text-red-400'
+                                                                : s.priority === 'medium'
+                                                                  ? 'bg-yellow-500/10 text-yellow-400'
+                                                                  : 'bg-blue-500/10 text-blue-400'
+                                                        }`}
+                                                    >
                                                         {s.priority}
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-slate-400 text-sm leading-relaxed mb-2">{s.description}</p>
+                                            <p className="text-slate-400 text-sm leading-relaxed mb-2">
+                                                {s.description}
+                                            </p>
                                             {s.target_date && (
-                                                <p className="text-xs text-slate-500">Target: {new Date(s.target_date).toLocaleDateString()}</p>
+                                                <p className="text-xs text-slate-500">
+                                                    Target: {new Date(s.target_date).toLocaleDateString()}
+                                                </p>
                                             )}
                                         </div>
 
@@ -678,34 +799,43 @@ export const AdminKnowledgeView: React.FC = () => {
                                         <div className="mb-4">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="text-xs text-slate-400">Progress</span>
-                                                <span className="text-xs text-slate-300 font-medium">{s.progress_percentage || 0}%</span>
+                                                <span className="text-xs text-slate-300 font-medium">
+                                                    {s.progress_percentage || 0}%
+                                                </span>
                                             </div>
                                             <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-purple-500 transition-all duration-500" 
+                                                <div
+                                                    className="h-full bg-purple-500 transition-all duration-500"
                                                     style={{ width: `${s.progress_percentage || 0}%` }}
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Success Metrics */}
-                                        {s.success_metrics && Array.isArray(s.success_metrics) && s.success_metrics.length > 0 && (
-                                            <div className="mb-4">
-                                                <p className="text-xs text-slate-400 mb-1">Success Metrics:</p>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {s.success_metrics.map((metric: string, idx: number) => (
-                                                        <span key={idx} className="text-xs px-2 py-0.5 bg-green-500/10 text-green-400 rounded">
-                                                            {metric}
-                                                        </span>
-                                                    ))}
+                                        {s.success_metrics &&
+                                            Array.isArray(s.success_metrics) &&
+                                            s.success_metrics.length > 0 && (
+                                                <div className="mb-4">
+                                                    <p className="text-xs text-slate-400 mb-1">Success Metrics:</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {s.success_metrics.map((metric: string, idx: number) => (
+                                                            <span
+                                                                key={idx}
+                                                                className="text-xs px-2 py-0.5 bg-green-500/10 text-green-400 rounded"
+                                                            >
+                                                                {metric}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
                                         {/* Related Knowledge */}
                                         <div className="mb-4 border-t border-white/5 pt-4">
                                             <div className="flex justify-between items-center mb-2">
-                                                <p className="text-xs font-semibold text-slate-400 uppercase">Related Knowledge</p>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase">
+                                                    Related Knowledge
+                                                </p>
                                                 <div className="flex gap-1">
                                                     <button
                                                         onClick={() => {
@@ -731,46 +861,79 @@ export const AdminKnowledgeView: React.FC = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            {s.related_document_ids && Array.isArray(s.related_document_ids) && s.related_document_ids.length > 0 && (
-                                                <div className="mb-2">
-                                                    <p className="text-xs text-slate-500 mb-1">Documents ({s.related_document_ids.length})</p>
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {documents.filter(d => s.related_document_ids.includes(d.id)).map((doc: any) => (
-                                                            <span key={doc.id} className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1">
-                                                                <FileText size={10} /> {doc.filename}
-                                                                <button
-                                                                    onClick={() => handleUnlinkFromStrategy(s.id, 'document', doc.id)}
-                                                                    className="hover:text-red-400"
-                                                                >
-                                                                    <X size={10} />
-                                                                </button>
-                                                            </span>
-                                                        ))}
+                                            {s.related_document_ids &&
+                                                Array.isArray(s.related_document_ids) &&
+                                                s.related_document_ids.length > 0 && (
+                                                    <div className="mb-2">
+                                                        <p className="text-xs text-slate-500 mb-1">
+                                                            Documents ({s.related_document_ids.length})
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {documents
+                                                                .filter((d) => s.related_document_ids.includes(d.id))
+                                                                .map((doc: any) => (
+                                                                    <span
+                                                                        key={doc.id}
+                                                                        className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1"
+                                                                    >
+                                                                        <FileText size={10} /> {doc.filename}
+                                                                        <button
+                                                                            onClick={() =>
+                                                                                handleUnlinkFromStrategy(
+                                                                                    s.id,
+                                                                                    'document',
+                                                                                    doc.id,
+                                                                                )
+                                                                            }
+                                                                            className="hover:text-red-400"
+                                                                        >
+                                                                            <X size={10} />
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                            {s.related_idea_ids && Array.isArray(s.related_idea_ids) && s.related_idea_ids.length > 0 && (
-                                                <div>
-                                                    <p className="text-xs text-slate-500 mb-1">Ideas ({s.related_idea_ids.length})</p>
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {candidates.filter(c => s.related_idea_ids.includes(c.id)).map((idea: any) => (
-                                                            <span key={idea.id} className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded flex items-center gap-1">
-                                                                <Lightbulb size={10} /> {idea.content.substring(0, 30)}...
-                                                                <button
-                                                                    onClick={() => handleUnlinkFromStrategy(s.id, 'idea', idea.id)}
-                                                                    className="hover:text-red-400"
-                                                                >
-                                                                    <X size={10} />
-                                                                </button>
-                                                            </span>
-                                                        ))}
+                                                )}
+                                            {s.related_idea_ids &&
+                                                Array.isArray(s.related_idea_ids) &&
+                                                s.related_idea_ids.length > 0 && (
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">
+                                                            Ideas ({s.related_idea_ids.length})
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {candidates
+                                                                .filter((c) => s.related_idea_ids.includes(c.id))
+                                                                .map((idea: any) => (
+                                                                    <span
+                                                                        key={idea.id}
+                                                                        className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded flex items-center gap-1"
+                                                                    >
+                                                                        <Lightbulb size={10} />{' '}
+                                                                        {idea.content.substring(0, 30)}...
+                                                                        <button
+                                                                            onClick={() =>
+                                                                                handleUnlinkFromStrategy(
+                                                                                    s.id,
+                                                                                    'idea',
+                                                                                    idea.id,
+                                                                                )
+                                                                            }
+                                                                            className="hover:text-red-400"
+                                                                        >
+                                                                            <X size={10} />
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
                                         </div>
 
                                         <div className="w-full h-1 bg-navy-950 rounded-full overflow-hidden">
-                                            <div className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-purple-500' : 'w-0'}`} />
+                                            <div
+                                                className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-purple-500' : 'w-0'}`}
+                                            />
                                         </div>
                                         <div className="mt-2 text-xs text-right text-slate-500">
                                             {s.is_active ? 'Active Direction' : 'Inactive'}
@@ -796,81 +959,118 @@ export const AdminKnowledgeView: React.FC = () => {
                                     </div>
                                     <h3 className="text-xl font-bold text-white mb-2">Analyze Global Interactions</h3>
                                     <p className="text-slate-400 text-sm max-w-md mb-6">
-                                        The AI will analyze recent user interactions and feedback log to identify patterns, feature requests, and knowledge gaps.
+                                        The AI will analyze recent user interactions and feedback log to identify
+                                        patterns, feature requests, and knowledge gaps.
                                     </p>
                                     <button
                                         onClick={generateObservations}
                                         disabled={loading}
                                         className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium shadow-lg shadow-purple-900/20 flex items-center gap-2 transition-all"
                                     >
-                                        {loading ? <RefreshCw className="animate-spin" size={18} /> : <Lightbulb size={18} />}
+                                        {loading ? (
+                                            <RefreshCw className="animate-spin" size={18} />
+                                        ) : (
+                                            <Lightbulb size={18} />
+                                        )}
                                         {loading ? 'Analyzing...' : 'Generate Observations'}
                                     </button>
                                 </div>
 
-                                {(observations && (observations.app_improvements?.length > 0 || observations.content_gaps?.length > 0)) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        {/* App Improvements */}
-                                        <div className="space-y-4">
-                                            <h3 className="flex items-center gap-2 text-lg font-bold text-white">
-                                                <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
-                                                App Improvements
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {observations.app_improvements.map((item: any, i: number) => (
-                                                    <div key={i} className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-blue-500/30 transition-colors">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${item.severity === 'high' ? 'bg-red-500/10 text-red-400' :
-                                                                item.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-500' :
-                                                                    'bg-blue-500/10 text-blue-400'
-                                                                }`}>
-                                                                {item.severity}
-                                                            </span>
+                                {observations &&
+                                    (observations.app_improvements?.length > 0 ||
+                                        observations.content_gaps?.length > 0) && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                            {/* App Improvements */}
+                                            <div className="space-y-4">
+                                                <h3 className="flex items-center gap-2 text-lg font-bold text-white">
+                                                    <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+                                                    App Improvements
+                                                </h3>
+                                                <div className="space-y-3">
+                                                    {observations.app_improvements.map((item: any, i: number) => (
+                                                        <div
+                                                            key={i}
+                                                            className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-blue-500/30 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <span
+                                                                    className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
+                                                                        item.severity === 'high'
+                                                                            ? 'bg-red-500/10 text-red-400'
+                                                                            : item.severity === 'medium'
+                                                                              ? 'bg-yellow-500/10 text-yellow-500'
+                                                                              : 'bg-blue-500/10 text-blue-400'
+                                                                    }`}
+                                                                >
+                                                                    {item.severity}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-slate-200 text-sm font-medium mb-2">
+                                                                {item.description}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 text-xs text-slate-500 bg-navy-950 p-2 rounded">
+                                                                <Target size={12} className="text-blue-400" />
+                                                                Recommendation:{' '}
+                                                                <span className="text-slate-300">
+                                                                    {item.action_item}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <p className="text-slate-200 text-sm font-medium mb-2">{item.description}</p>
-                                                        <div className="flex items-center gap-2 text-xs text-slate-500 bg-navy-950 p-2 rounded">
-                                                            <Target size={12} className="text-blue-400" />
-                                                            Recommendation: <span className="text-slate-300">{item.action_item}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {observations.app_improvements.length === 0 && (
-                                                    <p className="text-slate-500 text-sm italic">No improvements detected.</p>
-                                                )}
+                                                    ))}
+                                                    {observations.app_improvements.length === 0 && (
+                                                        <p className="text-slate-500 text-sm italic">
+                                                            No improvements detected.
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Content Gaps */}
-                                        <div className="space-y-4">
-                                            <h3 className="flex items-center gap-2 text-lg font-bold text-white">
-                                                <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
-                                                Knowledge Gaps
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {observations.content_gaps.map((item: any, i: number) => (
-                                                    <div key={i} className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-purple-500/30 transition-colors">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${item.severity === 'high' ? 'bg-red-500/10 text-red-400' :
-                                                                item.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-500' :
-                                                                    'bg-purple-500/10 text-purple-400'
-                                                                }`}>
-                                                                {item.severity}
-                                                            </span>
+                                            {/* Content Gaps */}
+                                            <div className="space-y-4">
+                                                <h3 className="flex items-center gap-2 text-lg font-bold text-white">
+                                                    <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                                                    Knowledge Gaps
+                                                </h3>
+                                                <div className="space-y-3">
+                                                    {observations.content_gaps.map((item: any, i: number) => (
+                                                        <div
+                                                            key={i}
+                                                            className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-purple-500/30 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <span
+                                                                    className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
+                                                                        item.severity === 'high'
+                                                                            ? 'bg-red-500/10 text-red-400'
+                                                                            : item.severity === 'medium'
+                                                                              ? 'bg-yellow-500/10 text-yellow-500'
+                                                                              : 'bg-purple-500/10 text-purple-400'
+                                                                    }`}
+                                                                >
+                                                                    {item.severity}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-slate-200 text-sm font-medium mb-2">
+                                                                {item.description}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 text-xs text-slate-500 bg-navy-950 p-2 rounded">
+                                                                <Lightbulb size={12} className="text-purple-400" />
+                                                                Missing Topic:{' '}
+                                                                <span className="text-slate-300">
+                                                                    {item.action_item}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <p className="text-slate-200 text-sm font-medium mb-2">{item.description}</p>
-                                                        <div className="flex items-center gap-2 text-xs text-slate-500 bg-navy-950 p-2 rounded">
-                                                            <Lightbulb size={12} className="text-purple-400" />
-                                                            Missing Topic: <span className="text-slate-300">{item.action_item}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {observations.content_gaps.length === 0 && (
-                                                    <p className="text-slate-500 text-sm italic">No knowledge gaps detected.</p>
-                                                )}
+                                                    ))}
+                                                    {observations.content_gaps.length === 0 && (
+                                                        <p className="text-slate-500 text-sm italic">
+                                                            No knowledge gaps detected.
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
                             </div>
                         )}
                     </>
@@ -883,7 +1083,16 @@ export const AdminKnowledgeView: React.FC = () => {
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-white">Approve Idea</h2>
-                            <button onClick={() => { setApprovingIdea(null); setApproveIdeaCategory(''); setApproveIdeaTags(''); }} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            <button
+                                onClick={() => {
+                                    setApprovingIdea(null);
+                                    setApproveIdeaCategory('');
+                                    setApproveIdeaTags('');
+                                }}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <div className="space-y-4">
                             <div className="bg-navy-950 p-4 rounded-lg">
@@ -898,8 +1107,10 @@ export const AdminKnowledgeView: React.FC = () => {
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                 >
                                     <option value="">Select category...</option>
-                                    {IDEA_CATEGORIES.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {IDEA_CATEGORIES.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -914,8 +1125,24 @@ export const AdminKnowledgeView: React.FC = () => {
                                 />
                             </div>
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => { setApprovingIdea(null); setApproveIdeaCategory(''); setApproveIdeaTags(''); }} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium">Cancel</button>
-                                <button type="button" onClick={handleApproveWithDetails} className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-medium rounded shadow-lg shadow-green-900/20">Approve & Add to Library</button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setApprovingIdea(null);
+                                        setApproveIdeaCategory('');
+                                        setApproveIdeaTags('');
+                                    }}
+                                    className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleApproveWithDetails}
+                                    className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-medium rounded shadow-lg shadow-green-900/20"
+                                >
+                                    Approve & Add to Library
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -928,7 +1155,16 @@ export const AdminKnowledgeView: React.FC = () => {
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-white">Apply Idea in Project</h2>
-                            <button onClick={() => { setLinkingIdea(null); setLinkProjectId(''); setLinkProjectNotes(''); }} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            <button
+                                onClick={() => {
+                                    setLinkingIdea(null);
+                                    setLinkProjectId('');
+                                    setLinkProjectNotes('');
+                                }}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <div className="space-y-4">
                             <div className="bg-navy-950 p-4 rounded-lg">
@@ -942,13 +1178,17 @@ export const AdminKnowledgeView: React.FC = () => {
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                 >
                                     <option value="">Select project...</option>
-                                    {projects.map(project => (
-                                        <option key={project.id} value={project.id}>{project.name}</option>
+                                    {projects.map((project) => (
+                                        <option key={project.id} value={project.id}>
+                                            {project.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Implementation Notes (optional)</label>
+                                <label className="block text-xs text-slate-400 mb-1">
+                                    Implementation Notes (optional)
+                                </label>
                                 <textarea
                                     value={linkProjectNotes}
                                     onChange={(e) => setLinkProjectNotes(e.target.value)}
@@ -958,8 +1198,25 @@ export const AdminKnowledgeView: React.FC = () => {
                                 />
                             </div>
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => { setLinkingIdea(null); setLinkProjectId(''); setLinkProjectNotes(''); }} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium">Cancel</button>
-                                <button type="button" onClick={handleLinkIdeaToProject} disabled={!linkProjectId} className="flex-1 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-lg shadow-green-900/20">Link to Project</button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setLinkingIdea(null);
+                                        setLinkProjectId('');
+                                        setLinkProjectNotes('');
+                                    }}
+                                    className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleLinkIdeaToProject}
+                                    disabled={!linkProjectId}
+                                    className="flex-1 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-lg shadow-green-900/20"
+                                >
+                                    Link to Project
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -972,7 +1229,16 @@ export const AdminKnowledgeView: React.FC = () => {
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-white">Edit Document</h2>
-                            <button onClick={() => { setEditingDoc(null); setEditDocCategory(''); setEditDocTags(''); }} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            <button
+                                onClick={() => {
+                                    setEditingDoc(null);
+                                    setEditDocCategory('');
+                                    setEditDocTags('');
+                                }}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <div className="space-y-4">
                             <div>
@@ -983,8 +1249,10 @@ export const AdminKnowledgeView: React.FC = () => {
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                 >
                                     <option value="">No category</option>
-                                    {DOCUMENT_CATEGORIES.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {DOCUMENT_CATEGORIES.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -999,8 +1267,24 @@ export const AdminKnowledgeView: React.FC = () => {
                                 />
                             </div>
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => { setEditingDoc(null); setEditDocCategory(''); setEditDocTags(''); }} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium">Cancel</button>
-                                <button type="button" onClick={() => handleUpdateDocument(editingDoc.id)} className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded shadow-lg shadow-purple-900/20">Save Changes</button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingDoc(null);
+                                        setEditDocCategory('');
+                                        setEditDocTags('');
+                                    }}
+                                    className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleUpdateDocument(editingDoc.id)}
+                                    className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded shadow-lg shadow-purple-900/20"
+                                >
+                                    Save Changes
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1012,34 +1296,67 @@ export const AdminKnowledgeView: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">Link {linkType === 'document' ? 'Document' : 'Idea'} to Strategy</h2>
-                            <button onClick={() => { setLinkingStrategy(null); setLinkItemId(''); }} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            <h2 className="text-xl font-bold text-white">
+                                Link {linkType === 'document' ? 'Document' : 'Idea'} to Strategy
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    setLinkingStrategy(null);
+                                    setLinkItemId('');
+                                }}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <div className="space-y-4">
                             <div className="bg-navy-950 p-4 rounded-lg">
                                 <p className="text-white font-medium">{linkingStrategy.title}</p>
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Select {linkType === 'document' ? 'Document' : 'Idea'}</label>
+                                <label className="block text-xs text-slate-400 mb-1">
+                                    Select {linkType === 'document' ? 'Document' : 'Idea'}
+                                </label>
                                 <select
                                     value={linkItemId}
                                     onChange={(e) => setLinkItemId(e.target.value)}
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                 >
                                     <option value="">Select {linkType === 'document' ? 'document' : 'idea'}...</option>
-                                    {linkType === 'document' 
-                                        ? documents.map(doc => (
-                                            <option key={doc.id} value={doc.id}>{doc.filename}</option>
-                                        ))
-                                        : candidates.filter(c => c.status === 'approved' || c.status === 'implemented').map(idea => (
-                                            <option key={idea.id} value={idea.id}>{idea.content.substring(0, 50)}...</option>
-                                        ))
-                                    }
+                                    {linkType === 'document'
+                                        ? documents.map((doc) => (
+                                              <option key={doc.id} value={doc.id}>
+                                                  {doc.filename}
+                                              </option>
+                                          ))
+                                        : candidates
+                                              .filter((c) => c.status === 'approved' || c.status === 'implemented')
+                                              .map((idea) => (
+                                                  <option key={idea.id} value={idea.id}>
+                                                      {idea.content.substring(0, 50)}...
+                                                  </option>
+                                              ))}
                                 </select>
                             </div>
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => { setLinkingStrategy(null); setLinkItemId(''); }} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium">Cancel</button>
-                                <button type="button" onClick={handleLinkToStrategy} disabled={!linkItemId} className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-lg shadow-purple-900/20">Link</button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setLinkingStrategy(null);
+                                        setLinkItemId('');
+                                    }}
+                                    className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleLinkToStrategy}
+                                    disabled={!linkItemId}
+                                    className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-lg shadow-purple-900/20"
+                                >
+                                    Link
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1051,28 +1368,60 @@ export const AdminKnowledgeView: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">{editingStrategy ? 'Edit Strategic Direction' : 'New Strategic Direction'}</h2>
-                            <button onClick={() => { setShowStrategyModal(false); setEditingStrategy(null); setStrategyForm({ title: '', description: '', success_metrics: [], priority: 'medium', target_date: '', progress_percentage: 0 }); }} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            <h2 className="text-xl font-bold text-white">
+                                {editingStrategy ? 'Edit Strategic Direction' : 'New Strategic Direction'}
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    setShowStrategyModal(false);
+                                    setEditingStrategy(null);
+                                    setStrategyForm({
+                                        title: '',
+                                        description: '',
+                                        success_metrics: [],
+                                        priority: 'medium',
+                                        target_date: '',
+                                        progress_percentage: 0,
+                                    });
+                                }}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
-                        <form onSubmit={editingStrategy ? (e) => { e.preventDefault(); handleUpdateStrategy(editingStrategy.id, strategyForm); } : handleAddStrategy} className="space-y-4">
+                        <form
+                            onSubmit={
+                                editingStrategy
+                                    ? (e) => {
+                                          e.preventDefault();
+                                          handleUpdateStrategy(editingStrategy.id, strategyForm);
+                                      }
+                                    : handleAddStrategy
+                            }
+                            className="space-y-4"
+                        >
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Strategy Title (e.g., "Digital First")</label>
+                                <label className="block text-xs text-slate-400 mb-1">
+                                    Strategy Title (e.g., "Digital First")
+                                </label>
                                 <input
                                     required
                                     autoFocus
                                     value={strategyForm.title}
-                                    onChange={e => setStrategyForm({ ...strategyForm, title: e.target.value })}
+                                    onChange={(e) => setStrategyForm({ ...strategyForm, title: e.target.value })}
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                     placeholder="Enter a concise title..."
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Description (Instructions for AI)</label>
+                                <label className="block text-xs text-slate-400 mb-1">
+                                    Description (Instructions for AI)
+                                </label>
                                 <textarea
                                     required
                                     rows={5}
                                     value={strategyForm.description}
-                                    onChange={e => setStrategyForm({ ...strategyForm, description: e.target.value })}
+                                    onChange={(e) => setStrategyForm({ ...strategyForm, description: e.target.value })}
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
                                     placeholder="Explain how the AI should behave or what it should prioritize..."
                                 />
@@ -1082,7 +1431,12 @@ export const AdminKnowledgeView: React.FC = () => {
                                     <label className="block text-xs text-slate-400 mb-1">Priority</label>
                                     <select
                                         value={strategyForm.priority}
-                                        onChange={e => setStrategyForm({ ...strategyForm, priority: e.target.value as 'low' | 'medium' | 'high' })}
+                                        onChange={(e) =>
+                                            setStrategyForm({
+                                                ...strategyForm,
+                                                priority: e.target.value as 'low' | 'medium' | 'high',
+                                            })
+                                        }
                                         className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                     >
                                         <option value="low">Low</option>
@@ -1095,17 +1449,26 @@ export const AdminKnowledgeView: React.FC = () => {
                                     <input
                                         type="date"
                                         value={strategyForm.target_date}
-                                        onChange={e => setStrategyForm({ ...strategyForm, target_date: e.target.value })}
+                                        onChange={(e) =>
+                                            setStrategyForm({ ...strategyForm, target_date: e.target.value })
+                                        }
                                         className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Success Metrics (one per line)</label>
+                                <label className="block text-xs text-slate-400 mb-1">
+                                    Success Metrics (one per line)
+                                </label>
                                 <textarea
                                     rows={3}
                                     value={strategyForm.success_metrics.join('\n')}
-                                    onChange={e => setStrategyForm({ ...strategyForm, success_metrics: e.target.value.split('\n').filter(m => m.trim()) })}
+                                    onChange={(e) =>
+                                        setStrategyForm({
+                                            ...strategyForm,
+                                            success_metrics: e.target.value.split('\n').filter((m) => m.trim()),
+                                        })
+                                    }
                                     className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
                                     placeholder="Metric 1&#10;Metric 2&#10;Metric 3"
                                 />
@@ -1118,20 +1481,46 @@ export const AdminKnowledgeView: React.FC = () => {
                                         min="0"
                                         max="100"
                                         value={strategyForm.progress_percentage}
-                                        onChange={e => setStrategyForm({ ...strategyForm, progress_percentage: parseInt(e.target.value) || 0 })}
+                                        onChange={(e) =>
+                                            setStrategyForm({
+                                                ...strategyForm,
+                                                progress_percentage: parseInt(e.target.value) || 0,
+                                            })
+                                        }
                                         className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
                                     />
                                 </div>
                             )}
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => { setShowStrategyModal(false); setEditingStrategy(null); setStrategyForm({ title: '', description: '', success_metrics: [], priority: 'medium', target_date: '', progress_percentage: 0 }); }} className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium">Cancel</button>
-                                <button type="submit" className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded shadow-lg shadow-purple-900/20">{editingStrategy ? 'Update Strategy' : 'Add Strategy'}</button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowStrategyModal(false);
+                                        setEditingStrategy(null);
+                                        setStrategyForm({
+                                            title: '',
+                                            description: '',
+                                            success_metrics: [],
+                                            priority: 'medium',
+                                            target_date: '',
+                                            progress_percentage: 0,
+                                        });
+                                    }}
+                                    className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded shadow-lg shadow-purple-900/20"
+                                >
+                                    {editingStrategy ? 'Update Strategy' : 'Add Strategy'}
+                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

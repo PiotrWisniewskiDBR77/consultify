@@ -4,8 +4,9 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { enforceProjectQuota, setDependencies } from '../../../../src/middleware/projectQuota.middleware.js';
 
 describe('Project Quota Middleware', () => {
@@ -83,7 +84,7 @@ describe('Project Quota Middleware', () => {
                 expect.objectContaining({
                     error: 'Project storage quota exceeded',
                     code: 'PROJECT_STORAGE_EXCEEDED',
-                })
+                }),
             );
         });
 
@@ -95,7 +96,4 @@ describe('Project Quota Middleware', () => {
         });
     });
 });
-
-
-
 

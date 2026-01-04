@@ -1,35 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Cpu, CreditCard, Languages, LogOut, Monitor, Moon, Sun, UserCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-import {
-    UserCircle,
-    Sun,
-    Moon,
-    Monitor,
-    Languages,
-    CreditCard,
-    Cpu,
-    LogOut,
-    ChevronDown
-} from 'lucide-react';
 
 interface UserProfileMenuProps {
     className?: string;
     showName?: boolean;
 }
 
-export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
-    className = '',
-    showName = true
-}) => {
-    const {
-        currentUser,
-        setCurrentView,
-        logout,
-        theme,
-        toggleTheme
-    } = useAppStore();
+export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ className = '', showName = true }) => {
+    const { currentUser, setCurrentView, logout, theme, toggleTheme } = useAppStore();
 
     const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
@@ -99,7 +81,11 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-slate-500 overflow-hidden shrink-0 border border-slate-200 dark:border-white/10">
                                 {currentUser.avatarUrl ? (
-                                    <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                                    <img
+                                        src={currentUser.avatarUrl}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
                                 ) : (
                                     <UserCircle size={24} />
                                 )}
@@ -135,10 +121,15 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                                 {(['light', 'system', 'dark'] as const).map((tMode) => (
                                     <button
                                         key={tMode}
-                                        onClick={(e) => { e.stopPropagation(); toggleTheme(tMode); }}
-                                        className={`p-1.5 rounded-md transition-all ${theme === tMode
-                                            ? 'bg-white dark:bg-navy-800 shadow-sm text-purple-600 dark:text-purple-400'
-                                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleTheme(tMode);
+                                        }}
+                                        className={`p-1.5 rounded-md transition-all ${
+                                            theme === tMode
+                                                ? 'bg-white dark:bg-navy-800 shadow-sm text-purple-600 dark:text-purple-400'
+                                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                        }`}
                                         title={tMode.charAt(0).toUpperCase() + tMode.slice(1)}
                                     >
                                         {tMode === 'light' && <Sun size={14} />}
@@ -159,10 +150,15 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                                 {['en', 'pl'].map((lang) => (
                                     <button
                                         key={lang}
-                                        onClick={(e) => { e.stopPropagation(); i18n.changeLanguage(lang); }}
-                                        className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${i18n.language?.startsWith(lang)
-                                            ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-500/30 dark:text-purple-300'
-                                            : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            i18n.changeLanguage(lang);
+                                        }}
+                                        className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${
+                                            i18n.language?.startsWith(lang)
+                                                ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-500/30 dark:text-purple-300'
+                                                : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'
+                                        }`}
                                     >
                                         {lang}
                                     </button>

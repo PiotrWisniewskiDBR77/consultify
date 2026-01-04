@@ -1,20 +1,21 @@
 /**
  * Integration Service
- * 
+ *
  * Manages third-party integrations and connectors.
  * Features:
  * - Integration CRUD operations
  * - Sync management
  * - Health monitoring
  * - Error handling and retry logic
- * 
+ *
  * Fully migrated from server/services/integrationService.js to TypeScript
  */
 
-import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
-import logger from '../utils/Logger.js';
+
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase, RunResult } from '../database/IDatabase.js';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPE DEFINITIONS
@@ -138,7 +139,7 @@ class IntegrationServiceClass {
     constructor(deps?: Partial<IntegrationServiceDependencies>) {
         this.deps = {
             db: deps?.db ?? getDatabase(),
-            uuidv4: deps?.uuidv4 ?? uuidv4
+            uuidv4: deps?.uuidv4 ?? uuidv4,
         };
     }
 
@@ -170,19 +171,18 @@ class IntegrationServiceClass {
 
         query += ' ORDER BY created_at DESC';
 
-        const rows = await this.deps.db.all<IntegrationRecord>(query, params) as IntegrationRecord[];
-        
-        return rows.map(row => this._formatIntegration(row));
+        const rows = (await this.deps.db.all<IntegrationRecord>(query, params)) as IntegrationRecord[];
+
+        return rows.map((row) => this._formatIntegration(row));
     }
 
     /**
      * Get integration by ID
      */
     async getIntegrationById(id: string): Promise<Integration | null> {
-        const row = await this.deps.db.get<IntegrationRecord>(
-            'SELECT * FROM integrations WHERE id = ?',
-            [id]
-        ) as IntegrationRecord | null;
+        const row = (await this.deps.db.get<IntegrationRecord>('SELECT * FROM integrations WHERE id = ?', [
+            id,
+        ])) as IntegrationRecord | null;
 
         if (!row) {
             return null;
@@ -202,7 +202,7 @@ class IntegrationServiceClass {
             config = {},
             auth_config = {},
             enabled = true,
-            sync_config = {}
+            sync_config = {},
         } = integrationData;
 
         const id = this.deps.uuidv4();
@@ -214,11 +214,17 @@ class IntegrationServiceClass {
                 enabled, sync_config, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                id, organization_id, type, name,
-                JSON.stringify(config), JSON.stringify(auth_config),
-                enabled ? 1 : 0, JSON.stringify(sync_config),
-                now, now
-            ]
+                id,
+                organization_id,
+                type,
+                name,
+                JSON.stringify(config),
+                JSON.stringify(auth_config),
+                enabled ? 1 : 0,
+                JSON.stringify(sync_config),
+                now,
+                now,
+            ],
         );
 
         const created = await this.getIntegrationById(id);
@@ -232,15 +238,7 @@ class IntegrationServiceClass {
      * Update an integration
      */
     async updateIntegration(id: string, updates: UpdateIntegrationData): Promise<Integration> {
-        const {
-            name,
-            config,
-            auth_config,
-            enabled,
-            sync_config,
-            last_sync_at,
-            last_sync_status
-        } = updates;
+        const { name, config, auth_config, enabled, sync_config, last_sync_at, last_sync_status } = updates;
 
         const updatesList: string[] = [];
         const params: unknown[] = [];
@@ -292,10 +290,7 @@ class IntegrationServiceClass {
         params.push(new Date().toISOString());
         params.push(id);
 
-        await this.deps.db.run(
-            `UPDATE integrations SET ${updatesList.join(', ')} WHERE id = ?`,
-            params
-        );
+        await this.deps.db.run(`UPDATE integrations SET ${updatesList.join(', ')} WHERE id = ?`, params);
 
         const updated = await this.getIntegrationById(id);
         if (!updated) {
@@ -308,10 +303,7 @@ class IntegrationServiceClass {
      * Delete an integration
      */
     async deleteIntegration(id: string): Promise<{ deleted: boolean }> {
-        const result = await this.deps.db.run(
-            'DELETE FROM integrations WHERE id = ?',
-            [id]
-        ) as RunResult;
+        const result = (await this.deps.db.run('DELETE FROM integrations WHERE id = ?', [id])) as RunResult;
 
         return { deleted: result.changes > 0 };
     }
@@ -333,7 +325,7 @@ class IntegrationServiceClass {
             `INSERT INTO integration_sync_logs (
                 id, integration_id, sync_type, status, started_at
             ) VALUES (?, ?, ?, ?, ?)`,
-            [syncLogId, id, syncType, 'in_progress', startedAt]
+            [syncLogId, id, syncType, 'in_progress', startedAt],
         );
 
         try {
@@ -344,13 +336,13 @@ class IntegrationServiceClass {
             await this.updateSyncLog(syncLogId, {
                 status: 'success',
                 records_processed: result.recordsProcessed || 0,
-                completed_at: new Date().toISOString()
+                completed_at: new Date().toISOString(),
             });
 
             // Update integration last sync info
             await this.updateIntegration(id, {
                 last_sync_at: new Date().toISOString(),
-                last_sync_status: 'success'
+                last_sync_status: 'success',
             });
 
             return { syncLogId, ...result };
@@ -359,13 +351,13 @@ class IntegrationServiceClass {
             await this.updateSyncLog(syncLogId, {
                 status: 'failed',
                 errors: JSON.stringify({ error: (error as Error).message }),
-                completed_at: new Date().toISOString()
+                completed_at: new Date().toISOString(),
             });
 
             // Update integration last sync info
             await this.updateIntegration(id, {
                 last_sync_at: new Date().toISOString(),
-                last_sync_status: 'failed'
+                last_sync_status: 'failed',
             });
 
             throw error;
@@ -375,12 +367,12 @@ class IntegrationServiceClass {
     /**
      * Perform actual sync (placeholder - implement per integration type)
      */
-    async performSync(integration: Integration, syncType: string): Promise<SyncResult> {
+    async performSync(integration: Integration, _syncType: string): Promise<SyncResult> {
         // This is a placeholder - implement actual sync logic per integration type
         // For now, return a mock result
         return {
             recordsProcessed: 0,
-            message: `Sync for ${integration.type} not yet implemented`
+            message: `Sync for ${integration.type} not yet implemented`,
         };
     }
 
@@ -419,10 +411,10 @@ class IntegrationServiceClass {
 
         params.push(syncLogId);
 
-        const result = await this.deps.db.run(
+        const result = (await this.deps.db.run(
             `UPDATE integration_sync_logs SET ${updatesList.join(', ')} WHERE id = ?`,
-            params
-        ) as RunResult;
+            params,
+        )) as RunResult;
 
         return { updated: result.changes > 0 };
     }
@@ -431,15 +423,15 @@ class IntegrationServiceClass {
      * Get sync logs for an integration
      */
     async getSyncLogs(integrationId: string, limit: number = 50): Promise<SyncLog[]> {
-        const rows = await this.deps.db.all<SyncLogRecord>(
+        const rows = (await this.deps.db.all<SyncLogRecord>(
             `SELECT * FROM integration_sync_logs 
              WHERE integration_id = ? 
              ORDER BY started_at DESC 
              LIMIT ?`,
-            [integrationId, limit]
-        ) as SyncLogRecord[];
+            [integrationId, limit],
+        )) as SyncLogRecord[];
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             integrationId: row.integration_id,
             syncType: row.sync_type,
@@ -447,7 +439,7 @@ class IntegrationServiceClass {
             startedAt: row.started_at,
             completedAt: row.completed_at || undefined,
             recordsProcessed: row.records_processed || undefined,
-            errors: row.errors ? JSON.parse(row.errors) as Record<string, unknown> : null
+            errors: row.errors ? (JSON.parse(row.errors) as Record<string, unknown>) : null,
         }));
     }
 
@@ -466,12 +458,12 @@ class IntegrationServiceClass {
             return {
                 status: 'healthy',
                 lastSync: integration.lastSyncAt,
-                lastSyncStatus: integration.lastSyncStatus
+                lastSyncStatus: integration.lastSyncStatus,
             };
         } catch (error: unknown) {
             return {
                 status: 'unhealthy',
-                error: (error as Error).message
+                error: (error as Error).message,
             };
         }
     }
@@ -490,7 +482,7 @@ class IntegrationServiceClass {
             { id: 'github', name: 'GitHub', description: 'GitHub integration' },
             { id: 'gitlab', name: 'GitLab', description: 'GitLab integration' },
             { id: 'salesforce', name: 'Salesforce', description: 'Salesforce CRM integration' },
-            { id: 'hubspot', name: 'HubSpot', description: 'HubSpot CRM integration' }
+            { id: 'hubspot', name: 'HubSpot', description: 'HubSpot CRM integration' },
         ];
     }
 
@@ -504,14 +496,14 @@ class IntegrationServiceClass {
             organizationId: row.organization_id,
             type: row.type,
             name: row.name,
-            config: row.config ? JSON.parse(row.config) as Record<string, unknown> : {},
-            authConfig: row.auth_config ? JSON.parse(row.auth_config) as Record<string, unknown> : {},
+            config: row.config ? (JSON.parse(row.config) as Record<string, unknown>) : {},
+            authConfig: row.auth_config ? (JSON.parse(row.auth_config) as Record<string, unknown>) : {},
             enabled: row.enabled === 1,
-            syncConfig: row.sync_config ? JSON.parse(row.sync_config) as Record<string, unknown> : {},
+            syncConfig: row.sync_config ? (JSON.parse(row.sync_config) as Record<string, unknown>) : {},
             lastSyncAt: row.last_sync_at || undefined,
             lastSyncStatus: row.last_sync_status || undefined,
             createdAt: row.created_at,
-            updatedAt: row.updated_at
+            updatedAt: row.updated_at,
         };
     }
 }
@@ -522,14 +514,12 @@ const integrationServiceInstance = new IntegrationServiceClass();
 // Export individual functions for backward compatibility
 export const getIntegrations = (organizationId: string, filters?: IntegrationFilters) =>
     integrationServiceInstance.getIntegrations(organizationId, filters);
-export const getIntegrationById = (id: string) =>
-    integrationServiceInstance.getIntegrationById(id);
+export const getIntegrationById = (id: string) => integrationServiceInstance.getIntegrationById(id);
 export const createIntegration = (integrationData: CreateIntegrationData) =>
     integrationServiceInstance.createIntegration(integrationData);
 export const updateIntegration = (id: string, updates: UpdateIntegrationData) =>
     integrationServiceInstance.updateIntegration(id, updates);
-export const deleteIntegration = (id: string) =>
-    integrationServiceInstance.deleteIntegration(id);
+export const deleteIntegration = (id: string) => integrationServiceInstance.deleteIntegration(id);
 export const syncIntegration = (id: string, syncType?: string) =>
     integrationServiceInstance.syncIntegration(id, syncType);
 export const performSync = (integration: Integration, syncType: string) =>
@@ -538,10 +528,8 @@ export const updateSyncLog = (syncLogId: string, updates: UpdateSyncLogData) =>
     integrationServiceInstance.updateSyncLog(syncLogId, updates);
 export const getSyncLogs = (integrationId: string, limit?: number) =>
     integrationServiceInstance.getSyncLogs(integrationId, limit);
-export const checkHealth = (id: string) =>
-    integrationServiceInstance.checkHealth(id);
-export const getAvailableTypes = () =>
-    integrationServiceInstance.getAvailableTypes();
+export const checkHealth = (id: string) => integrationServiceInstance.checkHealth(id);
+export const getAvailableTypes = () => integrationServiceInstance.getAvailableTypes();
 
 // Default export for backward compatibility
 const integrationService = {
@@ -555,7 +543,7 @@ const integrationService = {
     updateSyncLog,
     getSyncLogs,
     checkHealth,
-    getAvailableTypes
+    getAvailableTypes,
 };
 
 export default integrationService;

@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/ui/BaseCard';
 import {
-    Plus,
-    FileText,
-    Play,
-    Calendar,
-    Clock,
-    Trash2,
-    Edit,
-    Download,
-    Filter,
-    Users,
-    Building2,
-    DollarSign,
     Activity,
     Bot,
+    Building2,
+    Calendar,
     CheckCircle2,
-    XCircle,
+    ChevronDown,
+    Clock,
+    DollarSign,
+    Download,
+    Edit,
+    FileText,
+    Filter,
     Loader2,
-    ChevronDown
+    Play,
+    Plus,
+    Trash2,
+    Users,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card } from '../../../components/ui/BaseCard';
 import Api from '../../../services/api';
 
 interface Report {
@@ -71,13 +72,13 @@ const SavedReportsView: React.FC = () => {
         description: '',
         reportType: 'users',
         filters: {} as Record<string, any>,
-        columns: [] as string[]
+        columns: [] as string[],
     });
 
     const [schedule, setSchedule] = useState({
         frequency: 'daily',
         time: '09:00',
-        is_active: true
+        is_active: true,
     });
 
     useEffect(() => {
@@ -174,15 +175,17 @@ const SavedReportsView: React.FC = () => {
         const csvContent = [
             headers.join(','),
             ...data.data.map((row: any) =>
-                headers.map(h => {
-                    const val = row[h];
-                    if (val === null || val === undefined) return '';
-                    if (typeof val === 'string' && val.includes(',')) {
-                        return `"${val.replace(/"/g, '""')}"`;
-                    }
-                    return String(val);
-                }).join(',')
-            )
+                headers
+                    .map((h) => {
+                        const val = row[h];
+                        if (val === null || val === undefined) return '';
+                        if (typeof val === 'string' && val.includes(',')) {
+                            return `"${val.replace(/"/g, '""')}"`;
+                        }
+                        return String(val);
+                    })
+                    .join(','),
+            ),
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -193,7 +196,7 @@ const SavedReportsView: React.FC = () => {
     };
 
     const getReportTypeInfo = (type: string) => {
-        return REPORT_TYPES.find(rt => rt.id === type) || REPORT_TYPES[0];
+        return REPORT_TYPES.find((rt) => rt.id === type) || REPORT_TYPES[0];
     };
 
     const formatDate = (dateStr?: string) => {
@@ -226,8 +229,10 @@ const SavedReportsView: React.FC = () => {
                             className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm appearance-none pr-8"
                         >
                             <option value="">All Types</option>
-                            {REPORT_TYPES.map(rt => (
-                                <option key={rt.id} value={rt.id}>{rt.label}</option>
+                            {REPORT_TYPES.map((rt) => (
+                                <option key={rt.id} value={rt.id}>
+                                    {rt.label}
+                                </option>
                             ))}
                         </select>
                         <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -253,17 +258,18 @@ const SavedReportsView: React.FC = () => {
                                     No reports yet. Create one to get started.
                                 </p>
                             ) : (
-                                reports.map(report => {
+                                reports.map((report) => {
                                     const typeInfo = getReportTypeInfo(report.report_type);
                                     const TypeIcon = typeInfo.icon;
                                     return (
                                         <div
                                             key={report.id}
                                             onClick={() => handleSelectReport(report)}
-                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedReport?.id === report.id
-                                                ? 'bg-blue-600/20 border border-blue-500'
-                                                : 'bg-gray-700/50 hover:bg-gray-700'
-                                                }`}
+                                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                                                selectedReport?.id === report.id
+                                                    ? 'bg-blue-600/20 border border-blue-500'
+                                                    : 'bg-gray-700/50 hover:bg-gray-700'
+                                            }`}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-gray-600 rounded-lg">
@@ -280,9 +286,7 @@ const SavedReportsView: React.FC = () => {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-400 text-xs mt-1">
-                                                        {typeInfo.label}
-                                                    </p>
+                                                    <p className="text-gray-400 text-xs mt-1">{typeInfo.label}</p>
                                                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                                                         <span>{report.execution_count || 0} runs</span>
                                                         <span>•</span>
@@ -306,13 +310,9 @@ const SavedReportsView: React.FC = () => {
                             <Card className="bg-gray-800 p-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">
-                                            {selectedReport.name}
-                                        </h3>
+                                        <h3 className="text-xl font-bold text-white">{selectedReport.name}</h3>
                                         {selectedReport.description && (
-                                            <p className="text-gray-400 text-sm mt-1">
-                                                {selectedReport.description}
-                                            </p>
+                                            <p className="text-gray-400 text-sm mt-1">{selectedReport.description}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -425,21 +425,31 @@ const SavedReportsView: React.FC = () => {
                                             <table className="w-full text-sm">
                                                 <thead>
                                                     <tr className="border-b border-gray-700">
-                                                        {Object.keys(executionResult.data[0]).slice(0, 6).map(key => (
-                                                            <th key={key} className="text-left py-2 px-3 text-gray-400 font-medium">
-                                                                {key}
-                                                            </th>
-                                                        ))}
+                                                        {Object.keys(executionResult.data[0])
+                                                            .slice(0, 6)
+                                                            .map((key) => (
+                                                                <th
+                                                                    key={key}
+                                                                    className="text-left py-2 px-3 text-gray-400 font-medium"
+                                                                >
+                                                                    {key}
+                                                                </th>
+                                                            ))}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {executionResult.data.slice(0, 10).map((row: any, idx: number) => (
                                                         <tr key={idx} className="border-b border-gray-700/50">
-                                                            {Object.keys(row).slice(0, 6).map(key => (
-                                                                <td key={key} className="py-2 px-3 text-white truncate max-w-[150px]">
-                                                                    {String(row[key] ?? '-')}
-                                                                </td>
-                                                            ))}
+                                                            {Object.keys(row)
+                                                                .slice(0, 6)
+                                                                .map((key) => (
+                                                                    <td
+                                                                        key={key}
+                                                                        className="py-2 px-3 text-white truncate max-w-[150px]"
+                                                                    >
+                                                                        {String(row[key] ?? '-')}
+                                                                    </td>
+                                                                ))}
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -458,12 +468,10 @@ const SavedReportsView: React.FC = () => {
                             <Card className="bg-gray-800 p-4">
                                 <h4 className="text-lg font-semibold text-white mb-4">Execution History</h4>
                                 {executions.length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4">
-                                        No executions yet
-                                    </p>
+                                    <p className="text-gray-500 text-sm text-center py-4">No executions yet</p>
                                 ) : (
                                     <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                        {executions.map(exec => (
+                                        {executions.map((exec) => (
                                             <div
                                                 key={exec.id}
                                                 className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg"
@@ -480,10 +488,15 @@ const SavedReportsView: React.FC = () => {
                                                         {formatDate(exec.executed_at)}
                                                     </span>
                                                 </div>
-                                                <span className={`text-xs px-2 py-1 rounded ${exec.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                                                    exec.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                                                        'bg-blue-500/20 text-blue-400'
-                                                    }`}>
+                                                <span
+                                                    className={`text-xs px-2 py-1 rounded ${
+                                                        exec.status === 'completed'
+                                                            ? 'bg-green-500/20 text-green-400'
+                                                            : exec.status === 'failed'
+                                                              ? 'bg-red-500/20 text-red-400'
+                                                              : 'bg-blue-500/20 text-blue-400'
+                                                    }`}
+                                                >
                                                     {exec.status}
                                                 </span>
                                             </div>
@@ -496,9 +509,7 @@ const SavedReportsView: React.FC = () => {
                         <Card className="bg-gray-800 p-8">
                             <div className="flex flex-col items-center justify-center h-64">
                                 <FileText className="w-16 h-16 text-gray-600 mb-4" />
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Select a Report
-                                </h3>
+                                <h3 className="text-xl font-semibold text-white mb-2">Select a Report</h3>
                                 <p className="text-gray-400 text-center">
                                     Choose a report from the list or create a new one
                                 </p>
@@ -515,9 +526,7 @@ const SavedReportsView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Create New Report</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Report Name
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Report Name</label>
                                 <input
                                     type="text"
                                     value={newReport.name}
@@ -527,9 +536,7 @@ const SavedReportsView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                                 <textarea
                                     value={newReport.description}
                                     onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
@@ -539,18 +546,17 @@ const SavedReportsView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Report Type
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Report Type</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {REPORT_TYPES.map(rt => (
+                                    {REPORT_TYPES.map((rt) => (
                                         <button
                                             key={rt.id}
                                             onClick={() => setNewReport({ ...newReport, reportType: rt.id })}
-                                            className={`p-3 rounded-lg flex items-center gap-2 transition-colors ${newReport.reportType === rt.id
-                                                ? 'bg-blue-600/20 border border-blue-500'
-                                                : 'bg-gray-700 hover:bg-gray-600'
-                                                }`}
+                                            className={`p-3 rounded-lg flex items-center gap-2 transition-colors ${
+                                                newReport.reportType === rt.id
+                                                    ? 'bg-blue-600/20 border border-blue-500'
+                                                    : 'bg-gray-700 hover:bg-gray-600'
+                                            }`}
                                         >
                                             <rt.icon className="w-4 h-4 text-blue-400" />
                                             <span className="text-sm text-white">{rt.label}</span>
@@ -585,9 +591,7 @@ const SavedReportsView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Schedule Report</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Frequency
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Frequency</label>
                                 <select
                                     value={schedule.frequency}
                                     onChange={(e) => setSchedule({ ...schedule, frequency: e.target.value })}
@@ -599,9 +603,7 @@ const SavedReportsView: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Time
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Time</label>
                                 <input
                                     type="time"
                                     value={schedule.time}
@@ -644,10 +646,4 @@ const SavedReportsView: React.FC = () => {
 };
 
 export default SavedReportsView;
-
-
-
-
-
-
 

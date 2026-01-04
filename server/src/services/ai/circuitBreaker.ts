@@ -16,7 +16,7 @@ const LLM_CONFIG = {
     retryAttempts: 3,
     retryBaseDelay: 1000,
     retryMaxDelay: 30000,
-    persistenceEnabled: true
+    persistenceEnabled: true,
 };
 
 export function canExecute(providerId: string) {
@@ -46,11 +46,11 @@ export function getStatus(): Record<string, unknown> {
 export async function execute<T>(
     providerId: string,
     fn: () => Promise<T>,
-    options: Record<string, unknown> = {}
+    options: Record<string, unknown> = {},
 ): Promise<T> {
     const breaker = CircuitBreakerService.getBreaker(providerId, {
         ...LLM_CONFIG,
-        ...options
+        ...options,
     });
     return breaker.execute(fn, options);
 }
@@ -66,7 +66,7 @@ export async function initialize(): Promise<void> {
 }
 
 setImmediate(() => {
-    initialize().catch(error => {
+    initialize().catch((error) => {
         const err = error as Error;
         console.warn('[CircuitBreaker] Auto-init failed:', err.message);
     });
@@ -81,5 +81,5 @@ export default {
     getStatus,
     execute,
     initialize,
-    CircuitBreakerService
+    CircuitBreakerService,
 };

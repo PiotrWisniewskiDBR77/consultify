@@ -15,7 +15,7 @@ const deps = {
  */
 async function initDeps() {
   if (!deps._db) {
-    const { default: dbInstance } = await import('../database.js');
+    const { default: dbInstance } = await import('../src/database/index.js');
     deps._db = dbInstance;
   }
 }
@@ -613,6 +613,7 @@ class PMORoleService {
 
 const pmoRoleServiceInstance = new PMORoleService();
 export default pmoRoleServiceInstance;
+
 
 
 

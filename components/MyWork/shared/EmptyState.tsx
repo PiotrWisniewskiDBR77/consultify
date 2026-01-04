@@ -3,28 +3,12 @@
  * Part of My Work Module PMO Upgrade
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
-import {
-    Target,
-    Inbox,
-    CheckCircle2,
-    Calendar,
-    Bell,
-    BarChart2,
-    Sparkles,
-    Plus
-} from 'lucide-react';
+import { BarChart2, Bell, Calendar, CheckCircle2, Inbox, Plus, Sparkles, Target } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-type EmptyStateType = 
-    | 'focus'
-    | 'inbox'
-    | 'tasks'
-    | 'decisions'
-    | 'notifications'
-    | 'dashboard'
-    | 'generic';
+type EmptyStateType = 'focus' | 'inbox' | 'tasks' | 'decisions' | 'notifications' | 'dashboard' | 'generic';
 
 interface EmptyStateProps {
     type: EmptyStateType;
@@ -42,54 +26,57 @@ interface EmptyStateProps {
 /**
  * Type configurations
  */
-const typeConfig: Record<EmptyStateType, {
-    icon: React.ReactNode;
-    defaultTitle: string;
-    defaultDescription: string;
-    gradient: string;
-}> = {
+const typeConfig: Record<
+    EmptyStateType,
+    {
+        icon: React.ReactNode;
+        defaultTitle: string;
+        defaultDescription: string;
+        gradient: string;
+    }
+> = {
     focus: {
         icon: <Target size={32} />,
         defaultTitle: 'No Focus Tasks',
         defaultDescription: 'Select up to 5 tasks to focus on today. AI can help you prioritize.',
-        gradient: 'from-blue-500/20 to-indigo-500/20 dark:from-blue-500/10 dark:to-indigo-500/10'
+        gradient: 'from-blue-500/20 to-indigo-500/20 dark:from-blue-500/10 dark:to-indigo-500/10',
     },
     inbox: {
         icon: <Inbox size={32} />,
         defaultTitle: 'Inbox Zero!',
         defaultDescription: "You've processed all items. Great job staying on top of things!",
-        gradient: 'from-green-500/20 to-emerald-500/20 dark:from-green-500/10 dark:to-emerald-500/10'
+        gradient: 'from-green-500/20 to-emerald-500/20 dark:from-green-500/10 dark:to-emerald-500/10',
     },
     tasks: {
         icon: <CheckCircle2 size={32} />,
         defaultTitle: 'No Tasks',
         defaultDescription: 'Create a task to get started with your work.',
-        gradient: 'from-purple-500/20 to-pink-500/20 dark:from-purple-500/10 dark:to-pink-500/10'
+        gradient: 'from-purple-500/20 to-pink-500/20 dark:from-purple-500/10 dark:to-pink-500/10',
     },
     decisions: {
         icon: <Calendar size={32} />,
         defaultTitle: 'No Pending Decisions',
         defaultDescription: 'All decisions have been made. Check back later for new ones.',
-        gradient: 'from-amber-500/20 to-orange-500/20 dark:from-amber-500/10 dark:to-orange-500/10'
+        gradient: 'from-amber-500/20 to-orange-500/20 dark:from-amber-500/10 dark:to-orange-500/10',
     },
     notifications: {
         icon: <Bell size={32} />,
         defaultTitle: 'All Caught Up',
         defaultDescription: 'No new notifications. You can customize your notification preferences.',
-        gradient: 'from-cyan-500/20 to-blue-500/20 dark:from-cyan-500/10 dark:to-blue-500/10'
+        gradient: 'from-cyan-500/20 to-blue-500/20 dark:from-cyan-500/10 dark:to-blue-500/10',
     },
     dashboard: {
         icon: <BarChart2 size={32} />,
         defaultTitle: 'No Data Yet',
         defaultDescription: 'Complete some tasks to see your execution metrics and trends.',
-        gradient: 'from-violet-500/20 to-purple-500/20 dark:from-violet-500/10 dark:to-purple-500/10'
+        gradient: 'from-violet-500/20 to-purple-500/20 dark:from-violet-500/10 dark:to-purple-500/10',
     },
     generic: {
         icon: <Sparkles size={32} />,
         defaultTitle: 'Nothing Here',
         defaultDescription: 'This section is empty. Start by adding some items.',
-        gradient: 'from-slate-500/20 to-gray-500/20 dark:from-slate-500/10 dark:to-gray-500/10'
-    }
+        gradient: 'from-slate-500/20 to-gray-500/20 dark:from-slate-500/10 dark:to-gray-500/10',
+    },
 };
 
 /**
@@ -105,7 +92,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     onSecondaryAction,
     showAISuggestion = false,
     onAISuggestion,
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const config = typeConfig[type];
@@ -122,9 +109,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             `}
         >
             {/* Icon */}
-            <div className="mb-4 text-slate-400 dark:text-slate-500">
-                {config.icon}
-            </div>
+            <div className="mb-4 text-slate-400 dark:text-slate-500">{config.icon}</div>
 
             {/* Title */}
             <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
@@ -206,9 +191,7 @@ export const EmptyStateInline: React.FC<{
 }> = ({ message, actionLabel, onAction, className = '' }) => {
     return (
         <div className={`text-center py-6 ${className}`}>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-                {message}
-            </p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{message}</p>
             {actionLabel && onAction && (
                 <button
                     onClick={onAction}
@@ -222,16 +205,4 @@ export const EmptyStateInline: React.FC<{
 };
 
 export default EmptyState;
-
-
-
-
-
-
-
-
-
-
-
-
 

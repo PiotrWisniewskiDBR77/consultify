@@ -1,20 +1,21 @@
 /**
  * Integration Hub Service
- * 
+ *
  * Centralized integration management for:
  * - ERP Systems (SAP, Oracle, Microsoft Dynamics)
  * - CRM Platforms (Salesforce, HubSpot, Zoho)
  * - Project Management (Jira, Monday, Asana, Azure DevOps)
  * - BI Tools (Power BI, Tableau, Looker)
  * - Communication (Slack, Microsoft Teams, Email)
- * 
+ *
  * Fully migrated from server/services/integrationHubService.js to TypeScript
  */
 
-import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
-import logger from '../utils/Logger.js';
+
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase, RunResult } from '../database/IDatabase.js';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
@@ -28,7 +29,7 @@ export const CATEGORIES = {
     COMMUNICATION: 'communication',
     HRIS: 'hris',
     FINANCE: 'finance',
-    COLLABORATION: 'collaboration'
+    COLLABORATION: 'collaboration',
 } as const;
 
 export const STATUS = {
@@ -36,11 +37,11 @@ export const STATUS = {
     DISCONNECTED: 'disconnected',
     ERROR: 'error',
     PENDING: 'pending',
-    REQUIRES_REAUTH: 'requires_reauth'
+    REQUIRES_REAUTH: 'requires_reauth',
 } as const;
 
-export type IntegrationCategory = typeof CATEGORIES[keyof typeof CATEGORIES];
-export type IntegrationStatus = typeof STATUS[keyof typeof STATUS];
+export type IntegrationCategory = (typeof CATEGORIES)[keyof typeof CATEGORIES];
+export type IntegrationStatus = (typeof STATUS)[keyof typeof STATUS];
 
 export interface Connector {
     id: string;
@@ -59,7 +60,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.ERP,
         capabilities: ['finance', 'procurement', 'inventory', 'projects'],
         authType: 'oauth2',
-        configFields: ['instance_url', 'client_id', 'client_secret']
+        configFields: ['instance_url', 'client_id', 'client_secret'],
     },
     oracle_erp: {
         id: 'oracle_erp',
@@ -67,7 +68,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.ERP,
         capabilities: ['finance', 'projects', 'procurement'],
         authType: 'oauth2',
-        configFields: ['tenant_id', 'client_id', 'client_secret']
+        configFields: ['tenant_id', 'client_id', 'client_secret'],
     },
     dynamics_365: {
         id: 'dynamics_365',
@@ -75,7 +76,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.ERP,
         capabilities: ['finance', 'sales', 'projects'],
         authType: 'oauth2',
-        configFields: ['tenant_id', 'environment_url']
+        configFields: ['tenant_id', 'environment_url'],
     },
 
     // CRM
@@ -85,7 +86,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.CRM,
         capabilities: ['contacts', 'opportunities', 'accounts', 'campaigns'],
         authType: 'oauth2',
-        configFields: ['instance_url', 'client_id', 'client_secret']
+        configFields: ['instance_url', 'client_id', 'client_secret'],
     },
     hubspot: {
         id: 'hubspot',
@@ -93,7 +94,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.CRM,
         capabilities: ['contacts', 'deals', 'companies', 'marketing'],
         authType: 'oauth2',
-        configFields: ['portal_id']
+        configFields: ['portal_id'],
     },
     zoho_crm: {
         id: 'zoho_crm',
@@ -101,7 +102,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.CRM,
         capabilities: ['leads', 'contacts', 'deals', 'accounts'],
         authType: 'oauth2',
-        configFields: ['organization_id']
+        configFields: ['organization_id'],
     },
 
     // Project Management
@@ -111,7 +112,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.PROJECT_MANAGEMENT,
         capabilities: ['issues', 'projects', 'sprints', 'boards'],
         authType: 'oauth2',
-        configFields: ['site_url', 'cloud_id']
+        configFields: ['site_url', 'cloud_id'],
     },
     asana: {
         id: 'asana',
@@ -119,7 +120,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.PROJECT_MANAGEMENT,
         capabilities: ['tasks', 'projects', 'workspaces', 'portfolios'],
         authType: 'oauth2',
-        configFields: ['workspace_gid']
+        configFields: ['workspace_gid'],
     },
     monday: {
         id: 'monday',
@@ -127,7 +128,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.PROJECT_MANAGEMENT,
         capabilities: ['boards', 'items', 'updates', 'workspaces'],
         authType: 'api_key',
-        configFields: ['api_token']
+        configFields: ['api_token'],
     },
     azure_devops: {
         id: 'azure_devops',
@@ -135,7 +136,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.PROJECT_MANAGEMENT,
         capabilities: ['work_items', 'projects', 'pipelines', 'repos'],
         authType: 'oauth2',
-        configFields: ['organization_url']
+        configFields: ['organization_url'],
     },
 
     // BI
@@ -145,7 +146,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.BI,
         capabilities: ['reports', 'dashboards', 'datasets'],
         authType: 'oauth2',
-        configFields: ['workspace_id']
+        configFields: ['workspace_id'],
     },
     tableau: {
         id: 'tableau',
@@ -153,7 +154,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.BI,
         capabilities: ['workbooks', 'views', 'datasources'],
         authType: 'token',
-        configFields: ['site_url', 'site_id']
+        configFields: ['site_url', 'site_id'],
     },
     looker: {
         id: 'looker',
@@ -161,7 +162,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.BI,
         capabilities: ['dashboards', 'looks', 'explores'],
         authType: 'api_key',
-        configFields: ['base_url', 'client_id', 'client_secret']
+        configFields: ['base_url', 'client_id', 'client_secret'],
     },
 
     // Communication
@@ -171,7 +172,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.COMMUNICATION,
         capabilities: ['messages', 'channels', 'notifications'],
         authType: 'oauth2',
-        configFields: ['workspace_id']
+        configFields: ['workspace_id'],
     },
     teams: {
         id: 'teams',
@@ -179,7 +180,7 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.COMMUNICATION,
         capabilities: ['messages', 'channels', 'meetings', 'notifications'],
         authType: 'oauth2',
-        configFields: ['tenant_id']
+        configFields: ['tenant_id'],
     },
     gmail: {
         id: 'gmail',
@@ -187,8 +188,8 @@ export const CONNECTORS: Record<string, Connector> = {
         category: CATEGORIES.COMMUNICATION,
         capabilities: ['email', 'calendar', 'contacts'],
         authType: 'oauth2',
-        configFields: ['domain']
-    }
+        configFields: ['domain'],
+    },
 };
 
 // ==========================================
@@ -298,7 +299,7 @@ class IntegrationHubServiceClass {
     constructor(deps?: Partial<IntegrationHubServiceDependencies>) {
         this.deps = {
             db: deps?.db ?? getDatabase(),
-            uuidv4: deps?.uuidv4 ?? uuidv4
+            uuidv4: deps?.uuidv4 ?? uuidv4,
         };
     }
 
@@ -314,14 +315,14 @@ class IntegrationHubServiceClass {
      */
     async getAvailableConnectors(category: IntegrationCategory | null = null): Promise<AvailableConnector[]> {
         let connectors = Object.values(CONNECTORS);
-        
+
         if (category) {
-            connectors = connectors.filter(c => c.category === category);
+            connectors = connectors.filter((c) => c.category === category);
         }
 
-        return connectors.map(c => ({
+        return connectors.map((c) => ({
             ...c,
-            isAvailable: true
+            isAvailable: true,
         }));
     }
 
@@ -329,14 +330,14 @@ class IntegrationHubServiceClass {
      * Get organization's connected integrations
      */
     async getConnectedIntegrations(organizationId: string): Promise<Integration[]> {
-        const rows = await this.deps.db.all<IntegrationRecord>(
+        const rows = (await this.deps.db.all<IntegrationRecord>(
             `SELECT * FROM integrations
              WHERE organization_id = ?
              ORDER BY created_at DESC`,
-            [organizationId]
-        ) as IntegrationRecord[];
+            [organizationId],
+        )) as IntegrationRecord[];
 
-        return (rows || []).map(r => ({
+        return (rows || []).map((r) => ({
             id: r.id,
             organizationId: r.organization_id,
             connectorId: r.connector_id,
@@ -346,18 +347,22 @@ class IntegrationHubServiceClass {
             config: JSON.parse(r.config || '{}') as Record<string, unknown>,
             capabilities: JSON.parse(r.capabilities || '[]') as string[],
             authType: r.auth_type,
-            syncSettings: r.sync_settings ? JSON.parse(r.sync_settings) as Record<string, unknown> : undefined,
+            syncSettings: r.sync_settings ? (JSON.parse(r.sync_settings) as Record<string, unknown>) : undefined,
             lastSyncAt: r.last_sync_at || undefined,
             lastError: r.last_error || undefined,
             createdAt: r.created_at,
-            updatedAt: r.updated_at
+            updatedAt: r.updated_at,
         }));
     }
 
     /**
      * Connect a new integration
      */
-    async connectIntegration(organizationId: string, connectorId: string, config: Record<string, unknown>): Promise<ConnectIntegrationResult> {
+    async connectIntegration(
+        organizationId: string,
+        connectorId: string,
+        config: Record<string, unknown>,
+    ): Promise<ConnectIntegrationResult> {
         const connector = CONNECTORS[connectorId];
         if (!connector) {
             throw new Error(`Unknown connector: ${connectorId}`);
@@ -386,8 +391,8 @@ class IntegrationHubServiceClass {
                 STATUS.PENDING,
                 JSON.stringify(config),
                 JSON.stringify(connector.capabilities),
-                connector.authType
-            ]
+                connector.authType,
+            ],
         );
 
         return {
@@ -396,20 +401,24 @@ class IntegrationHubServiceClass {
             name: connector.name,
             category: connector.category,
             status: STATUS.PENDING,
-            capabilities: connector.capabilities
+            capabilities: connector.capabilities,
         };
     }
 
     /**
      * Update integration status
      */
-    async updateIntegrationStatus(integrationId: string, status: IntegrationStatus | string, error: string | null = null): Promise<{ success: boolean }> {
-        const result = await this.deps.db.run(
+    async updateIntegrationStatus(
+        integrationId: string,
+        status: IntegrationStatus | string,
+        error: string | null = null,
+    ): Promise<{ success: boolean }> {
+        const result = (await this.deps.db.run(
             `UPDATE integrations
              SET status = ?, last_error = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
-            [status, error, integrationId]
-        ) as RunResult;
+            [status, error, integrationId],
+        )) as RunResult;
 
         return { success: result.changes > 0 };
     }
@@ -418,12 +427,12 @@ class IntegrationHubServiceClass {
      * Disconnect integration
      */
     async disconnectIntegration(integrationId: string): Promise<{ success: boolean }> {
-        const result = await this.deps.db.run(
+        const result = (await this.deps.db.run(
             `UPDATE integrations
              SET status = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
-            [STATUS.DISCONNECTED, integrationId]
-        ) as RunResult;
+            [STATUS.DISCONNECTED, integrationId],
+        )) as RunResult;
 
         return { success: result.changes > 0 };
     }
@@ -432,10 +441,7 @@ class IntegrationHubServiceClass {
      * Delete integration
      */
     async deleteIntegration(integrationId: string): Promise<{ success: boolean }> {
-        const result = await this.deps.db.run(
-            `DELETE FROM integrations WHERE id = ?`,
-            [integrationId]
-        ) as RunResult;
+        const result = (await this.deps.db.run(`DELETE FROM integrations WHERE id = ?`, [integrationId])) as RunResult;
 
         return { success: result.changes > 0 };
     }
@@ -456,7 +462,7 @@ class IntegrationHubServiceClass {
         await this.logSyncEvent(integrationId, {
             syncId,
             event: 'sync_started',
-            options
+            options,
         });
 
         try {
@@ -468,7 +474,7 @@ class IntegrationHubServiceClass {
                 connector: integration.connectorId,
                 status: 'completed',
                 recordsSynced: 0,
-                duration: 0
+                duration: 0,
             };
 
             // Update last sync time
@@ -476,7 +482,7 @@ class IntegrationHubServiceClass {
                 `UPDATE integrations 
                  SET last_sync_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
-                [integrationId]
+                [integrationId],
             );
 
             result.duration = Date.now() - startTime.getTime();
@@ -484,23 +490,18 @@ class IntegrationHubServiceClass {
             await this.logSyncEvent(integrationId, {
                 syncId,
                 event: 'sync_completed',
-                result
+                result,
             });
 
             return result;
-
         } catch (error: unknown) {
             await this.logSyncEvent(integrationId, {
                 syncId,
                 event: 'sync_failed',
-                error: (error as Error).message
+                error: (error as Error).message,
             });
 
-            await this.updateIntegrationStatus(
-                integrationId, 
-                STATUS.ERROR, 
-                (error as Error).message
-            );
+            await this.updateIntegrationStatus(integrationId, STATUS.ERROR, (error as Error).message);
 
             throw error;
         }
@@ -510,10 +511,9 @@ class IntegrationHubServiceClass {
      * Get integration by ID
      */
     async getIntegration(integrationId: string): Promise<Integration | null> {
-        const row = await this.deps.db.get<IntegrationRecord>(
-            `SELECT * FROM integrations WHERE id = ?`,
-            [integrationId]
-        ) as IntegrationRecord | null;
+        const row = (await this.deps.db.get<IntegrationRecord>(`SELECT * FROM integrations WHERE id = ?`, [
+            integrationId,
+        ])) as IntegrationRecord | null;
 
         if (!row) return null;
 
@@ -527,11 +527,11 @@ class IntegrationHubServiceClass {
             config: JSON.parse(row.config || '{}') as Record<string, unknown>,
             capabilities: JSON.parse(row.capabilities || '[]') as string[],
             authType: row.auth_type,
-            syncSettings: row.sync_settings ? JSON.parse(row.sync_settings) as Record<string, unknown> : undefined,
+            syncSettings: row.sync_settings ? (JSON.parse(row.sync_settings) as Record<string, unknown>) : undefined,
             lastSyncAt: row.last_sync_at || undefined,
             lastError: row.last_error || undefined,
             createdAt: row.created_at,
-            updatedAt: row.updated_at
+            updatedAt: row.updated_at,
         };
     }
 
@@ -542,7 +542,7 @@ class IntegrationHubServiceClass {
         await this.deps.db.run(
             `INSERT INTO integration_sync_logs (id, integration_id, event, data, created_at)
              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [this.deps.uuidv4(), integrationId, event.event, JSON.stringify(event)]
+            [this.deps.uuidv4(), integrationId, event.event, JSON.stringify(event)],
         );
     }
 
@@ -550,20 +550,20 @@ class IntegrationHubServiceClass {
      * Get sync history
      */
     async getSyncHistory(integrationId: string, limit: number = 20): Promise<SyncLog[]> {
-        const rows = await this.deps.db.all<SyncLogRecord>(
+        const rows = (await this.deps.db.all<SyncLogRecord>(
             `SELECT * FROM integration_sync_logs
              WHERE integration_id = ?
              ORDER BY created_at DESC
              LIMIT ?`,
-            [integrationId, limit]
-        ) as SyncLogRecord[];
+            [integrationId, limit],
+        )) as SyncLogRecord[];
 
-        return (rows || []).map(r => ({
+        return (rows || []).map((r) => ({
             id: r.id,
             integrationId: r.integration_id,
             event: r.event,
             data: JSON.parse(r.data || '{}') as Record<string, unknown>,
-            createdAt: r.created_at
+            createdAt: r.created_at,
         }));
     }
 
@@ -571,7 +571,7 @@ class IntegrationHubServiceClass {
      * Get integration statistics
      */
     async getIntegrationStats(organizationId: string): Promise<IntegrationStats[]> {
-        const rows = await this.deps.db.all<IntegrationStats>(
+        const rows = (await this.deps.db.all<IntegrationStats>(
             `SELECT 
                 category,
                 COUNT(*) as count,
@@ -580,8 +580,8 @@ class IntegrationHubServiceClass {
              FROM integrations
              WHERE organization_id = ?
              GROUP BY category`,
-            [organizationId]
-        ) as IntegrationStats[];
+            [organizationId],
+        )) as IntegrationStats[];
 
         return rows || [];
     }
@@ -606,7 +606,7 @@ class IntegrationHubServiceClass {
                 last_error TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`
+            )`,
         );
 
         await this.deps.db.run(
@@ -616,7 +616,7 @@ class IntegrationHubServiceClass {
                 event TEXT NOT NULL,
                 data TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`
+            )`,
         );
 
         await this.deps.db.run(`CREATE INDEX IF NOT EXISTS idx_int_org ON integrations(organization_id)`);
@@ -629,7 +629,7 @@ class IntegrationHubServiceClass {
 const integrationHubServiceInstance = new IntegrationHubServiceClass();
 
 // Export constants
-export { CATEGORIES, STATUS, CONNECTORS };
+export { CATEGORIES, CONNECTORS, STATUS };
 
 // Export individual functions for backward compatibility
 export const getAvailableConnectors = (category?: IntegrationCategory | null) =>
@@ -638,16 +638,18 @@ export const getConnectedIntegrations = (organizationId: string) =>
     integrationHubServiceInstance.getConnectedIntegrations(organizationId);
 export const connectIntegration = (organizationId: string, connectorId: string, config: Record<string, unknown>) =>
     integrationHubServiceInstance.connectIntegration(organizationId, connectorId, config);
-export const updateIntegrationStatus = (integrationId: string, status: IntegrationStatus | string, error?: string | null) =>
-    integrationHubServiceInstance.updateIntegrationStatus(integrationId, status, error);
+export const updateIntegrationStatus = (
+    integrationId: string,
+    status: IntegrationStatus | string,
+    error?: string | null,
+) => integrationHubServiceInstance.updateIntegrationStatus(integrationId, status, error);
 export const disconnectIntegration = (integrationId: string) =>
     integrationHubServiceInstance.disconnectIntegration(integrationId);
 export const deleteIntegration = (integrationId: string) =>
     integrationHubServiceInstance.deleteIntegration(integrationId);
 export const syncIntegration = (integrationId: string, options?: Record<string, unknown>) =>
     integrationHubServiceInstance.syncIntegration(integrationId, options);
-export const getIntegration = (integrationId: string) =>
-    integrationHubServiceInstance.getIntegration(integrationId);
+export const getIntegration = (integrationId: string) => integrationHubServiceInstance.getIntegration(integrationId);
 export const logSyncEvent = (integrationId: string, event: SyncEvent) =>
     integrationHubServiceInstance.logSyncEvent(integrationId, event);
 export const getSyncHistory = (integrationId: string, limit?: number) =>
@@ -673,7 +675,8 @@ const integrationHubService = {
     getSyncHistory,
     getIntegrationStats,
     initialize,
-    setDependencies: (newDeps: Partial<IntegrationHubServiceDependencies>) => integrationHubServiceInstance.setDependencies(newDeps)
+    setDependencies: (newDeps: Partial<IntegrationHubServiceDependencies>) =>
+        integrationHubServiceInstance.setDependencies(newDeps),
 };
 
 export default integrationHubService;

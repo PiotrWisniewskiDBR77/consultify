@@ -1,11 +1,11 @@
 /**
  * Security Headers Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Adds security headers for SOC2/ISO compliance.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 // ==========================================
 // TYPES
@@ -44,7 +44,7 @@ setInterval(() => {
     const maxAge = 3600000; // 1 hour
 
     for (const [key, requests] of rateLimitStore.entries()) {
-        const filtered = requests.filter(timestamp => timestamp > now - maxAge);
+        const filtered = requests.filter((timestamp) => timestamp > now - maxAge);
         if (filtered.length === 0) {
             rateLimitStore.delete(key);
         } else {
@@ -60,11 +60,7 @@ setInterval(() => {
 /**
  * Apply security headers to responses
  */
-export const securityHeaders = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): void => {
+export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
     // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
@@ -87,16 +83,17 @@ export const securityHeaders = (
 
     // Content Security Policy (customize as needed)
     // Allow images from transparenttextures.com for background patterns
-    res.setHeader('Content-Security-Policy',
+    res.setHeader(
+        'Content-Security-Policy',
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data: https://www.transparenttextures.com; " +
-        "connect-src 'self'; " +
-        "font-src 'self' data:; " +
-        "object-src 'none'; " +
-        "media-src 'self'; " +
-        "frame-src 'none'"
+            "script-src 'self' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: https://www.transparenttextures.com; " +
+            "connect-src 'self'; " +
+            "font-src 'self' data:; " +
+            "object-src 'none'; " +
+            "media-src 'self'; " +
+            "frame-src 'none'",
     );
 
     next();
@@ -108,11 +105,7 @@ export const securityHeaders = (
  * @param options - Rate limit options
  */
 export const createRateLimiter = (options: RateLimitOptions = {}) => {
-    const {
-        windowMs = 60000,
-        max = 100,
-        message = 'Too many requests'
-    } = options;
+    const { windowMs = 60000, max = 100, message = 'Too many requests' } = options;
 
     return (req: Request, res: Response, next: NextFunction): void => {
         const key = `${req.ip}-${req.path}`;
@@ -123,7 +116,7 @@ export const createRateLimiter = (options: RateLimitOptions = {}) => {
         let requests = rateLimitStore.get(key) || [];
 
         // Filter to only requests within the window
-        requests = requests.filter(timestamp => timestamp > windowStart);
+        requests = requests.filter((timestamp) => timestamp > windowStart);
 
         if (requests.length >= max) {
             const retryAfter = Math.ceil((requests[0] + windowMs - now) / 1000);
@@ -135,7 +128,7 @@ export const createRateLimiter = (options: RateLimitOptions = {}) => {
             res.status(429).json({
                 error: message,
                 retryAfter,
-                code: 'RATE_LIMITED'
+                code: 'RATE_LIMITED',
             });
             return;
         }
@@ -160,36 +153,36 @@ export const rateLimitPresets = {
     admin: createRateLimiter({
         windowMs: 60000, // 1 minute
         max: 30,
-        message: 'Too many admin requests, please slow down'
+        message: 'Too many admin requests, please slow down',
     }),
 
     // Authentication endpoints
     auth: createRateLimiter({
         windowMs: 900000, // 15 minutes
         max: 10,
-        message: 'Too many authentication attempts, please try again later'
+        message: 'Too many authentication attempts, please try again later',
     }),
 
     // Break-glass operations (very restrictive)
     breakGlass: createRateLimiter({
         windowMs: 3600000, // 1 hour
         max: 5,
-        message: 'Break-glass operations are rate limited for security'
+        message: 'Break-glass operations are rate limited for security',
     }),
 
     // Export operations
     export: createRateLimiter({
         windowMs: 300000, // 5 minutes
         max: 10,
-        message: 'Export operations are rate limited'
+        message: 'Export operations are rate limited',
     }),
 
     // General API
     api: createRateLimiter({
         windowMs: 60000, // 1 minute
         max: 200,
-        message: 'Too many requests'
-    })
+        message: 'Too many requests',
+    }),
 };
 
 /**
@@ -244,7 +237,7 @@ export const validateRequest = (schema: ValidationSchema) => {
             res.status(400).json({
                 error: 'Validation failed',
                 code: 'VALIDATION_ERROR',
-                details: errors
+                details: errors,
             });
             return;
         }
@@ -252,7 +245,4 @@ export const validateRequest = (schema: ValidationSchema) => {
         next();
     };
 };
-
-
-
 

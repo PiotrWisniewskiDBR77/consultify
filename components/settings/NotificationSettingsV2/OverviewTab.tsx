@@ -3,11 +3,12 @@
  * Shows summary and quick toggles for main notification settings
  */
 
+import { Bell, Mail, Settings, Smartphone } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bell, Mail, Smartphone, Settings } from 'lucide-react';
-import type { NotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
+
 import type { UserIntegration } from '../../../hooks/useUserIntegrations';
+import type { NotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
 
 interface OverviewTabProps {
     preferences: NotificationPreferences;
@@ -17,8 +18,10 @@ interface OverviewTabProps {
 }
 
 // Toggle component
-const Toggle: React.FC<{ checked: boolean; onChange: () => void; disabled?: boolean }> = ({ 
-    checked, onChange, disabled 
+const Toggle: React.FC<{ checked: boolean; onChange: () => void; disabled?: boolean }> = ({
+    checked,
+    onChange,
+    disabled,
 }) => (
     <button
         onClick={onChange}
@@ -33,14 +36,9 @@ const Toggle: React.FC<{ checked: boolean; onChange: () => void; disabled?: bool
     </button>
 );
 
-const OverviewTab: React.FC<OverviewTabProps> = ({
-    preferences,
-    integrations,
-    onToggleGlobal,
-    onToggleChannel
-}) => {
+const OverviewTab: React.FC<OverviewTabProps> = ({ preferences, integrations, onToggleGlobal, onToggleChannel }) => {
     const { t } = useTranslation();
-    
+
     // Count active channels
     const activeChannels = Object.values(preferences.categories).reduce((acc, cat) => {
         Object.entries(cat.channels).forEach(([channel, enabled]) => {
@@ -57,26 +55,26 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             key: 'taskAssignment',
             title: t('settings.notifications.taskAssignments', 'Task Assignments'),
             description: t('settings.notifications.taskAssignmentsDesc', 'When a new task is assigned to you'),
-            category: 'tasks'
+            category: 'tasks',
         },
         {
             key: 'taskUpdates',
             title: t('settings.notifications.taskUpdates', 'Task Updates'),
             description: t('settings.notifications.taskUpdatesDesc', 'When status changes or comments are added'),
-            category: 'tasks'
+            category: 'tasks',
         },
         {
             key: 'mentions',
             title: t('settings.notifications.mentions', 'Mentions'),
             description: t('settings.notifications.mentionsDesc', 'When someone mentions you in a comment'),
-            category: 'collaboration'
+            category: 'collaboration',
         },
         {
             key: 'milestones',
             title: t('settings.notifications.milestones', 'Project Milestones'),
             description: t('settings.notifications.milestonesDesc', 'Major project updates and completions'),
-            category: 'tasks'
-        }
+            category: 'tasks',
+        },
     ];
 
     return (
@@ -89,7 +87,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                         {t('settings.notifications.preferencesTitle', 'Notification Preferences')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('settings.notifications.preferencesDesc', 'Manage how and when you receive notifications across all channels.')}
+                        {t(
+                            'settings.notifications.preferencesDesc',
+                            'Manage how and when you receive notifications across all channels.',
+                        )}
                     </p>
                 </div>
             </div>
@@ -98,9 +99,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                 {/* Header */}
                 <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 dark:border-white/10 text-sm font-medium text-slate-500 dark:text-slate-400">
-                    <div className="col-span-4">
-                        {t('settings.notifications.activity', 'Activity')}
-                    </div>
+                    <div className="col-span-4">{t('settings.notifications.activity', 'Activity')}</div>
                     <div className="col-span-8 grid grid-cols-2 gap-4">
                         <div className="text-center flex flex-col items-center gap-1">
                             <Bell size={16} />
@@ -116,10 +115,11 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 {/* Rows */}
                 <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {notificationRows.map((row) => {
-                        const categoryPrefs = preferences.categories[row.category as keyof typeof preferences.categories];
-                        
+                        const categoryPrefs =
+                            preferences.categories[row.category as keyof typeof preferences.categories];
+
                         return (
-                            <div 
+                            <div
                                 key={row.key}
                                 className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-700/50 transition-colors"
                             >
@@ -127,29 +127,27 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                                         {row.title}
                                     </h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {row.description}
-                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{row.description}</p>
                                 </div>
                                 <div className="col-span-8 grid grid-cols-2 gap-4">
                                     <div className="flex justify-center">
-                                        <Toggle 
+                                        <Toggle
                                             checked={categoryPrefs?.channels?.in_app ?? true}
-                                            onChange={() => onToggleChannel(
-                                                row.category, 
-                                                'in_app', 
-                                                !categoryPrefs?.channels?.in_app
-                                            )}
+                                            onChange={() =>
+                                                onToggleChannel(
+                                                    row.category,
+                                                    'in_app',
+                                                    !categoryPrefs?.channels?.in_app,
+                                                )
+                                            }
                                         />
                                     </div>
                                     <div className="flex justify-center">
-                                        <Toggle 
+                                        <Toggle
                                             checked={categoryPrefs?.channels?.email ?? false}
-                                            onChange={() => onToggleChannel(
-                                                row.category, 
-                                                'email', 
-                                                !categoryPrefs?.channels?.email
-                                            )}
+                                            onChange={() =>
+                                                onToggleChannel(row.category, 'email', !categoryPrefs?.channels?.email)
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -160,9 +158,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
                 {/* Footer */}
                 <div className="px-6 py-4 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-white/10 flex justify-end">
-                    <button
-                        className="px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg text-sm font-medium transition-colors"
-                    >
+                    <button className="px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg text-sm font-medium transition-colors">
                         {t('settings.notifications.savePreferences', 'Save Preferences')}
                     </button>
                 </div>
@@ -172,11 +168,4 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 };
 
 export default OverviewTab;
-
-
-
-
-
-
-
 

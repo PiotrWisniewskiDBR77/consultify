@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { usePMOContext } from '../../hooks/usePMOContext';
 import {
+    AlertTriangle,
+    Calendar,
+    CheckCircle2,
     ChevronDown,
     ChevronUp,
-    AlertTriangle,
-    CheckCircle2,
     Clock,
+    FileQuestion,
     Target,
-    XCircle,
     User,
-    Calendar,
-    FileQuestion
+    XCircle,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { usePMOContext } from '../../hooks/usePMOContext';
 
 /**
  * PMO Status Bar - Displays current phase, gate status, and blocking issues
@@ -28,7 +29,7 @@ export const PMOStatusBar: React.FC = () => {
         isLoading,
         error,
         getCriticalMessages,
-        getWarningMessages
+        getWarningMessages,
     } = usePMOContext();
 
     const [isExpanded, setIsExpanded] = useState(false);
@@ -64,13 +65,20 @@ export const PMOStatusBar: React.FC = () => {
     // Phase colors
     const getPhaseColor = (phase: string | null) => {
         switch (phase) {
-            case 'Context': return 'bg-blue-500';
-            case 'Assessment': return 'bg-indigo-500';
-            case 'Initiatives': return 'bg-purple-500';
-            case 'Roadmap': return 'bg-pink-500';
-            case 'Execution': return 'bg-orange-500';
-            case 'Stabilization': return 'bg-green-500';
-            default: return 'bg-slate-500';
+            case 'Context':
+                return 'bg-blue-500';
+            case 'Assessment':
+                return 'bg-indigo-500';
+            case 'Initiatives':
+                return 'bg-purple-500';
+            case 'Roadmap':
+                return 'bg-pink-500';
+            case 'Execution':
+                return 'bg-orange-500';
+            case 'Stabilization':
+                return 'bg-green-500';
+            default:
+                return 'bg-slate-500';
         }
     };
 
@@ -95,10 +103,14 @@ export const PMOStatusBar: React.FC = () => {
     // Issue type icon
     const getIssueIcon = (type: string) => {
         switch (type) {
-            case 'DECISION': return <FileQuestion size={14} className="text-purple-400" />;
-            case 'TASK': return <Target size={14} className="text-blue-400" />;
-            case 'INITIATIVE': return <AlertTriangle size={14} className="text-orange-400" />;
-            default: return <XCircle size={14} className="text-red-400" />;
+            case 'DECISION':
+                return <FileQuestion size={14} className="text-purple-400" />;
+            case 'TASK':
+                return <Target size={14} className="text-blue-400" />;
+            case 'INITIATIVE':
+                return <AlertTriangle size={14} className="text-orange-400" />;
+            default:
+                return <XCircle size={14} className="text-red-400" />;
         }
     };
 
@@ -116,9 +128,7 @@ export const PMOStatusBar: React.FC = () => {
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                             Phase {phaseNumber}/{totalPhases}
                         </span>
-                        <span className="text-sm font-semibold text-white">
-                            {currentPhase || 'Loading...'}
-                        </span>
+                        <span className="text-sm font-semibold text-white">{currentPhase || 'Loading...'}</span>
                     </div>
 
                     {/* Separator */}
@@ -154,9 +164,14 @@ export const PMOStatusBar: React.FC = () => {
                     {/* System Messages */}
                     {(criticalMessages.length > 0 || warningMessages.length > 0) && (
                         <div className="pt-3 space-y-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">System Messages</h4>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                System Messages
+                            </h4>
                             {criticalMessages.map((msg, idx) => (
-                                <div key={`crit-${idx}`} className="flex items-start gap-2 p-2 bg-red-500/10 rounded border border-red-500/20">
+                                <div
+                                    key={`crit-${idx}`}
+                                    className="flex items-start gap-2 p-2 bg-red-500/10 rounded border border-red-500/20"
+                                >
                                     <XCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
                                     <div>
                                         <span className="text-xs font-bold text-red-400">{msg.code}</span>
@@ -165,7 +180,10 @@ export const PMOStatusBar: React.FC = () => {
                                 </div>
                             ))}
                             {warningMessages.map((msg, idx) => (
-                                <div key={`warn-${idx}`} className="flex items-start gap-2 p-2 bg-amber-500/10 rounded border border-amber-500/20">
+                                <div
+                                    key={`warn-${idx}`}
+                                    className="flex items-start gap-2 p-2 bg-amber-500/10 rounded border border-amber-500/20"
+                                >
                                     <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                                     <div>
                                         <span className="text-xs font-bold text-amber-400">{msg.code}</span>
@@ -179,7 +197,9 @@ export const PMOStatusBar: React.FC = () => {
                     {/* Blocking Issues */}
                     {blockingIssues.length > 0 && (
                         <div className="pt-3 space-y-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Blocking Issues</h4>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                Blocking Issues
+                            </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {blockingIssues.map((issue) => (
                                     <div

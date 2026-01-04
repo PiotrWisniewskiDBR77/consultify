@@ -1,6 +1,6 @@
 /**
  * UserDetailDrawer - Detailed user information panel
- * 
+ *
  * Features:
  * - User profile information
  * - Active sessions list with terminate option
@@ -9,14 +9,28 @@
  * - Activity timeline
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    X, User, Shield, Clock, Monitor, Smartphone, Globe,
-    LogOut, History, Check, AlertCircle, Crown, Activity,
-    RefreshCw, Mail, Calendar, Key
+    Activity,
+    AlertCircle,
+    Calendar,
+    Check,
+    Clock,
+    Crown,
+    Globe,
+    History,
+    Key,
+    LogOut,
+    Mail,
+    Monitor,
+    RefreshCw,
+    Shield,
+    Smartphone,
+    User,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface UserDetails {
     id: string;
@@ -59,12 +73,7 @@ interface UserDetailDrawerProps {
     onUserUpdated?: () => void;
 }
 
-export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
-    user,
-    isOpen,
-    onClose,
-    onUserUpdated
-}) => {
+export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({ user, isOpen, onClose, onUserUpdated }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'profile' | 'sessions' | 'history'>('profile');
     const [sessions, setSessions] = useState<Session[]>([]);
@@ -81,18 +90,18 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
 
     const fetchUserData = async () => {
         if (!user) return;
-        
+
         setLoading(true);
         try {
             // For now, we'll use the security sessions endpoint
             // In a full implementation, you'd have user-specific endpoints
             const [sessionsRes, historyRes] = await Promise.all([
                 fetch('/api/security/sessions/all', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 }),
                 fetch(`/api/security/login-history?all=true&limit=10`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
+                    headers: { Authorization: `Bearer ${token}` },
+                }),
             ]);
 
             if (sessionsRes.ok) {
@@ -119,7 +128,7 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         try {
             const res = await fetch(`/api/security/sessions/${sessionId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
@@ -140,7 +149,7 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
         try {
             const res = await fetch(`/api/security/sessions/user/${user.id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
@@ -160,7 +169,7 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
             day: 'numeric',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -184,11 +193,8 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
     return (
         <>
             {/* Backdrop */}
-            <div 
-                className="fixed inset-0 bg-black/50 z-40"
-                onClick={onClose}
-            />
-            
+            <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+
             {/* Drawer */}
             <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-navy-900 border-l border-white/10 shadow-2xl z-50 overflow-hidden flex flex-col">
                 {/* Header */}
@@ -211,12 +217,18 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                                 </h2>
                                 <p className="text-slate-400">{user?.email}</p>
                                 <div className="flex items-center gap-2 mt-2">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${getRoleBadgeColor(user?.role, user?.isOwner)}`}>
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs ${getRoleBadgeColor(user?.role, user?.isOwner)}`}
+                                    >
                                         {user?.isOwner ? 'Owner' : user?.role || 'USER'}
                                     </span>
-                                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                                        user?.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                                    }`}>
+                                    <span
+                                        className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                            user?.status === 'active'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-red-500/20 text-red-400'
+                                        }`}
+                                    >
                                         {user?.status === 'active' ? <Check size={12} /> : <AlertCircle size={12} />}
                                         {user?.status || 'active'}
                                     </span>
@@ -276,7 +288,9 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                                                 <Key size={16} />
                                                 Role
                                             </div>
-                                            <p className="text-white">{user?.isOwner ? 'Owner (Billing Admin)' : user?.role}</p>
+                                            <p className="text-white">
+                                                {user?.isOwner ? 'Owner (Billing Admin)' : user?.role}
+                                            </p>
                                         </div>
 
                                         {user?.createdAt && (
@@ -307,7 +321,8 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                                                 Account Owner
                                             </div>
                                             <p className="text-sm text-amber-200/70">
-                                                This user is the billing owner of the organization and cannot be deleted or deactivated.
+                                                This user is the billing owner of the organization and cannot be deleted
+                                                or deactivated.
                                             </p>
                                         </div>
                                     )}
@@ -330,11 +345,9 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                                     )}
 
                                     {sessions.length === 0 ? (
-                                        <div className="text-center py-8 text-slate-500">
-                                            No active sessions
-                                        </div>
+                                        <div className="text-center py-8 text-slate-500">No active sessions</div>
                                     ) : (
-                                        sessions.map(session => (
+                                        sessions.map((session) => (
                                             <div
                                                 key={session.id}
                                                 className={`p-4 rounded-lg border ${
@@ -350,11 +363,14 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                                                             <p className="text-white font-medium">
                                                                 {session.deviceInfo || 'Unknown Device'}
                                                                 {session.isCurrent && (
-                                                                    <span className="ml-2 text-xs text-green-400">(Current)</span>
+                                                                    <span className="ml-2 text-xs text-green-400">
+                                                                        (Current)
+                                                                    </span>
                                                                 )}
                                                             </p>
                                                             <p className="text-xs text-slate-400">
-                                                                {session.ipAddress} • {session.location || 'Unknown location'}
+                                                                {session.ipAddress} •{' '}
+                                                                {session.location || 'Unknown location'}
                                                             </p>
                                                             <p className="text-xs text-slate-500 mt-1">
                                                                 Last active: {formatDate(session.lastActiveAt)}
@@ -381,11 +397,9 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                             {activeTab === 'history' && (
                                 <div className="space-y-3">
                                     {loginHistory.length === 0 ? (
-                                        <div className="text-center py-8 text-slate-500">
-                                            No login history
-                                        </div>
+                                        <div className="text-center py-8 text-slate-500">No login history</div>
                                     ) : (
-                                        loginHistory.map(item => (
+                                        loginHistory.map((item) => (
                                             <div
                                                 key={item.id}
                                                 className="p-4 bg-navy-800/50 rounded-lg border border-white/5"
@@ -398,10 +412,16 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
                                                             <AlertCircle className="text-red-400" size={16} />
                                                         )}
                                                         <div>
-                                                            <p className={`font-medium ${
-                                                                item.status === 'success' ? 'text-green-400' : 'text-red-400'
-                                                            }`}>
-                                                                {item.status === 'success' ? 'Successful login' : 'Failed login'}
+                                                            <p
+                                                                className={`font-medium ${
+                                                                    item.status === 'success'
+                                                                        ? 'text-green-400'
+                                                                        : 'text-red-400'
+                                                                }`}
+                                                            >
+                                                                {item.status === 'success'
+                                                                    ? 'Successful login'
+                                                                    : 'Failed login'}
                                                             </p>
                                                             <p className="text-xs text-slate-400">
                                                                 {item.ipAddress} • {item.location || 'Unknown'}
@@ -431,11 +451,4 @@ export const UserDetailDrawer: React.FC<UserDetailDrawerProps> = ({
 };
 
 export default UserDetailDrawer;
-
-
-
-
-
-
-
 

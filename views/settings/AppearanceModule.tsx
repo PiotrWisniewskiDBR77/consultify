@@ -1,22 +1,34 @@
 /**
  * AppearanceModule - Appearance & Regional Settings
- * 
+ *
  * Tabs: Theme | Language | Regional | Accessibility | Work | Dashboard
  */
 
+import {
+    Accessibility,
+    Briefcase,
+    Clock,
+    Globe,
+    Keyboard,
+    LayoutDashboard,
+    Moon,
+    Palette,
+    Shield,
+    Zap,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { Palette, Globe, Clock, Accessibility, Briefcase, LayoutDashboard, Keyboard, Moon, Zap, Shield } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { RegionalSettings } from '../../components/settings/RegionalSettings';
-import { AccessibilitySettings } from '../../components/settings/AccessibilitySettings';
-import { WorkPreferencesSettings } from '../../components/settings/WorkPreferencesSettings';
-import { DashboardPreferencesSettings } from '../../components/settings/DashboardPreferencesSettings';
-import { KeyboardShortcutsSettings } from '../../components/settings/KeyboardShortcutsSettings';
-import { QuietHoursSettings } from '../../components/settings/QuietHoursSettings';
-import { PerformanceSettings } from '../../components/settings/PerformanceSettings';
-import { DataPrivacySettings } from '../../components/settings/DataPrivacySettings';
 import { useTranslation } from 'react-i18next';
-import { User, Language } from '../../types';
+
+import { AccessibilitySettings } from '../../components/settings/AccessibilitySettings';
+import { DashboardPreferencesSettings } from '../../components/settings/DashboardPreferencesSettings';
+import { DataPrivacySettings } from '../../components/settings/DataPrivacySettings';
+import { KeyboardShortcutsSettings } from '../../components/settings/KeyboardShortcutsSettings';
+import { PerformanceSettings } from '../../components/settings/PerformanceSettings';
+import { QuietHoursSettings } from '../../components/settings/QuietHoursSettings';
+import { RegionalSettings } from '../../components/settings/RegionalSettings';
+import { WorkPreferencesSettings } from '../../components/settings/WorkPreferencesSettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { Language, User } from '../../types';
 
 // Accent color options
 const ACCENT_COLORS = [
@@ -54,7 +66,7 @@ const ThemeSettings: React.FC<{
 
     const handleAccentColorChange = (colorId: string) => {
         setAccentColor(colorId);
-        const color = ACCENT_COLORS.find(c => c.id === colorId);
+        const color = ACCENT_COLORS.find((c) => c.id === colorId);
         if (color) {
             document.documentElement.style.setProperty('--accent-color', color.value);
             document.documentElement.style.setProperty('--accent-color-dark', color.dark);
@@ -77,16 +89,20 @@ const ThemeSettings: React.FC<{
                         <button
                             key={t_.id}
                             onClick={() => toggleTheme(t_.id)}
-                            className={`p-6 rounded-xl border-2 transition-all ${theme === t_.id
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
-                                }`}
+                            className={`p-6 rounded-xl border-2 transition-all ${
+                                theme === t_.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                            }`}
                         >
                             <div className="text-4xl mb-3">{t_.icon}</div>
-                            <p className={`font-medium ${theme === t_.id
-                                ? 'text-purple-700 dark:text-purple-300'
-                                : 'text-slate-900 dark:text-white'
-                                }`}>
+                            <p
+                                className={`font-medium ${
+                                    theme === t_.id
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-slate-900 dark:text-white'
+                                }`}
+                            >
                                 {t_.label}
                             </p>
                         </button>
@@ -100,7 +116,10 @@ const ThemeSettings: React.FC<{
                     {t('settings.theme.accentColor', 'Accent Color')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    {t('settings.theme.accentColorDescription', 'Customize the highlight color used throughout the app')}
+                    {t(
+                        'settings.theme.accentColorDescription',
+                        'Customize the highlight color used throughout the app',
+                    )}
                 </p>
 
                 <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
@@ -108,8 +127,9 @@ const ThemeSettings: React.FC<{
                         <button
                             key={color.id}
                             onClick={() => handleAccentColorChange(color.id)}
-                            className={`relative w-12 h-12 rounded-full transition-all transform hover:scale-110 ${accentColor === color.id ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white' : ''
-                                }`}
+                            className={`relative w-12 h-12 rounded-full transition-all transform hover:scale-110 ${
+                                accentColor === color.id ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white' : ''
+                            }`}
                             style={{ backgroundColor: color.value }}
                             title={color.label}
                         >
@@ -128,16 +148,28 @@ const ThemeSettings: React.FC<{
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {t('settings.theme.currentTheme', 'Current theme')}: <strong className="text-slate-900 dark:text-white capitalize">{theme}</strong>
+                            {t('settings.theme.currentTheme', 'Current theme')}:{' '}
+                            <strong className="text-slate-900 dark:text-white capitalize">{theme}</strong>
                         </p>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            {t('settings.theme.currentAccent', 'Accent color')}: <strong className="capitalize" style={{ color: ACCENT_COLORS.find(c => c.id === accentColor)?.value }}>{accentColor}</strong>
+                            {t('settings.theme.currentAccent', 'Accent color')}:{' '}
+                            <strong
+                                className="capitalize"
+                                style={{ color: ACCENT_COLORS.find((c) => c.id === accentColor)?.value }}
+                            >
+                                {accentColor}
+                            </strong>
                         </p>
                     </div>
                     {/* Preview Swatch */}
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10" style={{ backgroundColor: ACCENT_COLORS.find(c => c.id === accentColor)?.value }} />
-                        <div className="text-sm text-slate-500">{ACCENT_COLORS.find(c => c.id === accentColor)?.value}</div>
+                        <div
+                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10"
+                            style={{ backgroundColor: ACCENT_COLORS.find((c) => c.id === accentColor)?.value }}
+                        />
+                        <div className="text-sm text-slate-500">
+                            {ACCENT_COLORS.find((c) => c.id === accentColor)?.value}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -148,10 +180,12 @@ const ThemeSettings: React.FC<{
 // Language Settings Component
 const LanguageSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Partial<User>) => void }> = ({
     currentUser,
-    onUpdateUser
+    onUpdateUser,
 }) => {
     const { t, i18n } = useTranslation();
-    const [selectedLanguage, setSelectedLanguage] = useState<Language>((i18n.language?.toUpperCase() as Language) || 'EN');
+    const [selectedLanguage, setSelectedLanguage] = useState<Language>(
+        (i18n.language?.toUpperCase() as Language) || 'EN',
+    );
 
     const languages = [
         { code: 'EN', name: 'English', flag: '🇬🇧' },
@@ -180,21 +214,23 @@ const LanguageSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Pa
                     <button
                         key={lang.code}
                         onClick={() => handleLanguageChange(lang.code)}
-                        className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${selectedLanguage === lang.code
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
-                            }`}
+                        className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${
+                            selectedLanguage === lang.code
+                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                        }`}
                     >
                         <span className="text-2xl">{lang.flag}</span>
-                        <span className={`font-medium ${selectedLanguage === lang.code
-                            ? 'text-purple-700 dark:text-purple-300'
-                            : 'text-slate-900 dark:text-white'
-                            }`}>
+                        <span
+                            className={`font-medium ${
+                                selectedLanguage === lang.code
+                                    ? 'text-purple-700 dark:text-purple-300'
+                                    : 'text-slate-900 dark:text-white'
+                            }`}
+                        >
                             {lang.name}
                         </span>
-                        {selectedLanguage === lang.code && (
-                            <span className="ml-auto text-purple-500">✓</span>
-                        )}
+                        {selectedLanguage === lang.code && <span className="ml-auto text-purple-500">✓</span>}
                     </button>
                 ))}
             </div>
@@ -207,7 +243,7 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
     currentUser,
     onUpdateUser,
     theme,
-    toggleTheme
+    toggleTheme,
 }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'theme');
@@ -217,54 +253,54 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
         {
             id: 'theme',
             label: t('settings.tabs.theme', 'Theme'),
-            icon: <Palette size={16} />
+            icon: <Palette size={16} />,
         },
         {
             id: 'language',
             label: t('settings.tabs.language', 'Language'),
-            icon: <Globe size={16} />
+            icon: <Globe size={16} />,
         },
         {
             id: 'regional',
             label: t('settings.tabs.regional', 'Regional'),
-            icon: <Clock size={16} />
+            icon: <Clock size={16} />,
         },
         {
             id: 'accessibility',
             label: t('settings.tabs.accessibility', 'Accessibility'),
-            icon: <Accessibility size={16} />
+            icon: <Accessibility size={16} />,
         },
         // Productivity
         {
             id: 'shortcuts',
             label: t('settings.tabs.shortcuts', 'Shortcuts'),
-            icon: <Keyboard size={16} />
+            icon: <Keyboard size={16} />,
         },
         {
             id: 'work',
             label: t('settings.tabs.work', 'Work'),
-            icon: <Briefcase size={16} />
+            icon: <Briefcase size={16} />,
         },
         {
             id: 'dashboard',
             label: t('settings.tabs.dashboard', 'Dashboard'),
-            icon: <LayoutDashboard size={16} />
+            icon: <LayoutDashboard size={16} />,
         },
         // Focus & Privacy
         {
             id: 'quiet-hours',
             label: t('settings.tabs.quietHours', 'Quiet Hours'),
-            icon: <Moon size={16} />
+            icon: <Moon size={16} />,
         },
         {
             id: 'performance',
             label: t('settings.tabs.performance', 'Performance'),
-            icon: <Zap size={16} />
+            icon: <Zap size={16} />,
         },
         {
             id: 'privacy',
             label: t('settings.tabs.privacy', 'Privacy'),
-            icon: <Shield size={16} />
+            icon: <Shield size={16} />,
         },
     ];
 
@@ -329,7 +365,10 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
             activeTab={activeTab}
             onTabChange={setActiveTab}
             title={t('settings.modules.appearance', 'Appearance & Regional')}
-            subtitle={t('settings.modules.appearanceDesc', 'Customize theme, language, accessibility, and work preferences')}
+            subtitle={t(
+                'settings.modules.appearanceDesc',
+                'Customize theme, language, accessibility, and work preferences',
+            )}
         >
             {renderContent()}
         </TabLayout>
@@ -337,5 +376,3 @@ export const AppearanceModule: React.FC<AppearanceModuleProps> = ({
 };
 
 export default AppearanceModule;
-
-

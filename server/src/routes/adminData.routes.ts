@@ -1,15 +1,16 @@
 /**
  * Admin Data Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Admin panel data endpoints (requires ADMIN role)
  */
 
 import { Router } from 'express';
-import { verifyToken } from '../middleware/auth.middleware.js';
-import { verifyAdmin } from '../middleware/admin.middleware.js';
-import { validateBody } from '../middleware/validation.middleware.js';
+
 import AdminDataController from '../controllers/AdminDataController.js';
+import { verifyAdmin } from '../middleware/admin.middleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateBody } from '../middleware/validation.middleware.js';
 import { UpdateUserTierSchema } from '../validators/admin.validators.js';
 
 const router = Router();
@@ -32,11 +33,7 @@ router.get('/user-tiers/:orgId', AdminDataController.getUserTiers);
  * PUT /api/admin-data/user-tiers/:orgId/:userId
  * Update user's AI tier
  */
-router.put(
-    '/user-tiers/:orgId/:userId',
-    validateBody(UpdateUserTierSchema),
-    AdminDataController.updateUserTier
-);
+router.put('/user-tiers/:orgId/:userId', validateBody(UpdateUserTierSchema), AdminDataController.updateUserTier);
 
 /**
  * GET /api/admin-data/cost-attribution/:orgId
@@ -61,4 +58,3 @@ router.get('/security-events/:orgId', AdminDataController.getSecurityEvents);
 router.get('/dashboard-activity/:orgId', AdminDataController.getDashboardActivity);
 
 export default router;
-

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -49,20 +49,26 @@ export const VerifyEmail = () => {
             <div className="w-full max-w-md space-y-8 text-center">
                 {status === 'verifying' && (
                     <div>
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">{t('auth.verifyEmail.verifying')}</h2>
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+                            {t('auth.verifyEmail.verifying')}
+                        </h2>
                         <div className="mt-4 animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
                     </div>
                 )}
                 {status === 'success' && (
                     <div>
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-green-600">{t('auth.verifyEmail.successTitle')}</h2>
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-green-600">
+                            {t('auth.verifyEmail.successTitle')}
+                        </h2>
                         <p className="mt-2 text-sm text-gray-600">{t('auth.verifyEmail.successMessage')}</p>
                         <p className="mt-2 text-sm text-gray-500">{t('auth.verifyEmail.redirecting')}</p>
                     </div>
                 )}
                 {status === 'error' && (
                     <div>
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-red-600">{t('auth.verifyEmail.errorTitle')}</h2>
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-red-600">
+                            {t('auth.verifyEmail.errorTitle')}
+                        </h2>
                         <p className="mt-2 text-sm text-gray-600">{message}</p>
                         <button
                             onClick={() => navigate('/login')}

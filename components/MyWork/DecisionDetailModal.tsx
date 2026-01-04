@@ -3,29 +3,30 @@
  * Shows full context, related objects, and requires rationale for decisions
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    X,
-    Scale,
-    Target,
+    AlertCircle,
+    Calendar,
+    Check,
     CheckSquare,
     Clock,
-    User,
-    Calendar,
-    AlertCircle,
-    Check,
-    XCircle,
-    Loader2,
     ExternalLink,
+    FileText,
     History,
+    Loader2,
+    Scale,
     Sparkles,
-    FileText
+    Target,
+    User,
+    X,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import toast from 'react-hot-toast';
 import { Decision } from './DecisionsList';
 import RelatedObjectPreview from './RelatedObjectPreview';
 
@@ -84,15 +85,15 @@ const getPriorityStyle = (priority?: string) => {
 // Type label mapping
 const getTypeLabel = (type: string): string => {
     const types: Record<string, string> = {
-        'INITIATIVE_APPROVAL': 'Initiative Approval',
-        'PHASE_TRANSITION': 'Phase Transition',
-        'TASK_UNBLOCK': 'Unblock Task',
-        'UNBLOCK': 'Unblock',
-        'BUDGET': 'Budget Approval',
-        'SCOPE_CHANGE': 'Scope Change',
-        'RESOURCE_ALLOCATION': 'Resource Allocation',
-        'EXCEPTION': 'Exception',
-        'GENERAL': 'General Decision'
+        INITIATIVE_APPROVAL: 'Initiative Approval',
+        PHASE_TRANSITION: 'Phase Transition',
+        TASK_UNBLOCK: 'Unblock Task',
+        UNBLOCK: 'Unblock',
+        BUDGET: 'Budget Approval',
+        SCOPE_CHANGE: 'Scope Change',
+        RESOURCE_ALLOCATION: 'Resource Allocation',
+        EXCEPTION: 'Exception',
+        GENERAL: 'General Decision',
     };
     return types[type] || type.replace(/_/g, ' ');
 };
@@ -100,12 +101,12 @@ const getTypeLabel = (type: string): string => {
 // Format date for display
 const formatDateTime = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-        month: 'short', 
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
         day: 'numeric',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
 };
 
@@ -113,7 +114,7 @@ const formatDateTime = (dateStr: string): string => {
 const Section: React.FC<{ title: string; icon?: React.ReactNode; children: React.ReactNode }> = ({
     title,
     icon,
-    children
+    children,
 }) => (
     <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
@@ -128,7 +129,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
     decisionId,
     onClose,
     onDecisionMade,
-    onNavigateToObject
+    onNavigateToObject,
 }) => {
     const { t } = useTranslation();
     const [decision, setDecision] = useState<DecisionDetail | null>(null);
@@ -137,7 +138,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
 
-    const currentUserId = useAppStore(state => state.currentUser?.id);
+    const currentUserId = useAppStore((state) => state.currentUser?.id);
     const isOwner = decision?.decisionOwnerId === currentUserId;
 
     // Fetch decision details
@@ -146,7 +147,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
             try {
                 setLoading(true);
                 const data = await Api.get(`/decisions/${decisionId}`);
-                
+
                 // Parse audit trail if string
                 if (typeof data.audit_trail === 'string') {
                     try {
@@ -179,7 +180,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     relatedObjectName: data.related_object_name || data.relatedObjectName,
                     auditTrail: data.auditTrail,
                     impacts: data.impacts || [],
-                    aiBrief: data.aiBrief
+                    aiBrief: data.aiBrief,
                 });
             } catch (error) {
                 console.error('Failed to fetch decision:', error);
@@ -201,17 +202,17 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
         try {
             setSubmitting(true);
-            await Api.put(`/decisions/${decisionId}/decide`, { 
-                status, 
-                outcome: outcome.trim() 
+            await Api.put(`/decisions/${decisionId}/decide`, {
+                status,
+                outcome: outcome.trim(),
             });
-            
+
             toast.success(
-                status === 'APPROVED' 
-                    ? t('decisions.approved', 'Decision approved') 
-                    : t('decisions.rejected', 'Decision rejected')
+                status === 'APPROVED'
+                    ? t('decisions.approved', 'Decision approved')
+                    : t('decisions.rejected', 'Decision rejected'),
             );
-            
+
             onDecisionMade?.();
             onClose();
         } catch (error) {
@@ -265,27 +266,31 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                                 {getTypeLabel(decision.decisionType)}
                                             </span>
                                             {decision.priority && (
-                                                <span className={`text-xs px-2 py-0.5 rounded font-medium ${getPriorityStyle(decision.priority)}`}>
+                                                <span
+                                                    className={`text-xs px-2 py-0.5 rounded font-medium ${getPriorityStyle(decision.priority)}`}
+                                                >
                                                     {decision.priority}
                                                 </span>
                                             )}
                                             {decision.status !== 'PENDING' && (
-                                                <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                                                    decision.status === 'APPROVED' 
-                                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                                }`}>
+                                                <span
+                                                    className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                                        decision.status === 'APPROVED'
+                                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                                    }`}
+                                                >
                                                     {decision.status}
                                                 </span>
                                             )}
                                         </div>
-                                        
+
                                         {/* Title */}
                                         <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                                             {decision.title}
                                         </h2>
                                     </div>
-                                    
+
                                     <button
                                         onClick={onClose}
                                         className="shrink-0 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
@@ -299,7 +304,10 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                             <div className="flex-1 overflow-y-auto p-4 space-y-5">
                                 {/* Request Details */}
                                 {decision.description && (
-                                    <Section title={t('decisions.requestDetails', 'Request Details')} icon={<FileText size={14} />}>
+                                    <Section
+                                        title={t('decisions.requestDetails', 'Request Details')}
+                                        icon={<FileText size={14} />}
+                                    >
                                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                             {decision.description}
                                         </p>
@@ -308,7 +316,10 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
                                 {/* Related Object Preview */}
                                 {decision.relatedObjectType && decision.relatedObjectId && (
-                                    <Section title={t('decisions.relatedItem', 'Related Item')} icon={<Target size={14} />}>
+                                    <Section
+                                        title={t('decisions.relatedItem', 'Related Item')}
+                                        icon={<Target size={14} />}
+                                    >
                                         <RelatedObjectPreview
                                             type={decision.relatedObjectType}
                                             id={decision.relatedObjectId}
@@ -319,12 +330,15 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
                                 {/* AI Brief */}
                                 {decision.aiBrief && (
-                                    <Section title={t('decisions.aiBrief', 'AI Analysis')} icon={<Sparkles size={14} />}>
+                                    <Section
+                                        title={t('decisions.aiBrief', 'AI Analysis')}
+                                        icon={<Sparkles size={14} />}
+                                    >
                                         <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30">
                                             <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
                                                 {decision.aiBrief.contextSummary}
                                             </p>
-                                            
+
                                             {decision.aiBrief.aiRecommendation && (
                                                 <div className="pt-2 border-t border-purple-200 dark:border-purple-700/30">
                                                     <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
@@ -335,7 +349,11 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                                     </p>
                                                     {decision.aiBrief.recommendationConfidence && (
                                                         <span className="text-xs text-slate-500 mt-1">
-                                                            Confidence: {Math.round(decision.aiBrief.recommendationConfidence * 100)}%
+                                                            Confidence:{' '}
+                                                            {Math.round(
+                                                                decision.aiBrief.recommendationConfidence * 100,
+                                                            )}
+                                                            %
                                                         </span>
                                                     )}
                                                 </div>
@@ -346,13 +364,16 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
                                 {/* Impacts */}
                                 {decision.impacts && decision.impacts.length > 0 && (
-                                    <Section title={t('decisions.impacts', 'Impact Analysis')} icon={<AlertCircle size={14} />}>
+                                    <Section
+                                        title={t('decisions.impacts', 'Impact Analysis')}
+                                        icon={<AlertCircle size={14} />}
+                                    >
                                         <div className="space-y-2">
                                             {decision.impacts.map((impact, idx) => (
-                                                <div 
+                                                <div
                                                     key={impact.id || idx}
                                                     className={`p-2 rounded-lg text-sm ${
-                                                        impact.isBlocker 
+                                                        impact.isBlocker
                                                             ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30'
                                                             : 'bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5'
                                                     }`}
@@ -386,7 +407,9 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                             </p>
                                         </div>
                                         <div>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500">Requested by</span>
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                                                Requested by
+                                            </span>
                                             <p className="text-slate-700 dark:text-slate-200">
                                                 {decision.requestedByName || 'Unknown'}
                                             </p>
@@ -399,7 +422,9 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                         </div>
                                         {decision.dueDate && (
                                             <div>
-                                                <span className="text-xs text-slate-400 dark:text-slate-500">Due Date</span>
+                                                <span className="text-xs text-slate-400 dark:text-slate-500">
+                                                    Due Date
+                                                </span>
                                                 <p className="text-slate-700 dark:text-slate-200">
                                                     {formatDateTime(decision.dueDate)}
                                                 </p>
@@ -413,10 +438,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                     <Section title={t('decisions.history', 'History')} icon={<History size={14} />}>
                                         <div className="space-y-2">
                                             {decision.auditTrail.map((entry, idx) => (
-                                                <div 
-                                                    key={idx}
-                                                    className="flex items-start gap-2 text-sm"
-                                                >
+                                                <div key={idx} className="flex items-start gap-2 text-sm">
                                                     <div className="shrink-0 w-2 h-2 mt-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
                                                     <div className="flex-1">
                                                         <span className="font-medium text-slate-700 dark:text-slate-200">
@@ -424,7 +446,8 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                                         </span>
                                                         {entry.byName && (
                                                             <span className="text-slate-500 dark:text-slate-400">
-                                                                {' '}by {entry.byName}
+                                                                {' '}
+                                                                by {entry.byName}
                                                             </span>
                                                         )}
                                                         <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
@@ -454,7 +477,10 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                         <textarea
                                             value={outcome}
                                             onChange={(e) => setOutcome(e.target.value)}
-                                            placeholder={t('decisions.rationalePlaceholder', 'Explain your decision...')}
+                                            placeholder={t(
+                                                'decisions.rationalePlaceholder',
+                                                'Explain your decision...',
+                                            )}
                                             className="w-full p-3 text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg resize-none h-20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                         />
                                     </div>
@@ -467,7 +493,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                         >
                                             {t('common.cancel', 'Cancel')}
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => handleDecision('REJECTED')}
                                             disabled={submitting || !outcome.trim()}
@@ -478,7 +504,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                                 {t('decisions.reject', 'Reject')}
                                             </span>
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => handleDecision('APPROVED')}
                                             disabled={submitting || !outcome.trim()}
@@ -521,9 +547,3 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 };
 
 export default DecisionDetailModal;
-
-
-
-
-
-

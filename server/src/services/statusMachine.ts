@@ -11,32 +11,32 @@ export const INITIATIVE_STATUSES = {
     BLOCKED: 'BLOCKED',
     DONE: 'DONE',
     CANCELLED: 'CANCELLED',
-    ARCHIVED: 'ARCHIVED'
+    ARCHIVED: 'ARCHIVED',
 } as const;
 
 export const TASK_STATUSES = {
     TODO: 'TODO',
     IN_PROGRESS: 'IN_PROGRESS',
     BLOCKED: 'BLOCKED',
-    DONE: 'DONE'
+    DONE: 'DONE',
 } as const;
 
 export const DECISION_STATUSES = {
     PENDING: 'PENDING',
     APPROVED: 'APPROVED',
-    REJECTED: 'REJECTED'
+    REJECTED: 'REJECTED',
 } as const;
 
 export const EXECUTION_STAGES = {
     KICKOFF: 'KICKOFF',
     IN_PROGRESS: 'IN_PROGRESS',
     REVIEW: 'REVIEW',
-    DELIVERY: 'DELIVERY'
+    DELIVERY: 'DELIVERY',
 } as const;
 
-type InitiativeStatus = typeof INITIATIVE_STATUSES[keyof typeof INITIATIVE_STATUSES];
-type TaskStatus = typeof TASK_STATUSES[keyof typeof TASK_STATUSES];
-type ExecutionStage = typeof EXECUTION_STAGES[keyof typeof EXECUTION_STAGES];
+type InitiativeStatus = (typeof INITIATIVE_STATUSES)[keyof typeof INITIATIVE_STATUSES];
+type TaskStatus = (typeof TASK_STATUSES)[keyof typeof TASK_STATUSES];
+type ExecutionStage = (typeof EXECUTION_STAGES)[keyof typeof EXECUTION_STAGES];
 
 type InitiativeContext = {
     blockedReason?: string;
@@ -63,48 +63,42 @@ const EXECUTION_STAGE_TRANSITIONS: Record<ExecutionStage, ExecutionStage[]> = {
     [EXECUTION_STAGES.KICKOFF]: [EXECUTION_STAGES.IN_PROGRESS],
     [EXECUTION_STAGES.IN_PROGRESS]: [EXECUTION_STAGES.REVIEW, EXECUTION_STAGES.KICKOFF],
     [EXECUTION_STAGES.REVIEW]: [EXECUTION_STAGES.IN_PROGRESS, EXECUTION_STAGES.DELIVERY],
-    [EXECUTION_STAGES.DELIVERY]: [EXECUTION_STAGES.REVIEW]
+    [EXECUTION_STAGES.DELIVERY]: [EXECUTION_STAGES.REVIEW],
 };
 
 const INITIATIVE_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
-    [INITIATIVE_STATUSES.DRAFT]: [
-        INITIATIVE_STATUSES.PLANNING,
-        INITIATIVE_STATUSES.CANCELLED
-    ],
+    [INITIATIVE_STATUSES.DRAFT]: [INITIATIVE_STATUSES.PLANNING, INITIATIVE_STATUSES.CANCELLED],
     [INITIATIVE_STATUSES.PLANNING]: [
         INITIATIVE_STATUSES.REVIEW,
         INITIATIVE_STATUSES.DRAFT,
-        INITIATIVE_STATUSES.CANCELLED
+        INITIATIVE_STATUSES.CANCELLED,
     ],
     [INITIATIVE_STATUSES.REVIEW]: [
         INITIATIVE_STATUSES.APPROVED,
         INITIATIVE_STATUSES.PLANNING,
-        INITIATIVE_STATUSES.CANCELLED
+        INITIATIVE_STATUSES.CANCELLED,
     ],
     [INITIATIVE_STATUSES.APPROVED]: [
         INITIATIVE_STATUSES.EXECUTING,
         INITIATIVE_STATUSES.PLANNING,
-        INITIATIVE_STATUSES.CANCELLED
+        INITIATIVE_STATUSES.CANCELLED,
     ],
     [INITIATIVE_STATUSES.EXECUTING]: [
         INITIATIVE_STATUSES.BLOCKED,
         INITIATIVE_STATUSES.DONE,
-        INITIATIVE_STATUSES.CANCELLED
+        INITIATIVE_STATUSES.CANCELLED,
     ],
-    [INITIATIVE_STATUSES.BLOCKED]: [
-        INITIATIVE_STATUSES.EXECUTING,
-        INITIATIVE_STATUSES.CANCELLED
-    ],
+    [INITIATIVE_STATUSES.BLOCKED]: [INITIATIVE_STATUSES.EXECUTING, INITIATIVE_STATUSES.CANCELLED],
     [INITIATIVE_STATUSES.DONE]: [INITIATIVE_STATUSES.ARCHIVED],
     [INITIATIVE_STATUSES.CANCELLED]: [INITIATIVE_STATUSES.ARCHIVED],
-    [INITIATIVE_STATUSES.ARCHIVED]: []
+    [INITIATIVE_STATUSES.ARCHIVED]: [],
 };
 
 const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
     [TASK_STATUSES.TODO]: [TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.BLOCKED],
     [TASK_STATUSES.IN_PROGRESS]: [TASK_STATUSES.BLOCKED, TASK_STATUSES.DONE, TASK_STATUSES.TODO],
     [TASK_STATUSES.BLOCKED]: [TASK_STATUSES.TODO, TASK_STATUSES.IN_PROGRESS],
-    [TASK_STATUSES.DONE]: [TASK_STATUSES.IN_PROGRESS]
+    [TASK_STATUSES.DONE]: [TASK_STATUSES.IN_PROGRESS],
 };
 
 const StatusMachine = {
@@ -126,7 +120,7 @@ const StatusMachine = {
     validateInitiativeTransition: (
         from: string,
         to: string,
-        context: InitiativeContext = {}
+        context: InitiativeContext = {},
     ): { valid: boolean; reason?: string } => {
         if (!StatusMachine.canTransitionInitiative(from, to)) {
             return { valid: false, reason: `Cannot transition from ${from} to ${to}` };
@@ -149,7 +143,7 @@ const StatusMachine = {
             if (context.charterCompleteness !== undefined && context.charterCompleteness < 60) {
                 return {
                     valid: false,
-                    reason: `Charter completeness too low (${context.charterCompleteness}%). Minimum 60% required.`
+                    reason: `Charter completeness too low (${context.charterCompleteness}%). Minimum 60% required.`,
                 };
             }
         }
@@ -175,7 +169,7 @@ const StatusMachine = {
     validateTaskTransition: (
         from: string,
         to: string,
-        context: TaskContext = {}
+        context: TaskContext = {},
     ): { valid: boolean; reason?: string } => {
         if (!StatusMachine.canTransitionTask(from, to)) {
             return { valid: false, reason: `Cannot transition from ${from} to ${to}` };
@@ -213,7 +207,7 @@ const StatusMachine = {
     validateStageTransition: (
         from: string,
         to: string,
-        context: StageContext = {}
+        context: StageContext = {},
     ): { valid: boolean; reason?: string } => {
         if (!StatusMachine.canTransitionExecutionStage(from, to)) {
             return { valid: false, reason: `Cannot transition stage from ${from} to ${to}` };
@@ -233,12 +227,14 @@ const StatusMachine = {
             [EXECUTION_STAGES.KICKOFF]: 'Kickoff',
             [EXECUTION_STAGES.IN_PROGRESS]: 'In Progress',
             [EXECUTION_STAGES.REVIEW]: 'Review',
-            [EXECUTION_STAGES.DELIVERY]: 'Delivery'
+            [EXECUTION_STAGES.DELIVERY]: 'Delivery',
         };
         return labels[stage as ExecutionStage] || stage;
     },
 
-    getInitiativeModule: (status: string): 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'TERMINAL' | 'UNKNOWN' => {
+    getInitiativeModule: (
+        status: string,
+    ): 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'TERMINAL' | 'UNKNOWN' => {
         switch (status) {
             case INITIATIVE_STATUSES.DRAFT:
                 return 'ASSESSMENT';
@@ -258,13 +254,16 @@ const StatusMachine = {
         }
     },
 
-    isModuleTransition: (from: string, to: string): { crossesModule: boolean; fromModule: string; toModule: string } => {
+    isModuleTransition: (
+        from: string,
+        to: string,
+    ): { crossesModule: boolean; fromModule: string; toModule: string } => {
         const fromModule = StatusMachine.getInitiativeModule(from);
         const toModule = StatusMachine.getInitiativeModule(to);
         return {
             crossesModule: fromModule !== toModule,
             fromModule,
-            toModule
+            toModule,
         };
     },
 
@@ -278,10 +277,10 @@ const StatusMachine = {
             [INITIATIVE_STATUSES.BLOCKED]: 'Blocked',
             [INITIATIVE_STATUSES.DONE]: 'Done',
             [INITIATIVE_STATUSES.CANCELLED]: 'Cancelled',
-            [INITIATIVE_STATUSES.ARCHIVED]: 'Archived'
+            [INITIATIVE_STATUSES.ARCHIVED]: 'Archived',
         };
         return labels[status as InitiativeStatus] || status;
-    }
+    },
 };
 
 export default StatusMachine;

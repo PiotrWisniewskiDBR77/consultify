@@ -1,15 +1,16 @@
 /**
  * AIPreferencesModule - AI Preferences & Personalization
- * 
+ *
  * Tabs: Instructions | Memory | Response Style | Chat History | Voice
  */
 
+import { Brain, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { FileText, Brain, Sliders, MessageSquare, Volume2 } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
+import { useTranslation } from 'react-i18next';
+
 import { AISettings } from '../../components/settings/AISettings';
 import { VoiceSettingsPanel } from '../../components/settings/VoiceSettingsPanel';
-import { useTranslation } from 'react-i18next';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
 
 interface AIPreferencesModuleProps {
@@ -42,7 +43,10 @@ const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                             {t('settings.aiMemory.enable', 'Enable Memory')}
                         </p>
                         <p className="text-sm text-slate-500">
-                            {t('settings.aiMemory.enableDesc', 'Allow AI to remember preferences and context between sessions')}
+                            {t(
+                                'settings.aiMemory.enableDesc',
+                                'Allow AI to remember preferences and context between sessions',
+                            )}
                         </p>
                     </div>
                     <button
@@ -51,9 +55,11 @@ const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                             memoryEnabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
-                            memoryEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                memoryEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>
@@ -102,9 +108,9 @@ const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 };
 
 // Response Style Settings Component
-const ResponseStyleSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Partial<User>) => void }> = ({ 
+const ResponseStyleSettings: React.FC<{ currentUser: User; onUpdateUser: (updates: Partial<User>) => void }> = ({
     currentUser,
-    onUpdateUser 
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [responseLength, setResponseLength] = useState<'short' | 'medium' | 'long'>('medium');
@@ -224,9 +230,11 @@ const ChatHistorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) =
                             historyEnabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
-                            historyEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                historyEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>
@@ -251,39 +259,35 @@ const ChatHistorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) =
     );
 };
 
-export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({ 
-    initialTab,
-    currentUser,
-    onUpdateUser
-}) => {
+export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({ initialTab, currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'instructions');
 
     const tabs: Tab[] = [
-        { 
-            id: 'instructions', 
-            label: t('settings.tabs.instructions', 'Instructions'), 
-            icon: <FileText size={16} /> 
+        {
+            id: 'instructions',
+            label: t('settings.tabs.instructions', 'Instructions'),
+            icon: <FileText size={16} />,
         },
-        { 
-            id: 'memory', 
-            label: t('settings.tabs.memory', 'Memory'), 
-            icon: <Brain size={16} /> 
+        {
+            id: 'memory',
+            label: t('settings.tabs.memory', 'Memory'),
+            icon: <Brain size={16} />,
         },
-        { 
-            id: 'style', 
-            label: t('settings.tabs.style', 'Response Style'), 
-            icon: <Sliders size={16} /> 
+        {
+            id: 'style',
+            label: t('settings.tabs.style', 'Response Style'),
+            icon: <Sliders size={16} />,
         },
-        { 
-            id: 'history', 
-            label: t('settings.tabs.history', 'Chat History'), 
-            icon: <MessageSquare size={16} /> 
+        {
+            id: 'history',
+            label: t('settings.tabs.history', 'Chat History'),
+            icon: <MessageSquare size={16} />,
         },
-        { 
-            id: 'voice', 
-            label: t('settings.tabs.voice', 'Voice'), 
-            icon: <Volume2 size={16} /> 
+        {
+            id: 'voice',
+            label: t('settings.tabs.voice', 'Voice'),
+            icon: <Volume2 size={16} />,
         },
     ];
 
@@ -334,11 +338,4 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
 };
 
 export default AIPreferencesModule;
-
-
-
-
-
-
-
 

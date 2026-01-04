@@ -1,17 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-    Search,
-    X,
-    Filter,
-    Clock,
-    Tag,
-    FolderOpen,
-    Play,
-    Mail,
-    Hash,
-    FileText,
-    Sparkles
-} from 'lucide-react';
+import { Clock, FileText, Filter, FolderOpen, Hash, Mail, Play, Search, Sparkles, Tag, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ContentSearchProps {
     onSearch: (query: string, filters?: SearchFilters) => void;
@@ -52,7 +40,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
     showFilters = true,
     showSuggestions = true,
     initialQuery = '',
-    debounceMs = 300
+    debounceMs = 300,
 }) => {
     const [query, setQuery] = useState(initialQuery);
     const [isFocused, setIsFocused] = useState(false);
@@ -62,7 +50,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
         categoryIds: [],
         tagIds: [],
         sortBy: 'relevance',
-        sortOrder: 'desc'
+        sortOrder: 'desc',
     });
     const [showFiltersPanel, setShowFiltersPanel] = useState(false);
     const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
@@ -84,22 +72,25 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
     }, []);
 
     // Save to recent searches
-    const saveRecentSearch = useCallback((searchQuery: string) => {
-        if (!searchQuery.trim()) return;
+    const saveRecentSearch = useCallback(
+        (searchQuery: string) => {
+            if (!searchQuery.trim()) return;
 
-        const newSearch: RecentSearch = {
-            query: searchQuery,
-            timestamp: Date.now(),
-            contentType: filters.contentType
-        };
+            const newSearch: RecentSearch = {
+                query: searchQuery,
+                timestamp: Date.now(),
+                contentType: filters.contentType,
+            };
 
-        setRecentSearches((prev) => {
-            const filtered = prev.filter((s) => s.query !== searchQuery);
-            const updated = [newSearch, ...filtered].slice(0, MAX_RECENT_SEARCHES);
-            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-            return updated;
-        });
-    }, [filters.contentType]);
+            setRecentSearches((prev) => {
+                const filtered = prev.filter((s) => s.query !== searchQuery);
+                const updated = [newSearch, ...filtered].slice(0, MAX_RECENT_SEARCHES);
+                localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+                return updated;
+            });
+        },
+        [filters.contentType],
+    );
 
     // Debounced search handler
     const handleSearchChange = useCallback(
@@ -114,7 +105,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onSearch(value, filters);
             }, debounceMs);
         },
-        [onSearch, filters, debounceMs]
+        [onSearch, filters, debounceMs],
     );
 
     // Immediate search (for pressing Enter)
@@ -128,7 +119,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
             saveRecentSearch(query);
             setIsFocused(false);
         },
-        [query, filters, onSearch, saveRecentSearch]
+        [query, filters, onSearch, saveRecentSearch],
     );
 
     // Handle filter changes
@@ -140,7 +131,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 return updated;
             });
         },
-        [query, onSearch]
+        [query, onSearch],
     );
 
     // Clear search
@@ -157,7 +148,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
             onSearch(search.query, filters);
             setIsFocused(false);
         },
-        [filters, onSearch]
+        [filters, onSearch],
     );
 
     // Clear recent searches
@@ -203,7 +194,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                                 onClick={() =>
                                     handleFilterChange(
                                         'contentType',
-                                        filters.contentType === 'ALL' ? 'PLAYBOOK' : 'ALL'
+                                        filters.contentType === 'ALL' ? 'PLAYBOOK' : 'ALL',
                                     )
                                 }
                                 className={`p-1.5 rounded-lg transition-colors ${
@@ -218,10 +209,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                             <button
                                 type="button"
                                 onClick={() =>
-                                    handleFilterChange(
-                                        'contentType',
-                                        filters.contentType === 'ALL' ? 'EMAIL' : 'ALL'
-                                    )
+                                    handleFilterChange('contentType', filters.contentType === 'ALL' ? 'EMAIL' : 'ALL')
                                 }
                                 className={`p-1.5 rounded-lg transition-colors ${
                                     filters.contentType === 'EMAIL'
@@ -292,9 +280,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                                         <Search size={12} className="text-slate-500" />
                                         <span className="flex-1 truncate">{search.query}</span>
                                         {search.contentType && search.contentType !== 'ALL' && (
-                                            <span className="text-xs text-slate-500">
-                                                {search.contentType}
-                                            </span>
+                                            <span className="text-xs text-slate-500">{search.contentType}</span>
                                         )}
                                     </button>
                                 ))}
@@ -357,7 +343,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                                     categoryIds: [],
                                     tagIds: [],
                                     sortBy: 'relevance',
-                                    sortOrder: 'desc'
+                                    sortOrder: 'desc',
                                 })
                             }
                             className="text-sm text-violet-400 hover:text-violet-300"
@@ -369,9 +355,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {/* Content Type */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">
-                                Content Type
-                            </label>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Content Type</label>
                             <select
                                 value={filters.contentType}
                                 onChange={(e) => handleFilterChange('contentType', e.target.value)}
@@ -385,14 +369,10 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
                         {/* Status */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">
-                                Status
-                            </label>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Status</label>
                             <select
                                 value={filters.status?.[0] || ''}
-                                onChange={(e) =>
-                                    handleFilterChange('status', e.target.value ? [e.target.value] : [])
-                                }
+                                onChange={(e) => handleFilterChange('status', e.target.value ? [e.target.value] : [])}
                                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                             >
                                 <option value="">All Statuses</option>
@@ -404,9 +384,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
                         {/* Sort By */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">
-                                Sort By
-                            </label>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Sort By</label>
                             <select
                                 value={filters.sortBy}
                                 onChange={(e) =>
@@ -423,16 +401,11 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
                         {/* Sort Order */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">
-                                Order
-                            </label>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Order</label>
                             <select
                                 value={filters.sortOrder}
                                 onChange={(e) =>
-                                    handleFilterChange(
-                                        'sortOrder',
-                                        e.target.value as SearchFilters['sortOrder']
-                                    )
+                                    handleFilterChange('sortOrder', e.target.value as SearchFilters['sortOrder'])
                                 }
                                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                             >
@@ -447,11 +420,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-700">
                             {filters.contentType && filters.contentType !== 'ALL' && (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-violet-500/20 text-violet-400 text-xs rounded-full">
-                                    {filters.contentType === 'PLAYBOOK' ? (
-                                        <Play size={10} />
-                                    ) : (
-                                        <Mail size={10} />
-                                    )}
+                                    {filters.contentType === 'PLAYBOOK' ? <Play size={10} /> : <Mail size={10} />}
                                     {filters.contentType}
                                     <button
                                         onClick={() => handleFilterChange('contentType', 'ALL')}
@@ -471,7 +440,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                                         onClick={() =>
                                             handleFilterChange(
                                                 'status',
-                                                filters.status?.filter((s) => s !== status) || []
+                                                filters.status?.filter((s) => s !== status) || [],
                                             )
                                         }
                                         className="ml-1 hover:text-white"
@@ -486,7 +455,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
             )}
 
             {/* Click outside to close */}
-            {(showFiltersPanel) && (
+            {showFiltersPanel && (
                 <div
                     className="fixed inset-0 z-30"
                     onClick={() => {
@@ -499,10 +468,4 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 };
 
 export default ContentSearch;
-
-
-
-
-
-
 

@@ -1,0 +1,44 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
+    "noEmitOnError": false,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@consultify/shared": ["packages/shared/src/index.ts"],
+      "@consultify/shared/*": ["packages/shared/src/*"],
+      "@consultify/types": ["packages/shared/src/types/index.ts"],
+      "@consultify/types/*": ["packages/shared/src/types/*"],
+      "@consultify/utils": ["packages/shared/src/utils/index.ts"],
+      "@consultify/utils/*": ["packages/shared/src/utils/*"],
+      "@consultify/constants": ["packages/shared/src/constants/index.ts"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "backup",
+    "backup-pre-migration",
+    "quarantine"
+  ]
+}
+
+

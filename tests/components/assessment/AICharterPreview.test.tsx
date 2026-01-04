@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AICharterPreview } from '../../../components/assessment/AICharterPreview';
+import { AICharterPreview } from '../../components/assessment/AICharterPreview';
 import type { AIGeneratedCharter } from '../../../types';
 
 const mockCharter: AIGeneratedCharter = {
@@ -504,6 +504,7 @@ describe('AICharterPreview Component', () => {
         });
     });
 });
+
 
 
 

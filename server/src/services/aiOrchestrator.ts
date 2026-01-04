@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import { appCache } from './redis/CacheService.js';
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -13,14 +14,14 @@ export enum AIRole {
     ADVISOR = 'ADVISOR',
     PMO_MANAGER = 'PMO_MANAGER',
     EXECUTOR = 'EXECUTOR',
-    EDUCATOR = 'EDUCATOR'
+    EDUCATOR = 'EDUCATOR',
 }
 
 export const AI_ROLES = {
     ADVISOR: AIRole.ADVISOR,
     PMO_MANAGER: AIRole.PMO_MANAGER,
     EXECUTOR: AIRole.EXECUTOR,
-    EDUCATOR: AIRole.EDUCATOR
+    EDUCATOR: AIRole.EDUCATOR,
 };
 
 export enum ChatMode {
@@ -28,7 +29,7 @@ export enum ChatMode {
     GUIDE = 'GUIDE',
     ANALYZE = 'ANALYZE',
     DO = 'DO',
-    TEACH = 'TEACH'
+    TEACH = 'TEACH',
 }
 
 export const CHAT_MODES = {
@@ -36,7 +37,7 @@ export const CHAT_MODES = {
     GUIDE: ChatMode.GUIDE,
     ANALYZE: ChatMode.ANALYZE,
     DO: ChatMode.DO,
-    TEACH: ChatMode.TEACH
+    TEACH: ChatMode.TEACH,
 };
 
 export interface AIResponseContext {
@@ -84,38 +85,32 @@ let _AIAgents: any = null;
 async function initDeps() {
     if (_AIContextBuilder) return;
 
-    const [
-        aiCtx,
-        aiPol,
-        aiMem,
-        aiRoleMod,
-        regGuardMod,
-        aiExpMod,
-        accPolMod,
-        tokBillMod,
-        postProcMod,
-        agentsMod
-    ] = (await Promise.all([
-        import('./aiContextBuilder.js'),
-        import('./aiPolicyEngine.js'),
-        import('./aiMemoryManager.js'),
-        import('../../services/aiRoleGuard.js'),
-        import('../../services/regulatoryModeGuard.js'),
-        import('../../services/aiExplainabilityService.js'),
-        import('../../services/accessPolicyService.js'),
-        import('../../services/tokenBillingService.js'),
-        import('../../services/aiResponsePostProcessor.js'),
-        import('../../services/ai/agents/index.js')
-    ])) as any[];
+    const [aiCtx, aiPol, aiMem, aiRoleMod, regGuardMod, aiExpMod, accPolMod, tokBillMod, postProcMod, agentsMod] =
+        (await Promise.all([
+            import('./aiContextBuilder.js'),
+            import('./aiPolicyEngine.js'),
+            import('./aiMemoryManager.js'),
+            import('../../services/aiRoleGuard.js'),
+            import('../../services/regulatoryModeGuard.js'),
+            import('../../services/aiExplainabilityService.js'),
+            import('../../services/accessPolicyService.js'),
+            import('../../services/tokenBillingService.js'),
+            import('../../services/aiResponsePostProcessor.js'),
+            import('../../services/ai/agents/index.js'),
+        ])) as any[];
 
     _AIContextBuilder = aiCtx.default || aiCtx;
     _AIPolicyEngine = aiPol.default || aiPol;
     _AIMemoryManager = aiMem.default || aiMem;
     _AIRoleGuard = aiRoleMod.default || aiRoleMod.AIRoleGuard || aiRoleMod.aiRoleGuard || aiRoleMod;
-    _RegulatoryModeGuard = regGuardMod.default || regGuardMod.RegulatoryModeGuard || regGuardMod.regulatoryModeGuard || regGuardMod;
-    _AIExplainabilityService = aiExpMod.default || aiExpMod.AIExplainabilityService || aiExpMod.aiExplainabilityService || aiExpMod;
-    _AccessPolicyService = accPolMod.default || accPolMod.AccessPolicyService || accPolMod.accessPolicyService || accPolMod;
-    _TokenBillingService = tokBillMod.default || tokBillMod.TokenBillingService || tokBillMod.tokenBillingService || tokBillMod;
+    _RegulatoryModeGuard =
+        regGuardMod.default || regGuardMod.RegulatoryModeGuard || regGuardMod.regulatoryModeGuard || regGuardMod;
+    _AIExplainabilityService =
+        aiExpMod.default || aiExpMod.AIExplainabilityService || aiExpMod.aiExplainabilityService || aiExpMod;
+    _AccessPolicyService =
+        accPolMod.default || accPolMod.AccessPolicyService || accPolMod.accessPolicyService || accPolMod;
+    _TokenBillingService =
+        tokBillMod.default || tokBillMod.TokenBillingService || tokBillMod.tokenBillingService || tokBillMod;
     _AIResponsePostProcessor = postProcMod.aiResponsePostProcessor || postProcMod.default || postProcMod;
     _AIAgents = agentsMod.default || agentsMod;
 }
@@ -131,7 +126,13 @@ export const AIOrchestrator = {
     /**
      * Process a chat message
      */
-    processMessage: async (message: string, userId: string, organizationId: string, projectId: string | null = null, options: any = {}) => {
+    processMessage: async (
+        message: string,
+        userId: string,
+        organizationId: string,
+        projectId: string | null = null,
+        options: any = {},
+    ) => {
         await initDeps();
 
         // 0. Check Demo/Trial access policy
@@ -144,7 +145,7 @@ export const AIOrchestrator = {
                 errorCode: 'TRIAL_EXPIRED',
                 message: 'Your trial has expired. Please upgrade to continue using AI features.',
                 role: AIRole.ADVISOR,
-                intent: ChatMode.EXPLAIN
+                intent: ChatMode.EXPLAIN,
             };
         }
 
@@ -155,26 +156,43 @@ export const AIOrchestrator = {
                 errorCode: 'AI_LIMIT_REACHED',
                 message: `You've reached your daily AI call limit (${accessContext.dailyAIUsage.limit}). Upgrade for unlimited AI access.`,
                 role: AIRole.ADVISOR,
-                intent: ChatMode.EXPLAIN
+                intent: ChatMode.EXPLAIN,
             };
         }
 
         // HARD TOKEN ENFORCEMENT
         try {
-            const orgBalance = await _TokenBillingService.getOrgBalance(organizationId);
-            const tokenBalance = orgBalance?.balance || 0;
+            let tokenBalance = 0;
+            const cacheKey = `token_balance:${organizationId}`;
+
+            try {
+                const cached = await appCache.get<number>(cacheKey);
+                if (cached !== null) {
+                    tokenBalance = cached;
+                } else {
+                    const orgBalance = await _TokenBillingService.getOrgBalance(organizationId);
+                    tokenBalance = orgBalance?.balance || 0;
+                    // Cache for 1 minute to reduce DB load
+                    await appCache.set(cacheKey, tokenBalance, 60);
+                }
+            } catch (ignore) {
+                // Fallback to direct DB call on cache error
+                const orgBalance = await _TokenBillingService.getOrgBalance(organizationId);
+                tokenBalance = orgBalance?.balance || 0;
+            }
+
             const minTokensRequired = 100;
 
             if (tokenBalance < minTokensRequired) {
                 return {
                     blocked: true,
                     errorCode: 'INSUFFICIENT_TOKENS',
-                    message: 'You don\'t have enough tokens to use AI features. Please purchase tokens to continue.',
+                    message: "You don't have enough tokens to use AI features. Please purchase tokens to continue.",
                     role: AIRole.ADVISOR,
                     intent: ChatMode.EXPLAIN,
                     tokenBalance,
                     minRequired: minTokensRequired,
-                    buyTokensUrl: '/settings/billing'
+                    buyTokensUrl: '/settings/billing',
                 };
             }
         } catch (err: any) {
@@ -204,9 +222,10 @@ export const AIOrchestrator = {
             return {
                 blocked: true,
                 errorCode: 'DEMO_READ_ONLY',
-                message: 'Demo mode does not support creating or modifying data. Start a free trial to create your own projects.',
+                message:
+                    'Demo mode does not support creating or modifying data. Start a free trial to create your own projects.',
                 role: AIRole.ADVISOR,
-                intent: ChatMode.EXPLAIN
+                intent: ChatMode.EXPLAIN,
             };
         }
 
@@ -237,7 +256,7 @@ export const AIOrchestrator = {
             aiGovernance: {
                 activeRole: roleConfig?.activeRole || 'ADVISOR',
                 capabilities: roleConfig?.capabilities || _AIRoleGuard.getRoleCapabilities('ADVISOR'),
-                roleDescription: roleConfig?.roleDescription || _AIRoleGuard.getRoleDescription('ADVISOR')
+                roleDescription: roleConfig?.roleDescription || _AIRoleGuard.getRoleDescription('ADVISOR'),
             },
             accessContext: {
                 organizationType: accessContext.organizationType,
@@ -245,8 +264,8 @@ export const AIOrchestrator = {
                 isTrial: accessContext.isTrial,
                 isPaid: accessContext.isPaid,
                 aiResponseBadge: accessContext.aiResponseBadge,
-                dailyAIUsage: accessContext.dailyAIUsage
-            }
+                dailyAIUsage: accessContext.dailyAIUsage,
+            },
         };
 
         // 8. Generate AI Explanation
@@ -269,7 +288,7 @@ export const AIOrchestrator = {
             intent,
             contextSummary: AIOrchestrator._summarizeContext(context),
             explanation: responseContext.explanation,
-            accessContext: responseContext.accessContext
+            accessContext: responseContext.accessContext,
         };
     },
 
@@ -279,24 +298,49 @@ export const AIOrchestrator = {
     _detectIntent: (message: string): ChatMode => {
         const lower = message.toLowerCase();
 
-        if (lower.includes('wyjaśnij') || lower.includes('explain') || lower.includes('what is') ||
-            lower.includes('co to') || lower.includes('čo je')) {
+        if (
+            lower.includes('wyjaśnij') ||
+            lower.includes('explain') ||
+            lower.includes('what is') ||
+            lower.includes('co to') ||
+            lower.includes('čo je')
+        ) {
             return ChatMode.EXPLAIN;
         }
-        if (lower.includes('co powinienem') || lower.includes('what should') || lower.includes('next step') ||
-            lower.includes('następny krok') || lower.includes('guide')) {
+        if (
+            lower.includes('co powinienem') ||
+            lower.includes('what should') ||
+            lower.includes('next step') ||
+            lower.includes('następny krok') ||
+            lower.includes('guide')
+        ) {
             return ChatMode.GUIDE;
         }
-        if (lower.includes('ryzyko') || lower.includes('risk') || lower.includes('analyze') ||
-            lower.includes('analiz') || lower.includes('problem')) {
+        if (
+            lower.includes('ryzyko') ||
+            lower.includes('risk') ||
+            lower.includes('analyze') ||
+            lower.includes('analiz') ||
+            lower.includes('problem')
+        ) {
             return ChatMode.ANALYZE;
         }
-        if (lower.includes('przygotuj') || lower.includes('create') || lower.includes('draft') ||
-            lower.includes('stwórz') || lower.includes('zrób')) {
+        if (
+            lower.includes('przygotuj') ||
+            lower.includes('create') ||
+            lower.includes('draft') ||
+            lower.includes('stwórz') ||
+            lower.includes('zrób')
+        ) {
             return ChatMode.DO;
         }
-        if (lower.includes('dlaczego') || lower.includes('why') || lower.includes('teach') ||
-            lower.includes('naucz') || lower.includes('explain why')) {
+        if (
+            lower.includes('dlaczego') ||
+            lower.includes('why') ||
+            lower.includes('teach') ||
+            lower.includes('naucz') ||
+            lower.includes('explain why')
+        ) {
             return ChatMode.TEACH;
         }
 
@@ -316,7 +360,7 @@ export const AIOrchestrator = {
             [ChatMode.GUIDE]: AIRole.PMO_MANAGER,
             [ChatMode.ANALYZE]: AIRole.PMO_MANAGER,
             [ChatMode.DO]: AIRole.EXECUTOR,
-            [ChatMode.TEACH]: AIRole.EDUCATOR
+            [ChatMode.TEACH]: AIRole.EDUCATOR,
         };
 
         const selectedRole = roleMap[intent] || AIRole.ADVISOR;
@@ -344,7 +388,7 @@ export const AIOrchestrator = {
                 userMessage,
                 history: conversationHistory,
                 memory: projectMemory,
-                modelName
+                modelName,
             });
 
             if (trimResult.trimmed) {
@@ -353,7 +397,7 @@ export const AIOrchestrator = {
                     model: modelName,
                     originalTokens: trimResult.originalAnalysis?.breakdown?.total,
                     newTokens: trimResult.newAnalysis?.breakdown?.total,
-                    utilizationPercent: trimResult.newAnalysis?.status?.utilizationPercent
+                    utilizationPercent: trimResult.newAnalysis?.status?.utilizationPercent,
                 });
             }
         }
@@ -404,20 +448,20 @@ CURRENT WORKSPACE:
             }
 
             const screenContextHints: Record<string, string> = {
-                'initiatives': 'Focus on initiative management, status updates, and deliverables.',
-                'roadmap': 'Focus on timeline, dependencies, and scheduling.',
-                'assessment': 'Focus on maturity levels, gaps, and recommendations.',
-                'tasks': 'Focus on task execution, assignments, and deadlines.',
-                'risks': 'Focus on risk assessment, mitigation strategies, and monitoring.',
-                'decisions': 'Focus on decision rationale, options analysis, and outcomes.',
-                'stakeholders': 'Focus on communication, engagement, and influence.',
-                'reports': 'Focus on metrics, KPIs, and executive summaries.',
-                'settings': 'Focus on configuration, preferences, and system management.',
-                'projects': 'Focus on project overview, health, and portfolio view.'
+                initiatives: 'Focus on initiative management, status updates, and deliverables.',
+                roadmap: 'Focus on timeline, dependencies, and scheduling.',
+                assessment: 'Focus on maturity levels, gaps, and recommendations.',
+                tasks: 'Focus on task execution, assignments, and deadlines.',
+                risks: 'Focus on risk assessment, mitigation strategies, and monitoring.',
+                decisions: 'Focus on decision rationale, options analysis, and outcomes.',
+                stakeholders: 'Focus on communication, engagement, and influence.',
+                reports: 'Focus on metrics, KPIs, and executive summaries.',
+                settings: 'Focus on configuration, preferences, and system management.',
+                projects: 'Focus on project overview, health, and portfolio view.',
             };
 
-            const screenKey = Object.keys(screenContextHints).find(key =>
-                (context.currentScreen || '').toLowerCase().includes(key)
+            const screenKey = Object.keys(screenContextHints).find((key) =>
+                (context.currentScreen || '').toLowerCase().includes(key),
             );
 
             if (screenKey) {
@@ -440,8 +484,9 @@ PROJECT HISTORY:
         const roleInstructions: Record<string, string> = {
             [AIRole.ADVISOR]: 'Provide clear explanations and context. Be helpful but factual.',
             [AIRole.PMO_MANAGER]: 'Monitor execution, identify risks, suggest next steps. Be proactive but respectful.',
-            [AIRole.EXECUTOR]: 'Prepare drafts and actionable content. Always mark outputs as drafts requiring approval.',
-            [AIRole.EDUCATOR]: 'Explain concepts and best practices. Help user understand WHY, not just WHAT.'
+            [AIRole.EXECUTOR]:
+                'Prepare drafts and actionable content. Always mark outputs as drafts requiring approval.',
+            [AIRole.EDUCATOR]: 'Explain concepts and best practices. Help user understand WHY, not just WHAT.',
         };
 
         systemPrompt += `
@@ -461,7 +506,7 @@ RULES:
 
         const aiGovernanceRole = responseContext.aiGovernance?.activeRole || 'ADVISOR';
         const roleConstraints: Record<string, string> = {
-            'ADVISOR': `
+            ADVISOR: `
 
 AI GOVERNANCE - ADVISOR MODE:
 ⚠️ STRICT CONSTRAINTS:
@@ -471,7 +516,7 @@ AI GOVERNANCE - ADVISOR MODE:
 - Never propose action execution, only explain options
 - If user asks to create/modify something, explain how they can do it themselves`,
 
-            'MANAGER': `
+            MANAGER: `
 
 AI GOVERNANCE - MANAGER MODE:
 ⚠️ STRICT CONSTRAINTS:
@@ -482,7 +527,7 @@ AI GOVERNANCE - MANAGER MODE:
 - User must confirm each action before execution
 - Always include: "This is a draft proposal. Approve to proceed."`,
 
-            'OPERATOR': `
+            OPERATOR: `
 
 AI GOVERNANCE - OPERATOR MODE:
 ✅ EXECUTION ENABLED (within governance):
@@ -491,7 +536,7 @@ AI GOVERNANCE - OPERATOR MODE:
 - You MUST: operate within project governance rules
 - You MUST: log every action with "✅ ACTION EXECUTED:" prefix
 - Only execute actions marked as AI-executable
-- Always confirm what was done and what changed`
+- Always confirm what was done and what changed`,
         };
 
         systemPrompt += roleConstraints[aiGovernanceRole] || roleConstraints['ADVISOR'];
@@ -517,7 +562,7 @@ USER MESSAGE: ${userMessage}`;
             userMessage,
             conversationHistory,
             projectMemory,
-            modelName
+            modelName,
         );
 
         if (tokenAnalysis.status.utilizationPercent > 80) {
@@ -525,7 +570,7 @@ USER MESSAGE: ${userMessage}`;
                 model: modelName,
                 utilization: `${tokenAnalysis.status.utilizationPercent}%`,
                 total: tokenAnalysis.breakdown.total,
-                limit: tokenAnalysis.limits.availableForContext
+                limit: tokenAnalysis.limits.availableForContext,
             });
         }
 
@@ -534,7 +579,7 @@ USER MESSAGE: ${userMessage}`;
                 total: tokenAnalysis.breakdown.total,
                 utilization: tokenAnalysis.status.utilizationPercent,
                 model: modelName,
-                trimmed: projectMemory?._trimmed || false
+                trimmed: projectMemory?._trimmed || false,
             };
         }
 
@@ -598,7 +643,7 @@ USER MESSAGE: ${userMessage}`;
             [AIRole.ADVISOR]: 'Explains and answers questions',
             [AIRole.PMO_MANAGER]: 'Monitors execution, detects risks, suggests next steps',
             [AIRole.EXECUTOR]: 'Creates drafts (requires approval)',
-            [AIRole.EDUCATOR]: 'Teaches change management concepts'
+            [AIRole.EDUCATOR]: 'Teaches change management concepts',
         };
         return descriptions[role] || 'AI Assistant';
     },
@@ -614,7 +659,7 @@ USER MESSAGE: ${userMessage}`;
             pmo: { healthSnapshot: responseContext?.context?.pmo?.healthSnapshot },
             knowledge: responseContext?.context?.knowledge,
             external: responseContext?.context?.external,
-            execution: responseContext?.context?.execution
+            execution: responseContext?.context?.execution,
         };
 
         let processedResponse = _AIResponsePostProcessor(responseText, context);
@@ -636,7 +681,13 @@ USER MESSAGE: ${userMessage}`;
     /**
      * Process message using Multi-Agent Architecture
      */
-    processMessageWithAgents: async (message: string, userId: string, organizationId: string, projectId: string | null = null, options: any = {}) => {
+    processMessageWithAgents: async (
+        message: string,
+        userId: string,
+        organizationId: string,
+        projectId: string | null = null,
+        options: any = {},
+    ) => {
         await initDeps();
 
         const accessContext = await _AccessPolicyService.getAIAccessContext(organizationId);
@@ -645,7 +696,7 @@ USER MESSAGE: ${userMessage}`;
             return {
                 blocked: true,
                 errorCode: 'TRIAL_EXPIRED',
-                message: 'Your trial has expired. Please upgrade to continue using AI features.'
+                message: 'Your trial has expired. Please upgrade to continue using AI features.',
             };
         }
 
@@ -653,7 +704,7 @@ USER MESSAGE: ${userMessage}`;
             return {
                 blocked: true,
                 errorCode: 'AI_LIMIT_REACHED',
-                message: `You've reached your daily AI call limit.`
+                message: `You've reached your daily AI call limit.`,
             };
         }
 
@@ -667,15 +718,17 @@ USER MESSAGE: ${userMessage}`;
                 id: organizationId,
                 name: context.organization?.organizationName,
                 industry: context.organization?.industry,
-                employeeCount: context.organization?.employeeCount
+                employeeCount: context.organization?.employeeCount,
             },
-            project: context.project ? {
-                id: projectId,
-                name: context.project.projectName,
-                phase: context.project.currentPhase,
-                status: context.project.status,
-                progress: context.project.progressPercent
-            } : null,
+            project: context.project
+                ? {
+                    id: projectId,
+                    name: context.project.projectName,
+                    phase: context.project.currentPhase,
+                    status: context.project.status,
+                    progress: context.project.progressPercent,
+                }
+                : null,
             initiatives: context.project?.initiatives || [],
             assessment: context.project?.assessment,
             economics: context.project?.economics,
@@ -686,16 +739,16 @@ USER MESSAGE: ${userMessage}`;
             milestones: context.project?.milestones,
             dependencies: context.project?.dependencies,
             preferences,
-            preferredModel: policy.preferredModel
+            preferredModel: policy.preferredModel,
         };
 
         const coordinator = _AIAgents.getCoordinator({
             minAgentsForDebate: options.enableDebate !== false ? 2 : 99,
-            maxAgentsPerQuery: options.maxAgents || 3
+            maxAgentsPerQuery: options.maxAgents || 3,
         });
 
         const result = await coordinator.processQuery(message, agentContext, {
-            skipDebate: options.skipDebate
+            skipDebate: options.skipDebate,
         });
 
         _AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch((err: any) => {
@@ -708,15 +761,21 @@ USER MESSAGE: ${userMessage}`;
                 organizationType: accessContext.organizationType,
                 isDemo: accessContext.isDemo,
                 isTrial: accessContext.isTrial,
-                isPaid: accessContext.isPaid
-            }
+                isPaid: accessContext.isPaid,
+            },
         };
     },
 
     /**
      * Query a specific specialist agent directly
      */
-    querySpecialistAgent: async (domain: string, message: string, userId: string, organizationId: string, projectId: string | null = null) => {
+    querySpecialistAgent: async (
+        domain: string,
+        message: string,
+        userId: string,
+        organizationId: string,
+        projectId: string | null = null,
+    ) => {
         await initDeps();
 
         const context = await _AIContextBuilder.buildContext(userId, organizationId, projectId);
@@ -724,7 +783,7 @@ USER MESSAGE: ${userMessage}`;
         const agentContext = {
             organization: { id: organizationId },
             project: projectId ? { id: projectId } : null,
-            ...context
+            ...context,
         };
 
         const coordinator = _AIAgents.getCoordinator();
@@ -734,7 +793,12 @@ USER MESSAGE: ${userMessage}`;
     /**
      * Get recommendations from all relevant agents
      */
-    getMultiAgentRecommendations: async (topic: string, userId: string, organizationId: string, projectId: string | null = null) => {
+    getMultiAgentRecommendations: async (
+        topic: string,
+        userId: string,
+        organizationId: string,
+        projectId: string | null = null,
+    ) => {
         await initDeps();
 
         const context = await _AIContextBuilder.buildContext(userId, organizationId, projectId);
@@ -757,7 +821,7 @@ USER MESSAGE: ${userMessage}`;
     getAgentMetrics: async () => {
         await initDeps();
         return _AIAgents.getCoordinator().getMetrics();
-    }
+    },
 };
 
 export default AIOrchestrator;

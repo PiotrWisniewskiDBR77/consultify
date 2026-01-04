@@ -2,10 +2,11 @@
  * SettingsSearch - Global search across all settings
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User } from '../../../types';
+import { ArrowRight, Clock, Loader2, Search, Star, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, ArrowRight, Clock, Star, X, Loader2 } from 'lucide-react';
+
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsSearchProps {
@@ -25,43 +26,227 @@ interface SearchResult {
 
 const allSettings: SearchResult[] = [
     // Profile
-    { id: 'profile-name', title: 'Display Name', description: 'Change your display name', category: 'Profile', path: '/settings/profile', keywords: ['name', 'display', 'username'], icon: '👤' },
-    { id: 'profile-avatar', title: 'Profile Picture', description: 'Upload or change your avatar', category: 'Profile', path: '/settings/profile', keywords: ['avatar', 'picture', 'photo', 'image'], icon: '📷' },
-    { id: 'profile-bio', title: 'Bio & About', description: 'Edit your profile biography', category: 'Profile', path: '/settings/profile', keywords: ['bio', 'about', 'description'], icon: '📝' },
-    
+    {
+        id: 'profile-name',
+        title: 'Display Name',
+        description: 'Change your display name',
+        category: 'Profile',
+        path: '/settings/profile',
+        keywords: ['name', 'display', 'username'],
+        icon: '👤',
+    },
+    {
+        id: 'profile-avatar',
+        title: 'Profile Picture',
+        description: 'Upload or change your avatar',
+        category: 'Profile',
+        path: '/settings/profile',
+        keywords: ['avatar', 'picture', 'photo', 'image'],
+        icon: '📷',
+    },
+    {
+        id: 'profile-bio',
+        title: 'Bio & About',
+        description: 'Edit your profile biography',
+        category: 'Profile',
+        path: '/settings/profile',
+        keywords: ['bio', 'about', 'description'],
+        icon: '📝',
+    },
+
     // Security
-    { id: 'security-password', title: 'Change Password', description: 'Update your account password', category: 'Security', path: '/settings/security', keywords: ['password', 'credentials', 'login'], icon: '🔑' },
-    { id: 'security-2fa', title: 'Two-Factor Authentication', description: 'Enable or manage 2FA', category: 'Security', path: '/settings/security', keywords: ['2fa', 'mfa', 'authenticator', 'two-factor'], icon: '🔐' },
-    { id: 'security-sessions', title: 'Active Sessions', description: 'View and manage logged in devices', category: 'Security', path: '/settings/security', keywords: ['sessions', 'devices', 'logout'], icon: '💻' },
-    
+    {
+        id: 'security-password',
+        title: 'Change Password',
+        description: 'Update your account password',
+        category: 'Security',
+        path: '/settings/security',
+        keywords: ['password', 'credentials', 'login'],
+        icon: '🔑',
+    },
+    {
+        id: 'security-2fa',
+        title: 'Two-Factor Authentication',
+        description: 'Enable or manage 2FA',
+        category: 'Security',
+        path: '/settings/security',
+        keywords: ['2fa', 'mfa', 'authenticator', 'two-factor'],
+        icon: '🔐',
+    },
+    {
+        id: 'security-sessions',
+        title: 'Active Sessions',
+        description: 'View and manage logged in devices',
+        category: 'Security',
+        path: '/settings/security',
+        keywords: ['sessions', 'devices', 'logout'],
+        icon: '💻',
+    },
+
     // Privacy
-    { id: 'privacy-visibility', title: 'Profile Visibility', description: 'Control who can see your profile', category: 'Privacy', path: '/settings/privacy', keywords: ['visibility', 'public', 'private'], icon: '👁️' },
-    { id: 'privacy-data', title: 'Data Controls', description: 'Manage your data and privacy', category: 'Privacy', path: '/settings/privacy', keywords: ['data', 'gdpr', 'export', 'delete'], icon: '📊' },
-    
+    {
+        id: 'privacy-visibility',
+        title: 'Profile Visibility',
+        description: 'Control who can see your profile',
+        category: 'Privacy',
+        path: '/settings/privacy',
+        keywords: ['visibility', 'public', 'private'],
+        icon: '👁️',
+    },
+    {
+        id: 'privacy-data',
+        title: 'Data Controls',
+        description: 'Manage your data and privacy',
+        category: 'Privacy',
+        path: '/settings/privacy',
+        keywords: ['data', 'gdpr', 'export', 'delete'],
+        icon: '📊',
+    },
+
     // AI
-    { id: 'ai-model', title: 'AI Model Selection', description: 'Choose your preferred AI model', category: 'AI Preferences', path: '/settings/ai', keywords: ['ai', 'model', 'gpt', 'claude'], icon: '🤖' },
-    { id: 'ai-behavior', title: 'AI Behavior', description: 'Customize AI response style', category: 'AI Preferences', path: '/settings/ai', keywords: ['ai', 'behavior', 'personality', 'tone'], icon: '💬' },
-    { id: 'ai-context', title: 'AI Memory & Context', description: 'Manage what AI remembers', category: 'AI Preferences', path: '/settings/ai', keywords: ['ai', 'memory', 'context', 'history'], icon: '🧠' },
-    
+    {
+        id: 'ai-model',
+        title: 'AI Model Selection',
+        description: 'Choose your preferred AI model',
+        category: 'AI Preferences',
+        path: '/settings/ai',
+        keywords: ['ai', 'model', 'gpt', 'claude'],
+        icon: '🤖',
+    },
+    {
+        id: 'ai-behavior',
+        title: 'AI Behavior',
+        description: 'Customize AI response style',
+        category: 'AI Preferences',
+        path: '/settings/ai',
+        keywords: ['ai', 'behavior', 'personality', 'tone'],
+        icon: '💬',
+    },
+    {
+        id: 'ai-context',
+        title: 'AI Memory & Context',
+        description: 'Manage what AI remembers',
+        category: 'AI Preferences',
+        path: '/settings/ai',
+        keywords: ['ai', 'memory', 'context', 'history'],
+        icon: '🧠',
+    },
+
     // Notifications
-    { id: 'notif-email', title: 'Email Notifications', description: 'Configure email notification preferences', category: 'Notifications', path: '/settings/notifications', keywords: ['email', 'notifications', 'digest'], icon: '📧' },
-    { id: 'notif-push', title: 'Push Notifications', description: 'Manage push notifications', category: 'Notifications', path: '/settings/notifications', keywords: ['push', 'notifications', 'alerts'], icon: '🔔' },
-    { id: 'notif-rules', title: 'Notification Rules', description: 'Create custom notification rules', category: 'Notifications', path: '/settings/notifications', keywords: ['rules', 'custom', 'automation'], icon: '⚡' },
-    
+    {
+        id: 'notif-email',
+        title: 'Email Notifications',
+        description: 'Configure email notification preferences',
+        category: 'Notifications',
+        path: '/settings/notifications',
+        keywords: ['email', 'notifications', 'digest'],
+        icon: '📧',
+    },
+    {
+        id: 'notif-push',
+        title: 'Push Notifications',
+        description: 'Manage push notifications',
+        category: 'Notifications',
+        path: '/settings/notifications',
+        keywords: ['push', 'notifications', 'alerts'],
+        icon: '🔔',
+    },
+    {
+        id: 'notif-rules',
+        title: 'Notification Rules',
+        description: 'Create custom notification rules',
+        category: 'Notifications',
+        path: '/settings/notifications',
+        keywords: ['rules', 'custom', 'automation'],
+        icon: '⚡',
+    },
+
     // Integrations
-    { id: 'int-slack', title: 'Slack Integration', description: 'Connect with Slack', category: 'Integrations', path: '/settings/integrations', keywords: ['slack', 'integration', 'connect'], icon: '💬' },
-    { id: 'int-jira', title: 'Jira Integration', description: 'Connect with Jira', category: 'Integrations', path: '/settings/integrations', keywords: ['jira', 'integration', 'connect'], icon: '📋' },
-    { id: 'int-calendar', title: 'Calendar Sync', description: 'Sync with your calendar', category: 'Integrations', path: '/settings/integrations', keywords: ['calendar', 'sync', 'google', 'outlook'], icon: '📅' },
-    
+    {
+        id: 'int-slack',
+        title: 'Slack Integration',
+        description: 'Connect with Slack',
+        category: 'Integrations',
+        path: '/settings/integrations',
+        keywords: ['slack', 'integration', 'connect'],
+        icon: '💬',
+    },
+    {
+        id: 'int-jira',
+        title: 'Jira Integration',
+        description: 'Connect with Jira',
+        category: 'Integrations',
+        path: '/settings/integrations',
+        keywords: ['jira', 'integration', 'connect'],
+        icon: '📋',
+    },
+    {
+        id: 'int-calendar',
+        title: 'Calendar Sync',
+        description: 'Sync with your calendar',
+        category: 'Integrations',
+        path: '/settings/integrations',
+        keywords: ['calendar', 'sync', 'google', 'outlook'],
+        icon: '📅',
+    },
+
     // Appearance
-    { id: 'app-theme', title: 'Theme', description: 'Switch between light and dark mode', category: 'Appearance', path: '/settings/appearance', keywords: ['theme', 'dark', 'light', 'mode'], icon: '🎨' },
-    { id: 'app-font', title: 'Font Settings', description: 'Customize font size and family', category: 'Appearance', path: '/settings/appearance', keywords: ['font', 'size', 'text'], icon: '🔤' },
-    { id: 'app-density', title: 'Display Density', description: 'Adjust UI density', category: 'Appearance', path: '/settings/appearance', keywords: ['density', 'compact', 'comfortable'], icon: '📐' },
-    
+    {
+        id: 'app-theme',
+        title: 'Theme',
+        description: 'Switch between light and dark mode',
+        category: 'Appearance',
+        path: '/settings/appearance',
+        keywords: ['theme', 'dark', 'light', 'mode'],
+        icon: '🎨',
+    },
+    {
+        id: 'app-font',
+        title: 'Font Settings',
+        description: 'Customize font size and family',
+        category: 'Appearance',
+        path: '/settings/appearance',
+        keywords: ['font', 'size', 'text'],
+        icon: '🔤',
+    },
+    {
+        id: 'app-density',
+        title: 'Display Density',
+        description: 'Adjust UI density',
+        category: 'Appearance',
+        path: '/settings/appearance',
+        keywords: ['density', 'compact', 'comfortable'],
+        icon: '📐',
+    },
+
     // Advanced
-    { id: 'adv-shortcuts', title: 'Keyboard Shortcuts', description: 'Customize keyboard shortcuts', category: 'Advanced', path: '/settings/advanced/shortcuts', keywords: ['keyboard', 'shortcuts', 'hotkeys'], icon: '⌨️' },
-    { id: 'adv-export', title: 'Export/Import Settings', description: 'Backup and restore settings', category: 'Advanced', path: '/settings/advanced/export', keywords: ['export', 'import', 'backup'], icon: '💾' },
-    { id: 'adv-history', title: 'Settings History', description: 'View settings change log', category: 'Advanced', path: '/settings/advanced/history', keywords: ['history', 'log', 'audit'], icon: '📜' }
+    {
+        id: 'adv-shortcuts',
+        title: 'Keyboard Shortcuts',
+        description: 'Customize keyboard shortcuts',
+        category: 'Advanced',
+        path: '/settings/advanced/shortcuts',
+        keywords: ['keyboard', 'shortcuts', 'hotkeys'],
+        icon: '⌨️',
+    },
+    {
+        id: 'adv-export',
+        title: 'Export/Import Settings',
+        description: 'Backup and restore settings',
+        category: 'Advanced',
+        path: '/settings/advanced/export',
+        keywords: ['export', 'import', 'backup'],
+        icon: '💾',
+    },
+    {
+        id: 'adv-history',
+        title: 'Settings History',
+        description: 'View settings change log',
+        category: 'Advanced',
+        path: '/settings/advanced/history',
+        keywords: ['history', 'log', 'audit'],
+        icon: '📜',
+    },
 ];
 
 export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onNavigate }) => {
@@ -73,14 +258,17 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
     const results = useMemo(() => {
         if (!query.trim()) return [];
-        
+
         const searchTerm = query.toLowerCase();
-        return allSettings.filter(setting => 
-            setting.title.toLowerCase().includes(searchTerm) ||
-            setting.description.toLowerCase().includes(searchTerm) ||
-            setting.category.toLowerCase().includes(searchTerm) ||
-            setting.keywords.some(k => k.toLowerCase().includes(searchTerm))
-        ).slice(0, 10);
+        return allSettings
+            .filter(
+                (setting) =>
+                    setting.title.toLowerCase().includes(searchTerm) ||
+                    setting.description.toLowerCase().includes(searchTerm) ||
+                    setting.category.toLowerCase().includes(searchTerm) ||
+                    setting.keywords.some((k) => k.toLowerCase().includes(searchTerm)),
+            )
+            .slice(0, 10);
     }, [query]);
 
     const handleSelect = (result: SearchResult) => {
@@ -88,7 +276,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
         if (!recentSearches.includes(query) && query.trim()) {
             setRecentSearches([query, ...recentSearches.slice(0, 4)]);
         }
-        
+
         // Navigate
         onNavigate?.(result.path);
         setIsOpen(false);
@@ -96,14 +284,10 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
     };
 
     const toggleFavorite = (id: string) => {
-        setFavorites(prev => 
-            prev.includes(id) 
-                ? prev.filter(f => f !== id)
-                : [...prev, id]
-        );
+        setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
     };
 
-    const favoriteSettings = allSettings.filter(s => favorites.includes(s.id));
+    const favoriteSettings = allSettings.filter((s) => favorites.includes(s.id));
 
     // Keyboard shortcut to open
     useEffect(() => {
@@ -116,7 +300,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                 setIsOpen(false);
             }
         };
-        
+
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
@@ -124,7 +308,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in relative">
             <InfoButton cardId="settings-search" position="top-right" />
-            
+
             <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                     <Search size={28} className="text-cyan-500" />
@@ -139,13 +323,16 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                 <input
                     type="text"
                     value={query}
-                    onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
+                    onChange={(e) => {
+                        setQuery(e.target.value);
+                        setIsOpen(true);
+                    }}
                     onFocus={() => setIsOpen(true)}
                     placeholder="Search settings... (Cmd+K)"
                     className="w-full pl-12 pr-4 py-4 text-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 />
                 {query && (
-                    <button 
+                    <button
                         onClick={() => setQuery('')}
                         className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
                     >
@@ -182,10 +369,16 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                                             {result.category}
                                         </span>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); toggleFavorite(result.id); }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleFavorite(result.id);
+                                            }}
                                             className={`p-1 rounded ${favorites.includes(result.id) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'}`}
                                         >
-                                            <Star size={16} fill={favorites.includes(result.id) ? 'currentColor' : 'none'} />
+                                            <Star
+                                                size={16}
+                                                fill={favorites.includes(result.id) ? 'currentColor' : 'none'}
+                                            />
                                         </button>
                                         <ArrowRight size={16} className="text-slate-400" />
                                     </div>
@@ -209,7 +402,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                             <p className="text-sm text-slate-500">Star settings to add them here</p>
                         ) : (
                             <div className="space-y-2">
-                                {favoriteSettings.map(setting => (
+                                {favoriteSettings.map((setting) => (
                                     <button
                                         key={setting.id}
                                         onClick={() => handleSelect(setting)}
@@ -253,7 +446,16 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
                     <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Browse by Category</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {['Profile', 'Security', 'Privacy', 'AI Preferences', 'Notifications', 'Integrations', 'Appearance', 'Advanced'].map(cat => (
+                        {[
+                            'Profile',
+                            'Security',
+                            'Privacy',
+                            'AI Preferences',
+                            'Notifications',
+                            'Integrations',
+                            'Appearance',
+                            'Advanced',
+                        ].map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setQuery(cat)}
@@ -261,7 +463,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                             >
                                 <p className="font-medium text-slate-700 dark:text-slate-300">{cat}</p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    {allSettings.filter(s => s.category === cat).length} settings
+                                    {allSettings.filter((s) => s.category === cat).length} settings
                                 </p>
                             </button>
                         ))}
@@ -271,17 +473,12 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
             {/* Keyboard Hint */}
             <div className="text-center text-sm text-slate-400">
-                Press <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs">⌘K</kbd> anywhere to search settings
+                Press <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs">⌘K</kbd> anywhere to
+                search settings
             </div>
         </div>
     );
 };
 
 export default SettingsSearch;
-
-
-
-
-
-
 

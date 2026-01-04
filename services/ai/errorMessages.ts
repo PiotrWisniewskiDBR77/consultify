@@ -1,7 +1,7 @@
 // services/ai/errorMessages.ts
 // Centralized AI Error Messages with user-friendly, contextual responses
 
-export type AIErrorContext = 
+export type AIErrorContext =
     | 'roadmap_generation'
     | 'initiative_generation'
     | 'assessment_analysis'
@@ -22,23 +22,37 @@ export interface AIErrorMessage {
 }
 
 // Error type detection
-export function detectErrorType(error: Error | string): 'network' | 'timeout' | 'rate_limit' | 'auth' | 'validation' | 'server' | 'unknown' {
+export function detectErrorType(
+    error: Error | string,
+): 'network' | 'timeout' | 'rate_limit' | 'auth' | 'validation' | 'server' | 'unknown' {
     const message = typeof error === 'string' ? error : error.message;
     const lowerMessage = message.toLowerCase();
-    
+
     if (lowerMessage.includes('network') || lowerMessage.includes('fetch') || lowerMessage.includes('connection')) {
         return 'network';
     }
     if (lowerMessage.includes('timeout') || lowerMessage.includes('timed out')) {
         return 'timeout';
     }
-    if (lowerMessage.includes('rate limit') || lowerMessage.includes('429') || lowerMessage.includes('too many requests')) {
+    if (
+        lowerMessage.includes('rate limit') ||
+        lowerMessage.includes('429') ||
+        lowerMessage.includes('too many requests')
+    ) {
         return 'rate_limit';
     }
-    if (lowerMessage.includes('unauthorized') || lowerMessage.includes('401') || lowerMessage.includes('authentication')) {
+    if (
+        lowerMessage.includes('unauthorized') ||
+        lowerMessage.includes('401') ||
+        lowerMessage.includes('authentication')
+    ) {
         return 'auth';
     }
-    if (lowerMessage.includes('validation') || lowerMessage.includes('invalid') || lowerMessage.includes('bad request')) {
+    if (
+        lowerMessage.includes('validation') ||
+        lowerMessage.includes('invalid') ||
+        lowerMessage.includes('bad request')
+    ) {
         return 'validation';
     }
     if (lowerMessage.includes('500') || lowerMessage.includes('server error') || lowerMessage.includes('internal')) {
@@ -50,7 +64,7 @@ export function detectErrorType(error: Error | string): 'network' | 'timeout' | 
 // Get friendly error message based on context and error type
 export function getFriendlyErrorMessage(error: Error | string, context: AIErrorContext): AIErrorMessage {
     const errorType = detectErrorType(error);
-    
+
     // Context-specific messages
     const contextMessages: Record<AIErrorContext, Record<string, AIErrorMessage>> = {
         roadmap_generation: {
@@ -59,29 +73,29 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Unable to reach the AI service for roadmap generation.',
                 suggestion: 'Please check your internet connection and try again.',
                 retryable: true,
-                severity: 'warning'
+                severity: 'warning',
             },
             timeout: {
                 title: 'Analysis Taking Longer Than Expected',
                 description: 'The roadmap generation is taking more time due to complexity.',
-                suggestion: 'We\'re using a simplified approach. You can refine the roadmap manually.',
+                suggestion: "We're using a simplified approach. You can refine the roadmap manually.",
                 retryable: true,
-                severity: 'info'
+                severity: 'info',
             },
             rate_limit: {
                 title: 'High Demand',
                 description: 'Our AI service is experiencing high traffic right now.',
                 suggestion: 'Please wait a moment and try again. Your work has been saved.',
                 retryable: true,
-                severity: 'info'
+                severity: 'info',
             },
             default: {
                 title: 'Roadmap Generation Issue',
                 description: 'We encountered an issue generating your AI-optimized roadmap.',
                 suggestion: 'Using standard sequencing instead. You can reorder initiatives manually.',
                 retryable: true,
-                severity: 'warning'
-            }
+                severity: 'warning',
+            },
         },
         initiative_generation: {
             network: {
@@ -89,22 +103,22 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Unable to generate custom initiatives due to connectivity.',
                 suggestion: 'Check your connection. Standard recommendations are still available.',
                 retryable: true,
-                severity: 'warning'
+                severity: 'warning',
             },
             timeout: {
                 title: 'Complex Analysis in Progress',
                 description: 'Generating custom initiatives requires deep analysis.',
                 suggestion: 'Using pre-built recommendations. You can customize them to fit your needs.',
                 retryable: true,
-                severity: 'info'
+                severity: 'info',
             },
             default: {
                 title: 'Custom Generation Unavailable',
                 description: 'AI-powered initiative generation encountered an issue.',
                 suggestion: 'Standard recommendations based on your assessment are displayed instead.',
                 retryable: true,
-                severity: 'warning'
-            }
+                severity: 'warning',
+            },
         },
         assessment_analysis: {
             network: {
@@ -112,15 +126,15 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Could not complete the assessment analysis.',
                 suggestion: 'Your scores are saved. Try the analysis again when connected.',
                 retryable: true,
-                severity: 'warning'
+                severity: 'warning',
             },
             default: {
                 title: 'Analysis Delayed',
                 description: 'AI insights for this assessment are temporarily unavailable.',
                 suggestion: 'Continue with the assessment. Insights will be generated when available.',
                 retryable: true,
-                severity: 'info'
-            }
+                severity: 'info',
+            },
         },
         chat_response: {
             network: {
@@ -128,29 +142,29 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Unable to reach the AI assistant.',
                 suggestion: 'Please check your connection and send the message again.',
                 retryable: true,
-                severity: 'warning'
+                severity: 'warning',
             },
             timeout: {
                 title: 'Response Delayed',
                 description: 'The AI is taking longer than usual to respond.',
                 suggestion: 'Try simplifying your question or wait a moment and retry.',
                 retryable: true,
-                severity: 'info'
+                severity: 'info',
             },
             rate_limit: {
                 title: 'High Usage',
-                description: 'You\'ve sent many messages in a short time.',
+                description: "You've sent many messages in a short time.",
                 suggestion: 'Wait a moment before sending another message.',
                 retryable: true,
-                severity: 'info'
+                severity: 'info',
             },
             default: {
                 title: 'Response Issue',
-                description: 'I\'m having trouble processing that request.',
+                description: "I'm having trouble processing that request.",
                 suggestion: 'Please try rephrasing your question or try again shortly.',
                 retryable: true,
-                severity: 'warning'
-            }
+                severity: 'warning',
+            },
         },
         document_analysis: {
             default: {
@@ -158,8 +172,8 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Unable to fully analyze the uploaded document.',
                 suggestion: 'Ensure the document is in a supported format (PDF, DOCX, TXT).',
                 retryable: true,
-                severity: 'warning'
-            }
+                severity: 'warning',
+            },
         },
         strategic_synthesis: {
             default: {
@@ -167,8 +181,8 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'AI synthesis of your strategic data is temporarily unavailable.',
                 suggestion: 'Your data is saved. The synthesis will be available shortly.',
                 retryable: true,
-                severity: 'info'
-            }
+                severity: 'info',
+            },
         },
         risk_analysis: {
             default: {
@@ -176,8 +190,8 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'AI risk assessment is processing.',
                 suggestion: 'Manual risk entries are still available. AI insights will appear when ready.',
                 retryable: true,
-                severity: 'info'
-            }
+                severity: 'info',
+            },
         },
         pdf_export: {
             default: {
@@ -185,8 +199,8 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'PDF generation encountered a temporary issue.',
                 suggestion: 'Try again in a moment, or use Excel export as an alternative.',
                 retryable: true,
-                severity: 'warning'
-            }
+                severity: 'warning',
+            },
         },
         excel_export: {
             default: {
@@ -194,8 +208,8 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Excel file generation encountered an issue.',
                 suggestion: 'Try again or use PDF export as an alternative.',
                 retryable: true,
-                severity: 'warning'
-            }
+                severity: 'warning',
+            },
         },
         general: {
             network: {
@@ -203,32 +217,32 @@ export function getFriendlyErrorMessage(error: Error | string, context: AIErrorC
                 description: 'Unable to reach the server.',
                 suggestion: 'Please check your internet connection and try again.',
                 retryable: true,
-                severity: 'warning'
+                severity: 'warning',
             },
             auth: {
                 title: 'Session Expired',
                 description: 'Your session has expired.',
                 suggestion: 'Please log in again to continue.',
                 retryable: false,
-                severity: 'error'
+                severity: 'error',
             },
             server: {
                 title: 'Server Issue',
                 description: 'Our servers are experiencing temporary difficulties.',
                 suggestion: 'Please try again in a few minutes.',
                 retryable: true,
-                severity: 'error'
+                severity: 'error',
             },
             default: {
                 title: 'Something Went Wrong',
                 description: 'An unexpected issue occurred.',
                 suggestion: 'Please try again. If the problem persists, contact support.',
                 retryable: true,
-                severity: 'warning'
-            }
-        }
+                severity: 'warning',
+            },
+        },
     };
-    
+
     const contextErrors = contextMessages[context] || contextMessages.general;
     return contextErrors[errorType] || contextErrors.default;
 }
@@ -240,11 +254,14 @@ export function formatChatError(error: Error | string, context: AIErrorContext =
 }
 
 // Format error for toast notification
-export function formatToastError(error: Error | string, context: AIErrorContext = 'general'): { message: string; description?: string } {
+export function formatToastError(
+    error: Error | string,
+    context: AIErrorContext = 'general',
+): { message: string; description?: string } {
     const errorInfo = getFriendlyErrorMessage(error, context);
     return {
         message: errorInfo.title,
-        description: errorInfo.suggestion
+        description: errorInfo.suggestion,
     };
 }
 
@@ -252,14 +269,6 @@ export default {
     getFriendlyErrorMessage,
     formatChatError,
     formatToastError,
-    detectErrorType
+    detectErrorType,
 };
-
-
-
-
-
-
-
-
 

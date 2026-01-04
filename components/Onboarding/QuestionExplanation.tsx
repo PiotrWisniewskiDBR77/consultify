@@ -1,14 +1,14 @@
+import { AlertCircle, Brain, Compass, HelpCircle, Lightbulb, Target, Users } from 'lucide-react';
 import React from 'react';
-import { HelpCircle, Brain, Compass, Target, Users, Lightbulb, AlertCircle } from 'lucide-react';
 
 /**
  * QuestionExplanation — Phase E "Why I'm Asking" Component
- * 
+ *
  * ENTERPRISE SPEC COMPLIANCE:
  * - EPIC-E2: AI Explains Every Question
  * - Each question includes visible "Why I'm asking" explanation
  * - Builds trust through transparency
- * 
+ *
  * PURPOSE:
  * Users should understand WHY each question matters,
  * not just answer mechanically.
@@ -75,21 +75,21 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
     const Icon = content.icon;
 
     return (
-        <div className={`
+        <div
+            className={`
             bg-slate-50 dark:bg-navy-900/50 
             border border-slate-200 dark:border-slate-700 
             rounded-lg overflow-hidden
             ${className}
-        `}>
+        `}
+        >
             {/* Header - always visible */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-colors"
             >
                 <HelpCircle size={16} className="text-purple-500 shrink-0" />
-                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                    Dlaczego o to pytam?
-                </span>
+                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">Dlaczego o to pytam?</span>
                 <svg
                     className={`ml-auto w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                     fill="none"
@@ -111,9 +111,7 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
                             <h4 className="font-semibold text-navy-900 dark:text-white text-sm mb-1">
                                 {content.title}
                             </h4>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                {content.why}
-                            </p>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm">{content.why}</p>
                         </div>
                     </div>
 
@@ -145,9 +143,7 @@ export const QuestionWithExplanation: React.FC<{
     return (
         <div className={`space-y-3 ${className}`}>
             <div>
-                <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-1">
-                    {question}
-                </h3>
+                <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-1">{question}</h3>
                 <QuestionExplanation questionType={questionType} />
             </div>
             {children}

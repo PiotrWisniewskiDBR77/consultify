@@ -1,11 +1,12 @@
 /**
  * DatabaseConfig Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for DatabaseConfig - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { loadDatabaseConfig } from '../../../../src/config/DatabaseConfig.js';
 
 describe('DatabaseConfig', () => {
@@ -51,4 +52,3 @@ describe('DatabaseConfig', () => {
         });
     });
 });
-

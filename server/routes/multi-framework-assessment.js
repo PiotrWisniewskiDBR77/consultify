@@ -17,7 +17,7 @@ import authenticateToken from '../middleware/authMiddleware.js';
 import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
 
 // Services
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { calculateFrameworkScore  } from '../services/frameworkScoreCalculators.js';
 import * as multiFrameworkAuditServiceModule from '../services/multiFrameworkAuditService.js';
@@ -662,6 +662,7 @@ router.get('/:id/comments', authenticateToken, async (req, res) => {
 });
 
 export default router;
+
 
 
 

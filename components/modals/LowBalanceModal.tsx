@@ -1,5 +1,5 @@
+import { AlertTriangle, Coins, CreditCard, Sparkles, TrendingUp, X } from 'lucide-react';
 import React from 'react';
-import { AlertTriangle, CreditCard, X, Coins, TrendingUp, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface LowBalanceModalProps {
@@ -15,7 +15,7 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
     onClose,
     onBuyTokens,
     currentBalance,
-    minRequired = 100
+    minRequired = 100,
 }) => {
     const { t } = useTranslation();
 
@@ -28,7 +28,9 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                 {/* Header */}
-                <div className={`p-6 ${isZeroBalance ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}>
+                <div
+                    className={`p-6 ${isZeroBalance ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}
+                >
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -40,19 +42,17 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-white">
-                                    {isZeroBalance 
-                                        ? t('billing.noTokens', 'Out of Tokens') 
+                                    {isZeroBalance
+                                        ? t('billing.noTokens', 'Out of Tokens')
                                         : t('billing.lowBalance', 'Low Token Balance')}
                                 </h2>
                                 <p className="text-white/80 text-sm">
-                                    {t('billing.currentBalance', 'Current balance')}: {currentBalance.toLocaleString()} tokens
+                                    {t('billing.currentBalance', 'Current balance')}: {currentBalance.toLocaleString()}{' '}
+                                    tokens
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-1 rounded-lg hover:bg-white/20 transition-colors"
-                        >
+                        <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/20 transition-colors">
                             <X className="w-5 h-5 text-white" />
                         </button>
                     </div>
@@ -61,10 +61,15 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
                 {/* Content */}
                 <div className="p-6 space-y-6">
                     <p className="text-slate-600 dark:text-slate-300">
-                        {isZeroBalance 
-                            ? t('billing.noTokensDescription', 'You need to purchase tokens to continue using AI features. Our AI assistant requires tokens to process your requests.')
-                            : t('billing.lowBalanceDescription', 'Your token balance is running low. Purchase more tokens to ensure uninterrupted access to AI features.')
-                        }
+                        {isZeroBalance
+                            ? t(
+                                  'billing.noTokensDescription',
+                                  'You need to purchase tokens to continue using AI features. Our AI assistant requires tokens to process your requests.',
+                              )
+                            : t(
+                                  'billing.lowBalanceDescription',
+                                  'Your token balance is running low. Purchase more tokens to ensure uninterrupted access to AI features.',
+                              )}
                     </p>
 
                     {/* Token Benefits */}
@@ -124,12 +129,4 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
 };
 
 export default LowBalanceModal;
-
-
-
-
-
-
-
-
 

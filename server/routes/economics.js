@@ -1582,7 +1582,7 @@ router.post('/analyses/:id/business-case',
 let FinancialCalculatorService;
 const getFinancialService = () => {
     if (!FinancialCalculatorService) {
-        FinancialCalculatorService = import('financialCalculatorService.js');
+        FinancialCalculatorService = import('../services/financialCalculatorService.js');
     }
     return FinancialCalculatorService;
 };

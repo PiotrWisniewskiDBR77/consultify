@@ -1,6 +1,6 @@
 /**
  * ReviewFeedbackPanel
- * 
+ *
  * Slide-in panel for reviewers to submit their assessment review.
  * Includes:
  * - Star rating (1-5)
@@ -9,19 +9,19 @@
  * - Recommendation (Approve/Reject/Request Changes)
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    X,
-    Star,
-    MessageSquare,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
-    Loader2,
+    CheckCircle2,
     ChevronDown,
     ChevronUp,
-    Send
+    Loader2,
+    MessageSquare,
+    Send,
+    Star,
+    X,
+    XCircle,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // DRD Axis labels
 const AXIS_LABELS: Record<string, string> = {
@@ -31,7 +31,7 @@ const AXIS_LABELS: Record<string, string> = {
     dataManagement: 'Zarządzanie Danymi',
     culture: 'Kultura',
     cybersecurity: 'Cyberbezpieczeństwo',
-    aiMaturity: 'Dojrzałość AI'
+    aiMaturity: 'Dojrzałość AI',
 };
 
 type Recommendation = 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES';
@@ -51,7 +51,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
     assessmentName,
     isOpen,
     onClose,
-    onSubmitted
+    onSubmitted,
 }) => {
     const panelRef = useRef<HTMLDivElement>(null);
 
@@ -92,9 +92,9 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
 
     // Handle axis comment change
     const handleAxisCommentChange = useCallback((axisId: string, comment: string) => {
-        setAxisComments(prev => ({
+        setAxisComments((prev) => ({
             ...prev,
-            [axisId]: comment
+            [axisId]: comment,
         }));
     }, []);
 
@@ -118,17 +118,15 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
             const response = await fetch(`/api/assessment-workflow/reviews/${reviewId}/submit`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     rating: rating || null,
                     comments: comments.trim(),
-                    axisComments: Object.fromEntries(
-                        Object.entries(axisComments).filter(([_, v]) => v.trim())
-                    ),
-                    recommendation
-                })
+                    axisComments: Object.fromEntries(Object.entries(axisComments).filter(([_, v]) => v.trim())),
+                    recommendation,
+                }),
             });
 
             if (response.ok) {
@@ -150,28 +148,34 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
     };
 
     // Recommendation config
-    const recommendations: { id: Recommendation; label: string; icon: React.ReactNode; color: string; bgColor: string }[] = [
+    const recommendations: {
+        id: Recommendation;
+        label: string;
+        icon: React.ReactNode;
+        color: string;
+        bgColor: string;
+    }[] = [
         {
             id: 'APPROVE',
             label: 'Zatwierdź',
             icon: <CheckCircle2 size={20} />,
             color: 'text-green-600 dark:text-green-400',
-            bgColor: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-500/30'
+            bgColor: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-500/30',
         },
         {
             id: 'REQUEST_CHANGES',
             label: 'Poproś o zmiany',
             icon: <AlertTriangle size={20} />,
             color: 'text-amber-600 dark:text-amber-400',
-            bgColor: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-500/30'
+            bgColor: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-500/30',
         },
         {
             id: 'REJECT',
             label: 'Odrzuć',
             icon: <XCircle size={20} />,
             color: 'text-red-600 dark:text-red-400',
-            bgColor: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-500/30'
-        }
+            bgColor: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-500/30',
+        },
     ];
 
     if (!isOpen) return null;
@@ -179,10 +183,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
     return (
         <>
             {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
-                onClick={onClose}
-            />
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />
 
             {/* Panel */}
             <div
@@ -201,9 +202,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                 <h2 className="text-lg font-bold text-navy-900 dark:text-white">
                                     Wystawienie Recenzji
                                 </h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {assessmentName}
-                                </p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{assessmentName}</p>
                             </div>
                             <button
                                 onClick={onClose}
@@ -221,9 +220,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                 <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
                                     <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                                 </div>
-                                <p className="text-lg font-medium text-navy-900 dark:text-white">
-                                    Recenzja wysłana!
-                                </p>
+                                <p className="text-lg font-medium text-navy-900 dark:text-white">Recenzja wysłana!</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                     Dziękujemy za Twoją opinię
                                 </p>
@@ -275,18 +272,25 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                                 onClick={() => setRecommendation(rec.id)}
                                                 className={`
                                                     flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all
-                                                    ${recommendation === rec.id
-                                                        ? rec.bgColor + ' border-current'
-                                                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                                    ${
+                                                        recommendation === rec.id
+                                                            ? rec.bgColor + ' border-current'
+                                                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                                     }
                                                 `}
                                             >
-                                                <span className={recommendation === rec.id ? rec.color : 'text-slate-400'}>
+                                                <span
+                                                    className={recommendation === rec.id ? rec.color : 'text-slate-400'}
+                                                >
                                                     {rec.icon}
                                                 </span>
-                                                <span className={`text-xs font-medium ${
-                                                    recommendation === rec.id ? rec.color : 'text-slate-600 dark:text-slate-400'
-                                                }`}>
+                                                <span
+                                                    className={`text-xs font-medium ${
+                                                        recommendation === rec.id
+                                                            ? rec.color
+                                                            : 'text-slate-600 dark:text-slate-400'
+                                                    }`}
+                                                >
                                                     {rec.label}
                                                 </span>
                                             </button>
@@ -331,7 +335,9 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                                     </label>
                                                     <textarea
                                                         value={axisComments[axisId] || ''}
-                                                        onChange={(e) => handleAxisCommentChange(axisId, e.target.value)}
+                                                        onChange={(e) =>
+                                                            handleAxisCommentChange(axisId, e.target.value)
+                                                        }
                                                         placeholder={`Komentarz do ${label}...`}
                                                         rows={2}
                                                         className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -368,9 +374,10 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                     disabled={!recommendation || submitting}
                                     className={`
                                         flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                        ${recommendation && !submitting
-                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                        ${
+                                            recommendation && !submitting
+                                                ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                         }
                                     `}
                                 >
@@ -394,4 +401,3 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
         </>
     );
 };
-

@@ -1,19 +1,19 @@
 /**
  * useSpeechToText Hook
- * 
+ *
  * Enhanced Speech-to-Text hook with:
  * - Server-side Whisper API integration
  * - Client-side Web Speech API fallback
  * - Voice Activity Detection (VAD)
  * - Auto-send after silence detection
  * - Live transcript streaming
- * 
+ *
  * Part of the Universal Voice Conversation System
- * 
+ *
  * @version 2.0.0
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ============================================================================
 // Types
@@ -50,15 +50,15 @@ export interface UseSTTReturn {
     state: STTState;
     settings: STTSettings;
     isSupported: boolean;
-    
+
     // Controls
     start: () => void;
     stop: () => void;
     toggle: () => void;
-    
+
     // Settings
     updateSettings: (newSettings: Partial<STTSettings>) => void;
-    
+
     // Utilities
     getSupportedLanguages: () => string[];
     testProvider: (provider: STTProvider) => Promise<boolean>;
@@ -73,7 +73,7 @@ const DEFAULT_SETTINGS: STTSettings = {
     language: 'pl',
     autoSendDelay: 1.5,
     enableVAD: true,
-    silenceThreshold: 0.1
+    silenceThreshold: 0.1,
 };
 
 const SUPPORTED_LANGUAGES = ['pl', 'en', 'de', 'es', 'ja', 'ar', 'fr', 'it', 'pt', 'ru', 'zh', 'ko'];
@@ -83,11 +83,7 @@ const SUPPORTED_LANGUAGES = ['pl', 'en', 'de', 'es', 'ja', 'ar', 'fr', 'it', 'pt
 // ============================================================================
 
 export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
-    const {
-        onTranscript,
-        onAutoSend,
-        settings: initialSettings = {}
-    } = options;
+    const { onTranscript, onAutoSend, settings: initialSettings = {} } = options;
 
     // State
     const [state, setState] = useState<STTState>({
@@ -98,12 +94,12 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
         error: null,
         audioLevel: 0,
         recordingDuration: 0,
-        provider: initialSettings.provider || 'whisper'
+        provider: initialSettings.provider || 'whisper',
     });
 
     const [settings, setSettings] = useState<STTSettings>({
         ...DEFAULT_SETTINGS,
-        ...initialSettings
+        ...initialSettings,
     });
 
     // Refs
@@ -120,66 +116,69 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
     const accumulatedTranscriptRef = useRef<string>('');
 
     // Check support
-    const isSupported = typeof window !== 'undefined' && 
+    const isSupported =
+        typeof window !== 'undefined' &&
         (navigator.mediaDevices?.getUserMedia !== undefined ||
-         'webkitSpeechRecognition' in window ||
-         'SpeechRecognition' in window);
+            'webkitSpeechRecognition' in window ||
+            'SpeechRecognition' in window);
 
     // ========================================================================
     // Voice Activity Detection
     // ========================================================================
 
-    const startVAD = useCallback((stream: MediaStream) => {
-        if (!settings.enableVAD) return;
+    const startVAD = useCallback(
+        (stream: MediaStream) => {
+            if (!settings.enableVAD) return;
 
-        try {
-            audioContextRef.current = new AudioContext();
-            analyserRef.current = audioContextRef.current.createAnalyser();
-            const source = audioContextRef.current.createMediaStreamSource(stream);
-            source.connect(analyserRef.current);
-            analyserRef.current.fftSize = 256;
+            try {
+                audioContextRef.current = new AudioContext();
+                analyserRef.current = audioContextRef.current.createAnalyser();
+                const source = audioContextRef.current.createMediaStreamSource(stream);
+                source.connect(analyserRef.current);
+                analyserRef.current.fftSize = 256;
 
-            const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+                const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
 
-            vadIntervalRef.current = window.setInterval(() => {
-                if (!analyserRef.current) return;
+                vadIntervalRef.current = window.setInterval(() => {
+                    if (!analyserRef.current) return;
 
-                analyserRef.current.getByteFrequencyData(dataArray);
-                const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-                const normalizedLevel = Math.min(1, average / 128);
+                    analyserRef.current.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+                    const normalizedLevel = Math.min(1, average / 128);
 
-                setState(prev => ({ ...prev, audioLevel: normalizedLevel }));
+                    setState((prev) => ({ ...prev, audioLevel: normalizedLevel }));
 
-                // Detect speech/silence
-                if (normalizedLevel > settings.silenceThreshold) {
-                    lastSpeechTimeRef.current = Date.now();
-                    
-                    // Clear silence timer
-                    if (silenceTimerRef.current) {
-                        clearTimeout(silenceTimerRef.current);
-                        silenceTimerRef.current = null;
+                    // Detect speech/silence
+                    if (normalizedLevel > settings.silenceThreshold) {
+                        lastSpeechTimeRef.current = Date.now();
+
+                        // Clear silence timer
+                        if (silenceTimerRef.current) {
+                            clearTimeout(silenceTimerRef.current);
+                            silenceTimerRef.current = null;
+                        }
+                    } else {
+                        // Check for silence duration
+                        const silenceDuration = (Date.now() - lastSpeechTimeRef.current) / 1000;
+
+                        if (silenceDuration >= settings.autoSendDelay && !silenceTimerRef.current) {
+                            silenceTimerRef.current = setTimeout(() => {
+                                const transcript = accumulatedTranscriptRef.current.trim();
+                                if (transcript && onAutoSend) {
+                                    onAutoSend(transcript);
+                                    accumulatedTranscriptRef.current = '';
+                                    setState((prev) => ({ ...prev, transcript: '' }));
+                                }
+                            }, 100);
+                        }
                     }
-                } else {
-                    // Check for silence duration
-                    const silenceDuration = (Date.now() - lastSpeechTimeRef.current) / 1000;
-                    
-                    if (silenceDuration >= settings.autoSendDelay && !silenceTimerRef.current) {
-                        silenceTimerRef.current = setTimeout(() => {
-                            const transcript = accumulatedTranscriptRef.current.trim();
-                            if (transcript && onAutoSend) {
-                                onAutoSend(transcript);
-                                accumulatedTranscriptRef.current = '';
-                                setState(prev => ({ ...prev, transcript: '' }));
-                            }
-                        }, 100);
-                    }
-                }
-            }, 100);
-
-        } catch (error) {
-            console.warn('[STT] VAD initialization failed:', error);
-        }
-    }, [settings.enableVAD, settings.silenceThreshold, settings.autoSendDelay, onAutoSend]);
+                }, 100);
+            } catch (error) {
+                console.warn('[STT] VAD initialization failed:', error);
+            }
+        },
+        [settings.enableVAD, settings.silenceThreshold, settings.autoSendDelay, onAutoSend],
+    );
 
     const stopVAD = useCallback(() => {
         if (vadIntervalRef.current) {
@@ -197,25 +196,28 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
     // Server STT (Whisper)
     // ========================================================================
 
-    const transcribeWithServer = useCallback(async (audioBlob: Blob): Promise<string> => {
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
-        formData.append('language', settings.language);
+    const transcribeWithServer = useCallback(
+        async (audioBlob: Blob): Promise<string> => {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'audio.webm');
+            formData.append('language', settings.language);
 
-        const response = await fetch('/api/voice/stt', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
+            const response = await fetch('/api/voice/stt', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+            });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'STT failed');
-        }
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'STT failed');
+            }
 
-        const result = await response.json();
-        return result.text;
-    }, [settings.language]);
+            const result = await response.json();
+            return result.text;
+        },
+        [settings.language],
+    );
 
     // ========================================================================
     // MediaRecorder (for Whisper)
@@ -228,8 +230,8 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
                     echoCancellation: true,
                     noiseSuppression: true,
                     autoGainControl: true,
-                    sampleRate: 16000
-                }
+                    sampleRate: 16000,
+                },
             });
 
             streamRef.current = stream;
@@ -237,11 +239,11 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
             accumulatedTranscriptRef.current = '';
             lastSpeechTimeRef.current = Date.now();
 
-            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-                ? 'audio/webm;codecs=opus' 
-                : MediaRecorder.isTypeSupported('audio/webm') 
-                    ? 'audio/webm' 
-                    : 'audio/mp4';
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : MediaRecorder.isTypeSupported('audio/webm')
+                  ? 'audio/webm'
+                  : 'audio/mp4';
 
             const mediaRecorder = new MediaRecorder(stream, { mimeType });
 
@@ -253,31 +255,30 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
 
             mediaRecorder.onstop = async () => {
                 // Clean up stream
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach((track) => track.stop());
                 stopVAD();
 
                 if (audioChunksRef.current.length > 0) {
-                    setState(prev => ({ ...prev, isProcessing: true }));
+                    setState((prev) => ({ ...prev, isProcessing: true }));
 
                     try {
                         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
                         const text = await transcribeWithServer(audioBlob);
 
-                        setState(prev => ({
+                        setState((prev) => ({
                             ...prev,
                             transcript: text,
-                            isProcessing: false
+                            isProcessing: false,
                         }));
 
                         onTranscript?.(text, true);
                         accumulatedTranscriptRef.current = text;
-
                     } catch (error: any) {
                         console.error('[STT] Transcription error:', error);
-                        setState(prev => ({
+                        setState((prev) => ({
                             ...prev,
                             error: error.message,
-                            isProcessing: false
+                            isProcessing: false,
                         }));
                     }
                 }
@@ -293,15 +294,14 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
             let duration = 0;
             recordingTimerRef.current = setInterval(() => {
                 duration++;
-                setState(prev => ({ ...prev, recordingDuration: duration }));
+                setState((prev) => ({ ...prev, recordingDuration: duration }));
             }, 1000);
-
         } catch (error: any) {
             console.error('[STT] Failed to start recording:', error);
-            setState(prev => ({
+            setState((prev) => ({
                 ...prev,
                 error: 'Microphone access denied',
-                isListening: false
+                isListening: false,
             }));
         }
     }, [transcribeWithServer, onTranscript, startVAD, stopVAD]);
@@ -311,14 +311,13 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
     // ========================================================================
 
     const startWebSpeech = useCallback(() => {
-        const SpeechRecognition = (window as any).SpeechRecognition ||
-                                  (window as any).webkitSpeechRecognition;
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
         if (!SpeechRecognition) {
-            setState(prev => ({
+            setState((prev) => ({
                 ...prev,
                 error: 'Web Speech API not supported',
-                isListening: false
+                isListening: false,
             }));
             return;
         }
@@ -326,11 +325,20 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        
+
         const langMap: Record<string, string> = {
-            'pl': 'pl-PL', 'en': 'en-US', 'de': 'de-DE', 'es': 'es-ES',
-            'ja': 'ja-JP', 'ar': 'ar-SA', 'fr': 'fr-FR', 'it': 'it-IT',
-            'pt': 'pt-BR', 'ru': 'ru-RU', 'zh': 'zh-CN', 'ko': 'ko-KR'
+            pl: 'pl-PL',
+            en: 'en-US',
+            de: 'de-DE',
+            es: 'es-ES',
+            ja: 'ja-JP',
+            ar: 'ar-SA',
+            fr: 'fr-FR',
+            it: 'it-IT',
+            pt: 'pt-BR',
+            ru: 'ru-RU',
+            zh: 'zh-CN',
+            ko: 'ko-KR',
         };
         recognition.lang = langMap[settings.language] || 'pl-PL';
 
@@ -349,15 +357,15 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
 
             if (finalTranscript) {
                 accumulatedTranscriptRef.current += ' ' + finalTranscript;
-                setState(prev => ({
+                setState((prev) => ({
                     ...prev,
                     transcript: accumulatedTranscriptRef.current.trim(),
-                    interimTranscript: ''
+                    interimTranscript: '',
                 }));
                 onTranscript?.(finalTranscript.trim(), true);
                 lastSpeechTimeRef.current = Date.now();
             } else {
-                setState(prev => ({ ...prev, interimTranscript }));
+                setState((prev) => ({ ...prev, interimTranscript }));
                 onTranscript?.(interimTranscript, false);
             }
 
@@ -370,7 +378,7 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
                 if (transcript && onAutoSend) {
                     onAutoSend(transcript);
                     accumulatedTranscriptRef.current = '';
-                    setState(prev => ({ ...prev, transcript: '' }));
+                    setState((prev) => ({ ...prev, transcript: '' }));
                 }
             }, settings.autoSendDelay * 1000);
         };
@@ -378,9 +386,9 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
         recognition.onerror = (event: any) => {
             if (event.error !== 'no-speech' && event.error !== 'aborted') {
                 console.error('[STT] Web Speech error:', event.error);
-                setState(prev => ({
+                setState((prev) => ({
                     ...prev,
-                    error: `Recognition error: ${event.error}`
+                    error: `Recognition error: ${event.error}`,
                 }));
             }
         };
@@ -402,9 +410,8 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
         let duration = 0;
         recordingTimerRef.current = setInterval(() => {
             duration++;
-            setState(prev => ({ ...prev, recordingDuration: duration }));
+            setState((prev) => ({ ...prev, recordingDuration: duration }));
         }, 1000);
-
     }, [settings.language, settings.autoSendDelay, onTranscript, onAutoSend, state.isListening]);
 
     // ========================================================================
@@ -414,14 +421,14 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
     const start = useCallback(() => {
         if (state.isListening) return;
 
-        setState(prev => ({
+        setState((prev) => ({
             ...prev,
             isListening: true,
             error: null,
             transcript: '',
             interimTranscript: '',
             recordingDuration: 0,
-            provider: settings.provider
+            provider: settings.provider,
         }));
 
         accumulatedTranscriptRef.current = '';
@@ -460,19 +467,18 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
 
         // Stop stream
         if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
         }
 
         stopVAD();
 
-        setState(prev => ({
+        setState((prev) => ({
             ...prev,
             isListening: false,
             recordingDuration: 0,
-            audioLevel: 0
+            audioLevel: 0,
         }));
-
     }, [state.isListening, stopVAD]);
 
     const toggle = useCallback(() => {
@@ -488,7 +494,7 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
     // ========================================================================
 
     const updateSettings = useCallback((newSettings: Partial<STTSettings>) => {
-        setSettings(prev => ({ ...prev, ...newSettings }));
+        setSettings((prev) => ({ ...prev, ...newSettings }));
     }, []);
 
     const getSupportedLanguages = useCallback(() => {
@@ -502,7 +508,7 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ provider: 'whisper' })
+                    body: JSON.stringify({ provider: 'whisper' }),
                 });
                 const result = await response.json();
                 return result.success;
@@ -510,8 +516,7 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
                 return false;
             }
         } else {
-            const SpeechRecognition = (window as any).SpeechRecognition ||
-                                      (window as any).webkitSpeechRecognition;
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
             return !!SpeechRecognition;
         }
     }, []);
@@ -539,9 +544,8 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
         toggle,
         updateSettings,
         getSupportedLanguages,
-        testProvider
+        testProvider,
     };
 }
 
 export default useSpeechToText;
-

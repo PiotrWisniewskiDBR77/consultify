@@ -1,20 +1,21 @@
 /**
  * Projects Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * All project-related API endpoints with Zod validation
  */
 
 import { Router } from 'express';
+
+import ProjectController from '../controllers/ProjectController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { checkPlanLimit } from '../middleware/planLimits.middleware.js';
-import { validateBody, validateQuery } from '../middleware/validation.middleware.js';
-import ProjectController from '../controllers/ProjectController.js';
+import { _validateQuery, validateBody } from '../middleware/validation.middleware.js';
 import {
     CreateProjectSchema,
-    UpdateProjectSchema,
     ProjectNotificationSettingsSchema,
     UpdateAIRoleSchema,
+    UpdateProjectSchema,
     UpdateRegulatoryModeSchema,
 } from '../validators/project.validators.js';
 
@@ -37,12 +38,7 @@ router.get('/', ProjectController.getProjects);
  * POST /api/projects
  * Create a new project
  */
-router.post(
-    '/',
-    checkPlanLimit('max_projects'),
-    validateBody(CreateProjectSchema),
-    ProjectController.createProject
-);
+router.post('/', checkPlanLimit('max_projects'), validateBody(CreateProjectSchema), ProjectController.createProject);
 
 /**
  * GET /api/projects/:id
@@ -54,11 +50,7 @@ router.get('/:id', ProjectController.getProjectById);
  * PUT /api/projects/:id
  * Update project
  */
-router.put(
-    '/:id',
-    validateBody(UpdateProjectSchema),
-    ProjectController.updateProject
-);
+router.put('/:id', validateBody(UpdateProjectSchema), ProjectController.updateProject);
 
 /**
  * DELETE /api/projects/:id
@@ -83,7 +75,7 @@ router.get('/:id/notification-settings', ProjectController.getNotificationSettin
 router.put(
     '/:id/notification-settings',
     validateBody(ProjectNotificationSettingsSchema),
-    ProjectController.updateNotificationSettings
+    ProjectController.updateNotificationSettings,
 );
 
 // ==========================================
@@ -100,11 +92,7 @@ router.get('/:id/ai-role', ProjectController.getAIRole);
  * PUT /api/projects/:id/ai-role
  * Update AI role for project (Admin only)
  */
-router.put(
-    '/:id/ai-role',
-    validateBody(UpdateAIRoleSchema),
-    ProjectController.updateAIRole
-);
+router.put('/:id/ai-role', validateBody(UpdateAIRoleSchema), ProjectController.updateAIRole);
 
 // ==========================================
 // REGULATORY MODE
@@ -120,10 +108,6 @@ router.get('/:id/regulatory-mode', ProjectController.getRegulatoryMode);
  * PUT /api/projects/:id/regulatory-mode
  * Update regulatory mode for project (Admin only)
  */
-router.put(
-    '/:id/regulatory-mode',
-    validateBody(UpdateRegulatoryModeSchema),
-    ProjectController.updateRegulatoryMode
-);
+router.put('/:id/regulatory-mode', validateBody(UpdateRegulatoryModeSchema), ProjectController.updateRegulatoryMode);
 
 export default router;

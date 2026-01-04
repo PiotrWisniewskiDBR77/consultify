@@ -1,33 +1,34 @@
 /**
  * IPAccessRulesPanel - IP Allowlist/Blocklist Management
- * 
+ *
  * Features:
  * - Allowlist/Blocklist management
  * - CIDR notation support
  * - Geo restrictions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
+    AlertTriangle,
+    Building2,
+    Check,
+    Clock,
+    Edit2,
     Globe,
+    Info,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Search,
     Shield,
     ShieldOff,
-    Plus,
     Trash2,
-    Edit2,
-    Check,
-    X,
-    Search,
-    RefreshCw,
-    Building2,
-    Clock,
     User,
-    AlertTriangle,
-    Info,
-    Loader2
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface IPRule {
     id: string;
@@ -64,7 +65,7 @@ export const IPAccessRulesPanel: React.FC = () => {
         ipAddress: '',
         ruleType: 'block',
         description: '',
-        expiresAt: ''
+        expiresAt: '',
     });
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,7 +85,7 @@ export const IPAccessRulesPanel: React.FC = () => {
 
     const fetchRules = useCallback(async () => {
         if (!selectedOrgId) return;
-        
+
         setLoading(true);
         try {
             const result = await Api.get(`/security-policies/${selectedOrgId}/ip-rules`);
@@ -126,7 +127,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                 ipAddress: addForm.ipAddress,
                 ruleType: addForm.ruleType,
                 description: addForm.description || undefined,
-                expiresAt: addForm.expiresAt || undefined
+                expiresAt: addForm.expiresAt || undefined,
             });
             toast.success('IP rule added successfully');
             setShowAddForm(false);
@@ -140,15 +141,15 @@ export const IPAccessRulesPanel: React.FC = () => {
     };
 
     const handleDeleteRule = async (ruleId: string) => {
-        setDeletingIds(prev => new Set(prev).add(ruleId));
+        setDeletingIds((prev) => new Set(prev).add(ruleId));
         try {
             await Api.delete(`/security-policies/${selectedOrgId}/ip-rules/${ruleId}`);
             toast.success('IP rule deleted');
-            setRules(prev => prev.filter(r => r.id !== ruleId));
+            setRules((prev) => prev.filter((r) => r.id !== ruleId));
         } catch (error: any) {
             toast.error(error.message || 'Failed to delete rule');
         } finally {
-            setDeletingIds(prev => {
+            setDeletingIds((prev) => {
                 const next = new Set(prev);
                 next.delete(ruleId);
                 return next;
@@ -159,33 +160,35 @@ export const IPAccessRulesPanel: React.FC = () => {
     const handleToggleRule = async (rule: IPRule) => {
         try {
             await Api.put(`/security-policies/${selectedOrgId}/ip-rules/${rule.id}`, {
-                isActive: !rule.is_active
+                isActive: !rule.is_active,
             });
-            setRules(prev => prev.map(r => 
-                r.id === rule.id ? { ...r, is_active: r.is_active ? 0 : 1 } : r
-            ));
+            setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, is_active: r.is_active ? 0 : 1 } : r)));
             toast.success(`Rule ${rule.is_active ? 'disabled' : 'enabled'}`);
         } catch (error: any) {
             toast.error(error.message || 'Failed to update rule');
         }
     };
 
-    const allowRules = rules.filter(r => r.rule_type === 'allow');
-    const blockRules = rules.filter(r => r.rule_type === 'block');
+    const allowRules = rules.filter((r) => r.rule_type === 'allow');
+    const blockRules = rules.filter((r) => r.rule_type === 'block');
 
     const renderRuleCard = (rule: IPRule) => (
-        <div 
+        <div
             key={rule.id}
             className={`flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border ${
-                rule.is_active 
-                    ? rule.rule_type === 'allow' ? 'border-emerald-500/20' : 'border-red-500/20'
+                rule.is_active
+                    ? rule.rule_type === 'allow'
+                        ? 'border-emerald-500/20'
+                        : 'border-red-500/20'
                     : 'border-white/[0.04] opacity-60'
             }`}
         >
             <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-red-500/20'
-                }`}>
+                <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                    }`}
+                >
                     {rule.rule_type === 'allow' ? (
                         <Shield size={18} className="text-emerald-400" />
                     ) : (
@@ -194,16 +197,12 @@ export const IPAccessRulesPanel: React.FC = () => {
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <code className="px-2 py-0.5 bg-slate-800 rounded font-mono text-white">
-                            {rule.ip_address}
-                        </code>
+                        <code className="px-2 py-0.5 bg-slate-800 rounded font-mono text-white">{rule.ip_address}</code>
                         {!rule.is_active && (
                             <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-400">Disabled</span>
                         )}
                     </div>
-                    {rule.description && (
-                        <p className="text-sm text-slate-400 mt-1">{rule.description}</p>
-                    )}
+                    {rule.description && <p className="text-sm text-slate-400 mt-1">{rule.description}</p>}
                     <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
                             <Clock size={12} />
@@ -242,11 +241,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                     className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-400 rounded-lg transition-colors disabled:opacity-50"
                     title="Delete"
                 >
-                    {deletingIds.has(rule.id) ? (
-                        <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                        <Trash2 size={16} />
-                    )}
+                    {deletingIds.has(rule.id) ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                 </button>
             </div>
         </div>
@@ -262,13 +257,17 @@ export const IPAccessRulesPanel: React.FC = () => {
                         onChange={(e) => setSelectedOrgId(e.target.value)}
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none min-w-[200px]"
                     >
-                        <option value="" disabled>Select Organization</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        <option value="" disabled>
+                            Select Organization
+                        </option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchRules}
@@ -296,8 +295,12 @@ export const IPAccessRulesPanel: React.FC = () => {
                         <strong>How IP rules work:</strong>
                     </p>
                     <ul className="text-sm text-blue-300/80 mt-2 space-y-1 list-disc list-inside">
-                        <li><strong>Blocklist</strong> rules are evaluated first - matching IPs are denied access</li>
-                        <li><strong>Allowlist</strong> rules restrict access to only listed IPs (if any exist)</li>
+                        <li>
+                            <strong>Blocklist</strong> rules are evaluated first - matching IPs are denied access
+                        </li>
+                        <li>
+                            <strong>Allowlist</strong> rules restrict access to only listed IPs (if any exist)
+                        </li>
                         <li>Supports CIDR notation (e.g., 192.168.1.0/24) and wildcards</li>
                     </ul>
                 </div>
@@ -308,14 +311,16 @@ export const IPAccessRulesPanel: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
                         <h3 className="text-lg font-semibold text-white mb-6">Add IP Rule</h3>
-                        
+
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">IP Address / CIDR</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    IP Address / CIDR
+                                </label>
                                 <input
                                     type="text"
                                     value={addForm.ipAddress}
-                                    onChange={(e) => setAddForm(prev => ({ ...prev, ipAddress: e.target.value }))}
+                                    onChange={(e) => setAddForm((prev) => ({ ...prev, ipAddress: e.target.value }))}
                                     placeholder="192.168.1.1 or 192.168.0.0/24"
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none font-mono"
                                 />
@@ -326,7 +331,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                                 <div className="flex gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => setAddForm(prev => ({ ...prev, ruleType: 'allow' }))}
+                                        onClick={() => setAddForm((prev) => ({ ...prev, ruleType: 'allow' }))}
                                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                                             addForm.ruleType === 'allow'
                                                 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
@@ -338,7 +343,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setAddForm(prev => ({ ...prev, ruleType: 'block' }))}
+                                        onClick={() => setAddForm((prev) => ({ ...prev, ruleType: 'block' }))}
                                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                                             addForm.ruleType === 'block'
                                                 ? 'bg-red-500/20 border-red-500/50 text-red-400'
@@ -352,22 +357,26 @@ export const IPAccessRulesPanel: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Description (optional)</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Description (optional)
+                                </label>
                                 <input
                                     type="text"
                                     value={addForm.description}
-                                    onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
+                                    onChange={(e) => setAddForm((prev) => ({ ...prev, description: e.target.value }))}
                                     placeholder="e.g., Office network, VPN"
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Expires (optional)</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Expires (optional)
+                                </label>
                                 <input
                                     type="datetime-local"
                                     value={addForm.expiresAt}
-                                    onChange={(e) => setAddForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                                    onChange={(e) => setAddForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 />
                             </div>
@@ -416,7 +425,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                                 <p className="text-sm text-slate-400">{blockRules.length} blocked IPs</p>
                             </div>
                         </div>
-                        
+
                         <div className="space-y-3">
                             {blockRules.length === 0 ? (
                                 <p className="text-center py-8 text-slate-500">No blocked IPs</p>
@@ -435,13 +444,13 @@ export const IPAccessRulesPanel: React.FC = () => {
                             <div>
                                 <h3 className="font-semibold text-white">Allowlist</h3>
                                 <p className="text-sm text-slate-400">
-                                    {allowRules.length === 0 
-                                        ? 'All IPs allowed (except blocked)' 
+                                    {allowRules.length === 0
+                                        ? 'All IPs allowed (except blocked)'
                                         : `${allowRules.length} allowed IPs`}
                                 </p>
                             </div>
                         </div>
-                        
+
                         {allowRules.length > 0 && (
                             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                                 <div className="flex items-center gap-2 text-amber-400 text-sm">
@@ -450,7 +459,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        
+
                         <div className="space-y-3">
                             {allowRules.length === 0 ? (
                                 <p className="text-center py-8 text-slate-500">No allowlist restrictions</p>
@@ -466,10 +475,4 @@ export const IPAccessRulesPanel: React.FC = () => {
 };
 
 export default IPAccessRulesPanel;
-
-
-
-
-
-
 

@@ -5,7 +5,8 @@
  * Logs all changes with actor information, timestamps, and diff calculation.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 
 
@@ -553,6 +554,7 @@ export default {
     logPDFExport,
     logPDFImport,
 };
+
 
 
 

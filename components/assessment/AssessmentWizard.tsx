@@ -1,7 +1,8 @@
+import { ArrowLeft, ArrowRight, Award, Check, HelpCircle, RefreshCcw, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { DRDAxis, MaturityLevel } from '../../types';
-import { ArrowRight, Check, X, HelpCircle, Award, RefreshCcw, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+import { DRDAxis, MaturityLevel } from '../../types';
 
 interface AssessmentWizardProps {
     axis: DRDAxis;
@@ -9,11 +10,7 @@ interface AssessmentWizardProps {
     onCancel: () => void;
 }
 
-export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
-    axis,
-    onComplete,
-    onCancel
-}) => {
+export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({ axis, onComplete, onCancel }) => {
     const [step, setStep] = useState<'intro' | 'questions' | 'result'>('intro');
     const [currentAreaIdx, setCurrentAreaIdx] = useState(0);
     // Store selected level for each area: { areaKey: level }
@@ -45,7 +42,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
     const calculateResult = (finalRatings: Record<string, number>) => {
         let total = 0;
         let count = 0;
-        Object.values(finalRatings).forEach(level => {
+        Object.values(finalRatings).forEach((level) => {
             if (level > 0) {
                 total += level;
                 count++;
@@ -74,7 +71,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
 
     const handleComplete = () => {
         // Convert simple ratings { "sales": 3 } to areaScores format { "sales": [3, target?] }
-        // For the wizard, we act as setting the "Actual" state. 
+        // For the wizard, we act as setting the "Actual" state.
         // We can assume Target = Actual + 1 or just leave it 0 (user sets it later).
         // Let's set Target = 0 so user is forced to think about it in the Workspace.
         const areaScores: Record<string, number[]> = {};
@@ -82,29 +79,21 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
             areaScores[key] = [level, 0];
         });
 
-        onComplete(
-            recommendedLevel,
-            "Assessment completed via Wizard for all sub-areas.",
-            areaScores
-        );
+        onComplete(recommendedLevel, 'Assessment completed via Wizard for all sub-areas.', areaScores);
     };
 
     const getLevelsForCurrentArea = () => {
         if (!currentArea?.levels) return [];
-        return Array.isArray(currentArea.levels)
-            ? currentArea.levels
-            : Object.values(currentArea.levels);
+        return Array.isArray(currentArea.levels) ? currentArea.levels : Object.values(currentArea.levels);
     };
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white relative overflow-hidden transition-colors">
-
             {/* Background Decor */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none translate-y-1/3 -translate-x-1/3"></div>
 
             <div className="relative z-10 flex-1 flex flex-col max-w-4xl mx-auto w-full p-8 justify-center min-h-[500px]">
-
                 {/* BACK / CANCEL BUTTON */}
                 <button
                     onClick={onCancel}
@@ -128,9 +117,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                             <p className="text-slate-600 dark:text-slate-400 text-lg max-w-xl mx-auto leading-relaxed text-justify">
                                 {axisContent.intro || wizT.startDesc}
                             </p>
-                            <p className="text-sm text-slate-500 mt-4">
-                                You will assess {areaKeys.length} key areas.
-                            </p>
+                            <p className="text-sm text-slate-500 mt-4">You will assess {areaKeys.length} key areas.</p>
                         </div>
 
                         <button
@@ -149,21 +136,27 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                         {/* Progress */}
                         <div className="mb-8">
                             <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                                <span>Area {currentAreaIdx + 1} / {areaKeys.length}</span>
-                                <span>{Math.round(((currentAreaIdx) / areaKeys.length) * 100)}%</span>
+                                <span>
+                                    Area {currentAreaIdx + 1} / {areaKeys.length}
+                                </span>
+                                <span>{Math.round((currentAreaIdx / areaKeys.length) * 100)}%</span>
                             </div>
                             <div className="h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-purple-500 transition-all duration-500 ease-out"
-                                    style={{ width: `${((currentAreaIdx) / areaKeys.length) * 100}%` }}
+                                    style={{ width: `${(currentAreaIdx / areaKeys.length) * 100}%` }}
                                 ></div>
                             </div>
                         </div>
 
                         {/* Area Title */}
                         <div className="mb-8 text-center">
-                            <h3 className="text-2xl font-bold mb-2 text-navy-900 dark:text-white">{currentArea.title}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">Select the level that best describes your current state.</p>
+                            <h3 className="text-2xl font-bold mb-2 text-navy-900 dark:text-white">
+                                {currentArea.title}
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                Select the level that best describes your current state.
+                            </p>
                         </div>
 
                         {/* Level Options */}
@@ -227,7 +220,6 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                         </div>
                     </div>
                 )}
-
             </div>
         </div>
     );

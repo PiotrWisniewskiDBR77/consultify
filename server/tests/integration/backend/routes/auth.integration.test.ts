@@ -1,13 +1,13 @@
 /**
  * Auth Routes Integration Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Integration tests for authentication routes
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
 import type { Express } from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 // Note: This test requires the server to be running or a test server instance
 // For now, this is a template that can be expanded
@@ -37,7 +37,4 @@ describe('Auth Routes Integration', () => {
     // - POST /api/auth/logout
     // etc.
 });
-
-
-
 

@@ -6,7 +6,7 @@
 
 import express from 'express';
 const router = express.Router();
-import * as TokenBillingServiceModule from '../src/services/tokenBillingService.ts';
+import * as TokenBillingServiceModule from '../dist/services/tokenBillingService.js';
 const TokenBillingService = TokenBillingServiceModule.default || TokenBillingServiceModule;
 import authenticateToken from '../middleware/authMiddleware.js';
 import { verifyAdmin: requireAdmin } from '../middleware/adminMiddleware.js';

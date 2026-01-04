@@ -4,9 +4,15 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { checkPlanLimit, PLAN_LIMITS, setDependencies, type AuthRequest } from '../../../../src/middleware/planLimits.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    checkPlanLimit,
+    PLAN_LIMITS,
+    setDependencies,
+} from '../../../../src/middleware/planLimits.middleware.js';
 
 describe('Plan Limits Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -93,7 +99,7 @@ describe('Plan Limits Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: expect.stringContaining('Plan limit reached'),
-                })
+                }),
             );
         });
 
@@ -173,7 +179,4 @@ describe('Plan Limits Middleware', () => {
         });
     });
 });
-
-
-
 

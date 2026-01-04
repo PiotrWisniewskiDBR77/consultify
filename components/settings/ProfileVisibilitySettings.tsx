@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Eye, EyeOff, Globe, Users, Lock, AtSign, MessageSquare,
-    Save, Loader2, CheckCircle, Shield, Info
+import {
+    AtSign,
+    CheckCircle,
+    Eye,
+    EyeOff,
+    Globe,
+    Info,
+    Loader2,
+    Lock,
+    MessageSquare,
+    Save,
+    Shield,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
-import { User, ProfileVisibility } from '../../types';
+import { ProfileVisibility, User } from '../../types';
 
 interface ProfileVisibilitySettingsProps {
     currentUser: User;
@@ -16,29 +27,29 @@ type VisibilityLevel = 'public' | 'organization' | 'team' | 'private';
 type AllowFrom = 'all' | 'team' | 'none';
 
 const VISIBILITY_OPTIONS: { value: VisibilityLevel; label: string; description: string; icon: React.ReactNode }[] = [
-    { 
-        value: 'public', 
-        label: 'Public', 
+    {
+        value: 'public',
+        label: 'Public',
         description: 'Anyone can view your profile',
-        icon: <Globe size={18} />
+        icon: <Globe size={18} />,
     },
-    { 
-        value: 'organization', 
-        label: 'Organization', 
+    {
+        value: 'organization',
+        label: 'Organization',
         description: 'Only members of your organization',
-        icon: <Users size={18} />
+        icon: <Users size={18} />,
     },
-    { 
-        value: 'team', 
-        label: 'Team Only', 
+    {
+        value: 'team',
+        label: 'Team Only',
         description: 'Only your direct team members',
-        icon: <Users size={18} />
+        icon: <Users size={18} />,
     },
-    { 
-        value: 'private', 
-        label: 'Private', 
+    {
+        value: 'private',
+        label: 'Private',
         description: 'Only you can see your full profile',
-        icon: <Lock size={18} />
+        icon: <Lock size={18} />,
     },
 ];
 
@@ -48,14 +59,11 @@ const ALLOW_FROM_OPTIONS: { value: AllowFrom; label: string }[] = [
     { value: 'none', label: 'Nobody' },
 ];
 
-export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    
+
     const [visibility, setVisibility] = useState<ProfileVisibility>({
         profile: 'organization',
         showEmail: false,
@@ -64,7 +72,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
         showLastSeen: true,
         showInDirectory: true,
         allowMentionsFrom: 'all',
-        allowDirectMessagesFrom: 'all'
+        allowDirectMessagesFrom: 'all',
     });
 
     // Load data on mount
@@ -99,24 +107,25 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
     };
 
     // Styling classes
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
-    const toggleClass = (enabled: boolean) => `relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-    }`;
-    const toggleKnobClass = (enabled: boolean) => `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-        enabled ? 'left-7' : 'left-1'
-    }`;
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    const toggleClass = (enabled: boolean) =>
+        `relative w-12 h-6 rounded-full transition-colors ${
+            enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+        }`;
+    const toggleKnobClass = (enabled: boolean) =>
+        `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
-    const ToggleSwitch = ({ 
-        enabled, 
-        onChange, 
-        label, 
-        description 
-    }: { 
-        enabled: boolean; 
-        onChange: (value: boolean) => void; 
-        label: string; 
+    const ToggleSwitch = ({
+        enabled,
+        onChange,
+        label,
+        description,
+    }: {
+        enabled: boolean;
+        onChange: (value: boolean) => void;
+        label: string;
         description: string;
     }) => (
         <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5 last:border-0">
@@ -124,10 +133,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                 <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{description}</p>
             </div>
-            <button
-                onClick={() => onChange(!enabled)}
-                className={toggleClass(enabled)}
-            >
+            <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
                 <span className={toggleKnobClass(enabled)} />
             </button>
         </div>
@@ -142,7 +148,10 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                         {t('settings.profile.visibility.title', 'Privacy & Visibility')}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        {t('settings.profile.visibility.description', 'Control who can see your profile and contact you')}
+                        {t(
+                            'settings.profile.visibility.description',
+                            'Control who can see your profile and contact you',
+                        )}
                     </p>
                 </div>
                 <button
@@ -161,12 +170,12 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     <Eye size={16} className="text-purple-500" />
                     {t('settings.profile.visibility.profileVisibility', 'Profile Visibility')}
                 </h4>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {VISIBILITY_OPTIONS.map(option => (
+                    {VISIBILITY_OPTIONS.map((option) => (
                         <button
                             key={option.value}
-                            onClick={() => setVisibility(prev => ({ ...prev, profile: option.value }))}
+                            onClick={() => setVisibility((prev) => ({ ...prev, profile: option.value }))}
                             className={`p-4 rounded-lg border-2 text-left transition-all ${
                                 visibility.profile === option.value
                                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
@@ -174,24 +183,26 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                             }`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${
-                                    visibility.profile === option.value
-                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                                        : 'bg-slate-100 dark:bg-white/10 text-slate-500'
-                                }`}>
+                                <div
+                                    className={`p-2 rounded-lg ${
+                                        visibility.profile === option.value
+                                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-500'
+                                    }`}
+                                >
                                     {option.icon}
                                 </div>
                                 <div>
-                                    <p className={`font-medium ${
-                                        visibility.profile === option.value
-                                            ? 'text-purple-700 dark:text-purple-300'
-                                            : 'text-navy-900 dark:text-white'
-                                    }`}>
+                                    <p
+                                        className={`font-medium ${
+                                            visibility.profile === option.value
+                                                ? 'text-purple-700 dark:text-purple-300'
+                                                : 'text-navy-900 dark:text-white'
+                                        }`}
+                                    >
                                         {option.label}
                                     </p>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        {option.description}
-                                    </p>
+                                    <p className="text-xs text-slate-500 mt-0.5">{option.description}</p>
                                 </div>
                             </div>
                         </button>
@@ -205,25 +216,34 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     <Shield size={16} className="text-purple-500" />
                     {t('settings.profile.visibility.contactVisibility', 'Contact Information')}
                 </h4>
-                
+
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={visibility.showEmail}
-                        onChange={(val) => setVisibility(prev => ({ ...prev, showEmail: val }))}
+                        onChange={(val) => setVisibility((prev) => ({ ...prev, showEmail: val }))}
                         label={t('settings.profile.visibility.showEmail', 'Show email address')}
-                        description={t('settings.profile.visibility.showEmailDesc', 'Allow others to see your email on your profile')}
+                        description={t(
+                            'settings.profile.visibility.showEmailDesc',
+                            'Allow others to see your email on your profile',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={visibility.showPhone}
-                        onChange={(val) => setVisibility(prev => ({ ...prev, showPhone: val }))}
+                        onChange={(val) => setVisibility((prev) => ({ ...prev, showPhone: val }))}
                         label={t('settings.profile.visibility.showPhone', 'Show phone number')}
-                        description={t('settings.profile.visibility.showPhoneDesc', 'Allow others to see your phone number')}
+                        description={t(
+                            'settings.profile.visibility.showPhoneDesc',
+                            'Allow others to see your phone number',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={visibility.showInDirectory}
-                        onChange={(val) => setVisibility(prev => ({ ...prev, showInDirectory: val }))}
+                        onChange={(val) => setVisibility((prev) => ({ ...prev, showInDirectory: val }))}
                         label={t('settings.profile.visibility.showInDirectory', 'Show in team directory')}
-                        description={t('settings.profile.visibility.showInDirectoryDesc', 'Appear in the organization team directory')}
+                        description={t(
+                            'settings.profile.visibility.showInDirectoryDesc',
+                            'Appear in the organization team directory',
+                        )}
                     />
                 </div>
             </div>
@@ -234,19 +254,25 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     <Eye size={16} className="text-purple-500" />
                     {t('settings.profile.visibility.activityStatus', 'Activity Status')}
                 </h4>
-                
+
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={visibility.showActivityStatus}
-                        onChange={(val) => setVisibility(prev => ({ ...prev, showActivityStatus: val }))}
+                        onChange={(val) => setVisibility((prev) => ({ ...prev, showActivityStatus: val }))}
                         label={t('settings.profile.visibility.showActivity', 'Show online status')}
-                        description={t('settings.profile.visibility.showActivityDesc', 'Let others see when you are online or away')}
+                        description={t(
+                            'settings.profile.visibility.showActivityDesc',
+                            'Let others see when you are online or away',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={visibility.showLastSeen}
-                        onChange={(val) => setVisibility(prev => ({ ...prev, showLastSeen: val }))}
+                        onChange={(val) => setVisibility((prev) => ({ ...prev, showLastSeen: val }))}
                         label={t('settings.profile.visibility.showLastSeen', 'Show last seen')}
-                        description={t('settings.profile.visibility.showLastSeenDesc', 'Display when you were last active')}
+                        description={t(
+                            'settings.profile.visibility.showLastSeenDesc',
+                            'Display when you were last active',
+                        )}
                     />
                 </div>
             </div>
@@ -257,7 +283,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     <MessageSquare size={16} className="text-purple-500" />
                     {t('settings.profile.visibility.communication', 'Communication Settings')}
                 </h4>
-                
+
                 <div className="space-y-4">
                     <div>
                         <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2 mb-2">
@@ -265,10 +291,12 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                             {t('settings.profile.visibility.allowMentions', 'Allow @mentions from')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {ALLOW_FROM_OPTIONS.map(option => (
+                            {ALLOW_FROM_OPTIONS.map((option) => (
                                 <button
                                     key={option.value}
-                                    onClick={() => setVisibility(prev => ({ ...prev, allowMentionsFrom: option.value }))}
+                                    onClick={() =>
+                                        setVisibility((prev) => ({ ...prev, allowMentionsFrom: option.value }))
+                                    }
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         visibility.allowMentionsFrom === option.value
                                             ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
@@ -287,10 +315,12 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                             {t('settings.profile.visibility.allowDMs', 'Allow direct messages from')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {ALLOW_FROM_OPTIONS.map(option => (
+                            {ALLOW_FROM_OPTIONS.map((option) => (
                                 <button
                                     key={option.value}
-                                    onClick={() => setVisibility(prev => ({ ...prev, allowDirectMessagesFrom: option.value }))}
+                                    onClick={() =>
+                                        setVisibility((prev) => ({ ...prev, allowDirectMessagesFrom: option.value }))
+                                    }
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         visibility.allowDirectMessagesFrom === option.value
                                             ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
@@ -314,7 +344,10 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                             {t('settings.profile.visibility.note', 'Privacy Note')}
                         </h4>
                         <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
-                            {t('settings.profile.visibility.noteText', 'Administrators can always view your basic profile information regardless of these settings. Your name and role will always be visible to team members.')}
+                            {t(
+                                'settings.profile.visibility.noteText',
+                                'Administrators can always view your basic profile information regardless of these settings. Your name and role will always be visible to team members.',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -332,10 +365,4 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
 };
 
 export default ProfileVisibilitySettings;
-
-
-
-
-
-
 

@@ -1,11 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 
 const COMPANY = {
     name: 'DBR77 Robotics Sp. z o.o.',
     email: 'contact@dbr77.com',
-    website: 'https://consultinity.com'
+    website: 'https://consultinity.com',
 };
 
 /**
@@ -40,7 +41,9 @@ export const CookiePolicyView: React.FC = () => {
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                     {cookies.map((cookie, idx) => (
                         <tr key={idx}>
-                            <td className="px-4 py-2 font-mono text-xs text-purple-600 dark:text-purple-400">{cookie.name}</td>
+                            <td className="px-4 py-2 font-mono text-xs text-purple-600 dark:text-purple-400">
+                                {cookie.name}
+                            </td>
                             <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{cookie.purpose}</td>
                             <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{cookie.duration}</td>
                         </tr>
@@ -51,21 +54,21 @@ export const CookiePolicyView: React.FC = () => {
     );
 
     return (
-        <LegalPageLayout
-            title={t('legal.cookies.title', 'Cookie Policy')}
-            lastUpdated="January 1, 2025"
-        >
+        <LegalPageLayout title={t('legal.cookies.title', 'Cookie Policy')} lastUpdated="January 1, 2025">
             <section>
                 <h2>1. What Are Cookies?</h2>
                 <p>
-                    Cookies are small text files stored on your device when you visit our website. 
-                    They help us provide you with a better experience by remembering your preferences.
+                    Cookies are small text files stored on your device when you visit our website. They help us provide
+                    you with a better experience by remembering your preferences.
                 </p>
             </section>
 
             <section>
                 <h2>2. Cookies We Use</h2>
-                <p>Consultinity uses only essential and functional cookies. We do not use third-party tracking or advertising cookies.</p>
+                <p>
+                    Consultinity uses only essential and functional cookies. We do not use third-party tracking or
+                    advertising cookies.
+                </p>
 
                 <h3>Essential Cookies</h3>
                 <p>Required for the platform to function. Cannot be disabled.</p>
@@ -79,14 +82,46 @@ export const CookiePolicyView: React.FC = () => {
             <section>
                 <h2>3. Managing Cookies</h2>
                 <p>
-                    You can control cookies through your browser settings. Note that disabling essential cookies 
-                    will prevent you from using the platform. Links to browser cookie settings:
+                    You can control cookies through your browser settings. Note that disabling essential cookies will
+                    prevent you from using the platform. Links to browser cookie settings:
                 </p>
                 <ul>
-                    <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer">Chrome</a></li>
-                    <li><a href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer" target="_blank" rel="noopener noreferrer">Firefox</a></li>
-                    <li><a href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac" target="_blank" rel="noopener noreferrer">Safari</a></li>
-                    <li><a href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener noreferrer">Edge</a></li>
+                    <li>
+                        <a
+                            href="https://support.google.com/chrome/answer/95647"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Chrome
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Firefox
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Safari
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Edge
+                        </a>
+                    </li>
                 </ul>
             </section>
 

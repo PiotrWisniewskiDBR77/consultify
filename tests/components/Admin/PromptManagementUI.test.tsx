@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { PromptManagementUI } from '../../../components/Admin/PromptManagementUI';
+import { PromptManagementUI } from '../../components/Admin/PromptManagementUI';
 import api from '../../../services/api';
 
 // Mock API
@@ -298,6 +298,7 @@ describe('PromptManagementUI', () => {
         expect(screen.getByText('Wybierz prompt z listy')).toBeInTheDocument();
     });
 });
+
 
 
 

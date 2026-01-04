@@ -3,21 +3,19 @@
  * 5-dimension change management assessment
  */
 
+import axios from 'axios';
+import { AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react';
+
 import { ADKAR_QUESTIONNAIRE, ADKAR_QUESTIONS, ADKARDimension, ADKARQuestion } from '../../data/adkarQuestionnaire';
-import axios from 'axios';
 
 interface ADKARWorkspaceProps {
     projectId?: string;
     organizationId: string;
 }
 
-export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
-    projectId,
-    organizationId
-}) => {
+export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({ projectId, organizationId }) => {
     const { t } = useTranslation();
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [responses, setResponses] = useState<Record<string, number>>({});
@@ -39,7 +37,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
             const response = await axios.post('/api/adkar', {
                 organizationId,
                 projectId,
-                responses
+                responses,
             });
             setResults(response.data);
         } catch (error) {
@@ -106,8 +104,13 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
                             <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="font-semibold capitalize">{rec.dimension}</span>
-                                    <span className={`px-2 py-1 text-xs rounded ${rec.priority === 'High' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                                        }`}>
+                                    <span
+                                        className={`px-2 py-1 text-xs rounded ${
+                                            rec.priority === 'High'
+                                                ? 'bg-red-100 text-red-700'
+                                                : 'bg-yellow-100 text-yellow-700'
+                                        }`}
+                                    >
                                         {rec.priority} Priority
                                     </span>
                                 </div>
@@ -133,14 +136,13 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
             {/* Progress Bar */}
             <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
-                    <span>Question {currentQuestion + 1} of {ADKAR_QUESTIONS.length}</span>
+                    <span>
+                        Question {currentQuestion + 1} of {ADKAR_QUESTIONS.length}
+                    </span>
                     <span>{Math.round(progress)}%</span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                        className="h-full bg-blue-500 transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                    />
+                    <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
             </div>
 
@@ -149,9 +151,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
                 <div className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-1">
                     {currentDimension?.name}
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                    {currentDimension?.description}
-                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">{currentDimension?.description}</div>
             </div>
 
             {/* Question */}
@@ -165,15 +165,16 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({
                         { value: 2, label: 'Disagree', color: 'orange' },
                         { value: 3, label: 'Neutral', color: 'yellow' },
                         { value: 4, label: 'Agree', color: 'blue' },
-                        { value: 5, label: 'Strongly Agree', color: 'green' }
-                    ].map(option => (
+                        { value: 5, label: 'Strongly Agree', color: 'green' },
+                    ].map((option) => (
                         <button
                             key={option.value}
                             onClick={() => handleResponse(option.value)}
-                            className={`w-full p-4 rounded-lg border-2 transition-all hover:scale-105 ${responses[currentQ.id] === option.value
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                                }`}
+                            className={`w-full p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+                                responses[currentQ.id] === option.value
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                            }`}
                         >
                             <div className="flex items-center justify-between">
                                 <span className="font-medium">{option.label}</span>

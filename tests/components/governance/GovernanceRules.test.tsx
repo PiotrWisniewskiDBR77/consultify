@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { GovernanceRules } from '../../../components/governance/GovernanceRules';
+import { GovernanceRules } from '../../components/governance/GovernanceRules';
 
 vi.mock('lucide-react', () => ({
     Gavel: () => <div data-testid="icon-gavel" />,

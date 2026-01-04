@@ -1,11 +1,11 @@
 /**
  * Route Migration Helper
  * Utility script to help migrate JS routes to TypeScript
- * 
+ *
  * Usage: This provides patterns and utilities for systematic route migration
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 interface RouteMigrationConfig {
@@ -78,14 +78,11 @@ export function extractEndpoints(jsContent: string): string[] {
     const endpoints: string[] = [];
     const routePattern = /router\.(get|post|put|delete|patch)\(['"]([^'"]+)['"]/g;
     let match;
-    
+
     while ((match = routePattern.exec(jsContent)) !== null) {
         endpoints.push(`${match[1].toUpperCase()} ${match[2]}`);
     }
-    
+
     return endpoints;
 }
-
-
-
 

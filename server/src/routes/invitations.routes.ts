@@ -1,18 +1,19 @@
 /**
  * Invitations Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * All invitation-related API endpoints with Zod validation
  */
 
 import { Router } from 'express';
+
+import InvitationController from '../controllers/InvitationController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import InvitationController from '../controllers/InvitationController.js';
 import {
+    AcceptInvitationSchema,
     CreateInvitationSchema,
     ResendInvitationSchema,
-    AcceptInvitationSchema,
 } from '../validators/invitation.validators.js';
 
 const router = Router();
@@ -34,21 +35,13 @@ router.get('/', InvitationController.getInvitations);
  * POST /api/invitations
  * Create invitation
  */
-router.post(
-    '/',
-    validateBody(CreateInvitationSchema),
-    InvitationController.createInvitation
-);
+router.post('/', validateBody(CreateInvitationSchema), InvitationController.createInvitation);
 
 /**
  * POST /api/invitations/resend
  * Resend invitation
  */
-router.post(
-    '/resend',
-    validateBody(ResendInvitationSchema),
-    InvitationController.resendInvitation
-);
+router.post('/resend', validateBody(ResendInvitationSchema), InvitationController.resendInvitation);
 
 /**
  * GET /api/invitations
@@ -60,33 +53,19 @@ router.get('/', verifyToken, InvitationController.getInvitations);
  * POST /api/invitations
  * Create invitation
  */
-router.post(
-    '/',
-    verifyToken,
-    validateBody(CreateInvitationSchema),
-    InvitationController.createInvitation
-);
+router.post('/', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
 
 /**
  * POST /api/invitations/resend
  * Resend invitation
  */
-router.post(
-    '/resend',
-    verifyToken,
-    validateBody(ResendInvitationSchema),
-    InvitationController.resendInvitation
-);
+router.post('/resend', verifyToken, validateBody(ResendInvitationSchema), InvitationController.resendInvitation);
 
 /**
  * POST /api/invitations/accept
  * Accept invitation (no auth required - uses token)
  */
-router.post(
-    '/accept',
-    validateBody(AcceptInvitationSchema),
-    InvitationController.acceptInvitation
-);
+router.post('/accept', validateBody(AcceptInvitationSchema), InvitationController.acceptInvitation);
 
 /**
  * DELETE /api/invitations/:id

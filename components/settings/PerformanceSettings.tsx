@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Zap, Image, Video, Wifi, WifiOff, HardDrive,
-    Save, Loader2, CheckCircle, Info, Smartphone
+import {
+    CheckCircle,
+    HardDrive,
+    Image,
+    Info,
+    Loader2,
+    Save,
+    Smartphone,
+    Video,
+    Wifi,
+    WifiOff,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
-import { User, PerformancePreferences } from '../../types';
+import { PerformancePreferences, User } from '../../types';
 
 interface PerformanceSettingsProps {
     currentUser: User;
@@ -34,14 +44,11 @@ const CACHE_SIZE_OPTIONS = [
     { value: 2000, label: '2 GB', desc: 'Maximum offline' },
 ];
 
-export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    
+
     const [performance, setPerformance] = useState<PerformancePreferences>({
         imageQuality: 'high',
         videoQuality: 'auto',
@@ -53,7 +60,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
         cacheSizeMb: 500,
         animationEnabled: true,
         reduceDataUsage: false,
-        preloadContent: true
+        preloadContent: true,
     });
 
     // Load preferences
@@ -65,7 +72,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
         try {
             const response = await Api.get('/settings/preferences/performance');
             if (response.preferences) {
-                setPerformance(prev => ({ ...prev, ...response.preferences }));
+                setPerformance((prev) => ({ ...prev, ...response.preferences }));
             }
         } catch (error) {
             console.error('Failed to load performance settings:', error);
@@ -99,30 +106,31 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
             cacheSizeMb: 250,
             animationEnabled: false,
             reduceDataUsage: true,
-            preloadContent: false
+            preloadContent: false,
         });
     };
 
     // Styling
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
-    const labelClass = "text-xs font-medium text-slate-500 dark:text-slate-400";
-    const toggleClass = (enabled: boolean) => `relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-    }`;
-    const toggleKnobClass = (enabled: boolean) => `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-        enabled ? 'left-7' : 'left-1'
-    }`;
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    const toggleClass = (enabled: boolean) =>
+        `relative w-12 h-6 rounded-full transition-colors ${
+            enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+        }`;
+    const toggleKnobClass = (enabled: boolean) =>
+        `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
-    const ToggleSwitch = ({ 
-        enabled, 
-        onChange, 
-        label, 
-        description 
-    }: { 
-        enabled: boolean; 
-        onChange: (value: boolean) => void; 
-        label: string; 
+    const ToggleSwitch = ({
+        enabled,
+        onChange,
+        label,
+        description,
+    }: {
+        enabled: boolean;
+        onChange: (value: boolean) => void;
+        label: string;
         description: string;
     }) => (
         <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5 last:border-0">
@@ -130,10 +138,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                 <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{description}</p>
             </div>
-            <button
-                onClick={() => onChange(!enabled)}
-                className={toggleClass(enabled)}
-            >
+            <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
                 <span className={toggleKnobClass(enabled)} />
             </button>
         </div>
@@ -174,7 +179,10 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                                     {t('settings.performance.dataSaver', 'Data Saver Mode')}
                                 </p>
                                 <p className="text-sm text-blue-700 dark:text-blue-400 mt-0.5">
-                                    {t('settings.performance.dataSaverDesc', 'Reduce data usage for slower connections or metered data plans')}
+                                    {t(
+                                        'settings.performance.dataSaverDesc',
+                                        'Reduce data usage for slower connections or metered data plans',
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -197,7 +205,10 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                                 {t('settings.performance.dataSaverActive', 'Data Saver Mode is Active')}
                             </p>
                             <p className="text-sm text-green-700 dark:text-green-400">
-                                {t('settings.performance.dataSaverActiveDesc', 'Your settings are optimized for minimal data usage')}
+                                {t(
+                                    'settings.performance.dataSaverActiveDesc',
+                                    'Your settings are optimized for minimal data usage',
+                                )}
                             </p>
                         </div>
                     </div>
@@ -210,23 +221,25 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                     <Image size={16} className="text-purple-500" />
                     {t('settings.performance.imageQuality', 'Image Quality')}
                 </h4>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {IMAGE_QUALITY_OPTIONS.map(option => (
+                    {IMAGE_QUALITY_OPTIONS.map((option) => (
                         <button
                             key={option.value}
-                            onClick={() => setPerformance(prev => ({ ...prev, imageQuality: option.value as any }))}
+                            onClick={() => setPerformance((prev) => ({ ...prev, imageQuality: option.value as any }))}
                             className={`p-3 rounded-lg border-2 text-left transition-all ${
                                 performance.imageQuality === option.value
                                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                     : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
                             }`}
                         >
-                            <p className={`text-sm font-medium ${
-                                performance.imageQuality === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p
+                                className={`text-sm font-medium ${
+                                    performance.imageQuality === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {option.label}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">{option.desc}</p>
@@ -237,9 +250,12 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                 <div className="mt-4 space-y-1">
                     <ToggleSwitch
                         enabled={performance.autoLoadImages}
-                        onChange={(val) => setPerformance(prev => ({ ...prev, autoLoadImages: val }))}
+                        onChange={(val) => setPerformance((prev) => ({ ...prev, autoLoadImages: val }))}
                         label={t('settings.performance.autoLoadImages', 'Auto-load images')}
-                        description={t('settings.performance.autoLoadImagesDesc', 'Automatically load images when scrolling')}
+                        description={t(
+                            'settings.performance.autoLoadImagesDesc',
+                            'Automatically load images when scrolling',
+                        )}
                     />
                 </div>
             </div>
@@ -250,23 +266,25 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                     <Video size={16} className="text-purple-500" />
                     {t('settings.performance.videoQuality', 'Video Quality')}
                 </h4>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {VIDEO_QUALITY_OPTIONS.map(option => (
+                    {VIDEO_QUALITY_OPTIONS.map((option) => (
                         <button
                             key={option.value}
-                            onClick={() => setPerformance(prev => ({ ...prev, videoQuality: option.value as any }))}
+                            onClick={() => setPerformance((prev) => ({ ...prev, videoQuality: option.value as any }))}
                             className={`p-3 rounded-lg border-2 text-left transition-all ${
                                 performance.videoQuality === option.value
                                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                     : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
                             }`}
                         >
-                            <p className={`text-sm font-medium ${
-                                performance.videoQuality === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p
+                                className={`text-sm font-medium ${
+                                    performance.videoQuality === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {option.label}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">{option.desc}</p>
@@ -277,7 +295,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                 <div className="mt-4 space-y-1">
                     <ToggleSwitch
                         enabled={performance.autoLoadVideos}
-                        onChange={(val) => setPerformance(prev => ({ ...prev, autoLoadVideos: val }))}
+                        onChange={(val) => setPerformance((prev) => ({ ...prev, autoLoadVideos: val }))}
                         label={t('settings.performance.autoLoadVideos', 'Auto-play videos')}
                         description={t('settings.performance.autoLoadVideosDesc', 'Automatically start video playback')}
                     />
@@ -290,17 +308,17 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                     <HardDrive size={16} className="text-purple-500" />
                     {t('settings.performance.cacheOffline', 'Cache & Offline')}
                 </h4>
-                
+
                 <div className="space-y-4">
                     <div>
-                        <label className={labelClass + " mb-2 block"}>
+                        <label className={labelClass + ' mb-2 block'}>
                             {t('settings.performance.cacheSize', 'Cache Size')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {CACHE_SIZE_OPTIONS.map(option => (
+                            {CACHE_SIZE_OPTIONS.map((option) => (
                                 <button
                                     key={option.value}
-                                    onClick={() => setPerformance(prev => ({ ...prev, cacheSizeMb: option.value }))}
+                                    onClick={() => setPerformance((prev) => ({ ...prev, cacheSizeMb: option.value }))}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         performance.cacheSizeMb === option.value
                                             ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
@@ -316,21 +334,27 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                     <div className="space-y-1 pt-4 border-t border-slate-100 dark:border-white/5">
                         <ToggleSwitch
                             enabled={performance.offlineModeEnabled}
-                            onChange={(val) => setPerformance(prev => ({ ...prev, offlineModeEnabled: val }))}
+                            onChange={(val) => setPerformance((prev) => ({ ...prev, offlineModeEnabled: val }))}
                             label={t('settings.performance.offlineMode', 'Enable offline mode')}
                             description={t('settings.performance.offlineModeDesc', 'Cache data for offline access')}
                         />
                         <ToggleSwitch
                             enabled={performance.offlineSyncWifiOnly}
-                            onChange={(val) => setPerformance(prev => ({ ...prev, offlineSyncWifiOnly: val }))}
+                            onChange={(val) => setPerformance((prev) => ({ ...prev, offlineSyncWifiOnly: val }))}
                             label={t('settings.performance.wifiOnlySync', 'Sync only on Wi-Fi')}
-                            description={t('settings.performance.wifiOnlySyncDesc', 'Only sync offline data when connected to Wi-Fi')}
+                            description={t(
+                                'settings.performance.wifiOnlySyncDesc',
+                                'Only sync offline data when connected to Wi-Fi',
+                            )}
                         />
                         <ToggleSwitch
                             enabled={performance.preloadContent}
-                            onChange={(val) => setPerformance(prev => ({ ...prev, preloadContent: val }))}
+                            onChange={(val) => setPerformance((prev) => ({ ...prev, preloadContent: val }))}
                             label={t('settings.performance.preloadContent', 'Preload content')}
-                            description={t('settings.performance.preloadContentDesc', 'Preload data in the background for faster navigation')}
+                            description={t(
+                                'settings.performance.preloadContentDesc',
+                                'Preload data in the background for faster navigation',
+                            )}
                         />
                     </div>
                 </div>
@@ -342,19 +366,25 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                     <Zap size={16} className="text-purple-500" />
                     {t('settings.performance.animations', 'Animations & Effects')}
                 </h4>
-                
+
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={performance.animationEnabled}
-                        onChange={(val) => setPerformance(prev => ({ ...prev, animationEnabled: val }))}
+                        onChange={(val) => setPerformance((prev) => ({ ...prev, animationEnabled: val }))}
                         label={t('settings.performance.enableAnimations', 'Enable animations')}
-                        description={t('settings.performance.enableAnimationsDesc', 'Smooth transitions and visual effects')}
+                        description={t(
+                            'settings.performance.enableAnimationsDesc',
+                            'Smooth transitions and visual effects',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={performance.reduceDataUsage}
-                        onChange={(val) => setPerformance(prev => ({ ...prev, reduceDataUsage: val }))}
+                        onChange={(val) => setPerformance((prev) => ({ ...prev, reduceDataUsage: val }))}
                         label={t('settings.performance.reduceDataUsage', 'Reduce data usage')}
-                        description={t('settings.performance.reduceDataUsageDesc', 'Minimize background data transfers')}
+                        description={t(
+                            'settings.performance.reduceDataUsageDesc',
+                            'Minimize background data transfers',
+                        )}
                     />
                 </div>
             </div>
@@ -368,7 +398,10 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                             {t('settings.performance.tip', 'Performance Tip')}
                         </h4>
                         <p className="text-sm text-slate-500 mt-1">
-                            {t('settings.performance.tipText', 'Lower quality settings and disabled animations can significantly improve performance on older devices or slow connections.')}
+                            {t(
+                                'settings.performance.tipText',
+                                'Lower quality settings and disabled animations can significantly improve performance on older devices or slow connections.',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -386,10 +419,4 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
 };
 
 export default PerformanceSettings;
-
-
-
-
-
-
 

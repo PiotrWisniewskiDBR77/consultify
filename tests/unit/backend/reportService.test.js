@@ -22,6 +22,10 @@ const { mockDb, mockUuid } = vi.hoisted(() => {
     };
 });
 
+vi.mock('../../../server/src/database/Database.js', () => ({
+    getDatabase: () => mockDb
+}));
+
 // Mock Dependencies using absolute path
 
 
@@ -33,7 +37,8 @@ describe('ReportService', () => {
         vi.clearAllMocks();
 
         // Import the service
-        const module = await import('../../../server/services/reportService.js');
+        // Note: In Vitest/Node, we can import .ts files directly
+        const module = await import('../../../server/src/services/ReportService.ts');
         ReportService = module.default || module;
 
         // Inject mock DB
@@ -48,19 +53,21 @@ describe('ReportService', () => {
         it('should return reports list with defaults', async () => {
             if (!ReportService) return;
 
-            const mockRows = [{ id: 'rpt-1', name: 'Test Report' }];
-            mockDb.all.mockImplementation((sql, params, callback) => callback(null, mockRows));
+            const mockRows = [{ id: 'rpt-1', name: 'Test Report', report_type: 'custom', updated_at: '2023-01-01' }];
+            mockDb.all.mockResolvedValue(mockRows);
 
             const result = await ReportService.getReports();
 
             expect(mockDb.all).toHaveBeenCalled();
-            expect(result).toEqual(mockRows);
+            expect(result).toEqual(expect.arrayContaining([
+                expect.objectContaining({ id: 'rpt-1', name: 'Test Report' })
+            ]));
         });
 
         it('should apply filters', async () => {
             if (!ReportService) return;
 
-            mockDb.all.mockImplementation((sql, params, callback) => callback(null, []));
+            mockDb.all.mockResolvedValue([]);
 
             await ReportService.getReports({
                 report_type: 'users',
@@ -86,7 +93,7 @@ describe('ReportService', () => {
         it('should create a new report', async () => {
             if (!ReportService) return;
 
-            mockDb.run.mockImplementation((sql, params, callback) => callback(null));
+            mockDb.run.mockResolvedValue({ changes: 1, lastID: 1 });
 
             const reportData = {
                 name: 'New Report',
@@ -109,24 +116,25 @@ describe('ReportService', () => {
 
             const mockReport = {
                 id: 'rpt-1',
+                name: 'Test Report',
                 report_type: 'users',
                 filters_json: JSON.stringify({ role: 'admin' }),
-                columns_json: JSON.stringify(['id', 'email'])
+                columns_json: JSON.stringify(['id', 'email']),
+                created_by: 'user-1'
             };
 
             // 1. getReportById
-            mockDb.get.mockImplementation((sql, params, callback) => callback(null, mockReport));
+            mockDb.get.mockResolvedValue(mockReport);
 
             // 2. generateReportData -> generateUsersReport
-            // For generateUsersReport, it calls db.all to fetch users
             const mockUsers = [{ id: 1, email: 'admin@test.com' }];
-            // We need to orchestrate the multiple db calls.
-            // Call 1: INSERT execution (run)
-            // Call 2: SELECT users (all)
-            // Call 3: UPDATE execution (run)
 
-            mockDb.run.mockImplementation((sql, params, callback) => callback(null));
-            mockDb.all.mockImplementation((sql, params, callback) => callback(null, mockUsers));
+            // Call 1: INSERT execution (startExecution)
+            // Call 2: SELECT users (generateUsersReport)
+            // Call 3: UPDATE execution (completeExecution)
+
+            mockDb.run.mockResolvedValue({ changes: 1 });
+            mockDb.all.mockResolvedValue(mockUsers);
 
             const result = await ReportService.executeReport('rpt-1');
 
@@ -146,10 +154,10 @@ describe('ReportService', () => {
                 report_type: 'users'
             };
 
-            mockDb.get.mockImplementation((sql, params, callback) => callback(null, mockReport));
-            mockDb.run.mockImplementation((sql, params, callback) => callback(null));
+            mockDb.get.mockResolvedValue(mockReport);
+            mockDb.run.mockResolvedValue({ changes: 1 });
             // Simulate generation error
-            mockDb.all.mockImplementation((sql, params, callback) => callback(new Error('Query Failed')));
+            mockDb.all.mockRejectedValue(new Error('Query Failed'));
 
             await expect(ReportService.executeReport('rpt-1')).rejects.toThrow('Query Failed');
 
@@ -170,7 +178,7 @@ describe('ReportService', () => {
                 { id: 1, amount: 100 },
                 { id: 2, amount: 200 }
             ];
-            mockDb.all.mockImplementation((sql, params, callback) => callback(null, mockInvoices));
+            mockDb.all.mockResolvedValue(mockInvoices);
 
             const result = await ReportService.generateReportData('revenue', {}, []);
 

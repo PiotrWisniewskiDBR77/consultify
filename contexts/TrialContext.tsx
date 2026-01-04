@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 
 interface TrialState {
@@ -34,7 +35,7 @@ const defaultState: TrialState = {
     usage: { aiCalls: 0, projects: 0, users: 0, trialTokensUsed: 0 },
     blockedActions: [],
     loading: true,
-    refreshTrialStatus: async () => { },
+    refreshTrialStatus: async () => {},
 };
 
 const TrialContext = createContext<TrialState>(defaultState);
@@ -58,7 +59,7 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         try {
             // Fetch policy snapshot - correct endpoint
             const response = await fetch('/api/organization/policy-snapshot', {
-                headers: { Authorization: `Bearer ${storedToken}` }
+                headers: { Authorization: `Bearer ${storedToken}` },
             });
 
             if (response.ok) {
@@ -73,20 +74,20 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         aiCalls: policy.usageToday?.aiCalls ?? 0,
                         projects: policy.usageToday?.projects ?? 0,
                         users: policy.usageToday?.users ?? 0,
-                        trialTokensUsed: policy.trialTokenUsage?.tokensUsed ?? 0
+                        trialTokensUsed: policy.trialTokenUsage?.tokensUsed ?? 0,
                     },
                     blockedActions: Array.isArray(policy.blockedActions) ? policy.blockedActions : [],
                     loading: false,
-                    refreshTrialStatus
+                    refreshTrialStatus,
                 });
             } else {
                 // API returned non-200 - set safe defaults
                 console.warn('[TrialContext] Policy snapshot returned:', response.status);
-                setState(prev => ({ ...prev, loading: false }));
+                setState((prev) => ({ ...prev, loading: false }));
             }
         } catch (err) {
-            console.error("Failed to fetch trial status", err);
-            setState(prev => ({ ...prev, loading: false }));
+            console.error('Failed to fetch trial status', err);
+            setState((prev) => ({ ...prev, loading: false }));
         }
     };
 
@@ -98,9 +99,5 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     }, [user]);
 
-    return (
-        <TrialContext.Provider value={state}>
-            {children}
-        </TrialContext.Provider>
-    );
+    return <TrialContext.Provider value={state}>{children}</TrialContext.Provider>;
 };

@@ -6,7 +6,7 @@
  * If any is missing, feature must not ship.
  */
 
-const UserStateMachine = import('userStateMachine.js');
+const UserStateMachine = import('../services/userStateMachine.js');
 
 /**
  * Feature gate configuration

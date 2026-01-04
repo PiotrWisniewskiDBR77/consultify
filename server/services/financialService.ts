@@ -81,7 +81,7 @@ const FinancialService = {
         let totalCost = 0;
         let totalBenefit = 0;
 
-        const detailedInitiatives: DetailedInitiative[] = initiatives.map(i => {
+        const detailedInitiatives: DetailedInitiative[] = initiatives.map((i) => {
             const { cost, costRange } = FinancialService.estimateCost(i.complexity);
             const { benefit, benefitRange } = FinancialService.estimateBenefit(i.priority, cost);
 
@@ -93,7 +93,7 @@ const FinancialService = {
                 estimatedCost: cost,
                 costRange,
                 estimatedAnnualBenefit: benefit,
-                benefitRange
+                benefitRange,
             };
         });
 
@@ -110,10 +110,9 @@ const FinancialService = {
             efficiencyGains: parseFloat(efficiencyGains.toFixed(2)),
             roi: parseFloat(roi.toFixed(1)),
             paybackPeriodMonths: parseFloat(paybackMonths.toFixed(1)),
-            initiatives: detailedInitiatives
+            initiatives: detailedInitiatives,
         };
-    }
+    },
 };
 
 export default FinancialService;
-

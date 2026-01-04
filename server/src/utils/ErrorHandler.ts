@@ -1,12 +1,13 @@
 /**
  * Error Handler Utility
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Full TypeScript migration of errorHandler.js
  * Provides standardized error handling and Express middleware
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+
 import logger from './Logger.js';
 
 /**
@@ -23,7 +24,7 @@ export class AppError extends Error {
         message: string,
         statusCode: number,
         code: string = 'INTERNAL_ERROR',
-        details: Record<string, unknown> = {}
+        details: Record<string, unknown> = {},
     ) {
         super(message);
         this.statusCode = statusCode;
@@ -47,7 +48,7 @@ export const ERROR_CODES = {
     DATABASE_ERROR: 'DATABASE_ERROR',
     INTERNAL_ERROR: 'INTERNAL_ERROR',
     RATE_LIMIT: 'RATE_LIMIT',
-    BAD_REQUEST: 'BAD_REQUEST'
+    BAD_REQUEST: 'BAD_REQUEST',
 } as const;
 
 /**
@@ -56,15 +57,15 @@ export const ERROR_CODES = {
 export function createError(
     code: string,
     message: string,
-    details: Record<string, unknown> = {}
+    details: Record<string, unknown> = {},
 ): { error: Record<string, unknown> } {
     return {
         error: {
             code,
             message,
             ...details,
-            timestamp: new Date().toISOString()
-        }
+            timestamp: new Date().toISOString(),
+        },
     };
 }
 
@@ -75,7 +76,7 @@ export function errorHandlerMiddleware(
     err: Error & { statusCode?: number; status?: string; code?: string; details?: Record<string, unknown> },
     req: Request,
     res: Response,
-    _next: NextFunction
+    _next: NextFunction,
 ): void {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
@@ -86,12 +87,12 @@ export function errorHandlerMiddleware(
             stack: err.stack,
             path: req.path,
             method: req.method,
-            userId: (req as any).user?.id
+            userId: (req as any).user?.id,
         });
     } else {
         logger.warn(`[ErrorHandler] ${err.message}`, {
             statusCode: err.statusCode,
-            path: req.path
+            path: req.path,
         });
     }
 
@@ -101,7 +102,7 @@ export function errorHandlerMiddleware(
             status: err.status,
             error: err,
             message: err.message,
-            stack: err.stack
+            stack: err.stack,
         });
         return;
     }
@@ -115,8 +116,8 @@ export function errorHandlerMiddleware(
                 code: err.code || 'ERROR',
                 message: err.message,
                 ...(err.details || {}),
-                timestamp: new Date().toISOString()
-            }
+                timestamp: new Date().toISOString(),
+            },
         });
     } else {
         // Unknown programming/system error
@@ -125,8 +126,8 @@ export function errorHandlerMiddleware(
             error: {
                 code: 'INTERNAL_ERROR',
                 message: 'Something went very wrong!',
-                timestamp: new Date().toISOString()
-            }
+                timestamp: new Date().toISOString(),
+            },
         });
     }
 }
@@ -135,7 +136,7 @@ export function errorHandlerMiddleware(
  * Async route wrapper to catch errors
  */
 export function asyncHandler(
-    fn: (req: Request, res: Response, next: NextFunction) => Promise<void> | void
+    fn: (req: Request, res: Response, next: NextFunction) => Promise<void> | void,
 ): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
         Promise.resolve(fn(req, res, next)).catch(next);
@@ -152,4 +153,3 @@ export function validationError(msg: string, fields?: Record<string, unknown>): 
 export function notFoundError(resource: string, id?: string): AppError {
     return new AppError(`${resource} not found`, 404, ERROR_CODES.NOT_FOUND, { id });
 }
-

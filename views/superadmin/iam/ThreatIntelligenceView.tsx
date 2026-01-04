@@ -3,14 +3,29 @@
  * Manages threat intelligence including IP reputation and domain blocking
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import {
-    Shield, AlertTriangle, AlertCircle, CheckCircle, Globe, Monitor,
-    Filter, RefreshCw, Loader2, Plus, Eye, Lock, Unlock, Trash2, Search, Upload
+    AlertCircle,
+    AlertTriangle,
+    CheckCircle,
+    Eye,
+    Filter,
+    Globe,
+    Loader2,
+    Lock,
+    Monitor,
+    Plus,
+    RefreshCw,
+    Search,
+    Shield,
+    Trash2,
+    Unlock,
+    Upload,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { Api } from '../../../services/api';
 
 interface Threat {
     id: string;
@@ -53,7 +68,7 @@ const THREAT_TYPES = [
     { value: 'vpn_proxy', label: 'VPN/Proxy' },
     { value: 'compromised_host', label: 'Compromised Host' },
     { value: 'suspicious_domain', label: 'Suspicious Domain' },
-    { value: 'other', label: 'Other' }
+    { value: 'other', label: 'Other' },
 ];
 
 const ThreatIntelligenceView: React.FC = () => {
@@ -66,7 +81,7 @@ const ThreatIntelligenceView: React.FC = () => {
         threatLevel: '',
         isBlocked: '',
         ipAddress: '',
-        domain: ''
+        domain: '',
     });
     const [showFilters, setShowFilters] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -83,7 +98,7 @@ const ThreatIntelligenceView: React.FC = () => {
         domain: '',
         reputationScore: 50,
         threatLevel: 'MEDIUM',
-        description: ''
+        description: '',
     });
 
     useEffect(() => {
@@ -102,10 +117,7 @@ const ThreatIntelligenceView: React.FC = () => {
             if (filters.ipAddress) params.ipAddress = filters.ipAddress;
             if (filters.domain) params.domain = filters.domain;
 
-            const [threatsData, statsData] = await Promise.all([
-                Api.getThreats(params),
-                Api.getThreatStats()
-            ]);
+            const [threatsData, statsData] = await Promise.all([Api.getThreats(params), Api.getThreatStats()]);
 
             setThreats(threatsData);
             setStats(statsData);
@@ -127,7 +139,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 domain: formData.domain || undefined,
                 reputationScore: formData.reputationScore,
                 threatLevel: formData.threatLevel,
-                description: formData.description
+                description: formData.description,
             });
             toast.success('Threat added successfully');
             await loadData();
@@ -139,7 +151,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 domain: '',
                 reputationScore: 50,
                 threatLevel: 'MEDIUM',
-                description: ''
+                description: '',
             });
         } catch (err: any) {
             toast.error(err.message || 'Failed to add threat');
@@ -152,9 +164,7 @@ const ThreatIntelligenceView: React.FC = () => {
         try {
             await Api.blockThreat(threatId);
             toast.success('Threat blocked successfully');
-            setThreats(prev => prev.map(t =>
-                t.id === threatId ? { ...t, isBlocked: true } : t
-            ));
+            setThreats((prev) => prev.map((t) => (t.id === threatId ? { ...t, isBlocked: true } : t)));
             loadData();
         } catch (err: any) {
             toast.error(err.message || 'Failed to block threat');
@@ -165,9 +175,7 @@ const ThreatIntelligenceView: React.FC = () => {
         try {
             await Api.unblockThreat(threatId);
             toast.success('Threat unblocked successfully');
-            setThreats(prev => prev.map(t =>
-                t.id === threatId ? { ...t, isBlocked: false } : t
-            ));
+            setThreats((prev) => prev.map((t) => (t.id === threatId ? { ...t, isBlocked: false } : t)));
             loadData();
         } catch (err: any) {
             toast.error(err.message || 'Failed to unblock threat');
@@ -179,7 +187,7 @@ const ThreatIntelligenceView: React.FC = () => {
         try {
             await Api.deleteThreat(threatId);
             toast.success('Threat deleted successfully');
-            setThreats(prev => prev.filter(t => t.id !== threatId));
+            setThreats((prev) => prev.filter((t) => t.id !== threatId));
             loadData();
         } catch (err: any) {
             toast.error(err.message || 'Failed to delete threat');
@@ -191,9 +199,10 @@ const ThreatIntelligenceView: React.FC = () => {
         try {
             setChecking(true);
             setCheckResult(null);
-            const result = checkType === 'ip'
-                ? await Api.checkIPReputation(checkValue)
-                : await Api.checkDomainReputation(checkValue);
+            const result =
+                checkType === 'ip'
+                    ? await Api.checkIPReputation(checkValue)
+                    : await Api.checkDomainReputation(checkValue);
             setCheckResult(result);
         } catch (err: any) {
             toast.error(err.message || 'Failed to check reputation');
@@ -250,7 +259,7 @@ const ThreatIntelligenceView: React.FC = () => {
     };
 
     const getThreatTypeLabel = (type: string) => {
-        return THREAT_TYPES.find(t => t.value === type)?.label || type;
+        return THREAT_TYPES.find((t) => t.value === type)?.label || type;
     };
 
     if (loading && threats.length === 0) {
@@ -401,8 +410,10 @@ const ThreatIntelligenceView: React.FC = () => {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                             >
                                 <option value="">All Types</option>
-                                {THREAT_TYPES.map(t => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                {THREAT_TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>
+                                        {t.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -414,8 +425,10 @@ const ThreatIntelligenceView: React.FC = () => {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                             >
                                 <option value="">All Levels</option>
-                                {THREAT_LEVELS.map(l => (
-                                    <option key={l} value={l}>{l}</option>
+                                {THREAT_LEVELS.map((l) => (
+                                    <option key={l} value={l}>
+                                        {l}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -479,7 +492,10 @@ const ThreatIntelligenceView: React.FC = () => {
                                 </tr>
                             ) : (
                                 threats.map((threat) => (
-                                    <tr key={threat.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+                                    <tr
+                                        key={threat.id}
+                                        className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                                    >
                                         <td className="py-3 px-4">
                                             <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
                                                 {getThreatTypeLabel(threat.threatType)}
@@ -503,15 +519,21 @@ const ThreatIntelligenceView: React.FC = () => {
                                         </td>
                                         <td className="py-3 px-4">{getThreatLevelBadge(threat.threatLevel)}</td>
                                         <td className="py-3 px-4">
-                                            <span className={`font-semibold ${getReputationColor(threat.reputationScore)}`}>
+                                            <span
+                                                className={`font-semibold ${getReputationColor(threat.reputationScore)}`}
+                                            >
                                                 {threat.reputationScore}
                                             </span>
                                         </td>
                                         <td className="py-3 px-4">
                                             {threat.isBlocked ? (
-                                                <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs">Blocked</span>
+                                                <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs">
+                                                    Blocked
+                                                </span>
                                             ) : (
-                                                <span className="px-2 py-1 bg-slate-500/10 text-slate-400 rounded text-xs">Active</span>
+                                                <span className="px-2 py-1 bg-slate-500/10 text-slate-400 rounded text-xs">
+                                                    Active
+                                                </span>
                                             )}
                                         </td>
                                         <td className="py-3 px-4 text-sm text-slate-300">
@@ -566,8 +588,10 @@ const ThreatIntelligenceView: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, threatType: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
-                                    {THREAT_TYPES.map(t => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
+                                    {THREAT_TYPES.map((t) => (
+                                        <option key={t.value} value={t.value}>
+                                            {t.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -601,19 +625,25 @@ const ThreatIntelligenceView: React.FC = () => {
                                         onChange={(e) => setFormData({ ...formData, threatLevel: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                     >
-                                        {THREAT_LEVELS.map(l => (
-                                            <option key={l} value={l}>{l}</option>
+                                        {THREAT_LEVELS.map((l) => (
+                                            <option key={l} value={l}>
+                                                {l}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-1">Reputation Score (0-100)</label>
+                                    <label className="block text-sm text-slate-400 mb-1">
+                                        Reputation Score (0-100)
+                                    </label>
                                     <input
                                         type="number"
                                         min="0"
                                         max="100"
                                         value={formData.reputationScore}
-                                        onChange={(e) => setFormData({ ...formData, reputationScore: parseInt(e.target.value) })}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, reputationScore: parseInt(e.target.value) })
+                                        }
                                         className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                     />
                                 </div>
@@ -668,7 +698,10 @@ const ThreatIntelligenceView: React.FC = () => {
                                 <label className="block text-sm text-slate-400 mb-1">Check Type</label>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => { setCheckType('ip'); setCheckResult(null); }}
+                                        onClick={() => {
+                                            setCheckType('ip');
+                                            setCheckResult(null);
+                                        }}
                                         className={`flex-1 py-2 rounded-lg text-sm ${
                                             checkType === 'ip' ? 'bg-indigo-500' : 'bg-slate-700'
                                         }`}
@@ -676,7 +709,10 @@ const ThreatIntelligenceView: React.FC = () => {
                                         IP Address
                                     </button>
                                     <button
-                                        onClick={() => { setCheckType('domain'); setCheckResult(null); }}
+                                        onClick={() => {
+                                            setCheckType('domain');
+                                            setCheckResult(null);
+                                        }}
                                         className={`flex-1 py-2 rounded-lg text-sm ${
                                             checkType === 'domain' ? 'bg-indigo-500' : 'bg-slate-700'
                                         }`}
@@ -706,7 +742,9 @@ const ThreatIntelligenceView: React.FC = () => {
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm text-slate-400">Reputation Score</span>
-                                            <span className={`font-semibold ${getReputationColor(checkResult.reputationScore)}`}>
+                                            <span
+                                                className={`font-semibold ${getReputationColor(checkResult.reputationScore)}`}
+                                            >
                                                 {checkResult.reputationScore}
                                             </span>
                                         </div>
@@ -726,7 +764,8 @@ const ThreatIntelligenceView: React.FC = () => {
                                         )}
                                         {!checkResult.found && (
                                             <p className="text-sm text-emerald-400">
-                                                ✓ No threats found for this {checkType === 'ip' ? 'IP address' : 'domain'}
+                                                ✓ No threats found for this{' '}
+                                                {checkType === 'ip' ? 'IP address' : 'domain'}
                                             </p>
                                         )}
                                     </div>
@@ -735,7 +774,11 @@ const ThreatIntelligenceView: React.FC = () => {
                         </div>
                         <div className="flex justify-end gap-2 mt-6">
                             <button
-                                onClick={() => { setShowCheckModal(false); setCheckValue(''); setCheckResult(null); }}
+                                onClick={() => {
+                                    setShowCheckModal(false);
+                                    setCheckValue('');
+                                    setCheckResult(null);
+                                }}
                                 className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
                             >
                                 Close
@@ -745,7 +788,11 @@ const ThreatIntelligenceView: React.FC = () => {
                                 disabled={checking || !checkValue}
                                 className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-500 hover:bg-violet-600 rounded-lg disabled:opacity-50"
                             >
-                                {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                {checking ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Search className="w-4 h-4" />
+                                )}
                                 Check
                             </button>
                         </div>
@@ -757,10 +804,4 @@ const ThreatIntelligenceView: React.FC = () => {
 };
 
 export default ThreatIntelligenceView;
-
-
-
-
-
-
 

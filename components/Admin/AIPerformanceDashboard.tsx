@@ -1,6 +1,6 @@
 /**
  * AI Performance Dashboard Component
- * 
+ *
  * Comprehensive dashboard for monitoring AI system performance metrics.
  * Features:
  * - Response time trends and distribution
@@ -11,31 +11,32 @@
  * - Real-time health indicators
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
+import {
     Activity,
+    AlertTriangle,
+    ArrowDownRight,
+    ArrowUpRight,
+    BarChart3,
+    CheckCircle,
     Clock,
-    Zap,
+    Cpu,
     Database,
     DollarSign,
-    TrendingUp,
-    TrendingDown,
-    BarChart3,
+    Download,
+    Gauge,
+    Layers,
     PieChart,
     RefreshCw,
-    Download,
-    AlertTriangle,
-    CheckCircle,
-    Cpu,
-    Layers,
     Target,
-    Gauge,
-    ArrowUpRight,
-    ArrowDownRight
+    TrendingDown,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
-import api from '../../services/api';
-import { useTranslation } from 'react-i18next';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import api from '../../services/api';
 
 interface PerformanceMetrics {
     avgResponseTime: number;
@@ -91,7 +92,7 @@ export function AIPerformanceDashboard() {
         avgTokensPerRequest: 0,
         totalTokensUsed: 0,
         cacheHitRate: 0,
-        totalCostUsd: 0
+        totalCostUsd: 0,
     });
     const [capabilityMetrics, setCapabilityMetrics] = useState<CapabilityMetrics[]>([]);
     const [modelMetrics, setModelMetrics] = useState<ModelMetrics[]>([]);
@@ -149,29 +150,88 @@ export function AIPerformanceDashboard() {
         avgTokensPerRequest: Math.floor(800 + Math.random() * 400),
         totalTokensUsed: Math.floor(2000000 + Math.random() * 1000000),
         cacheHitRate: 20 + Math.random() * 15,
-        totalCostUsd: 150 + Math.random() * 100
+        totalCostUsd: 150 + Math.random() * 100,
     });
 
     const generateMockCapabilities = (): CapabilityMetrics[] => [
-        { capability: 'chat', requests: 3500, avgResponseTime: 0.9, avgTokens: 650, totalCost: 45.20, successRate: 98.2 },
-        { capability: 'report', requests: 850, avgResponseTime: 3.2, avgTokens: 2100, totalCost: 62.50, successRate: 95.1 },
-        { capability: 'initiative', requests: 420, avgResponseTime: 2.8, avgTokens: 1800, totalCost: 38.30, successRate: 93.5 },
-        { capability: 'diagnose', requests: 680, avgResponseTime: 1.5, avgTokens: 1200, totalCost: 28.40, successRate: 96.8 },
-        { capability: 'task', requests: 1200, avgResponseTime: 0.7, avgTokens: 450, totalCost: 18.60, successRate: 97.9 }
+        {
+            capability: 'chat',
+            requests: 3500,
+            avgResponseTime: 0.9,
+            avgTokens: 650,
+            totalCost: 45.2,
+            successRate: 98.2,
+        },
+        {
+            capability: 'report',
+            requests: 850,
+            avgResponseTime: 3.2,
+            avgTokens: 2100,
+            totalCost: 62.5,
+            successRate: 95.1,
+        },
+        {
+            capability: 'initiative',
+            requests: 420,
+            avgResponseTime: 2.8,
+            avgTokens: 1800,
+            totalCost: 38.3,
+            successRate: 93.5,
+        },
+        {
+            capability: 'diagnose',
+            requests: 680,
+            avgResponseTime: 1.5,
+            avgTokens: 1200,
+            totalCost: 28.4,
+            successRate: 96.8,
+        },
+        {
+            capability: 'task',
+            requests: 1200,
+            avgResponseTime: 0.7,
+            avgTokens: 450,
+            totalCost: 18.6,
+            successRate: 97.9,
+        },
     ];
 
     const generateMockModels = (): ModelMetrics[] => [
-        { model: 'gpt-4o', requests: 2800, avgResponseTime: 1.8, avgQuality: 0.92, totalCost: 85.40, successRate: 97.5 },
-        { model: 'gpt-4o-mini', requests: 3200, avgResponseTime: 0.6, avgQuality: 0.85, totalCost: 12.80, successRate: 98.2 },
-        { model: 'claude-3.5-sonnet', requests: 650, avgResponseTime: 2.1, avgQuality: 0.94, totalCost: 42.50, successRate: 96.8 },
-        { model: 'gemini-1.5-pro', requests: 420, avgResponseTime: 1.4, avgQuality: 0.88, totalCost: 8.20, successRate: 95.2 }
+        { model: 'gpt-4o', requests: 2800, avgResponseTime: 1.8, avgQuality: 0.92, totalCost: 85.4, successRate: 97.5 },
+        {
+            model: 'gpt-4o-mini',
+            requests: 3200,
+            avgResponseTime: 0.6,
+            avgQuality: 0.85,
+            totalCost: 12.8,
+            successRate: 98.2,
+        },
+        {
+            model: 'claude-3.5-sonnet',
+            requests: 650,
+            avgResponseTime: 2.1,
+            avgQuality: 0.94,
+            totalCost: 42.5,
+            successRate: 96.8,
+        },
+        {
+            model: 'gemini-1.5-pro',
+            requests: 420,
+            avgResponseTime: 1.4,
+            avgQuality: 0.88,
+            totalCost: 8.2,
+            successRate: 95.2,
+        },
     ];
 
     const generateMockTrend = (): TimeSeriesPoint[] => {
         const points = timeRange === '1h' ? 12 : timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : 30;
         return Array.from({ length: points }, (_, i) => ({
-            timestamp: new Date(Date.now() - (points - i - 1) * (timeRange === '1h' ? 5 * 60000 : timeRange === '24h' ? 3600000 : 86400000)).toISOString(),
-            value: 0.8 + Math.random() * 1.5
+            timestamp: new Date(
+                Date.now() -
+                    (points - i - 1) * (timeRange === '1h' ? 5 * 60000 : timeRange === '24h' ? 3600000 : 86400000),
+            ).toISOString(),
+            value: 0.8 + Math.random() * 1.5,
         }));
     };
 
@@ -182,7 +242,7 @@ export function AIPerformanceDashboard() {
             metrics,
             capabilityMetrics,
             modelMetrics,
-            responseTimeTrend
+            responseTimeTrend,
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -196,9 +256,14 @@ export function AIPerformanceDashboard() {
 
     const formatNumber = (num: number, decimals = 1) => num.toFixed(decimals);
     const formatCurrency = (num: number) => `$${num.toFixed(2)}`;
-    const formatTokens = (num: number) => num >= 1000000 ? `${(num / 1000000).toFixed(1)}M` : num >= 1000 ? `${(num / 1000).toFixed(0)}K` : num.toString();
+    const formatTokens = (num: number) =>
+        num >= 1000000
+            ? `${(num / 1000000).toFixed(1)}M`
+            : num >= 1000
+              ? `${(num / 1000).toFixed(0)}K`
+              : num.toString();
 
-    const maxTrendValue = Math.max(...responseTimeTrend.map(t => t.value), 1);
+    const maxTrendValue = Math.max(...responseTimeTrend.map((t) => t.value), 1);
 
     return (
         <div className="space-y-6">
@@ -219,9 +284,7 @@ export function AIPerformanceDashboard() {
                                 key={range}
                                 onClick={() => setTimeRange(range)}
                                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                                    timeRange === range
-                                        ? 'bg-white/10 text-white'
-                                        : 'text-slate-500 hover:text-white'
+                                    timeRange === range ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white'
                                 }`}
                             >
                                 {range}
@@ -240,7 +303,7 @@ export function AIPerformanceDashboard() {
                         <Download size={14} />
                         Export
                     </button>
-                    <button 
+                    <button
                         onClick={loadMetrics}
                         disabled={loading}
                         className="admin-btn admin-btn-subtle disabled:opacity-50"
@@ -253,42 +316,42 @@ export function AIPerformanceDashboard() {
 
             {/* Main Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <MetricCard 
-                    icon={Clock} 
-                    label="Avg Response" 
+                <MetricCard
+                    icon={Clock}
+                    label="Avg Response"
                     value={`${formatNumber(metrics.avgResponseTime)}s`}
                     color="text-cyan-400"
                     trend={metrics.avgResponseTime < 1.5 ? 'up' : 'down'}
                 />
-                <MetricCard 
-                    icon={Target} 
-                    label="Success Rate" 
+                <MetricCard
+                    icon={Target}
+                    label="Success Rate"
                     value={`${formatNumber(metrics.successRate)}%`}
                     color="text-emerald-400"
                     trend={metrics.successRate > 95 ? 'up' : 'down'}
                 />
-                <MetricCard 
-                    icon={Database} 
-                    label="Cache Hit Rate" 
+                <MetricCard
+                    icon={Database}
+                    label="Cache Hit Rate"
                     value={`${formatNumber(metrics.cacheHitRate)}%`}
                     color="text-purple-400"
                     trend={metrics.cacheHitRate > 25 ? 'up' : 'down'}
                 />
-                <MetricCard 
-                    icon={Layers} 
-                    label="Total Requests" 
+                <MetricCard
+                    icon={Layers}
+                    label="Total Requests"
                     value={metrics.totalRequests.toLocaleString()}
                     color="text-blue-400"
                 />
-                <MetricCard 
-                    icon={Cpu} 
-                    label="Avg Tokens" 
+                <MetricCard
+                    icon={Cpu}
+                    label="Avg Tokens"
                     value={formatTokens(metrics.avgTokensPerRequest)}
                     color="text-amber-400"
                 />
-                <MetricCard 
-                    icon={DollarSign} 
-                    label="Total Cost" 
+                <MetricCard
+                    icon={DollarSign}
+                    label="Total Cost"
                     value={formatCurrency(metrics.totalCostUsd)}
                     color="text-pink-400"
                 />
@@ -321,7 +384,7 @@ export function AIPerformanceDashboard() {
                         <div className="h-32 flex items-end gap-0.5">
                             {responseTimeTrend.map((point, idx) => (
                                 <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
-                                    <div 
+                                    <div
                                         className="w-full bg-slate-500 hover:bg-slate-400 rounded-sm transition-all"
                                         style={{ height: `${(point.value / maxTrendValue) * 100}%`, minHeight: '2px' }}
                                         title={`${new Date(point.timestamp).toLocaleTimeString()}: ${point.value.toFixed(2)}s`}
@@ -343,16 +406,23 @@ export function AIPerformanceDashboard() {
                     </h3>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {capabilityMetrics.map((cap, idx) => (
-                            <div key={idx} className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors">
+                            <div
+                                key={idx}
+                                className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
+                            >
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm text-slate-300 capitalize">{cap.capability}</div>
-                                    <div className="text-xs text-slate-600">{cap.requests.toLocaleString()} requests</div>
+                                    <div className="text-xs text-slate-600">
+                                        {cap.requests.toLocaleString()} requests
+                                    </div>
                                 </div>
                                 <div className="text-right text-xs space-y-1">
                                     <div className="text-slate-400">{cap.avgResponseTime.toFixed(1)}s</div>
                                     <div className="text-slate-600">{formatCurrency(cap.totalCost)}</div>
                                 </div>
-                                <div className={`text-xs ${cap.successRate > 95 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                <div
+                                    className={`text-xs ${cap.successRate > 95 ? 'text-emerald-400' : 'text-amber-400'}`}
+                                >
                                     {cap.successRate.toFixed(1)}%
                                 </div>
                             </div>
@@ -368,16 +438,23 @@ export function AIPerformanceDashboard() {
                     </h3>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {modelMetrics.map((model, idx) => (
-                            <div key={idx} className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors">
+                            <div
+                                key={idx}
+                                className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
+                            >
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm text-white font-medium">{model.model}</div>
-                                    <div className="text-xs text-slate-500">{model.requests.toLocaleString()} requests</div>
+                                    <div className="text-xs text-slate-500">
+                                        {model.requests.toLocaleString()} requests
+                                    </div>
                                 </div>
                                 <div className="text-right text-xs space-y-1">
                                     <div className="text-purple-400">Q: {(model.avgQuality * 100).toFixed(0)}%</div>
                                     <div className="text-slate-500">{formatCurrency(model.totalCost)}</div>
                                 </div>
-                                <div className={`text-xs font-medium ${model.successRate > 95 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                <div
+                                    className={`text-xs font-medium ${model.successRate > 95 ? 'text-emerald-400' : 'text-amber-400'}`}
+                                >
                                     {model.successRate.toFixed(1)}%
                                 </div>
                             </div>
@@ -393,21 +470,31 @@ export function AIPerformanceDashboard() {
                     System Health
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <HealthIndicator 
-                        label="API Response" 
-                        status={metrics.avgResponseTime < 2 ? 'healthy' : metrics.avgResponseTime < 4 ? 'warning' : 'critical'}
+                    <HealthIndicator
+                        label="API Response"
+                        status={
+                            metrics.avgResponseTime < 2
+                                ? 'healthy'
+                                : metrics.avgResponseTime < 4
+                                  ? 'warning'
+                                  : 'critical'
+                        }
                     />
-                    <HealthIndicator 
-                        label="Error Rate" 
+                    <HealthIndicator
+                        label="Error Rate"
                         status={metrics.errorRate < 2 ? 'healthy' : metrics.errorRate < 5 ? 'warning' : 'critical'}
                     />
-                    <HealthIndicator 
-                        label="Cache Efficiency" 
-                        status={metrics.cacheHitRate > 25 ? 'healthy' : metrics.cacheHitRate > 15 ? 'warning' : 'critical'}
+                    <HealthIndicator
+                        label="Cache Efficiency"
+                        status={
+                            metrics.cacheHitRate > 25 ? 'healthy' : metrics.cacheHitRate > 15 ? 'warning' : 'critical'
+                        }
                     />
-                    <HealthIndicator 
-                        label="Success Rate" 
-                        status={metrics.successRate > 95 ? 'healthy' : metrics.successRate > 90 ? 'warning' : 'critical'}
+                    <HealthIndicator
+                        label="Success Rate"
+                        status={
+                            metrics.successRate > 95 ? 'healthy' : metrics.successRate > 90 ? 'warning' : 'critical'
+                        }
                     />
                 </div>
             </div>
@@ -416,10 +503,10 @@ export function AIPerformanceDashboard() {
 }
 
 // Helper Components - Clean minimal style
-const MetricCard: React.FC<{ 
-    icon: any; 
-    label: string; 
-    value: string; 
+const MetricCard: React.FC<{
+    icon: any;
+    label: string;
+    value: string;
     color: string;
     trend?: 'up' | 'down';
 }> = ({ icon: Icon, label, value, trend }) => (
@@ -429,23 +516,26 @@ const MetricCard: React.FC<{
                 <Icon size={14} className="text-slate-500" />
                 <span className="admin-metric-label">{label}</span>
             </div>
-            {trend && (
-                trend === 'up' 
-                    ? <ArrowUpRight size={12} className="text-emerald-400" />
-                    : <ArrowDownRight size={12} className="text-red-400" />
-            )}
+            {trend &&
+                (trend === 'up' ? (
+                    <ArrowUpRight size={12} className="text-emerald-400" />
+                ) : (
+                    <ArrowDownRight size={12} className="text-red-400" />
+                ))}
         </div>
         <div className="admin-metric-value">{value}</div>
     </div>
 );
 
-const PercentileBar: React.FC<{ label: string; value: number; max: number; color: string }> = ({ 
-    label, value, max 
+const PercentileBar: React.FC<{ label: string; value: number; max: number; color: string }> = ({
+    label,
+    value,
+    max,
 }) => (
     <div className="flex items-center gap-3">
         <span className="text-xs text-slate-500 w-8">{label}</span>
         <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-            <div 
+            <div
                 className="h-full bg-slate-400 rounded-full transition-all"
                 style={{ width: `${Math.min((value / max) * 100, 100)}%` }}
             />
@@ -454,22 +544,29 @@ const PercentileBar: React.FC<{ label: string; value: number; max: number; color
     </div>
 );
 
-const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' | 'critical' }> = ({ 
-    label, status 
+const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' | 'critical' }> = ({
+    label,
+    status,
 }) => (
     <div className="flex items-center gap-3 p-3 bg-white/[0.02] rounded-lg">
-        <span className={`admin-status ${
-            status === 'healthy' ? 'admin-status-healthy' :
-            status === 'warning' ? 'admin-status-warning' : 'admin-status-error'
-        }`}>
+        <span
+            className={`admin-status ${
+                status === 'healthy'
+                    ? 'admin-status-healthy'
+                    : status === 'warning'
+                      ? 'admin-status-warning'
+                      : 'admin-status-error'
+            }`}
+        >
             <span className="admin-status-dot" />
         </span>
         <div className="flex-1">
             <div className="text-sm text-slate-300">{label}</div>
-            <div className={`text-xs capitalize ${
-                status === 'healthy' ? 'text-emerald-400' : 
-                status === 'warning' ? 'text-amber-400' : 'text-red-400'
-            }`}>
+            <div
+                className={`text-xs capitalize ${
+                    status === 'healthy' ? 'text-emerald-400' : status === 'warning' ? 'text-amber-400' : 'text-red-400'
+                }`}
+            >
                 {status}
             </div>
         </div>
@@ -477,5 +574,3 @@ const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' |
 );
 
 export default AIPerformanceDashboard;
-
-

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import EvidencePanel from '../../../components/ai/EvidencePanel';
+import EvidencePanel from '../../components/ai/EvidencePanel';
 
 const mockExplanation = {
     entity_type: 'proposal',
@@ -462,6 +462,7 @@ describe('EvidencePanel Component', () => {
         });
     });
 });
+
 
 
 

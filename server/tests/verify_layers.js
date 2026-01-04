@@ -1,5 +1,5 @@
-import AiService from '../services/aiService.js';
-import FinancialService from '../services/financialService.js';
+import AiService from '../src/services/aiService.js';
+import FinancialService from '../src/services/financialService.js';
 
 // Mock specific parts if needed, but we want integration test
 // We need to mock DB for callLLM if we don't have a real DB connection, 

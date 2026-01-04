@@ -1,6 +1,6 @@
 /**
  * Activation Milestones Configuration
- * 
+ *
  * Defines what "activated" means for each phase.
  * Used for:
  * - Dashboard metrics
@@ -19,7 +19,7 @@ export interface PhaseActivation {
     phase: string;
     phaseName: string;
     milestones: Milestone[];
-    activatedWhen: string[];  // Milestone IDs that define activation
+    activatedWhen: string[]; // Milestone IDs that define activation
 }
 
 export const ACTIVATION_MILESTONES: Record<string, PhaseActivation> = {
@@ -27,7 +27,12 @@ export const ACTIVATION_MILESTONES: Record<string, PhaseActivation> = {
         phase: 'A',
         phaseName: 'Pre-Entry',
         milestones: [
-            { id: 'cta_clicked', name: 'CTA Clicked', description: 'User clicked main CTA on landing page', required: true },
+            {
+                id: 'cta_clicked',
+                name: 'CTA Clicked',
+                description: 'User clicked main CTA on landing page',
+                required: true,
+            },
         ],
         activatedWhen: ['cta_clicked'],
     },
@@ -51,7 +56,11 @@ export const ACTIVATION_MILESTONES: Record<string, PhaseActivation> = {
         milestones: [
             { id: 'code_entered', name: 'Code Entered', description: 'User entered access code', required: true },
             { id: 'trial_started', name: 'Trial Started', description: 'Trial session activated', required: true },
-            { id: 'confirmations_accepted', name: 'Confirmations Accepted', description: 'User accepted transition confirmations' },
+            {
+                id: 'confirmations_accepted',
+                name: 'Confirmations Accepted',
+                description: 'User accepted transition confirmations',
+            },
         ],
         activatedWhen: ['code_entered', 'trial_started'],
     },
@@ -63,7 +72,12 @@ export const ACTIVATION_MILESTONES: Record<string, PhaseActivation> = {
             { id: 'org_name_set', name: 'Organization Named', description: 'User set organization name' },
             { id: 'role_selected', name: 'Role Selected', description: 'User selected their role' },
             { id: 'context_set', name: 'Context Set', description: 'User provided organization context' },
-            { id: 'memory_activated', name: 'Memory Activated', description: 'User confirmed memory activation', required: true },
+            {
+                id: 'memory_activated',
+                name: 'Memory Activated',
+                description: 'User confirmed memory activation',
+                required: true,
+            },
         ],
         activatedWhen: ['memory_activated'],
     },
@@ -73,10 +87,27 @@ export const ACTIVATION_MILESTONES: Record<string, PhaseActivation> = {
         phaseName: 'Guided First Value',
         milestones: [
             { id: 'first_axis_created', name: 'First Axis Created', description: 'User created first DRD axis' },
-            { id: 'first_position_added', name: 'First Position Added', description: 'User added first position to axis' },
-            { id: 'ai_question_answered', name: 'AI Question Answered', description: 'User responded to AI thinking partner' },
-            { id: 'snapshot_created', name: 'Snapshot Created', description: 'User created first snapshot', required: true },
-            { id: 'tour_first_value_completed', name: 'First Value Tour', description: 'User completed first value tour' },
+            {
+                id: 'first_position_added',
+                name: 'First Position Added',
+                description: 'User added first position to axis',
+            },
+            {
+                id: 'ai_question_answered',
+                name: 'AI Question Answered',
+                description: 'User responded to AI thinking partner',
+            },
+            {
+                id: 'snapshot_created',
+                name: 'Snapshot Created',
+                description: 'User created first snapshot',
+                required: true,
+            },
+            {
+                id: 'tour_first_value_completed',
+                name: 'First Value Tour',
+                description: 'User completed first value tour',
+            },
         ],
         activatedWhen: ['first_axis_created', 'snapshot_created'],
     },
@@ -86,9 +117,22 @@ export const ACTIVATION_MILESTONES: Record<string, PhaseActivation> = {
         phaseName: 'Team Expansion',
         milestones: [
             { id: 'invite_sent', name: 'Invite Sent', description: 'User sent team invitation' },
-            { id: 'second_user_joined', name: 'Second User Joined', description: 'Another team member joined', required: true },
-            { id: 'multi_perspective_view', name: 'Multi-Perspective View', description: 'User viewed multiple perspectives' },
-            { id: 'ai_facilitation_used', name: 'AI Facilitation Used', description: 'User used AI facilitation features' },
+            {
+                id: 'second_user_joined',
+                name: 'Second User Joined',
+                description: 'Another team member joined',
+                required: true,
+            },
+            {
+                id: 'multi_perspective_view',
+                name: 'Multi-Perspective View',
+                description: 'User viewed multiple perspectives',
+            },
+            {
+                id: 'ai_facilitation_used',
+                name: 'AI Facilitation Used',
+                description: 'User used AI facilitation features',
+            },
         ],
         activatedWhen: ['second_user_joined'],
     },
@@ -106,7 +150,7 @@ export const getActivationCriteria = (phase: string): string[] => {
  */
 export const isPhaseActivated = (phase: string, completedMilestones: string[]): boolean => {
     const criteria = getActivationCriteria(phase);
-    return criteria.every(milestone => completedMilestones.includes(milestone));
+    return criteria.every((milestone) => completedMilestones.includes(milestone));
 };
 
 /**
@@ -120,7 +164,7 @@ export const getPhaseMilestones = (phase: string): Milestone[] => {
  * Get required milestones for a phase
  */
 export const getRequiredMilestones = (phase: string): Milestone[] => {
-    return getPhaseMilestones(phase).filter(m => m.required);
+    return getPhaseMilestones(phase).filter((m) => m.required);
 };
 
 export default ACTIVATION_MILESTONES;

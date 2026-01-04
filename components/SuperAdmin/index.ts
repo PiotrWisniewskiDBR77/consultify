@@ -1,19 +1,19 @@
 /**
  * SuperAdmin Components Index
- * 
+ *
  * Central export for all Super Admin module components.
  */
 
 // Core components
-export { TabLayout } from './TabLayout';
 export type { Tab } from './TabLayout';
+export { TabLayout } from './TabLayout';
 
 // Placeholder panels (to be expanded)
+export { EmailTemplatesPanel } from './EmailTemplatesPanel';
 export { FeatureFlagsPanel } from './FeatureFlagsPanel';
 export { IntegrationsPanel } from './IntegrationsPanel';
-export { EmailTemplatesPanel } from './EmailTemplatesPanel';
-export { UsageStatsPanel } from './UsageStatsPanel';
 export { LegalPanel } from './LegalPanel';
+export { UsageStatsPanel } from './UsageStatsPanel';
 
 // Existing SuperAdmin components
 export { SuperAdminSignalCenter } from './SuperAdminSignalCenter';

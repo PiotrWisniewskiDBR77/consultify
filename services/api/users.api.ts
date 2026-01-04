@@ -4,7 +4,7 @@
  */
 
 import { User } from '../../types';
-import { API_URL, fetchWithRetry, handleResponse, getHeaders, getAuthHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getAuthHeaders, getHeaders, handleResponse } from './baseClient';
 
 export const UserApi = {
     // ==========================================
@@ -13,8 +13,8 @@ export const UserApi = {
 
     getUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
-        const data = await handleResponse(res, 'Failed to fetch users') as any;
-        return (Array.isArray(data) ? data : ((data as any).users || [])) as User[];
+        const data = (await handleResponse(res, 'Failed to fetch users')) as any;
+        return (Array.isArray(data) ? data : (data as any).users || []) as User[];
     },
 
     getUser: async (id: string): Promise<User> => {
@@ -26,7 +26,7 @@ export const UserApi = {
         const res = await fetch(`${API_URL}/users`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(user)
+            body: JSON.stringify(user),
         });
         return handleResponse(res, 'Failed to add user');
     },
@@ -35,7 +35,7 @@ export const UserApi = {
         const res = await fetch(`${API_URL}/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update user');
     },
@@ -43,7 +43,7 @@ export const UserApi = {
     deleteUser: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/users/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete user');
     },
@@ -52,11 +52,14 @@ export const UserApi = {
     // USER STATUS
     // ==========================================
 
-    updateUserStatus: async (id: string, status: { availabilityStatus?: string; statusMessage?: string }): Promise<void> => {
+    updateUserStatus: async (
+        id: string,
+        status: { availabilityStatus?: string; statusMessage?: string },
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/settings/profile/status`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ userId: id, ...status })
+            body: JSON.stringify({ userId: id, ...status }),
         });
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
@@ -75,9 +78,9 @@ export const UserApi = {
         const res = await fetch(`${API_URL}/users/${userId}/avatar`, {
             method: 'POST',
             headers: {
-                'Authorization': getHeaders()['Authorization']
+                Authorization: getHeaders()['Authorization'],
             },
-            body: formData
+            body: formData,
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to upload avatar');
@@ -96,7 +99,7 @@ export const UserApi = {
     generateReferralCode: async (): Promise<{ code: string }> => {
         const res = await fetch(`${API_URL}/referrals/generate`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to generate referral code');
     },
@@ -109,7 +112,7 @@ export const UserApi = {
         const res = await fetch(`${API_URL}/onboarding/context`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(context)
+            body: JSON.stringify(context),
         });
         await handleResponse(res, 'Failed to save onboarding context');
     },
@@ -117,7 +120,7 @@ export const UserApi = {
     generateFirstValuePlan: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/onboarding/generate-plan`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to generate plan');
     },
@@ -131,12 +134,12 @@ export const UserApi = {
         type: string;
         message: string;
         screenshot?: string;
-        url?: string
+        url?: string;
     }): Promise<void> => {
         const res = await fetch(`${API_URL}/feedback`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to submit feedback');
     },
@@ -151,7 +154,7 @@ export const UserApi = {
         const res = await fetch(`${API_URL}/feedback/${id}/status`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status }),
         });
         if (!res.ok) throw new Error('Failed to update feedback status');
     },
@@ -160,7 +163,7 @@ export const UserApi = {
         const res = await fetch(`${API_URL}/feedback/${id}/respond`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ response })
+            body: JSON.stringify({ response }),
         });
         if (!res.ok) throw new Error('Failed to send response');
     },
@@ -174,15 +177,13 @@ export const UserApi = {
         email: string;
         company?: string;
         subject: string;
-        message: string
+        message: string;
     }): Promise<void> => {
         const res = await fetch(`${API_URL}/legal/contact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
         });
         if (!res.ok) throw new Error('Failed to submit contact form');
-    }
+    },
 };
-
-

@@ -28,8 +28,8 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
 
     // Generate web (concentric polygons)
     const webPoints: string[] = [];
-    [1, 2, 3, 4, 5, 6, 7].forEach(level => {
-        let points = "";
+    [1, 2, 3, 4, 5, 6, 7].forEach((level) => {
+        let points = '';
         data.forEach((_, i) => {
             const { x, y } = getCoords(level, i);
             points += `${x},${y} `;
@@ -38,7 +38,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
     });
 
     // Generate data polygon
-    let dataPoints = "";
+    let dataPoints = '';
     data.forEach((d, i) => {
         const { x, y } = getCoords(d.value, i);
         dataPoints += `${x},${y} `;
@@ -55,19 +55,30 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
                         fill="none"
                         stroke={webColor}
                         strokeWidth="1"
-                        opacity={0.3 + (i / 10)}
+                        opacity={0.3 + i / 10}
                     />
                 ))}
 
                 {/* Axes */}
                 {data.map((_, i) => {
                     const { x, y } = getCoords(maxVal, i);
-                    return <line key={i} x1={radius} y1={radius} x2={x} y2={y} stroke={axisColor} strokeWidth="1" />
+                    return <line key={i} x1={radius} y1={radius} x2={x} y2={y} stroke={axisColor} strokeWidth="1" />;
                 })}
                 {/* We need to map again to render lines because forEach returns void */}
                 {data.map((_, i) => {
                     const { x, y } = getCoords(maxVal, i);
-                    return <line key={`axis-${i}`} x1={radius} y1={radius} x2={x} y2={y} stroke={axisColor} strokeWidth="1" opacity="0.5" />
+                    return (
+                        <line
+                            key={`axis-${i}`}
+                            x1={radius}
+                            y1={radius}
+                            x2={x}
+                            y2={y}
+                            stroke={axisColor}
+                            strokeWidth="1"
+                            opacity="0.5"
+                        />
+                    );
                 })}
 
                 {/* Data Area */}
@@ -77,11 +88,6 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
                 {data.map((d, i) => {
                     // Push labels out a bit further than maxVal
                     const angle = i * angleSlice - Math.PI / 2;
-
-
-
-
-
 
                     const textX = radius + (radius - 10) * Math.cos(angle);
                     const textY = radius + (radius - 10) * Math.sin(angle);
@@ -99,7 +105,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size }) => {
                             {/* Shorten labels for chart clarity if needed */}
                             {d.label.split(' ')[0]}
                         </text>
-                    )
+                    );
                 })}
             </svg>
         </div>

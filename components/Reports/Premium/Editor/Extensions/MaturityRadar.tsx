@@ -1,37 +1,29 @@
 /**
  * MaturityRadar Extension
- * 
+ *
  * Custom TipTap node for embedding interactive maturity radar charts
  * in the report editor.
  */
 
-import { Node, mergeAttributes } from '@tiptap/core';
-import { NodeViewWrapper, NodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
-import React, { useEffect, useState } from 'react';
-import { RefreshCw, Settings } from 'lucide-react';
-
+import { mergeAttributes, Node } from '@tiptap/core';
+import { NodeViewProps, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 // Chart.js for radar visualization
 import {
     Chart as ChartJS,
-    RadialLinearScale,
-    PointElement,
-    LineElement,
-    Filler,
-    Tooltip,
-    Legend,
     ChartData,
-    ChartOptions
+    ChartOptions,
+    Filler,
+    Legend,
+    LineElement,
+    PointElement,
+    RadialLinearScale,
+    Tooltip,
 } from 'chart.js';
+import { RefreshCw, Settings } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 
-ChartJS.register(
-    RadialLinearScale,
-    PointElement,
-    LineElement,
-    Filler,
-    Tooltip,
-    Legend
-);
+ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
 interface MaturityRadarAttrs {
     assessmentId: string | null;
@@ -63,8 +55,8 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
                     { id: 'dataManagement', name: 'Zarządzanie Danymi', actual: 3.5, target: 5.5 },
                     { id: 'culture', name: 'Kultura', actual: 3.0, target: 4.5 },
                     { id: 'cybersecurity', name: 'Cyberbezpieczeństwo', actual: 4.0, target: 5.0 },
-                    { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0 }
-                ]
+                    { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0 },
+                ],
             });
             setIsLoading(false);
             return;
@@ -73,7 +65,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
         const fetchData = async () => {
             try {
                 const response = await fetch(`/api/assessments/${assessmentId}/summary`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (response.ok) {
                     const result = await response.json();
@@ -90,30 +82,36 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
     }, [assessmentId]);
 
     // Chart configuration
-    const chartData: ChartData<'radar'> | null = data ? {
-        labels: data.axes.map(a => a.name),
-        datasets: [
-            {
-                label: 'Obecny poziom',
-                data: data.axes.map(a => a.actual),
-                backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                borderColor: 'rgba(99, 102, 241, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(99, 102, 241, 1)',
-                pointRadius: 4
-            },
-            ...(showTarget ? [{
-                label: 'Cel',
-                data: data.axes.map(a => a.target),
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderColor: 'rgba(16, 185, 129, 1)',
-                borderWidth: 2,
-                borderDash: [5, 5] as number[],
-                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
-                pointRadius: 4
-            }] : [])
-        ]
-    } : null;
+    const chartData: ChartData<'radar'> | null = data
+        ? {
+              labels: data.axes.map((a) => a.name),
+              datasets: [
+                  {
+                      label: 'Obecny poziom',
+                      data: data.axes.map((a) => a.actual),
+                      backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                      borderColor: 'rgba(99, 102, 241, 1)',
+                      borderWidth: 2,
+                      pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                      pointRadius: 4,
+                  },
+                  ...(showTarget
+                      ? [
+                            {
+                                label: 'Cel',
+                                data: data.axes.map((a) => a.target),
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                borderWidth: 2,
+                                borderDash: [5, 5] as number[],
+                                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                                pointRadius: 4,
+                            },
+                        ]
+                      : []),
+              ],
+          }
+        : null;
 
     const chartOptions: ChartOptions<'radar'> = {
         responsive: true,
@@ -121,18 +119,18 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
         plugins: {
             legend: {
                 display: showLegend,
-                position: 'bottom'
-            }
+                position: 'bottom',
+            },
         },
         scales: {
             r: {
                 min: 0,
                 max: 7,
                 ticks: {
-                    stepSize: 1
-                }
-            }
-        }
+                    stepSize: 1,
+                },
+            },
+        },
     };
 
     return (
@@ -225,25 +223,25 @@ export const MaturityRadarExtension = Node.create({
     addAttributes() {
         return {
             assessmentId: {
-                default: null
+                default: null,
             },
             showTarget: {
-                default: true
+                default: true,
             },
             showLegend: {
-                default: true
+                default: true,
             },
             title: {
-                default: 'Przegląd Dojrzałości'
-            }
+                default: 'Przegląd Dojrzałości',
+            },
         };
     },
 
     parseHTML() {
         return [
             {
-                tag: 'div[data-maturity-radar]'
-            }
+                tag: 'div[data-maturity-radar]',
+            },
         ];
     },
 
@@ -253,7 +251,7 @@ export const MaturityRadarExtension = Node.create({
 
     addNodeView() {
         return ReactNodeViewRenderer(MaturityRadarComponent);
-    }
+    },
 });
 
 export default MaturityRadarExtension;

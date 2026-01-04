@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { Api } from '../services/api';
 
 /**
@@ -83,7 +84,7 @@ const initialState: PMOContext = {
     issueCount: 0,
     isLoading: false,
     lastFetched: null,
-    error: null
+    error: null,
 };
 
 export const usePMOStore = create<PMOStoreState>((set, get) => ({
@@ -115,13 +116,13 @@ export const usePMOStore = create<PMOStoreState>((set, get) => ({
                 issueCount: data.issueCount || 0,
                 isLoading: false,
                 lastFetched: new Date().toISOString(),
-                error: null
+                error: null,
             });
         } catch (err: any) {
             console.error('Failed to fetch PMO context:', err);
             set({
                 isLoading: false,
-                error: err.message || 'Failed to fetch PMO context'
+                error: err.message || 'Failed to fetch PMO context',
             });
         }
     },
@@ -153,26 +154,26 @@ export const usePMOStore = create<PMOStoreState>((set, get) => ({
 
     getWarningMessages: () => {
         const state = get();
-        return state.systemMessages.filter(m => m.severity === 'warning');
+        return state.systemMessages.filter((m) => m.severity === 'warning');
     },
 
     getCriticalMessages: () => {
         const state = get();
-        return state.systemMessages.filter(m => m.severity === 'critical');
+        return state.systemMessages.filter((m) => m.severity === 'critical');
     },
 
     getTaskLabel: (taskId: string) => {
         const state = get();
         return state.taskLabels[taskId] || null;
-    }
+    },
 }));
 
 // Hook for auto-fetching PMO context when project changes
 export const usePMOContextAutoFetch = (projectId: string | null) => {
-    const fetchPMOContext = usePMOStore(state => state.fetchPMOContext);
-    const fetchTaskLabels = usePMOStore(state => state.fetchTaskLabels);
-    const lastFetched = usePMOStore(state => state.lastFetched);
-    const storedProjectId = usePMOStore(state => state.projectId);
+    const fetchPMOContext = usePMOStore((state) => state.fetchPMOContext);
+    const fetchTaskLabels = usePMOStore((state) => state.fetchTaskLabels);
+    const lastFetched = usePMOStore((state) => state.lastFetched);
+    const storedProjectId = usePMOStore((state) => state.projectId);
 
     // Re-fetch when project changes or on initial load
     if (projectId && (projectId !== storedProjectId || !lastFetched)) {

@@ -1,6 +1,7 @@
+import { Check, Sliders, X } from 'lucide-react';
 import React, { useState } from 'react';
+
 import { Api } from '../services/api';
-import { Check, X, Sliders } from 'lucide-react';
 
 interface RebalanceModalProps {
     isOpen: boolean;
@@ -18,14 +19,14 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({ isOpen, onClose,
         if (isOpen && !options) {
             setLoading(true);
             Api.post('/ai/rebalance-roadmap', { initiatives })
-                .then(res => {
+                .then((res) => {
                     setOptions(res.options);
                     // Default select "Balanced"
                     const balIdx = res.options.findIndex((o: any) => o.type === 'Balanced');
                     if (balIdx >= 0) setSelectedIdx(balIdx);
                 })
-                .catch(err => {
-                    console.error("Failed to fetch rebalance options", err);
+                .catch((err) => {
+                    console.error('Failed to fetch rebalance options', err);
                     setOptions([]); // Error state
                 })
                 .finally(() => setLoading(false));
@@ -50,7 +51,9 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({ isOpen, onClose,
                             <Sliders size={20} className="text-blue-500" />
                             Rebalance Roadmap
                         </h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">AI has analyzed your roadmap and proposes these adjustments.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            AI has analyzed your roadmap and proposes these adjustments.
+                        </p>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-navy-900 dark:hover:text-white">
                         <X size={24} />
@@ -62,7 +65,9 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({ isOpen, onClose,
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-12 space-y-4">
                             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-slate-500 font-medium animate-pulse">Analyzing workload distribution...</p>
+                            <p className="text-slate-500 font-medium animate-pulse">
+                                Analyzing workload distribution...
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -70,17 +75,20 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({ isOpen, onClose,
                                 <div
                                     key={idx}
                                     onClick={() => setSelectedIdx(idx)}
-                                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer relative ${selectedIdx === idx
-                                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-md ring-2 ring-blue-500/20'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-navy-800'
-                                        }`}
+                                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer relative ${
+                                        selectedIdx === idx
+                                            ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-md ring-2 ring-blue-500/20'
+                                            : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-navy-800'
+                                    }`}
                                 >
                                     {selectedIdx === idx && (
                                         <div className="absolute top-3 right-3 bg-blue-500 text-white p-1 rounded-full shadow-sm">
                                             <Check size={12} strokeWidth={3} />
                                         </div>
                                     )}
-                                    <h3 className="font-bold text-lg text-navy-900 dark:text-white mb-2">{benefit.type}</h3>
+                                    <h3 className="font-bold text-lg text-navy-900 dark:text-white mb-2">
+                                        {benefit.type}
+                                    </h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-300 mb-4 leading-relaxed">
                                         {benefit.description}
                                     </p>
@@ -89,11 +97,15 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({ isOpen, onClose,
                                     <div className="space-y-1 mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
                                         <div className="flex justify-between text-[10px] text-slate-400 font-semibold uppercase">
                                             <span>Load Variance</span>
-                                            <span className={idx === 0 ? 'text-green-500' : 'text-slate-500'}>{idx === 0 ? 'Low' : idx === 1 ? 'Med' : 'High'}</span>
+                                            <span className={idx === 0 ? 'text-green-500' : 'text-slate-500'}>
+                                                {idx === 0 ? 'Low' : idx === 1 ? 'Med' : 'High'}
+                                            </span>
                                         </div>
                                         <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                                             {/* Dummy bar sizes for visual diff */}
-                                            <div className={`h-full rounded-full ${idx === 0 ? 'w-full bg-green-500' : idx === 1 ? 'w-2/3 bg-blue-500' : 'w-full bg-amber-500'}`}></div>
+                                            <div
+                                                className={`h-full rounded-full ${idx === 0 ? 'w-full bg-green-500' : idx === 1 ? 'w-2/3 bg-blue-500' : 'w-full bg-amber-500'}`}
+                                            ></div>
                                         </div>
                                     </div>
                                 </div>

@@ -47,7 +47,7 @@ const requireRole = (allowedRoles) => {
 // ============================================================================
 
 /**
- * GET /api/ai/learning/analytics
+ * GET /a../services/ai/learning/analytics
  * Get learning system analytics
  * Available to: authenticated users (scoped by organization)
  */
@@ -71,7 +71,7 @@ router.get('/analytics', verifyToken, async (req, res) => {
 });
 
 /**
- * GET /api/ai/learning/analytics/global
+ * GET /a../services/ai/learning/analytics/global
  * Get global learning analytics (all organizations)
  * Available to: SUPERADMIN only
  */
@@ -98,7 +98,7 @@ router.get('/analytics/global', verifySuperAdmin, async (req, res) => {
 // ============================================================================
 
 /**
- * GET /api/ai/learning/patterns/:capability
+ * GET /a../services/ai/learning/patterns/:capability
  * Get learned patterns for a specific capability
  * Available to: authenticated users
  */
@@ -131,7 +131,7 @@ router.get('/patterns/:capability', verifyToken, async (req, res) => {
 });
 
 /**
- * GET /api/ai/learning/suggestions/:capability
+ * GET /a../services/ai/learning/suggestions/:capability
  * Get prompt suggestions based on learned patterns
  * Available to: authenticated users
  */
@@ -164,7 +164,7 @@ router.get('/suggestions/:capability', verifyToken, async (req, res) => {
 });
 
 /**
- * GET /api/ai/learning/interactions
+ * GET /a../services/ai/learning/interactions
  * Get recent AI interactions
  * Available to: authenticated users
  */
@@ -179,8 +179,8 @@ router.get('/interactions', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         const interactions = await new Promise((resolve, reject) => {
             const sql = organizationId 
                 ? `SELECT * FROM ai_logs WHERE user_id IN (SELECT id FROM users WHERE organization_id = ?) AND created_at >= ? ORDER BY created_at DESC LIMIT ?`
@@ -218,7 +218,7 @@ const db = getDatabase();
 });
 
 /**
- * GET /api/ai/learning/metrics
+ * GET /a../services/ai/learning/metrics
  * Get learning metrics
  * Available to: authenticated users
  */
@@ -232,8 +232,8 @@ router.get('/metrics', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         const analytics = await learningSystem.getAnalytics(organizationId);
         
         // Get quality trends
@@ -291,7 +291,7 @@ const db = getDatabase();
 // ============================================================================
 
 /**
- * POST /api/ai/learning/extract
+ * POST /a../services/ai/learning/extract
  * Manually trigger pattern extraction
  * Available to: ADMIN, SUPERADMIN
  */
@@ -325,7 +325,7 @@ router.post('/extract', verifyToken, requireRole(['ADMIN', 'SUPERADMIN', 'OWNER'
 });
 
 /**
- * POST /api/ai/learning/consolidate
+ * POST /a../services/ai/learning/consolidate
  * Manually trigger learning consolidation
  * Available to: SUPERADMIN only
  */
@@ -349,7 +349,7 @@ router.post('/consolidate', verifySuperAdmin, async (req, res) => {
 });
 
 /**
- * POST /api/ai/learning/cleanup
+ * POST /a../services/ai/learning/cleanup
  * Manually trigger data cleanup
  * Available to: SUPERADMIN only
  */
@@ -377,7 +377,7 @@ router.post('/cleanup', verifySuperAdmin, async (req, res) => {
 // ============================================================================
 
 /**
- * GET /api/ai/learning/jobs
+ * GET /a../services/ai/learning/jobs
  * Get learning job history
  * Available to: ADMIN, SUPERADMIN
  */
@@ -405,13 +405,13 @@ router.get('/jobs', verifyToken, requireRole(['ADMIN', 'SUPERADMIN', 'OWNER']), 
 // ============================================================================
 
 /**
- * GET /api/ai/learning/config
+ * GET /a../services/ai/learning/config
  * Get learning system configuration
  * Available to: SUPERADMIN only
  */
 router.get('/config', verifySuperAdmin, async (req, res) => {
     try {
-        const { CONFIG   } = await import('../ai/learningSystem.js');
+        const { CONFIG   } = await import('../services/ai/learningSystem.js');
         
         res.json({
             success: true,
@@ -441,7 +441,7 @@ router.get('/config', verifySuperAdmin, async (req, res) => {
 // ============================================================================
 
 /**
- * GET /api/ai/learning/health
+ * GET /a../services/ai/learning/health
  * Check learning system health
  * Available to: all authenticated users
  */

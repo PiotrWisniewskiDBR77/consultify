@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
-import { usePMOStore } from '../store/usePMOStore';
+
 import { useAppStore } from '../store/useAppStore';
+import { usePMOStore } from '../store/usePMOStore';
 
 /**
  * Hook for auto-fetching PMO context when project changes
  * Should be used at the app level or in components that need phase awareness
  */
 export const usePMOContext = () => {
-    const currentProjectId = useAppStore(state => state.currentProjectId);
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
     const {
         fetchPMOContext,
         fetchTaskLabels,
@@ -23,8 +24,7 @@ export const usePMOContext = () => {
         isActionAllowed,
         getWarningMessages,
         getCriticalMessages,
-        getTaskLabel
-
+        getTaskLabel,
     } = usePMOStore();
 
     // Re-fetch when project changes
@@ -39,10 +39,13 @@ export const usePMOContext = () => {
     useEffect(() => {
         if (!currentProjectId) return;
 
-        const interval = setInterval(() => {
-            fetchPMOContext(currentProjectId);
-            fetchTaskLabels(currentProjectId);
-        }, 5 * 60 * 1000);
+        const interval = setInterval(
+            () => {
+                fetchPMOContext(currentProjectId);
+                fetchTaskLabels(currentProjectId);
+            },
+            5 * 60 * 1000,
+        );
 
         return () => clearInterval(interval);
     }, [currentProjectId, fetchPMOContext, fetchTaskLabels]);
@@ -71,7 +74,7 @@ export const usePMOContext = () => {
                 fetchPMOContext(currentProjectId);
                 fetchTaskLabels(currentProjectId);
             }
-        }
+        },
     };
 };
 
@@ -79,7 +82,7 @@ export const usePMOContext = () => {
  * Hook for getting PMO labels for a specific task
  */
 export const useTaskPMOLabel = (taskId: string) => {
-    const getTaskLabel = usePMOStore(state => state.getTaskLabel);
+    const getTaskLabel = usePMOStore((state) => state.getTaskLabel);
     return getTaskLabel(taskId);
 };
 
@@ -87,6 +90,6 @@ export const useTaskPMOLabel = (taskId: string) => {
  * Hook for checking if current phase allows an action
  */
 export const usePhaseAction = (action: string) => {
-    const isActionAllowed = usePMOStore(state => state.isActionAllowed);
+    const isActionAllowed = usePMOStore((state) => state.isActionAllowed);
     return isActionAllowed(action);
 };

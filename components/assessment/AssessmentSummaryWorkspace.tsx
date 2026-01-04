@@ -1,10 +1,23 @@
+import {
+    BarChart2,
+    BrainCircuit,
+    Briefcase,
+    Check,
+    Database,
+    Lock,
+    Pencil,
+    Settings,
+    Smartphone,
+    TrendingUp,
+    Users,
+} from 'lucide-react';
 import React, { useRef, useState } from 'react';
-import { DRDAxis, AxisAssessment } from '../../types';
-import { BarChart2, TrendingUp, Settings, Smartphone, Briefcase, Database, Users, Lock, BrainCircuit, Pencil, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AssessmentMatrixCard } from './AssessmentMatrixCard';
+
 import { DRDArea } from '../../services/drdStructure';
+import { AxisAssessment, DRDAxis } from '../../types';
 import { ACTUAL_COLORS, TARGET_COLORS } from '../../utils/assessmentColors';
+import { AssessmentMatrixCard } from './AssessmentMatrixCard';
 
 interface AssessmentSummaryWorkspaceProps {
     assessment: Partial<Record<DRDAxis, AxisAssessment>>;
@@ -22,7 +35,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
     onNavigate,
     assessmentName = 'Nowy Assessment',
     isNewAssessment = true,
-    onNameChange
+    onNameChange,
 }) => {
     const { t: translate } = useTranslation();
     const tSidebar = translate('sidebar', { returnObjects: true }) as any;
@@ -38,11 +51,19 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         businessModels: tSidebar.fullStep1_model,
         dataManagement: tSidebar.fullStep1_data,
         culture: tSidebar.fullStep1_cult,
-        cybersecurity: "Cybersecurity",
+        cybersecurity: 'Cybersecurity',
         aiMaturity: tSidebar.fullStep1_ai,
     };
 
-    const axes: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+    const axes: DRDAxis[] = [
+        'processes',
+        'digitalProducts',
+        'businessModels',
+        'dataManagement',
+        'culture',
+        'cybersecurity',
+        'aiMaturity',
+    ];
 
     // Helper: Get level value (handles both plain numbers and bitmasks)
     const getHighestLevel = (value: number): number => {
@@ -65,15 +86,15 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             return {
                 worked: hasActual || hasTarget ? 1 : 0,
                 rated: hasActual && hasTarget ? 1 : 0,
-                total: 1
+                total: 1,
             };
         }
 
         const areaKeys = Object.keys(data.areaScores);
         let worked = 0; // At least one score set
-        let rated = 0;  // Both actual and target set
+        let rated = 0; // Both actual and target set
 
-        areaKeys.forEach(key => {
+        areaKeys.forEach((key) => {
             const scores = data.areaScores?.[key] || [0, 0];
             if (scores[0] > 0 || scores[1] > 0) worked++;
             if (scores[0] > 0 && scores[1] > 0) rated++;
@@ -83,16 +104,19 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
     };
 
     // Calculate overall progress across all axes
-    const overallProgress = axes.reduce((acc, axis) => {
-        const progress = calculateAxisProgress(assessment[axis]);
-        return {
-            axesWorked: acc.axesWorked + (progress.worked > 0 ? 1 : 0),
-            axesRated: acc.axesRated + (progress.rated === progress.total && progress.total > 0 ? 1 : 0),
-            totalAreas: acc.totalAreas + progress.total,
-            workedAreas: acc.workedAreas + progress.worked,
-            ratedAreas: acc.ratedAreas + progress.rated
-        };
-    }, { axesWorked: 0, axesRated: 0, totalAreas: 0, workedAreas: 0, ratedAreas: 0 });
+    const overallProgress = axes.reduce(
+        (acc, axis) => {
+            const progress = calculateAxisProgress(assessment[axis]);
+            return {
+                axesWorked: acc.axesWorked + (progress.worked > 0 ? 1 : 0),
+                axesRated: acc.axesRated + (progress.rated === progress.total && progress.total > 0 ? 1 : 0),
+                totalAreas: acc.totalAreas + progress.total,
+                workedAreas: acc.workedAreas + progress.worked,
+                ratedAreas: acc.ratedAreas + progress.rated,
+            };
+        },
+        { axesWorked: 0, axesRated: 0, totalAreas: 0, workedAreas: 0, ratedAreas: 0 },
+    );
 
     // Calculate generic stats - improved algorithm
     const totalGap = axes.reduce((acc, axis) => {
@@ -100,7 +124,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         if (data?.areaScores) {
             // Calculate from area scores
             let axisGap = 0;
-            Object.values(data.areaScores).forEach(scores => {
+            Object.values(data.areaScores).forEach((scores) => {
                 const actual = getHighestLevel(scores[0]);
                 const target = getHighestLevel(scores[1]);
                 axisGap += Math.max(0, target - actual);
@@ -117,10 +141,10 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         let totalActual = 0;
         let count = 0;
 
-        axes.forEach(axis => {
+        axes.forEach((axis) => {
             const data = assessment[axis];
             if (data?.areaScores) {
-                Object.values(data.areaScores).forEach(scores => {
+                Object.values(data.areaScores).forEach((scores) => {
                     const actual = getHighestLevel(scores[0]);
                     if (actual > 0) {
                         totalActual += actual;
@@ -136,10 +160,11 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         return count > 0 ? (totalActual / count).toFixed(1) : '0.0';
     })();
 
-
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white p-8 overflow-y-auto" ref={componentRef}>
-
+        <div
+            className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white p-8 overflow-y-auto"
+            ref={componentRef}
+        >
             {/* Header - Editable Assessment Name */}
             <div className="flex justify-between items-start mb-8">
                 <div className="flex-1 min-w-0">
@@ -198,7 +223,10 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 <div className="flex gap-4">
                     {/* Progress: Axes Worked */}
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
-                        <div className="text-3xl font-bold text-purple-500">{overallProgress.axesWorked}<span className="text-lg text-slate-400">/{axes.length}</span></div>
+                        <div className="text-3xl font-bold text-purple-500">
+                            {overallProgress.axesWorked}
+                            <span className="text-lg text-slate-400">/{axes.length}</span>
+                        </div>
                         <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Przepracowane</div>
                         <div className="mt-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
@@ -209,7 +237,10 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     </div>
                     {/* Progress: Axes Rated */}
                     <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-center min-w-[100px]">
-                        <div className="text-3xl font-bold text-green-500">{overallProgress.axesRated}<span className="text-lg text-slate-400">/{axes.length}</span></div>
+                        <div className="text-3xl font-bold text-green-500">
+                            {overallProgress.axesRated}
+                            <span className="text-lg text-slate-400">/{axes.length}</span>
+                        </div>
                         <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Ocenione</div>
                         <div className="mt-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
@@ -229,7 +260,6 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">Total Gap Points</div>
                     </div>
                 </div>
-
             </div>
 
             {/* Main Chart / Table */}
@@ -243,7 +273,9 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                             <span className="text-slate-600 dark:text-slate-400">Obecny</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 ${TARGET_COLORS.bgLight} border ${TARGET_COLORS.border} rounded-sm`}></div>
+                            <div
+                                className={`w-3 h-3 ${TARGET_COLORS.bgLight} border ${TARGET_COLORS.border} rounded-sm`}
+                            ></div>
                             <span className="text-slate-600 dark:text-slate-400">Docelowy</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -254,19 +286,24 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 </div>
 
                 <div className="grid grid-cols-7 gap-4 mb-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center border-b border-slate-200 dark:border-white/5 pb-2">
-                    {axes.map(axis => <div key={axis}>{labels[axis]}</div>)}
+                    {axes.map((axis) => (
+                        <div key={axis}>{labels[axis]}</div>
+                    ))}
                 </div>
 
                 {/* Visual Bars */}
                 <div className="grid grid-cols-7 gap-4 h-64 items-end pb-4">
-                    {axes.map(axis => {
+                    {axes.map((axis) => {
                         const data = assessment[axis];
                         const actual = data?.actual || 0;
                         const target = data?.target || 0;
                         const gap = Math.max(0, target - actual);
 
                         return (
-                            <div key={axis} className="flex flex-col items-center justify-end h-full gap-1 group relative">
+                            <div
+                                key={axis}
+                                className="flex flex-col items-center justify-end h-full gap-1 group relative"
+                            >
                                 {/* Tooltip */}
                                 <div className="absolute -top-12 opacity-0 group-hover:opacity-100 bg-white text-navy-900 text-xs p-2 rounded shadow-lg transition-opacity z-10 pointer-events-none whitespace-nowrap">
                                     Actual: {actual} → Target: {target}
@@ -277,19 +314,22 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                                     <div
                                         style={{ height: `${gap * 10}%` }}
                                         className="w-full bg-red-500/10 border border-dashed border-red-500/30 rounded-t relative overflow-hidden"
-                                    >
-                                    </div>
+                                    ></div>
                                 )}
 
                                 {/* Actual Bar (Bottom) */}
                                 <div
                                     style={{ height: `${actual * 10}%` }}
-                                    className={`w-full rounded-b transition-all ${!data ? 'bg-slate-200 dark:bg-slate-800' : 'bg-gradient-to-t from-blue-900 to-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'
-                                        }`}
+                                    className={`w-full rounded-b transition-all ${
+                                        !data
+                                            ? 'bg-slate-200 dark:bg-slate-800'
+                                            : 'bg-gradient-to-t from-blue-900 to-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'
+                                    }`}
                                 ></div>
 
                                 <div className="mt-2 text-xs font-mono text-slate-400">
-                                    {actual} <span className="text-slate-600">/</span> <span className="text-purple-400 font-bold">{target}</span>
+                                    {actual} <span className="text-slate-600">/</span>{' '}
+                                    <span className="text-purple-400 font-bold">{target}</span>
                                 </div>
                             </div>
                         );
@@ -304,7 +344,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                     Szczegółowa Analiza Macierzy (Matrix Deep Dive)
                 </h2>
                 <div className="grid grid-cols-1 gap-6">
-                    {axes.map(axis => {
+                    {axes.map((axis) => {
                         // Map axis to icon
                         const iconMap: Record<DRDAxis, React.ReactNode> = {
                             processes: <Settings size={18} />,
@@ -317,45 +357,49 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                         };
 
                         // Get axis content from translations (same source as AssessmentAxisWorkspace)
-                        const axisContent = translate(`assessment.axisContent.${axis}`, { returnObjects: true }) as { 
-                            title: string; 
-                            intro?: string; 
-                            levels?: Record<string, string>; 
-                            areas?: Record<string, { title: string; levels: Record<string, string> }> 
+                        const axisContent = translate(`assessment.axisContent.${axis}`, { returnObjects: true }) as {
+                            title: string;
+                            intro?: string;
+                            levels?: Record<string, string>;
+                            areas?: Record<string, { title: string; levels: Record<string, string> }>;
                         };
-                        
+
                         // Convert translation areas to DRDArea format
-                        const translatedAreas: DRDArea[] = axisContent.areas 
+                        const translatedAreas: DRDArea[] = axisContent.areas
                             ? Object.entries(axisContent.areas).map(([key, area]) => ({
-                                id: key, // Use translation key (e.g., "sales", "marketing")
-                                name: area.title,
-                                levels: Object.entries(area.levels).map(([levelKey, levelTitle]) => ({
-                                    level: parseInt(levelKey, 10),
-                                    title: levelTitle,
-                                    description: ''
-                                }))
-                            }))
+                                  id: key, // Use translation key (e.g., "sales", "marketing")
+                                  name: area.title,
+                                  levels: Object.entries(area.levels).map(([levelKey, levelTitle]) => ({
+                                      level: parseInt(levelKey, 10),
+                                      title: levelTitle,
+                                      description: '',
+                                  })),
+                              }))
                             : [];
 
                         // Get existing areaScores or create fallback from axis-level actual/target
                         const axisData = assessment[axis];
                         const existingAreaScores = axisData?.areaScores;
-                        
+
                         // If no areaScores but we have axis-level scores, create uniform scores for all areas
-                        const effectiveScores: Record<string, number[]> = existingAreaScores && Object.keys(existingAreaScores).length > 0
-                            ? existingAreaScores
-                            : translatedAreas.reduce((acc, area) => {
-                                // Fallback: use axis-level actual/target for all areas
-                                acc[area.id] = [axisData?.actual || 0, axisData?.target || 0];
-                                return acc;
-                            }, {} as Record<string, number[]>);
+                        const effectiveScores: Record<string, number[]> =
+                            existingAreaScores && Object.keys(existingAreaScores).length > 0
+                                ? existingAreaScores
+                                : translatedAreas.reduce(
+                                      (acc, area) => {
+                                          // Fallback: use axis-level actual/target for all areas
+                                          acc[area.id] = [axisData?.actual || 0, axisData?.target || 0];
+                                          return acc;
+                                      },
+                                      {} as Record<string, number[]>,
+                                  );
 
                         // Calculate detailed averages from area scores using translation keys
                         let totalActual = 0;
                         let totalTarget = 0;
                         let areaCount = 0;
 
-                        translatedAreas.forEach(area => {
+                        translatedAreas.forEach((area) => {
                             // area.id is now the translation key (e.g., "sales")
                             const scores = effectiveScores[area.id] || [0, 0];
                             const actualValue = scores[0];
@@ -392,4 +436,3 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         </div>
     );
 };
-

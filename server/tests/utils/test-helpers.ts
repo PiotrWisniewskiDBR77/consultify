@@ -1,12 +1,13 @@
 /**
  * Test Utilities and Helpers
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Shared utilities for backend tests
  */
 
-import type { IDatabase } from '../../src/database/IDatabase.js';
 import { vi } from 'vitest';
+
+import type { IDatabase } from '../../src/database/IDatabase.js';
 
 /**
  * Create a mock database instance
@@ -109,7 +110,4 @@ export function createTestOrganization(overrides?: Partial<{ id: string; name: s
         ...overrides,
     };
 }
-
-
-
 

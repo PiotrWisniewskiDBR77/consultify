@@ -1,6 +1,6 @@
 /**
  * InvoicesPanel - Invoice Management
- * 
+ *
  * Features:
  * - Lista faktur z filtrami
  * - Status (paid, open, overdue)
@@ -8,28 +8,29 @@
  * - Send reminder
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FileText,
-    Download,
-    Mail,
-    Eye,
-    Search,
-    Filter,
-    RefreshCw,
-    Plus,
-    CheckCircle2,
-    Clock,
     AlertTriangle,
-    XCircle,
     Building2,
     Calendar,
+    CheckCircle2,
+    ChevronDown,
+    Clock,
     DollarSign,
+    Download,
+    Eye,
+    FileText,
+    Filter,
     Loader2,
-    ChevronDown
+    Mail,
+    Plus,
+    RefreshCw,
+    Search,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface LineItem {
     description: string;
@@ -80,7 +81,7 @@ export const InvoicesPanel: React.FC = () => {
             const params = new URLSearchParams();
             if (filterStatus !== 'all') params.append('status', filterStatus);
             if (filterOrgId) params.append('organizationId', filterOrgId);
-            
+
             const result = await Api.get(`/billing/invoices?${params.toString()}`);
             setInvoices(result.invoices || []);
         } catch (error) {
@@ -131,7 +132,7 @@ export const InvoicesPanel: React.FC = () => {
     const formatCurrency = (cents: number, currency = 'USD') => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency
+            currency,
         }).format(cents / 100);
     };
 
@@ -141,19 +142,21 @@ export const InvoicesPanel: React.FC = () => {
             open: { icon: <Clock size={14} />, bg: 'bg-blue-500/20', text: 'text-blue-400' },
             paid: { icon: <CheckCircle2 size={14} />, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
             void: { icon: <XCircle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
-            uncollectible: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' }
+            uncollectible: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' },
         };
         const config = configs[status] || configs.draft;
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+            <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+            >
                 {config.icon}
                 {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
         );
     };
 
-    const filteredInvoices = invoices.filter(invoice => {
+    const filteredInvoices = invoices.filter((invoice) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -177,7 +180,7 @@ export const InvoicesPanel: React.FC = () => {
                             className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none w-64"
                         />
                     </div>
-                    
+
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
@@ -196,12 +199,14 @@ export const InvoicesPanel: React.FC = () => {
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                     >
                         <option value="">All Organizations</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchInvoices}
@@ -243,7 +248,7 @@ export const InvoicesPanel: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredInvoices.map(invoice => (
+                            {filteredInvoices.map((invoice) => (
                                 <tr key={invoice.id} className="border-b border-white/[0.04] hover:bg-slate-800/50">
                                     <td className="p-4">
                                         <div>
@@ -350,10 +355,16 @@ export const InvoicesPanel: React.FC = () => {
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-white/[0.06]">
-                                            <th className="text-left p-3 text-xs font-medium text-slate-400">Description</th>
+                                            <th className="text-left p-3 text-xs font-medium text-slate-400">
+                                                Description
+                                            </th>
                                             <th className="text-right p-3 text-xs font-medium text-slate-400">Qty</th>
-                                            <th className="text-right p-3 text-xs font-medium text-slate-400">Unit Price</th>
-                                            <th className="text-right p-3 text-xs font-medium text-slate-400">Amount</th>
+                                            <th className="text-right p-3 text-xs font-medium text-slate-400">
+                                                Unit Price
+                                            </th>
+                                            <th className="text-right p-3 text-xs font-medium text-slate-400">
+                                                Amount
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -378,28 +389,38 @@ export const InvoicesPanel: React.FC = () => {
                         <div className="space-y-2 mb-6">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">Subtotal</span>
-                                <span className="text-white">{formatCurrency(selectedInvoice.subtotal, selectedInvoice.currency)}</span>
+                                <span className="text-white">
+                                    {formatCurrency(selectedInvoice.subtotal, selectedInvoice.currency)}
+                                </span>
                             </div>
                             {selectedInvoice.tax_amount > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-400">Tax</span>
-                                    <span className="text-white">{formatCurrency(selectedInvoice.tax_amount, selectedInvoice.currency)}</span>
+                                    <span className="text-white">
+                                        {formatCurrency(selectedInvoice.tax_amount, selectedInvoice.currency)}
+                                    </span>
                                 </div>
                             )}
                             <div className="flex justify-between text-lg font-semibold border-t border-white/10 pt-2">
                                 <span className="text-white">Total</span>
-                                <span className="text-white">{formatCurrency(selectedInvoice.total, selectedInvoice.currency)}</span>
+                                <span className="text-white">
+                                    {formatCurrency(selectedInvoice.total, selectedInvoice.currency)}
+                                </span>
                             </div>
                             {selectedInvoice.amount_paid > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-400">Amount Paid</span>
-                                    <span className="text-emerald-400">{formatCurrency(selectedInvoice.amount_paid, selectedInvoice.currency)}</span>
+                                    <span className="text-emerald-400">
+                                        {formatCurrency(selectedInvoice.amount_paid, selectedInvoice.currency)}
+                                    </span>
                                 </div>
                             )}
                             {selectedInvoice.amount_due > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-400">Amount Due</span>
-                                    <span className="text-amber-400">{formatCurrency(selectedInvoice.amount_due, selectedInvoice.currency)}</span>
+                                    <span className="text-amber-400">
+                                        {formatCurrency(selectedInvoice.amount_due, selectedInvoice.currency)}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -420,7 +441,3 @@ export const InvoicesPanel: React.FC = () => {
 };
 
 export default InvoicesPanel;
-
-
-
-

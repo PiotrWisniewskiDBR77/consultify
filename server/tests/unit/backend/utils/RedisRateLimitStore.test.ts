@@ -1,11 +1,12 @@
 /**
  * RedisRateLimitStore Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for RedisRateLimitStore - 100% coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { RedisRateLimitStore } from '../../../../src/utils/RedisRateLimitStore.js';
 
 describe('RedisRateLimitStore', () => {
@@ -77,4 +78,3 @@ describe('RedisRateLimitStore', () => {
         });
     });
 });
-

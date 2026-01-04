@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PlaybookTemplateComments } from '../../../components/SuperAdmin/PlaybookTemplateComments';
+import { PlaybookTemplateComments } from '../../components/SuperAdmin/PlaybookTemplateComments';
 import '@testing-library/jest-dom';
 
 // Mock fetch
@@ -399,6 +399,7 @@ describe('PlaybookTemplateComments', () => {
         });
     });
 });
+
 
 
 

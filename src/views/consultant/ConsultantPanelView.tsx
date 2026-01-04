@@ -1,10 +1,18 @@
+import {
+    Building,
+    ExternalLink,
+    LogOut as LucideLogOut,
+    Plus,
+    Settings as LucideSettings,
+    Users as LucideUsers,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useAppStore } from '../../../store/useAppStore';
-import { AppView } from '../../../types';
-import { Api } from '../../../services/api';
-import { Building, Plus, ExternalLink, Settings as LucideSettings, Users as LucideUsers, LogOut as LucideLogOut } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { useAppStore } from '../../../store/useAppStore';
+import { AppView } from '../../../types';
 
 interface LinkedOrg {
     id: string;
@@ -53,7 +61,9 @@ export const ConsultantPanelView = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-navy-900 dark:text-white">{t('consultant.panel.title')}</h1>
+                        <h1 className="text-3xl font-bold text-navy-900 dark:text-white">
+                            {t('consultant.panel.title')}
+                        </h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">
                             {t('consultant.panel.welcome', { name: currentUser?.firstName || 'Consultant' })}
                         </p>
@@ -89,7 +99,9 @@ export const ConsultantPanelView = () => {
                                 <div className="w-16 h-16 bg-slate-100 dark:bg-navy-900 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Building size={32} className="text-slate-400" />
                                 </div>
-                                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">{t('consultant.panel.noOrgsTitle')}</h3>
+                                <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
+                                    {t('consultant.panel.noOrgsTitle')}
+                                </h3>
                                 <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">
                                     {t('consultant.panel.noOrgsMessage')}
                                 </p>
@@ -103,7 +115,10 @@ export const ConsultantPanelView = () => {
                         ) : (
                             <div className="divide-y divide-slate-100 dark:divide-white/5">
                                 {linkedOrgs.map((org) => (
-                                    <div key={org.id} className="p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                    <div
+                                        key={org.id}
+                                        className="p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                                    >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl uppercase">
@@ -116,7 +131,11 @@ export const ConsultantPanelView = () => {
                                                     <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-1">
                                                         <span className="capitalize">{org.status.toLowerCase()}</span>
                                                         <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                                        <span className="capitalize text-slate-400">{t('consultant.panel.role', { role: org.role_in_org.toLowerCase() })}</span>
+                                                        <span className="capitalize text-slate-400">
+                                                            {t('consultant.panel.role', {
+                                                                role: org.role_in_org.toLowerCase(),
+                                                            })}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>

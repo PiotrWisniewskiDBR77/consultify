@@ -3,8 +3,9 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { init, getScheduler } from '../../../../src/cron/Scheduler.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getScheduler, init } from '../../../../src/cron/Scheduler.js';
 
 describe('Scheduler', () => {
     let mockRetentionPolicyService: { runCleanup: () => Promise<void> };
@@ -96,7 +97,4 @@ describe('Scheduler', () => {
         });
     });
 });
-
-
-
 

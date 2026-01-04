@@ -10,7 +10,8 @@
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import ManagementReportsService from './managementReportsService.js';
 
 // Lazy load PDF generator to avoid circular dependencies

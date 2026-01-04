@@ -1,7 +1,7 @@
 /**
  * AiSecurity Routes
  * API endpoints for ai-security
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

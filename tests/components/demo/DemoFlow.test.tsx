@@ -23,11 +23,11 @@ jest.mock('framer-motion', () => ({
 }));
 
 // Import demo components
-import { DemoWelcomeTour } from '../../../components/demo/DemoWelcomeTour';
-import { SmartDemoBanner } from '../../../components/demo/SmartDemoBanner';
-import { DemoLoadingOverlay } from '../../../components/demo/DemoLoadingOverlay';
-import { ExitIntentModal } from '../../../components/demo/ExitIntentModal';
-import { DemoUpgradePrompt } from '../../../components/demo/DemoUpgradePrompt';
+import { DemoWelcomeTour } from '../../components/demo/DemoWelcomeTour';
+import { SmartDemoBanner } from '../../components/demo/SmartDemoBanner';
+import { DemoLoadingOverlay } from '../../components/demo/DemoLoadingOverlay';
+import { ExitIntentModal } from '../../components/demo/ExitIntentModal';
+import { DemoUpgradePrompt } from '../../components/demo/DemoUpgradePrompt';
 
 // Wrapper for i18n
 const renderWithI18n = (component: React.ReactElement) => {
@@ -333,6 +333,7 @@ describe('Demo Flow Integration', () => {
         );
     });
 });
+
 
 
 

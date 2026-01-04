@@ -1,6 +1,6 @@
 /**
  * Backup Cron Job
- * 
+ *
  * Automated daily backups at 3 AM UTC.
  * Also runs retention policy cleanup.
  */
@@ -20,34 +20,37 @@ function startBackupJob() {
     }
 
     // Daily at 3 AM UTC
-    backupJob = cron.schedule('0 3 * * *', async () => {
-        console.log('[BackupCron] Starting scheduled backup...');
+    backupJob = cron.schedule(
+        '0 3 * * *',
+        async () => {
+            console.log('[BackupCron] Starting scheduled backup...');
 
-        try {
-            // Create backup
-            const result = await BackupService.createBackup('full', 'scheduled');
-            console.log(`[BackupCron] Backup completed: ${result.id}`);
-
-            // Run retention policy
-            const cleanup = await BackupService.runRetentionPolicy();
-            console.log(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
-
-        } catch (error) {
-            console.error('[BackupCron] Scheduled backup failed:', error);
-
-            // Report to Sentry if available
             try {
-                const { captureException } = require('../config/sentry');
-                captureException(error, {
-                    tags: { component: 'backup', job: 'scheduled' }
-                });
-            } catch (e) {
-                // Sentry not available
+                // Create backup
+                const result = await BackupService.createBackup('full', 'scheduled');
+                console.log(`[BackupCron] Backup completed: ${result.id}`);
+
+                // Run retention policy
+                const cleanup = await BackupService.runRetentionPolicy();
+                console.log(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
+            } catch (error) {
+                console.error('[BackupCron] Scheduled backup failed:', error);
+
+                // Report to Sentry if available
+                try {
+                    const { captureException } = require('../config/sentry');
+                    captureException(error, {
+                        tags: { component: 'backup', job: 'scheduled' },
+                    });
+                } catch (e) {
+                    // Sentry not available
+                }
             }
-        }
-    }, {
-        timezone: 'UTC'
-    });
+        },
+        {
+            timezone: 'UTC',
+        },
+    );
 
     console.log('[BackupCron] Scheduled daily backup at 3:00 AM UTC');
 }

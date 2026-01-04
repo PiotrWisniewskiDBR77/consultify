@@ -1,6 +1,6 @@
 /**
  * DocumentTabsBar
- * 
+ *
  * A tab bar component for managing opened documents (reports, initiatives).
  * Features:
  * - Multiple tabs for opened documents
@@ -10,8 +10,8 @@
  * - Scroll support for many tabs
  */
 
+import { FileText, Lightbulb, Plus, X } from 'lucide-react';
 import React from 'react';
-import { X, FileText, Lightbulb, Plus } from 'lucide-react';
 
 export type DocumentType = 'report' | 'initiative';
 
@@ -40,7 +40,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
     onCloseDocument,
     onCloseAll,
     showListButton = true,
-    onShowList
+    onShowList,
 }) => {
     if (openDocuments.length === 0) {
         return null;
@@ -59,8 +59,8 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
 
     const getTypeColor = (type: DocumentType, isActive: boolean) => {
         if (isActive) {
-            return type === 'report' 
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30' 
+            return type === 'report'
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
                 : 'border-amber-500 bg-amber-50 dark:bg-amber-900/30';
         }
         return 'border-transparent bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700';
@@ -68,9 +68,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
 
     const getIconColor = (type: DocumentType, isActive: boolean) => {
         if (isActive) {
-            return type === 'report'
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-amber-600 dark:text-amber-400';
+            return type === 'report' ? 'text-purple-600 dark:text-purple-400' : 'text-amber-600 dark:text-amber-400';
         }
         return 'text-slate-500 dark:text-slate-400';
     };
@@ -100,7 +98,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
                 {/* Document tabs */}
                 {openDocuments.map((doc) => {
                     const isActive = doc.id === activeDocumentId;
-                    
+
                     return (
                         <div
                             key={doc.id}
@@ -111,23 +109,18 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
                             `}
                             onClick={() => onSelectDocument(doc.id)}
                         >
-                            <span className={getIconColor(doc.type, isActive)}>
-                                {getIcon(doc.type)}
-                            </span>
-                            <span 
+                            <span className={getIconColor(doc.type, isActive)}>{getIcon(doc.type)}</span>
+                            <span
                                 className={`
                                     text-xs font-medium truncate
-                                    ${isActive 
-                                        ? 'text-navy-900 dark:text-white' 
-                                        : 'text-slate-600 dark:text-slate-300'
-                                    }
+                                    ${isActive ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}
                                 `}
                                 title={doc.name}
                             >
                                 {doc.name}
                                 {doc.isDirty && <span className="text-amber-500 ml-1">•</span>}
                             </span>
-                            
+
                             {/* Close button */}
                             <button
                                 onClick={(e) => {
@@ -141,7 +134,10 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
                                 `}
                                 title="Zamknij"
                             >
-                                <X size={12} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+                                <X
+                                    size={12}
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                />
                             </button>
                         </div>
                     );
@@ -161,4 +157,3 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
         </div>
     );
 };
-

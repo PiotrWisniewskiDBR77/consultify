@@ -1,5 +1,5 @@
+import { CheckCircle2, FileText, Sparkles, Star, Target, Users, Zap } from 'lucide-react';
 import React from 'react';
-import { CheckCircle2, Star, Zap, Users, Target, FileText, Sparkles } from 'lucide-react';
 
 /**
  * MilestoneBadge — Visual badge for achieved milestones
@@ -77,11 +77,7 @@ export const MilestoneBadge: React.FC<MilestoneBadgeProps> = ({
                 >
                     <Icon size={sizeClasses.icon} className="text-slate-400" />
                 </div>
-                {showLabel && (
-                    <span className="text-[10px] text-slate-400 text-center max-w-[60px]">
-                        {label}
-                    </span>
-                )}
+                {showLabel && <span className="text-[10px] text-slate-400 text-center max-w-[60px]">{label}</span>}
             </div>
         );
     }
@@ -129,7 +125,7 @@ export const MilestoneBadgeRow: React.FC<MilestoneBadgeRowProps> = ({
 }) => {
     return (
         <div className="flex items-center gap-3">
-            {milestoneIds.map(id => (
+            {milestoneIds.map((id) => (
                 <MilestoneBadge
                     key={id}
                     milestoneId={id}

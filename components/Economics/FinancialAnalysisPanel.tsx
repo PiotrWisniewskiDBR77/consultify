@@ -1,6 +1,6 @@
 /**
  * Financial Analysis Panel
- * 
+ *
  * Comprehensive financial analysis view that integrates:
  * - Financial Input Form
  * - Financial Metrics Display
@@ -10,22 +10,33 @@
  * - Business Case Generation
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-    Calculator, DollarSign, TrendingUp, Activity, 
-    Link2, FileText, RefreshCw, Save, ChevronDown,
-    ChevronUp, AlertCircle, Loader2, Target
+import {
+    Activity,
+    AlertCircle,
+    Calculator,
+    ChevronDown,
+    ChevronUp,
+    DollarSign,
+    FileText,
+    Link2,
+    Loader2,
+    RefreshCw,
+    Save,
+    Target,
+    TrendingUp,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
+import { BenefitsTrackingDashboard } from './BenefitsTrackingDashboard';
+import { BusinessCaseGenerator } from './BusinessCaseGenerator';
+import { CashFlowChart } from './CashFlowChart';
 import { FinancialInputForm } from './FinancialInputForm';
 import { FinancialMetricsPanel } from './FinancialMetricsPanel';
-import { CashFlowChart } from './CashFlowChart';
-import { SensitivityChart } from './SensitivityChart';
 import { InitiativeLinkingPanel } from './InitiativeLinkingPanel';
-import { BusinessCaseGenerator } from './BusinessCaseGenerator';
-import { BenefitsTrackingDashboard } from './BenefitsTrackingDashboard';
+import { SensitivityChart } from './SensitivityChart';
 import { DigitizationAnalysis } from './types';
-import { Api } from '../../services/api';
-import { toast } from 'react-hot-toast';
 
 interface FinancialAnalysisPanelProps {
     analysis: DigitizationAnalysis;
@@ -69,10 +80,7 @@ interface CalculatedMetrics {
 
 type ActiveSection = 'input' | 'metrics' | 'cashflow' | 'sensitivity' | 'initiative' | 'benefits' | 'businesscase';
 
-export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
-    analysis,
-    onUpdate
-}) => {
+export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({ analysis, onUpdate }) => {
     const [financialData, setFinancialData] = useState<FinancialData | null>(null);
     const [calculatedMetrics, setCalculatedMetrics] = useState<CalculatedMetrics | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +93,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         sensitivity: false,
         initiative: false,
         benefits: false,
-        businesscase: false
+        businesscase: false,
     });
 
     // Load financial data
@@ -112,7 +120,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     const calculateMetrics = useCallback((data: FinancialData): CalculatedMetrics => {
         const horizon = data.analysisHorizonYears;
         const discountRate = data.discountRate / 100;
-        
+
         // Calculate total upfront costs
         const totalInitialCost = data.initialInvestment + data.implementationCost + data.trainingCost;
         const contingency = totalInitialCost * (data.contingencyPercent / 100);
@@ -132,7 +140,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             costs: totalUpfront,
             benefits: 0,
             netCashFlow: -totalUpfront,
-            cumulativeCashFlow
+            cumulativeCashFlow,
         });
 
         // Years 1 to horizon
@@ -147,7 +155,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                 costs: yearCosts,
                 benefits: yearBenefits,
                 netCashFlow,
-                cumulativeCashFlow
+                cumulativeCashFlow,
             });
         }
 
@@ -161,7 +169,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         // Calculate IRR using Newton-Raphson
         let irr: number | null = null;
         const irrCashFlows = [-totalUpfront, ...Array(horizon).fill(annualBenefits - data.annualOperatingCost)];
-        
+
         const calculateNPVForRate = (rate: number) => {
             let npvCalc = 0;
             for (let i = 0; i < irrCashFlows.length; i++) {
@@ -175,13 +183,13 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             const npvAtGuess = calculateNPVForRate(irrGuess);
             const npvAtGuessPlus = calculateNPVForRate(irrGuess + 0.0001);
             const derivative = (npvAtGuessPlus - npvAtGuess) / 0.0001;
-            
+
             if (Math.abs(npvAtGuess) < 0.01) {
                 irr = irrGuess;
                 break;
             }
             if (derivative === 0) break;
-            
+
             irrGuess = irrGuess - npvAtGuess / derivative;
             if (irrGuess < -1 || irrGuess > 10) break;
         }
@@ -192,13 +200,13 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             if (cashFlows[i].cumulativeCashFlow >= 0 && cashFlows[i - 1].cumulativeCashFlow < 0) {
                 const previousCumulative = Math.abs(cashFlows[i - 1].cumulativeCashFlow);
                 const currentNet = cashFlows[i].netCashFlow;
-                paybackPeriod = (i - 1) + previousCumulative / currentNet;
+                paybackPeriod = i - 1 + previousCumulative / currentNet;
                 break;
             }
         }
 
         // Calculate ROI
-        const totalCosts = totalUpfront + (data.annualOperatingCost * horizon);
+        const totalCosts = totalUpfront + data.annualOperatingCost * horizon;
         const totalBenefits = annualBenefits * horizon;
         const netBenefit = totalBenefits - totalCosts;
         const roi = totalCosts > 0 ? netBenefit / totalCosts : null;
@@ -211,7 +219,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             totalCosts,
             totalBenefits,
             netBenefit,
-            cashFlows
+            cashFlows,
         };
     }, []);
 
@@ -237,9 +245,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                     { year: 1, amount: data.annualRevenueIncrease, description: 'Wzrost przychodów' },
                 ],
                 discountRate: data.discountRate,
-                investmentHorizon: data.analysisHorizonYears
+                investmentHorizon: data.analysisHorizonYears,
             });
-            
+
             setFinancialData(data);
             toast.success('Dane finansowe zapisane');
         } catch (error: any) {
@@ -258,9 +266,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     };
 
     const toggleSection = (section: ActiveSection) => {
-        setExpandedSections(prev => ({
+        setExpandedSections((prev) => ({
             ...prev,
-            [section]: !prev[section]
+            [section]: !prev[section],
         }));
     };
 
@@ -270,13 +278,13 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 
         const baseData = financialData;
         const changes = [-0.2, -0.1, 0, 0.1, 0.2];
-        
+
         const generateSensitivityData = (
             name: string,
             namePl: string,
             baseValue: number,
             modifyData: (data: FinancialData, factor: number) => FinancialData,
-            color: string
+            color: string,
         ) => {
             return {
                 name,
@@ -284,15 +292,15 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                 baseValue,
                 unit: financialData.currency,
                 color,
-                data: changes.map(change => {
+                data: changes.map((change) => {
                     const modifiedData = modifyData({ ...baseData }, 1 + change);
                     const metrics = calculateMetrics(modifiedData);
                     return {
                         change,
                         variableValue: baseValue * (1 + change),
-                        npv: metrics.npv || 0
+                        npv: metrics.npv || 0,
                     };
-                })
+                }),
             };
         };
 
@@ -302,29 +310,29 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                 'Inwestycja początkowa',
                 baseData.initialInvestment,
                 (data, factor) => ({ ...data, initialInvestment: data.initialInvestment * factor }),
-                '#ef4444'
+                '#ef4444',
             ),
             generateSensitivityData(
                 'annualCostSavings',
                 'Roczne oszczędności',
                 baseData.annualCostSavings,
                 (data, factor) => ({ ...data, annualCostSavings: data.annualCostSavings * factor }),
-                '#10b981'
+                '#10b981',
             ),
             generateSensitivityData(
                 'discountRate',
                 'Stopa dyskontowa',
                 baseData.discountRate,
                 (data, factor) => ({ ...data, discountRate: data.discountRate * factor }),
-                '#3b82f6'
+                '#3b82f6',
             ),
             generateSensitivityData(
                 'annualOperatingCost',
                 'Roczne koszty operacyjne',
                 baseData.annualOperatingCost,
                 (data, factor) => ({ ...data, annualOperatingCost: data.annualOperatingCost * factor }),
-                '#f59e0b'
-            )
+                '#f59e0b',
+            ),
         ];
     }, [financialData, calculatedMetrics, calculateMetrics]);
 
@@ -344,9 +352,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                 </div>
                 <div className="text-left">
                     <h3 className="font-semibold text-navy-900 dark:text-white">{title}</h3>
-                    {badge && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{badge}</span>
-                    )}
+                    {badge && <span className="text-xs text-slate-500 dark:text-slate-400">{badge}</span>}
                 </div>
             </div>
             {expandedSections[section] ? (
@@ -383,13 +389,23 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                         Kompleksowa ocena ekonomiczna dla: {analysis.name}
                     </p>
                 </div>
-                
+
                 {calculatedMetrics && (
                     <div className="flex items-center gap-4">
-                        <div className={`px-4 py-2 rounded-xl ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}>
+                        <div
+                            className={`px-4 py-2 rounded-xl ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}
+                        >
                             <p className="text-xs text-slate-500 dark:text-slate-400">NPV</p>
-                            <p className={`font-bold ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                                {calculatedMetrics.npv ? new Intl.NumberFormat('pl-PL', { style: 'currency', currency: financialData?.currency || 'PLN', maximumFractionDigits: 0 }).format(calculatedMetrics.npv) : '—'}
+                            <p
+                                className={`font-bold ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                            >
+                                {calculatedMetrics.npv
+                                    ? new Intl.NumberFormat('pl-PL', {
+                                          style: 'currency',
+                                          currency: financialData?.currency || 'PLN',
+                                          maximumFractionDigits: 0,
+                                      }).format(calculatedMetrics.npv)
+                                    : '—'}
                             </p>
                         </div>
                     </div>
@@ -398,8 +414,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 
             {/* Financial Input Section */}
             <div className="bg-white dark:bg-navy-800 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                <SectionHeader 
-                    title="Dane wejściowe" 
+                <SectionHeader
+                    title="Dane wejściowe"
                     icon={<DollarSign size={20} />}
                     section="input"
                     badge="Koszty i korzyści"
@@ -423,8 +439,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             {/* Financial Metrics Section */}
             {calculatedMetrics && (
                 <div className="bg-white dark:bg-navy-800 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                    <SectionHeader 
-                        title="Wskaźniki finansowe" 
+                    <SectionHeader
+                        title="Wskaźniki finansowe"
                         icon={<TrendingUp size={20} />}
                         section="metrics"
                         badge="NPV, IRR, ROI, Payback"
@@ -445,8 +461,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             {/* Cash Flow Chart Section */}
             {calculatedMetrics && calculatedMetrics.cashFlows.length > 0 && (
                 <div className="space-y-0">
-                    <SectionHeader 
-                        title="Przepływy pieniężne" 
+                    <SectionHeader
+                        title="Przepływy pieniężne"
                         icon={<Activity size={20} />}
                         section="cashflow"
                         badge="Wizualizacja cash flow"
@@ -467,8 +483,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             {/* Sensitivity Analysis Section */}
             {sensitivityVariables.length > 0 && (
                 <div className="space-y-0">
-                    <SectionHeader 
-                        title="Analiza wrażliwości" 
+                    <SectionHeader
+                        title="Analiza wrażliwości"
                         icon={<Activity size={20} />}
                         section="sensitivity"
                         badge="Wpływ zmian parametrów"
@@ -487,8 +503,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 
             {/* Initiative Linking Section */}
             <div className="space-y-0">
-                <SectionHeader 
-                    title="Powiązanie z inicjatywą" 
+                <SectionHeader
+                    title="Powiązanie z inicjatywą"
                     icon={<Link2 size={20} />}
                     section="initiative"
                     badge="Integracja z portfolio"
@@ -506,8 +522,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 
             {/* Benefits Tracking Section */}
             <div className="space-y-0">
-                <SectionHeader 
-                    title="Śledzenie korzyści" 
+                <SectionHeader
+                    title="Śledzenie korzyści"
                     icon={<Target size={20} />}
                     section="benefits"
                     badge="Plan vs realizacja"
@@ -525,8 +541,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 
             {/* Business Case Generator Section */}
             <div className="space-y-0">
-                <SectionHeader 
-                    title="Generator Business Case" 
+                <SectionHeader
+                    title="Generator Business Case"
                     icon={<FileText size={20} />}
                     section="businesscase"
                     badge="Dokument uzasadnienia"
@@ -546,4 +562,3 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 };
 
 export default FinancialAnalysisPanel;
-

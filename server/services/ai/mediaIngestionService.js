@@ -19,18 +19,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import processors
-import docxProcessor from './processors/docxProcessor';
-import spreadsheetProcessor from './processors/spreadsheetProcessor';
-import pptxProcessor from './processors/pptxProcessor';
-import youtubeProcessor from './processors/youtubeProcessor';
-import audioProcessor from './processors/audioProcessor';
-import videoProcessor from './processors/videoProcessor';
-import imageProcessor from './processors/imageProcessor';
-import urlProcessor from './processors/urlProcessor';
+import docxProcessor from './processors/docxProcessor.js';
+import spreadsheetProcessor from './processors/spreadsheetProcessor.js';
+import pptxProcessor from './processors/pptxProcessor.js';
+import youtubeProcessor from './processors/youtubeProcessor.js';
+import audioProcessor from './processors/audioProcessor.js';
+import videoProcessor from './processors/videoProcessor.js';
+import imageProcessor from './processors/imageProcessor.js';
+import urlProcessor from './processors/urlProcessor.js';
 
 // Import existing services
-import RagService from '../ragService';
-import KnowledgeService from '../knowledgeService';
+import RagService from '../ragService.js';
+import KnowledgeService from '../knowledgeService.js';
 
 // Import external libraries
 import * as pdfParse from 'pdf-parse';

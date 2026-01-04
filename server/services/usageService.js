@@ -17,8 +17,9 @@ let deps = {
  */
 async function initDeps() {
     if (!deps.db) {
-        const dbModule = await import('../database.js');
-        deps.db = dbModule.default || dbModule;
+        const dbModule = await import('../src/database/index.js');
+        const { getDatabase } = dbModule;
+        deps.db = getDatabase();
     }
 
     if (!deps.uuidv4) {
@@ -36,9 +37,9 @@ async function initDeps() {
         deps.payAsYouGoService = payAsYouGoModule.default || payAsYouGoModule;
     }
 
-    if (!deps.budgetManagementService) {
-        const budgetManagementModule = await import('./budgetManagementService.js');
-        deps.budgetManagementService = budgetManagementModule.default || budgetManagementModule;
+    if (!deps.budgetService) {
+        const budgetServiceModule = await import('./budgetService.js');
+        deps.budgetService = budgetServiceModule.default || budgetServiceModule;
     }
 }
 
@@ -526,7 +527,7 @@ async function getOperationalCosts(startDate, endDate) {
 
 
 export {
-recordTokenUsage,
+    recordTokenUsage,
     recordStorageUsage,
     getCurrentUsage,
     checkQuota,

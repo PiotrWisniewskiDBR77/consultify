@@ -3,8 +3,9 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { startHealthCheck, getHealthCheckJob } from '../../../../src/cron/HealthCheckJob.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getHealthCheckJob, startHealthCheck } from '../../../../src/cron/HealthCheckJob.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('HealthCheckJob', () => {
@@ -79,7 +80,7 @@ describe('HealthCheckJob', () => {
             expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
                 'test@example.com',
                 'CRITICAL ALERT: System Database Down',
-                expect.stringContaining('System Alert')
+                expect.stringContaining('System Alert'),
             );
         });
 
@@ -108,7 +109,7 @@ describe('HealthCheckJob', () => {
             expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
                 'test@example.com',
                 'RESOLVED: System Database Recovered',
-                expect.stringContaining('System Recovered')
+                expect.stringContaining('System Recovered'),
             );
         });
 
@@ -155,7 +156,4 @@ describe('HealthCheckJob', () => {
         });
     });
 });
-
-
-
 

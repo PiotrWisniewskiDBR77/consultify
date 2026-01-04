@@ -4,9 +4,17 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { requireFeature, requireAccess, isFeatureAccessible, getAccessibleFeatures, FEATURE_REQUIREMENTS, type AuthRequest } from '../../../../src/middleware/featureGate.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    FEATURE_REQUIREMENTS,
+    getAccessibleFeatures,
+    isFeatureAccessible,
+    requireAccess,
+    requireFeature,
+} from '../../../../src/middleware/featureGate.middleware.js';
 
 describe('Feature Gate Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -49,7 +57,7 @@ describe('Feature Gate Middleware', () => {
                 expect.objectContaining({
                     error: 'FEATURE_ACCESS_DENIED',
                     feature: 'benchmark_access',
-                })
+                }),
             );
         });
 
@@ -77,7 +85,7 @@ describe('Feature Gate Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'FEATURE_NOT_REGISTERED',
-                })
+                }),
             );
         });
 
@@ -115,7 +123,7 @@ describe('Feature Gate Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'PHASE_REQUIRED',
-                })
+                }),
             );
         });
 
@@ -131,7 +139,7 @@ describe('Feature Gate Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'STATE_REQUIRED',
-                })
+                }),
             );
         });
 
@@ -148,7 +156,7 @@ describe('Feature Gate Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'ROLE_REQUIRED',
-                })
+                }),
             );
         });
     });
@@ -203,7 +211,4 @@ describe('Feature Gate Middleware', () => {
         });
     });
 });
-
-
-
 

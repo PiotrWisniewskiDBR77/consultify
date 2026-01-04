@@ -1,8 +1,9 @@
 import React from 'react';
-import { User } from '../../types';
-import { Api } from '../../services/api';
-import { UserManagementCore } from '../../components/shared/UserManagementCore';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { UserManagementCore } from '../../components/shared/UserManagementCore';
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface SuperAdminUserManagementProps {
     organizations?: Array<{ id: string; name: string; status: string }>;
@@ -11,7 +12,6 @@ interface SuperAdminUserManagementProps {
 export const SuperAdminUserManagement: React.FC<SuperAdminUserManagementProps> = ({ organizations = [] }) => {
     return (
         <div className="p-8 overflow-y-auto relative">
-
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-white">User Management</h1>
@@ -35,4 +35,3 @@ export const SuperAdminUserManagement: React.FC<SuperAdminUserManagementProps> =
 };
 
 export default SuperAdminUserManagement;
-

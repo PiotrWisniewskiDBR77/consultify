@@ -4,9 +4,9 @@
  */
 
 // Phase 1 - Profile Components
-export { ProfessionalProfileSection } from './ProfessionalProfileSection';
-export { ContactInformationSection } from './ContactInformationSection';
 export { AvailabilityStatusSection } from './AvailabilityStatusSection';
+export { ContactInformationSection } from './ContactInformationSection';
+export { ProfessionalProfileSection } from './ProfessionalProfileSection';
 export { ProfileCompleteness } from './ProfileCompleteness';
 
 // Phase 2 - Security & Privacy
@@ -19,18 +19,12 @@ export * from './ai';
 export * from './notifications';
 
 // Phase 5 - Integrations & Appearance
-export * from './integrations';
 export * from './appearance';
+export * from './integrations';
 
 // Phase 6 - Modules
 export * from './modules';
 
 // Phase 7 - Advanced
 export * from './advanced';
-
-
-
-
-
-
 

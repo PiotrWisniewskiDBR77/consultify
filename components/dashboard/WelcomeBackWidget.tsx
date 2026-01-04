@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
 import { ArrowRight, History } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { Api } from '../../services/api';
 
 /**
  * WelcomeBackWidget — "Pick up where you left off"
- * 
+ *
  * Shows the last active context/view to quickly resume work.
  */
 
@@ -30,12 +31,14 @@ export const WelcomeBackWidget: React.FC = () => {
                 const parsed = JSON.parse(history);
                 const last = parsed[0]; // Most recent
                 if (last) {
-                    queueMicrotask(() => setLastActivity({
-                        view: last.viewId,
-                        label: last.title || 'Ostatnia aktywność',
-                        timestamp: last.timestamp,
-                        url: last.path
-                    }));
+                    queueMicrotask(() =>
+                        setLastActivity({
+                            view: last.viewId,
+                            label: last.title || 'Ostatnia aktywność',
+                            timestamp: last.timestamp,
+                            url: last.path,
+                        }),
+                    );
                 }
             } catch (e) {
                 console.error('Failed to parse history', e);
@@ -57,9 +60,7 @@ export const WelcomeBackWidget: React.FC = () => {
                     <span>Witaj z powrotem!</span>
                 </div>
 
-                <h3 className="text-2xl font-bold mb-1">
-                    Chcesz wrócić do pracy?
-                </h3>
+                <h3 className="text-2xl font-bold mb-1">Chcesz wrócić do pracy?</h3>
                 <p className="text-indigo-100 mb-6 max-w-md">
                     Ostatnio pracowałeś nad: <strong className="text-white">{lastActivity.label}</strong>
                 </p>

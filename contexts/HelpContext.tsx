@@ -1,22 +1,23 @@
 /**
  * Help Context
- * 
+ *
  * React Context for the In-App Help + Training + Playbooks system.
  * Provides contextual help based on AccessPolicy and user role.
- * 
+ *
  * Extended with Module Documentation, FAQ, and Video Tutorials system.
- * 
+ *
  * Step 6: Enterprise+ Ready
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
+import { FAQItem, getFAQsForModule } from '../config/faqContent';
+import { getModuleHelp, ModuleHelp } from '../config/moduleHelpContent';
+import { getVideosForModule, VideoTutorial } from '../config/videoTutorialsContent';
+import { getHelpMapping, HelpModuleId, ViewHelpMapping } from '../config/viewToModuleMapping';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-import { getHelpMapping, HelpModuleId, ViewHelpMapping } from '../config/viewToModuleMapping';
-import { getModuleHelp, ModuleHelp } from '../config/moduleHelpContent';
-import { getFAQsForModule, FAQItem } from '../config/faqContent';
-import { getVideosForModule, VideoTutorial } from '../config/videoTutorialsContent';
-import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
 
 // Types
 export interface PlaybookStep {
@@ -129,14 +130,16 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [toggleSidePanel]);
 
     // Set help side panel open (internal helper to match interface, but delegates to store)
-    const setHelpSidePanelOpen = useCallback((open: boolean) => {
-        if (open) {
-            if (activeSidePanel !== 'HELP') toggleSidePanel('HELP');
-        } else {
-            if (activeSidePanel === 'HELP') toggleSidePanel('HELP');
-        }
-    }, [activeSidePanel, toggleSidePanel]);
-
+    const setHelpSidePanelOpen = useCallback(
+        (open: boolean) => {
+            if (open) {
+                if (activeSidePanel !== 'HELP') toggleSidePanel('HELP');
+            } else {
+                if (activeSidePanel === 'HELP') toggleSidePanel('HELP');
+            }
+        },
+        [activeSidePanel, toggleSidePanel],
+    );
 
     // Get contextual help for a specific view
     const getHelpForView = useCallback((view: AppView | string): ContextualHelpState => {
@@ -152,7 +155,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
             moduleHelp,
             cardHelp,
             faqs,
-            videos
+            videos,
         };
     }, []);
 
@@ -175,9 +178,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const response = await fetch(`/api/help/playbooks?route=${encodeURIComponent(currentRoute)}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -202,39 +205,38 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [fetchPlaybooks, currentUser]);
 
     // Log event (append-only)
-    const logEvent = useCallback(async (
-        playbookKey: string,
-        eventType: string,
-        context: Record<string, any> = {}
-    ) => {
-        const token = getAuthToken();
-        if (!token) return;
+    const logEvent = useCallback(
+        async (playbookKey: string, eventType: string, context: Record<string, any> = {}) => {
+            const token = getAuthToken();
+            if (!token) return;
 
-        try {
-            await fetch('/api/help/events', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    playbookKey,
-                    eventType,
-                    context: {
-                        ...context,
-                        route: currentRoute
-                    }
-                })
-            });
+            try {
+                await fetch('/api/help/events', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        playbookKey,
+                        eventType,
+                        context: {
+                            ...context,
+                            route: currentRoute,
+                        },
+                    }),
+                });
 
-            // Refresh playbooks to update completion status
-            if (eventType === 'COMPLETED' || eventType === 'DISMISSED') {
-                await fetchPlaybooks();
+                // Refresh playbooks to update completion status
+                if (eventType === 'COMPLETED' || eventType === 'DISMISSED') {
+                    await fetchPlaybooks();
+                }
+            } catch (err) {
+                console.error('[HelpContext] Error logging event:', err);
             }
-        } catch (err) {
-            console.error('[HelpContext] Error logging event:', err);
-        }
-    }, [currentRoute, fetchPlaybooks]);
+        },
+        [currentRoute, fetchPlaybooks],
+    );
 
     // Get single playbook with steps
     const getPlaybook = useCallback(async (key: string): Promise<Playbook | null> => {
@@ -244,9 +246,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const response = await fetch(`/api/help/playbooks/${key}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -268,9 +270,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const response = await fetch(`/api/help/hint/${featureKey}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -286,27 +288,29 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     return (
-        <HelpContext.Provider value={{
-            playbooks,
-            loading,
-            error,
-            refresh: fetchPlaybooks,
-            logEvent,
-            getPlaybook,
-            getHelpHint,
-            isPanelOpen,
-            setPanelOpen,
-            currentRoute,
-            setCurrentRoute,
-            // New contextual help system
-            isHelpSidePanelOpen,
-            setHelpSidePanelOpen,
-            toggleHelpSidePanel,
-            activeHelpTab,
-            setActiveHelpTab,
-            contextualHelp,
-            getHelpForView
-        }}>
+        <HelpContext.Provider
+            value={{
+                playbooks,
+                loading,
+                error,
+                refresh: fetchPlaybooks,
+                logEvent,
+                getPlaybook,
+                getHelpHint,
+                isPanelOpen,
+                setPanelOpen,
+                currentRoute,
+                setCurrentRoute,
+                // New contextual help system
+                isHelpSidePanelOpen,
+                setHelpSidePanelOpen,
+                toggleHelpSidePanel,
+                activeHelpTab,
+                setActiveHelpTab,
+                contextualHelp,
+                getHelpForView,
+            }}
+        >
             {children}
         </HelpContext.Provider>
     );
@@ -343,7 +347,7 @@ export const useHelpSidePanel = () => {
         activeHelpTab,
         setActiveHelpTab,
         contextualHelp,
-        getHelpForView
+        getHelpForView,
     } = useHelp();
 
     return {
@@ -353,7 +357,7 @@ export const useHelpSidePanel = () => {
         activeTab: activeHelpTab,
         setActiveTab: setActiveHelpTab,
         help: contextualHelp,
-        getHelpForView
+        getHelpForView,
     };
 };
 

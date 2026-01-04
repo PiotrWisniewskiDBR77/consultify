@@ -1,28 +1,19 @@
 /**
  * ExportControls Component
- * 
+ *
  * Unified export functionality for Implementation module.
  * Supports PDF, PPTX, and Excel exports.
- * 
+ *
  * PMO Standards Compliance:
  * - ISO 21500:2021 - Documentation Requirements
  * - PMI PMBOK 7th Edition - Information Management
  * - PRINCE2 - Management Products
- * 
+ *
  * PMO Domain: PERFORMANCE_MONITORING
  */
 
+import { Check, ChevronDown, Download, FileText, Loader2, Presentation, Table, X } from 'lucide-react';
 import React, { useState } from 'react';
-import {
-    Download,
-    FileText,
-    Presentation,
-    Table,
-    ChevronDown,
-    Loader2,
-    Check,
-    X
-} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export type ExportFormat = 'pdf' | 'pptx' | 'xlsx';
@@ -49,25 +40,91 @@ interface ExportControlsProps {
 
 const EXPORT_OPTIONS: Record<ExportType, ExportOption[]> = {
     'status-report': [
-        { format: 'pdf', label: 'PDF Report', icon: <FileText size={16} />, description: 'Formatted status report', available: true },
-        { format: 'pptx', label: 'PowerPoint', icon: <Presentation size={16} />, description: 'Presentation slides', available: true },
+        {
+            format: 'pdf',
+            label: 'PDF Report',
+            icon: <FileText size={16} />,
+            description: 'Formatted status report',
+            available: true,
+        },
+        {
+            format: 'pptx',
+            label: 'PowerPoint',
+            icon: <Presentation size={16} />,
+            description: 'Presentation slides',
+            available: true,
+        },
     ],
-    'initiative': [
-        { format: 'pdf', label: 'PDF Summary', icon: <FileText size={16} />, description: 'Initiative overview', available: true },
-        { format: 'xlsx', label: 'Excel Export', icon: <Table size={16} />, description: 'Task and data export', available: true },
+    initiative: [
+        {
+            format: 'pdf',
+            label: 'PDF Summary',
+            icon: <FileText size={16} />,
+            description: 'Initiative overview',
+            available: true,
+        },
+        {
+            format: 'xlsx',
+            label: 'Excel Export',
+            icon: <Table size={16} />,
+            description: 'Task and data export',
+            available: true,
+        },
     ],
-    'portfolio': [
-        { format: 'pdf', label: 'Portfolio Report', icon: <FileText size={16} />, description: 'Executive summary', available: true },
-        { format: 'pptx', label: 'PowerPoint', icon: <Presentation size={16} />, description: 'Board presentation', available: true },
-        { format: 'xlsx', label: 'Excel Dashboard', icon: <Table size={16} />, description: 'Full data export', available: true },
+    portfolio: [
+        {
+            format: 'pdf',
+            label: 'Portfolio Report',
+            icon: <FileText size={16} />,
+            description: 'Executive summary',
+            available: true,
+        },
+        {
+            format: 'pptx',
+            label: 'PowerPoint',
+            icon: <Presentation size={16} />,
+            description: 'Board presentation',
+            available: true,
+        },
+        {
+            format: 'xlsx',
+            label: 'Excel Dashboard',
+            icon: <Table size={16} />,
+            description: 'Full data export',
+            available: true,
+        },
     ],
-    'raid': [
-        { format: 'pdf', label: 'RAID Report', icon: <FileText size={16} />, description: 'Risk & issue summary', available: true },
-        { format: 'xlsx', label: 'Excel Export', icon: <Table size={16} />, description: 'Full RAID register', available: true },
+    raid: [
+        {
+            format: 'pdf',
+            label: 'RAID Report',
+            icon: <FileText size={16} />,
+            description: 'Risk & issue summary',
+            available: true,
+        },
+        {
+            format: 'xlsx',
+            label: 'Excel Export',
+            icon: <Table size={16} />,
+            description: 'Full RAID register',
+            available: true,
+        },
     ],
-    'budget': [
-        { format: 'pdf', label: 'Budget Report', icon: <FileText size={16} />, description: 'Financial summary', available: true },
-        { format: 'xlsx', label: 'Excel Export', icon: <Table size={16} />, description: 'Budget breakdown', available: true },
+    budget: [
+        {
+            format: 'pdf',
+            label: 'Budget Report',
+            icon: <FileText size={16} />,
+            description: 'Financial summary',
+            available: true,
+        },
+        {
+            format: 'xlsx',
+            label: 'Excel Export',
+            icon: <Table size={16} />,
+            description: 'Budget breakdown',
+            available: true,
+        },
     ],
 };
 
@@ -102,7 +159,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     onExportComplete,
     variant = 'dropdown',
     size = 'md',
-    className = ''
+    className = '',
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isExporting, setIsExporting] = useState<ExportFormat | null>(null);
@@ -124,7 +181,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
         try {
             // Simulate progress for UX
             const progressInterval = setInterval(() => {
-                setExportProgress(prev => Math.min(prev + 10, 90));
+                setExportProgress((prev) => Math.min(prev + 10, 90));
             }, 200);
 
             const token = localStorage.getItem('token');
@@ -132,8 +189,8 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
             const response = await fetch(endpoint, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             clearInterval(progressInterval);
@@ -170,7 +227,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     const sizeClasses = {
         sm: 'px-2 py-1 text-xs',
         md: 'px-3 py-2 text-sm',
-        lg: 'px-4 py-2.5 text-base'
+        lg: 'px-4 py-2.5 text-base',
     };
 
     // Icon-only variant
@@ -182,21 +239,14 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                     className={`p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors ${className}`}
                     title="Export"
                 >
-                    {isExporting ? (
-                        <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                        <Download size={18} />
-                    )}
+                    {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                 </button>
 
                 {isOpen && (
                     <>
-                        <div 
-                            className="fixed inset-0 z-40" 
-                            onClick={() => setIsOpen(false)} 
-                        />
+                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                         <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-50">
-                            {options.map(option => (
+                            {options.map((option) => (
                                 <button
                                     key={option.format}
                                     onClick={() => handleExport(option.format)}
@@ -207,9 +257,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                                 >
                                     {option.icon}
                                     <span className="flex-1">{option.label}</span>
-                                    {isExporting === option.format && (
-                                        <Loader2 size={14} className="animate-spin" />
-                                    )}
+                                    {isExporting === option.format && <Loader2 size={14} className="animate-spin" />}
                                 </button>
                             ))}
                         </div>
@@ -269,15 +317,12 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
             {isOpen && (
                 <>
-                    <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setIsOpen(false)} 
-                    />
+                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                     <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-navy-900 rounded-xl shadow-lg border border-slate-200 dark:border-white/10 py-2 z-50">
                         <div className="px-3 py-1.5 text-xs font-medium text-slate-400 uppercase tracking-wider">
                             Export Format
                         </div>
-                        {options.map(option => (
+                        {options.map((option) => (
                             <button
                                 key={option.format}
                                 onClick={() => handleExport(option.format)}
@@ -286,11 +331,15 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                                     !option.available ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                             >
-                                <div className={`p-1.5 rounded ${
-                                    option.format === 'pdf' ? 'bg-red-100 dark:bg-red-900/30 text-red-600' :
-                                    option.format === 'pptx' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600' :
-                                    'bg-green-100 dark:bg-green-900/30 text-green-600'
-                                }`}>
+                                <div
+                                    className={`p-1.5 rounded ${
+                                        option.format === 'pdf'
+                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-600'
+                                            : option.format === 'pptx'
+                                              ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600'
+                                              : 'bg-green-100 dark:bg-green-900/30 text-green-600'
+                                    }`}
+                                >
                                     {option.icon}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -315,15 +364,11 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
                     <div className="bg-white dark:bg-navy-900 rounded-xl p-6 shadow-xl w-72">
                         <div className="flex items-center justify-between mb-4">
-                            <span className="font-medium text-navy-900 dark:text-white">
-                                Exporting...
-                            </span>
-                            <span className="text-sm text-slate-500">
-                                {exportProgress}%
-                            </span>
+                            <span className="font-medium text-navy-900 dark:text-white">Exporting...</span>
+                            <span className="text-sm text-slate-500">{exportProgress}%</span>
                         </div>
                         <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className="h-full bg-purple-500 rounded-full transition-all duration-300"
                                 style={{ width: `${exportProgress}%` }}
                             />
@@ -342,12 +387,4 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 };
 
 export default ExportControls;
-
-
-
-
-
-
-
-
 

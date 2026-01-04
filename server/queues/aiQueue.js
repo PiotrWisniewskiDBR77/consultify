@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq';
 import redisConfig from '../config/queue.config.js';
-import { aiLogger } from '../services/ai/logger.js';
+import { aiLogger } from '../dist/services/ai/logger.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 

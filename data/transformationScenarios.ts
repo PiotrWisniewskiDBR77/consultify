@@ -1,5 +1,4 @@
-
-import { BrainCircuit, GitMerge, RefreshCw, Zap, TrendingUp, Layers, Activity } from 'lucide-react';
+import { Activity, BrainCircuit, GitMerge, Layers, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 
 export interface ScenarioArchetype {
     id: 'stabilize' | 'quickwins' | 'hybrid' | 'foundation' | 'scale' | 'fullreset';
@@ -32,7 +31,8 @@ export const SCENARIOS: ScenarioArchetype[] = [
         name: 'Stabilize & Optimize',
         icon: Activity,
         narrative: 'Najpierw porządek, potem ambicje.',
-        description: 'Firma koncentruje się na stabilizacji procesów krytycznych, naprawie długu technologicznego i przygotowaniu organizacji pod przyszłe zmiany.',
+        description:
+            'Firma koncentruje się na stabilizacji procesów krytycznych, naprawie długu technologicznego i przygotowaniu organizacji pod przyszłe zmiany.',
         tags: ['Process', 'Compliance', 'Cleanup'],
         tempo: 2,
         ambition: 2,
@@ -43,19 +43,20 @@ export const SCENARIOS: ScenarioArchetype[] = [
             management: 'Focus on governance',
             operations: 'Standardization',
             it: 'Debt reduction',
-            culture: 'Discipline first'
+            culture: 'Discipline first',
         },
         approach: 'Stabilization',
         timeline: '6-12 months',
         investment: 'Low',
-        riskLevel: 'Low'
+        riskLevel: 'Low',
     },
     {
         id: 'quickwins',
         name: 'Quick Wins First',
         icon: Zap,
         narrative: 'Pokażmy efekt, żeby kupić czas.',
-        description: 'Strategia punktowych wdrożeń (np. RPA, proste AI) w celu wygenerowania oszczędności finansujących dalszą transformację.',
+        description:
+            'Strategia punktowych wdrożeń (np. RPA, proste AI) w celu wygenerowania oszczędności finansujących dalszą transformację.',
         tags: ['ROI', 'Speed', 'Momentum'],
         tempo: 5,
         ambition: 2,
@@ -66,19 +67,20 @@ export const SCENARIOS: ScenarioArchetype[] = [
             management: 'Results-driven',
             operations: 'Efficiency spikes',
             it: 'Integration challenges',
-            culture: 'Excitement'
+            culture: 'Excitement',
         },
         approach: 'Quick Wins',
         timeline: '3-6 months',
         investment: 'Low',
-        riskLevel: 'Low-Medium'
+        riskLevel: 'Low-Medium',
     },
     {
         id: 'hybrid',
         name: 'Balanced Hybrid Core',
         icon: GitMerge,
         narrative: 'Zmiana bez szoku, ale z kierunkiem.',
-        description: 'Równoległe porządkowanie operacji (Core) i budowa nowych kompetencji cyfrowych na wydzielonym obszarze.',
+        description:
+            'Równoległe porządkowanie operacji (Core) i budowa nowych kompetencji cyfrowych na wydzielonym obszarze.',
         tags: ['Balance', 'Culture', 'Evolution'],
         tempo: 3,
         ambition: 3,
@@ -89,19 +91,20 @@ export const SCENARIOS: ScenarioArchetype[] = [
             management: 'Dual focus',
             operations: 'Incremental',
             it: 'Modernization',
-            culture: 'Gradual shift'
+            culture: 'Gradual shift',
         },
         approach: 'Balanced',
         timeline: '12-18 months',
         investment: 'Medium',
-        riskLevel: 'Medium'
+        riskLevel: 'Medium',
     },
     {
         id: 'foundation',
         name: 'AI & Data Foundation',
         icon: Layers,
         narrative: 'Bez danych nie ma przyszłości.',
-        description: 'Inwestycja w platformy danych, czyszczenie master data i analitykę przed jakimkolwiek wdrożeniem procesowym.',
+        description:
+            'Inwestycja w platformy danych, czyszczenie master data i analitykę przed jakimkolwiek wdrożeniem procesowym.',
         tags: ['Data', 'Architect', 'AI-Ready'],
         tempo: 2,
         ambition: 4,
@@ -112,19 +115,20 @@ export const SCENARIOS: ScenarioArchetype[] = [
             management: 'Data literacy',
             operations: 'New metrics',
             it: 'Platform build',
-            culture: 'Fact-based'
+            culture: 'Fact-based',
         },
         approach: 'Foundation First',
         timeline: '9-15 months',
         investment: 'High',
-        riskLevel: 'Medium-High'
+        riskLevel: 'Medium-High',
     },
     {
         id: 'scale',
         name: 'Digital Scale-Up',
         icon: TrendingUp,
         narrative: 'Skalujemy to, co już działa.',
-        description: 'Agresywne wdrażanie sprawdzonych technologii na całą organizację. Zakłada, że fundamenty już istnieją.',
+        description:
+            'Agresywne wdrażanie sprawdzonych technologii na całą organizację. Zakłada, że fundamenty już istnieją.',
         tags: ['Growth', 'Rollout', 'Speed'],
         tempo: 5,
         ambition: 4,
@@ -135,19 +139,20 @@ export const SCENARIOS: ScenarioArchetype[] = [
             management: 'Change champions',
             operations: 'New SOPs',
             it: 'Support scaling',
-            culture: 'Agility'
+            culture: 'Agility',
         },
         approach: 'Scaling',
         timeline: '12-24 months',
         investment: 'High',
-        riskLevel: 'High'
+        riskLevel: 'High',
     },
     {
         id: 'fullreset',
         name: 'Full Digital Reset',
         icon: RefreshCw,
         narrative: 'Zrywamy z przeszłością.',
-        description: 'Budowa nowej organizacji obok starej ("Greenfield") lub całkowita wymiana systemów core (ERP replacement).',
+        description:
+            'Budowa nowej organizacji obok starej ("Greenfield") lub całkowita wymiana systemów core (ERP replacement).',
         tags: ['Disruption', 'Greenfield', 'Reinvention'],
         tempo: 2, // Slow start
         ambition: 5,
@@ -158,13 +163,13 @@ export const SCENARIOS: ScenarioArchetype[] = [
             management: 'Visionary',
             operations: 'Reinvention',
             it: 'Cloud Native',
-            culture: 'Shock therapy'
+            culture: 'Shock therapy',
         },
         approach: 'Full Reset',
         timeline: '18-36 months',
         investment: 'Very High',
-        riskLevel: 'Very High'
-    }
+        riskLevel: 'Very High',
+    },
 ];
 
 export const recommendScenario = (challenges: any[], profile: any): string => {

@@ -1,39 +1,40 @@
 /**
  * ReportsTable
- * 
+ *
  * Table view for assessment reports:
  * - Draft reports (being edited)
  * - Final reports (approved, can generate initiatives)
- * 
+ *
  * Reports are created from approved assessments.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
 import {
-    Plus,
-    Search,
-    FileOutput,
+    AlertCircle,
+    ArrowRight,
+    CheckCircle2,
+    Clock,
+    Download,
     Edit,
     Eye,
-    Lightbulb,
-    Clock,
-    CheckCircle2,
-    Download,
-    MoreVertical,
-    RefreshCw,
-    Loader2,
+    FileOutput,
     FileText,
+    Lightbulb,
+    Loader2,
+    MoreVertical,
+    Plus,
+    RefreshCw,
+    Search,
     Trash2,
-    AlertCircle,
+    Upload,
     User,
-    ArrowRight,
-    Upload
 } from 'lucide-react';
-import { NewReportModal } from './modals/NewReportModal';
-import { ReportEditor } from './ReportEditor';
-import { StageGateModal } from './modals/StageGateModal';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { ImportReportModal } from '../Reports/ImportReportModal';
+import { NewReportModal } from './modals/NewReportModal';
+import { StageGateModal } from './modals/StageGateModal';
+import { ReportEditor } from './ReportEditor';
 
 interface Report {
     id: string;
@@ -62,28 +63,28 @@ interface ReportsTableProps {
 }
 
 const STATUS_CONFIG = {
-    'DRAFT': {
+    DRAFT: {
         label: 'Draft',
         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-        icon: <Edit size={14} />
+        icon: <Edit size={14} />,
     },
-    'FINAL': {
+    FINAL: {
         label: 'Final',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 size={14} />
+        icon: <CheckCircle2 size={14} />,
     },
-    'ARCHIVED': {
+    ARCHIVED: {
         label: 'Archived',
         color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
-        icon: <Clock size={14} />
-    }
+        icon: <Clock size={14} />,
+    },
 };
 
 export const ReportsTable: React.FC<ReportsTableProps> = ({
     projectId,
     onCreateInitiatives,
     pendingAssessmentId,
-    onOpenReport
+    onOpenReport,
 }) => {
     // State
     const [reports, setReports] = useState<Report[]>([]);
@@ -103,11 +104,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         try {
             const token = localStorage.getItem('token');
             // Fetch all reports for org, optionally filter by project
-            const url = projectId
-                ? `/api/assessment-reports?projectId=${projectId}`
-                : `/api/assessment-reports`;
+            const url = projectId ? `/api/assessment-reports?projectId=${projectId}` : `/api/assessment-reports`;
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -134,10 +133,10 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             const response = await fetch('/api/assessment-reports', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ assessmentId, name, projectId })
+                body: JSON.stringify({ assessmentId, name, projectId }),
             });
 
             if (response.ok) {
@@ -157,7 +156,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             const token = localStorage.getItem('token');
             await fetch(`/api/assessment-reports/${reportId}/finalize`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             await fetchReports();
         } catch (err) {
@@ -170,9 +169,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/assessment-reports/${reportId}/export/pdf`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -199,9 +198,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/assessment-reports/${reportId}/export/excel`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -224,7 +223,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     };
 
     // Filter reports
-    const filteredReports = reports.filter(report => {
+    const filteredReports = reports.filter((report) => {
         // Status filter
         if (filterStatus !== 'all') {
             if (filterStatus === 'draft' && report.status !== 'DRAFT') return false;
@@ -234,10 +233,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         // Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            return (
-                report.name.toLowerCase().includes(query) ||
-                report.assessmentName.toLowerCase().includes(query)
-            );
+            return report.name.toLowerCase().includes(query) || report.assessmentName.toLowerCase().includes(query);
         }
 
         return true;
@@ -249,15 +245,15 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
     // Stats
     const stats = {
         total: reports.length,
-        draft: reports.filter(r => r.status === 'DRAFT').length,
-        final: reports.filter(r => r.status === 'FINAL').length
+        draft: reports.filter((r) => r.status === 'DRAFT').length,
+        final: reports.filter((r) => r.status === 'FINAL').length,
     };
 
     // If editing a report, show the editor
@@ -281,9 +277,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                            Reports
-                        </h2>
+                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">Reports</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Assessment reports created from approved assessments
                         </p>
@@ -439,12 +433,17 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                             </div>
                                         </td>
                                         <td className="px-4 py-4">
-                                            <div 
+                                            <div
                                                 className="flex items-center gap-2 cursor-default"
                                                 title={report.createdBy}
                                             >
                                                 <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
-                                                    {report.createdBy.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                    {report.createdBy
+                                                        .split(' ')
+                                                        .map((n) => n[0])
+                                                        .join('')
+                                                        .slice(0, 2)
+                                                        .toUpperCase()}
                                                 </div>
                                                 <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
                                                     {report.createdBy.split(' ')[0]}
@@ -455,7 +454,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                             {report.assessmentName}
                                         </td>
                                         <td className="px-4 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
+                                            >
                                                 {statusConfig.icon}
                                                 {statusConfig.label}
                                             </span>
@@ -496,7 +497,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                     </button>
                                                 ) : (
                                                     // Default - View
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             if (onOpenReport) {
                                                                 onOpenReport(report.id, report.name, report.status);
@@ -513,7 +514,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
 
                                                 {/* Download PDF - for final reports */}
                                                 {report.status === 'FINAL' && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleExportPDF(report.id, report.name)}
                                                         className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                                         title="Download PDF"
@@ -525,7 +526,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                 {/* More menu - all secondary actions */}
                                                 <div className="relative">
                                                     <button
-                                                        onClick={() => setActiveRowMenu(activeRowMenu === report.id ? null : report.id)}
+                                                        onClick={() =>
+                                                            setActiveRowMenu(
+                                                                activeRowMenu === report.id ? null : report.id,
+                                                            )
+                                                        }
                                                         className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                                     >
                                                         <MoreVertical size={16} />
@@ -533,10 +538,14 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
 
                                                     {activeRowMenu === report.id && (
                                                         <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-10">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (onOpenReport) {
-                                                                        onOpenReport(report.id, report.name, report.status);
+                                                                        onOpenReport(
+                                                                            report.id,
+                                                                            report.name,
+                                                                            report.status,
+                                                                        );
                                                                     } else {
                                                                         setEditingReportId(report.id);
                                                                     }
@@ -544,7 +553,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                                 }}
                                                                 className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
                                                             >
-                                                                {report.status === 'DRAFT' ? <Edit size={14} /> : <Eye size={14} />}
+                                                                {report.status === 'DRAFT' ? (
+                                                                    <Edit size={14} />
+                                                                ) : (
+                                                                    <Eye size={14} />
+                                                                )}
                                                                 {report.status === 'DRAFT' ? 'Edit' : 'View'} Report
                                                             </button>
                                                             {report.status === 'DRAFT' && (
@@ -559,20 +572,21 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                                     Finalize
                                                                 </button>
                                                             )}
-                                                            {report.status === 'FINAL' && !report.initiativesGenerated && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        onCreateInitiatives(report.id);
-                                                                        setActiveRowMenu(null);
-                                                                    }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
-                                                                >
-                                                                    <Lightbulb size={14} />
-                                                                    Generate Initiatives
-                                                                </button>
-                                                            )}
+                                                            {report.status === 'FINAL' &&
+                                                                !report.initiativesGenerated && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            onCreateInitiatives(report.id);
+                                                                            setActiveRowMenu(null);
+                                                                        }}
+                                                                        className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
+                                                                    >
+                                                                        <Lightbulb size={14} />
+                                                                        Generate Initiatives
+                                                                    </button>
+                                                                )}
                                                             <div className="border-t border-slate-200 dark:border-white/10 my-1" />
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     handleExportPDF(report.id, report.name);
                                                                     setActiveRowMenu(null);
@@ -582,7 +596,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                                                 <FileText size={14} />
                                                                 Export PDF
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     handleExportExcel(report.id, report.name);
                                                                     setActiveRowMenu(null);
@@ -662,4 +676,3 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         </div>
     );
 };
-

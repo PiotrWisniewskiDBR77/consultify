@@ -8,10 +8,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+
 import { aiLogger } from '../../../services/ai/logger.js';
-import { embeddingService } from './embeddingService.js';
 import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { embeddingService } from './embeddingService.js';
 
 type KnowledgeSourceConfig = {
     name: string;
@@ -34,46 +35,37 @@ export const KNOWLEDGE_SOURCES: Record<string, KnowledgeSourceConfig> = {
             'knowledge/5. Kultura.pdf',
             'knowledge/6. Cyberbezpieczenstwo .pdf',
             'knowledge/7. Os AI opis.pdf',
-            'knowledge/DRD1.pdf'
+            'knowledge/DRD1.pdf',
         ],
         chunkSize: 1000,
         overlap: 200,
-        metadata: { type: 'methodology', weight: 1.0 }
+        metadata: { type: 'methodology', weight: 1.0 },
     },
     initiatives: {
         name: 'Initiative Library',
-        files: [
-            'knowledge/DRD 2.0/INITIATIVE_LIBRARY.xlsx'
-        ],
+        files: ['knowledge/DRD 2.0/INITIATIVE_LIBRARY.xlsx'],
         parser: 'xlsx',
-        metadata: { type: 'initiative_template', weight: 0.9 }
+        metadata: { type: 'initiative_template', weight: 0.9 },
     },
     engine: {
         name: 'Assessment Engine',
-        files: [
-            'knowledge/DRD 2.0/MASTER_DRD_ENGINE.xlsx',
-            'knowledge/DRD 2.0/MASTER_DRD_ENGINE_EN.xlsx'
-        ],
+        files: ['knowledge/DRD 2.0/MASTER_DRD_ENGINE.xlsx', 'knowledge/DRD 2.0/MASTER_DRD_ENGINE_EN.xlsx'],
         parser: 'xlsx',
-        metadata: { type: 'assessment_logic', weight: 1.0 }
+        metadata: { type: 'assessment_logic', weight: 1.0 },
     },
     maturity: {
         name: 'AI Maturity Matrix',
-        files: [
-            'knowledge/DRD 2.0/DRD_AI_Maturity_Matrix.xlsx'
-        ],
+        files: ['knowledge/DRD 2.0/DRD_AI_Maturity_Matrix.xlsx'],
         parser: 'xlsx',
-        metadata: { type: 'maturity_matrix', weight: 0.9 }
+        metadata: { type: 'maturity_matrix', weight: 0.9 },
     },
     rapid: {
         name: 'Rapid Assessments',
-        files: [
-            'knowledge/Rapid 1.pdf'
-        ],
+        files: ['knowledge/Rapid 1.pdf'],
         chunkSize: 800,
         overlap: 150,
-        metadata: { type: 'rapid_assessment', weight: 0.8 }
-    }
+        metadata: { type: 'rapid_assessment', weight: 0.8 },
+    },
 };
 
 type PdfParseResult = { text: string };
@@ -241,7 +233,7 @@ export class KnowledgeIndexer {
         const results = {
             success: [] as Array<{ file: string; chunks: number }>,
             failed: [] as Array<{ file: string; error: string }>,
-            skipped: [] as Array<{ file: string; reason: string }>
+            skipped: [] as Array<{ file: string; reason: string }>,
         };
 
         const sources = sourceNames
@@ -273,7 +265,7 @@ export class KnowledgeIndexer {
                     const result = await this.indexFile(filePath, {
                         ...sourceConfig,
                         sourceName,
-                        relativeFilePath
+                        relativeFilePath,
                     });
 
                     results.success.push({ file: relativeFilePath, chunks: result.chunkCount });
@@ -288,7 +280,7 @@ export class KnowledgeIndexer {
         aiLogger.info('KnowledgeIndexer', 'Indexing complete', {
             success: results.success.length,
             failed: results.failed.length,
-            skipped: results.skipped.length
+            skipped: results.skipped.length,
         });
 
         return results;
@@ -299,7 +291,7 @@ export class KnowledgeIndexer {
      */
     async indexFile(
         filePath: string,
-        config: KnowledgeSourceConfig & { sourceName: string; relativeFilePath: string }
+        config: KnowledgeSourceConfig & { sourceName: string; relativeFilePath: string },
     ): Promise<{ docId: string; filename: string; chunkCount: number }> {
         const ext = path.extname(filePath).toLowerCase();
         let content: string | Record<string, string>;
@@ -327,7 +319,7 @@ export class KnowledgeIndexer {
             filepath: config.relativeFilePath,
             sourceType: config.sourceName,
             metadata: config.metadata,
-            chunkCount: chunks.length
+            chunkCount: chunks.length,
         });
 
         let successCount = 0;
@@ -344,7 +336,7 @@ export class KnowledgeIndexer {
                     chunkIndex: i,
                     content: chunks[i],
                     embedding,
-                    metadata: { ...config.metadata, chunkIndex: i }
+                    metadata: { ...config.metadata, chunkIndex: i },
                 });
 
                 successCount++;
@@ -359,7 +351,7 @@ export class KnowledgeIndexer {
         return {
             docId,
             filename,
-            chunkCount: successCount
+            chunkCount: successCount,
         };
     }
 
@@ -394,8 +386,8 @@ export class KnowledgeIndexer {
             const jsonData = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
             const textContent = jsonData
-                .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
-                .map(row => row.filter(cell => cell !== null && cell !== undefined).join(' | '))
+                .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ''))
+                .map((row) => row.filter((cell) => cell !== null && cell !== undefined).join(' | '))
                 .join('\n');
 
             sheetContents[sheetName] = textContent;
@@ -407,10 +399,7 @@ export class KnowledgeIndexer {
     /**
      * Process Excel content into chunks
      */
-    processExcelChunks(
-        sheetContents: Record<string, string>,
-        config: KnowledgeSourceConfig
-    ): string[] {
+    processExcelChunks(sheetContents: Record<string, string>, config: KnowledgeSourceConfig): string[] {
         const chunks: string[] = [];
 
         for (const [sheetName, content] of Object.entries(sheetContents)) {
@@ -505,8 +494,8 @@ export class KnowledgeIndexer {
                     doc.filepath,
                     doc.sourceType,
                     JSON.stringify(doc.metadata || {}),
-                    doc.chunkCount
-                ]
+                    doc.chunkCount,
+                ],
             );
             return;
         }
@@ -517,15 +506,8 @@ export class KnowledgeIndexer {
                 (id, filename, filepath, source_type, metadata, chunk_count, indexed_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
             `,
-            [
-                doc.id,
-                doc.filename,
-                doc.filepath,
-                doc.sourceType,
-                JSON.stringify(doc.metadata || {}),
-                doc.chunkCount
-            ],
-            { fallback: false }
+            [doc.id, doc.filename, doc.filepath, doc.sourceType, JSON.stringify(doc.metadata || {}), doc.chunkCount],
+            { fallback: false },
         );
     }
 
@@ -551,8 +533,8 @@ export class KnowledgeIndexer {
                     chunk.chunkIndex,
                     chunk.content,
                     chunk.embedding,
-                    JSON.stringify(chunk.metadata || {})
-                ]
+                    JSON.stringify(chunk.metadata || {}),
+                ],
             );
             return;
         }
@@ -569,9 +551,9 @@ export class KnowledgeIndexer {
                 chunk.chunkIndex,
                 chunk.content,
                 chunk.embedding,
-                JSON.stringify(chunk.metadata || {})
+                JSON.stringify(chunk.metadata || {}),
             ],
-            { fallback: false }
+            { fallback: false },
         );
     }
 
@@ -581,18 +563,13 @@ export class KnowledgeIndexer {
     async getDocByPath(filepath: string): Promise<KnowledgeDoc | null> {
         if (this.isPg) {
             const db = getDatabase();
-            const result = await db.query<KnowledgeDoc>(
-                'SELECT * FROM knowledge_docs WHERE filepath = $1',
-                [filepath]
-            );
+            const result = await db.query<KnowledgeDoc>('SELECT * FROM knowledge_docs WHERE filepath = $1', [filepath]);
             return result.rows[0] ?? null;
         }
 
-        const row = await DbPromise.get<KnowledgeDoc>(
-            'SELECT * FROM knowledge_docs WHERE filepath = ?',
-            [filepath],
-            { fallback: false }
-        );
+        const row = await DbPromise.get<KnowledgeDoc>('SELECT * FROM knowledge_docs WHERE filepath = ?', [filepath], {
+            fallback: false,
+        });
         return row ?? null;
     }
 
@@ -601,8 +578,16 @@ export class KnowledgeIndexer {
      */
     async search(
         query: string,
-        options: { limit?: number; minSimilarity?: number; sourceTypes?: string[] | null } = {}
-    ): Promise<Array<{ content: string; source: string; sourceType: string; similarity: number; metadata: Record<string, unknown> }>> {
+        options: { limit?: number; minSimilarity?: number; sourceTypes?: string[] | null } = {},
+    ): Promise<
+        Array<{
+            content: string;
+            source: string;
+            sourceType: string;
+            similarity: number;
+            metadata: Record<string, unknown>;
+        }>
+    > {
         const { limit = 5, minSimilarity = 0.5, sourceTypes = null } = options;
 
         if (!this.embeddingService) {
@@ -617,7 +602,7 @@ export class KnowledgeIndexer {
 
             const chunks = await this.getAllChunksWithEmbeddings(sourceTypes);
 
-            const scored = chunks.map(chunk => {
+            const scored = chunks.map((chunk) => {
                 const chunkEmbedding = parseJson<number[] | null>(chunk.embedding, null);
                 if (!chunkEmbedding) {
                     return { ...chunk, similarity: 0 };
@@ -628,15 +613,15 @@ export class KnowledgeIndexer {
             });
 
             return scored
-                .filter(chunk => (chunk.similarity ?? 0) >= minSimilarity)
+                .filter((chunk) => (chunk.similarity ?? 0) >= minSimilarity)
                 .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
                 .slice(0, limit)
-                .map(chunk => ({
+                .map((chunk) => ({
                     content: chunk.content,
                     source: chunk.filename,
                     sourceType: chunk.source_type,
                     similarity: chunk.similarity ?? 0,
-                    metadata: parseJson<Record<string, unknown>>(chunk.metadata, {})
+                    metadata: parseJson<Record<string, unknown>>(chunk.metadata, {}),
                 }));
         } catch (error: unknown) {
             const err = error as Error;
@@ -650,21 +635,29 @@ export class KnowledgeIndexer {
      */
     async keywordSearch(
         query: string,
-        options: { limit?: number; sourceTypes?: string[] | null } = {}
-    ): Promise<Array<{ content: string; source: string; sourceType: string; similarity: number; metadata: Record<string, unknown> }>> {
+        options: { limit?: number; sourceTypes?: string[] | null } = {},
+    ): Promise<
+        Array<{
+            content: string;
+            source: string;
+            sourceType: string;
+            similarity: number;
+            metadata: Record<string, unknown>;
+        }>
+    > {
         const { limit = 5, sourceTypes = null } = options;
 
         const keywords = query
             .toLowerCase()
             .split(/\s+/)
-            .filter(word => word.length > 3);
+            .filter((word) => word.length > 3);
 
         if (keywords.length === 0) {
             return [];
         }
 
         const whereClauses = keywords.map(() => 'c.content LIKE ?').join(' OR ');
-        const params: unknown[] = keywords.map(word => `%${word}%`);
+        const params: unknown[] = keywords.map((word) => `%${word}%`);
 
         let sql = `
             SELECT c.content, c.metadata, d.filename, d.source_type
@@ -685,22 +678,22 @@ export class KnowledgeIndexer {
             const pgSql = toPgPlaceholders(sql);
             const db = getDatabase();
             const result = await db.query<KnowledgeChunkRow>(pgSql, params);
-            return (result.rows || []).map(row => ({
+            return (result.rows || []).map((row) => ({
                 content: row.content,
                 source: row.filename,
                 sourceType: row.source_type,
                 similarity: 0.5,
-                metadata: parseJson<Record<string, unknown>>(row.metadata, {})
+                metadata: parseJson<Record<string, unknown>>(row.metadata, {}),
             }));
         }
 
         const rows = await DbPromise.all<KnowledgeChunkRow>(sql, params, { fallback: false });
-        return (rows || []).map(row => ({
+        return (rows || []).map((row) => ({
             content: row.content,
             source: row.filename,
             sourceType: row.source_type,
             similarity: 0.5,
-            metadata: parseJson<Record<string, unknown>>(row.metadata, {})
+            metadata: parseJson<Record<string, unknown>>(row.metadata, {}),
         }));
     }
 
@@ -755,12 +748,14 @@ export class KnowledgeIndexer {
     /**
      * Get indexing statistics
      */
-    async getStats(): Promise<Array<{
-        source_type: string;
-        doc_count: number;
-        chunk_count: number;
-        last_indexed: string;
-    }>> {
+    async getStats(): Promise<
+        Array<{
+            source_type: string;
+            doc_count: number;
+            chunk_count: number;
+            last_indexed: string;
+        }>
+    > {
         const sql = `
             SELECT 
                 d.source_type,
@@ -792,7 +787,7 @@ export class KnowledgeIndexer {
                     DELETE FROM knowledge_chunks 
                     WHERE doc_id IN (SELECT id FROM knowledge_docs WHERE source_type = $1)
                 `,
-                [sourceType]
+                [sourceType],
             );
             await db.query('DELETE FROM knowledge_docs WHERE source_type = $1', [sourceType]);
             return;
@@ -804,13 +799,9 @@ export class KnowledgeIndexer {
                 WHERE doc_id IN (SELECT id FROM knowledge_docs WHERE source_type = ?)
             `,
             [sourceType],
-            { fallback: false }
+            { fallback: false },
         );
-        await DbPromise.run(
-            'DELETE FROM knowledge_docs WHERE source_type = ?',
-            [sourceType],
-            { fallback: false }
-        );
+        await DbPromise.run('DELETE FROM knowledge_docs WHERE source_type = ?', [sourceType], { fallback: false });
     }
 }
 
@@ -819,5 +810,5 @@ export const knowledgeIndexer = new KnowledgeIndexer();
 export default {
     KnowledgeIndexer,
     knowledgeIndexer,
-    KNOWLEDGE_SOURCES
+    KNOWLEDGE_SOURCES,
 };

@@ -9,13 +9,16 @@
  * @version 1.0.0
  */
 
-const { describe, test, expect, beforeAll, afterAll, beforeEach } = require('@jest/globals');
+import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Mock database and services
 const mockDb = {
-    all: jest.fn(),
-    run: jest.fn(),
-    get: jest.fn()
+    all: vi.fn(),
+    run: vi.fn(),
+    get: vi.fn()
 };
 
 // Setup test organizations
@@ -54,33 +57,50 @@ const PROJECT_B = {
 };
 
 // Mock AIMemoryManager
-jest.mock('../../server/services/aiMemoryManager', () => ({
-    getProjectMemory: jest.fn(),
-    recordProjectMemory: jest.fn(),
-    getOrganizationMemory: jest.fn(),
-    getRelevantMemory: jest.fn(),
-    getUserPreferences: jest.fn()
+const aiMemoryManagerMock = {
+    getProjectMemory: vi.fn(),
+    recordProjectMemory: vi.fn(),
+    getOrganizationMemory: vi.fn(),
+    getRelevantMemory: vi.fn(),
+    getUserPreferences: vi.fn()
+};
+vi.mock('../../server/services/aiMemoryManager', () => ({
+    default: aiMemoryManagerMock,
+    ...aiMemoryManagerMock
 }));
 
 // Mock AIContextBuilder
-jest.mock('../../server/services/aiContextBuilder', () => ({
-    buildContext: jest.fn()
+const aiContextBuilderMock = {
+    buildContext: vi.fn()
+};
+vi.mock('../../server/services/aiContextBuilder', () => ({
+    default: aiContextBuilderMock,
+    ...aiContextBuilderMock
 }));
 
 // Mock AIActionExecutor
-jest.mock('../../server/services/aiActionExecutor', () => ({
-    getPendingActions: jest.fn(),
-    requestAction: jest.fn(),
-    approveAction: jest.fn()
+const aiActionExecutorMock = {
+    getPendingActions: vi.fn(),
+    requestAction: vi.fn(),
+    approveAction: vi.fn()
+};
+vi.mock('../../server/services/aiActionExecutor', () => ({
+    default: aiActionExecutorMock,
+    ...aiActionExecutorMock
 }));
 
-const AIMemoryManager = require('../../server/services/aiMemoryManager');
-const AIContextBuilder = require('../../server/services/aiContextBuilder');
-const AIActionExecutor = require('../../server/services/aiActionExecutor');
+const AIMemoryManagerModule = await import('../../server/services/aiMemoryManager');
+const AIMemoryManager = AIMemoryManagerModule.default || AIMemoryManagerModule;
+
+const AIContextBuilderModule = await import('../../server/services/aiContextBuilder');
+const AIContextBuilder = AIContextBuilderModule.default || AIContextBuilderModule;
+
+const AIActionExecutorModule = await import('../../server/services/aiActionExecutor');
+const AIActionExecutor = AIActionExecutorModule.default || AIActionExecutorModule;
 
 describe('AI Multi-Tenant Security Tests', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('Memory Isolation', () => {
@@ -100,10 +120,10 @@ describe('AI Multi-Tenant Security Tests', () => {
             // Test: User B should not be able to access Org A's project memory
             // This simulates a cross-tenant access attempt
             const memoryFromOrgB = await AIMemoryManager.getProjectMemory(PROJECT_A.id);
-            
+
             // Verify the mock was called - in real implementation, this would be blocked
             expect(AIMemoryManager.getProjectMemory).toHaveBeenCalledWith(PROJECT_A.id);
-            
+
             // The test passes if the service properly filters by organization
             // In a real test, we'd verify the middleware blocks cross-org access
         });
@@ -445,7 +465,7 @@ describe('Token Leakage Prevention', () => {
 
         const rawError = new Error('Query failed for user@secret-email.com');
         rawError.stack = 'Error at /sensitive/path/file.js:123';
-        
+
         const context = {
             userId: 'user-id',
             organizationId: 'org-id',
@@ -460,6 +480,7 @@ describe('Token Leakage Prevention', () => {
         expect(JSON.stringify(sanitized)).not.toContain('sk-');
     });
 });
+
 
 
 

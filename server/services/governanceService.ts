@@ -1,8 +1,13 @@
-import db from '../database';
 import { v4 as uuidv4 } from 'uuid';
 
+import db from '../database.js';
+
 interface Database {
-    run: (sql: string, params: unknown[], callback: (this: { lastID: number; changes: number }, err: Error | null) => void) => void;
+    run: (
+        sql: string,
+        params: unknown[],
+        callback: (this: { lastID: number; changes: number }, err: Error | null) => void,
+    ) => void;
 }
 
 export interface ChangeRequestData {
@@ -42,13 +47,18 @@ export interface DecisionResult {
 export interface GovernanceServiceInterface {
     setDependencies: (newDeps?: Partial<{ db: Database; uuidv4: () => string }>) => void;
     createChangeRequest: (crData: ChangeRequestData) => Promise<ChangeRequestResult>;
-    decideChangeRequest: (id: string, status: 'APPROVED' | 'REJECTED', userId: string, reason?: string) => Promise<DecisionResult>;
+    decideChangeRequest: (
+        id: string,
+        status: 'APPROVED' | 'REJECTED',
+        userId: string,
+        reason?: string,
+    ) => Promise<DecisionResult>;
 }
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {
     db: db as Database,
-    uuidv4
+    uuidv4,
 };
 
 const GovernanceService: GovernanceServiceInterface = {
@@ -64,8 +74,16 @@ const GovernanceService: GovernanceServiceInterface = {
         return new Promise((resolve, reject) => {
             const id = deps.uuidv4();
             const {
-                projectId, title, description, type, riskAssessment,
-                rationale, impactAnalysis, createdBy, aiAnalysis, aiRecommendedDecision
+                projectId,
+                title,
+                description,
+                type,
+                riskAssessment,
+                rationale,
+                impactAnalysis,
+                createdBy,
+                aiAnalysis,
+                aiRecommendedDecision,
             } = crData;
 
             const sql = `INSERT INTO change_requests (
@@ -75,9 +93,17 @@ const GovernanceService: GovernanceServiceInterface = {
             ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?)`;
 
             const params = [
-                id, projectId, title, description, type,
-                riskAssessment || 'LOW', rationale, JSON.stringify(impactAnalysis || []),
-                createdBy, aiRecommendedDecision, aiAnalysis
+                id,
+                projectId,
+                title,
+                description,
+                type,
+                riskAssessment || 'LOW',
+                rationale,
+                JSON.stringify(impactAnalysis || []),
+                createdBy,
+                aiRecommendedDecision,
+                aiAnalysis,
             ];
 
             deps.db.run(sql, params, function (err) {
@@ -90,7 +116,12 @@ const GovernanceService: GovernanceServiceInterface = {
     /**
      * Approve or Reject a CR
      */
-    decideChangeRequest: (id: string, status: 'APPROVED' | 'REJECTED', userId: string, reason?: string): Promise<DecisionResult> => {
+    decideChangeRequest: (
+        id: string,
+        status: 'APPROVED' | 'REJECTED',
+        userId: string,
+        reason?: string,
+    ): Promise<DecisionResult> => {
         return new Promise((resolve, reject) => {
             const sql = `UPDATE change_requests 
                          SET status = ?, approved_by = ?, approved_at = CURRENT_TIMESTAMP, rejected_reason = ?
@@ -104,7 +135,7 @@ const GovernanceService: GovernanceServiceInterface = {
                 resolve({ id, status, userId });
             });
         });
-    }
+    },
 };
 
 export default GovernanceService;

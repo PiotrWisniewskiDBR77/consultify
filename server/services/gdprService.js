@@ -1,4 +1,5 @@
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -85,7 +86,7 @@ class GdprService {
 
     async fetchUserAudits(userId) {
         return new Promise(resolve => {
-            db.all('SELECT * FROM audit_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 1000', [userId], (err, rows) => resolve(rows));
+            db.all('SELECT * FROM activity_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 1000', [userId], (err, rows) => resolve(rows));
         });
     }
 
@@ -113,7 +114,7 @@ class GdprService {
 
                 // 3. Log Deletion (Compliance)
                 db.run(
-                    `INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, organization_id) VALUES (?, ?, 'gdpr_deletion', 'user', ?, ?)`,
+                    `INSERT INTO activity_logs (id, user_id, action, entity_type, entity_id, organization_id) VALUES (?, ?, 'gdpr_deletion', 'user', ?, ?)`,
                     [uuidv4(), 'SYSTEM', userId, 'test-org'] // Simplified args
                 );
 

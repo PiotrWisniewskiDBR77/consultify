@@ -3,10 +3,11 @@
  * Displays and manages security events and alerts
  */
 
-import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Filter } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const SecurityEventsView: React.FC = () => {
     const [events, setEvents] = useState<any[]>([]);
@@ -16,7 +17,7 @@ export const SecurityEventsView: React.FC = () => {
         userId: '',
         eventType: '',
         severity: '',
-        resolved: ''
+        resolved: '',
     });
 
     useEffect(() => {
@@ -47,11 +48,16 @@ export const SecurityEventsView: React.FC = () => {
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
-            case 'critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
-            case 'high': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-            case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-            case 'low': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-            default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+            case 'critical':
+                return 'bg-red-500/20 text-red-400 border-red-500/30';
+            case 'high':
+                return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+            case 'medium':
+                return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+            case 'low':
+                return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+            default:
+                return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
         }
     };
 
@@ -105,13 +111,27 @@ export const SecurityEventsView: React.FC = () => {
                     <table className="w-full">
                         <thead className="bg-navy-900 border-b border-slate-700">
                             <tr>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Time</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Event Type</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Severity</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">IP Address</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Location</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Status</th>
-                                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Actions</th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Time
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Event Type
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Severity
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    IP Address
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Location
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Status
+                                </th>
+                                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
@@ -129,19 +149,27 @@ export const SecurityEventsView: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 text-white">{event.event_type}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs border ${getSeverityColor(event.severity)}`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs border ${getSeverityColor(event.severity)}`}
+                                            >
                                                 {event.severity}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-300">{event.ip_address || '-'}</td>
                                         <td className="px-6 py-4 text-slate-300">
-                                            {event.location_city ? `${event.location_city}, ${event.location_country}` : '-'}
+                                            {event.location_city
+                                                ? `${event.location_city}, ${event.location_country}`
+                                                : '-'}
                                         </td>
                                         <td className="px-6 py-4">
                                             {event.resolved ? (
-                                                <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Resolved</span>
+                                                <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">
+                                                    Resolved
+                                                </span>
                                             ) : (
-                                                <span className="px-2 py-1 rounded text-xs bg-yellow-500/20 text-yellow-400">Open</span>
+                                                <span className="px-2 py-1 rounded text-xs bg-yellow-500/20 text-yellow-400">
+                                                    Open
+                                                </span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -165,10 +193,4 @@ export const SecurityEventsView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

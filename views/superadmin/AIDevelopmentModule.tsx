@@ -1,9 +1,9 @@
 /**
  * AIDevelopmentModule - AI Development & Testing
- * 
+ *
  * Module 2 of 3: Development and testing tools
  * Tabs: Prompt Library | AI Intelligence | Experiments | Knowledge Base
- * 
+ *
  * Responsibilities:
  * - Prompt management and versioning
  * - AI intelligence configuration
@@ -11,13 +11,14 @@
  * - Knowledge base administration
  */
 
+import { BookOpen, FileText, FlaskConical, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
-import { FileText, Sparkles, FlaskConical, BookOpen } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { PromptManagementUI } from '../../components/Admin/PromptManagementUI';
-import { AIIntelligenceView } from './AIIntelligenceView';
+
 import { ABTestingDashboard } from '../../components/Admin/ABTestingDashboard';
+import { PromptManagementUI } from '../../components/Admin/PromptManagementUI';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
+import { AIIntelligenceView } from './AIIntelligenceView';
 
 interface AIDevelopmentModuleProps {
     initialTab?: string;
@@ -27,29 +28,29 @@ export const AIDevelopmentModule: React.FC<AIDevelopmentModuleProps> = ({ initia
     const [activeTab, setActiveTab] = useState(initialTab || 'prompts');
 
     const tabs: Tab[] = [
-        { 
-            id: 'prompts', 
-            label: 'Prompt Library', 
+        {
+            id: 'prompts',
+            label: 'Prompt Library',
             icon: <FileText size={16} />,
-            description: 'Manage and version control prompts'
+            description: 'Manage and version control prompts',
         },
-        { 
-            id: 'intelligence', 
-            label: 'AI Intelligence', 
+        {
+            id: 'intelligence',
+            label: 'AI Intelligence',
             icon: <Sparkles size={16} />,
-            description: 'Configure AI intelligence systems'
+            description: 'Configure AI intelligence systems',
         },
-        { 
-            id: 'experiments', 
-            label: 'Experiments', 
+        {
+            id: 'experiments',
+            label: 'Experiments',
             icon: <FlaskConical size={16} />,
-            description: 'A/B testing and experiments'
+            description: 'A/B testing and experiments',
         },
-        { 
-            id: 'knowledge', 
-            label: 'Knowledge Base', 
+        {
+            id: 'knowledge',
+            label: 'Knowledge Base',
             icon: <BookOpen size={16} />,
-            description: 'Manage AI knowledge sources'
+            description: 'Manage AI knowledge sources',
         },
     ];
 

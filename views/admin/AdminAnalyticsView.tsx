@@ -2,18 +2,46 @@
  * AdminAnalyticsView - AI Strategic Center with Performance KPIs
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart
-} from 'recharts';
-import {
-    Cpu, Zap, AlertTriangle, TrendingUp, DollarSign, Activity,
-    MessageSquare, Lightbulb, Target, CheckCircle, Clock, RefreshCw,
-    Loader2, BarChart2, ThumbsUp, ThumbsDown, Eye
+    Activity,
+    AlertTriangle,
+    BarChart2,
+    CheckCircle,
+    Clock,
+    Cpu,
+    DollarSign,
+    Eye,
+    Lightbulb,
+    Loader2,
+    MessageSquare,
+    RefreshCw,
+    Target,
+    ThumbsDown,
+    ThumbsUp,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+    Area,
+    AreaChart,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Legend,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+
+import { Api } from '../../services/api';
 
 // Removed mock data generators - using real API data only
 
@@ -37,9 +65,9 @@ export const AdminAnalyticsView: React.FC = () => {
                 Api.getAIDeepReports().catch(() => null),
                 Api.getOrgMetricsAIAnalytics().catch(() => null),
                 Api.getAIIdeas().catch(() => []),
-                Api.getAIObservations().catch(() => [])
+                Api.getAIObservations().catch(() => []),
             ]);
-            
+
             // Merge real AI analytics data with stats
             if (aiAnalyticsData) {
                 setStats({
@@ -50,7 +78,7 @@ export const AdminAnalyticsView: React.FC = () => {
                     estCost: aiAnalyticsData.estCost,
                     usageTrend: aiAnalyticsData.usageTrend || [],
                     paygUsage: aiAnalyticsData.paygUsage,
-                    forecast: aiAnalyticsData.forecast
+                    forecast: aiAnalyticsData.forecast,
                 });
             } else {
                 setStats(statsData);
@@ -58,7 +86,7 @@ export const AdminAnalyticsView: React.FC = () => {
             setIdeas(ideasData || []);
             setObservations(obsData || []);
         } catch (error) {
-            console.error("Failed to load AI analytics", error);
+            console.error('Failed to load AI analytics', error);
         } finally {
             setLoading(false);
         }
@@ -75,7 +103,7 @@ export const AdminAnalyticsView: React.FC = () => {
             await Api.updateAIIdea(id, { status: status as any });
             loadData();
         } catch (e) {
-            console.error("Failed to update idea", e);
+            console.error('Failed to update idea', e);
         }
     };
 
@@ -98,13 +126,14 @@ export const AdminAnalyticsView: React.FC = () => {
     };
 
     // Use real data only - show empty state if no data
-    const usageData = stats?.usageTrend?.length > 0 
-        ? stats.usageTrend.map((d: any) => ({
-            date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            tokens: d.tokens || 0,
-            cost: d.cost || 0
-        }))
-        : [];
+    const usageData =
+        stats?.usageTrend?.length > 0
+            ? stats.usageTrend.map((d: any) => ({
+                  date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  tokens: d.tokens || 0,
+                  cost: d.cost || 0,
+              }))
+            : [];
     const failureData = stats?.topFailureModes?.length > 0 ? stats.topFailureModes : [];
 
     if (loading) {
@@ -144,28 +173,31 @@ export const AdminAnalyticsView: React.FC = () => {
             <div className="flex space-x-1">
                 <button
                     onClick={() => setActiveTab('kpis')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'kpis'
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === 'kpis'
                             ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
                             : 'text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
-                        }`}
+                    }`}
                 >
                     {t('admin.analytics.performanceKpis', 'Performance & KPIs')}
                 </button>
                 <button
                     onClick={() => setActiveTab('ideas')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'ideas'
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === 'ideas'
                             ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
                             : 'text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
-                        }`}
+                    }`}
                 >
                     {t('admin.analytics.strategicIdeas', 'Strategic Ideas')}
                 </button>
                 <button
                     onClick={() => setActiveTab('observations')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'observations'
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === 'observations'
                             ? 'bg-slate-200 text-navy-900 dark:bg-white/10 dark:text-white'
                             : 'text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
-                        }`}
+                    }`}
                 >
                     {t('admin.analytics.observations', 'Observations')}
                 </button>
@@ -182,9 +214,7 @@ export const AdminAnalyticsView: React.FC = () => {
                                     <p className="admin-metric-label">
                                         {t('admin.analytics.successRate', 'Success Rate')}
                                     </p>
-                                    <p className="admin-metric-value">
-                                        {formatPercentage(stats?.successRate || 0)}
-                                    </p>
+                                    <p className="admin-metric-value">{formatPercentage(stats?.successRate || 0)}</p>
                                 </div>
                                 <CheckCircle className="w-5 h-5 text-slate-600" />
                             </div>
@@ -201,9 +231,7 @@ export const AdminAnalyticsView: React.FC = () => {
                                     <p className="admin-metric-label">
                                         {t('admin.analytics.avgResponseTime', 'Avg Response Time')}
                                     </p>
-                                    <p className="admin-metric-value">
-                                        {stats?.avgResponseTime?.toFixed(1) || '1.2'}s
-                                    </p>
+                                    <p className="admin-metric-value">{stats?.avgResponseTime?.toFixed(1) || '1.2'}s</p>
                                 </div>
                                 <Clock className="w-5 h-5 text-slate-600" />
                             </div>
@@ -221,7 +249,15 @@ export const AdminAnalyticsView: React.FC = () => {
                                         {t('admin.analytics.totalTokens', 'Total Tokens')}
                                     </p>
                                     <p className="admin-metric-value">
-                                        {formatNumber(stats?.totalTokens || stats?.usageTrend?.reduce((sum: number, d: any) => sum + (d.tokens || 0), 0) || 0, '1.2M')}
+                                        {formatNumber(
+                                            stats?.totalTokens ||
+                                                stats?.usageTrend?.reduce(
+                                                    (sum: number, d: any) => sum + (d.tokens || 0),
+                                                    0,
+                                                ) ||
+                                                0,
+                                            '1.2M',
+                                        )}
                                     </p>
                                 </div>
                                 <Cpu className="w-5 h-5 text-slate-600" />
@@ -234,9 +270,7 @@ export const AdminAnalyticsView: React.FC = () => {
                         <div className="admin-metric">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="admin-metric-label">
-                                        {t('admin.analytics.estCost', 'Est. Cost')}
-                                    </p>
+                                    <p className="admin-metric-label">{t('admin.analytics.estCost', 'Est. Cost')}</p>
                                     <p className="admin-metric-value">
                                         {formatCurrency(stats?.estCost || stats?.forecast?.currentCost || 0)}
                                     </p>
@@ -261,15 +295,26 @@ export const AdminAnalyticsView: React.FC = () => {
                                 {failureData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={failureData} layout="vertical">
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={true} vertical={false} />
+                                            <CartesianGrid
+                                                strokeDasharray="3 3"
+                                                stroke="#1e293b"
+                                                horizontal={true}
+                                                vertical={false}
+                                            />
                                             <XAxis type="number" stroke="#64748b" fontSize={12} />
-                                            <YAxis dataKey="reason" type="category" stroke="#64748b" fontSize={12} width={80} />
+                                            <YAxis
+                                                dataKey="reason"
+                                                type="category"
+                                                stroke="#64748b"
+                                                fontSize={12}
+                                                width={80}
+                                            />
                                             <Tooltip
                                                 contentStyle={{
                                                     backgroundColor: '#0f172a',
                                                     border: '1px solid rgba(255,255,255,0.1)',
                                                     borderRadius: '8px',
-                                                    color: '#fff'
+                                                    color: '#fff',
                                                 }}
                                             />
                                             <Bar dataKey="count" fill="#64748b" radius={[0, 4, 4, 0]} />
@@ -278,7 +323,9 @@ export const AdminAnalyticsView: React.FC = () => {
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-slate-500">
                                         <CheckCircle className="w-12 h-12 mb-2 opacity-50" />
-                                        <p className="text-sm">{t('admin.analytics.noFailures', 'No failures recorded')}</p>
+                                        <p className="text-sm">
+                                            {t('admin.analytics.noFailures', 'No failures recorded')}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -302,13 +349,17 @@ export const AdminAnalyticsView: React.FC = () => {
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                             <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                                            <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                                            <YAxis
+                                                stroke="#64748b"
+                                                fontSize={12}
+                                                tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+                                            />
                                             <Tooltip
                                                 contentStyle={{
                                                     backgroundColor: '#0f172a',
                                                     border: '1px solid rgba(255,255,255,0.1)',
                                                     borderRadius: '8px',
-                                                    color: '#fff'
+                                                    color: '#fff',
                                                 }}
                                                 formatter={(value: any) => [value.toLocaleString(), 'Tokens']}
                                             />
@@ -324,7 +375,9 @@ export const AdminAnalyticsView: React.FC = () => {
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-slate-500">
                                         <Activity className="w-12 h-12 mb-2 opacity-50" />
-                                        <p className="text-sm">{t('admin.analytics.noUsageData', 'No usage data available')}</p>
+                                        <p className="text-sm">
+                                            {t('admin.analytics.noUsageData', 'No usage data available')}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -339,14 +392,22 @@ export const AdminAnalyticsView: React.FC = () => {
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {[
-                                { name: 'OpenAI GPT-4', success: 98.5, tokens: '450K', cost: '$12.50', color: 'emerald' },
+                                {
+                                    name: 'OpenAI GPT-4',
+                                    success: 98.5,
+                                    tokens: '450K',
+                                    cost: '$12.50',
+                                    color: 'emerald',
+                                },
                                 { name: 'Claude 3.5', success: 97.2, tokens: '320K', cost: '$8.20', color: 'purple' },
-                                { name: 'Gemini Pro', success: 95.8, tokens: '180K', cost: '$4.30', color: 'blue' }
+                                { name: 'Gemini Pro', success: 95.8, tokens: '180K', cost: '$4.30', color: 'blue' },
                             ].map((model, idx) => (
                                 <div key={idx} className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="font-medium text-navy-900 dark:text-white">{model.name}</span>
-                                        <span className={`text-xs px-2 py-1 rounded-full bg-${model.color}-500/20 text-${model.color}-400`}>
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded-full bg-${model.color}-500/20 text-${model.color}-400`}
+                                        >
                                             {model.success}% success
                                         </span>
                                     </div>
@@ -375,59 +436,72 @@ export const AdminAnalyticsView: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {ideas.length > 0 ? ideas.map((idea) => (
-                            <div key={idea.id} className="bg-navy-900 border border-white/5 p-5 rounded-xl hover:border-purple-500/30 transition-colors">
-                                <div className="flex justify-between items-start mb-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${idea.priority === 'high'
-                                            ? 'bg-red-500/20 text-red-400'
-                                            : idea.priority === 'medium'
-                                                ? 'bg-amber-500/20 text-amber-400'
-                                                : 'bg-emerald-500/20 text-emerald-400'
-                                        }`}>
-                                        {idea.priority?.toUpperCase() || 'LOW'}
-                                    </span>
-                                    <span className="text-xs text-slate-500">
-                                        {new Date(idea.createdAt).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <h3 className="text-base font-bold text-white mb-2">{idea.title}</h3>
-                                <p className="text-slate-400 text-sm mb-4 line-clamp-3">{idea.description}</p>
-                                <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => handleVoteIdea(idea.id, 'approved')}
-                                            className="p-2 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors"
-                                            title="Approve"
+                        {ideas.length > 0 ? (
+                            ideas.map((idea) => (
+                                <div
+                                    key={idea.id}
+                                    className="bg-navy-900 border border-white/5 p-5 rounded-xl hover:border-purple-500/30 transition-colors"
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                idea.priority === 'high'
+                                                    ? 'bg-red-500/20 text-red-400'
+                                                    : idea.priority === 'medium'
+                                                      ? 'bg-amber-500/20 text-amber-400'
+                                                      : 'bg-emerald-500/20 text-emerald-400'
+                                            }`}
                                         >
-                                            <ThumbsUp className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
-                                            title="Reject"
-                                        >
-                                            <ThumbsDown className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            className="p-2 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors"
-                                            title="View Details"
-                                        >
-                                            <Eye className="w-4 h-4" />
-                                        </button>
+                                            {idea.priority?.toUpperCase() || 'LOW'}
+                                        </span>
+                                        <span className="text-xs text-slate-500">
+                                            {new Date(idea.createdAt).toLocaleDateString()}
+                                        </span>
                                     </div>
-                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${idea.status === 'new'
-                                            ? 'bg-blue-500/20 text-blue-400'
-                                            : idea.status === 'approved'
-                                                ? 'bg-emerald-500/20 text-emerald-400'
-                                                : 'bg-white/10 text-slate-400'
-                                        }`}>
-                                        {idea.status?.toUpperCase() || 'NEW'}
-                                    </span>
+                                    <h3 className="text-base font-bold text-white mb-2">{idea.title}</h3>
+                                    <p className="text-slate-400 text-sm mb-4 line-clamp-3">{idea.description}</p>
+                                    <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => handleVoteIdea(idea.id, 'approved')}
+                                                className="p-2 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors"
+                                                title="Approve"
+                                            >
+                                                <ThumbsUp className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
+                                                title="Reject"
+                                            >
+                                                <ThumbsDown className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                className="p-2 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors"
+                                                title="View Details"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <span
+                                            className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                                idea.status === 'new'
+                                                    ? 'bg-blue-500/20 text-blue-400'
+                                                    : idea.status === 'approved'
+                                                      ? 'bg-emerald-500/20 text-emerald-400'
+                                                      : 'bg-white/10 text-slate-400'
+                                            }`}
+                                        >
+                                            {idea.status?.toUpperCase() || 'NEW'}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        )) : (
+                            ))
+                        ) : (
                             <div className="col-span-full py-12 text-center bg-navy-900 border border-dashed border-white/10 rounded-xl">
                                 <Lightbulb className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-                                <p className="text-slate-500">{t('admin.analytics.noIdeas', 'No strategic ideas yet. Start by creating one!')}</p>
+                                <p className="text-slate-500">
+                                    {t('admin.analytics.noIdeas', 'No strategic ideas yet. Start by creating one!')}
+                                </p>
                                 <button className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors">
                                     {t('admin.analytics.createFirst', 'Create First Idea')}
                                 </button>
@@ -445,48 +519,59 @@ export const AdminAnalyticsView: React.FC = () => {
                             {t('admin.analytics.observationsLog', 'System Observations Log')}
                         </h2>
                         <p className="text-sm text-slate-400 mt-1">
-                            {t('admin.analytics.observationsDesc', 'Automated insights and anomalies detected by the AI Monitor')}
+                            {t(
+                                'admin.analytics.observationsDesc',
+                                'Automated insights and anomalies detected by the AI Monitor',
+                            )}
                         </p>
                     </div>
                     <div className="divide-y divide-white/5">
-                        {observations.length > 0 ? observations.map((obs) => (
-                            <div key={obs.id} className="p-5 hover:bg-white/5 transition-colors">
-                                <div className="flex items-start">
-                                    <div className={`mt-1 p-2 rounded-lg mr-4 ${obs.category === 'anomaly'
-                                            ? 'bg-red-500/20 text-red-400'
-                                            : obs.category === 'insight'
-                                                ? 'bg-purple-500/20 text-purple-400'
-                                                : 'bg-slate-500/20 text-slate-400'
-                                        }`}>
-                                        {obs.category === 'anomaly'
-                                            ? <AlertTriangle className="w-5 h-5" />
-                                            : obs.category === 'insight'
-                                                ? <Lightbulb className="w-5 h-5" />
-                                                : <Activity className="w-5 h-5" />
-                                        }
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between mb-1">
-                                            <span className="font-semibold text-white">
-                                                Observation #{obs.id.substring(0, 8)}
-                                            </span>
-                                            <span className="text-xs text-slate-500">
-                                                {new Date(obs.created_at).toLocaleString()}
-                                            </span>
+                        {observations.length > 0 ? (
+                            observations.map((obs) => (
+                                <div key={obs.id} className="p-5 hover:bg-white/5 transition-colors">
+                                    <div className="flex items-start">
+                                        <div
+                                            className={`mt-1 p-2 rounded-lg mr-4 ${
+                                                obs.category === 'anomaly'
+                                                    ? 'bg-red-500/20 text-red-400'
+                                                    : obs.category === 'insight'
+                                                      ? 'bg-purple-500/20 text-purple-400'
+                                                      : 'bg-slate-500/20 text-slate-400'
+                                            }`}
+                                        >
+                                            {obs.category === 'anomaly' ? (
+                                                <AlertTriangle className="w-5 h-5" />
+                                            ) : obs.category === 'insight' ? (
+                                                <Lightbulb className="w-5 h-5" />
+                                            ) : (
+                                                <Activity className="w-5 h-5" />
+                                            )}
                                         </div>
-                                        <p className="text-slate-400 text-sm">{obs.content}</p>
-                                        <div className="mt-2 flex items-center space-x-4">
-                                            <span className="text-xs bg-white/10 text-slate-300 px-2 py-1 rounded">
-                                                Confidence: {(obs.confidence_score * 100).toFixed(0)}%
-                                            </span>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between mb-1">
+                                                <span className="font-semibold text-white">
+                                                    Observation #{obs.id.substring(0, 8)}
+                                                </span>
+                                                <span className="text-xs text-slate-500">
+                                                    {new Date(obs.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <p className="text-slate-400 text-sm">{obs.content}</p>
+                                            <div className="mt-2 flex items-center space-x-4">
+                                                <span className="text-xs bg-white/10 text-slate-300 px-2 py-1 rounded">
+                                                    Confidence: {(obs.confidence_score * 100).toFixed(0)}%
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )) : (
+                            ))
+                        ) : (
                             <div className="p-12 text-center">
                                 <Activity className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-                                <p className="text-slate-500">{t('admin.analytics.noObservations', 'No observations recorded yet.')}</p>
+                                <p className="text-slate-500">
+                                    {t('admin.analytics.noObservations', 'No observations recorded yet.')}
+                                </p>
                             </div>
                         )}
                     </div>

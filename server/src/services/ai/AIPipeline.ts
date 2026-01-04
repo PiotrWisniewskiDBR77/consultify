@@ -1,27 +1,27 @@
 /**
  * AI Pipeline Service
  * Enterprise SaaS Architecture - TypeScript Backend AI Pipeline
- * 
+ *
  * This is the TypeScript migration of the core AI Pipeline.
  * It serves as a pattern for migrating other backend services.
  */
 
 import type {
+    _ResponseMetadata,
+    _StreamChunk,
+    AIArtifact,
+    AICapability,
+    AIContext,
+    AIError,
+    AIOptions,
     AIPipelineRequest,
     AIPipelineResponse,
-    AIContext,
-    AIOptions,
-    ChatMessage,
-    StreamChunk,
-    StreamCallback,
     CapabilityName,
-    AICapability,
     CapabilityRegistry,
+    ChatMessage,
+    StreamCallback,
     TokenUsage,
-    ResponseMetadata,
-    AIError,
-    AIArtifact,
-} from '../../types/ai.types';
+} from '../../types/ai.types.js';
 
 // ==========================================
 // CAPABILITY REGISTRY
@@ -212,7 +212,7 @@ export class AIPipeline {
         } catch (error: unknown) {
             const aiError = this.handleError(error);
             await this.logError(request, aiError, Date.now() - startTime, traceId);
-            
+
             return {
                 success: false,
                 content: '',
@@ -230,10 +230,7 @@ export class AIPipeline {
     /**
      * Process a streaming AI request
      */
-    public async processStream(
-        request: AIPipelineRequest,
-        onChunk: StreamCallback
-    ): Promise<void> {
+    public async processStream(request: AIPipelineRequest, onChunk: StreamCallback): Promise<void> {
         const startTime = Date.now();
         const traceId = this.generateTraceId();
 
@@ -257,12 +254,7 @@ export class AIPipeline {
             const modelConfig = await this.selectModel(request, capability);
 
             // 7. Execute streaming
-            await this.executeStreamingWithProvider(
-                prompt,
-                modelConfig,
-                request.options,
-                onChunk
-            );
+            await this.executeStreamingWithProvider(prompt, modelConfig, request.options, onChunk);
 
             // 8. Send done signal
             onChunk({
@@ -306,7 +298,7 @@ export class AIPipeline {
         return CAPABILITY_REGISTRY[name];
     }
 
-    private async checkQuota(userId: string, organizationId?: string): Promise<void> {
+    private async checkQuota(_userId: string, _organizationId?: string): Promise<void> {
         // TODO: Implement quota checking
         // This will be migrated from quotaService.js
     }
@@ -328,7 +320,7 @@ export class AIPipeline {
     private async buildPrompt(
         request: AIPipelineRequest,
         capability: AICapability,
-        enrichedContext: { context: AIContext }
+        _enrichedContext: { context: AIContext },
     ): Promise<ChatMessage[]> {
         // TODO: Implement prompt building
         // This will be migrated from promptAssembler.js
@@ -346,7 +338,7 @@ export class AIPipeline {
 
     private async selectModel(
         request: AIPipelineRequest,
-        capability: AICapability
+        capability: AICapability,
     ): Promise<{ provider: string; model: string; maxTokens: number }> {
         // TODO: Implement model selection
         // This will be migrated from modelRouter.js
@@ -358,9 +350,9 @@ export class AIPipeline {
     }
 
     private async executeWithProvider(
-        messages: ChatMessage[],
-        modelConfig: { provider: string; model: string; maxTokens: number },
-        options?: AIOptions
+        _messages: ChatMessage[],
+        _modelConfig: { provider: string; model: string; maxTokens: number },
+        _options?: AIOptions,
     ): Promise<{
         content: string;
         artifacts?: AIArtifact[];
@@ -381,10 +373,10 @@ export class AIPipeline {
     }
 
     private async executeStreamingWithProvider(
-        messages: ChatMessage[],
-        modelConfig: { provider: string; model: string; maxTokens: number },
-        options: AIOptions | undefined,
-        onChunk: StreamCallback
+        _messages: ChatMessage[],
+        _modelConfig: { provider: string; model: string; maxTokens: number },
+        _options: AIOptions | undefined,
+        onChunk: StreamCallback,
     ): Promise<void> {
         // TODO: Implement streaming execution
         // This will be migrated from aiGateway.js
@@ -396,7 +388,7 @@ export class AIPipeline {
 
     private async postProcess(
         response: { content: string; artifacts?: AIArtifact[]; usage?: TokenUsage; cached?: boolean },
-        capability: AICapability
+        _capability: AICapability,
     ): Promise<typeof response> {
         // TODO: Implement post-processing
         // Quality checks, artifact extraction, etc.
@@ -405,9 +397,9 @@ export class AIPipeline {
 
     private async logRequest(
         request: AIPipelineRequest,
-        response: { content: string; usage?: TokenUsage },
+        _response: { content: string; usage?: TokenUsage },
         latency: number,
-        traceId: string
+        traceId: string,
     ): Promise<void> {
         // TODO: Implement logging
         console.log(`[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`);
@@ -416,8 +408,8 @@ export class AIPipeline {
     private async logError(
         request: AIPipelineRequest,
         error: AIError,
-        latency: number,
-        traceId: string
+        _latency: number,
+        traceId: string,
     ): Promise<void> {
         console.error(`[AI Pipeline] ${request.capability} failed: ${error.message} (trace: ${traceId})`);
     }
@@ -448,11 +440,4 @@ export class AIPipeline {
 
 export const aiPipeline = AIPipeline.getInstance();
 
-export {
-    CAPABILITY_REGISTRY,
-    type AIPipelineRequest,
-    type AIPipelineResponse,
-    type StreamCallback,
-};
-
-
+export { type AIPipelineRequest, type AIPipelineResponse, CAPABILITY_REGISTRY, type StreamCallback };

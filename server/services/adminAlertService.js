@@ -3,7 +3,8 @@
  * Handles advanced alerting for billing anomalies, cost spikes, and budget issues
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -431,6 +432,7 @@ export default {
     getAlertHistory,
     updateAlertCooldown
 };
+
 
 
 

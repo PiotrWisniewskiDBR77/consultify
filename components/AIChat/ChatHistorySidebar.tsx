@@ -1,24 +1,16 @@
 /**
  * ChatHistorySidebar
- * 
+ *
  * FLOATING overlay sidebar showing conversation history.
  * When closed, completely disappears except for a floating toggle button.
  * Groups: Pinned → Today → Yesterday → This Week → Last Month → Older → Archived
  */
 
+import { Archive, ChevronLeft, ChevronRight, PanelLeft, Plus, Search, Star, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Plus, 
-    Search, 
-    ChevronLeft, 
-    ChevronRight,
-    Archive,
-    Star,
-    PanelLeft,
-    X
-} from 'lucide-react';
-import { useConversationStore, groupConversations, Conversation } from '../../store/useConversationStore';
+
+import { Conversation, groupConversations, useConversationStore } from '../../store/useConversationStore';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
 
@@ -28,11 +20,7 @@ interface ChatHistorySidebarProps {
     className?: string;
 }
 
-export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
-    projectId,
-    onNewChat,
-    className = ''
-}) => {
+export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({ projectId, onNewChat, className = '' }) => {
     const { t } = useTranslation();
     const {
         conversations,
@@ -47,7 +35,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
         toggleSidebar,
         setSearchQuery,
         toggleShowArchived,
-        clearActiveChat
+        clearActiveChat,
     } = useConversationStore();
 
     // Fetch conversations on mount
@@ -57,24 +45,22 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
     // Filter conversations based on search
     const filteredConversations = searchQuery
-        ? conversations.filter(c =>
-            c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.lastMessagePreview?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        ? conversations.filter(
+              (c) =>
+                  c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  c.lastMessagePreview?.toLowerCase().includes(searchQuery.toLowerCase()),
+          )
         : conversations;
 
     // Group filtered conversations
-    const displayGroups = searchQuery
-        ? groupConversations(filteredConversations)
-        : groupedConversations;
+    const displayGroups = searchQuery ? groupConversations(filteredConversations) : groupedConversations;
 
     // Calculate visible groups (exclude empty and archived unless shown)
-    const visibleGroups = Object.entries(displayGroups)
-        .filter(([key, items]) => {
-            if (items.length === 0) return false;
-            if (key === 'archived' && !showArchived) return false;
-            return true;
-        });
+    const visibleGroups = Object.entries(displayGroups).filter(([key, items]) => {
+        if (items.length === 0) return false;
+        if (key === 'archived' && !showArchived) return false;
+        return true;
+    });
 
     // Handle new chat - clear active and call parent handler
     const handleNewChat = () => {
@@ -88,14 +74,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
             {/* Overlay Background */}
             {isSidebarOpen && (
-                <div 
-                    className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 lg:hidden"
-                    onClick={toggleSidebar}
-                />
+                <div className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 lg:hidden" onClick={toggleSidebar} />
             )}
 
             {/* Sidebar Panel - Floating Overlay */}
-            <div className={`
+            <div
+                className={`
                 fixed top-0 left-0 h-full z-50
                 bg-white dark:bg-navy-900 
                 border-r border-slate-200 dark:border-navy-800
@@ -104,7 +88,8 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-80'}
                 ${className}
-            `}>
+            `}
+            >
                 {/* Header */}
                 <div className="p-4 border-b border-slate-200 dark:border-white/5">
                     <div className="flex items-center justify-between mb-4">
@@ -153,8 +138,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                             <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                                 {searchQuery
                                     ? t('aiChat.noResults', 'No conversations found')
-                                    : t('aiChat.noConversations', 'No conversations yet')
-                                }
+                                    : t('aiChat.noConversations', 'No conversations yet')}
                             </p>
                             {!searchQuery && (
                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
@@ -202,4 +186,3 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 };
 
 export default ChatHistorySidebar;
-

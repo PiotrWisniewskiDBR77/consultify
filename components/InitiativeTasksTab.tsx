@@ -1,8 +1,8 @@
+import { ArrowRight, CheckCircle, CheckSquare, Clock, Plus, Square, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Task, User, TaskStatus, FullInitiative, InitiativeStatus } from '../types';
+import { FullInitiative, InitiativeStatus, Task, TaskStatus, User } from '../types';
 import { Button } from './Button';
-import { Plus, CheckCircle, Clock, CheckSquare, Square, ArrowRight, XCircle } from 'lucide-react';
 import { TaskDetailModal } from './TaskDetailModal';
 
 interface Props {
@@ -30,7 +30,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
             const data = await Api.getTasks({ initiativeId });
             setTasks(data);
         } catch (error) {
-            console.error("Failed to fetch tasks", error);
+            console.error('Failed to fetch tasks', error);
         } finally {
             setLoading(false);
         }
@@ -56,7 +56,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
             fetchTasks(); // Reload
             setIsCreateModalOpen(false);
         } catch (error) {
-            console.error("Failed to create task", error);
+            console.error('Failed to create task', error);
         }
     };
 
@@ -66,25 +66,29 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
             fetchTasks(); // Reload
             setSelectedTask(null);
         } catch (error) {
-            console.error("Failed to update task", error);
+            console.error('Failed to update task', error);
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'completed': return 'text-green-400 bg-green-500/10 border-green-500/20';
-            case 'in_progress': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-            case 'blocked': return 'text-red-400 bg-red-500/10 border-red-500/20';
-            default: return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+            case 'completed':
+                return 'text-green-400 bg-green-500/10 border-green-500/20';
+            case 'in_progress':
+                return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+            case 'blocked':
+                return 'text-red-400 bg-red-500/10 border-red-500/20';
+            default:
+                return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
         }
     };
 
-    const filteredTasks = tasks.filter(t => filterStatus === 'all' || t.status === filterStatus);
+    const filteredTasks = tasks.filter((t) => filterStatus === 'all' || t.status === filterStatus);
 
     // Bulk Selection Handlers
     const toggleTaskSelection = (taskId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setSelectedTaskIds(prev => {
+        setSelectedTaskIds((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(taskId)) {
                 newSet.delete(taskId);
@@ -99,7 +103,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         if (selectedTaskIds.size === filteredTasks.length) {
             setSelectedTaskIds(new Set());
         } else {
-            setSelectedTaskIds(new Set(filteredTasks.map(t => t.id)));
+            setSelectedTaskIds(new Set(filteredTasks.map((t) => t.id)));
         }
     };
 
@@ -108,7 +112,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         setIsBulkUpdating(true);
         try {
             for (const taskId of selectedTaskIds) {
-                const task = tasks.find(t => t.id === taskId);
+                const task = tasks.find((t) => t.id === taskId);
                 if (task) {
                     await Api.updateTask(taskId, { ...task, status: newStatus });
                 }
@@ -116,7 +120,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
             setSelectedTaskIds(new Set());
             fetchTasks();
         } catch (error) {
-            console.error("Failed to bulk update tasks", error);
+            console.error('Failed to bulk update tasks', error);
         } finally {
             setIsBulkUpdating(false);
         }
@@ -128,7 +132,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         status: TaskStatus.TODO,
         priority: 'medium',
         taskType: 'task', // Default to Task
-        initiativeId: initiativeId
+        initiativeId: initiativeId,
     };
 
     const handleGenerateTasks = async () => {
@@ -147,16 +151,16 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         initiativeId: initiative.id,
                         taskType: t.taskType || 'ANALYSIS',
                         why: t.why,
-                        stepPhase: t.stepPhase
+                        stepPhase: t.stepPhase,
                     });
                 }
                 fetchTasks();
             } else {
-                alert("No tasks generated");
+                alert('No tasks generated');
             }
         } catch (error) {
-            console.error("Failed to generate tasks", error);
-            alert("AI Generation failed");
+            console.error('Failed to generate tasks', error);
+            alert('AI Generation failed');
         } finally {
             setIsGenerating(false);
         }
@@ -186,7 +190,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         {isGenerating ? 'Generating Plan...' : 'Generate with AI'}
                     </button>
                     <div className="flex bg-slate-100 dark:bg-navy-950 rounded border border-slate-200 dark:border-white/10 p-1">
-                        {['all', 'todo', 'in_progress', 'completed'].map(s => (
+                        {['all', 'todo', 'in_progress', 'completed'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setFilterStatus(s)}
@@ -270,14 +274,15 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         <p className="text-slate-500">No tasks found. Create one to get started.</p>
                     </div>
                 ) : (
-                    filteredTasks.map(task => (
+                    filteredTasks.map((task) => (
                         <div
                             key={task.id}
                             onClick={() => setSelectedTask(task)}
-                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${selectedTaskIds.has(task.id)
+                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${
+                                selectedTaskIds.has(task.id)
                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
                                     : 'border-slate-200 dark:border-white/5'
-                                }`}
+                            }`}
                         >
                             {/* Checkbox */}
                             <button
@@ -287,23 +292,32 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                                 {selectedTaskIds.has(task.id) ? (
                                     <CheckSquare size={18} className="text-blue-500" />
                                 ) : (
-                                    <Square size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400" />
+                                    <Square
+                                        size={18}
+                                        className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400"
+                                    />
                                 )}
                             </button>
 
                             {/* Status Indicator */}
-                            <div className={`w-2 h-full self-stretch rounded-full ${(task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600')}`}></div>
+                            <div
+                                className={`w-2 h-full self-stretch rounded-full ${task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                            ></div>
 
                             <div className="flex-1">
                                 <div className="flex justify-between items-start">
-                                    <h4 className="text-navy-900 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{task.title}</h4>
+                                    <h4 className="text-navy-900 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        {task.title}
+                                    </h4>
                                     <div className="flex items-center gap-2">
                                         {task.weight && task.weight > 1 && (
                                             <span className="text-[9px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-1.5 py-0.5 rounded">
                                                 {task.weight}x
                                             </span>
                                         )}
-                                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getStatusColor(task.status)}`}>
+                                        <span
+                                            className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getStatusColor(task.status)}`}
+                                        >
                                             {task.status.replace('_', ' ')}
                                         </span>
                                     </div>
@@ -311,16 +325,27 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                                 <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                                     <span className="flex items-center gap-1">
                                         <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] text-navy-600 dark:text-white overflow-hidden">
-                                            {task.assignee?.avatarUrl ? <img src={task.assignee.avatarUrl} className="w-full h-full object-cover" /> : (task.assignee?.firstName?.[0] || '?')}
+                                            {task.assignee?.avatarUrl ? (
+                                                <img
+                                                    src={task.assignee.avatarUrl}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                task.assignee?.firstName?.[0] || '?'
+                                            )}
                                         </div>
-                                        {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : 'Unassigned'}
+                                        {task.assignee
+                                            ? `${task.assignee.firstName} ${task.assignee.lastName}`
+                                            : 'Unassigned'}
                                     </span>
                                     {task.dueDate && (
                                         <span className="flex items-center gap-1">
                                             <Clock size={12} /> {new Date(task.dueDate).toLocaleDateString()}
                                         </span>
                                     )}
-                                    <span className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'}`}>
+                                    <span
+                                        className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'}`}
+                                    >
                                         {task.priority}
                                     </span>
                                     {task.signedOff && (

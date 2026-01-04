@@ -1,26 +1,27 @@
 /**
  * CreditNotesPanel - Credit Notes Management
- * 
+ *
  * Features:
  * - Credit notes management
  * - Issue refunds
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Receipt,
-    Plus,
     Building2,
     Calendar,
+    CheckCircle2,
     DollarSign,
-    Search,
-    RefreshCw,
-    Loader2,
     FileText,
-    CheckCircle2
+    Loader2,
+    Plus,
+    Receipt,
+    RefreshCw,
+    Search,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface CreditNote {
     id: string;
@@ -48,7 +49,7 @@ export const CreditNotesPanel: React.FC = () => {
     const [createForm, setCreateForm] = useState({
         organizationId: '',
         amount: '',
-        reason: ''
+        reason: '',
     });
     const [saving, setSaving] = useState(false);
 
@@ -89,7 +90,7 @@ export const CreditNotesPanel: React.FC = () => {
             await Api.post('/billing/credit-notes', {
                 organizationId: createForm.organizationId,
                 amount: Math.round(parseFloat(createForm.amount) * 100), // Convert to cents
-                reason: createForm.reason
+                reason: createForm.reason,
             });
             toast.success('Credit note created');
             setShowCreateModal(false);
@@ -105,17 +106,14 @@ export const CreditNotesPanel: React.FC = () => {
     const formatCurrency = (cents: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'USD',
         }).format(cents / 100);
     };
 
-    const filteredCreditNotes = creditNotes.filter(cn => {
+    const filteredCreditNotes = creditNotes.filter((cn) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
-        return (
-            cn.note_number.toLowerCase().includes(query) ||
-            cn.organization_name?.toLowerCase().includes(query)
-        );
+        return cn.note_number.toLowerCase().includes(query) || cn.organization_name?.toLowerCase().includes(query);
     });
 
     const totalCredited = creditNotes.reduce((sum, cn) => sum + cn.amount, 0);
@@ -127,9 +125,7 @@ export const CreditNotesPanel: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm text-violet-300">Total Credits Issued</p>
-                        <p className="text-3xl font-bold text-white mt-1">
-                            {formatCurrency(totalCredited)}
-                        </p>
+                        <p className="text-3xl font-bold text-white mt-1">{formatCurrency(totalCredited)}</p>
                         <p className="text-sm text-violet-400 mt-1">{creditNotes.length} credit notes</p>
                     </div>
                     <div className="w-16 h-16 rounded-xl bg-violet-500/20 flex items-center justify-center">
@@ -150,7 +146,7 @@ export const CreditNotesPanel: React.FC = () => {
                         className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none w-64"
                     />
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchCreditNotes}
@@ -192,7 +188,7 @@ export const CreditNotesPanel: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredCreditNotes.map(cn => (
+                            {filteredCreditNotes.map((cn) => (
                                 <tr key={cn.id} className="border-b border-white/[0.04] hover:bg-slate-800/50">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -242,18 +238,22 @@ export const CreditNotesPanel: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
                         <h3 className="text-lg font-semibold text-white mb-6">Issue Credit Note</h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Organization</label>
                                 <select
                                     value={createForm.organizationId}
-                                    onChange={(e) => setCreateForm(prev => ({ ...prev, organizationId: e.target.value }))}
+                                    onChange={(e) =>
+                                        setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
+                                    }
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 >
                                     <option value="">Select organization</option>
-                                    {organizations.map(org => (
-                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    {organizations.map((org) => (
+                                        <option key={org.id} value={org.id}>
+                                            {org.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -261,13 +261,16 @@ export const CreditNotesPanel: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Amount (USD)</label>
                                 <div className="relative">
-                                    <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <DollarSign
+                                        size={18}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         value={createForm.amount}
-                                        onChange={(e) => setCreateForm(prev => ({ ...prev, amount: e.target.value }))}
+                                        onChange={(e) => setCreateForm((prev) => ({ ...prev, amount: e.target.value }))}
                                         placeholder="0.00"
                                         className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                     />
@@ -278,7 +281,7 @@ export const CreditNotesPanel: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Reason</label>
                                 <textarea
                                     value={createForm.reason}
-                                    onChange={(e) => setCreateForm(prev => ({ ...prev, reason: e.target.value }))}
+                                    onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
                                     placeholder="Enter reason for credit note..."
                                     rows={3}
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none resize-none"
@@ -310,10 +313,4 @@ export const CreditNotesPanel: React.FC = () => {
 };
 
 export default CreditNotesPanel;
-
-
-
-
-
-
 

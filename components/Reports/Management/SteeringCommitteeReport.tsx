@@ -4,31 +4,21 @@
  * PRINCE2: Highlight Report
  */
 
+import { AlertCircle, AlertTriangle, Calendar, HelpCircle, Sparkles, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
-import { 
-    AlertTriangle,
-    HelpCircle,
-    Target,
-    TrendingUp,
-    AlertCircle,
-    Sparkles,
-    Calendar
-} from 'lucide-react';
-import { ManagementReport, SteeringCommitteeReportContent, RAGStatus } from '../../../types';
-import { ReportHeader } from './shared/ReportHeader';
-import { ReportFooter } from './shared/ReportFooter';
-import { RAGIndicator, RAGStatusGrid } from './shared/RAGIndicator';
+
+import { ManagementReport, RAGStatus, SteeringCommitteeReportContent } from '../../../types';
 import { MetricCard } from './shared/MetricCard';
+import { RAGIndicator, RAGStatusGrid } from './shared/RAGIndicator';
+import { ReportFooter } from './shared/ReportFooter';
+import { ReportHeader } from './shared/ReportHeader';
 
 interface SteeringCommitteeReportProps {
     report: ManagementReport;
     className?: string;
 }
 
-export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = ({
-    report,
-    className = ''
-}) => {
+export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = ({ report, className = '' }) => {
     const content = report.content as SteeringCommitteeReportContent;
     const overallStatus = content.overallStatus;
 
@@ -50,9 +40,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
             <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-500/20 p-6">
                 <div className="flex items-center gap-2 mb-3">
                     <Sparkles size={18} className="text-violet-500" />
-                    <h2 className="text-lg font-semibold text-violet-900 dark:text-violet-100">
-                        Executive Summary
-                    </h2>
+                    <h2 className="text-lg font-semibold text-violet-900 dark:text-violet-100">Executive Summary</h2>
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
                     {content.executiveSummary || 'No executive summary available.'}
@@ -65,15 +53,15 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                     🚦 Overall Status
                 </h2>
                 <RAGStatusGrid
-                    schedule={overallStatus.schedule?.status as RAGStatus || 'GREY'}
-                    budget={overallStatus.budget?.status as RAGStatus || 'GREY'}
-                    scope={overallStatus.scope?.status as RAGStatus || 'GREY'}
-                    risk={overallStatus.risk?.status as RAGStatus || 'GREY'}
+                    schedule={(overallStatus.schedule?.status as RAGStatus) || 'GREY'}
+                    budget={(overallStatus.budget?.status as RAGStatus) || 'GREY'}
+                    scope={(overallStatus.scope?.status as RAGStatus) || 'GREY'}
+                    risk={(overallStatus.risk?.status as RAGStatus) || 'GREY'}
                 />
-                
+
                 {/* Status summaries */}
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    {['schedule', 'budget', 'scope', 'risk'].map(key => {
+                    {['schedule', 'budget', 'scope', 'risk'].map((key) => {
                         const status = overallStatus[key as keyof typeof overallStatus];
                         if (typeof status === 'object' && status && 'summary' in status) {
                             return (
@@ -92,9 +80,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                 <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border-2 border-red-200 dark:border-red-500/30 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <AlertCircle size={20} className="text-red-500" />
-                        <h2 className="text-lg font-bold text-red-700 dark:text-red-400">
-                            ⚠️ Attention Required
-                        </h2>
+                        <h2 className="text-lg font-bold text-red-700 dark:text-red-400">⚠️ Attention Required</h2>
                     </div>
                     <ul className="space-y-2">
                         {content.warnings.map((warning, idx) => (
@@ -146,13 +132,25 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                         <table className="w-full">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-navy-800/50">
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Severity</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Owner</th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Days Open</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Type
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Title
+                                    </th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Severity
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Owner
+                                    </th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Days Open
+                                    </th>
                                     {report.scope === 'PORTFOLIO' && (
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Project</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                            Project
+                                        </th>
                                     )}
                                 </tr>
                             </thead>
@@ -160,11 +158,13 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                                 {content.risksAndIssues.slice(0, 10).map((item) => (
                                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                                item.type === 'RISK' 
-                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                            }`}>
+                                            <span
+                                                className={`px-2 py-1 text-xs font-medium rounded ${
+                                                    item.type === 'RISK'
+                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                }`}
+                                            >
                                                 {item.type}
                                             </span>
                                         </td>
@@ -172,12 +172,17 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                                             {item.title}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className={`px-2 py-1 text-xs font-bold rounded ${
-                                                item.severity === 'CRITICAL' ? 'bg-red-500 text-white' :
-                                                item.severity === 'HIGH' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                item.severity === 'MEDIUM' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                                            }`}>
+                                            <span
+                                                className={`px-2 py-1 text-xs font-bold rounded ${
+                                                    item.severity === 'CRITICAL'
+                                                        ? 'bg-red-500 text-white'
+                                                        : item.severity === 'HIGH'
+                                                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                          : item.severity === 'MEDIUM'
+                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                                }`}
+                                            >
                                                 {item.severity}
                                             </span>
                                         </td>
@@ -214,16 +219,18 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                                 <div
                                     key={decision.id}
                                     className={`p-4 rounded-lg border-2 ${
-                                        isOverdue 
+                                        isOverdue
                                             ? 'border-red-300 bg-red-50 dark:border-red-500/30 dark:bg-red-900/10'
                                             : 'border-violet-200 bg-violet-50/50 dark:border-violet-500/20 dark:bg-violet-900/10'
                                     }`}
                                 >
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                                isOverdue ? 'bg-red-500 text-white' : 'bg-violet-500 text-white'
-                                            }`}>
+                                            <span
+                                                className={`px-2 py-1 text-xs font-medium rounded ${
+                                                    isOverdue ? 'bg-red-500 text-white' : 'bg-violet-500 text-white'
+                                                }`}
+                                            >
                                                 {decision.decisionType}
                                             </span>
                                             {isOverdue && (
@@ -232,8 +239,12 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                                                 </span>
                                             )}
                                         </div>
-                                        <span className={`text-sm ${isOverdue ? 'text-red-600 font-bold' : 'text-slate-500'}`}>
-                                            {isOverdue ? `${Math.abs(decision.daysUntilDeadline)} days overdue` : `Due: ${decision.deadline}`}
+                                        <span
+                                            className={`text-sm ${isOverdue ? 'text-red-600 font-bold' : 'text-slate-500'}`}
+                                        >
+                                            {isOverdue
+                                                ? `${Math.abs(decision.daysUntilDeadline)} days overdue`
+                                                : `Due: ${decision.deadline}`}
                                         </span>
                                     </div>
                                     <h3 className="font-semibold text-navy-900 dark:text-white mb-1">
@@ -246,9 +257,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                                     )}
                                     <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                                         <span>Requested by: {decision.requestedByName}</span>
-                                        {decision.projectName && (
-                                            <span>Project: {decision.projectName}</span>
-                                        )}
+                                        {decision.projectName && <span>Project: {decision.projectName}</span>}
                                     </div>
                                 </div>
                             );
@@ -263,11 +272,9 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                     <Target size={20} className="text-violet-500" />
                     Forecast & Next Milestones
                 </h2>
-                
+
                 {content.forecast?.forecastNarrative && (
-                    <p className="text-slate-600 dark:text-slate-300 mb-4">
-                        {content.forecast.forecastNarrative}
-                    </p>
+                    <p className="text-slate-600 dark:text-slate-300 mb-4">{content.forecast.forecastNarrative}</p>
                 )}
 
                 {content.forecast?.nextMilestones && content.forecast.nextMilestones.length > 0 && (
@@ -279,9 +286,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                             >
                                 <div className="flex items-center gap-3">
                                     <RAGIndicator status={milestone.status} size="sm" />
-                                    <span className="font-medium text-navy-900 dark:text-white">
-                                        {milestone.name}
-                                    </span>
+                                    <span className="font-medium text-navy-900 dark:text-white">{milestone.name}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                     <Calendar size={14} />
@@ -331,11 +336,21 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                         <table className="w-full">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-navy-800/50">
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Project</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Owner</th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Phase</th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Health</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Key Issues</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                        Project
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                        Owner
+                                    </th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">
+                                        Phase
+                                    </th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">
+                                        Health
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                        Key Issues
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -381,12 +396,4 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
 };
 
 export default SteeringCommitteeReport;
-
-
-
-
-
-
-
-
 

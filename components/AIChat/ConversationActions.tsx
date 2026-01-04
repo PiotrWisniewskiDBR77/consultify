@@ -1,24 +1,25 @@
 /**
  * ConversationActions
- * 
+ *
  * Dropdown menu for conversation actions: rename, star, archive, delete.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    MoreHorizontal, 
-    Star, 
-    StarOff,
-    Edit2, 
-    Archive, 
+import {
+    Archive,
     ArchiveRestore,
-    Trash2, 
     Copy,
     Download,
+    Edit2,
+    Folder,
     FolderPlus,
-    Folder
+    MoreHorizontal,
+    Star,
+    StarOff,
+    Trash2,
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Conversation, useConversationStore } from '../../store/useConversationStore';
 import { MoveToProjectModal } from './MoveToProjectModal';
 
@@ -27,10 +28,7 @@ interface ConversationActionsProps {
     onOpenChange?: (open: boolean) => void;
 }
 
-export const ConversationActions: React.FC<ConversationActionsProps> = ({
-    conversation,
-    onOpenChange
-}) => {
+export const ConversationActions: React.FC<ConversationActionsProps> = ({ conversation, onOpenChange }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
@@ -45,7 +43,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
         archiveConversation,
         unarchiveConversation,
         deleteConversation,
-        renameConversation
+        renameConversation,
     } = useConversationStore();
 
     // Handle click outside
@@ -147,14 +145,16 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="
+                <div
+                    className="
                     absolute right-0 top-full mt-1 z-50
                     w-48 py-1
                     bg-white dark:bg-navy-800
                     border border-slate-200 dark:border-navy-700
                     rounded-lg shadow-lg
                     animate-in fade-in-0 zoom-in-95 duration-100
-                ">
+                "
+                >
                     {/* Rename */}
                     <button
                         onClick={(e) => {
@@ -181,7 +181,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                             handleAction(
                                 conversation.starred
                                     ? () => unstarConversation(conversation.id)
-                                    : () => starConversation(conversation.id)
+                                    : () => starConversation(conversation.id),
                             );
                         }}
                         className="
@@ -239,7 +239,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                             handleAction(
                                 conversation.archived
                                     ? () => unarchiveConversation(conversation.id)
-                                    : () => archiveConversation(conversation.id)
+                                    : () => archiveConversation(conversation.id),
                             );
                         }}
                         className="
@@ -269,7 +269,11 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm(t('aiChat.confirmDelete', 'Are you sure you want to delete this conversation?'))) {
+                            if (
+                                window.confirm(
+                                    t('aiChat.confirmDelete', 'Are you sure you want to delete this conversation?'),
+                                )
+                            ) {
                                 handleAction(() => deleteConversation(conversation.id));
                             }
                         }}
@@ -297,5 +301,3 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
 };
 
 export default ConversationActions;
-
-

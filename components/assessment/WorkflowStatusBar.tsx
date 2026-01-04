@@ -1,21 +1,13 @@
 /**
  * WorkflowStatusBar
- * 
+ *
  * Visual timeline showing current workflow state for an assessment.
  * Displays: DRAFT → IN_REVIEW → AWAITING_APPROVAL → APPROVED
  * With color-coded status indicators.
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-    FileEdit,
-    Users,
-    Clock,
-    CheckCircle2,
-    XCircle,
-    ChevronRight,
-    Loader2
-} from 'lucide-react';
+import { CheckCircle2, ChevronRight, Clock, FileEdit, Loader2, Users, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 type WorkflowStatus = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
@@ -31,26 +23,26 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
         id: 'DRAFT',
         label: 'Draft',
         icon: <FileEdit size={16} />,
-        description: 'Ocena w trakcie edycji'
+        description: 'Ocena w trakcie edycji',
     },
     {
         id: 'IN_REVIEW',
         label: 'W recenzji',
         icon: <Users size={16} />,
-        description: 'Recenzenci weryfikują ocenę'
+        description: 'Recenzenci weryfikują ocenę',
     },
     {
         id: 'AWAITING_APPROVAL',
         label: 'Oczekuje na zatwierdzenie',
         icon: <Clock size={16} />,
-        description: 'Wszystkie recenzje zakończone'
+        description: 'Wszystkie recenzje zakończone',
     },
     {
         id: 'APPROVED',
         label: 'Zatwierdzony',
         icon: <CheckCircle2 size={16} />,
-        description: 'Ocena zatwierdzona'
-    }
+        description: 'Ocena zatwierdzona',
+    },
 ];
 
 interface WorkflowStatusBarProps {
@@ -66,7 +58,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     currentStatus,
     reviewCount = 0,
     completedReviews = 0,
-    onStatusClick
+    onStatusClick,
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [workflowData, setWorkflowData] = useState<any>(null);
@@ -75,12 +67,12 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     useEffect(() => {
         const fetchWorkflowStatus = async () => {
             if (!assessmentId) return;
-            
+
             setIsLoading(true);
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`/api/assessment-workflow/${assessmentId}/status`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -102,7 +94,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     // Get stage index for current status
     const getCurrentStageIndex = () => {
         if (actualStatus === 'REJECTED') return -1; // Special case
-        return WORKFLOW_STAGES.findIndex(s => s.id === actualStatus);
+        return WORKFLOW_STAGES.findIndex((s) => s.id === actualStatus);
     };
 
     const currentStageIndex = getCurrentStageIndex();
@@ -125,21 +117,21 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                     bg: 'bg-green-500',
                     text: 'text-green-600 dark:text-green-400',
                     border: 'border-green-500',
-                    connector: 'bg-green-500'
+                    connector: 'bg-green-500',
                 };
             case 'current':
                 return {
                     bg: 'bg-purple-500',
                     text: 'text-purple-600 dark:text-purple-400',
                     border: 'border-purple-500',
-                    connector: 'bg-purple-200 dark:bg-purple-900/50'
+                    connector: 'bg-purple-200 dark:bg-purple-900/50',
                 };
             default:
                 return {
                     bg: 'bg-slate-300 dark:bg-slate-600',
                     text: 'text-slate-400 dark:text-slate-500',
                     border: 'border-slate-300 dark:border-slate-600',
-                    connector: 'bg-slate-200 dark:bg-slate-700'
+                    connector: 'bg-slate-200 dark:bg-slate-700',
                 };
         }
     };
@@ -173,15 +165,18 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                                     title={stage.description}
                                 >
                                     {/* Icon Circle */}
-                                    <div className={`
+                                    <div
+                                        className={`
                                         w-8 h-8 rounded-full flex items-center justify-center transition-all
-                                        ${state === 'current' 
-                                            ? 'bg-purple-100 dark:bg-purple-900/30 ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-50 dark:ring-offset-navy-950' 
-                                            : state === 'completed'
-                                                ? 'bg-green-100 dark:bg-green-900/30'
-                                                : 'bg-slate-100 dark:bg-navy-800'
+                                        ${
+                                            state === 'current'
+                                                ? 'bg-purple-100 dark:bg-purple-900/30 ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-50 dark:ring-offset-navy-950'
+                                                : state === 'completed'
+                                                  ? 'bg-green-100 dark:bg-green-900/30'
+                                                  : 'bg-slate-100 dark:bg-navy-800'
                                         }
-                                    `}>
+                                    `}
+                                    >
                                         <span className={colors.text}>
                                             {state === 'completed' ? <CheckCircle2 size={16} /> : stage.icon}
                                         </span>
@@ -189,9 +184,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
 
                                     {/* Label */}
                                     <div className="hidden sm:block">
-                                        <span className={`text-xs font-medium ${colors.text}`}>
-                                            {stage.label}
-                                        </span>
+                                        <span className={`text-xs font-medium ${colors.text}`}>{stage.label}</span>
                                         {stage.id === 'IN_REVIEW' && reviewCount > 0 && (
                                             <span className="ml-1 text-xs text-slate-400">
                                                 ({completedReviews}/{reviewCount})
@@ -203,9 +196,13 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                                 {/* Connector Line */}
                                 {!isLast && (
                                     <div className="flex-1 mx-2 sm:mx-4 h-0.5 min-w-[24px] max-w-[60px]">
-                                        <div className={`h-full ${
-                                            state === 'completed' ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'
-                                        }`} />
+                                        <div
+                                            className={`h-full ${
+                                                state === 'completed'
+                                                    ? 'bg-green-500'
+                                                    : 'bg-slate-200 dark:bg-slate-700'
+                                            }`}
+                                        />
                                     </div>
                                 )}
                             </React.Fragment>
@@ -217,9 +214,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                 {actualStatus === 'REJECTED' && (
                     <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/20 rounded-full">
                         <XCircle size={14} className="text-red-500" />
-                        <span className="text-xs font-medium text-red-600 dark:text-red-400">
-                            Odrzucony
-                        </span>
+                        <span className="text-xs font-medium text-red-600 dark:text-red-400">Odrzucony</span>
                     </div>
                 )}
 
@@ -232,9 +227,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                                 <div
                                     key={i}
                                     className={`w-2 h-2 rounded-full ${
-                                        i < completedReviews
-                                            ? 'bg-green-500'
-                                            : 'bg-slate-300 dark:bg-slate-600'
+                                        i < completedReviews ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                 />
                             ))}
@@ -245,4 +238,3 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         </div>
     );
 };
-

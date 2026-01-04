@@ -15,7 +15,8 @@
  * - Defensive type checking to prevent "is not iterable" errors
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { aiLogger } from './logger.js';
 
 // =============================================================================

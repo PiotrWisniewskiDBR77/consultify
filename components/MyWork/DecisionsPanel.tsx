@@ -1,7 +1,7 @@
 /**
  * DecisionsPanel - Enhanced decision management
  * Part of My Work Module PMO Upgrade
- * 
+ *
  * Features:
  * - View toggle: My Decisions vs Awaiting Others
  * - Filters and sorting
@@ -11,43 +11,44 @@
  * - Escalation system
  */
 
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    FileQuestion,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    User,
     AlertTriangle,
-    Loader2,
-    TrendingUp,
-    Hourglass,
-    Users,
-    Bell,
-    Plus,
-    Filter,
-    ArrowUpDown,
-    ArrowUp,
     ArrowDown,
-    UserPlus,
-    Search,
-    X,
+    ArrowUp,
+    ArrowUpDown,
+    Bell,
     Calendar,
-    Tag,
-    MapPin,
-    FolderKanban,
-    Flag,
     CalendarClock,
     CheckCheck,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    FileQuestion,
+    Filter,
+    Flag,
+    FolderKanban,
+    Hourglass,
+    Loader2,
+    MapPin,
+    Plus,
+    Search,
+    Tag,
     Timer,
+    TrendingUp,
+    User,
+    UserPlus,
+    Users,
+    X,
+    XCircle,
     Zap,
-    ChevronRight
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 interface Decision {
     id: string;
@@ -87,7 +88,7 @@ interface DecisionsPanelProps {
  */
 const OverdueBadge: React.FC<{ days: number }> = ({ days }) => {
     const { t } = useTranslation();
-    
+
     const getBadgeStyle = () => {
         if (days > 7) {
             return 'bg-red-500 text-white animate-pulse';
@@ -99,7 +100,9 @@ const OverdueBadge: React.FC<{ days: number }> = ({ days }) => {
     };
 
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getBadgeStyle()}`}>
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getBadgeStyle()}`}
+        >
             <AlertTriangle size={12} />
             {days}d
         </span>
@@ -136,7 +139,7 @@ const NewDecisionModal: React.FC<{
                 decisionType,
                 priority,
                 dueDate: dueDate || undefined,
-                decisionOwnerId: assigneeId || undefined
+                decisionOwnerId: assigneeId || undefined,
             });
             setTitle('');
             setDescription('');
@@ -278,7 +281,10 @@ const NewDecisionModal: React.FC<{
                             type="text"
                             value={assigneeId}
                             onChange={(e) => setAssigneeId(e.target.value)}
-                            placeholder={t('decisions.field.assigneePlaceholder', 'Enter email or leave empty for auto-assign')}
+                            placeholder={t(
+                                'decisions.field.assigneePlaceholder',
+                                'Enter email or leave empty for auto-assign',
+                            )}
                             className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
                     </div>
@@ -289,7 +295,12 @@ const NewDecisionModal: React.FC<{
                     <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/20">
                         <div className="flex items-center gap-2 text-red-700 dark:text-red-300 text-sm">
                             <Zap size={16} className="animate-pulse" />
-                            <span className="font-medium">{t('decisions.criticalWarning', 'Critical priority will trigger immediate notifications')}</span>
+                            <span className="font-medium">
+                                {t(
+                                    'decisions.criticalWarning',
+                                    'Critical priority will trigger immediate notifications',
+                                )}
+                            </span>
                         </div>
                     </div>
                 )}
@@ -306,11 +317,7 @@ const NewDecisionModal: React.FC<{
                         disabled={submitting || !title.trim()}
                         className="flex-1 px-4 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {submitting ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                            <Plus size={18} />
-                        )}
+                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                         {t('decisions.create', 'Create')}
                     </button>
                 </div>
@@ -339,7 +346,7 @@ const DelegateModal: React.FC<{
             return;
         }
         if (!decision) return;
-        
+
         setSubmitting(true);
         try {
             await onDelegate(decision.id, toUserId, note);
@@ -419,11 +426,7 @@ const DelegateModal: React.FC<{
                         disabled={submitting || !toUserId.trim()}
                         className="flex-1 px-4 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {submitting ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                            <UserPlus size={18} />
-                        )}
+                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
                         {t('decisions.delegateBtn', 'Delegate')}
                     </button>
                 </div>
@@ -437,43 +440,45 @@ const DelegateModal: React.FC<{
  */
 const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
     const { t } = useTranslation();
-    
+
     const config = {
-        CRITICAL: { 
-            bg: 'bg-red-500', 
-            text: 'text-white', 
+        CRITICAL: {
+            bg: 'bg-red-500',
+            text: 'text-white',
             icon: Zap,
             label: t('priority.critical', 'Critical'),
-            animate: true
+            animate: true,
         },
-        HIGH: { 
-            bg: 'bg-orange-500', 
-            text: 'text-white', 
+        HIGH: {
+            bg: 'bg-orange-500',
+            text: 'text-white',
             icon: Flag,
             label: t('priority.high', 'High'),
-            animate: false
+            animate: false,
         },
-        MEDIUM: { 
-            bg: 'bg-amber-100 dark:bg-amber-900/30', 
-            text: 'text-amber-700 dark:text-amber-300', 
+        MEDIUM: {
+            bg: 'bg-amber-100 dark:bg-amber-900/30',
+            text: 'text-amber-700 dark:text-amber-300',
             icon: Flag,
             label: t('priority.medium', 'Medium'),
-            animate: false
+            animate: false,
         },
-        LOW: { 
-            bg: 'bg-slate-100 dark:bg-slate-800', 
-            text: 'text-slate-500 dark:text-slate-400', 
+        LOW: {
+            bg: 'bg-slate-100 dark:bg-slate-800',
+            text: 'text-slate-500 dark:text-slate-400',
             icon: Flag,
             label: t('priority.low', 'Low'),
-            animate: false
-        }
+            animate: false,
+        },
     };
 
     const cfg = config[priority as keyof typeof config] || config.MEDIUM;
     const Icon = cfg.icon;
 
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text} ${cfg.animate ? 'animate-pulse' : ''}`}>
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text} ${cfg.animate ? 'animate-pulse' : ''}`}
+        >
             <Icon size={10} />
             {cfg.label}
         </span>
@@ -483,8 +488,8 @@ const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
 /**
  * Status Timeline Badge
  */
-const StatusTimeline: React.FC<{ 
-    dueDate?: string; 
+const StatusTimeline: React.FC<{
+    dueDate?: string;
     createdAt: string;
     isOverdue: boolean;
     daysOverdue: number;
@@ -499,11 +504,13 @@ const StatusTimeline: React.FC<{
 
     if (isOverdue && daysOverdue > 0) {
         return (
-            <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
-                daysOverdue > 7 
-                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse' 
-                    : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-            }`}>
+            <div
+                className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
+                    daysOverdue > 7
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse'
+                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                }`}
+            >
                 <AlertTriangle size={14} className="shrink-0" />
                 <div className="text-xs">
                     <span className="font-bold">{daysOverdue}d</span>
@@ -516,15 +523,17 @@ const StatusTimeline: React.FC<{
     if (dueDate) {
         const isUrgent = daysUntilDue <= 2;
         const isSoon = daysUntilDue <= 5;
-        
+
         return (
-            <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
-                isUrgent 
-                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' 
-                    : isSoon 
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300'
-                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
-            }`}>
+            <div
+                className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
+                    isUrgent
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                        : isSoon
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300'
+                          : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
+                }`}
+            >
                 {isUrgent ? <Timer size={14} /> : <CalendarClock size={14} />}
                 <div className="text-xs">
                     {isUrgent ? (
@@ -564,13 +573,15 @@ const DecisionCard: React.FC<{
     onClick?: (id: string) => void;
 }> = ({ decision, viewMode, onApprove, onReject, onDelegate, onEscalate, onClick }) => {
     const { t } = useTranslation();
-    
+
     const isOverdue = decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 7);
     const daysOverdue = decision.daysOverdue || Math.max(0, (decision.daysWaiting || 0) - 7);
-    const daysUntilDue = decision.daysUntilDue || (decision.dueDate 
-        ? Math.ceil((new Date(decision.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        : 999);
-    
+    const daysUntilDue =
+        decision.daysUntilDue ||
+        (decision.dueDate
+            ? Math.ceil((new Date(decision.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            : 999);
+
     const getCardStyle = () => {
         if (isOverdue && daysOverdue > 7) {
             return 'border-l-red-500 bg-gradient-to-r from-red-50 to-white dark:from-red-900/20 dark:to-navy-900 ring-1 ring-red-200 dark:ring-red-500/20';
@@ -586,13 +597,13 @@ const DecisionCard: React.FC<{
 
     const getTypeLabel = (decisionType: string) => {
         const types: Record<string, { icon: string; label: string; color: string }> = {
-            'INITIATIVE_APPROVAL': { icon: '🎯', label: 'Initiative', color: 'text-blue-600' },
-            'PHASE_TRANSITION': { icon: '🚀', label: 'Phase Gate', color: 'text-purple-600' },
-            'UNBLOCK': { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
-            'CANCEL': { icon: '❌', label: 'Cancel', color: 'text-red-600' },
-            'BUDGET': { icon: '💰', label: 'Budget', color: 'text-amber-600' },
-            'SCOPE_CHANGE': { icon: '📐', label: 'Scope', color: 'text-cyan-600' },
-            'GENERAL': { icon: '📋', label: 'General', color: 'text-slate-600' }
+            INITIATIVE_APPROVAL: { icon: '🎯', label: 'Initiative', color: 'text-blue-600' },
+            PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-purple-600' },
+            UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
+            CANCEL: { icon: '❌', label: 'Cancel', color: 'text-red-600' },
+            BUDGET: { icon: '💰', label: 'Budget', color: 'text-amber-600' },
+            SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-cyan-600' },
+            GENERAL: { icon: '📋', label: 'General', color: 'text-slate-600' },
         };
         return types[decisionType] || types['GENERAL'];
     };
@@ -613,15 +624,17 @@ const DecisionCard: React.FC<{
                 <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 flex-wrap">
                         {/* Type Badge */}
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/10 ${typeInfo.color} dark:text-slate-200`}>
+                        <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/10 ${typeInfo.color} dark:text-slate-200`}
+                        >
                             <span>{typeInfo.icon}</span>
                             {typeInfo.label}
                         </span>
-                        
+
                         {/* Priority */}
                         <PriorityBadge priority={decision.priority} />
                     </div>
-                    
+
                     {/* Status Timeline */}
                     <StatusTimeline
                         dueDate={decision.dueDate}
@@ -636,14 +649,14 @@ const DecisionCard: React.FC<{
                 <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2 line-clamp-2">
                     {decision.title}
                 </h4>
-                
+
                 {/* Description */}
                 {decision.description && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
                         {decision.description}
                     </p>
                 )}
-                
+
                 {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
                     {/* Project */}
@@ -657,7 +670,7 @@ const DecisionCard: React.FC<{
                             </span>
                         </div>
                     )}
-                    
+
                     {/* Location */}
                     {decision.locationName && (
                         <div className="flex items-center gap-2 text-xs">
@@ -669,19 +682,17 @@ const DecisionCard: React.FC<{
                             </span>
                         </div>
                     )}
-                    
+
                     {/* Owner/Assignee */}
                     {viewMode === 'awaiting' && decision.ownerName && (
                         <div className="flex items-center gap-2 text-xs">
                             <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-600 dark:text-slate-300">
                                 {decision.ownerName.charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-slate-700 dark:text-slate-300 truncate">
-                                {decision.ownerName}
-                            </span>
+                            <span className="text-slate-700 dark:text-slate-300 truncate">{decision.ownerName}</span>
                         </div>
                     )}
-                    
+
                     {/* Blocked Items */}
                     {(decision.blockedItemsCount || 0) > 0 && (
                         <div className="flex items-center gap-2 text-xs">
@@ -699,18 +710,20 @@ const DecisionCard: React.FC<{
                 <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5">
                     <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                         <span>{t('decisions.waitingFor', 'Waiting for')}</span>
-                        <span className="font-medium">{decision.daysWaiting || 0} {t('decisions.days', 'days')}</span>
+                        <span className="font-medium">
+                            {decision.daysWaiting || 0} {t('decisions.days', 'days')}
+                        </span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${Math.min(100, ((decision.daysWaiting || 0) / 14) * 100)}%` }}
                             className={`h-full rounded-full ${
-                                (decision.daysWaiting || 0) > 10 
-                                    ? 'bg-red-500' 
-                                    : (decision.daysWaiting || 0) > 5 
-                                        ? 'bg-orange-500' 
-                                        : 'bg-green-500'
+                                (decision.daysWaiting || 0) > 10
+                                    ? 'bg-red-500'
+                                    : (decision.daysWaiting || 0) > 5
+                                      ? 'bg-orange-500'
+                                      : 'bg-green-500'
                             }`}
                         />
                     </div>
@@ -718,11 +731,13 @@ const DecisionCard: React.FC<{
             </div>
 
             {/* Action Bar */}
-            <div className={`px-4 py-3 border-t flex items-center gap-2 ${
-                isOverdue 
-                    ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-500/10' 
-                    : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5'
-            }`}>
+            <div
+                className={`px-4 py-3 border-t flex items-center gap-2 ${
+                    isOverdue
+                        ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-500/10'
+                        : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5'
+                }`}
+            >
                 {viewMode === 'my' ? (
                     <>
                         {/* OK Button */}
@@ -769,7 +784,7 @@ const DecisionCard: React.FC<{
                             {t('decisions.viewDetails', 'View Details')}
                             <ChevronRight size={14} />
                         </button>
-                        
+
                         {/* Escalate Button - only for overdue */}
                         {isOverdue && (
                             <button
@@ -804,9 +819,9 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
     const [showFilters, setShowFilters] = useState(false);
     const [showNewModal, setShowNewModal] = useState(false);
     const [delegateDecision, setDelegateDecision] = useState<Decision | null>(null);
-    
-    const currentProjectId = useAppStore(state => state.currentProjectId);
-    const currentUserId = useAppStore(state => state.currentUser?.id);
+
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
+    const currentUserId = useAppStore((state) => state.currentUser?.id);
 
     useEffect(() => {
         fetchDecisions();
@@ -819,9 +834,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                 ? `/decisions?projectId=${currentProjectId}&includeAll=true`
                 : `/decisions?includeAll=true`;
             const data = await Api.get(url);
-            
+
             const enhanced = (data || []).map((d: Decision) => {
-                const daysWaiting = d.daysWaiting || Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                const daysWaiting =
+                    d.daysWaiting || Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
                 const isOverdue = daysWaiting > 7;
                 const daysOverdue = Math.max(0, daysWaiting - 7);
                 return {
@@ -829,10 +845,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                     daysWaiting,
                     isOverdue,
                     daysOverdue,
-                    escalationLevel: d.escalationLevel || 0
+                    escalationLevel: d.escalationLevel || 0,
                 };
             });
-            
+
             setDecisions(enhanced);
         } catch (error) {
             console.error('Failed to fetch decisions:', error);
@@ -865,9 +881,9 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
     const handleDelegate = async (decisionId: string, toUserId: string, note: string) => {
         try {
-            await Api.put(`/decisions/${decisionId}`, { 
+            await Api.put(`/decisions/${decisionId}`, {
                 decisionOwnerId: toUserId,
-                delegationNote: note 
+                delegationNote: note,
             });
             toast.success(t('decisions.delegated', 'Decision delegated'));
             fetchDecisions();
@@ -895,7 +911,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                 projectId: currentProjectId,
                 relatedObjectType: 'PROJECT',
                 relatedObjectId: currentProjectId,
-                requestedById: currentUserId
+                requestedById: currentUserId,
             });
             toast.success(t('decisions.created', 'Decision request created'));
             fetchDecisions();
@@ -907,53 +923,54 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
     // Filter and sort decisions
     const getFilteredDecisions = () => {
-        let filtered = decisions.filter(d => d.status === 'PENDING');
-        
+        let filtered = decisions.filter((d) => d.status === 'PENDING');
+
         // View mode filter
         if (viewMode === 'my') {
-            filtered = filtered.filter(d => d.decisionOwnerId === currentUserId);
+            filtered = filtered.filter((d) => d.decisionOwnerId === currentUserId);
         } else {
-            filtered = filtered.filter(d => d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId);
+            filtered = filtered.filter((d) => d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId);
         }
-        
+
         // Type filter
         switch (filterType) {
             case 'overdue':
-                filtered = filtered.filter(d => d.isOverdue);
+                filtered = filtered.filter((d) => d.isOverdue);
                 break;
             case 'thisWeek':
-                filtered = filtered.filter(d => (d.daysWaiting || 0) <= 7);
+                filtered = filtered.filter((d) => (d.daysWaiting || 0) <= 7);
                 break;
             case 'blocking':
-                filtered = filtered.filter(d => (d.blockedItemsCount || 0) > 0);
+                filtered = filtered.filter((d) => (d.blockedItemsCount || 0) > 0);
                 break;
             case 'critical':
-                filtered = filtered.filter(d => d.priority === 'CRITICAL');
+                filtered = filtered.filter((d) => d.priority === 'CRITICAL');
                 break;
             case 'high':
-                filtered = filtered.filter(d => d.priority === 'HIGH' || d.priority === 'CRITICAL');
+                filtered = filtered.filter((d) => d.priority === 'HIGH' || d.priority === 'CRITICAL');
                 break;
         }
-        
+
         // Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(d => 
-                d.title.toLowerCase().includes(query) ||
-                d.description?.toLowerCase().includes(query) ||
-                d.projectName?.toLowerCase().includes(query)
+            filtered = filtered.filter(
+                (d) =>
+                    d.title.toLowerCase().includes(query) ||
+                    d.description?.toLowerCase().includes(query) ||
+                    d.projectName?.toLowerCase().includes(query),
             );
         }
-        
+
         // Sort
         // Priority order mapping for sorting
         const priorityOrder: Record<string, number> = {
-            'CRITICAL': 4,
-            'HIGH': 3,
-            'MEDIUM': 2,
-            'LOW': 1
+            CRITICAL: 4,
+            HIGH: 3,
+            MEDIUM: 2,
+            LOW: 1,
         };
-        
+
         filtered.sort((a, b) => {
             switch (sortOrder) {
                 case 'oldest':
@@ -967,14 +984,18 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
             }
         });
-        
+
         return filtered;
     };
 
     const filteredDecisions = getFilteredDecisions();
-    const myDecisionsCount = decisions.filter(d => d.status === 'PENDING' && d.decisionOwnerId === currentUserId).length;
-    const awaitingCount = decisions.filter(d => d.status === 'PENDING' && d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId).length;
-    const urgentCount = decisions.filter(d => d.status === 'PENDING' && d.isOverdue).length;
+    const myDecisionsCount = decisions.filter(
+        (d) => d.status === 'PENDING' && d.decisionOwnerId === currentUserId,
+    ).length;
+    const awaitingCount = decisions.filter(
+        (d) => d.status === 'PENDING' && d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId,
+    ).length;
+    const urgentCount = decisions.filter((d) => d.status === 'PENDING' && d.isOverdue).length;
 
     if (loading) {
         return (
@@ -999,13 +1020,11 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {myDecisionsCount + awaitingCount} {t('decisions.pending', 'pending')}
-                                {urgentCount > 0 && (
-                                    <span className="text-red-500 ml-1">• {urgentCount} urgent</span>
-                                )}
+                                {urgentCount > 0 && <span className="text-red-500 ml-1">• {urgentCount} urgent</span>}
                             </p>
                         </div>
                     </div>
-                    
+
                     {/* New Button */}
                     <button
                         onClick={() => setShowNewModal(true)}
@@ -1028,11 +1047,13 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                     >
                         <User size={16} />
                         {t('decisions.myDecisions', 'My Decisions')}
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${
-                            viewMode === 'my' 
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' 
-                                : 'bg-slate-200 dark:bg-white/10'
-                        }`}>
+                        <span
+                            className={`px-2 py-0.5 rounded-full text-xs ${
+                                viewMode === 'my'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                    : 'bg-slate-200 dark:bg-white/10'
+                            }`}
+                        >
                             {myDecisionsCount}
                         </span>
                     </button>
@@ -1046,11 +1067,13 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                     >
                         <Hourglass size={16} />
                         {t('decisions.awaiting', 'Awaiting Others')}
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${
-                            viewMode === 'awaiting' 
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' 
-                                : 'bg-slate-200 dark:bg-white/10'
-                        }`}>
+                        <span
+                            className={`px-2 py-0.5 rounded-full text-xs ${
+                                viewMode === 'awaiting'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                    : 'bg-slate-200 dark:bg-white/10'
+                            }`}
+                        >
                             {awaitingCount}
                         </span>
                     </button>
@@ -1081,14 +1104,19 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                             }`}
                         >
                             <Filter size={16} />
-                            {filterType === 'all' ? t('decisions.filter', 'Filter') : 
-                             filterType === 'overdue' ? t('decisions.filterOverdue', 'Overdue') :
-                             filterType === 'thisWeek' ? t('decisions.filterThisWeek', 'This Week') :
-                             filterType === 'blocking' ? t('decisions.filterBlocking', 'Blocking') :
-                             filterType === 'critical' ? t('decisions.filterCritical', 'Critical') :
-                             t('decisions.filterHigh', 'High+')}
+                            {filterType === 'all'
+                                ? t('decisions.filter', 'Filter')
+                                : filterType === 'overdue'
+                                  ? t('decisions.filterOverdue', 'Overdue')
+                                  : filterType === 'thisWeek'
+                                    ? t('decisions.filterThisWeek', 'This Week')
+                                    : filterType === 'blocking'
+                                      ? t('decisions.filterBlocking', 'Blocking')
+                                      : filterType === 'critical'
+                                        ? t('decisions.filterCritical', 'Critical')
+                                        : t('decisions.filterHigh', 'High+')}
                         </button>
-                        
+
                         {showFilters && (
                             <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-20">
                                 <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -1097,19 +1125,27 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                                 {(['all', 'overdue', 'thisWeek', 'blocking'] as FilterType[]).map((filter) => (
                                     <button
                                         key={filter}
-                                        onClick={() => { setFilterType(filter); setShowFilters(false); }}
+                                        onClick={() => {
+                                            setFilterType(filter);
+                                            setShowFilters(false);
+                                        }}
                                         className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
-                                            filterType === filter ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-700 dark:text-slate-300'
+                                            filterType === filter
+                                                ? 'text-purple-600 dark:text-purple-400 font-medium'
+                                                : 'text-slate-700 dark:text-slate-300'
                                         }`}
                                     >
                                         {filter === 'all' && <Tag size={14} />}
                                         {filter === 'overdue' && <AlertTriangle size={14} className="text-red-500" />}
                                         {filter === 'thisWeek' && <Calendar size={14} className="text-blue-500" />}
                                         {filter === 'blocking' && <Bell size={14} className="text-orange-500" />}
-                                        {filter === 'all' ? t('decisions.filterAll', 'All') :
-                                         filter === 'overdue' ? t('decisions.filterOverdue', 'Overdue') :
-                                         filter === 'thisWeek' ? t('decisions.filterThisWeek', 'This Week') :
-                                         t('decisions.filterBlocking', 'Blocking Items')}
+                                        {filter === 'all'
+                                            ? t('decisions.filterAll', 'All')
+                                            : filter === 'overdue'
+                                              ? t('decisions.filterOverdue', 'Overdue')
+                                              : filter === 'thisWeek'
+                                                ? t('decisions.filterThisWeek', 'This Week')
+                                                : t('decisions.filterBlocking', 'Blocking Items')}
                                     </button>
                                 ))}
                                 <div className="border-t border-slate-100 dark:border-white/5 my-1" />
@@ -1119,15 +1155,21 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                                 {(['critical', 'high'] as FilterType[]).map((filter) => (
                                     <button
                                         key={filter}
-                                        onClick={() => { setFilterType(filter); setShowFilters(false); }}
+                                        onClick={() => {
+                                            setFilterType(filter);
+                                            setShowFilters(false);
+                                        }}
                                         className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
-                                            filterType === filter ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-700 dark:text-slate-300'
+                                            filterType === filter
+                                                ? 'text-purple-600 dark:text-purple-400 font-medium'
+                                                : 'text-slate-700 dark:text-slate-300'
                                         }`}
                                     >
                                         {filter === 'critical' && <Zap size={14} className="text-red-500" />}
                                         {filter === 'high' && <Flag size={14} className="text-orange-500" />}
-                                        {filter === 'critical' ? t('decisions.filterCritical', 'Critical Only') :
-                                         t('decisions.filterHigh', 'High & Critical')}
+                                        {filter === 'critical'
+                                            ? t('decisions.filterCritical', 'Critical Only')
+                                            : t('decisions.filterHigh', 'High & Critical')}
                                     </button>
                                 ))}
                             </div>
@@ -1152,7 +1194,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 <AnimatePresence mode="popLayout">
                     {filteredDecisions.length > 0 ? (
-                        filteredDecisions.map(decision => (
+                        filteredDecisions.map((decision) => (
                             <DecisionCard
                                 key={decision.id}
                                 decision={decision}
@@ -1173,13 +1215,17 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                             {viewMode === 'my' ? (
                                 <>
                                     <CheckCircle2 size={32} className="mx-auto mb-2 text-green-500" />
-                                    <p className="text-sm font-medium">{t('decisions.noMyDecisions', 'No decisions awaiting your action')}</p>
+                                    <p className="text-sm font-medium">
+                                        {t('decisions.noMyDecisions', 'No decisions awaiting your action')}
+                                    </p>
                                     <p className="text-xs">{t('decisions.allCaughtUp', 'All caught up!')}</p>
                                 </>
                             ) : (
                                 <>
                                     <Hourglass size={32} className="mx-auto mb-2 text-slate-400" />
-                                    <p className="text-sm font-medium">{t('decisions.noAwaitingOthers', 'No decisions pending from others')}</p>
+                                    <p className="text-sm font-medium">
+                                        {t('decisions.noAwaitingOthers', 'No decisions pending from others')}
+                                    </p>
                                 </>
                             )}
                         </motion.div>
@@ -1193,7 +1239,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
                 onClose={() => setShowNewModal(false)}
                 onSubmit={handleCreateDecision}
             />
-            
+
             <DelegateModal
                 isOpen={!!delegateDecision}
                 decision={delegateDecision}

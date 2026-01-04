@@ -1,14 +1,14 @@
 /**
  * Request Store
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Middleware to initialize request context with a Correlation ID
  * Uses AsyncLocalStorage for request-scoped context
  */
 
 import { AsyncLocalStorage } from 'async_hooks';
+import type { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import type { Request, Response, NextFunction } from 'express';
 
 // ==========================================
 // TYPES

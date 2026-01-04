@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const client = require('./redisClient');
 
 /**
@@ -19,8 +18,12 @@ class RedisStore {
         const rKey = this.prefix + key;
         try {
             // Check connectivity
-            const redisClient = client as { isOpen?: boolean; incr?: (key: string) => Promise<number>; expire?: (key: string, seconds: number) => Promise<boolean> };
-            
+            const redisClient = client as {
+                isOpen?: boolean;
+                incr?: (key: string) => Promise<number>;
+                expire?: (key: string, seconds: number) => Promise<boolean>;
+            };
+
             if (!redisClient.isOpen) {
                 // Fallback to memory-like behavior (return 1 to allow request but warn)
                 return { totalHits: 1, resetTime: new Date(Date.now() + this.windowMs) };
@@ -34,7 +37,7 @@ class RedisStore {
             const resetTime = new Date(Date.now() + this.windowMs); // Approximate
             return {
                 totalHits: hits,
-                resetTime
+                resetTime,
             };
         } catch (error) {
             console.error('[RateLimit] Redis error:', error);
@@ -69,4 +72,3 @@ class RedisStore {
 }
 
 module.exports = RedisStore;
-

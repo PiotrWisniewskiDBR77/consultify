@@ -1,10 +1,5 @@
-import { ProjectSchema, Project } from '../../schemas/project.schema';
-import {
-    API_URL,
-    getHeaders,
-    fetchWithRetry,
-    handleResponse
-} from '../apiUtils';
+import { Project, ProjectSchema } from '../../schemas/project.schema';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../apiUtils';
 
 export const ProjectService = {
     getProjects: async (): Promise<Project[]> => {
@@ -17,7 +12,7 @@ export const ProjectService = {
         const res = await fetchWithRetry(`${API_URL}/projects`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         const json = await handleResponse(res, 'Failed to create project');
         return ProjectSchema.parse(json);
@@ -26,7 +21,7 @@ export const ProjectService = {
     deleteProject: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/projects/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete project');
     },
@@ -41,7 +36,7 @@ export const ProjectService = {
         const res = await fetchWithRetry(`${API_URL}/projects/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         const json = await handleResponse(res, 'Failed to update project');
         return ProjectSchema.parse(json);
@@ -49,7 +44,7 @@ export const ProjectService = {
 
     getAssessmentReports: async (projectId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/assessment-reports?projectId=${projectId}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await handleResponse(res, 'Failed to list reports');
         return data.reports || [];
@@ -59,14 +54,14 @@ export const ProjectService = {
         const res = await fetchWithRetry(`${API_URL}/assessment-reports`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ assessmentId: projectId, projectId })
+            body: JSON.stringify({ assessmentId: projectId, projectId }),
         });
         return handleResponse(res, 'Failed to generate report');
     },
 
     getAssessmentReport: async (reportId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/assessment-reports/${reportId}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load report');
     },
@@ -74,7 +69,7 @@ export const ProjectService = {
     suggestInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/initiatives/${initiativeId}/tasks/suggest`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to suggest tasks');
     },

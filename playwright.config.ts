@@ -8,7 +8,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     timeout: 60000, // 60 seconds per test
     expect: {
-        timeout: 10000 // 10 seconds for assertions
+        timeout: 10000, // 10 seconds for assertions
     },
     reporter: [['list'], ['junit', { outputFile: 'e2e-results.xml' }]],
     use: {

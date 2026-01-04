@@ -1,9 +1,9 @@
-import db from '../database.js';
 import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
 // Dependency injection container (for deterministic unit tests)
 const deps = {
     db: db,
-    uuidv4
+    uuidv4,
 };
 const GovernanceService = {
     // For testing: allow overriding dependencies
@@ -16,16 +16,24 @@ const GovernanceService = {
     createChangeRequest: (crData) => {
         return new Promise((resolve, reject) => {
             const id = deps.uuidv4();
-            const { projectId, title, description, type, riskAssessment, rationale, impactAnalysis, createdBy, aiAnalysis, aiRecommendedDecision } = crData;
+            const { projectId, title, description, type, riskAssessment, rationale, impactAnalysis, createdBy, aiAnalysis, aiRecommendedDecision, } = crData;
             const sql = `INSERT INTO change_requests (
                 id, project_id, title, description, type, 
                 status, risk_assessment, rationale, impact_analysis,
                 created_by, ai_recommended_decision, ai_analysis
             ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?)`;
             const params = [
-                id, projectId, title, description, type,
-                riskAssessment || 'LOW', rationale, JSON.stringify(impactAnalysis || []),
-                createdBy, aiRecommendedDecision, aiAnalysis
+                id,
+                projectId,
+                title,
+                description,
+                type,
+                riskAssessment || 'LOW',
+                rationale,
+                JSON.stringify(impactAnalysis || []),
+                createdBy,
+                aiRecommendedDecision,
+                aiAnalysis,
             ];
             deps.db.run(sql, params, function (err) {
                 if (err)
@@ -50,7 +58,7 @@ const GovernanceService = {
                 resolve({ id, status, userId });
             });
         });
-    }
+    },
 };
 export default GovernanceService;
 //# sourceMappingURL=governanceService.js.map

@@ -1,21 +1,35 @@
 /**
  * AdminDashboard - Clean Minimalist Dashboard
- * 
+ *
  * Design: Elegant minimalism with monochrome palette and subtle accent
  */
 
-import React, { useState, useEffect } from 'react';
-import { User, Project } from '../../types';
 import {
-    Users, Briefcase, DollarSign, Activity,
-    ArrowUpRight, ArrowDownRight,
-    Plus, Send, Settings, Shield, Calendar, UserPlus,
-    FileText, RefreshCw, X, Clock, MapPin
+    Activity,
+    ArrowDownRight,
+    ArrowUpRight,
+    Briefcase,
+    Calendar,
+    Clock,
+    DollarSign,
+    FileText,
+    MapPin,
+    Plus,
+    RefreshCw,
+    Send,
+    Settings,
+    Shield,
+    UserPlus,
+    Users,
+    X,
 } from 'lucide-react';
-import { InfoButton } from '../../components/shared/InfoButton';
-import { useTranslation } from 'react-i18next';
-import { useAppStore } from '../../store/useAppStore';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
+import { Project, User } from '../../types';
 
 interface AdminDashboardProps {
     users: User[];
@@ -68,13 +82,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
             { name: 'API', status: 'up' },
             { name: 'Database', status: 'up' },
             { name: 'AI Services', status: 'up' },
-            { name: 'Storage', status: 'up' }
-        ]
+            { name: 'Storage', status: 'up' },
+        ],
     });
 
-    const activeUsers = users.filter(u => u.status === 'active').length;
-    const activeProjects = projects.filter(p => p.status === 'active' || !p.status).length;
-    const pendingInvites = users.filter(u => u.status === 'pending').length;
+    const activeUsers = users.filter((u) => u.status === 'active').length;
+    const activeProjects = projects.filter((p) => p.status === 'active' || !p.status).length;
+    const pendingInvites = users.filter((u) => u.status === 'pending').length;
 
     const userGrowth = users.length > 0 ? Math.round((activeUsers / users.length) * 100) - 88 : 0;
     const projectGrowth = projects.length > 0 ? Math.round((activeProjects / projects.length) * 100) - 95 : 0;
@@ -91,7 +105,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
         if (!currentOrganization?.id) return;
         try {
             const response = await fetch(`/api/admin-data/recent-activity/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -105,7 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
     const loadSystemHealth = async () => {
         try {
             const response = await fetch('/api/admin-data/system-health', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -120,7 +134,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
         if (!currentOrganization?.id) return;
         try {
             const response = await fetch(`/api/admin-data/scheduled-events/${currentOrganization.id}?limit=5`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -148,26 +162,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         };
         return start.toLocaleDateString('en-US', options);
     };
 
     const getEventTypeColor = (type: string) => {
         switch (type) {
-            case 'meeting': return 'bg-blue-500/20 text-blue-400';
-            case 'deadline': return 'bg-red-500/20 text-red-400';
-            case 'milestone': return 'bg-purple-500/20 text-purple-400';
-            case 'review': return 'bg-amber-500/20 text-amber-400';
-            default: return 'bg-slate-500/20 text-slate-400';
+            case 'meeting':
+                return 'bg-blue-500/20 text-blue-400';
+            case 'deadline':
+                return 'bg-red-500/20 text-red-400';
+            case 'milestone':
+                return 'bg-purple-500/20 text-purple-400';
+            case 'review':
+                return 'bg-amber-500/20 text-amber-400';
+            default:
+                return 'bg-slate-500/20 text-slate-400';
         }
     };
 
     const quickActions = [
-        { icon: UserPlus, label: t('admin.dashboard.inviteUser', 'Invite User'), action: () => { } },
-        { icon: Plus, label: t('admin.dashboard.createProject', 'New Project'), action: () => { } },
-        { icon: FileText, label: t('admin.dashboard.viewReports', 'View Reports'), action: () => { } },
-        { icon: Settings, label: t('admin.dashboard.settings', 'Settings'), action: () => { } },
+        { icon: UserPlus, label: t('admin.dashboard.inviteUser', 'Invite User'), action: () => {} },
+        { icon: Plus, label: t('admin.dashboard.createProject', 'New Project'), action: () => {} },
+        { icon: FileText, label: t('admin.dashboard.viewReports', 'View Reports'), action: () => {} },
+        { icon: Settings, label: t('admin.dashboard.settings', 'Settings'), action: () => {} },
     ];
 
     const getStatusColor = (status: string) => {
@@ -190,11 +209,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                         {t('admin.dashboard.overview', "Here's what's happening with your organization")}
                     </p>
                 </div>
-                <button
-                    onClick={handleRefresh}
-                    disabled={loading}
-                    className="admin-btn admin-btn-subtle"
-                >
+                <button onClick={handleRefresh} disabled={loading} className="admin-btn admin-btn-subtle">
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     {t('common.refresh', 'Refresh')}
                 </button>
@@ -207,12 +222,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Users size={14} className="text-slate-500" />
-                            <span className="admin-metric-label">
-                                {t('admin.dashboard.totalUsers', 'Total Users')}
-                            </span>
+                            <span className="admin-metric-label">{t('admin.dashboard.totalUsers', 'Total Users')}</span>
                         </div>
                         {userGrowth !== 0 && (
-                            <span className={`flex items-center gap-0.5 text-xs ${userGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <span
+                                className={`flex items-center gap-0.5 text-xs ${userGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                            >
                                 {userGrowth >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                                 {Math.abs(userGrowth)}%
                             </span>
@@ -232,7 +247,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                             </span>
                         </div>
                         {projectGrowth !== 0 && (
-                            <span className={`flex items-center gap-0.5 text-xs ${projectGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <span
+                                className={`flex items-center gap-0.5 text-xs ${projectGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                            >
                                 {projectGrowth >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                                 {Math.abs(projectGrowth)}%
                             </span>
@@ -258,9 +275,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                 <div className="admin-metric">
                     <div className="flex items-center gap-2">
                         <DollarSign size={14} className="text-slate-500" />
-                        <span className="admin-metric-label">
-                            {t('admin.dashboard.estRevenue', 'Est. Revenue')}
-                        </span>
+                        <span className="admin-metric-label">{t('admin.dashboard.estRevenue', 'Est. Revenue')}</span>
                     </div>
                     <p className="admin-metric-value">$0.00</p>
                     <p className="admin-metric-subtitle">this month</p>
@@ -269,9 +284,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
 
             {/* Quick Actions - Minimal style */}
             <div className="admin-card p-4">
-                <h3 className="admin-section-title mb-4">
-                    {t('admin.dashboard.quickActions', 'Quick Actions')}
-                </h3>
+                <h3 className="admin-section-title mb-4">{t('admin.dashboard.quickActions', 'Quick Actions')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {quickActions.map((action, idx) => (
                         <button
@@ -302,12 +315,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                     <div className="space-y-2">
                         {recentActivity.length > 0 ? (
                             recentActivity.slice(0, 5).map((activity) => (
-                                <div key={activity.id} className="flex items-start gap-3 p-2 hover:bg-white/[0.02] rounded-lg transition-colors">
+                                <div
+                                    key={activity.id}
+                                    className="flex items-start gap-3 p-2 hover:bg-white/[0.02] rounded-lg transition-colors"
+                                >
                                     <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center flex-shrink-0 mt-0.5">
                                         <Activity size={12} className="text-slate-500" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-navy-900 dark:text-slate-300 truncate">{activity.description}</p>
+                                        <p className="text-sm text-navy-900 dark:text-slate-300 truncate">
+                                            {activity.description}
+                                        </p>
                                         <p className="text-xs text-slate-600 dark:text-slate-600 mt-0.5">
                                             {activity.user} · {activity.timestamp}
                                         </p>
@@ -339,17 +357,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                     <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="p-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg">
                             <p className="text-xs text-slate-500">{t('admin.dashboard.uptime', 'Uptime')}</p>
-                            <p className="text-lg font-medium text-navy-900 dark:text-white mt-0.5">{systemHealth.uptime}</p>
+                            <p className="text-lg font-medium text-navy-900 dark:text-white mt-0.5">
+                                {systemHealth.uptime}
+                            </p>
                         </div>
                         <div className="p-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg">
                             <p className="text-xs text-slate-500">{t('admin.dashboard.lastCheck', 'Last Check')}</p>
-                            <p className="text-lg font-medium text-navy-900 dark:text-white mt-0.5">{systemHealth.lastCheck}</p>
+                            <p className="text-lg font-medium text-navy-900 dark:text-white mt-0.5">
+                                {systemHealth.lastCheck}
+                            </p>
                         </div>
                     </div>
 
                     <div className="space-y-1">
                         {systemHealth.services.map((service, idx) => (
-                            <div key={idx} className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg">
+                            <div
+                                key={idx}
+                                className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg"
+                            >
                                 <span className="text-sm text-slate-600 dark:text-slate-400">{service.name}</span>
                                 <span className={`admin-status ${getStatusColor(service.status)}`}>
                                     <span className="admin-status-dot" />
@@ -375,14 +400,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                 {upcomingEvents.length > 0 ? (
                     <div className="space-y-2">
                         {upcomingEvents.map((event) => (
-                            <div key={event.id} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-lg transition-colors">
-                                <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getEventTypeColor(event.eventType)}`}>
+                            <div
+                                key={event.id}
+                                className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-lg transition-colors"
+                            >
+                                <div
+                                    className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getEventTypeColor(event.eventType)}`}
+                                >
                                     <Calendar size={14} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-navy-900 dark:text-white truncate">{event.title}</p>
-                                        <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-medium ${getEventTypeColor(event.eventType)}`}>
+                                        <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                                            {event.title}
+                                        </p>
+                                        <span
+                                            className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-medium ${getEventTypeColor(event.eventType)}`}
+                                        >
                                             {event.eventType}
                                         </span>
                                     </div>
@@ -399,9 +433,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                                         )}
                                     </div>
                                     {event.projectName && (
-                                        <p className="text-xs text-slate-400 mt-1">
-                                            Project: {event.projectName}
-                                        </p>
+                                        <p className="text-xs text-slate-400 mt-1">Project: {event.projectName}</p>
                                     )}
                                 </div>
                             </div>
@@ -418,10 +450,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
                     <div className="text-center py-8 text-slate-600">
                         <Calendar size={24} className="mx-auto mb-2 opacity-50" />
                         <p className="text-sm">{t('admin.dashboard.noEvents', 'No upcoming events')}</p>
-                        <button
-                            onClick={() => setShowScheduleModal(true)}
-                            className="mt-3 admin-btn admin-btn-subtle"
-                        >
+                        <button onClick={() => setShowScheduleModal(true)} className="mt-3 admin-btn admin-btn-subtle">
                             {t('admin.dashboard.scheduleEvent', 'Schedule Event')}
                         </button>
                     </div>
@@ -462,7 +491,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
         endTime: '',
         location: '',
         isAllDay: false,
-        projectId: ''
+        projectId: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -474,13 +503,13 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
             const response = await fetch(`/api/admin-data/scheduled-events/${currentOrganization.id}`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     ...formData,
-                    projectId: formData.projectId || null
-                })
+                    projectId: formData.projectId || null,
+                }),
             });
 
             if (response.ok) {
@@ -519,7 +548,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                             type="text"
                             required
                             value={formData.title}
-                            onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                             placeholder="e.g., Team Standup, Project Review..."
                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                         />
@@ -532,7 +561,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                         </label>
                         <select
                             value={formData.eventType}
-                            onChange={e => setFormData(prev => ({ ...prev, eventType: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, eventType: e.target.value }))}
                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                         >
                             <option value="meeting">Meeting</option>
@@ -553,7 +582,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                                 type="datetime-local"
                                 required
                                 value={formData.startTime}
-                                onChange={e => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, startTime: e.target.value }))}
                                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                             />
                         </div>
@@ -564,7 +593,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                             <input
                                 type="datetime-local"
                                 value={formData.endTime}
-                                onChange={e => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, endTime: e.target.value }))}
                                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                             />
                         </div>
@@ -575,7 +604,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                         <input
                             type="checkbox"
                             checked={formData.isAllDay}
-                            onChange={e => setFormData(prev => ({ ...prev, isAllDay: e.target.checked }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, isAllDay: e.target.checked }))}
                             className="form-checkbox h-4 w-4 text-indigo-600"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">All day event</span>
@@ -589,7 +618,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                         <input
                             type="text"
                             value={formData.location}
-                            onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                             placeholder="e.g., Conference Room A, Zoom link..."
                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                         />
@@ -602,12 +631,14 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                         </label>
                         <select
                             value={formData.projectId}
-                            onChange={e => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, projectId: e.target.value }))}
                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                         >
                             <option value="">No project</option>
-                            {projects.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
+                            {projects.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -619,7 +650,7 @@ const ScheduleEventModal: React.FC<ScheduleEventModalProps> = ({ onClose, onSucc
                         </label>
                         <textarea
                             value={formData.description}
-                            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                             placeholder="Add details about this event..."
                             rows={3}
                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white resize-none"

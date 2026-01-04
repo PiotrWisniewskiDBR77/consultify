@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { CheckCircle, Eye, EyeOff, Lock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 export function ResetPasswordView() {
@@ -49,7 +50,9 @@ export function ResetPasswordView() {
                         <CheckCircle className="text-green-500" size={32} />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-2">Password Reset!</h2>
-                    <p className="text-slate-400 mb-6">Your password has been successfully updated. Redirecting to login...</p>
+                    <p className="text-slate-400 mb-6">
+                        Your password has been successfully updated. Redirecting to login...
+                    </p>
                     <button
                         onClick={() => navigate('/login')}
                         className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
@@ -77,14 +80,16 @@ export function ResetPasswordView() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">New Password</label>
+                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                            New Password
+                        </label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-3 text-slate-500" size={18} />
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type={showPassword ? 'text' : 'password'}
                                 required
                                 value={newPassword}
-                                onChange={e => setNewPassword(e.target.value)}
+                                onChange={(e) => setNewPassword(e.target.value)}
                                 className="w-full bg-navy-950 border border-white/10 rounded-lg py-2.5 pl-10 pr-10 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600"
                                 placeholder="••••••••"
                             />
@@ -99,14 +104,16 @@ export function ResetPasswordView() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Confirm Password</label>
+                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                            Confirm Password
+                        </label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-3 text-slate-500" size={18} />
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type={showPassword ? 'text' : 'password'}
                                 required
                                 value={confirmPassword}
-                                onChange={e => setConfirmPassword(e.target.value)}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="w-full bg-navy-950 border border-white/10 rounded-lg py-2.5 pl-10 pr-10 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600"
                                 placeholder="••••••••"
                             />
@@ -122,7 +129,11 @@ export function ResetPasswordView() {
                     </button>
 
                     <div className="text-center">
-                        <button type="button" onClick={() => navigate('/login')} className="text-sm text-slate-400 hover:text-white transition-colors">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/login')}
+                            className="text-sm text-slate-400 hover:text-white transition-colors"
+                        >
                             Back to Login
                         </button>
                     </div>

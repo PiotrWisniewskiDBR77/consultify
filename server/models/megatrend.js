@@ -2,7 +2,7 @@
 // Provides data access for Megatrend Scanner module
 // Uses the existing SQLite/Postgres db abstraction (db.get, db.all, db.run)
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // Default megatrends data for common industries (fallback when DB is empty)

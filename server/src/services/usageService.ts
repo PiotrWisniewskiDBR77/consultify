@@ -1,14 +1,15 @@
 /**
  * Usage Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/usageService.js (CommonJS) to TypeScript (ES Modules)
  * Handles token and storage usage tracking, quota enforcement, and overage calculation
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -184,10 +185,10 @@ export async function recordTokenUsage(
     userId: string,
     tokens: number,
     action: string,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
 ): Promise<UsageRecordResult> {
     await initDeps();
-    
+
     // Check budget limits before recording usage
     try {
         const budgetCheck = await budgetManagementService.checkBudgetLimit(orgId, userId, null, 'tokens', tokens);
@@ -205,7 +206,7 @@ export async function recordTokenUsage(
         db,
         `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
          VALUES (?, ?, ?, 'token', ?, ?, ?)`,
-        [id, orgId, userId, tokens, action, JSON.stringify(metadata)]
+        [id, orgId, userId, tokens, action, JSON.stringify(metadata)],
     );
 
     // Record PAYG usage if billing model is PAYG
@@ -214,7 +215,15 @@ export async function recordTokenUsage(
         if (billingModel.billingModel === 'pay_as_you_go' || billingModel.billingModel === 'hybrid') {
             const costCalc = await payAsYouGoService.calculateUsageCost(orgId, 'tokens', tokens);
             if (costCalc.cost > 0) {
-                await payAsYouGoService.recordUsage(orgId, 'tokens', tokens, costCalc.unitPrice, metadata, userId, null);
+                await payAsYouGoService.recordUsage(
+                    orgId,
+                    'tokens',
+                    tokens,
+                    costCalc.unitPrice,
+                    metadata,
+                    userId,
+                    null,
+                );
             }
         }
     } catch (paygErr) {
@@ -232,7 +241,7 @@ export async function recordStorageUsage(
     orgId: string,
     bytes: number,
     action: string,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
 ): Promise<UsageRecordResult> {
     await initDeps();
     const gb = bytes / (1024 * 1024 * 1024);
@@ -253,7 +262,7 @@ export async function recordStorageUsage(
         db,
         `INSERT INTO usage_records (id, organization_id, user_id, type, amount, action, metadata)
          VALUES (?, ?, NULL, 'storage', ?, ?, ?)`,
-        [id, orgId, bytes, action, JSON.stringify(metadata)]
+        [id, orgId, bytes, action, JSON.stringify(metadata)],
     );
 
     // Record PAYG usage if billing model is PAYG
@@ -279,9 +288,7 @@ export async function recordStorageUsage(
 export async function getCurrentUsage(orgId: string): Promise<CurrentUsageResult> {
     await initDeps();
     const billing = await billingService.getOrganizationBilling(orgId);
-    const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
-        : null;
+    const plan = billing?.subscription_plan_id ? await billingService.getPlanById(billing.subscription_plan_id) : null;
 
     // Default period: current month
     const now = new Date();
@@ -296,7 +303,7 @@ export async function getCurrentUsage(orgId: string): Promise<CurrentUsageResult
             COALESCE(SUM(CASE WHEN type = 'storage' THEN amount ELSE 0 END), 0) as storage_bytes
          FROM usage_records
          WHERE organization_id = ?`,
-        [periodStart.toISOString(), orgId]
+        [periodStart.toISOString(), orgId],
     );
 
     const tokenLimit = plan?.token_limit || 0;
@@ -310,7 +317,7 @@ export async function getCurrentUsage(orgId: string): Promise<CurrentUsageResult
             used: row?.tokens_used || 0,
             limit: tokenLimit,
             remaining: Math.max(0, tokenLimit - (row?.tokens_used || 0)),
-            percentage: tokenLimit > 0 ? Math.round(((row?.tokens_used || 0) / tokenLimit) * 100) : 0
+            percentage: tokenLimit > 0 ? Math.round(((row?.tokens_used || 0) / tokenLimit) * 100) : 0,
         },
         storage: {
             used: storageUsed,
@@ -318,11 +325,11 @@ export async function getCurrentUsage(orgId: string): Promise<CurrentUsageResult
             remaining: Math.max(0, storageLimit - storageUsed),
             usedGB: storageUsed / (1024 * 1024 * 1024),
             limitGB: plan?.storage_limit_gb || 0,
-            percentage: storageLimit > 0 ? Math.round((storageUsed / storageLimit) * 100) : 0
+            percentage: storageLimit > 0 ? Math.round((storageUsed / storageLimit) * 100) : 0,
         },
         plan: plan?.name || 'Free',
         periodStart,
-        periodEnd: billing?.current_period_end ? new Date(billing.current_period_end) : null
+        periodEnd: billing?.current_period_end ? new Date(billing.current_period_end) : null,
     };
 }
 
@@ -333,9 +340,7 @@ export async function checkQuota(orgId: string, type: 'token' | 'storage' = 'tok
     await initDeps();
     const usage = await getCurrentUsage(orgId);
     const billing = await billingService.getOrganizationBilling(orgId);
-    const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
-        : null;
+    const plan = billing?.subscription_plan_id ? await billingService.getPlanById(billing.subscription_plan_id) : null;
 
     const quotaData = type === 'token' ? usage.tokens : usage.storage;
 
@@ -352,19 +357,21 @@ export async function checkQuota(orgId: string, type: 'token' | 'storage' = 'tok
         remaining: quotaData.remaining,
         percentage: quotaData.percentage,
         overageEnabled,
-        overageRate: type === 'token' ? plan?.token_overage_rate : plan?.storage_overage_rate
+        overageRate: type === 'token' ? plan?.token_overage_rate : plan?.storage_overage_rate,
     };
 }
 
 /**
  * Calculate overage charges for a billing period
  */
-export async function calculateOverage(orgId: string, periodStart: Date, periodEnd: Date): Promise<OverageCalculationResult> {
+export async function calculateOverage(
+    orgId: string,
+    periodStart: Date,
+    periodEnd: Date,
+): Promise<OverageCalculationResult> {
     await initDeps();
     const billing = await billingService.getOrganizationBilling(orgId);
-    const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
-        : null;
+    const plan = billing?.subscription_plan_id ? await billingService.getPlanById(billing.subscription_plan_id) : null;
 
     if (!plan) {
         return {
@@ -376,7 +383,7 @@ export async function calculateOverage(orgId: string, periodStart: Date, periodE
             storageLimit: 0,
             storageOverageGB: 0,
             storageOverage: 0,
-            totalOverage: 0
+            totalOverage: 0,
         };
     }
 
@@ -387,14 +394,14 @@ export async function calculateOverage(orgId: string, periodStart: Date, periodE
             COALESCE(MAX(CASE WHEN type = 'storage' THEN amount ELSE 0 END), 0) as storage_peak
          FROM usage_records
          WHERE organization_id = ? AND recorded_at >= ? AND recorded_at < ?`,
-        [orgId, periodStart.toISOString(), periodEnd.toISOString()]
+        [orgId, periodStart.toISOString(), periodEnd.toISOString()],
     );
 
     const tokensUsed = row?.tokens_used || 0;
     const storagePeak = row?.storage_peak || 0;
 
     const tokenOverageAmount = Math.max(0, tokensUsed - (plan.token_limit || 0));
-    const storageOverageGB = Math.max(0, (storagePeak / (1024 * 1024 * 1024)) - (plan.storage_limit_gb || 0));
+    const storageOverageGB = Math.max(0, storagePeak / (1024 * 1024 * 1024) - (plan.storage_limit_gb || 0));
 
     // Calculate charges (rate is per 1K tokens, per GB storage)
     const tokenOverage = (tokenOverageAmount / 1000) * (plan.token_overage_rate || 0);
@@ -409,23 +416,24 @@ export async function calculateOverage(orgId: string, periodStart: Date, periodE
         storageLimit: plan.storage_limit_gb || 0,
         storageOverageGB,
         storageOverage: Math.round(storageOverage * 100) / 100,
-        totalOverage: Math.round((tokenOverage + storageOverage) * 100) / 100
+        totalOverage: Math.round((tokenOverage + storageOverage) * 100) / 100,
     };
 }
 
 /**
  * Create or update monthly usage summary
  */
-export async function updateUsageSummary(orgId: string, periodStart: Date): Promise<OverageCalculationResult & { id: string }> {
+export async function updateUsageSummary(
+    orgId: string,
+    periodStart: Date,
+): Promise<OverageCalculationResult & { id: string }> {
     await initDeps();
     const periodEnd = new Date(periodStart);
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
     const overage = await calculateOverage(orgId, periodStart, periodEnd);
     const billing = await billingService.getOrganizationBilling(orgId);
-    const plan = billing?.subscription_plan_id
-        ? await billingService.getPlanById(billing.subscription_plan_id)
-        : null;
+    const plan = billing?.subscription_plan_id ? await billingService.getPlanById(billing.subscription_plan_id) : null;
 
     const id = `summary-${uuidv4()}`;
 
@@ -440,11 +448,18 @@ export async function updateUsageSummary(orgId: string, periodStart: Date): Prom
          storage_gb_overage = excluded.storage_gb_overage,
          overage_amount = excluded.overage_amount`,
         [
-            id, orgId, periodStart.toISOString(), periodEnd.toISOString(),
-            overage.tokensUsed, plan?.token_limit || 0,
-            overage.tokenOverageAmount, overage.storagePeakGB * 1024 * 1024 * 1024,
-            plan?.storage_limit_gb || 0, overage.storageOverageGB, overage.totalOverage
-        ]
+            id,
+            orgId,
+            periodStart.toISOString(),
+            periodEnd.toISOString(),
+            overage.tokensUsed,
+            plan?.token_limit || 0,
+            overage.tokenOverageAmount,
+            overage.storagePeakGB * 1024 * 1024 * 1024,
+            plan?.storage_limit_gb || 0,
+            overage.storageOverageGB,
+            overage.totalOverage,
+        ],
     );
 
     return { id, ...overage };
@@ -461,7 +476,7 @@ export async function getUsageHistory(orgId: string, limit: number = 12): Promis
          WHERE organization_id = ? 
          ORDER BY period_start DESC 
          LIMIT ?`,
-        [orgId, limit]
+        [orgId, limit],
     );
 
     return rows || [];
@@ -483,7 +498,7 @@ export async function getGlobalUsageStats(): Promise<GlobalUsageStats> {
             COUNT(DISTINCT organization_id) as active_orgs
          FROM usage_records
          WHERE recorded_at >= ?`,
-        [monthStart.toISOString()]
+        [monthStart.toISOString()],
     );
 
     return {
@@ -491,20 +506,23 @@ export async function getGlobalUsageStats(): Promise<GlobalUsageStats> {
         totalStorageBytes: row?.total_storage || 0,
         totalStorageGB: (row?.total_storage || 0) / (1024 * 1024 * 1024),
         activeOrganizations: row?.active_orgs || 0,
-        periodStart: monthStart
+        periodStart: monthStart,
     };
 }
 
 /**
  * Record project-level storage usage
  */
-export async function recordProjectStorageUsage(projectId: string, bytes: number, action: string): Promise<{ projectId: string; bytes: number }> {
+export async function recordProjectStorageUsage(
+    projectId: string,
+    bytes: number,
+    _action: string,
+): Promise<{ projectId: string; bytes: number }> {
     await initDeps();
-    await DbPromise.run(
-        db,
-        `UPDATE projects SET storage_used_bytes = storage_used_bytes + ? WHERE id = ?`,
-        [bytes, projectId]
-    );
+    await DbPromise.run(db, `UPDATE projects SET storage_used_bytes = storage_used_bytes + ? WHERE id = ?`, [
+        bytes,
+        projectId,
+    ]);
 
     return { projectId, bytes };
 }
@@ -517,7 +535,7 @@ export async function checkProjectQuota(projectId: string): Promise<ProjectQuota
     const row = await DbPromise.get<ProjectRow>(
         db,
         `SELECT storage_limit_gb, storage_used_bytes FROM projects WHERE id = ?`,
-        [projectId]
+        [projectId],
     );
 
     if (!row) {
@@ -538,7 +556,7 @@ export async function checkProjectQuota(projectId: string): Promise<ProjectQuota
         remaining,
         limit: limitBytes,
         used: usedBytes,
-        percentage: limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0
+        percentage: limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0,
     };
 }
 
@@ -547,7 +565,7 @@ export async function checkProjectQuota(projectId: string): Promise<ProjectQuota
  */
 export async function getOperationalCosts(startDate?: Date, endDate?: Date): Promise<OperationalCostsResult> {
     await initDeps();
-    
+
     // Default to last 30 days if no dates provided
     const end = endDate ? new Date(endDate) : new Date();
     const start = startDate ? new Date(startDate) : new Date(new Date().setDate(end.getDate() - 30));
@@ -562,19 +580,19 @@ export async function getOperationalCosts(startDate?: Date, endDate?: Date): Pro
         AND u.recorded_at >= ? 
         AND u.recorded_at <= ?
         GROUP BY u.metadata`,
-        [start.toISOString(), end.toISOString()]
+        [start.toISOString(), end.toISOString()],
     );
 
     // Fetch current provider costs to calculate estimated spend
     const providers = await DbPromise.all<LLMProviderRow>(
         db,
         'SELECT provider, model_id, cost_per_1k FROM llm_providers',
-        []
+        [],
     );
 
     // Create a lookup map for costs: "provider:model" -> cost
     const costMap: Record<string, number> = {};
-    providers.forEach(p => {
+    providers.forEach((p) => {
         costMap[`${p.provider}:${p.model_id}`] = p.cost_per_1k || 0;
     });
 
@@ -597,7 +615,7 @@ export async function getOperationalCosts(startDate?: Date, endDate?: Date): Pro
                 provider,
                 model,
                 totalTokens: 0,
-                cost: 0
+                cost: 0,
             };
         }
 
@@ -610,9 +628,8 @@ export async function getOperationalCosts(startDate?: Date, endDate?: Date): Pro
 
         let costPer1k = 0;
 
-        const matchedProvider = providers.find(p =>
-            (p.provider === provider && p.model_id === cleanModelId) ||
-            (`${p.provider}:${p.model_id}` === model)
+        const matchedProvider = providers.find(
+            (p) => (p.provider === provider && p.model_id === cleanModelId) || `${p.provider}:${p.model_id}` === model,
         );
 
         if (matchedProvider) {
@@ -628,7 +645,7 @@ export async function getOperationalCosts(startDate?: Date, endDate?: Date): Pro
     return {
         period: { start, end },
         items: results,
-        totalCost: results.reduce((sum, item) => sum + item.cost, 0)
+        totalCost: results.reduce((sum, item) => sum + item.cost, 0),
     };
 }
 
@@ -645,7 +662,7 @@ const UsageService = {
     recordProjectStorageUsage,
     checkProjectQuota,
     setDependencies,
-    getOperationalCosts
+    getOperationalCosts,
 };
 
 export default UsageService;

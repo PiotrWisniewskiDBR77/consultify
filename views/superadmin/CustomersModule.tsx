@@ -1,20 +1,35 @@
 /**
  * CustomersModule - Customer Management
- * 
+ *
  * Tabs: Organizations | Users | Lifecycle | Playbooks | Contracts | Security | Support & CS | Feedback | Analytics | Compliance | Automation | Communication | Bulk Ops
  */
 
-import React, { useState, useEffect } from 'react';
-import { Building2, Users, MessageSquare, Upload, Shield, HeadphonesIcon, BarChart3, FileCheck, Zap, Mail, RefreshCw, BookOpen, FileText } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { OrganizationsView } from './OrganizationsView';
-import { SuperAdminUserManagement } from './SuperAdminUserManagement';
-import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
-import { BulkOperationsView } from '../admin/BulkOperationsView';
-import { SecurityModuleView } from './security/SecurityModuleView';
-import { SupportModuleView } from './support/SupportModuleView';
-import { CustomerLifecycleView, CustomerSuccessPlaybooksView, ContractManagementView } from './customers';
+import {
+    BarChart3,
+    BookOpen,
+    Building2,
+    FileCheck,
+    FileText,
+    HeadphonesIcon,
+    Mail,
+    MessageSquare,
+    RefreshCw,
+    Shield,
+    Upload,
+    Users,
+    Zap,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
+import { BulkOperationsView } from '../admin/BulkOperationsView';
+import { ContractManagementView, CustomerLifecycleView, CustomerSuccessPlaybooksView } from './customers';
+import { OrganizationsView } from './OrganizationsView';
+import { SecurityModuleView } from './security/SecurityModuleView';
+import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
+import { SuperAdminUserManagement } from './SuperAdminUserManagement';
+import { SupportModuleView } from './support/SupportModuleView';
 
 interface CustomersModuleProps {
     initialTab?: string;
@@ -148,4 +163,3 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
 };
 
 export default CustomersModule;
-

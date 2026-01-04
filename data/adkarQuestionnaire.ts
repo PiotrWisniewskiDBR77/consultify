@@ -19,28 +19,28 @@ export const ADKAR_QUESTIONNAIRE: ADKARDimension[] = [
     {
         id: 'awareness',
         name: 'Awareness',
-        description: 'Understanding of why change is needed'
+        description: 'Understanding of why change is needed',
     },
     {
         id: 'desire',
         name: 'Desire',
-        description: 'Personal motivation to support the change'
+        description: 'Personal motivation to support the change',
     },
     {
         id: 'knowledge',
         name: 'Knowledge',
-        description: 'Information about how to change'
+        description: 'Information about how to change',
     },
     {
         id: 'ability',
         name: 'Ability',
-        description: 'Skills and behaviors to implement change'
+        description: 'Skills and behaviors to implement change',
     },
     {
         id: 'reinforcement',
         name: 'Reinforcement',
-        description: 'Sustaining the change over time'
-    }
+        description: 'Sustaining the change over time',
+    },
 ];
 
 // Questionnaire structure (simplified)
@@ -54,5 +54,5 @@ export const ADKAR_QUESTIONS: ADKARQuestion[] = [
     { id: 'ability_1', text: 'Do employees have the skills to execute change?', dimension: 'ability' },
     { id: 'ability_2', text: 'Are resources available to support new ways of working?', dimension: 'ability' },
     { id: 'reinforcement_1', text: 'Are there mechanisms to sustain change?', dimension: 'reinforcement' },
-    { id: 'reinforcement_2', text: 'Is success celebrated and recognized?', dimension: 'reinforcement' }
+    { id: 'reinforcement_2', text: 'Is success celebrated and recognized?', dimension: 'reinforcement' },
 ];

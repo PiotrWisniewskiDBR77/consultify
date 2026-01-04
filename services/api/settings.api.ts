@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - User & System Settings
  */
 
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export interface Integration {
     id: string;
@@ -27,7 +27,7 @@ export const SettingsApi = {
     // ==========================================
     // SYSTEM SETTINGS
     // ==========================================
-    
+
     getSystemSettings: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/settings`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch settings');
@@ -38,7 +38,7 @@ export const SettingsApi = {
         const res = await fetch(`${API_URL}/settings`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ key, value })
+            body: JSON.stringify({ key, value }),
         });
         if (!res.ok) throw new Error('Failed to save setting');
     },
@@ -46,9 +46,11 @@ export const SettingsApi = {
     // ==========================================
     // INTEGRATIONS
     // ==========================================
-    
+
     getIntegrations: async (organizationId: string): Promise<Integration[]> => {
-        const res = await fetchWithRetry(`${API_URL}/settings/integrations?organizationId=${organizationId}`, { headers: getHeaders() });
+        const res = await fetchWithRetry(`${API_URL}/settings/integrations?organizationId=${organizationId}`, {
+            headers: getHeaders(),
+        });
         if (!res.ok) return [];
         return res.json();
     },
@@ -57,7 +59,7 @@ export const SettingsApi = {
         const res = await fetchWithRetry(`${API_URL}/settings/integrations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(integration)
+            body: JSON.stringify(integration),
         });
         return handleResponse(res, 'Failed to save integration');
     },
@@ -65,7 +67,7 @@ export const SettingsApi = {
     deleteIntegration: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/settings/integrations/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete integration');
     },
@@ -73,7 +75,7 @@ export const SettingsApi = {
     // ==========================================
     // WEBHOOKS
     // ==========================================
-    
+
     getWebhooks: async (): Promise<Webhook[]> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/webhooks`, { headers: getHeaders() });
         const data = await handleResponse<{ webhooks: Webhook[] }>(res, 'Failed to fetch webhooks');
@@ -84,7 +86,7 @@ export const SettingsApi = {
         const res = await fetchWithRetry(`${API_URL}/integrations/webhooks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(webhook)
+            body: JSON.stringify(webhook),
         });
         return handleResponse(res, 'Failed to create webhook');
     },
@@ -93,7 +95,7 @@ export const SettingsApi = {
         const res = await fetchWithRetry(`${API_URL}/integrations/webhooks/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update webhook');
     },
@@ -101,7 +103,7 @@ export const SettingsApi = {
     deleteWebhook: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/webhooks/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete webhook');
     },
@@ -109,7 +111,7 @@ export const SettingsApi = {
     // ==========================================
     // API KEYS
     // ==========================================
-    
+
     getUserApiKeys: async (): Promise<unknown[]> => {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys`, { headers: getHeaders() });
         const data = await handleResponse<{ keys: unknown[] }>(res, 'Failed to fetch API keys');
@@ -120,7 +122,7 @@ export const SettingsApi = {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ name, scopes })
+            body: JSON.stringify({ name, scopes }),
         });
         return handleResponse(res, 'Failed to create API key');
     },
@@ -128,7 +130,7 @@ export const SettingsApi = {
     deleteUserApiKey: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete API key');
     },
@@ -142,7 +144,7 @@ export const SettingsApi = {
     rotateApiKey: async (keyId: string): Promise<unknown> => {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}/rotate`, {
             method: 'PUT',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to rotate API key');
     },
@@ -151,10 +153,8 @@ export const SettingsApi = {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update API key');
-    }
+    },
 };
-
-

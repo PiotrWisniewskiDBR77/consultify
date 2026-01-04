@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
-import { AppState } from '../useAppStore';
+
 import { ChatMessage } from '../../types';
+import { AppState } from '../useAppStore';
 
 export interface ChatSlice {
     activeChatMessages: ChatMessage[];
@@ -55,141 +56,150 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
         maxMode: false,
         multiModel: false,
         selectedModelId: null,
-        selectedTier: 'BUDGET'
+        selectedTier: 'BUDGET',
     },
 
     aiFreezeStatus: {
         isFrozen: false,
         reason: null,
-        scope: null
+        scope: null,
     },
 
-    setAIConfig: (newConfig) => set((state) => ({
-        aiConfig: { ...state.aiConfig, ...newConfig }
-    })),
+    setAIConfig: (newConfig) =>
+        set((state) => ({
+            aiConfig: { ...state.aiConfig, ...newConfig },
+        })),
 
-    setAiFreezeStatus: (status) => set((state) => ({
-        aiFreezeStatus: { ...state.aiFreezeStatus, ...status }
-    })),
+    setAiFreezeStatus: (status) =>
+        set((state) => ({
+            aiFreezeStatus: { ...state.aiFreezeStatus, ...status },
+        })),
 
     setIsBotTyping: (isTyping) => set({ isBotTyping: isTyping }),
     setCurrentStreamContent: (content) => set({ currentStreamContent: content }),
 
-    addChatMessage: (message) => set((state) => {
-        const MAX_MESSAGES = 100;
-        const newMessages = [...state.activeChatMessages, message].slice(-MAX_MESSAGES);
-        const projectKey = state.currentProjectId || 'global';
+    addChatMessage: (message) =>
+        set((state) => {
+            const MAX_MESSAGES = 100;
+            const newMessages = [...state.activeChatMessages, message].slice(-MAX_MESSAGES);
+            const projectKey = state.currentProjectId || 'global';
 
-        return {
-            activeChatMessages: newMessages,
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: newMessages
-            }
-        };
-    }),
+            return {
+                activeChatMessages: newMessages,
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: newMessages,
+                },
+            };
+        }),
 
-    setChatMessages: (messages) => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        const trimmedMessages = messages.slice(-100);
-        return {
-            activeChatMessages: trimmedMessages,
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: trimmedMessages
-            }
-        };
-    }),
+    setChatMessages: (messages) =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            const trimmedMessages = messages.slice(-100);
+            return {
+                activeChatMessages: trimmedMessages,
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: trimmedMessages,
+                },
+            };
+        }),
 
-    clearChat: () => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        return {
-            activeChatMessages: [],
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: []
-            }
-        };
-    }),
+    clearChat: () =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            return {
+                activeChatMessages: [],
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: [],
+                },
+            };
+        }),
 
     // Project Chat Management
-    loadProjectChat: () => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        const messages = state.projectChatMessages[projectKey] || [];
-        return { activeChatMessages: messages };
-    }),
+    loadProjectChat: () =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            const messages = state.projectChatMessages[projectKey] || [];
+            return { activeChatMessages: messages };
+        }),
 
-    saveProjectChat: () => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        const MAX_MESSAGES = 100;
-        const trimmedMessages = state.activeChatMessages.slice(-MAX_MESSAGES);
-        return {
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: trimmedMessages
-            }
-        };
-    }),
+    saveProjectChat: () =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            const MAX_MESSAGES = 100;
+            const trimmedMessages = state.activeChatMessages.slice(-MAX_MESSAGES);
+            return {
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: trimmedMessages,
+                },
+            };
+        }),
 
-    editChatMessage: (messageId, newContent) => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        const messages = state.activeChatMessages.map(msg =>
-            msg.id === messageId
-                ? { ...msg, content: newContent, canEdit: true }
-                : msg
-        );
-        return {
-            activeChatMessages: messages,
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: messages
-            }
-        };
-    }),
+    editChatMessage: (messageId, newContent) =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            const messages = state.activeChatMessages.map((msg) =>
+                msg.id === messageId ? { ...msg, content: newContent, canEdit: true } : msg,
+            );
+            return {
+                activeChatMessages: messages,
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: messages,
+                },
+            };
+        }),
 
-    deleteChatMessage: (messageId) => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        const messages = state.activeChatMessages.filter(msg => msg.id !== messageId);
-        return {
-            activeChatMessages: messages,
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: messages
-            }
-        };
-    }),
+    deleteChatMessage: (messageId) =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            const messages = state.activeChatMessages.filter((msg) => msg.id !== messageId);
+            return {
+                activeChatMessages: messages,
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: messages,
+                },
+            };
+        }),
 
-    setMessageFeedback: (messageId, feedback) => set((state) => {
-        const projectKey = state.currentProjectId || 'global';
-        const messages = state.activeChatMessages.map(msg =>
-            msg.id === messageId
-                ? {
-                    ...msg,
-                    feedback: {
-                        rating: feedback.rating,
-                        reason: feedback.reason,
-                        timestamp: new Date()
-                    }
+    setMessageFeedback: (messageId, feedback) =>
+        set((state) => {
+            const projectKey = state.currentProjectId || 'global';
+            const messages = state.activeChatMessages.map((msg) =>
+                msg.id === messageId
+                    ? {
+                          ...msg,
+                          feedback: {
+                              rating: feedback.rating,
+                              reason: feedback.reason,
+                              timestamp: new Date(),
+                          },
+                      }
+                    : msg,
+            );
+            return {
+                activeChatMessages: messages,
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [projectKey]: messages,
+                },
+            };
+        }),
+
+    updateLastChatMessage: (content) =>
+        set((state) => {
+            const messages = [...state.activeChatMessages];
+            if (messages.length > 0) {
+                const lastMsg = messages[messages.length - 1];
+                if (lastMsg.role === 'ai') {
+                    messages[messages.length - 1] = { ...lastMsg, content: content };
                 }
-                : msg
-        );
-        return {
-            activeChatMessages: messages,
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [projectKey]: messages
             }
-        };
-    }),
-
-    updateLastChatMessage: (content) => set((state) => {
-        const messages = [...state.activeChatMessages];
-        if (messages.length > 0) {
-            const lastMsg = messages[messages.length - 1];
-            if (lastMsg.role === 'ai') {
-                messages[messages.length - 1] = { ...lastMsg, content: content };
-            }
-        }
-        return { activeChatMessages: messages };
-    }),
+            return { activeChatMessages: messages };
+        }),
 });

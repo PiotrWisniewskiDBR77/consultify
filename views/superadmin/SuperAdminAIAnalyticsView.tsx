@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
 import {
-    BarChart3,
-    TrendingUp,
-    Zap,
-    Database,
-    AlertCircle,
-    RefreshCw,
     Activity,
-    DollarSign,
-    Clock,
+    AlertCircle,
+    BarChart3,
     CheckCircle,
+    Clock,
+    Database,
+    DollarSign,
+    Gauge,
+    RefreshCw,
+    TrendingUp,
     XCircle,
-    Gauge
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 interface AIStats {
@@ -65,18 +65,23 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
 
             // Fetch AI Stats
             const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
             const [statsRes, providersRes, diagRes] = await Promise.all([
-                fetch('/api/llm/audit/stats', { headers }).then(r => r.json()).catch(() => null),
-                fetch('/api/llm/providers/public', { headers }).then(r => r.json()).catch(() => []),
-                fetch('/api/llm/diagnose').then(r => r.json()).catch(() => null)
+                fetch('/api/llm/audit/stats', { headers })
+                    .then((r) => r.json())
+                    .catch(() => null),
+                fetch('/api/llm/providers/public', { headers })
+                    .then((r) => r.json())
+                    .catch(() => []),
+                fetch('/api/llm/diagnose')
+                    .then((r) => r.json())
+                    .catch(() => null),
             ]);
 
             if (statsRes) setStats(statsRes);
             if (providersRes) setProviders(providersRes);
             if (diagRes) setDiagnostics(diagRes);
-
         } catch (err) {
             console.error('Failed to fetch AI analytics', err);
             toast.error('Failed to load AI analytics');
@@ -135,26 +140,36 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
 
             {/* System Status Banner */}
             {diagnostics && (
-                <div className={`rounded-xl p-4 flex items-center gap-4 ${diagnostics.status === 'OK'
-                        ? 'bg-green-500/10 border border-green-500/20'
-                        : diagnostics.status === 'NEEDS_CONFIG'
-                            ? 'bg-yellow-500/10 border border-yellow-500/20'
-                            : 'bg-red-500/10 border border-red-500/20'
-                    }`}>
+                <div
+                    className={`rounded-xl p-4 flex items-center gap-4 ${
+                        diagnostics.status === 'OK'
+                            ? 'bg-green-500/10 border border-green-500/20'
+                            : diagnostics.status === 'NEEDS_CONFIG'
+                              ? 'bg-yellow-500/10 border border-yellow-500/20'
+                              : 'bg-red-500/10 border border-red-500/20'
+                    }`}
+                >
                     {diagnostics.status === 'OK' ? (
                         <CheckCircle className="text-green-500 shrink-0" size={24} />
                     ) : (
                         <AlertCircle className="text-yellow-500 shrink-0" size={24} />
                     )}
                     <div className="flex-1">
-                        <p className={`font-medium ${diagnostics.status === 'OK' ? 'text-green-400' : 'text-yellow-400'
-                            }`}>
-                            System Status: {diagnostics.status === 'OK' ? 'All Systems Operational' : diagnostics.status}
+                        <p
+                            className={`font-medium ${
+                                diagnostics.status === 'OK' ? 'text-green-400' : 'text-yellow-400'
+                            }`}
+                        >
+                            System Status:{' '}
+                            {diagnostics.status === 'OK' ? 'All Systems Operational' : diagnostics.status}
                         </p>
                         <p className="text-sm text-slate-400">
                             Version: {diagnostics.version} •
-                            {diagnostics.checks.find(c => c.name === 'api_connection')?.details && (
-                                <> LLM Connection: <span className="text-green-400">Connected</span></>
+                            {diagnostics.checks.find((c) => c.name === 'api_connection')?.details && (
+                                <>
+                                    {' '}
+                                    LLM Connection: <span className="text-green-400">Connected</span>
+                                </>
                             )}
                         </p>
                     </div>
@@ -170,9 +185,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                         <Activity className="text-blue-400" size={20} />
                     </div>
                     <p className="text-3xl font-bold text-white">{formatNumber(stats?.tokensToday || 0)}</p>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Est. cost: {estimateCost(stats?.tokensToday || 0)}
-                    </p>
+                    <p className="text-sm text-slate-500 mt-1">Est. cost: {estimateCost(stats?.tokensToday || 0)}</p>
                 </div>
 
                 {/* Tokens This Month */}
@@ -193,9 +206,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                         <span className="text-slate-400 text-sm">Cache Hit Rate</span>
                         <Database className="text-purple-400" size={20} />
                     </div>
-                    <p className="text-3xl font-bold text-white">
-                        {((stats?.cache?.hitRate || 0) * 100).toFixed(1)}%
-                    </p>
+                    <p className="text-3xl font-bold text-white">{((stats?.cache?.hitRate || 0) * 100).toFixed(1)}%</p>
                     <p className="text-sm text-slate-500 mt-1">
                         {formatNumber(stats?.cache?.hits || 0)} hits / {formatNumber(stats?.cache?.misses || 0)} misses
                     </p>
@@ -218,7 +229,6 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
 
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
                 {/* Top Organizations */}
                 <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -229,11 +239,17 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                         <div className="space-y-3">
                             {stats.topOrganizations.map((org, idx) => (
                                 <div key={org.organizationId} className="flex items-center gap-3">
-                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-yellow-500 text-black' :
-                                            idx === 1 ? 'bg-slate-400 text-black' :
-                                                idx === 2 ? 'bg-amber-700 text-white' :
-                                                    'bg-navy-700 text-slate-400'
-                                        }`}>
+                                    <span
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                            idx === 0
+                                                ? 'bg-yellow-500 text-black'
+                                                : idx === 1
+                                                  ? 'bg-slate-400 text-black'
+                                                  : idx === 2
+                                                    ? 'bg-amber-700 text-white'
+                                                    : 'bg-navy-700 text-slate-400'
+                                        }`}
+                                    >
                                         {idx + 1}
                                     </span>
                                     <div className="flex-1">
@@ -249,7 +265,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                                             <div
                                                 className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
                                                 style={{
-                                                    width: `${Math.min(100, (org.tokensMonth / (stats.topOrganizations[0]?.tokensMonth || 1)) * 100)}%`
+                                                    width: `${Math.min(100, (org.tokensMonth / (stats.topOrganizations[0]?.tokensMonth || 1)) * 100)}%`,
                                                 }}
                                             />
                                         </div>
@@ -269,27 +285,35 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                         Active LLM Providers
                     </h3>
                     <div className="space-y-3">
-                        {providers.length > 0 ? providers.map(provider => (
-                            <div
-                                key={provider.id}
-                                className="flex items-center justify-between p-3 bg-navy-800 rounded-lg"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${provider.is_active ? 'bg-green-500' : 'bg-red-500'
-                                        }`} />
-                                    <div>
-                                        <p className="text-white font-medium text-sm">{provider.name}</p>
-                                        <p className="text-slate-500 text-xs">{provider.provider}</p>
+                        {providers.length > 0 ? (
+                            providers.map((provider) => (
+                                <div
+                                    key={provider.id}
+                                    className="flex items-center justify-between p-3 bg-navy-800 rounded-lg"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-2 h-2 rounded-full ${
+                                                provider.is_active ? 'bg-green-500' : 'bg-red-500'
+                                            }`}
+                                        />
+                                        <div>
+                                            <p className="text-white font-medium text-sm">{provider.name}</p>
+                                            <p className="text-slate-500 text-xs">{provider.provider}</p>
+                                        </div>
                                     </div>
+                                    <span
+                                        className={`px-2 py-1 rounded text-xs font-medium ${
+                                            provider.visibility === 'public'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-slate-700 text-slate-400'
+                                        }`}
+                                    >
+                                        {provider.visibility}
+                                    </span>
                                 </div>
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${provider.visibility === 'public'
-                                        ? 'bg-green-500/20 text-green-400'
-                                        : 'bg-slate-700 text-slate-400'
-                                    }`}>
-                                    {provider.visibility}
-                                </span>
-                            </div>
-                        )) : (
+                            ))
+                        ) : (
                             <p className="text-slate-500 text-sm">No providers configured</p>
                         )}
                     </div>
@@ -316,7 +340,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                             )}
                             <div>
                                 <p className="text-white text-sm font-medium">
-                                    {check.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                    {check.name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                                 </p>
                                 <p className="text-slate-500 text-xs">
                                     {check.status || (check.value !== undefined ? `Value: ${check.value}` : 'OK')}
@@ -333,13 +357,13 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                 <div className="flex flex-wrap gap-3">
                     <button
-                        onClick={() => window.location.href = '/admin#llm'}
+                        onClick={() => (window.location.href = '/admin#llm')}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors"
                     >
                         Manage LLM Providers
                     </button>
                     <button
-                        onClick={() => window.location.href = '/admin#knowledge'}
+                        onClick={() => (window.location.href = '/admin#knowledge')}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors"
                     >
                         Knowledge Base

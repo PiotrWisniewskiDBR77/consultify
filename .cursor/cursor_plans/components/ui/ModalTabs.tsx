@@ -5,8 +5,8 @@
  * gdzie identyczny wzorzec tabów był powielony
  */
 
-import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import React from 'react';
 
 // ============================================================================
 // TabConfig - konfiguracja pojedynczego taba
@@ -33,32 +33,30 @@ export function ModalTabs<T extends string>({
     activeTab,
     onTabChange,
     variant = 'default',
-    accentColor = 'blue'
+    accentColor = 'blue',
 }: ModalTabsProps<T>) {
     const accentClasses = {
         blue: {
             active: 'text-blue-400 border-blue-500',
-            inactive: 'text-slate-400 border-transparent hover:text-white'
+            inactive: 'text-slate-400 border-transparent hover:text-white',
         },
         purple: {
             active: 'text-purple-400 border-purple-500',
-            inactive: 'text-slate-400 border-transparent hover:text-white'
+            inactive: 'text-slate-400 border-transparent hover:text-white',
         },
         green: {
             active: 'text-green-400 border-green-500',
-            inactive: 'text-slate-400 border-transparent hover:text-white'
-        }
+            inactive: 'text-slate-400 border-transparent hover:text-white',
+        },
     };
 
     const sizeClasses = variant === 'compact' ? 'py-2 text-xs' : 'py-3 text-sm';
 
     return (
         <div className="flex border-b border-white/5 bg-navy-900/50 px-6 gap-6">
-            {tabs.map(tab => {
+            {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
-                const colorClass = isActive 
-                    ? accentClasses[accentColor].active 
-                    : accentClasses[accentColor].inactive;
+                const colorClass = isActive ? accentClasses[accentColor].active : accentClasses[accentColor].inactive;
 
                 return (
                     <button
@@ -95,7 +93,7 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({
     onClose,
     children,
     maxWidth = '3xl',
-    height = 'auto'
+    height = 'auto',
 }) => {
     if (!isOpen) return null;
 
@@ -107,19 +105,19 @@ export const ModalContainer: React.FC<ModalContainerProps> = ({
         '2xl': 'max-w-2xl',
         '3xl': 'max-w-3xl',
         '4xl': 'max-w-4xl',
-        '5xl': 'max-w-5xl'
+        '5xl': 'max-w-5xl',
     };
 
     const heightClass = height === 'full' ? 'h-[90vh]' : 'max-h-[90vh]';
 
     return (
-        <div 
+        <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div 
+            <div
                 className={`
                     bg-navy-900 border border-white/10 rounded-xl w-full 
                     ${maxWidthClasses[maxWidth]} ${heightClass}
@@ -144,33 +142,18 @@ interface ModalHeaderProps {
     actions?: React.ReactNode;
 }
 
-export const ModalHeader: React.FC<ModalHeaderProps> = ({
-    title,
-    subtitle,
-    icon,
-    onClose,
-    actions
-}) => (
+export const ModalHeader: React.FC<ModalHeaderProps> = ({ title, subtitle, icon, onClose, actions }) => (
     <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-navy-950">
         <div className="flex items-center gap-3">
-            {icon && (
-                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
-                    {icon}
-                </div>
-            )}
+            {icon && <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">{icon}</div>}
             <div>
                 <h2 className="text-lg font-bold text-white">{title}</h2>
-                {subtitle && (
-                    <div className="text-xs text-slate-400">{subtitle}</div>
-                )}
+                {subtitle && <div className="text-xs text-slate-400">{subtitle}</div>}
             </div>
         </div>
         <div className="flex items-center gap-2">
             {actions}
-            <button 
-                onClick={onClose} 
-                className="text-slate-400 hover:text-white p-1 transition-colors"
-            >
+            <button onClick={onClose} className="text-slate-400 hover:text-white p-1 transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
@@ -197,17 +180,14 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
     saveLabel = 'Save',
     cancelLabel = 'Cancel',
     saveIcon,
-    isLoading = false
+    isLoading = false,
 }) => (
     <div className="h-20 border-t border-white/5 bg-navy-950 px-6 flex items-center justify-between shrink-0">
-        <button 
-            onClick={onCancel} 
-            className="text-slate-400 hover:text-white text-sm font-medium transition-colors"
-        >
+        <button onClick={onCancel} className="text-slate-400 hover:text-white text-sm font-medium transition-colors">
             {cancelLabel}
         </button>
         {onSave && (
-            <button 
+            <button
                 onClick={onSave}
                 disabled={isLoading}
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
@@ -218,4 +198,3 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
         )}
     </div>
 );
-

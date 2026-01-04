@@ -1,24 +1,17 @@
 /**
  * BottomNavigation Component
- * 
+ *
  * Mobile-only bottom navigation bar with 5 key navigation items.
  * Provides quick access to main app sections on mobile devices.
  */
 
+import { Calendar, ClipboardCheck, Home, LayoutDashboard, Lightbulb, Menu, Sparkles } from 'lucide-react';
 import React from 'react';
-import {
-    LayoutDashboard,
-    ClipboardCheck,
-    Lightbulb,
-    Calendar,
-    Menu,
-    Sparkles,
-    Home,
-} from 'lucide-react';
-import { AppView } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
-import { useDeviceType } from '../../hooks/useDeviceType';
 import { useTranslation } from 'react-i18next';
+
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 interface NavItem {
     id: string;
@@ -32,13 +25,7 @@ interface NavItem {
 export const BottomNavigation: React.FC = () => {
     const { t } = useTranslation();
     const { isMobile } = useDeviceType();
-    const {
-        currentView,
-        setCurrentView,
-        setIsSidebarOpen,
-        toggleChatCollapse,
-        isChatCollapsed,
-    } = useAppStore();
+    const { currentView, setCurrentView, setIsSidebarOpen, toggleChatCollapse, isChatCollapsed } = useAppStore();
 
     // Don't render on non-mobile devices
     if (!isMobile) return null;
@@ -90,23 +77,25 @@ export const BottomNavigation: React.FC = () => {
 
     const isActive = (item: NavItem): boolean => {
         if (!item.view) return false;
-        
+
         // Check for assessment views
         if (item.id === 'assessment') {
             return currentView.toString().includes('ASSESSMENT');
         }
-        
+
         // Check for initiative views
         if (item.id === 'initiatives') {
             return currentView === AppView.FULL_STEP2_INITIATIVES;
         }
-        
+
         // Check for MyWork views (unified home)
         if (item.id === 'mywork') {
-            return currentView === AppView.MY_WORK || 
-                   currentView === AppView.DASHBOARD_OVERVIEW || 
-                   currentView === AppView.USER_DASHBOARD ||
-                   currentView === AppView.DASHBOARD;
+            return (
+                currentView === AppView.MY_WORK ||
+                currentView === AppView.DASHBOARD_OVERVIEW ||
+                currentView === AppView.USER_DASHBOARD ||
+                currentView === AppView.DASHBOARD
+            );
         }
 
         return currentView === item.view;
@@ -116,12 +105,12 @@ export const BottomNavigation: React.FC = () => {
         <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb">
             {/* Background with blur */}
             <div className="absolute inset-0 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 shadow-2xl shadow-black/10" />
-            
+
             {/* Navigation Items */}
             <div className="relative flex items-stretch justify-around px-2 h-16">
                 {navItems.map((item) => {
                     const active = isActive(item);
-                    
+
                     return (
                         <button
                             key={item.id}
@@ -129,9 +118,10 @@ export const BottomNavigation: React.FC = () => {
                             className={`
                                 flex-1 flex flex-col items-center justify-center gap-0.5 
                                 transition-all duration-200 relative touch-target no-select
-                                ${active 
-                                    ? 'text-purple-600 dark:text-purple-400' 
-                                    : 'text-slate-400 dark:text-slate-500 active:text-purple-600 dark:active:text-purple-400'
+                                ${
+                                    active
+                                        ? 'text-purple-600 dark:text-purple-400'
+                                        : 'text-slate-400 dark:text-slate-500 active:text-purple-600 dark:active:text-purple-400'
                                 }
                             `}
                         >
@@ -139,14 +129,16 @@ export const BottomNavigation: React.FC = () => {
                             {active && (
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-purple-600 dark:bg-purple-400 rounded-b-full" />
                             )}
-                            
+
                             {/* Icon Container with pulse effect for AI */}
-                            <div className={`
+                            <div
+                                className={`
                                 relative flex items-center justify-center
                                 ${item.id === 'ai' && !isChatCollapsed ? 'animate-pulse' : ''}
-                            `}>
+                            `}
+                            >
                                 {item.icon}
-                                
+
                                 {/* Badge */}
                                 {item.badge && item.badge > 0 && (
                                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -154,7 +146,7 @@ export const BottomNavigation: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                            
+
                             {/* Label */}
                             <span className={`text-[10px] font-medium ${active ? 'font-semibold' : ''}`}>
                                 {item.label}
@@ -168,8 +160,3 @@ export const BottomNavigation: React.FC = () => {
 };
 
 export default BottomNavigation;
-
-
-
-
-

@@ -4,7 +4,8 @@
  * Integrates with backend AI services
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 
 // Types
@@ -153,164 +154,159 @@ export function useAssessmentAI(projectId: string): UseAssessmentAIReturn {
         gapAnalysis: null,
         executiveSummary: null,
         initiatives: [],
-        quickActions: []
+        quickActions: [],
     });
 
     const abortControllerRef = useRef<AbortController | null>(null);
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     // Helper to make API calls
-    const apiCall = useCallback(async <T>(
-        endpoint: string,
-        method: 'GET' | 'POST' = 'POST',
-        body?: object
-    ): Promise<T> => {
-        // Cancel previous request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-        abortControllerRef.current = new AbortController();
-
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-        try {
-            const url = `${API_BASE}/${projectId}${endpoint}`;
-            const options: RequestInit = {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                signal: abortControllerRef.current.signal
-            };
-
-            if (body && method === 'POST') {
-                options.body = JSON.stringify(body);
+    const apiCall = useCallback(
+        async <T>(endpoint: string, method: 'GET' | 'POST' = 'POST', body?: object): Promise<T> => {
+            // Cancel previous request
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
             }
+            abortControllerRef.current = new AbortController();
 
-            const response = await fetch(url, options);
+            setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `HTTP ${response.status}`);
+            try {
+                const url = `${API_BASE}/${projectId}${endpoint}`;
+                const options: RequestInit = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    signal: abortControllerRef.current.signal,
+                };
+
+                if (body && method === 'POST') {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                setState((prev) => ({ ...prev, isLoading: false }));
+                return data as T;
+            } catch (err) {
+                if ((err as Error).name === 'AbortError') {
+                    throw err; // Re-throw abort errors
+                }
+                const errorMessage = (err as Error).message || 'Unknown error';
+                setState((prev) => ({ ...prev, isLoading: false, error: errorMessage }));
+                throw err;
             }
-
-            const data = await response.json();
-            setState(prev => ({ ...prev, isLoading: false }));
-            return data as T;
-        } catch (err) {
-            if ((err as Error).name === 'AbortError') {
-                throw err; // Re-throw abort errors
-            }
-            const errorMessage = (err as Error).message || 'Unknown error';
-            setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
-            throw err;
-        }
-    }, [projectId, token]);
+        },
+        [projectId, token],
+    );
 
     // =========================================================================
     // SUGGESTION METHODS
     // =========================================================================
 
-    const suggestJustification = useCallback(async (
-        axisId: string,
-        score: number,
-        existingText?: string
-    ): Promise<AISuggestion> => {
-        const result = await apiCall<AISuggestion>('/ai/suggest-justification', 'POST', {
-            axisId,
-            score,
-            existingJustification: existingText,
-            language: 'pl'
-        });
-        setState(prev => ({ ...prev, lastSuggestion: result }));
-        return result;
-    }, [apiCall]);
+    const suggestJustification = useCallback(
+        async (axisId: string, score: number, existingText?: string): Promise<AISuggestion> => {
+            const result = await apiCall<AISuggestion>('/ai/suggest-justification', 'POST', {
+                axisId,
+                score,
+                existingJustification: existingText,
+                language: 'pl',
+            });
+            setState((prev) => ({ ...prev, lastSuggestion: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
-    const suggestEvidence = useCallback(async (
-        axisId: string,
-        score: number
-    ): Promise<AISuggestion> => {
-        const result = await apiCall<AISuggestion>('/ai/suggest-evidence', 'POST', {
-            axisId,
-            score,
-            language: 'pl'
-        });
-        setState(prev => ({ ...prev, lastSuggestion: result }));
-        return result;
-    }, [apiCall]);
+    const suggestEvidence = useCallback(
+        async (axisId: string, score: number): Promise<AISuggestion> => {
+            const result = await apiCall<AISuggestion>('/ai/suggest-evidence', 'POST', {
+                axisId,
+                score,
+                language: 'pl',
+            });
+            setState((prev) => ({ ...prev, lastSuggestion: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
-    const suggestTarget = useCallback(async (
-        axisId: string,
-        currentScore: number,
-        ambitionLevel: string = 'balanced'
-    ): Promise<AISuggestion> => {
-        const result = await apiCall<AISuggestion>('/ai/suggest-target', 'POST', {
-            axisId,
-            currentScore,
-            ambitionLevel
-        });
-        setState(prev => ({ ...prev, lastSuggestion: result }));
-        return result;
-    }, [apiCall]);
+    const suggestTarget = useCallback(
+        async (axisId: string, currentScore: number, ambitionLevel: string = 'balanced'): Promise<AISuggestion> => {
+            const result = await apiCall<AISuggestion>('/ai/suggest-target', 'POST', {
+                axisId,
+                currentScore,
+                ambitionLevel,
+            });
+            setState((prev) => ({ ...prev, lastSuggestion: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
-    const correctText = useCallback(async (
-        text: string,
-        language: string = 'pl'
-    ): Promise<AISuggestion> => {
-        const result = await apiCall<AISuggestion>('/ai/correct-text', 'POST', {
-            text,
-            targetLanguage: language
-        });
-        setState(prev => ({ ...prev, lastSuggestion: result }));
-        return result;
-    }, [apiCall]);
+    const correctText = useCallback(
+        async (text: string, language: string = 'pl'): Promise<AISuggestion> => {
+            const result = await apiCall<AISuggestion>('/ai/correct-text', 'POST', {
+                text,
+                targetLanguage: language,
+            });
+            setState((prev) => ({ ...prev, lastSuggestion: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
-    const autocomplete = useCallback(async (
-        partialText: string,
-        axisId: string,
-        score: number
-    ): Promise<AISuggestion> => {
-        const result = await apiCall<AISuggestion>('/ai/autocomplete', 'POST', {
-            partialText,
-            axisId,
-            score,
-            language: 'pl'
-        });
-        setState(prev => ({ ...prev, lastSuggestion: result }));
-        return result;
-    }, [apiCall]);
+    const autocomplete = useCallback(
+        async (partialText: string, axisId: string, score: number): Promise<AISuggestion> => {
+            const result = await apiCall<AISuggestion>('/ai/autocomplete', 'POST', {
+                partialText,
+                axisId,
+                score,
+                language: 'pl',
+            });
+            setState((prev) => ({ ...prev, lastSuggestion: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
     // =========================================================================
     // VALIDATION METHODS
     // =========================================================================
 
-    const validateField = useCallback(async (
-        fieldType: string,
-        value: unknown,
-        context: object = {}
-    ): Promise<AIValidation> => {
-        const result = await apiCall<AIValidation>('/ai/validate-field', 'POST', {
-            fieldType,
-            value,
-            ...context
-        });
-        setState(prev => ({ ...prev, lastValidation: result }));
-        return result;
-    }, [apiCall]);
+    const validateField = useCallback(
+        async (fieldType: string, value: unknown, context: object = {}): Promise<AIValidation> => {
+            const result = await apiCall<AIValidation>('/ai/validate-field', 'POST', {
+                fieldType,
+                value,
+                ...context,
+            });
+            setState((prev) => ({ ...prev, lastValidation: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
     const validateConsistency = useCallback(async (): Promise<AIValidation> => {
         const result = await apiCall<{ hasInconsistencies: boolean; inconsistencies: Array<{ message: string }> }>(
             '/ai/validate',
-            'POST'
+            'POST',
         );
         const validation: AIValidation = {
             isValid: !result.hasInconsistencies,
             errors: [],
-            warnings: result.inconsistencies?.map(i => i.message) || [],
-            suggestions: []
+            warnings: result.inconsistencies?.map((i) => i.message) || [],
+            suggestions: [],
         };
-        setState(prev => ({ ...prev, lastValidation: validation }));
+        setState((prev) => ({ ...prev, lastValidation: validation }));
         return validation;
     }, [apiCall]);
 
@@ -318,118 +314,125 @@ export function useAssessmentAI(projectId: string): UseAssessmentAIReturn {
     // ANALYSIS METHODS
     // =========================================================================
 
-    const getGuidance = useCallback(async (
-        axisId: string,
-        currentScore: number,
-        targetScore?: number
-    ) => {
-        return apiCall('/ai/guidance', 'POST', {
-            axisId,
-            currentScore,
-            targetScore: targetScore || currentScore + 1
-        });
-    }, [apiCall]);
+    const getGuidance = useCallback(
+        async (axisId: string, currentScore: number, targetScore?: number) => {
+            return apiCall('/ai/guidance', 'POST', {
+                axisId,
+                currentScore,
+                targetScore: targetScore || currentScore + 1,
+            });
+        },
+        [apiCall],
+    );
 
-    const generateGapAnalysis = useCallback(async (
-        axisId: string,
-        currentScore: number,
-        targetScore: number
-    ): Promise<AIGapAnalysis> => {
-        const result = await apiCall<AIGapAnalysis>(`/ai/gap/${axisId}`, 'POST', {
-            currentScore,
-            targetScore
-        });
-        setState(prev => ({ ...prev, gapAnalysis: result }));
-        return result;
-    }, [apiCall]);
+    const generateGapAnalysis = useCallback(
+        async (axisId: string, currentScore: number, targetScore: number): Promise<AIGapAnalysis> => {
+            const result = await apiCall<AIGapAnalysis>(`/ai/gap/${axisId}`, 'POST', {
+                currentScore,
+                targetScore,
+            });
+            setState((prev) => ({ ...prev, gapAnalysis: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
     const getInsights = useCallback(async (): Promise<AIInsight[]> => {
         const result = await apiCall<{ insights: AIInsight[] }>('/ai/insights', 'GET');
-        setState(prev => ({ ...prev, insights: result.insights }));
+        setState((prev) => ({ ...prev, insights: result.insights }));
         return result.insights;
     }, [apiCall]);
 
-    const getClarifyingQuestion = useCallback(async (
-        axisId: string,
-        score: number
-    ): Promise<{ question: string }> => {
-        return apiCall('/ai/clarify', 'POST', { axisId, score });
-    }, [apiCall]);
+    const getClarifyingQuestion = useCallback(
+        async (axisId: string, score: number): Promise<{ question: string }> => {
+            return apiCall('/ai/clarify', 'POST', { axisId, score });
+        },
+        [apiCall],
+    );
 
     // =========================================================================
     // REPORT METHODS
     // =========================================================================
 
-    const generateExecutiveSummary = useCallback(async (
-        options: object = {}
-    ): Promise<AIExecutiveSummary> => {
-        const result = await apiCall<AIExecutiveSummary>('/ai/executive-summary', 'POST', options);
-        setState(prev => ({ ...prev, executiveSummary: result }));
-        return result;
-    }, [apiCall]);
+    const generateExecutiveSummary = useCallback(
+        async (options: object = {}): Promise<AIExecutiveSummary> => {
+            const result = await apiCall<AIExecutiveSummary>('/ai/executive-summary', 'POST', options);
+            setState((prev) => ({ ...prev, executiveSummary: result }));
+            return result;
+        },
+        [apiCall],
+    );
 
-    const generateStakeholderView = useCallback(async (
-        stakeholderRole: string
-    ) => {
-        return apiCall('/ai/stakeholder-view', 'POST', {
-            stakeholderRole,
-            language: 'pl'
-        });
-    }, [apiCall]);
+    const generateStakeholderView = useCallback(
+        async (stakeholderRole: string) => {
+            return apiCall('/ai/stakeholder-view', 'POST', {
+                stakeholderRole,
+                language: 'pl',
+            });
+        },
+        [apiCall],
+    );
 
     // =========================================================================
     // INITIATIVE METHODS
     // =========================================================================
 
-    const generateInitiatives = useCallback(async (
-        constraints: object = {}
-    ): Promise<AIInitiative[]> => {
-        const result = await apiCall<{ initiatives: AIInitiative[] }>(
-            '/ai/generate-initiatives',
-            'POST',
-            constraints
-        );
-        setState(prev => ({ ...prev, initiatives: result.initiatives }));
-        return result.initiatives;
-    }, [apiCall]);
+    const generateInitiatives = useCallback(
+        async (constraints: object = {}): Promise<AIInitiative[]> => {
+            const result = await apiCall<{ initiatives: AIInitiative[] }>(
+                '/ai/generate-initiatives',
+                'POST',
+                constraints,
+            );
+            setState((prev) => ({ ...prev, initiatives: result.initiatives }));
+            return result.initiatives;
+        },
+        [apiCall],
+    );
 
-    const prioritizeInitiatives = useCallback(async (
-        initiatives: AIInitiative[],
-        criteria: object = {}
-    ) => {
-        return apiCall('/ai/prioritize-initiatives', 'POST', {
-            initiatives,
-            criteria
-        });
-    }, [apiCall]);
+    const prioritizeInitiatives = useCallback(
+        async (initiatives: AIInitiative[], criteria: object = {}) => {
+            return apiCall('/ai/prioritize-initiatives', 'POST', {
+                initiatives,
+                criteria,
+            });
+        },
+        [apiCall],
+    );
 
-    const estimateROI = useCallback(async (initiative: AIInitiative) => {
-        return apiCall('/ai/estimate-roi', 'POST', { initiative });
-    }, [apiCall]);
+    const estimateROI = useCallback(
+        async (initiative: AIInitiative) => {
+            return apiCall('/ai/estimate-roi', 'POST', { initiative });
+        },
+        [apiCall],
+    );
 
     // =========================================================================
     // FORM HELPER METHODS
     // =========================================================================
 
-    const getQuickActions = useCallback(async (
-        formState: object
-    ): Promise<QuickAction[]> => {
-        const result = await apiCall<{ actions: QuickAction[] }>(
-            '/ai/quick-actions',
-            'POST',
-            formState
-        );
-        setState(prev => ({ ...prev, quickActions: result.actions }));
-        return result.actions;
-    }, [apiCall]);
+    const getQuickActions = useCallback(
+        async (formState: object): Promise<QuickAction[]> => {
+            const result = await apiCall<{ actions: QuickAction[] }>('/ai/quick-actions', 'POST', formState);
+            setState((prev) => ({ ...prev, quickActions: result.actions }));
+            return result.actions;
+        },
+        [apiCall],
+    );
 
-    const getContextualHelp = useCallback(async (formState: object) => {
-        return apiCall('/ai/contextual-help', 'POST', formState);
-    }, [apiCall]);
+    const getContextualHelp = useCallback(
+        async (formState: object) => {
+            return apiCall('/ai/contextual-help', 'POST', formState);
+        },
+        [apiCall],
+    );
 
-    const fillMissingFields = useCallback(async (strategy: string = 'suggest-only') => {
-        return apiCall('/ai/fill-missing', 'POST', { strategy });
-    }, [apiCall]);
+    const fillMissingFields = useCallback(
+        async (strategy: string = 'suggest-only') => {
+            return apiCall('/ai/fill-missing', 'POST', { strategy });
+        },
+        [apiCall],
+    );
 
     const reviewJustifications = useCallback(async () => {
         return apiCall('/ai/review-justifications', 'POST', { language: 'pl' });
@@ -440,11 +443,11 @@ export function useAssessmentAI(projectId: string): UseAssessmentAIReturn {
     // =========================================================================
 
     const clearError = useCallback(() => {
-        setState(prev => ({ ...prev, error: null }));
+        setState((prev) => ({ ...prev, error: null }));
     }, []);
 
     const clearSuggestion = useCallback(() => {
-        setState(prev => ({ ...prev, lastSuggestion: null }));
+        setState((prev) => ({ ...prev, lastSuggestion: null }));
     }, []);
 
     return {
@@ -485,9 +488,8 @@ export function useAssessmentAI(projectId: string): UseAssessmentAIReturn {
 
         // Utilities
         clearError,
-        clearSuggestion
+        clearSuggestion,
     };
 }
 
 export default useAssessmentAI;
-

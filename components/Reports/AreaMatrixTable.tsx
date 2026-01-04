@@ -1,14 +1,14 @@
 /**
  * AreaMatrixTable Component
- * 
+ *
  * Displays a comprehensive matrix of 9 business areas × 7 maturity levels
  * for a specific DRD axis. Shows current state, target state, and gaps.
- * 
+ *
  * Based on BCG/McKinsey report standards.
  */
 
-import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
 
 // ============================================================================
 // CONSTANTS
@@ -73,16 +73,16 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
     showAnimation = true,
 }) => {
     const isPolish = language === 'pl';
-    
+
     // Calculate summary statistics
     const stats = useMemo(() => {
-        const assessments = areaAssessments.filter(a => a.currentLevel > 0);
+        const assessments = areaAssessments.filter((a) => a.currentLevel > 0);
         if (assessments.length === 0) return { avgCurrent: 0, avgTarget: 0, avgGap: 0, maxGap: 0 };
-        
+
         const totalCurrent = assessments.reduce((sum, a) => sum + a.currentLevel, 0);
         const totalTarget = assessments.reduce((sum, a) => sum + a.targetLevel, 0);
-        const gaps = assessments.map(a => a.targetLevel - a.currentLevel);
-        
+        const gaps = assessments.map((a) => a.targetLevel - a.currentLevel);
+
         return {
             avgCurrent: (totalCurrent / assessments.length).toFixed(1),
             avgTarget: (totalTarget / assessments.length).toFixed(1),
@@ -91,12 +91,12 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             assessed: assessments.length,
         };
     }, [areaAssessments]);
-    
+
     // Get assessment for a specific area
     const getAreaAssessment = (areaId: string): AreaAssessment | undefined => {
-        return areaAssessments.find(a => a.areaId === areaId);
+        return areaAssessments.find((a) => a.areaId === areaId);
     };
-    
+
     // Get gap color based on size
     const getGapColor = (gap: number): string => {
         if (gap >= 3) return '#ef4444'; // Critical
@@ -104,7 +104,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
         if (gap >= 1) return '#eab308'; // Medium
         return '#22c55e'; // Low
     };
-    
+
     // Get priority label
     const getPriorityLabel = (gap: number): string => {
         if (gap >= 3) return isPolish ? 'Krytyczny' : 'Critical';
@@ -112,7 +112,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
         if (gap >= 1) return isPolish ? 'Średni' : 'Medium';
         return isPolish ? 'Niski' : 'Low';
     };
-    
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -122,16 +122,16 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             },
         },
     };
-    
+
     const cellVariants = {
         hidden: { opacity: 0, scale: 0.8 },
         visible: { opacity: 1, scale: 1 },
     };
-    
+
     return (
         <motion.div
             className="area-matrix-container"
-            initial={showAnimation ? "hidden" : "visible"}
+            initial={showAnimation ? 'hidden' : 'visible'}
             animate="visible"
             variants={containerVariants}
         >
@@ -139,19 +139,27 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             <div className="matrix-header">
                 <div className="matrix-title">
                     <span className="axis-icon">{axisIcon}</span>
-                    <h3>{isPolish ? 'Macierz Dojrzałości Obszarów' : 'Area Maturity Matrix'}: {axisName}</h3>
+                    <h3>
+                        {isPolish ? 'Macierz Dojrzałości Obszarów' : 'Area Maturity Matrix'}: {axisName}
+                    </h3>
                 </div>
                 <div className="matrix-summary">
                     <div className="summary-card">
-                        <span className="summary-value" style={{ color: '#3b82f6' }}>{stats.avgCurrent}</span>
+                        <span className="summary-value" style={{ color: '#3b82f6' }}>
+                            {stats.avgCurrent}
+                        </span>
                         <span className="summary-label">{isPolish ? 'Śr. Aktualny' : 'Avg Current'}</span>
                     </div>
                     <div className="summary-card">
-                        <span className="summary-value" style={{ color: '#10b981' }}>{stats.avgTarget}</span>
+                        <span className="summary-value" style={{ color: '#10b981' }}>
+                            {stats.avgTarget}
+                        </span>
                         <span className="summary-label">{isPolish ? 'Śr. Docelowy' : 'Avg Target'}</span>
                     </div>
                     <div className="summary-card">
-                        <span className="summary-value" style={{ color: getGapColor(Number(stats.avgGap)) }}>+{stats.avgGap}</span>
+                        <span className="summary-value" style={{ color: getGapColor(Number(stats.avgGap)) }}>
+                            +{stats.avgGap}
+                        </span>
                         <span className="summary-label">{isPolish ? 'Śr. Luka' : 'Avg Gap'}</span>
                     </div>
                     <div className="summary-card">
@@ -160,16 +168,16 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     </div>
                 </div>
             </div>
-            
+
             {/* Matrix Table */}
             <div className="matrix-table-wrapper">
                 <table className="matrix-table">
                     <thead>
                         <tr>
                             <th className="level-header">{isPolish ? 'Poziom' : 'Level'}</th>
-                            {BUSINESS_AREAS.map(area => (
-                                <th 
-                                    key={area.id} 
+                            {BUSINESS_AREAS.map((area) => (
+                                <th
+                                    key={area.id}
                                     className="area-header"
                                     onClick={() => onAreaClick?.(area.id)}
                                     style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
@@ -182,11 +190,11 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     </thead>
                     <tbody>
                         {/* Level rows (7 to 1) */}
-                        {MATURITY_LEVELS.map(levelInfo => (
+                        {MATURITY_LEVELS.map((levelInfo) => (
                             <motion.tr key={levelInfo.level} variants={cellVariants}>
-                                <td 
+                                <td
                                     className="level-cell"
-                                    style={{ 
+                                    style={{
                                         borderLeft: `4px solid ${levelInfo.color}`,
                                         background: `${levelInfo.color}10`,
                                     }}
@@ -194,11 +202,11 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                                     <span className="level-number">{levelInfo.level}.</span>
                                     <span className="level-name">{isPolish ? levelInfo.namePl : levelInfo.name}</span>
                                 </td>
-                                {BUSINESS_AREAS.map(area => {
+                                {BUSINESS_AREAS.map((area) => {
                                     const assessment = getAreaAssessment(area.id);
                                     const isCurrent = assessment?.currentLevel === levelInfo.level;
                                     const isTarget = assessment?.targetLevel === levelInfo.level;
-                                    
+
                                     return (
                                         <motion.td
                                             key={`${levelInfo.level}-${area.id}`}
@@ -207,30 +215,24 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                                             onClick={() => onAreaClick?.(area.id)}
                                             style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
                                         >
-                                            {isCurrent && isTarget && (
-                                                <span className="marker both">●○</span>
-                                            )}
-                                            {isCurrent && !isTarget && (
-                                                <span className="marker current">●</span>
-                                            )}
-                                            {isTarget && !isCurrent && (
-                                                <span className="marker target">○</span>
-                                            )}
+                                            {isCurrent && isTarget && <span className="marker both">●○</span>}
+                                            {isCurrent && !isTarget && <span className="marker current">●</span>}
+                                            {isTarget && !isCurrent && <span className="marker target">○</span>}
                                         </motion.td>
                                     );
                                 })}
                             </motion.tr>
                         ))}
-                        
+
                         {/* Separator */}
                         <tr className="separator-row">
                             <td colSpan={10}></td>
                         </tr>
-                        
+
                         {/* Summary rows */}
                         <tr className="summary-row current-row">
                             <td className="summary-label-cell">{isPolish ? 'Aktualny' : 'Current'}</td>
-                            {BUSINESS_AREAS.map(area => {
+                            {BUSINESS_AREAS.map((area) => {
                                 const assessment = getAreaAssessment(area.id);
                                 return (
                                     <td key={`current-${area.id}`} className="summary-value-cell current">
@@ -241,7 +243,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                         </tr>
                         <tr className="summary-row target-row">
                             <td className="summary-label-cell">{isPolish ? 'Docelowy' : 'Target'}</td>
-                            {BUSINESS_AREAS.map(area => {
+                            {BUSINESS_AREAS.map((area) => {
                                 const assessment = getAreaAssessment(area.id);
                                 return (
                                     <td key={`target-${area.id}`} className="summary-value-cell target">
@@ -252,12 +254,12 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                         </tr>
                         <tr className="summary-row gap-row">
                             <td className="summary-label-cell">{isPolish ? 'Luka' : 'Gap'}</td>
-                            {BUSINESS_AREAS.map(area => {
+                            {BUSINESS_AREAS.map((area) => {
                                 const assessment = getAreaAssessment(area.id);
                                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
                                 return (
-                                    <td 
-                                        key={`gap-${area.id}`} 
+                                    <td
+                                        key={`gap-${area.id}`}
                                         className="summary-value-cell gap"
                                         style={{ color: getGapColor(gap) }}
                                     >
@@ -268,14 +270,14 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                         </tr>
                         <tr className="summary-row priority-row">
                             <td className="summary-label-cell">{isPolish ? 'Priorytet' : 'Priority'}</td>
-                            {BUSINESS_AREAS.map(area => {
+                            {BUSINESS_AREAS.map((area) => {
                                 const assessment = getAreaAssessment(area.id);
                                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
                                 return (
-                                    <td 
-                                        key={`priority-${area.id}`} 
+                                    <td
+                                        key={`priority-${area.id}`}
                                         className="summary-value-cell priority"
-                                        style={{ 
+                                        style={{
                                             background: `${getGapColor(gap)}15`,
                                             color: getGapColor(gap),
                                         }}
@@ -288,7 +290,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     </tbody>
                 </table>
             </div>
-            
+
             {/* Legend */}
             <div className="matrix-legend">
                 <div className="legend-item">
@@ -317,7 +319,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     <span>{isPolish ? 'Niski (0)' : 'Low (0)'}</span>
                 </div>
             </div>
-            
+
             <style>{`
                 .area-matrix-container {
                     background: white;
@@ -587,4 +589,3 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 };
 
 export default AreaMatrixTable;
-

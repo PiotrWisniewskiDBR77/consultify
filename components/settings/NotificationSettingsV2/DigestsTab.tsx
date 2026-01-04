@@ -2,10 +2,11 @@
  * DigestsTab - Configure digest email settings
  */
 
-import React, { useState, useEffect } from 'react';
+import { Calendar, Check, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Clock, Check } from 'lucide-react';
-import type { NotificationPreferences, DigestSettings } from '../../../hooks/useUserNotificationPreferences';
+
+import type { DigestSettings, NotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
 
 interface DigestsTabProps {
     preferences: NotificationPreferences;
@@ -22,10 +23,7 @@ const DAYS_OF_WEEK = [
     { value: 'sunday', label: 'Sunday' },
 ];
 
-const DigestsTab: React.FC<DigestsTabProps> = ({
-    preferences,
-    onUpdateDigests
-}) => {
+const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests }) => {
     const { t } = useTranslation();
     const [localDigests, setLocalDigests] = useState(preferences.digests);
     const prevDigestsRef = React.useRef(preferences.digests);
@@ -39,12 +37,12 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
     }, [preferences.digests]);
 
     const handleToggle = async (field: keyof DigestSettings, value: boolean) => {
-        setLocalDigests(prev => ({ ...prev, [field]: value }));
+        setLocalDigests((prev) => ({ ...prev, [field]: value }));
         await onUpdateDigests({ [field]: value });
     };
 
     const handleChange = async (field: keyof DigestSettings, value: string) => {
-        setLocalDigests(prev => ({ ...prev, [field]: value }));
+        setLocalDigests((prev) => ({ ...prev, [field]: value }));
         await onUpdateDigests({ [field]: value });
     };
 
@@ -56,7 +54,10 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
                     {t('settings.notifications.digestsTitle', 'Email Digests')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t('settings.notifications.digestsDesc', 'Receive summary emails instead of individual notifications.')}
+                    {t(
+                        'settings.notifications.digestsDesc',
+                        'Receive summary emails instead of individual notifications.',
+                    )}
                 </p>
             </div>
 
@@ -130,7 +131,9 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
                                 className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-sm"
                             >
                                 {DAYS_OF_WEEK.map(({ value, label }) => (
-                                    <option key={value} value={value}>{label}</option>
+                                    <option key={value} value={value}>
+                                        {label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -152,7 +155,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
                 <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {t('settings.notifications.digestContent', 'Include in digests:')}
                 </h4>
-                
+
                 {[
                     { key: 'includeOverdue', label: 'Overdue tasks', desc: 'Tasks past their due date' },
                     { key: 'includeUpcoming', label: 'Upcoming deadlines', desc: 'Tasks due in the next 7 days' },
@@ -171,7 +174,9 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
                             </p>
                         </div>
                         <button
-                            onClick={() => handleToggle(key as keyof DigestSettings, !localDigests[key as keyof DigestSettings])}
+                            onClick={() =>
+                                handleToggle(key as keyof DigestSettings, !localDigests[key as keyof DigestSettings])
+                            }
                             className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                                 localDigests[key as keyof DigestSettings]
                                     ? 'bg-brand border-brand text-white'
@@ -188,11 +193,3 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
 };
 
 export default DigestsTab;
-
-
-
-
-
-
-
-

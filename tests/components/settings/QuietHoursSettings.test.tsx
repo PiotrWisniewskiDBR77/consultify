@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QuietHoursSettings } from '../../../components/settings/QuietHoursSettings';
+import { QuietHoursSettings } from '../../components/settings/QuietHoursSettings';
 import { Api } from '../../../services/api';
 
 // Mock API

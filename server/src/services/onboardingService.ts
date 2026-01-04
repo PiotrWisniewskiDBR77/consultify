@@ -1,19 +1,20 @@
 /**
  * Onboarding Service (HARDENED)
- * 
+ *
  * Handles Phase E: Guided First Value flow with:
  * - Context validation and size limits
  * - Plan snapshot persistence and versioning
  * - Idempotent accept with transaction safety
  * - Integration with audit logging
- * 
+ *
  * Fully migrated from server/services/onboardingService.js to TypeScript
  */
 
-import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
-import logger from '../utils/Logger.js';
+
+import { getDatabase } from '../database/Database.js';
+import type { _RunResult, IDatabase } from '../database/IDatabase.js';
+import _logger from '../utils/Logger.js';
 
 // ============================================
 // VALIDATION
@@ -41,8 +42,12 @@ export function validateContext(input: unknown): TransformationContext {
     const ctx = (input || {}) as Record<string, unknown>;
 
     // Required fields
-    const role = String(ctx.role || '').trim().slice(0, 64);
-    const problems = String(ctx.problems || '').trim().slice(0, 500);
+    const role = String(ctx.role || '')
+        .trim()
+        .slice(0, 64);
+    const problems = String(ctx.problems || '')
+        .trim()
+        .slice(0, 500);
 
     if (!role) {
         const err = new Error('Missing required field: role') as ValidationError;
@@ -59,9 +64,15 @@ export function validateContext(input: unknown): TransformationContext {
     const normalized: TransformationContext = {
         role,
         problems,
-        industry: String(ctx.industry || '').trim().slice(0, 64),
-        urgency: String(ctx.urgency || 'Normal').trim().slice(0, 32),
-        targets: String(ctx.targets || '').trim().slice(0, 256)
+        industry: String(ctx.industry || '')
+            .trim()
+            .slice(0, 64),
+        urgency: String(ctx.urgency || 'Normal')
+            .trim()
+            .slice(0, 32),
+        targets: String(ctx.targets || '')
+            .trim()
+            .slice(0, 256),
     };
 
     // Size check
@@ -188,7 +199,7 @@ class OnboardingServiceClass {
     constructor(deps?: Partial<OnboardingServiceDependencies>) {
         this.deps = {
             db: deps?.db ?? getDatabase(),
-            uuidv4: deps?.uuidv4 ?? uuidv4
+            uuidv4: deps?.uuidv4 ?? uuidv4,
         };
     }
 
@@ -209,7 +220,7 @@ class OnboardingServiceClass {
             `UPDATE organizations 
              SET transformation_context = ?, onboarding_status = 'IN_PROGRESS' 
              WHERE id = ?`,
-            [JSON.stringify(ctx), organizationId]
+            [JSON.stringify(ctx), organizationId],
         );
 
         return { success: true, status: 'IN_PROGRESS' };
@@ -221,12 +232,12 @@ class OnboardingServiceClass {
      */
     async generatePlan(organizationId: string, userId: string): Promise<GeneratePlanResult> {
         // 1. Fetch org + context
-        const org = await this.deps.db.get<OrganizationRecord>(
+        const org = (await this.deps.db.get<OrganizationRecord>(
             `SELECT transformation_context, onboarding_plan_version, onboarding_status,
                     organization_type, token_balance
              FROM organizations WHERE id = ?`,
-            [organizationId]
-        ) as OrganizationRecord | null;
+            [organizationId],
+        )) as OrganizationRecord | null;
 
         if (!org) {
             const err = new Error('Organization not found') as ValidationError;
@@ -244,7 +255,7 @@ class OnboardingServiceClass {
 
         // 2. Call AI Service
         const aiService = await getAiService();
-        const plan = await aiService.generateFirstValuePlan(context, userId) as FirstValuePlan;
+        const plan = (await aiService.generateFirstValuePlan(context, userId)) as FirstValuePlan;
 
         // 3. Validate plan structure
         if (!plan || typeof plan !== 'object') {
@@ -260,7 +271,7 @@ class OnboardingServiceClass {
         // Assign stable IDs to initiatives for selection
         plan.suggested_initiatives = plan.suggested_initiatives.map((init, idx) => ({
             id: `init-${idx}`,
-            ...init
+            ...init,
         }));
 
         // 4. Persist snapshot + increment version
@@ -276,7 +287,7 @@ class OnboardingServiceClass {
                  onboarding_plan_version = ?, 
                  onboarding_status = 'GENERATED'
              WHERE id = ?`,
-            [JSON.stringify(plan), nextVersion, organizationId]
+            [JSON.stringify(plan), nextVersion, organizationId],
         );
 
         return { plan, planVersion: nextVersion, planId };
@@ -286,27 +297,35 @@ class OnboardingServiceClass {
      * Get current plan snapshot (for reload without regenerating).
      */
     async getPlanSnapshot(organizationId: string): Promise<PlanSnapshotResult> {
-        const org = await this.deps.db.get<OrganizationRecord>(
+        const org = (await this.deps.db.get<OrganizationRecord>(
             `SELECT onboarding_plan_snapshot, onboarding_plan_version, onboarding_status
              FROM organizations WHERE id = ?`,
-            [organizationId]
-        ) as OrganizationRecord | null;
+            [organizationId],
+        )) as OrganizationRecord | null;
 
         if (!org || !org.onboarding_plan_snapshot) {
-            return { plan: null, planVersion: org?.onboarding_plan_version || 0, status: org?.onboarding_status || 'NOT_STARTED' };
+            return {
+                plan: null,
+                planVersion: org?.onboarding_plan_version || 0,
+                status: org?.onboarding_status || 'NOT_STARTED',
+            };
         }
 
         return {
             plan: JSON.parse(org.onboarding_plan_snapshot) as FirstValuePlan,
             planVersion: org.onboarding_plan_version || 0,
-            status: org.onboarding_status || 'NOT_STARTED'
+            status: org.onboarding_status || 'NOT_STARTED',
         };
     }
 
     /**
      * Accept Plan & Create Real Initiatives (IDEMPOTENT + TRANSACTIONAL).
      */
-    async acceptPlan(organizationId: string, userId: string, options: AcceptPlanOptions = {}): Promise<AcceptPlanResult> {
+    async acceptPlan(
+        organizationId: string,
+        userId: string,
+        options: AcceptPlanOptions = {},
+    ): Promise<AcceptPlanResult> {
         const { acceptedInitiativeIds = null, idempotencyKey = null } = options;
         const key = String(idempotencyKey || `acc-${this.deps.uuidv4()}`);
 
@@ -315,11 +334,11 @@ class OnboardingServiceClass {
         // For full transaction support, this would need to be implemented in the database layer
 
         // 1. Check idempotency
-        const org = await this.deps.db.get<OrganizationRecord>(
+        const org = (await this.deps.db.get<OrganizationRecord>(
             `SELECT onboarding_plan_snapshot, onboarding_status, onboarding_accept_idempotency_key
              FROM organizations WHERE id = ?`,
-            [organizationId]
-        ) as OrganizationRecord | null;
+            [organizationId],
+        )) as OrganizationRecord | null;
 
         if (!org) {
             const err = new Error('Organization not found') as ValidationError;
@@ -349,9 +368,10 @@ class OnboardingServiceClass {
         const allInitiatives = plan.suggested_initiatives || [];
 
         // 2. Filter if specific IDs provided
-        const toCreate = acceptedInitiativeIds && acceptedInitiativeIds.length > 0
-            ? allInitiatives.filter(i => acceptedInitiativeIds.includes(i.id || ''))
-            : allInitiatives;
+        const toCreate =
+            acceptedInitiativeIds && acceptedInitiativeIds.length > 0
+                ? allInitiatives.filter((i) => acceptedInitiativeIds.includes(i.id || ''))
+                : allInitiatives;
 
         // 3. Create initiatives with Phase E->F linkage (Fix Pack 1)
         const planId = plan.planId || `onbplan-${organizationId}-unknown`;
@@ -370,8 +390,8 @@ class OnboardingServiceClass {
                     String(init.summary || '').slice(0, 2000),
                     String(init.hypothesis || '').slice(0, 500),
                     userId,
-                    planId
-                ]
+                    planId,
+                ],
             );
             createdCount++;
         }
@@ -383,7 +403,7 @@ class OnboardingServiceClass {
                  onboarding_accepted_at = CURRENT_TIMESTAMP,
                  onboarding_accept_idempotency_key = ?
              WHERE id = ?`,
-            [key, organizationId]
+            [key, organizationId],
         );
 
         return { success: true, idempotent: false, createdCount };
@@ -394,12 +414,12 @@ class OnboardingServiceClass {
      * Phase E success signals that indicate readiness for Phase F/G.
      */
     async detectAHAMoment(organizationId: string): Promise<DetectAHAResult> {
-        const org = await this.deps.db.get<OrganizationRecord>(
+        const org = (await this.deps.db.get<OrganizationRecord>(
             `SELECT onboarding_status, onboarding_plan_version, onboarding_accepted_at,
                     transformation_context, onboarding_plan_snapshot
              FROM organizations WHERE id = ?`,
-            [organizationId]
-        ) as OrganizationRecord | null;
+            [organizationId],
+        )) as OrganizationRecord | null;
 
         if (!org) {
             return { hasAHA: false, signals: [], totalScore: 0, recommendedAction: null, message: null };
@@ -413,7 +433,7 @@ class OnboardingServiceClass {
             signals.push({
                 type: 'SNAPSHOT_CREATED',
                 description: 'First DRD snapshot generated',
-                weight: 0.4
+                weight: 0.4,
             });
         }
 
@@ -422,7 +442,7 @@ class OnboardingServiceClass {
             signals.push({
                 type: 'PLAN_ACCEPTED',
                 description: 'User accepted AI-generated plan',
-                weight: 0.3
+                weight: 0.3,
             });
         }
 
@@ -435,7 +455,7 @@ class OnboardingServiceClass {
                     signals.push({
                         type: 'CONTEXT_COMPLETE',
                         description: 'Transformation context fully provided',
-                        weight: 0.2
+                        weight: 0.2,
                     });
                 }
             } catch (e: unknown) {
@@ -448,7 +468,7 @@ class OnboardingServiceClass {
             signals.push({
                 type: 'REPEATED_ENGAGEMENT',
                 description: 'User regenerated plan multiple times',
-                weight: 0.1
+                weight: 0.1,
             });
         }
 
@@ -471,9 +491,7 @@ class OnboardingServiceClass {
             signals,
             totalScore: totalWeight,
             recommendedAction,
-            message: hasAHA
-                ? 'You\'re making great progress! Your transformation baseline is taking shape.'
-                : null
+            message: hasAHA ? "You're making great progress! Your transformation baseline is taking shape." : null,
         };
     }
 
@@ -481,16 +499,16 @@ class OnboardingServiceClass {
      * Get onboarding status for an organization.
      */
     async getStatus(organizationId: string): Promise<OnboardingStatusResult> {
-        const org = await this.deps.db.get<OrganizationRecord>(
+        const org = (await this.deps.db.get<OrganizationRecord>(
             `SELECT onboarding_status, onboarding_plan_version, onboarding_accepted_at
              FROM organizations WHERE id = ?`,
-            [organizationId]
-        ) as OrganizationRecord | null;
+            [organizationId],
+        )) as OrganizationRecord | null;
 
         return {
             status: org?.onboarding_status || 'NOT_STARTED',
             planVersion: org?.onboarding_plan_version || 0,
-            acceptedAt: org?.onboarding_accepted_at || null
+            acceptedAt: org?.onboarding_accepted_at || null,
         };
     }
 }
@@ -503,14 +521,11 @@ export const saveContext = (organizationId: string, rawContext: unknown) =>
     onboardingServiceInstance.saveContext(organizationId, rawContext);
 export const generatePlan = (organizationId: string, userId: string) =>
     onboardingServiceInstance.generatePlan(organizationId, userId);
-export const getPlanSnapshot = (organizationId: string) =>
-    onboardingServiceInstance.getPlanSnapshot(organizationId);
+export const getPlanSnapshot = (organizationId: string) => onboardingServiceInstance.getPlanSnapshot(organizationId);
 export const acceptPlan = (organizationId: string, userId: string, options?: AcceptPlanOptions) =>
     onboardingServiceInstance.acceptPlan(organizationId, userId, options);
-export const detectAHAMoment = (organizationId: string) =>
-    onboardingServiceInstance.detectAHAMoment(organizationId);
-export const getStatus = (organizationId: string) =>
-    onboardingServiceInstance.getStatus(organizationId);
+export const detectAHAMoment = (organizationId: string) => onboardingServiceInstance.detectAHAMoment(organizationId);
+export const getStatus = (organizationId: string) => onboardingServiceInstance.getStatus(organizationId);
 
 // Default export for backward compatibility
 const onboardingService = {
@@ -521,7 +536,7 @@ const onboardingService = {
     getPlanSnapshot,
     acceptPlan,
     detectAHAMoment,
-    getStatus
+    getStatus,
 };
 
 export default onboardingService;

@@ -1,7 +1,7 @@
 /**
  * PmoContext Routes
  * API endpoints for pmo-context
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof pmo_contextRoutesJS === 'function' || (pmo_contextRoutesJS && typeof pmo_contextRoutesJS.handle === 'function')) {
+if (
+    typeof pmo_contextRoutesJS === 'function' ||
+    (pmo_contextRoutesJS && typeof pmo_contextRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(pmo_contextRoutesJS);
 } else {

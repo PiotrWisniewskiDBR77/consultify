@@ -1,27 +1,19 @@
 /**
  * ProfileStatusSettings - User availability status and status message
- * 
+ *
  * Features:
  * - Set availability status (online, away, busy, dnd)
  * - Custom status message
  * - Real-time status updates
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Circle, 
-    Clock, 
-    Moon, 
-    Zap,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Circle, Clock, Loader2, Moon, Save, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface ProfileStatusSettingsProps {
     currentUser: User;
@@ -35,13 +27,10 @@ const STATUS_OPTIONS = [
     { value: 'dnd', label: 'Do Not Disturb', icon: Moon, color: 'text-red-500' },
 ] as const;
 
-export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [status, setStatus] = useState<'online' | 'away' | 'busy' | 'dnd'>(
-        currentUser.availabilityStatus || 'online'
+        currentUser.availabilityStatus || 'online',
     );
     const [statusMessage, setStatusMessage] = useState(currentUser.statusMessage || '');
     const [isSaving, setIsSaving] = useState(false);
@@ -55,21 +44,21 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.updateUserStatus(currentUser.id, {
                 availabilityStatus: status,
-                statusMessage: statusMessage.trim() || undefined
+                statusMessage: statusMessage.trim() || undefined,
             });
-            
+
             onUpdateUser({
                 availabilityStatus: status,
-                statusMessage: statusMessage.trim() || undefined
+                statusMessage: statusMessage.trim() || undefined,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.profile.status.saved', 'Status updated successfully'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -79,7 +68,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
         }
     };
 
-    const selectedStatus = STATUS_OPTIONS.find(opt => opt.value === status);
+    const selectedStatus = STATUS_OPTIONS.find((opt) => opt.value === status);
 
     return (
         <div className="space-y-6">
@@ -101,28 +90,28 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
                     {STATUS_OPTIONS.map((option) => {
                         const Icon = option.icon;
                         const isSelected = status === option.value;
-                        
+
                         return (
                             <button
                                 key={option.value}
                                 onClick={() => setStatus(option.value)}
                                 className={`
                                     flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
-                                    ${isSelected 
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20' 
-                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                    ${
+                                        isSelected
+                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                            : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
                                     }
                                 `}
                             >
-                                <Icon 
-                                    size={24} 
-                                    className={isSelected ? option.color : 'text-slate-400'} 
-                                />
-                                <span className={`text-sm font-medium ${
-                                    isSelected 
-                                        ? 'text-purple-700 dark:text-purple-300' 
-                                        : 'text-slate-600 dark:text-slate-400'
-                                }`}>
+                                <Icon size={24} className={isSelected ? option.color : 'text-slate-400'} />
+                                <span
+                                    className={`text-sm font-medium ${
+                                        isSelected
+                                            ? 'text-purple-700 dark:text-purple-300'
+                                            : 'text-slate-600 dark:text-slate-400'
+                                    }`}
+                                >
                                     {option.label}
                                 </span>
                             </button>
@@ -134,7 +123,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
             {/* Status Message */}
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {t('settings.profile.status.message', 'Status Message')} 
+                    {t('settings.profile.status.message', 'Status Message')}
                     <span className="text-slate-400 text-xs ml-1">({t('common.optional', 'Optional')})</span>
                 </label>
                 <input
@@ -158,19 +147,14 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
                 <div className="flex items-center gap-2">
                     {selectedStatus && (
                         <>
-                            <selectedStatus.icon 
-                                size={16} 
-                                className={selectedStatus.color} 
-                            />
+                            <selectedStatus.icon size={16} className={selectedStatus.color} />
                             <span className="text-sm font-medium text-slate-900 dark:text-white">
                                 {selectedStatus.label}
                             </span>
                             {statusMessage && (
                                 <>
                                     <span className="text-slate-400">•</span>
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                                        {statusMessage}
-                                    </span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">{statusMessage}</span>
                                 </>
                             )}
                         </>
@@ -217,10 +201,4 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
 };
 
 export default ProfileStatusSettings;
-
-
-
-
-
-
 

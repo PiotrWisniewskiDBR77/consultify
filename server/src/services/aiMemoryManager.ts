@@ -4,7 +4,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { get, run, all } from '../utils/DbPromise.js';
+
+import { all, get, run } from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -14,14 +15,14 @@ export enum MemoryType {
     DECISION = 'DECISION',
     PHASE_TRANSITION = 'PHASE_TRANSITION',
     RECOMMENDATION = 'RECOMMENDATION',
-    PATTERN = 'PATTERN'
+    PATTERN = 'PATTERN',
 }
 
 export const MEMORY_TYPES = {
     DECISION: MemoryType.DECISION,
     PHASE_TRANSITION: MemoryType.PHASE_TRANSITION,
     RECOMMENDATION: MemoryType.RECOMMENDATION,
-    PATTERN: MemoryType.PATTERN
+    PATTERN: MemoryType.PATTERN,
 };
 
 export const MODEL_TOKEN_LIMITS: Record<string, number> = {
@@ -33,7 +34,7 @@ export const MODEL_TOKEN_LIMITS: Record<string, number> = {
     'claude-3-opus': 200000,
     'claude-3-sonnet': 200000,
     'claude-3-haiku': 200000,
-    'default': 8192
+    default: 8192,
 };
 
 export interface MemoryMessage {
@@ -85,7 +86,7 @@ export const AIMemoryManager = {
             conversationId: uuidv4(),
             messages: [],
             currentScreen: null,
-            startedAt: new Date().toISOString()
+            startedAt: new Date().toISOString(),
         };
     },
 
@@ -93,7 +94,7 @@ export const AIMemoryManager = {
         session.messages.push({
             role,
             content,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         });
         return session;
     },
@@ -110,7 +111,7 @@ export const AIMemoryManager = {
         const result = await run(
             `INSERT INTO ai_project_memory (id, project_id, memory_type, content, recorded_by)
              VALUES (?, ?, ?, ?, ?)`,
-            [id, projectId, memoryType, contentStr, userId]
+            [id, projectId, memoryType, contentStr, userId],
         );
 
         if (!result.success) {
@@ -122,14 +123,19 @@ export const AIMemoryManager = {
             const project: any = await get(`SELECT organization_id FROM projects WHERE id = ?`, [projectId]);
 
             if (project && project.organization_id) {
-                const contentSnippet = typeof content === 'string'
-                    ? content.substring(0, 100)
-                    : contentStr.substring(0, 100);
+                const contentSnippet =
+                    typeof content === 'string' ? content.substring(0, 100) : contentStr.substring(0, 100);
 
                 await run(
                     `INSERT INTO activity_logs (id, organization_id, user_id, action, entity_type, entity_id, new_value, created_at)
                      VALUES (?, ?, ?, 'ai_memory_write', 'ai_memory', ?, ?, CURRENT_TIMESTAMP)`,
-                    [uuidv4(), project.organization_id, userId, id, JSON.stringify({ memoryType, snippet: contentSnippet })]
+                    [
+                        uuidv4(),
+                        project.organization_id,
+                        userId,
+                        id,
+                        JSON.stringify({ memoryType, snippet: contentSnippet }),
+                    ],
                 );
             }
         } catch (err: any) {
@@ -142,44 +148,82 @@ export const AIMemoryManager = {
     /**
      * Record a decision with rationale
      */
-    recordDecision: async (projectId: string, decisionId: string, title: string, outcome: string, rationale: string, userId: string) => {
-        return AIMemoryManager.recordProjectMemory(projectId, MemoryType.DECISION, {
-            decisionId,
-            title,
-            outcome,
-            rationale,
-            recordedAt: new Date().toISOString()
-        }, userId);
+    recordDecision: async (
+        projectId: string,
+        decisionId: string,
+        title: string,
+        outcome: string,
+        rationale: string,
+        userId: string,
+    ) => {
+        return AIMemoryManager.recordProjectMemory(
+            projectId,
+            MemoryType.DECISION,
+            {
+                decisionId,
+                title,
+                outcome,
+                rationale,
+                recordedAt: new Date().toISOString(),
+            },
+            userId,
+        );
     },
 
     /**
      * Record phase transition
      */
-    recordPhaseTransition: async (projectId: string, fromPhase: string, toPhase: string, reason: string, userId: string) => {
-        return AIMemoryManager.recordProjectMemory(projectId, MemoryType.PHASE_TRANSITION, {
-            from: fromPhase,
-            to: toPhase,
-            reason,
-            transitionedAt: new Date().toISOString()
-        }, userId);
+    recordPhaseTransition: async (
+        projectId: string,
+        fromPhase: string,
+        toPhase: string,
+        reason: string,
+        userId: string,
+    ) => {
+        return AIMemoryManager.recordProjectMemory(
+            projectId,
+            MemoryType.PHASE_TRANSITION,
+            {
+                from: fromPhase,
+                to: toPhase,
+                reason,
+                transitionedAt: new Date().toISOString(),
+            },
+            userId,
+        );
     },
 
     /**
      * Record AI recommendation and user response
      */
-    recordRecommendation: async (projectId: string, recommendation: string, accepted: boolean, userFeedback: string | null, userId: string) => {
-        return AIMemoryManager.recordProjectMemory(projectId, MemoryType.RECOMMENDATION, {
-            recommendation,
-            accepted,
-            userFeedback,
-            recordedAt: new Date().toISOString()
-        }, userId);
+    recordRecommendation: async (
+        projectId: string,
+        recommendation: string,
+        accepted: boolean,
+        userFeedback: string | null,
+        userId: string,
+    ) => {
+        return AIMemoryManager.recordProjectMemory(
+            projectId,
+            MemoryType.RECOMMENDATION,
+            {
+                recommendation,
+                accepted,
+                userFeedback,
+                recordedAt: new Date().toISOString(),
+            },
+            userId,
+        );
     },
 
     /**
      * Get project memory
      */
-    getProjectMemory: async (projectId: string, memoryType: MemoryType | null = null, limit = 20): Promise<ProjectMemoryEntry[]> => {
+    getProjectMemory: async (
+        projectId: string,
+        memoryType: MemoryType | null = null,
+        limit = 20,
+    ): Promise<ProjectMemoryEntry[]> => {
         let sql = `SELECT * FROM ai_project_memory WHERE project_id = ?`;
         const params: any[] = [projectId];
 
@@ -193,12 +237,12 @@ export const AIMemoryManager = {
 
         const rows = await all<ProjectMemoryEntry>(sql, params);
 
-        return (rows || []).map(row => {
+        return (rows || []).map((row) => {
             try {
                 if (typeof row.content === 'string') {
                     row.content = JSON.parse(row.content);
                 }
-            } catch { }
+            } catch {}
             return row;
         });
     },
@@ -213,10 +257,10 @@ export const AIMemoryManager = {
 
         return {
             projectId,
-            majorDecisions: decisions.map(d => d.content),
-            phaseTransitions: transitions.map(t => t.content),
-            aiRecommendations: recommendations.map(r => r.content),
-            memoryCount: decisions.length + transitions.length + recommendations.length
+            majorDecisions: decisions.map((d) => d.content),
+            phaseTransitions: transitions.map((t) => t.content),
+            aiRecommendations: recommendations.map((r) => r.content),
+            memoryCount: decisions.length + transitions.length + recommendations.length,
         };
     },
 
@@ -231,25 +275,94 @@ export const AIMemoryManager = {
         const normalizedContent = (typeof content === 'string' ? content : JSON.stringify(content)).toLowerCase();
         const normalizedQuery = query.toLowerCase();
 
-        const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
-            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'to', 'of', 'in',
-            'for', 'on', 'with', 'at', 'by', 'from', 'as', 'or', 'and', 'but', 'if',
-            'then', 'than', 'so', 'that', 'this', 'these', 'those', 'what', 'which',
-            'who', 'whom', 'whose', 'when', 'where', 'why', 'how', 'all', 'each',
-            'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
-            'not', 'only', 'same', 'just', 'also', 'very', 'it', 'its', 'my', 'your']);
+        const stopWords = new Set([
+            'the',
+            'a',
+            'an',
+            'is',
+            'are',
+            'was',
+            'were',
+            'be',
+            'been',
+            'being',
+            'have',
+            'has',
+            'had',
+            'do',
+            'does',
+            'did',
+            'will',
+            'would',
+            'could',
+            'should',
+            'may',
+            'might',
+            'must',
+            'shall',
+            'can',
+            'need',
+            'to',
+            'of',
+            'in',
+            'for',
+            'on',
+            'with',
+            'at',
+            'by',
+            'from',
+            'as',
+            'or',
+            'and',
+            'but',
+            'if',
+            'then',
+            'than',
+            'so',
+            'that',
+            'this',
+            'these',
+            'those',
+            'what',
+            'which',
+            'who',
+            'whom',
+            'whose',
+            'when',
+            'where',
+            'why',
+            'how',
+            'all',
+            'each',
+            'every',
+            'both',
+            'few',
+            'more',
+            'most',
+            'other',
+            'some',
+            'such',
+            'no',
+            'not',
+            'only',
+            'same',
+            'just',
+            'also',
+            'very',
+            'it',
+            'its',
+            'my',
+            'your',
+        ]);
 
-        const queryWords = normalizedQuery
-            .split(/\s+/)
-            .filter(word => word.length > 2 && !stopWords.has(word));
+        const queryWords = normalizedQuery.split(/\s+/).filter((word) => word.length > 2 && !stopWords.has(word));
 
         if (queryWords.length === 0) return 0.5;
 
         let exactMatches = 0;
         let partialMatches = 0;
 
-        queryWords.forEach(word => {
+        queryWords.forEach((word) => {
             const exactRegex = new RegExp(`\\b${word}\\b`, 'gi');
             if (exactRegex.test(normalizedContent)) {
                 exactMatches++;
@@ -260,7 +373,7 @@ export const AIMemoryManager = {
 
         const exactScore = exactMatches / queryWords.length;
         const partialScore = partialMatches / queryWords.length;
-        const score = (exactScore * 0.7) + (partialScore * 0.3);
+        const score = exactScore * 0.7 + partialScore * 0.3;
 
         if (normalizedContent.includes(normalizedQuery)) {
             return Math.min(1, score + 0.3);
@@ -278,10 +391,8 @@ export const AIMemoryManager = {
 
         if (!allMemory || allMemory.length === 0) return [];
 
-        const scoredMemory = allMemory.map(item => {
-            const contentString = typeof item.content === 'string'
-                ? item.content
-                : JSON.stringify(item.content);
+        const scoredMemory = allMemory.map((item) => {
+            const contentString = typeof item.content === 'string' ? item.content : JSON.stringify(item.content);
 
             const relevanceScore = AIMemoryManager.calculateRelevance(contentString, query);
 
@@ -290,17 +401,17 @@ export const AIMemoryManager = {
             else if (item.memory_type === MemoryType.PHASE_TRANSITION) typeWeight = 1.1;
 
             const ageInDays = (Date.now() - new Date(item.created_at).getTime()) / (1000 * 60 * 60 * 24);
-            const recencyWeight = Math.max(0.8, 1 - (ageInDays / 365));
+            const recencyWeight = Math.max(0.8, 1 - ageInDays / 365);
 
             return {
                 ...item,
                 relevanceScore,
-                weightedScore: relevanceScore * typeWeight * recencyWeight
+                weightedScore: relevanceScore * typeWeight * recencyWeight,
             };
         });
 
         return scoredMemory
-            .filter(item => item.relevanceScore >= minRelevance)
+            .filter((item) => item.relevanceScore >= minRelevance)
             .sort((a, b) => b.weightedScore - a.weightedScore)
             .slice(0, limit);
     },
@@ -315,33 +426,27 @@ export const AIMemoryManager = {
 
         const relevantMemory = await AIMemoryManager.getRelevantMemory(projectId, query, 15, 0.1);
 
-        const decisions = relevantMemory
-            .filter(m => m.memory_type === MemoryType.DECISION)
-            .slice(0, 5);
-        const transitions = relevantMemory
-            .filter(m => m.memory_type === MemoryType.PHASE_TRANSITION)
-            .slice(0, 3);
-        const recommendations = relevantMemory
-            .filter(m => m.memory_type === MemoryType.RECOMMENDATION)
-            .slice(0, 5);
+        const decisions = relevantMemory.filter((m) => m.memory_type === MemoryType.DECISION).slice(0, 5);
+        const transitions = relevantMemory.filter((m) => m.memory_type === MemoryType.PHASE_TRANSITION).slice(0, 3);
+        const recommendations = relevantMemory.filter((m) => m.memory_type === MemoryType.RECOMMENDATION).slice(0, 5);
 
         return {
             projectId,
-            majorDecisions: decisions.map(d => ({
+            majorDecisions: decisions.map((d) => ({
                 ...d.content,
-                _relevance: d.relevanceScore
+                _relevance: d.relevanceScore,
             })),
-            phaseTransitions: transitions.map(t => ({
+            phaseTransitions: transitions.map((t) => ({
                 ...t.content,
-                _relevance: t.relevanceScore
+                _relevance: t.relevanceScore,
             })),
-            aiRecommendations: recommendations.map(r => ({
+            aiRecommendations: recommendations.map((r) => ({
                 ...r.content,
-                _relevance: r.relevanceScore
+                _relevance: r.relevanceScore,
             })),
             memoryCount: decisions.length + transitions.length + recommendations.length,
             _relevanceFiltered: true,
-            _query: query.substring(0, 50) + (query.length > 50 ? '...' : '')
+            _query: query.substring(0, 50) + (query.length > 50 ? '...' : ''),
         };
     },
 
@@ -369,7 +474,7 @@ export const AIMemoryManager = {
             governance_style: 'BALANCED',
             ai_strictness: 'STANDARD',
             recurringPatterns: [],
-            pmo_maturity: 'BASIC'
+            pmo_maturity: 'BASIC',
         };
     },
 
@@ -387,7 +492,7 @@ export const AIMemoryManager = {
                 recurring_patterns = COALESCE(?, recurring_patterns),
                 updated_at = CURRENT_TIMESTAMP
              WHERE organization_id = ?`,
-            [governanceStyle, aiStrictness, pmoMaturity, patterns ? JSON.stringify(patterns) : null, organizationId]
+            [governanceStyle, aiStrictness, pmoMaturity, patterns ? JSON.stringify(patterns) : null, organizationId],
         );
 
         return { updated: result.success && (result.changes || 0) > 0 };
@@ -421,7 +526,7 @@ export const AIMemoryManager = {
             preferred_tone: 'EXPERT',
             education_mode: 0,
             proactive_notifications: 1,
-            preferred_language: 'en'
+            preferred_language: 'en',
         };
     },
 
@@ -441,12 +546,16 @@ export const AIMemoryManager = {
                 preferred_language = COALESCE(?, preferred_language),
                 updated_at = CURRENT_TIMESTAMP`,
             [
-                userId, preferredTone, educationMode ? 1 : 0,
-                proactiveNotifications !== false ? 1 : 0, preferredLanguage || 'en',
-                preferredTone, educationMode !== undefined ? (educationMode ? 1 : 0) : null,
+                userId,
+                preferredTone,
+                educationMode ? 1 : 0,
+                proactiveNotifications !== false ? 1 : 0,
+                preferredLanguage || 'en',
+                preferredTone,
+                educationMode !== undefined ? (educationMode ? 1 : 0) : null,
                 proactiveNotifications !== undefined ? (proactiveNotifications ? 1 : 0) : null,
-                preferredLanguage
-            ]
+                preferredLanguage,
+            ],
         );
 
         return { updated: true, userId };
@@ -485,12 +594,14 @@ export const AIMemoryManager = {
         }
 
         const result = await run(sql, params);
-        console.log(`[AIMemoryManager] Cleaned up ${result.changes} old memory entries (older than ${maxAgeDays} days)`);
+        console.log(
+            `[AIMemoryManager] Cleaned up ${result.changes} old memory entries (older than ${maxAgeDays} days)`,
+        );
 
         return {
             deleted: result.changes,
             maxAgeDays,
-            projectId: projectId || 'all'
+            projectId: projectId || 'all',
         };
     },
 
@@ -500,7 +611,7 @@ export const AIMemoryManager = {
     cleanupPartialResponses: async (maxAgeHours = 1) => {
         const result = await run(
             `DELETE FROM ai_partial_responses WHERE updated_at < datetime('now', '-' || ? || ' hours')`,
-            [maxAgeHours]
+            [maxAgeHours],
         );
 
         if (!result.success && (result.error?.includes('no such table') || result.error?.includes('does not exist'))) {
@@ -517,10 +628,9 @@ export const AIMemoryManager = {
      * Cleanup old feedback entries
      */
     cleanupOldFeedback: async (maxAgeDays = 365) => {
-        const result = await run(
-            `DELETE FROM ai_feedback WHERE created_at < datetime('now', '-' || ? || ' days')`,
-            [maxAgeDays]
-        );
+        const result = await run(`DELETE FROM ai_feedback WHERE created_at < datetime('now', '-' || ? || ' days')`, [
+            maxAgeDays,
+        ]);
 
         if (!result.success && (result.error?.includes('no such table') || result.error?.includes('does not exist'))) {
             return { deleted: 0, skipped: true };
@@ -550,9 +660,11 @@ export const AIMemoryManager = {
         const oldest: any = await get(`SELECT MIN(created_at) as oldest FROM ai_project_memory`);
         stats.oldestMemoryEntry = oldest?.oldest || null;
 
-        const rows = await all<any>(`SELECT memory_type, COUNT(*) as count FROM ai_project_memory GROUP BY memory_type`);
+        const rows = await all<any>(
+            `SELECT memory_type, COUNT(*) as count FROM ai_project_memory GROUP BY memory_type`,
+        );
         stats.memoryByType = {};
-        (rows || []).forEach(r => {
+        (rows || []).forEach((r) => {
             stats.memoryByType[r.memory_type] = r.count;
         });
 
@@ -570,7 +682,7 @@ export const AIMemoryManager = {
             partialResponses: null,
             feedback: null,
             stats: null,
-            duration: 0
+            duration: 0,
         };
 
         try {
@@ -584,7 +696,7 @@ export const AIMemoryManager = {
                 projectMemoryDeleted: results.projectMemory.deleted,
                 partialResponsesDeleted: results.partialResponses.deleted,
                 feedbackDeleted: results.feedback.deleted,
-                duration: `${results.duration}ms`
+                duration: `${results.duration}ms`,
             });
 
             return results;
@@ -667,11 +779,13 @@ export const AIMemoryManager = {
             if (currentTokens > maxTokens) {
                 if (trimmedMemory.majorDecisions[0]) {
                     const decision = trimmedMemory.majorDecisions[0];
-                    trimmedMemory.majorDecisions = [{
-                        ...decision,
-                        rationale: decision.rationale ? decision.rationale.substring(0, 200) + '...' : '',
-                        _truncated: true
-                    }];
+                    trimmedMemory.majorDecisions = [
+                        {
+                            ...decision,
+                            rationale: decision.rationale ? decision.rationale.substring(0, 200) + '...' : '',
+                            _truncated: true,
+                        },
+                    ];
                 }
             }
         }
@@ -695,12 +809,12 @@ export const AIMemoryManager = {
         if (!history || !Array.isArray(history) || maxTokens <= 0) return history;
 
         const estimateTokens = AIMemoryManager.estimateTokens;
-        let currentTokens = history.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
+        const currentTokens = history.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
 
         if (currentTokens <= maxTokens) return history;
 
-        const systemMessages = history.filter(m => m.role === 'system');
-        const conversationMessages = history.filter(m => m.role !== 'system');
+        const systemMessages = history.filter((m) => m.role === 'system');
+        const conversationMessages = history.filter((m) => m.role !== 'system');
 
         const systemTokens = systemMessages.reduce((sum, msg) => sum + estimateTokens(msg.content || ''), 0);
         const availableForConversation = maxTokens - systemTokens;
@@ -724,7 +838,7 @@ export const AIMemoryManager = {
                     trimmedConversation.unshift({
                         ...msg,
                         content: truncatedContent,
-                        _truncated: true
+                        _truncated: true,
                     });
                 }
                 break;
@@ -735,7 +849,7 @@ export const AIMemoryManager = {
             trimmedConversation.unshift({
                 role: 'system',
                 content: `[Note: Earlier conversation history (${conversationMessages.length - trimmedConversation.length} messages) was trimmed to fit context window]`,
-                _trimMarker: true
+                _trimMarker: true,
             });
         }
 
@@ -745,7 +859,13 @@ export const AIMemoryManager = {
     /**
      * Calculate total context size and check if within limits
      */
-    analyzeContextTokens: (systemPrompt: string, userMessage: string, history: any[], memory: any, modelName = 'gpt-4') => {
+    analyzeContextTokens: (
+        systemPrompt: string,
+        userMessage: string,
+        history: any[],
+        memory: any,
+        modelName = 'gpt-4',
+    ) => {
         const estimateTokens = AIMemoryManager.estimateTokens;
         const modelLimit = AIMemoryManager.getModelTokenLimit(modelName);
 
@@ -764,24 +884,27 @@ export const AIMemoryManager = {
                 user: userTokens,
                 history: historyTokens,
                 memory: memoryTokens,
-                total: totalTokens
+                total: totalTokens,
             },
             limits: {
                 model: modelName,
                 modelLimit,
                 responseBuffer,
-                availableForContext
+                availableForContext,
             },
             status: {
                 withinLimits: totalTokens <= availableForContext,
                 utilizationPercent: Math.round((totalTokens / availableForContext) * 100),
                 overBy: Math.max(0, totalTokens - availableForContext),
-                headroom: Math.max(0, availableForContext - totalTokens)
+                headroom: Math.max(0, availableForContext - totalTokens),
             },
-            recommendations: totalTokens > availableForContext ? {
-                trimMemoryBy: Math.min(memoryTokens, totalTokens - availableForContext),
-                trimHistoryBy: Math.max(0, totalTokens - availableForContext - memoryTokens)
-            } : null
+            recommendations:
+                totalTokens > availableForContext
+                    ? {
+                          trimMemoryBy: Math.min(memoryTokens, totalTokens - availableForContext),
+                          trimHistoryBy: Math.max(0, totalTokens - availableForContext - memoryTokens),
+                      }
+                    : null,
         };
     },
 
@@ -796,7 +919,7 @@ export const AIMemoryManager = {
                 history,
                 memory,
                 trimmed: false,
-                analysis
+                analysis,
             };
         }
 
@@ -809,14 +932,20 @@ export const AIMemoryManager = {
         const trimmedHistory = AIMemoryManager.trimHistory(history, historyBudget);
         const trimmedMemory = AIMemoryManager.trimMemory(memory, memoryBudget);
 
-        const newAnalysis = AIMemoryManager.analyzeContextTokens(systemPrompt, userMessage, trimmedHistory, trimmedMemory, modelName);
+        const newAnalysis = AIMemoryManager.analyzeContextTokens(
+            systemPrompt,
+            userMessage,
+            trimmedHistory,
+            trimmedMemory,
+            modelName,
+        );
 
         return {
             history: trimmedHistory,
             memory: trimmedMemory,
             trimmed: true,
             originalAnalysis: analysis,
-            newAnalysis
+            newAnalysis,
         };
     },
 
@@ -833,7 +962,7 @@ export const AIMemoryManager = {
         includeCodeSnippets: true,
         formatPreference: 'markdown',
         educationMode: false,
-        actionOrientation: 'balanced'
+        actionOrientation: 'balanced',
     } as PersonalizationProfile,
 
     /**
@@ -854,7 +983,7 @@ export const AIMemoryManager = {
             const prefs = JSON.parse(row.preferences || '{}');
             return {
                 ...AIMemoryManager.DEFAULT_PERSONALIZATION,
-                ...prefs
+                ...prefs,
             };
         } catch (e) {
             return { ...AIMemoryManager.DEFAULT_PERSONALIZATION };
@@ -873,13 +1002,16 @@ export const AIMemoryManager = {
         const current = await AIMemoryManager.getPersonalizationProfile(userId);
         const merged = { ...current, ...preferences };
 
-        const result = await run(`
+        const result = await run(
+            `
             INSERT INTO user_ai_preferences (id, user_id, preferences, updated_at)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 preferences = excluded.preferences,
                 updated_at = excluded.updated_at
-        `, [id, userId, JSON.stringify(merged), now]);
+        `,
+            [id, userId, JSON.stringify(merged), now],
+        );
 
         return { success: result.success, preferences: merged };
     },
@@ -984,9 +1116,7 @@ export const AIMemoryManager = {
                 break;
         }
 
-        return parts.length > 0
-            ? `\n\nUSER PREFERENCES:\n${parts.map(p => `- ${p}`).join('\n')}\n`
-            : '';
+        return parts.length > 0 ? `\n\nUSER PREFERENCES:\n${parts.map((p) => `- ${p}`).join('\n')}\n` : '';
     },
 
     /**
@@ -994,24 +1124,27 @@ export const AIMemoryManager = {
      */
     getPersonalizationAnalytics: async (userId: string) => {
         const profile = await AIMemoryManager.getPersonalizationProfile(userId);
-        const stats: any = await get(`
+        const stats: any = await get(
+            `
             SELECT 
                 COUNT(*) as totalInteractions,
                 AVG(CASE WHEN json_extract(metadata, '$.rating') = 'positive' THEN 1 ELSE 0 END) as positiveRate
             FROM ai_feedback
             WHERE user_id = ?
             AND created_at >= datetime('now', '-30 days')
-        `, [userId]);
+        `,
+            [userId],
+        );
 
         return {
             profile,
             analytics: {
                 totalInteractions: stats?.totalInteractions || 0,
                 satisfactionRate: Math.round((stats?.positiveRate || 0) * 100),
-                isPersonalized: JSON.stringify(profile) !== JSON.stringify(AIMemoryManager.DEFAULT_PERSONALIZATION)
-            }
+                isPersonalized: JSON.stringify(profile) !== JSON.stringify(AIMemoryManager.DEFAULT_PERSONALIZATION),
+            },
         };
-    }
+    },
 };
 
 export default AIMemoryManager;

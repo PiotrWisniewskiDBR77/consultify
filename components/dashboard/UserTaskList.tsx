@@ -1,10 +1,22 @@
+import {
+    ArrowRight,
+    BarChart,
+    CheckCircle2,
+    Circle,
+    FileText,
+    Lock,
+    MoveRight,
+    Play,
+    Plus,
+    RefreshCw,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, ArrowRight, Play, FileText, BarChart, MoveRight, Lock, Plus, RefreshCw } from 'lucide-react';
-import { FullSession, AppView, Task, TaskStatus } from '../../types';
-import { TaskDetailModal } from '../TaskDetailModal';
+import toast from 'react-hot-toast';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import toast from 'react-hot-toast';
+import { AppView, FullSession, Task, TaskStatus } from '../../types';
+import { TaskDetailModal } from '../TaskDetailModal';
 
 interface UserTaskListProps {
     session?: FullSession;
@@ -30,7 +42,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         taskType: 'task',
-        stepPhase: 'design'
+        stepPhase: 'design',
     };
 
     const fetchTasks = async () => {
@@ -79,7 +91,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                 dueDate: newTask.dueDate,
                 estimatedHours: newTask.estimatedHours,
                 taskType: newTask.taskType,
-                stepPhase: newTask.stepPhase as any
+                stepPhase: newTask.stepPhase as any,
             });
             toast.success('Task created successfully');
             fetchTasks();
@@ -93,7 +105,9 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
             <div className="mb-6 flex justify-between items-end">
                 <div>
                     <h2 className="text-2xl font-bold text-navy-900 dark:text-white">My Action Plan</h2>
-                    <p className="text-slate-500 dark:text-slate-400">Complete these steps to advance your transformation journey.</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        Complete these steps to advance your transformation journey.
+                    </p>
                 </div>
                 <div className="flex gap-2">
                     <button
@@ -114,7 +128,9 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
 
             <div className="space-y-4">
                 {loading && <div className="text-center p-8 text-slate-400">Loading tasks...</div>}
-                {!loading && tasks.length === 0 && <div className="text-center p-8 text-slate-500">No pending tasks. Great job!</div>}
+                {!loading && tasks.length === 0 && (
+                    <div className="text-center p-8 text-slate-500">No pending tasks. Great job!</div>
+                )}
 
                 {tasks.map((task) => {
                     const isCompleted = task.status === TaskStatus.DONE;
@@ -123,24 +139,32 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                     return (
                         <div
                             key={task.id}
-                            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${isActive
-                                ? 'bg-white dark:bg-navy-900 border-purple-500 dark:border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)] scale-[1.01]'
-                                : 'bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-white/5 opacity-80'
-                                }`}
+                            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                                isActive
+                                    ? 'bg-white dark:bg-navy-900 border-purple-500 dark:border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)] scale-[1.01]'
+                                    : 'bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-white/5 opacity-80'
+                            }`}
                         >
-                            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-purple-500 to-indigo-600"></div>}
+                            {isActive && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-purple-500 to-indigo-600"></div>
+                            )}
 
                             <div className="p-6 flex items-start gap-6">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${isActive
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                    : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                    }`}>
+                                <div
+                                    className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                                        isActive
+                                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                            : 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                                    }`}
+                                >
                                     {isCompleted ? <CheckCircle2 size={24} /> : getIcon(task)}
                                 </div>
 
                                 <div className="flex-1 min-w-0 pt-1">
                                     <div className="flex items-center justify-between mb-2">
-                                        <h3 className={`text-lg font-bold ${isActive ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                                        <h3
+                                            className={`text-lg font-bold ${isActive ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
+                                        >
                                             {task.title}
                                         </h3>
                                         {isActive && (
@@ -183,9 +207,8 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
                     <div>
                         <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-1">How it works</h4>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Follow the active tasks above to systematically unlock new modules.
-                            Each step is designed to build upon the previous one, ensuring a comprehensive
-                            transformation strategy.
+                            Follow the active tasks above to systematically unlock new modules. Each step is designed to
+                            build upon the previous one, ensuring a comprehensive transformation strategy.
                         </p>
                     </div>
                 </div>
@@ -204,7 +227,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     );
 };
 
-const TaskClock = ({ size, className }: { size: number, className?: string }) => (
+const TaskClock = ({ size, className }: { size: number; className?: string }) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         width={size}

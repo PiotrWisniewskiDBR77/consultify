@@ -1,5 +1,5 @@
-import type { IDatabase } from '../../../database/IDatabase.js';
-import { getDatabase } from '../../../database/Database.js';
+import { getDatabase } from '../../../../database/Database.js';
+import type { IDatabase } from '../../../../database/IDatabase.js';
 
 export interface DeleteProjectCommand {
     projectId: string;

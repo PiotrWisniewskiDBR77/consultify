@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { FinancialMetricsPanel } from '../../../components/Economics/FinancialMetricsPanel';
+import { FinancialMetricsPanel } from '../../components/Economics/FinancialMetricsPanel';
 
 describe('FinancialMetricsPanel', () => {
     const defaultMetrics = {
@@ -129,6 +129,7 @@ describe('FinancialMetricsPanel', () => {
         expect(screen.getByText(/€|EUR/i)).toBeInTheDocument();
     });
 });
+
 
 
 

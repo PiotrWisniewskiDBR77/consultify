@@ -1,18 +1,19 @@
 /**
  * Consultant Service
- * 
+ *
  * Manages the "Consultant Mode" features:
  * - Consultant identity & status
  * - Multi-organization access (links)
  * - Consultant-generated invites (Trial & Add-to-Org)
- * 
+ *
  * Fully migrated from server/services/consultantService.js to TypeScript
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
-import logger from '../utils/Logger.js';
+
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
+import _logger from '../utils/Logger.js';
 
 // Dynamic import for AccessCodeService (may still be a wrapper)
 let AccessCodeService: any = null;
@@ -32,10 +33,10 @@ async function getAccessCodeService() {
 export const CONSULTANT_INVITE_TYPES = {
     TRIAL_ORG: 'TRIAL_ORG',
     TRIAL_USER: 'TRIAL_USER',
-    ORG_ADD_CONSULTANT: 'ORG_ADD_CONSULTANT'
+    ORG_ADD_CONSULTANT: 'ORG_ADD_CONSULTANT',
 } as const;
 
-export type ConsultantInviteType = typeof CONSULTANT_INVITE_TYPES[keyof typeof CONSULTANT_INVITE_TYPES];
+export type ConsultantInviteType = (typeof CONSULTANT_INVITE_TYPES)[keyof typeof CONSULTANT_INVITE_TYPES];
 
 // ==========================================
 // TYPE DEFINITIONS
@@ -135,7 +136,7 @@ class ConsultantServiceClass {
     constructor(deps?: Partial<ConsultantServiceDependencies>) {
         this.deps = {
             db: deps?.db ?? getDatabase(),
-            uuidv4: deps?.uuidv4 ?? uuidv4
+            uuidv4: deps?.uuidv4 ?? uuidv4,
         };
     }
 
@@ -150,10 +151,9 @@ class ConsultantServiceClass {
      * Check if a user is a registered consultant
      */
     async getConsultantProfile(userId: string): Promise<ConsultantProfile | null> {
-        const row = await this.deps.db.get<ConsultantRecord>(
-            `SELECT * FROM consultants WHERE id = ?`,
-            [userId]
-        ) as ConsultantRecord | null;
+        const row = (await this.deps.db.get<ConsultantRecord>(`SELECT * FROM consultants WHERE id = ?`, [
+            userId,
+        ])) as ConsultantRecord | null;
 
         if (!row) return null;
 
@@ -162,18 +162,21 @@ class ConsultantServiceClass {
             displayName: row.display_name,
             status: row.status,
             createdAt: row.created_at,
-            updatedAt: row.updated_at
+            updatedAt: row.updated_at,
         };
     }
 
     /**
      * Register a user as a consultant (Internal/Admin use)
      */
-    async registerConsultant(userId: string, displayName: string): Promise<{ id: string; displayName: string; status: string }> {
+    async registerConsultant(
+        userId: string,
+        displayName: string,
+    ): Promise<{ id: string; displayName: string; status: string }> {
         await this.deps.db.run(
             `INSERT INTO consultants (id, display_name, status) VALUES (?, ?, 'ACTIVE')
              ON CONFLICT(id) DO UPDATE SET display_name = excluded.display_name`,
-            [userId, displayName]
+            [userId, displayName],
         );
 
         return { id: userId, displayName, status: 'ACTIVE' };
@@ -183,7 +186,7 @@ class ConsultantServiceClass {
      * Get all organizations linked to a consultant
      */
     async getLinkedOrganizations(consultantId: string): Promise<LinkedOrganization[]> {
-        const rows = await this.deps.db.all<LinkedOrganization & { permission_scope: string }>(
+        const rows = (await this.deps.db.all<LinkedOrganization & { permission_scope: string }>(
             `SELECT 
                 o.id, o.name, o.status, o.billing_status, o.trial_expires_at,
                 l.id as link_id, l.permission_scope, l.status as link_status, l.created_at as linked_at
@@ -191,14 +194,14 @@ class ConsultantServiceClass {
              JOIN organizations o ON l.organization_id = o.id
              WHERE l.consultant_id = ? AND l.status = 'ACTIVE'
              ORDER BY l.created_at DESC`,
-            [consultantId]
-        ) as Array<LinkedOrganization & { permission_scope: string }>;
+            [consultantId],
+        )) as Array<LinkedOrganization & { permission_scope: string }>;
 
-        return rows.map(row => {
-            const parsed = row.permission_scope ? JSON.parse(row.permission_scope) as Record<string, unknown> : {};
+        return rows.map((row) => {
+            const parsed = row.permission_scope ? (JSON.parse(row.permission_scope) as Record<string, unknown>) : {};
             return {
                 ...row,
-                permission_scope: parsed
+                permission_scope: parsed,
             } as LinkedOrganization;
         });
     }
@@ -206,19 +209,22 @@ class ConsultantServiceClass {
     /**
      * Verify if a consultant has access to a specific organization
      */
-    async verifyAccess(consultantId: string, organizationId: string): Promise<(Omit<ConsultantOrgLink, 'permission_scope'> & { permission_scope: Record<string, unknown> }) | null> {
-        const row = await this.deps.db.get<ConsultantOrgLink>(
+    async verifyAccess(
+        consultantId: string,
+        organizationId: string,
+    ): Promise<(Omit<ConsultantOrgLink, 'permission_scope'> & { permission_scope: Record<string, unknown> }) | null> {
+        const row = (await this.deps.db.get<ConsultantOrgLink>(
             `SELECT * FROM consultant_org_links 
              WHERE consultant_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
-            [consultantId, organizationId]
-        ) as ConsultantOrgLink | null;
+            [consultantId, organizationId],
+        )) as ConsultantOrgLink | null;
 
         if (!row) return null;
 
-        const parsed = row.permission_scope ? JSON.parse(row.permission_scope) as Record<string, unknown> : {};
+        const parsed = row.permission_scope ? (JSON.parse(row.permission_scope) as Record<string, unknown>) : {};
         return {
             ...row,
-            permission_scope: parsed
+            permission_scope: parsed,
         };
     }
 
@@ -255,7 +261,7 @@ class ConsultantServiceClass {
             subtype: type,
             targetEmail,
             targetCompanyName,
-            source: 'CONSULTANT_DASHBOARD'
+            source: 'CONSULTANT_DASHBOARD',
         };
 
         const result = await accessCodeService.generateCode({
@@ -263,7 +269,7 @@ class ConsultantServiceClass {
             createdByConsultantId: consultantId,
             maxUses,
             expiresInDays,
-            metadata
+            metadata,
         });
 
         return {
@@ -272,7 +278,7 @@ class ConsultantServiceClass {
             type: type,
             invite_type: type,
             expiresAt: result.expiresAt,
-            maxUses: result.maxUses
+            maxUses: result.maxUses,
         };
     }
 
@@ -287,13 +293,15 @@ class ConsultantServiceClass {
 
             return {
                 invite_code: result.code,
-                invite_type: (result.metadata?.subtype as ConsultantInviteType) || (result.type === 'CONSULTANT' ? 'ORG_ADD_CONSULTANT' : 'TRIAL_ORG'),
+                invite_type:
+                    (result.metadata?.subtype as ConsultantInviteType) ||
+                    (result.type === 'CONSULTANT' ? 'ORG_ADD_CONSULTANT' : 'TRIAL_ORG'),
                 consultant_id: result.createdByConsultantId,
                 status: 'valid',
                 expires_at: null,
                 max_uses: null,
                 uses_count: null,
-                metadata: result.metadata as Record<string, unknown>
+                metadata: result.metadata as Record<string, unknown>,
             };
         } catch (err: unknown) {
             throw new Error('Invalid or expired invite code');
@@ -304,7 +312,7 @@ class ConsultantServiceClass {
      * Record usage of an invite code
      * DEPRECATED: AccessCodeService handles usage
      */
-    async recordInviteUsage(code: string): Promise<void> {
+    async recordInviteUsage(_code: string): Promise<void> {
         // No-op, handled by AccessCodeService.acceptCode
         return;
     }
@@ -313,17 +321,19 @@ class ConsultantServiceClass {
      * List invites created by a consultant
      * Uses AccessCodeService
      */
-    async getConsultantInvites(consultantId: string): Promise<Array<{
-        id: string;
-        invite_code: string;
-        invite_type: string;
-        created_at: string;
-        expires_at: string;
-        uses_count: number;
-        max_uses: number;
-        target_email?: string | null;
-        target_company_name?: string | null;
-    }>> {
+    async getConsultantInvites(consultantId: string): Promise<
+        Array<{
+            id: string;
+            invite_code: string;
+            invite_type: string;
+            created_at: string;
+            expires_at: string;
+            uses_count: number;
+            max_uses: number;
+            target_email?: string | null;
+            target_company_name?: string | null;
+        }>
+    > {
         const accessCodeService = await getAccessCodeService();
         const codes = await accessCodeService.listCodes(consultantId, 'CONSULTANT');
 
@@ -336,28 +346,33 @@ class ConsultantServiceClass {
             uses_count: c.uses_count,
             max_uses: c.max_uses,
             target_email: c.metadata?.targetEmail,
-            target_company_name: c.metadata?.targetCompanyName
+            target_company_name: c.metadata?.targetCompanyName,
         }));
     }
 
     /**
      * Ensure link exists between consultant and organization
      */
-    async ensureLink(consultantId: string, organizationId: string, createdByUserId: string, permissions: Record<string, unknown> = {}): Promise<EnsureLinkResult> {
+    async ensureLink(
+        consultantId: string,
+        organizationId: string,
+        createdByUserId: string,
+        permissions: Record<string, unknown> = {},
+    ): Promise<EnsureLinkResult> {
         const id = this.deps.uuidv4();
         const permissionJson = JSON.stringify(permissions);
 
-        const existing = await this.deps.db.get<{ id: string }>(
+        const existing = (await this.deps.db.get<{ id: string }>(
             `SELECT id FROM consultant_org_links WHERE consultant_id = ? AND organization_id = ?`,
-            [consultantId, organizationId]
-        ) as { id: string } | null;
+            [consultantId, organizationId],
+        )) as { id: string } | null;
 
         if (existing) {
             await this.deps.db.run(
                 `UPDATE consultant_org_links 
                  SET status = 'ACTIVE', permission_scope = ? 
                  WHERE id = ?`,
-                [permissionJson, existing.id]
+                [permissionJson, existing.id],
             );
             return { id: existing.id, status: 'ACTIVE' };
         } else {
@@ -365,7 +380,7 @@ class ConsultantServiceClass {
                 `INSERT INTO consultant_org_links 
                  (id, consultant_id, organization_id, created_by_user_id, permission_scope, status)
                  VALUES (?, ?, ?, ?, ?, 'ACTIVE')`,
-                [id, consultantId, organizationId, createdByUserId, permissionJson]
+                [id, consultantId, organizationId, createdByUserId, permissionJson],
             );
             return { id, status: 'ACTIVE' };
         }
@@ -374,11 +389,15 @@ class ConsultantServiceClass {
     /**
      * Accept an invite code
      */
-    async acceptInvite(inviteCode: string, userId: string, targetOrganizationId: string | null = null): Promise<AcceptInviteResult> {
+    async acceptInvite(
+        inviteCode: string,
+        userId: string,
+        targetOrganizationId: string | null = null,
+    ): Promise<AcceptInviteResult> {
         const accessCodeService = await getAccessCodeService();
         const acceptedCode = await accessCodeService.acceptCode({
             code: inviteCode,
-            actorUserId: userId
+            actorUserId: userId,
         });
 
         if (!acceptedCode.ok) {
@@ -392,16 +411,19 @@ class ConsultantServiceClass {
         if (inviteType === 'TRIAL_ORG' || inviteType === 'TRIAL') {
             await this.deps.db.run(
                 "UPDATE users SET attribution_source = 'CONSULTANT_INVITE', attribution_data = ? WHERE id = ?",
-                [JSON.stringify({ consultantId, code: inviteCode }), userId]
+                [JSON.stringify({ consultantId, code: inviteCode }), userId],
             );
         } else if (inviteType === 'ORG_ADD_CONSULTANT' || inviteType === 'CONSULTANT') {
             const orgId = targetOrganizationId || acceptedCode.organizationId;
 
             if (!orgId) {
-                if (!targetOrganizationId) throw new Error("Organization context required to link consultant");
+                if (!targetOrganizationId) throw new Error('Organization context required to link consultant');
             }
 
-            await this.ensureLink(consultantId, orgId || targetOrganizationId || '', userId, { role: 'CONSULTANT', permissions: ['VIEW_ALL', 'COMMENT'] });
+            await this.ensureLink(consultantId, orgId || targetOrganizationId || '', userId, {
+                role: 'CONSULTANT',
+                permissions: ['VIEW_ALL', 'COMMENT'],
+            });
         }
 
         return { success: true, type: inviteType, consultantId };
@@ -411,20 +433,17 @@ class ConsultantServiceClass {
      * Update permissions for a consultant link
      */
     async updateLinkPermissions(linkId: string, permissions: Record<string, unknown>): Promise<void> {
-        await this.deps.db.run(
-            `UPDATE consultant_org_links SET permission_scope = ? WHERE id = ?`,
-            [JSON.stringify(permissions), linkId]
-        );
+        await this.deps.db.run(`UPDATE consultant_org_links SET permission_scope = ? WHERE id = ?`, [
+            JSON.stringify(permissions),
+            linkId,
+        ]);
     }
 
     /**
      * Revoke consultant access
      */
     async revokeLink(linkId: string): Promise<void> {
-        await this.deps.db.run(
-            `UPDATE consultant_org_links SET status = 'REVOKED' WHERE id = ?`,
-            [linkId]
-        );
+        await this.deps.db.run(`UPDATE consultant_org_links SET status = 'REVOKED' WHERE id = ?`, [linkId]);
     }
 }
 
@@ -433,16 +452,27 @@ const consultantServiceInstance = new ConsultantServiceClass();
 
 // Export individual functions for backward compatibility
 export const getConsultantProfile = (userId: string) => consultantServiceInstance.getConsultantProfile(userId);
-export const registerConsultant = (userId: string, displayName: string) => consultantServiceInstance.registerConsultant(userId, displayName);
-export const getLinkedOrganizations = (consultantId: string) => consultantServiceInstance.getLinkedOrganizations(consultantId);
-export const verifyAccess = (consultantId: string, organizationId: string) => consultantServiceInstance.verifyAccess(consultantId, organizationId);
+export const registerConsultant = (userId: string, displayName: string) =>
+    consultantServiceInstance.registerConsultant(userId, displayName);
+export const getLinkedOrganizations = (consultantId: string) =>
+    consultantServiceInstance.getLinkedOrganizations(consultantId);
+export const verifyAccess = (consultantId: string, organizationId: string) =>
+    consultantServiceInstance.verifyAccess(consultantId, organizationId);
 export const createInvite = (params: CreateInviteParams) => consultantServiceInstance.createInvite(params);
 export const validateInvite = (code: string) => consultantServiceInstance.validateInvite(code);
 export const recordInviteUsage = (code: string) => consultantServiceInstance.recordInviteUsage(code);
-export const getConsultantInvites = (consultantId: string) => consultantServiceInstance.getConsultantInvites(consultantId);
-export const ensureLink = (consultantId: string, organizationId: string, createdByUserId: string, permissions?: Record<string, unknown>) => consultantServiceInstance.ensureLink(consultantId, organizationId, createdByUserId, permissions);
-export const acceptInvite = (inviteCode: string, userId: string, targetOrganizationId?: string | null) => consultantServiceInstance.acceptInvite(inviteCode, userId, targetOrganizationId);
-export const updateLinkPermissions = (linkId: string, permissions: Record<string, unknown>) => consultantServiceInstance.updateLinkPermissions(linkId, permissions);
+export const getConsultantInvites = (consultantId: string) =>
+    consultantServiceInstance.getConsultantInvites(consultantId);
+export const ensureLink = (
+    consultantId: string,
+    organizationId: string,
+    createdByUserId: string,
+    permissions?: Record<string, unknown>,
+) => consultantServiceInstance.ensureLink(consultantId, organizationId, createdByUserId, permissions);
+export const acceptInvite = (inviteCode: string, userId: string, targetOrganizationId?: string | null) =>
+    consultantServiceInstance.acceptInvite(inviteCode, userId, targetOrganizationId);
+export const updateLinkPermissions = (linkId: string, permissions: Record<string, unknown>) =>
+    consultantServiceInstance.updateLinkPermissions(linkId, permissions);
 export const revokeLink = (linkId: string) => consultantServiceInstance.revokeLink(linkId);
 
 // Default export for backward compatibility
@@ -460,7 +490,8 @@ const consultantService = {
     acceptInvite,
     updateLinkPermissions,
     revokeLink,
-    setDependencies: (newDeps: Partial<ConsultantServiceDependencies>) => consultantServiceInstance.setDependencies(newDeps)
+    setDependencies: (newDeps: Partial<ConsultantServiceDependencies>) =>
+        consultantServiceInstance.setDependencies(newDeps),
 };
 
 export default consultantService;

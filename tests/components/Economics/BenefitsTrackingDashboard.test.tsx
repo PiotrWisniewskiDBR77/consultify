@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { BenefitsTrackingDashboard } from '../../../components/Economics/BenefitsTrackingDashboard';
+import { BenefitsTrackingDashboard } from '../../components/Economics/BenefitsTrackingDashboard';
 import { Api } from '../../../services/api';
 
 // Mock the API
@@ -304,6 +304,7 @@ describe('BenefitsTrackingDashboard', () => {
         });
     });
 });
+
 
 
 

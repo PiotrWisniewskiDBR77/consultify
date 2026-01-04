@@ -1,9 +1,45 @@
-import { describe, it, expect } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const ActionProposalEngine = require('../../server/ai/actionProposalEngine');
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('@google/generative-ai', () => ({
+    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+        getGenerativeModel: vi.fn().mockReturnValue({
+            generateContent: vi.fn()
+        })
+    }))
+}));
+
+// Mock Dependencies
+const { mockDb } = vi.hoisted(() => ({
+    mockDb: {
+        get: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+        initPromise: Promise.resolve()
+    }
+}));
+
+// Mock aiPipeline to prevent loading complex dependencies
+vi.mock('../../server/services/ai/aiPipeline.js', () => ({
+    aiPipeline: {
+        generateInitiatives: vi.fn()
+    }
+}));
+
+// Mock both potential database entry points
+vi.mock('../../server/database.js', () => ({
+    default: mockDb,
+    getDatabase: () => mockDb
+}));
+
+// Mock Database.ts if reached deeper in the chain
+vi.mock('../../server/src/database/Database.ts', () => ({
+    getDatabase: () => mockDb,
+    default: mockDb
+}));
 
 describe('ActionProposalEngine', () => {
+    let ActionProposalEngine;
+
     const mockContext = {
         orgId: 'legolex-v2',
         orgName: 'Legolex',
@@ -34,6 +70,12 @@ describe('ActionProposalEngine', () => {
             recent_events: []
         }
     };
+
+    beforeEach(async () => {
+        vi.resetModules();
+        const module = await import('../../server/ai/actionProposalEngine.js');
+        ActionProposalEngine = module.default;
+    });
 
     it('should generate proposals for USER_AT_RISK', () => {
         const proposals = ActionProposalEngine.generateProposals(mockContext);

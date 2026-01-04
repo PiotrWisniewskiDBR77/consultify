@@ -1,11 +1,11 @@
 /**
  * Admin Flow E2E Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * End-to-end tests for admin journey - 95%+ coverage target
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Admin Flow E2E', () => {
     describe('Full Admin Journey', () => {
@@ -25,4 +25,3 @@ describe('Admin Flow E2E', () => {
         });
     });
 });
-

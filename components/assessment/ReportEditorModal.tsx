@@ -1,6 +1,6 @@
 /**
  * ReportEditorModal
- * 
+ *
  * Full-featured report editor modal for creating and editing assessment reports.
  * Features:
  * - Edit report name, description
@@ -9,24 +9,24 @@
  * - Preview before finalization
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import {
-    X,
-    Save,
-    FileText,
-    Sparkles,
-    Eye,
-    Edit3,
-    CheckCircle2,
-    Loader2,
     AlertCircle,
+    CheckCircle2,
     ChevronDown,
     ChevronUp,
-    RefreshCw,
     Download,
-    FileOutput
+    Edit3,
+    Eye,
+    FileOutput,
+    FileText,
+    Loader2,
+    RefreshCw,
+    Save,
+    Sparkles,
+    X,
 } from 'lucide-react';
-import DOMPurify from 'dompurify';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface ReportSection {
     id: string;
@@ -63,38 +63,38 @@ const DEFAULT_SECTIONS: ReportSection[] = [
         id: 'executive-summary',
         title: 'Executive Summary',
         content: '',
-        isExpanded: true
+        isExpanded: true,
     },
     {
         id: 'current-state',
         title: 'Current State Analysis',
         content: '',
-        isExpanded: false
+        isExpanded: false,
     },
     {
         id: 'gap-analysis',
         title: 'Gap Analysis',
         content: '',
-        isExpanded: false
+        isExpanded: false,
     },
     {
         id: 'recommendations',
         title: 'Key Recommendations',
         content: '',
-        isExpanded: false
+        isExpanded: false,
     },
     {
         id: 'roadmap',
         title: 'Transformation Roadmap',
         content: '',
-        isExpanded: false
+        isExpanded: false,
     },
     {
         id: 'next-steps',
         title: 'Next Steps',
         content: '',
-        isExpanded: false
-    }
+        isExpanded: false,
+    },
 ];
 
 export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
@@ -104,7 +104,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
     assessmentId,
     assessmentName,
     onSave,
-    onFinalize
+    onFinalize,
 }) => {
     // State
     const [report, setReport] = useState<ReportData>({
@@ -113,7 +113,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
         assessmentId: assessmentId || '',
         assessmentName: assessmentName || '',
         status: 'DRAFT',
-        sections: DEFAULT_SECTIONS
+        sections: DEFAULT_SECTIONS,
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -134,7 +134,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
                 assessmentId: assessmentId || '',
                 assessmentName: assessmentName || '',
                 status: 'DRAFT',
-                sections: DEFAULT_SECTIONS
+                sections: DEFAULT_SECTIONS,
             });
             setHasChanges(false);
         }
@@ -146,7 +146,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/assessment-reports/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!response.ok) throw new Error('Failed to load report');
@@ -154,7 +154,7 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
             const data = await response.json();
             setReport({
                 ...data,
-                sections: data.sections || DEFAULT_SECTIONS
+                sections: data.sections || DEFAULT_SECTIONS,
             });
         } catch (err) {
             setError('Failed to load report');
@@ -166,22 +166,18 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
 
     // Handle section content change
     const handleSectionChange = (sectionId: string, content: string) => {
-        setReport(prev => ({
+        setReport((prev) => ({
             ...prev,
-            sections: prev.sections.map(s =>
-                s.id === sectionId ? { ...s, content } : s
-            )
+            sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, content } : s)),
         }));
         setHasChanges(true);
     };
 
     // Toggle section expansion
     const toggleSection = (sectionId: string) => {
-        setReport(prev => ({
+        setReport((prev) => ({
             ...prev,
-            sections: prev.sections.map(s =>
-                s.id === sectionId ? { ...s, isExpanded: !s.isExpanded } : s
-            )
+            sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, isExpanded: !s.isExpanded } : s)),
         }));
     };
 
@@ -195,14 +191,14 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
             const response = await fetch('/api/ai/assessment/report-section', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     assessmentId: report.assessmentId,
                     sectionType: sectionId,
-                    existingContent: report.sections.find(s => s.id === sectionId)?.content
-                })
+                    existingContent: report.sections.find((s) => s.id === sectionId)?.content,
+                }),
             });
 
             if (!response.ok) {
@@ -216,11 +212,9 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
             handleSectionChange(sectionId, data.content);
 
             // Mark as AI generated
-            setReport(prev => ({
+            setReport((prev) => ({
                 ...prev,
-                sections: prev.sections.map(s =>
-                    s.id === sectionId ? { ...s, aiGenerated: true } : s
-                )
+                sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, aiGenerated: true } : s)),
             }));
         } catch (err) {
             // Use placeholder on error
@@ -295,7 +289,7 @@ The assessment reveals a total gap of [X] points between current state and targe
 2. [Root cause 2]
 3. [Root cause 3]`,
 
-            'recommendations': `## Key Recommendations
+            recommendations: `## Key Recommendations
 
 ### Immediate Actions (0-3 months)
 1. **[Recommendation 1]**
@@ -321,7 +315,7 @@ The assessment reveals a total gap of [X] points between current state and targe
 - [KPI 2]
 - [KPI 3]`,
 
-            'roadmap': `## Transformation Roadmap
+            roadmap: `## Transformation Roadmap
 
 ### Phase 1: Foundation (Q1)
 - [ ] Establish governance framework
@@ -368,7 +362,7 @@ The assessment reveals a total gap of [X] points between current state and targe
 |--------|-------|----------|
 | Stakeholder review | [Name] | [Date] |
 | Initiative prioritization | [Name] | [Date] |
-| Kick-off meeting | [Name] | [Date] |`
+| Kick-off meeting | [Name] | [Date] |`,
         };
 
         return placeholders[sectionId] || '## [Section Title]\n\nContent to be added...';
@@ -382,23 +376,21 @@ The assessment reveals a total gap of [X] points between current state and targe
         try {
             const token = localStorage.getItem('token');
             const method = report.id ? 'PUT' : 'POST';
-            const url = report.id
-                ? `/api/assessment-reports/${report.id}`
-                : '/api/assessment-reports';
+            const url = report.id ? `/api/assessment-reports/${report.id}` : '/api/assessment-reports';
 
             const response = await fetch(url, {
                 method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(report)
+                body: JSON.stringify(report),
             });
 
             if (!response.ok) throw new Error('Failed to save report');
 
             const savedReport = await response.json();
-            setReport(prev => ({ ...prev, id: savedReport.id }));
+            setReport((prev) => ({ ...prev, id: savedReport.id }));
             setHasChanges(false);
             onSave(savedReport);
         } catch (err) {
@@ -455,9 +447,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                             <h2 className="text-lg font-bold text-navy-900 dark:text-white">
                                 {report.id ? 'Edit Report' : 'Create Report'}
                             </h2>
-                            <p className="text-sm text-slate-500">
-                                {report.assessmentName}
-                            </p>
+                            <p className="text-sm text-slate-500">{report.assessmentName}</p>
                         </div>
                     </div>
 
@@ -466,20 +456,22 @@ The assessment reveals a total gap of [X] points between current state and targe
                         <div className="flex bg-slate-100 dark:bg-navy-800 rounded-lg p-1">
                             <button
                                 onClick={() => setActiveTab('edit')}
-                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'edit'
-                                    ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                                    activeTab === 'edit'
+                                        ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
                             >
                                 <Edit3 size={14} className="inline mr-1" />
                                 Edit
                             </button>
                             <button
                                 onClick={() => setActiveTab('preview')}
-                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'preview'
-                                    ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                                    activeTab === 'preview'
+                                        ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
                             >
                                 <Eye size={14} className="inline mr-1" />
                                 Preview
@@ -521,7 +513,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                                         type="text"
                                         value={report.name}
                                         onChange={(e) => {
-                                            setReport(prev => ({ ...prev, name: e.target.value }));
+                                            setReport((prev) => ({ ...prev, name: e.target.value }));
                                             setHasChanges(true);
                                         }}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -536,7 +528,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                                         type="text"
                                         value={report.description}
                                         onChange={(e) => {
-                                            setReport(prev => ({ ...prev, description: e.target.value }));
+                                            setReport((prev) => ({ ...prev, description: e.target.value }));
                                             setHasChanges(true);
                                         }}
                                         className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -621,12 +613,8 @@ The assessment reveals a total gap of [X] points between current state and targe
                     ) : (
                         /* Preview Tab */
                         <div className="prose dark:prose-invert max-w-none">
-                            <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-                                {report.name}
-                            </h1>
-                            {report.description && (
-                                <p className="text-slate-500 mb-6">{report.description}</p>
-                            )}
+                            <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{report.name}</h1>
+                            {report.description && <p className="text-slate-500 mb-6">{report.description}</p>}
 
                             {report.sections.map((section) => (
                                 <div key={section.id} className="mb-8">
@@ -634,11 +622,19 @@ The assessment reveals a total gap of [X] points between current state and targe
                                         <div
                                             className="whitespace-pre-wrap text-slate-700 dark:text-slate-300"
                                             dangerouslySetInnerHTML={{
-                                                __html: DOMPurify.sanitize(section.content
-                                                    .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-navy-900 dark:text-white mt-6 mb-3">$1</h2>')
-                                                    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold text-navy-900 dark:text-white mt-4 mb-2">$1</h3>')
-                                                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                                                    .replace(/\n/g, '<br/>'))
+                                                __html: DOMPurify.sanitize(
+                                                    section.content
+                                                        .replace(
+                                                            /^## (.+)$/gm,
+                                                            '<h2 class="text-xl font-bold text-navy-900 dark:text-white mt-6 mb-3">$1</h2>',
+                                                        )
+                                                        .replace(
+                                                            /^### (.+)$/gm,
+                                                            '<h3 class="text-lg font-semibold text-navy-900 dark:text-white mt-4 mb-2">$1</h3>',
+                                                        )
+                                                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                                                        .replace(/\n/g, '<br/>'),
+                                                ),
                                             }}
                                         />
                                     ) : (
@@ -680,11 +676,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                             disabled={isSaving}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                         >
-                            {isSaving ? (
-                                <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                                <Save size={16} />
-                            )}
+                            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                             Save Draft
                         </button>
                         {report.id && (
@@ -702,4 +694,3 @@ The assessment reveals a total gap of [X] points between current state and targe
         </div>
     );
 };
-

@@ -225,8 +225,8 @@ router.post('/confirm', authMiddleware, async (req, res) => {
         }
 
         // Save to database
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         const { calculateFrameworkScore   } = await import('../services/frameworkScoreCalculators.js');
         const multiFrameworkAuditServiceModule = await import('../services/multiFrameworkAuditService.js');
         const multiFrameworkAuditService = multiFrameworkAuditServiceModule.default || multiFrameworkAuditServiceModule;

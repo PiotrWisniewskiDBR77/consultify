@@ -1,32 +1,33 @@
 /**
  * IntegrationsMarketplace - Third-party Integrations Hub
- * 
+ *
  * Features:
  * - GitHub, GitLab, Jira, Trello, Asana integrations
  * - Slack, Teams, Google Workspace, Microsoft 365
  * - Dropbox, OneDrive, Zapier, Make integrations
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
+    AlertCircle,
+    CheckCircle,
+    Download,
+    ExternalLink,
+    Filter,
+    Link,
+    Loader2,
     Puzzle,
     Save,
-    Loader2,
-    Link,
-    Unlink,
     Search,
-    Filter,
-    ExternalLink,
-    CheckCircle,
-    AlertCircle,
+    Settings,
     Star,
-    Download,
-    Settings
+    Unlink,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface IntegrationsMarketplaceProps {
@@ -50,27 +51,170 @@ interface Integration {
 
 const availableIntegrations: Integration[] = [
     // Development
-    { id: 'github', name: 'GitHub', description: 'Connect repositories, track issues, sync commits', category: 'development', icon: '🐙', color: 'bg-[#24292e]', connected: false, enabled: false, popular: true, features: ['Repo sync', 'Issue tracking', 'PR integration'] },
-    { id: 'gitlab', name: 'GitLab', description: 'GitLab repositories and CI/CD pipelines', category: 'development', icon: '🦊', color: 'bg-[#FC6D26]', connected: false, enabled: false, popular: false, features: ['Repo sync', 'Pipeline status', 'Issue sync'] },
-    
+    {
+        id: 'github',
+        name: 'GitHub',
+        description: 'Connect repositories, track issues, sync commits',
+        category: 'development',
+        icon: '🐙',
+        color: 'bg-[#24292e]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Repo sync', 'Issue tracking', 'PR integration'],
+    },
+    {
+        id: 'gitlab',
+        name: 'GitLab',
+        description: 'GitLab repositories and CI/CD pipelines',
+        category: 'development',
+        icon: '🦊',
+        color: 'bg-[#FC6D26]',
+        connected: false,
+        enabled: false,
+        popular: false,
+        features: ['Repo sync', 'Pipeline status', 'Issue sync'],
+    },
+
     // Project Management
-    { id: 'jira', name: 'Jira', description: 'Sync issues and sprints from Jira', category: 'project', icon: '🎫', color: 'bg-[#0052CC]', connected: false, enabled: false, popular: true, features: ['Issue sync', 'Sprint import', 'Status mapping'] },
-    { id: 'trello', name: 'Trello', description: 'Import boards and cards from Trello', category: 'project', icon: '📋', color: 'bg-[#0079BF]', connected: false, enabled: false, popular: true, features: ['Board import', 'Card sync', 'Checklist sync'] },
-    { id: 'asana', name: 'Asana', description: 'Sync tasks and projects from Asana', category: 'project', icon: '🎯', color: 'bg-[#F06A6A]', connected: false, enabled: false, popular: false, features: ['Task sync', 'Project import', 'Timeline view'] },
-    
+    {
+        id: 'jira',
+        name: 'Jira',
+        description: 'Sync issues and sprints from Jira',
+        category: 'project',
+        icon: '🎫',
+        color: 'bg-[#0052CC]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Issue sync', 'Sprint import', 'Status mapping'],
+    },
+    {
+        id: 'trello',
+        name: 'Trello',
+        description: 'Import boards and cards from Trello',
+        category: 'project',
+        icon: '📋',
+        color: 'bg-[#0079BF]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Board import', 'Card sync', 'Checklist sync'],
+    },
+    {
+        id: 'asana',
+        name: 'Asana',
+        description: 'Sync tasks and projects from Asana',
+        category: 'project',
+        icon: '🎯',
+        color: 'bg-[#F06A6A]',
+        connected: false,
+        enabled: false,
+        popular: false,
+        features: ['Task sync', 'Project import', 'Timeline view'],
+    },
+
     // Communication
-    { id: 'slack', name: 'Slack', description: 'Receive notifications and updates in Slack', category: 'communication', icon: '💬', color: 'bg-[#4A154B]', connected: false, enabled: false, popular: true, features: ['Notifications', 'Commands', 'File sharing'] },
-    { id: 'teams', name: 'Microsoft Teams', description: 'Integrate with Microsoft Teams', category: 'communication', icon: '👥', color: 'bg-[#6264A7]', connected: false, enabled: false, popular: true, features: ['Notifications', 'Tabs', 'Bots'] },
-    
+    {
+        id: 'slack',
+        name: 'Slack',
+        description: 'Receive notifications and updates in Slack',
+        category: 'communication',
+        icon: '💬',
+        color: 'bg-[#4A154B]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Notifications', 'Commands', 'File sharing'],
+    },
+    {
+        id: 'teams',
+        name: 'Microsoft Teams',
+        description: 'Integrate with Microsoft Teams',
+        category: 'communication',
+        icon: '👥',
+        color: 'bg-[#6264A7]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Notifications', 'Tabs', 'Bots'],
+    },
+
     // Productivity
-    { id: 'google', name: 'Google Workspace', description: 'Connect Google Drive, Calendar, Docs', category: 'productivity', icon: '🔵', color: 'bg-[#4285F4]', connected: false, enabled: false, popular: true, features: ['Drive sync', 'Calendar', 'Docs integration'] },
-    { id: 'microsoft365', name: 'Microsoft 365', description: 'Connect OneDrive, Outlook, Office apps', category: 'productivity', icon: '📦', color: 'bg-[#D83B01]', connected: false, enabled: false, popular: true, features: ['OneDrive', 'Outlook', 'Office apps'] },
-    { id: 'dropbox', name: 'Dropbox', description: 'Attach and sync files from Dropbox', category: 'storage', icon: '📥', color: 'bg-[#0061FF]', connected: false, enabled: false, popular: false, features: ['File sync', 'Attachments', 'Sharing'] },
-    { id: 'onedrive', name: 'OneDrive', description: 'Access files from OneDrive', category: 'storage', icon: '☁️', color: 'bg-[#094AB2]', connected: false, enabled: false, popular: false, features: ['File sync', 'Attachments', 'Sharing'] },
-    
+    {
+        id: 'google',
+        name: 'Google Workspace',
+        description: 'Connect Google Drive, Calendar, Docs',
+        category: 'productivity',
+        icon: '🔵',
+        color: 'bg-[#4285F4]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Drive sync', 'Calendar', 'Docs integration'],
+    },
+    {
+        id: 'microsoft365',
+        name: 'Microsoft 365',
+        description: 'Connect OneDrive, Outlook, Office apps',
+        category: 'productivity',
+        icon: '📦',
+        color: 'bg-[#D83B01]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['OneDrive', 'Outlook', 'Office apps'],
+    },
+    {
+        id: 'dropbox',
+        name: 'Dropbox',
+        description: 'Attach and sync files from Dropbox',
+        category: 'storage',
+        icon: '📥',
+        color: 'bg-[#0061FF]',
+        connected: false,
+        enabled: false,
+        popular: false,
+        features: ['File sync', 'Attachments', 'Sharing'],
+    },
+    {
+        id: 'onedrive',
+        name: 'OneDrive',
+        description: 'Access files from OneDrive',
+        category: 'storage',
+        icon: '☁️',
+        color: 'bg-[#094AB2]',
+        connected: false,
+        enabled: false,
+        popular: false,
+        features: ['File sync', 'Attachments', 'Sharing'],
+    },
+
     // Automation
-    { id: 'zapier', name: 'Zapier', description: 'Create automated workflows with Zapier', category: 'automation', icon: '⚡', color: 'bg-[#FF4A00]', connected: false, enabled: false, popular: true, features: ['Triggers', 'Actions', '5000+ apps'] },
-    { id: 'make', name: 'Make (Integromat)', description: 'Advanced automation scenarios', category: 'automation', icon: '🔄', color: 'bg-[#6D00CC]', connected: false, enabled: false, popular: false, features: ['Scenarios', 'Visual builder', 'Advanced logic'] },
+    {
+        id: 'zapier',
+        name: 'Zapier',
+        description: 'Create automated workflows with Zapier',
+        category: 'automation',
+        icon: '⚡',
+        color: 'bg-[#FF4A00]',
+        connected: false,
+        enabled: false,
+        popular: true,
+        features: ['Triggers', 'Actions', '5000+ apps'],
+    },
+    {
+        id: 'make',
+        name: 'Make (Integromat)',
+        description: 'Advanced automation scenarios',
+        category: 'automation',
+        icon: '🔄',
+        color: 'bg-[#6D00CC]',
+        connected: false,
+        enabled: false,
+        popular: false,
+        features: ['Scenarios', 'Visual builder', 'Advanced logic'],
+    },
 ];
 
 const categories = [
@@ -80,13 +224,10 @@ const categories = [
     { id: 'communication', label: 'Communication' },
     { id: 'productivity', label: 'Productivity' },
     { id: 'storage', label: 'Storage' },
-    { id: 'automation', label: 'Automation' }
+    { id: 'automation', label: 'Automation' },
 ];
 
-export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState<string | null>(null);
@@ -105,7 +246,7 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
             const response = await Api.get('/api/user/integrations');
             if (response.success && response.data) {
                 // Merge server data with available integrations
-                const merged = availableIntegrations.map(int => {
+                const merged = availableIntegrations.map((int) => {
                     const serverInt = response.data.find((s: any) => s.id === int.id);
                     return serverInt ? { ...int, ...serverInt } : int;
                 });
@@ -126,9 +267,11 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
                 if (response.authUrl) {
                     window.open(response.authUrl, '_blank', 'width=600,height=700');
                 } else {
-                    setIntegrations(integrations.map(int =>
-                        int.id === integrationId ? { ...int, connected: true, enabled: true } : int
-                    ));
+                    setIntegrations(
+                        integrations.map((int) =>
+                            int.id === integrationId ? { ...int, connected: true, enabled: true } : int,
+                        ),
+                    );
                     toast.success(`${integrationId} connected successfully`);
                 }
             }
@@ -142,9 +285,11 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
     const disconnectIntegration = async (integrationId: string) => {
         try {
             await Api.post(`/api/integrations/${integrationId}/disconnect`, {});
-            setIntegrations(integrations.map(int =>
-                int.id === integrationId ? { ...int, connected: false, enabled: false } : int
-            ));
+            setIntegrations(
+                integrations.map((int) =>
+                    int.id === integrationId ? { ...int, connected: false, enabled: false } : int,
+                ),
+            );
             toast.success('Integration disconnected');
         } catch (error) {
             toast.error('Failed to disconnect integration');
@@ -152,28 +297,29 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
     };
 
     const toggleEnabled = async (integrationId: string) => {
-        const integration = integrations.find(int => int.id === integrationId);
+        const integration = integrations.find((int) => int.id === integrationId);
         if (!integration?.connected) return;
 
         try {
             await Api.put(`/api/integrations/${integrationId}/toggle`, { enabled: !integration.enabled });
-            setIntegrations(integrations.map(int =>
-                int.id === integrationId ? { ...int, enabled: !int.enabled } : int
-            ));
+            setIntegrations(
+                integrations.map((int) => (int.id === integrationId ? { ...int, enabled: !int.enabled } : int)),
+            );
         } catch (error) {
             toast.error('Failed to update integration');
         }
     };
 
-    const filteredIntegrations = integrations.filter(int => {
-        const matchesSearch = int.name.toLowerCase().includes(search.toLowerCase()) ||
-                            int.description.toLowerCase().includes(search.toLowerCase());
+    const filteredIntegrations = integrations.filter((int) => {
+        const matchesSearch =
+            int.name.toLowerCase().includes(search.toLowerCase()) ||
+            int.description.toLowerCase().includes(search.toLowerCase());
         const matchesCategory = category === 'all' || int.category === category;
         const matchesConnected = !showConnectedOnly || int.connected;
         return matchesSearch && matchesCategory && matchesConnected;
     });
 
-    const connectedCount = integrations.filter(int => int.connected).length;
+    const connectedCount = integrations.filter((int) => int.connected).length;
 
     if (loading) {
         return (
@@ -186,7 +332,7 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
     return (
         <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-integrations-marketplace" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -218,8 +364,10 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
                         onChange={(e) => setCategory(e.target.value)}
                         className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
                     >
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.label}</option>
+                        {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.label}
+                            </option>
                         ))}
                     </select>
                     <button
@@ -244,16 +392,18 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
                         Popular Integrations
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {integrations.filter(int => int.popular).map(integration => (
-                            <IntegrationCard
-                                key={integration.id}
-                                integration={integration}
-                                connecting={connecting}
-                                onConnect={connectIntegration}
-                                onDisconnect={disconnectIntegration}
-                                onToggle={toggleEnabled}
-                            />
-                        ))}
+                        {integrations
+                            .filter((int) => int.popular)
+                            .map((integration) => (
+                                <IntegrationCard
+                                    key={integration.id}
+                                    integration={integration}
+                                    connecting={connecting}
+                                    onConnect={connectIntegration}
+                                    onDisconnect={disconnectIntegration}
+                                    onToggle={toggleEnabled}
+                                />
+                            ))}
                     </div>
                 </div>
             )}
@@ -267,7 +417,7 @@ export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = (
                     </h3>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredIntegrations.map(integration => (
+                    {filteredIntegrations.map((integration) => (
                         <IntegrationCard
                             key={integration.id}
                             integration={integration}
@@ -297,11 +447,13 @@ const IntegrationCard: React.FC<{
     onDisconnect: (id: string) => void;
     onToggle: (id: string) => void;
 }> = ({ integration, connecting, onConnect, onDisconnect, onToggle }) => (
-    <div className={`p-4 rounded-xl border-2 transition-all ${
-        integration.connected
-            ? 'border-green-500/50 bg-green-50 dark:bg-green-500/5'
-            : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 hover:border-indigo-300'
-    }`}>
+    <div
+        className={`p-4 rounded-xl border-2 transition-all ${
+            integration.connected
+                ? 'border-green-500/50 bg-green-50 dark:bg-green-500/5'
+                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 hover:border-indigo-300'
+        }`}
+    >
         <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl ${integration.color} flex items-center justify-center text-2xl`}>
@@ -312,16 +464,17 @@ const IntegrationCard: React.FC<{
                     <p className="text-xs text-slate-500 capitalize">{integration.category}</p>
                 </div>
             </div>
-            {integration.connected && (
-                <CheckCircle size={20} className="text-green-500" />
-            )}
+            {integration.connected && <CheckCircle size={20} className="text-green-500" />}
         </div>
-        
+
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{integration.description}</p>
-        
+
         <div className="flex flex-wrap gap-1 mb-4">
-            {integration.features.map(feature => (
-                <span key={feature} className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded">
+            {integration.features.map((feature) => (
+                <span
+                    key={feature}
+                    className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded"
+                >
                     {feature}
                 </span>
             ))}
@@ -335,9 +488,11 @@ const IntegrationCard: React.FC<{
                         integration.enabled ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                 >
-                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                        integration.enabled ? 'left-5' : 'left-0.5'
-                    }`} />
+                    <span
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                            integration.enabled ? 'left-5' : 'left-0.5'
+                        }`}
+                    />
                 </button>
                 <div className="flex gap-2">
                     <button
@@ -361,11 +516,7 @@ const IntegrationCard: React.FC<{
                 disabled={connecting === integration.id}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
             >
-                {connecting === integration.id ? (
-                    <Loader2 size={16} className="animate-spin" />
-                ) : (
-                    <Link size={16} />
-                )}
+                {connecting === integration.id ? <Loader2 size={16} className="animate-spin" /> : <Link size={16} />}
                 Connect
             </button>
         )}
@@ -373,7 +524,3 @@ const IntegrationCard: React.FC<{
 );
 
 export default IntegrationsMarketplace;
-
-
-
-

@@ -8,7 +8,7 @@ const authHeaders = (): Record<string, string> => {
     const token = localStorage.getItem('token');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        Authorization: token ? `Bearer ${token}` : '',
     };
 };
 
@@ -28,23 +28,26 @@ export const createWebhook = async (data: {
     const response = await fetch(`${API_URL}/webhooks`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create webhook');
     return response.json();
 };
 
-export const updateWebhook = async (id: string, data: Partial<{
-    name: string;
-    url: string;
-    events: string[];
-    description: string;
-    isActive: boolean;
-}>): Promise<any> => {
+export const updateWebhook = async (
+    id: string,
+    data: Partial<{
+        name: string;
+        url: string;
+        events: string[];
+        description: string;
+        isActive: boolean;
+    }>,
+): Promise<any> => {
     const response = await fetch(`${API_URL}/webhooks/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update webhook');
     return response.json();
@@ -53,7 +56,7 @@ export const updateWebhook = async (id: string, data: Partial<{
 export const deleteWebhook = async (id: string): Promise<void> => {
     const response = await fetch(`${API_URL}/webhooks/${id}`, {
         method: 'DELETE',
-        headers: authHeaders()
+        headers: authHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete webhook');
 };
@@ -61,7 +64,7 @@ export const deleteWebhook = async (id: string): Promise<void> => {
 export const testWebhook = async (id: string): Promise<any> => {
     const response = await fetch(`${API_URL}/webhooks/${id}/test`, {
         method: 'POST',
-        headers: authHeaders()
+        headers: authHeaders(),
     });
     if (!response.ok) throw new Error('Failed to test webhook');
     return response.json();
@@ -78,7 +81,7 @@ export const submitAIFeedback = async (data: {
     const response = await fetch(`${API_URL}/ai-training`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to submit feedback');
     return response.json();
@@ -109,22 +112,25 @@ export const createCustomPrompt = async (data: {
     const response = await fetch(`${API_URL}/ai-training/prompts`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create prompt');
     return response.json();
 };
 
-export const updateCustomPrompt = async (id: string, data: Partial<{
-    name: string;
-    template: string;
-    variables: string[];
-    isActive: boolean;
-}>): Promise<any> => {
+export const updateCustomPrompt = async (
+    id: string,
+    data: Partial<{
+        name: string;
+        template: string;
+        variables: string[];
+        isActive: boolean;
+    }>,
+): Promise<any> => {
     const response = await fetch(`${API_URL}/ai-training/prompts/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update prompt');
     return response.json();

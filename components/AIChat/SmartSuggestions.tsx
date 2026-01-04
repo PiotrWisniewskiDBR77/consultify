@@ -1,24 +1,16 @@
 /**
  * SmartSuggestions
- * 
+ *
  * Displays context-aware suggestions based on user's PMO state.
  * Supports two variants:
  * - 'full': Rich suggestions with icons, colors, and dismiss buttons
  * - 'minimal': 3 short, subtle text prompts for welcome screen
  */
 
+import { ChevronRight, Clock, Lightbulb, Map, MessageSquare, Sparkles, Target, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Sparkles, 
-    ChevronRight, 
-    Target, 
-    Lightbulb, 
-    Map,
-    Clock,
-    MessageSquare,
-    X
-} from 'lucide-react';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
@@ -48,7 +40,7 @@ const SUGGESTION_ICONS: Record<string, React.ElementType> = {
     action: Target,
     insight: Lightbulb,
     followup: MessageSquare,
-    expand: Map
+    expand: Map,
 };
 
 const SUGGESTION_COLORS: Record<string, string> = {
@@ -56,21 +48,21 @@ const SUGGESTION_COLORS: Record<string, string> = {
     action: 'from-primary-500/10 to-primary-600/5 border-primary-200/50 dark:border-primary-800/50',
     insight: 'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/50',
     followup: 'from-green-500/10 to-green-600/5 border-green-200/50 dark:border-green-800/50',
-    expand: 'from-purple-500/10 to-purple-600/5 border-purple-200/50 dark:border-purple-800/50'
+    expand: 'from-purple-500/10 to-purple-600/5 border-purple-200/50 dark:border-purple-800/50',
 };
 
 // Minimal static suggestions for welcome screen
 const MINIMAL_SUGGESTIONS = [
     { id: 'brief', text: 'Dzienny brief', prompt: '__DAILY_BRIEF__' },
     { id: 'week', text: 'Zaplanuj tydzień', prompt: 'Pomóż mi zaplanować priorytety na najbliższy tydzień' },
-    { id: 'risks', text: 'Przeanalizuj ryzyka', prompt: 'Przeanalizuj główne ryzyka w moich inicjatywach' }
+    { id: 'risks', text: 'Przeanalizuj ryzyka', prompt: 'Przeanalizuj główne ryzyka w moich inicjatywach' },
 ];
 
 export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     projectId,
     onSuggestionClick,
     className = '',
-    variant = 'full'
+    variant = 'full',
 }) => {
     const { t } = useTranslation();
     const { setCurrentView } = useAppStore();
@@ -90,10 +82,10 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
         try {
             const response = await fetch(`/api/ai/suggestions${projectId ? `?projectId=${projectId}` : ''}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setSuggestions(data.suggestions || []);
@@ -107,8 +99,8 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
                     text: t('aiChat.suggestions.startAssessment', 'Start your digital maturity assessment'),
                     priority: 95,
                     context: ['fallback'],
-                    action: { type: 'navigate', view: 'ASSESSMENT_OVERVIEW' }
-                }
+                    action: { type: 'navigate', view: 'ASSESSMENT_OVERVIEW' },
+                },
             ]);
         } finally {
             setIsLoading(false);
@@ -130,13 +122,13 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
             text: prompt,
             priority: 100,
             context: ['minimal'],
-            action: { type: 'chat', prompt }
+            action: { type: 'chat', prompt },
         });
     };
 
     const handleDismiss = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setDismissed(prev => new Set(prev).add(id));
+        setDismissed((prev) => new Set(prev).add(id));
     };
 
     // Minimal variant - 3 subtle text suggestions
@@ -145,9 +137,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
             <div className={`flex items-center justify-center gap-4 ${className}`}>
                 {MINIMAL_SUGGESTIONS.map((item, idx) => (
                     <React.Fragment key={item.id}>
-                        {idx > 0 && (
-                            <span className="text-slate-300 dark:text-slate-700">·</span>
-                        )}
+                        {idx > 0 && <span className="text-slate-300 dark:text-slate-700">·</span>}
                         <button
                             onClick={() => handleMinimalClick(item.prompt)}
                             className="
@@ -165,7 +155,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     }
 
     // Full variant - rich suggestions
-    const visibleSuggestions = suggestions.filter(s => !dismissed.has(s.id));
+    const visibleSuggestions = suggestions.filter((s) => !dismissed.has(s.id));
 
     if (isLoading || visibleSuggestions.length === 0) {
         return null;
@@ -183,7 +173,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
 
             {/* Suggestions List */}
             <div className="flex flex-wrap gap-2">
-                {visibleSuggestions.map(suggestion => {
+                {visibleSuggestions.map((suggestion) => {
                     const Icon = SUGGESTION_ICONS[suggestion.type] || Sparkles;
                     const colorClass = SUGGESTION_COLORS[suggestion.type] || SUGGESTION_COLORS.action;
 
@@ -202,7 +192,10 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
                         >
                             <Icon size={14} className="shrink-0 text-current opacity-70" />
                             <span>{suggestion.text}</span>
-                            <ChevronRight size={14} className="shrink-0 opacity-0 group-hover:opacity-70 transition-opacity" />
+                            <ChevronRight
+                                size={14}
+                                className="shrink-0 opacity-0 group-hover:opacity-70 transition-opacity"
+                            />
 
                             {/* Dismiss button */}
                             <button
@@ -232,10 +225,7 @@ interface SuggestionChipProps {
     onClick: () => void;
 }
 
-export const SuggestionChip: React.FC<SuggestionChipProps> = ({
-    suggestion,
-    onClick
-}) => {
+export const SuggestionChip: React.FC<SuggestionChipProps> = ({ suggestion, onClick }) => {
     const Icon = SUGGESTION_ICONS[suggestion.type] || Sparkles;
 
     return (
@@ -260,4 +250,3 @@ export const SuggestionChip: React.FC<SuggestionChipProps> = ({
 };
 
 export default SmartSuggestions;
-

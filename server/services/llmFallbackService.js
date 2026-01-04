@@ -12,7 +12,8 @@
  */
 
 import CircuitBreakerService from './circuitBreakerService.js';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 
 
@@ -401,6 +402,7 @@ class LLMFallbackService {
 const llmFallbackService = new LLMFallbackService();
 
 export default llmFallbackService;
+
 
 
 

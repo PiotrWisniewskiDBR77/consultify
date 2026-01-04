@@ -3,7 +3,8 @@
  * Enforces storage limits per project
  */
 
-const usageService = import('usageService.js');
+import fs from 'fs';
+import usageService from '../services/usageService.js';
 
 async function enforceProjectQuota(req, res, next) {
     try {
@@ -19,7 +20,6 @@ async function enforceProjectQuota(req, res, next) {
         if (!quota.allowed) {
             // Cleanup temp file if it exists (since we are rejecting after upload)
             if (req.file && req.file.path) {
-                import fs from 'fs';
                 try { fs.unlinkSync(req.file.path); } catch (e) { console.error('Failed to cleanup temp file:', e); }
             }
 

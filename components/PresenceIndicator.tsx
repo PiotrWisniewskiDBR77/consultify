@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { realtimeClient } from '../services/realtimeClient';
 import { Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { realtimeClient } from '../services/realtimeClient';
 
 interface PresenceIndicatorProps {
     className?: string;
@@ -11,7 +12,6 @@ export const PresenceIndicator: React.FC<PresenceIndicatorProps> = ({ className 
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-         
         const handlePresence = (data: any) => {
             setActiveUsers(data.users || []);
         };
@@ -49,9 +49,7 @@ export const PresenceIndicator: React.FC<PresenceIndicatorProps> = ({ className 
                     <Users size={16} className="text-green-500" />
                     <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 </div>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    {count} online
-                </span>
+                <span className="text-sm font-medium text-green-600 dark:text-green-400">{count} online</span>
             </div>
         </div>
     );

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { IPAccessRulesPanel } from '../../../components/SuperAdmin/security/IPAccessRulesPanel';
+import { IPAccessRulesPanel } from '../../components/SuperAdmin/security/IPAccessRulesPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -281,6 +281,7 @@ describe('IPAccessRulesPanel', () => {
         });
     });
 });
+
 
 
 

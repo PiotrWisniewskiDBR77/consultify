@@ -1,7 +1,7 @@
 /**
  * AiLearning Routes
  * API endpoints for aiLearning
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

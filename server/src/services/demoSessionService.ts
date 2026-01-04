@@ -1,14 +1,12 @@
 /**
  * Demosession Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadDemosessionservice = createCachedLazyService('../../services/demoSessionService.js');
+import service from '../../services/demoSessionService.js';
 
 // Export default instance (for backward compatibility)
-export default loadDemosessionservice();
+export default service;

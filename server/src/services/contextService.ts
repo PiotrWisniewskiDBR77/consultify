@@ -1,14 +1,12 @@
 /**
  * Context Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadContextservice = createCachedLazyService('../../services/contextService.js');
+import service from '../../services/contextService.js';
 
 // Export default instance (for backward compatibility)
-export default loadContextservice();
+export default service;

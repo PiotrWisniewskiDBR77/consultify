@@ -1,39 +1,37 @@
 /**
  * ProactivitySelector Component
- * 
+ *
  * Visual selector for AI proactivity modes (REACTIVE, BALANCED, PROACTIVE)
  * with animated transitions and behavior explanations.
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, ChevronRight, Pause, Scale, X, Zap } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Pause, 
-    Scale, 
-    Zap, 
-    Check, 
-    X,
-    ChevronRight 
-} from 'lucide-react';
+
 import { AIProactivityMode, ProactivityBehavior } from '../../types';
 
 // Mode configurations
-const MODE_CONFIG: Record<AIProactivityMode, {
-    title: string;
-    shortDescription: string;
-    longDescription: string;
-    icon: React.ElementType;
-    color: string;
-    bgGradient: string;
-    borderColor: string;
-    glowColor: string;
-    characteristics: string[];
-    behaviors: ProactivityBehavior;
-}> = {
+const MODE_CONFIG: Record<
+    AIProactivityMode,
+    {
+        title: string;
+        shortDescription: string;
+        longDescription: string;
+        icon: React.ElementType;
+        color: string;
+        bgGradient: string;
+        borderColor: string;
+        glowColor: string;
+        characteristics: string[];
+        behaviors: ProactivityBehavior;
+    }
+> = {
     REACTIVE: {
         title: 'Reactive',
         shortDescription: 'AI waits for your questions',
-        longDescription: 'The AI remains silent until you ask. Perfect for experienced users who prefer to work independently.',
+        longDescription:
+            'The AI remains silent until you ask. Perfect for experienced users who prefer to work independently.',
         icon: Pause,
         color: 'text-slate-400',
         bgGradient: 'from-slate-800 to-slate-900',
@@ -43,19 +41,20 @@ const MODE_CONFIG: Record<AIProactivityMode, {
             'Responds only when asked',
             'No automatic suggestions',
             'No proactive notifications',
-            'Full user control'
+            'Full user control',
         ],
         behaviors: {
             autoSuggest: false,
             nudges: false,
             contextualHints: false,
-            initiateConversation: false
-        }
+            initiateConversation: false,
+        },
     },
     BALANCED: {
         title: 'Balanced',
         shortDescription: 'AI suggests when helpful',
-        longDescription: 'The AI provides suggestions when it detects you might benefit, but waits for you to initiate major interactions.',
+        longDescription:
+            'The AI provides suggestions when it detects you might benefit, but waits for you to initiate major interactions.',
         icon: Scale,
         color: 'text-violet-400',
         bgGradient: 'from-violet-900/50 to-purple-900/50',
@@ -65,19 +64,20 @@ const MODE_CONFIG: Record<AIProactivityMode, {
             'Helpful suggestions when relevant',
             'Contextual hints appear naturally',
             'Waits for you to start conversations',
-            'Background recommendations'
+            'Background recommendations',
         ],
         behaviors: {
             autoSuggest: true,
             nudges: true,
             contextualHints: true,
-            initiateConversation: false
-        }
+            initiateConversation: false,
+        },
     },
     PROACTIVE: {
         title: 'Proactive',
         shortDescription: 'AI actively assists',
-        longDescription: 'The AI actively monitors your work and proactively offers assistance, starting conversations about potential issues.',
+        longDescription:
+            'The AI actively monitors your work and proactively offers assistance, starting conversations about potential issues.',
         icon: Zap,
         color: 'text-emerald-400',
         bgGradient: 'from-emerald-900/50 to-teal-900/50',
@@ -87,15 +87,15 @@ const MODE_CONFIG: Record<AIProactivityMode, {
             'Active suggestions and analysis',
             'Proactively starts conversations',
             'Continuous monitoring and alerts',
-            'Frequent recommendations'
+            'Frequent recommendations',
         ],
         behaviors: {
             autoSuggest: true,
             nudges: true,
             contextualHints: true,
-            initiateConversation: true
-        }
-    }
+            initiateConversation: true,
+        },
+    },
 };
 
 const MODES: AIProactivityMode[] = ['REACTIVE', 'BALANCED', 'PROACTIVE'];
@@ -117,7 +117,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
     disabled = false,
     compact = false,
     showBehaviors = true,
-    className = ''
+    className = '',
 }) => {
     const maxIndex = MODES.indexOf(maxAllowed);
     const selectedConfig = MODE_CONFIG[value];
@@ -143,9 +143,10 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                             disabled={disabled || !allowed}
                             className={`
                                 relative p-2 rounded-lg transition-all duration-200
-                                ${isSelected 
-                                    ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border shadow-lg ${config.glowColor}`
-                                    : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
+                                ${
+                                    isSelected
+                                        ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border shadow-lg ${config.glowColor}`
+                                        : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
                                 }
                                 ${!allowed ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -163,9 +164,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                         </motion.button>
                     );
                 })}
-                <span className={`ml-2 text-sm font-medium ${selectedConfig.color}`}>
-                    {selectedConfig.title}
-                </span>
+                <span className={`ml-2 text-sm font-medium ${selectedConfig.color}`}>{selectedConfig.title}</span>
             </div>
         );
     }
@@ -177,9 +176,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                 <Icon className={`w-5 h-5 ${selectedConfig.color}`} />
                 <h3 className="text-lg font-semibold text-navy-900 dark:text-white">AI Proactivity</h3>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-                How should AI interact with you?
-            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">How should AI interact with you?</p>
 
             {/* Mode Selector Cards */}
             <div className="grid grid-cols-3 gap-3">
@@ -196,9 +193,10 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                             disabled={disabled || !allowed}
                             className={`
                                 relative p-4 rounded-xl transition-all duration-300 text-left
-                                ${isSelected 
-                                    ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border-2 shadow-xl ${config.glowColor}`
-                                    : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                                ${
+                                    isSelected
+                                        ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border-2 shadow-xl ${config.glowColor}`
+                                        : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/50'
                                 }
                                 ${!allowed ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -221,25 +219,30 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                             </AnimatePresence>
 
                             {/* Icon */}
-                            <div className={`
+                            <div
+                                className={`
                                 w-10 h-10 rounded-lg flex items-center justify-center mb-3
-                                ${isSelected 
-                                    ? `bg-gradient-to-br ${config.bgGradient} border ${config.borderColor}`
-                                    : 'bg-slate-200 dark:bg-slate-700/50'
+                                ${
+                                    isSelected
+                                        ? `bg-gradient-to-br ${config.bgGradient} border ${config.borderColor}`
+                                        : 'bg-slate-200 dark:bg-slate-700/50'
                                 }
-                            `}>
-                                <ModeIcon className={`w-5 h-5 ${isSelected ? config.color : 'text-slate-500 dark:text-slate-400'}`} />
+                            `}
+                            >
+                                <ModeIcon
+                                    className={`w-5 h-5 ${isSelected ? config.color : 'text-slate-500 dark:text-slate-400'}`}
+                                />
                             </div>
 
                             {/* Title */}
-                            <h4 className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900 dark:text-slate-300'}`}>
+                            <h4
+                                className={`font-semibold mb-1 ${isSelected ? config.color : 'text-navy-900 dark:text-slate-300'}`}
+                            >
                                 {config.title}
                             </h4>
 
                             {/* Short description */}
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {config.shortDescription}
-                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{config.shortDescription}</p>
 
                             {/* Locked indicator */}
                             {!allowed && (
@@ -270,27 +273,24 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                         `}
                     >
                         <div className="flex items-start gap-3">
-                            <div className={`
+                            <div
+                                className={`
                                 w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
                                 bg-white/5 border ${selectedConfig.borderColor}
-                            `}>
+                            `}
+                            >
                                 <Icon className={`w-5 h-5 ${selectedConfig.color}`} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h4 className={`font-semibold ${selectedConfig.color} mb-1`}>
                                     {selectedConfig.title} Mode
                                 </h4>
-                                <p className="text-sm text-slate-300 mb-3">
-                                    {selectedConfig.longDescription}
-                                </p>
+                                <p className="text-sm text-slate-300 mb-3">{selectedConfig.longDescription}</p>
 
                                 {/* Behavior flags */}
                                 <div className="grid grid-cols-2 gap-2">
                                     {Object.entries(selectedConfig.behaviors).map(([key, enabled]) => (
-                                        <div 
-                                            key={key}
-                                            className="flex items-center gap-2 text-xs"
-                                        >
+                                        <div key={key} className="flex items-center gap-2 text-xs">
                                             {enabled ? (
                                                 <Check className="w-3.5 h-3.5 text-emerald-400" />
                                             ) : (
@@ -317,10 +317,9 @@ function formatBehaviorKey(key: string): string {
         autoSuggest: 'Auto-suggestions',
         nudges: 'Proactive nudges',
         contextualHints: 'Contextual hints',
-        initiateConversation: 'Start conversations'
+        initiateConversation: 'Start conversations',
     };
     return labels[key] || key;
 }
 
 export default ProactivitySelector;
-

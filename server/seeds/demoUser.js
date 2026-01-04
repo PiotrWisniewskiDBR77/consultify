@@ -5,7 +5,7 @@
  * Run: node server/seeds/demoUser.js
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -110,6 +110,7 @@ seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID
 };
 
 export default { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
+
 
 
 

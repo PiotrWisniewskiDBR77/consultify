@@ -1,6 +1,6 @@
 /**
  * VoiceSettingsPanel
- * 
+ *
  * Voice preferences settings panel with:
  * - Input mode selection (push-to-talk, click-to-talk, always listening)
  * - Auto-send delay configuration
@@ -8,24 +8,15 @@
  * - Speech rate and pitch controls
  * - Auto-speak AI responses toggle
  * - Provider selection
- * 
+ *
  * Part of the Universal Voice Conversation System
- * 
+ *
  * @version 1.0.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { CheckCircle, Loader2, Mic, Play, RefreshCw, Settings2, Volume2, XCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Mic, 
-    Volume2, 
-    Settings2, 
-    Play, 
-    RefreshCw,
-    CheckCircle,
-    XCircle,
-    Loader2
-} from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -66,7 +57,7 @@ const DEFAULT_SETTINGS: VoiceSettings = {
     sttProvider: 'whisper',
     autoSpeakResponses: true,
     language: 'pl',
-    showLiveTranscript: true
+    showLiveTranscript: true,
 };
 
 // ============================================================================
@@ -79,7 +70,7 @@ const OPENAI_VOICES = [
     { id: 'fable', name: 'Fable', description: 'Expressive, narrative' },
     { id: 'onyx', name: 'Onyx', description: 'Deep, authoritative' },
     { id: 'nova', name: 'Nova', description: 'Energetic, bright' },
-    { id: 'shimmer', name: 'Shimmer', description: 'Soft, calming' }
+    { id: 'shimmer', name: 'Shimmer', description: 'Soft, calming' },
 ];
 
 const SPEED_OPTIONS = [
@@ -88,7 +79,7 @@ const SPEED_OPTIONS = [
     { value: 1.0, label: '1.0x (Normal)' },
     { value: 1.25, label: '1.25x' },
     { value: 1.5, label: '1.5x (Fast)' },
-    { value: 2.0, label: '2.0x (Very Fast)' }
+    { value: 2.0, label: '2.0x (Very Fast)' },
 ];
 
 const DELAY_OPTIONS = [
@@ -96,7 +87,7 @@ const DELAY_OPTIONS = [
     { value: 1.0, label: '1.0s' },
     { value: 1.5, label: '1.5s (Recommended)' },
     { value: 2.0, label: '2.0s' },
-    { value: 3.0, label: '3.0s (Slow)' }
+    { value: 3.0, label: '3.0s (Slow)' },
 ];
 
 // ============================================================================
@@ -106,14 +97,14 @@ const DELAY_OPTIONS = [
 export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
     settings: initialSettings,
     onSettingsChange,
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
 
     // State
     const [settings, setSettings] = useState<VoiceSettings>({
         ...DEFAULT_SETTINGS,
-        ...initialSettings
+        ...initialSettings,
     });
     const [isTesting, setIsTesting] = useState(false);
     const [testResults, setTestResults] = useState<{
@@ -127,11 +118,11 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
         const loadSettings = async () => {
             try {
                 const response = await fetch('/api/voice/settings', {
-                    credentials: 'include'
+                    credentials: 'include',
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setSettings(prev => ({ ...prev, ...data }));
+                    setSettings((prev) => ({ ...prev, ...data }));
                 }
             } catch (error) {
                 console.error('[VoiceSettings] Failed to load settings:', error);
@@ -142,16 +133,16 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
     }, []);
 
     // Update setting
-    const updateSetting = useCallback(<K extends keyof VoiceSettings>(
-        key: K,
-        value: VoiceSettings[K]
-    ) => {
-        setSettings(prev => {
-            const newSettings = { ...prev, [key]: value };
-            onSettingsChange?.(newSettings);
-            return newSettings;
-        });
-    }, [onSettingsChange]);
+    const updateSetting = useCallback(
+        <K extends keyof VoiceSettings>(key: K, value: VoiceSettings[K]) => {
+            setSettings((prev) => {
+                const newSettings = { ...prev, [key]: value };
+                onSettingsChange?.(newSettings);
+                return newSettings;
+            });
+        },
+        [onSettingsChange],
+    );
 
     // Save settings to server
     const saveSettings = useCallback(async () => {
@@ -161,7 +152,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
 
             if (!response.ok) {
@@ -185,21 +176,20 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ provider: settings.sttProvider })
+                body: JSON.stringify({ provider: settings.sttProvider }),
             });
             const sttResult = await sttResponse.json();
-            setTestResults(prev => ({ ...prev, stt: sttResult.success }));
+            setTestResults((prev) => ({ ...prev, stt: sttResult.success }));
 
             // Test TTS
             const ttsResponse = await fetch('/api/voice/test/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ provider: settings.ttsProvider })
+                body: JSON.stringify({ provider: settings.ttsProvider }),
             });
             const ttsResult = await ttsResponse.json();
-            setTestResults(prev => ({ ...prev, tts: ttsResult.success }));
-
+            setTestResults((prev) => ({ ...prev, tts: ttsResult.success }));
         } catch (error) {
             console.error('[VoiceSettings] Test failed:', error);
             setTestResults({ stt: false, tts: false });
@@ -219,8 +209,8 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                     text: t('voiceSettings.previewText', 'Hello! This is a preview of the selected voice.'),
                     voice: settings.ttsVoice,
                     speed: settings.ttsSpeed,
-                    language: settings.language
-                })
+                    language: settings.language,
+                }),
             });
 
             if (response.ok) {
@@ -262,11 +252,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                     disabled={isTesting}
                     className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/10 rounded-lg hover:bg-slate-200 dark:hover:bg-white/20 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors"
                 >
-                    {isTesting ? (
-                        <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                        <RefreshCw size={16} />
-                    )}
+                    {isTesting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     {t('voiceSettings.test', 'Test')}
                 </button>
             </div>
@@ -300,9 +286,10 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                             onClick={() => updateSetting('inputMode', mode)}
                             className={`
                                 px-3 py-2 rounded-lg border text-sm font-medium transition-all
-                                ${settings.inputMode === mode
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20'
+                                ${
+                                    settings.inputMode === mode
+                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20'
                                 }
                             `}
                         >
@@ -353,18 +340,15 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                             onClick={() => updateSetting('ttsVoice', voice.id)}
                             className={`
                                 p-3 rounded-lg border text-left transition-all
-                                ${settings.ttsVoice === voice.id
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                ${
+                                    settings.ttsVoice === voice.id
+                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                 }
                             `}
                         >
-                            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {voice.name}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                                {voice.description}
-                            </div>
+                            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{voice.name}</div>
+                            <div className="text-xs text-slate-500">{voice.description}</div>
                         </button>
                     ))}
                 </div>
@@ -440,11 +424,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                     disabled={isSaving}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
                 >
-                    {isSaving ? (
-                        <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                        <CheckCircle size={16} />
-                    )}
+                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                     {t('voiceSettings.save', 'Save Voice Settings')}
                 </button>
             </div>
@@ -453,12 +433,4 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 };
 
 export default VoiceSettingsPanel;
-
-
-
-
-
-
-
-
 

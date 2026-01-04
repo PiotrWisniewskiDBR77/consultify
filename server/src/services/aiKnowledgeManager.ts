@@ -1,14 +1,12 @@
 /**
  * Aiknowledgemanager Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadAiknowledgemanager = createCachedLazyService('../../services/aiKnowledgeManager.js');
+import service from '../../services/aiKnowledgeManager.js';
 
 // Export default instance (for backward compatibility)
-export default loadAiknowledgemanager();
+export default service;

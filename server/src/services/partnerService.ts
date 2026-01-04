@@ -1,10 +1,10 @@
 /**
  * Partner Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Manages partner entities for the settlement system.
  * Fully migrated from server/services/partnerService.js
- * 
+ *
  * Features:
  * - Referral partners
  * - Resellers
@@ -13,8 +13,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -24,10 +25,10 @@ import logger from '../utils/Logger.js';
 export const PARTNER_TYPES = {
     REFERRAL: 'REFERRAL',
     RESELLER: 'RESELLER',
-    SALES: 'SALES'
+    SALES: 'SALES',
 } as const;
 
-export type PartnerType = typeof PARTNER_TYPES[keyof typeof PARTNER_TYPES];
+export type PartnerType = (typeof PARTNER_TYPES)[keyof typeof PARTNER_TYPES];
 
 interface Partner {
     id: string;
@@ -125,21 +126,23 @@ class PartnerServiceClass {
         return {
             ...row,
             metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-            isActive: !!row.is_active
+            isActive: !!row.is_active,
         };
     }
 
     /**
      * Create a new partner
      */
-    async createPartner(params: PartnerCreateParams): Promise<Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt: string }> {
+    async createPartner(
+        params: PartnerCreateParams,
+    ): Promise<Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt: string }> {
         const {
             name,
             partnerType,
             email = null,
             contactName = null,
             defaultRevenueSharePercent = 10,
-            metadata = {}
+            metadata = {},
         } = params;
 
         if (!name || !partnerType) {
@@ -156,7 +159,7 @@ class PartnerServiceClass {
             `INSERT INTO partners 
              (id, name, partner_type, email, contact_name, default_revenue_share_percent, metadata)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [id, name, partnerType, email, contactName, defaultRevenueSharePercent, JSON.stringify(metadata)]
+            [id, name, partnerType, email, contactName, defaultRevenueSharePercent, JSON.stringify(metadata)],
         );
 
         logger.info(`[PartnerService] Created partner: ${name} (${partnerType})`);
@@ -173,7 +176,7 @@ class PartnerServiceClass {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             isActive: true,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
         };
         return { ...createdPartner, metadata };
     }
@@ -181,11 +184,10 @@ class PartnerServiceClass {
     /**
      * Get partner by ID
      */
-    async getPartner(id: string): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
-        const row = await this.dbGet<Partner>(
-            `SELECT * FROM partners WHERE id = ?`,
-            [id]
-        );
+    async getPartner(
+        id: string,
+    ): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
+        const row = await this.dbGet<Partner>(`SELECT * FROM partners WHERE id = ?`, [id]);
 
         if (!row) return null;
 
@@ -195,7 +197,9 @@ class PartnerServiceClass {
     /**
      * Get all partners with filters
      */
-    async getPartners(filters: PartnerFilters = {}): Promise<Array<Partner & { metadata?: Record<string, unknown>; isActive: boolean }>> {
+    async getPartners(
+        filters: PartnerFilters = {},
+    ): Promise<Array<Partner & { metadata?: Record<string, unknown>; isActive: boolean }>> {
         let query = 'SELECT * FROM partners WHERE 1=1';
         const params: unknown[] = [];
 
@@ -222,13 +226,16 @@ class PartnerServiceClass {
         }
 
         const rows = await this.dbAll<Partner>(query, params);
-        return rows.map(row => this.parsePartnerRow(row));
+        return rows.map((row) => this.parsePartnerRow(row));
     }
 
     /**
      * Update partner
      */
-    async updatePartner(id: string, updates: PartnerUpdateParams): Promise<Partner & { metadata?: Record<string, unknown>; isActive: boolean } | null> {
+    async updatePartner(
+        id: string,
+        updates: PartnerUpdateParams,
+    ): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
         const fields: string[] = [];
         const values: unknown[] = [];
 
@@ -264,10 +271,7 @@ class PartnerServiceClass {
         fields.push('updated_at = datetime("now")');
         values.push(id);
 
-        await this.dbRun(
-            `UPDATE partners SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
+        await this.dbRun(`UPDATE partners SET ${fields.join(', ')} WHERE id = ?`, values);
 
         return this.getPartner(id);
     }
@@ -283,11 +287,13 @@ class PartnerServiceClass {
     /**
      * List all partners (alias for getPartners)
      */
-    async listPartners(filters: PartnerFilters = {}): Promise<Array<Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt?: string }>> {
+    async listPartners(
+        filters: PartnerFilters = {},
+    ): Promise<Array<Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt?: string }>> {
         const partners = await this.getPartners(filters);
-        return partners.map(p => ({
+        return partners.map((p) => ({
             ...p,
-            createdAt: p.created_at
+            createdAt: p.created_at,
         }));
     }
 
@@ -317,11 +323,14 @@ class PartnerServiceClass {
             validUntil = null,
             revenueSharePercent,
             appliesTo = 'GLOBAL',
-            appliesValue = null
+            appliesValue = null,
         } = params;
 
         if (!partnerId || !validFrom || revenueSharePercent === undefined) {
-            throw { errorCode: 'MISSING_REQUIRED', message: 'partnerId, validFrom, and revenueSharePercent are required' };
+            throw {
+                errorCode: 'MISSING_REQUIRED',
+                message: 'partnerId, validFrom, and revenueSharePercent are required',
+            };
         }
 
         const id = uuidv4();
@@ -330,7 +339,7 @@ class PartnerServiceClass {
             `INSERT INTO partner_agreements 
              (id, partner_id, valid_from, valid_until, revenue_share_percent, applies_to, applies_value)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [id, partnerId, validFrom, validUntil, revenueSharePercent, appliesTo, appliesValue]
+            [id, partnerId, validFrom, validUntil, revenueSharePercent, appliesTo, appliesValue],
         );
 
         logger.info(`[PartnerService] Created agreement for partner ${partnerId}: ${revenueSharePercent}%`);
@@ -343,14 +352,17 @@ class PartnerServiceClass {
             revenueSharePercent,
             appliesTo,
             appliesValue,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
         };
     }
 
     /**
      * Get the active agreement for a partner at a specific date
      */
-    async getActiveAgreement(partnerId: string, atDate: string | null = null): Promise<{
+    async getActiveAgreement(
+        partnerId: string,
+        atDate: string | null = null,
+    ): Promise<{
         id: string;
         partnerId: string;
         validFrom: string;
@@ -378,7 +390,7 @@ class PartnerServiceClass {
                AND (valid_until IS NULL OR valid_until >= ?)
              ORDER BY valid_from DESC
              LIMIT 1`,
-            [partnerId, checkDate, checkDate]
+            [partnerId, checkDate, checkDate],
         );
 
         if (!row) return null;
@@ -391,23 +403,25 @@ class PartnerServiceClass {
             revenueSharePercent: row.revenue_share_percent,
             appliesTo: row.applies_to,
             appliesValue: row.applies_value,
-            createdAt: row.created_at
+            createdAt: row.created_at,
         };
     }
 
     /**
      * Get all agreements for a partner
      */
-    async getAgreements(partnerId: string): Promise<Array<{
-        id: string;
-        partnerId: string;
-        validFrom: string;
-        validUntil: string | null;
-        revenueSharePercent: number;
-        appliesTo: string;
-        appliesValue: string | null;
-        createdAt: string;
-    }>> {
+    async getAgreements(partnerId: string): Promise<
+        Array<{
+            id: string;
+            partnerId: string;
+            validFrom: string;
+            validUntil: string | null;
+            revenueSharePercent: number;
+            appliesTo: string;
+            appliesValue: string | null;
+            createdAt: string;
+        }>
+    > {
         const rows = await this.dbAll<{
             id: string;
             partner_id: string;
@@ -417,12 +431,9 @@ class PartnerServiceClass {
             applies_to: string;
             applies_value: string | null;
             created_at: string;
-        }>(
-            `SELECT * FROM partner_agreements WHERE partner_id = ? ORDER BY valid_from DESC`,
-            [partnerId]
-        );
+        }>(`SELECT * FROM partner_agreements WHERE partner_id = ? ORDER BY valid_from DESC`, [partnerId]);
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             partnerId: row.partner_id,
             validFrom: row.valid_from,
@@ -430,20 +441,22 @@ class PartnerServiceClass {
             revenueSharePercent: row.revenue_share_percent,
             appliesTo: row.applies_to,
             appliesValue: row.applies_value,
-            createdAt: row.created_at
+            createdAt: row.created_at,
         }));
     }
 
     /**
      * Get partner by their partner code (for attribution lookups)
      */
-    async getByPartnerCode(partnerCode: string): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
+    async getByPartnerCode(
+        partnerCode: string,
+    ): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
         const row = await this.dbGet<Partner>(
             `SELECT p.* FROM partners p
              JOIN promo_codes pc ON pc.partner_id = p.id
              WHERE pc.code = ?
              LIMIT 1`,
-            [partnerCode.toUpperCase()]
+            [partnerCode.toUpperCase()],
         );
 
         if (!row) return null;
@@ -472,7 +485,15 @@ export const getPartners = (filters?: PartnerFilters) => partnerService.getPartn
 export const listPartners = (filters?: PartnerFilters) => partnerService.listPartners(filters);
 export const updatePartner = (id: string, updates: PartnerUpdateParams) => partnerService.updatePartner(id, updates);
 export const deletePartner = (id: string) => partnerService.deletePartner(id);
-export const createAgreement = (params: { partnerId: string; validFrom: string; validUntil?: string | null; revenueSharePercent: number; appliesTo?: string; appliesValue?: string | null }) => partnerService.createAgreement(params);
-export const getActiveAgreement = (partnerId: string, atDate?: string | null) => partnerService.getActiveAgreement(partnerId, atDate);
+export const createAgreement = (params: {
+    partnerId: string;
+    validFrom: string;
+    validUntil?: string | null;
+    revenueSharePercent: number;
+    appliesTo?: string;
+    appliesValue?: string | null;
+}) => partnerService.createAgreement(params);
+export const getActiveAgreement = (partnerId: string, atDate?: string | null) =>
+    partnerService.getActiveAgreement(partnerId, atDate);
 export const getAgreements = (partnerId: string) => partnerService.getAgreements(partnerId);
 export const getByPartnerCode = (partnerCode: string) => partnerService.getByPartnerCode(partnerCode);

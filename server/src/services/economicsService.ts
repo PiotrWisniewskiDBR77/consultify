@@ -1,14 +1,12 @@
 /**
  * Economics Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadEconomicsservice = createCachedLazyService('../../services/economicsService.js');
+import service from '../../services/economicsService.js';
 
 // Export default instance (for backward compatibility)
-export default loadEconomicsservice();
+export default service;

@@ -3,8 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { GlobalAccessBanners } from '../../../components/GlobalAccessBanners';
-import { usePolicySnapshot, useIsDemo, useIsTrial, useIsTrialExpired } from '../../../contexts/AccessPolicyContext';
+import { GlobalAccessBanners } from '../../components/GlobalAccessBanners';
+import { usePolicySnapshot, useIsDemo, useIsTrial, useIsTrialExpired } from '../../contexts/AccessPolicyContext';
 
 vi.mock('../../../contexts/AccessPolicyContext', () => ({
     usePolicySnapshot: vi.fn(),
@@ -110,6 +110,7 @@ describe('GlobalAccessBanners Component', () => {
         expect(screen.getByText('DemoBanner')).toBeInTheDocument();
     });
 });
+
 
 
 

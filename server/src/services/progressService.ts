@@ -1,14 +1,12 @@
 /**
  * Progress Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadProgressservice = createCachedLazyService('../../services/progressService.js');
+import service from '../../services/progressService.js';
 
 // Export default instance (for backward compatibility)
-export default loadProgressservice();
+export default service;

@@ -113,7 +113,7 @@ router.get('/candidates/by-project/:projectId', verifyToken, async (req, res) =>
 router.get('/observations/generate', requireSuperAdmin, async (req, res) => {
     try {
         // Use unified AI pipeline for observation generation
-        const { generateObservations   } = await import('../ai/aiPipeline.js');
+        const { generateObservations   } = await import('../services/ai/aiPipeline.js');
         const observations = await generateObservations(req.user?.id, req.user?.organizationId);
         res.json(observations);
     } catch (err) {

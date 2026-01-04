@@ -1,6 +1,6 @@
 /**
  * AdminSettingsConsultants - External Consultants Management
- * 
+ *
  * Features:
  * - Project-level consultant access (not organization)
  * - Access code system (consultants don't consume paid seats)
@@ -8,15 +8,32 @@
  * - Multi-project assignment for existing consultants
  */
 
-import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../../store/useAppStore';
-import { toast } from 'react-hot-toast';
 import {
-    Users, UserPlus, Trash2, Mail, Shield, CheckCircle,
-    X, ChevronDown, ChevronRight, FolderPlus, Copy,
-    Key, AlertCircle, Settings, Eye, EyeOff, Clock,
-    Briefcase, Check, RefreshCw
+    AlertCircle,
+    Briefcase,
+    Check,
+    CheckCircle,
+    ChevronDown,
+    ChevronRight,
+    Clock,
+    Copy,
+    Eye,
+    EyeOff,
+    FolderPlus,
+    Key,
+    Mail,
+    RefreshCw,
+    Settings,
+    Shield,
+    Trash2,
+    UserPlus,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { useAppStore } from '../../store/useAppStore';
 
 interface ConsultantProject {
     access_id: string;
@@ -100,7 +117,7 @@ export const AdminSettingsConsultants: React.FC = () => {
         canComment: false,
         canUseAI: false,
         canEscalate: false,
-        canReceiveEscalations: false
+        canReceiveEscalations: false,
     };
 
     // Fetch data
@@ -114,14 +131,14 @@ export const AdminSettingsConsultants: React.FC = () => {
         setLoading(true);
         try {
             const headers = {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
             };
 
             const [consultantsRes, projectsRes, permissionsRes] = await Promise.all([
                 fetch(API_URL, { headers }),
                 fetch(`${API_URL}/projects`, { headers }),
-                fetch(`${API_URL}/permission-definitions`, { headers })
+                fetch(`${API_URL}/permission-definitions`, { headers }),
             ]);
 
             if (consultantsRes.ok) {
@@ -159,16 +176,16 @@ export const AdminSettingsConsultants: React.FC = () => {
             const res = await fetch(`${API_URL}/invite`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     email: inviteEmail,
                     projectId: inviteProjectId,
                     permissions: invitePermissions,
                     accessCode: inviteAccessCode || undefined,
-                    generateCode: inviteGenerateCode && !inviteAccessCode
-                })
+                    generateCode: inviteGenerateCode && !inviteAccessCode,
+                }),
             });
 
             if (res.ok) {
@@ -199,13 +216,13 @@ export const AdminSettingsConsultants: React.FC = () => {
             const res = await fetch(`${API_URL}/${selectedConsultant.consultant_id}/add-project`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     projectId,
-                    permissions: defaultPermissions
-                })
+                    permissions: defaultPermissions,
+                }),
             });
 
             if (res.ok) {
@@ -229,10 +246,10 @@ export const AdminSettingsConsultants: React.FC = () => {
             const res = await fetch(`${API_URL}/${selectedProjectAccess.access_id}/permissions`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ permissions })
+                body: JSON.stringify({ permissions }),
             });
 
             if (res.ok) {
@@ -254,7 +271,7 @@ export const AdminSettingsConsultants: React.FC = () => {
         try {
             const res = await fetch(`${API_URL}/${accessId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -275,7 +292,7 @@ export const AdminSettingsConsultants: React.FC = () => {
         try {
             const res = await fetch(`${API_URL}/consultant/${consultantId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -300,7 +317,7 @@ export const AdminSettingsConsultants: React.FC = () => {
 
     // Toggle consultant expansion
     const toggleExpand = (consultantId: string) => {
-        setExpandedConsultants(prev => {
+        setExpandedConsultants((prev) => {
             const next = new Set(prev);
             if (next.has(consultantId)) {
                 next.delete(consultantId);
@@ -318,16 +335,19 @@ export const AdminSettingsConsultants: React.FC = () => {
     };
 
     // Group permissions by category
-    const groupedPermissions = permissionDefinitions.reduce((acc, perm) => {
-        if (!acc[perm.category]) acc[perm.category] = [];
-        acc[perm.category].push(perm);
-        return acc;
-    }, {} as Record<string, PermissionDefinition[]>);
+    const groupedPermissions = permissionDefinitions.reduce(
+        (acc, perm) => {
+            if (!acc[perm.category]) acc[perm.category] = [];
+            acc[perm.category].push(perm);
+            return acc;
+        },
+        {} as Record<string, PermissionDefinition[]>,
+    );
 
     // Get projects not yet assigned to a consultant
     const getUnassignedProjects = (consultant: Consultant) => {
-        const assignedIds = new Set(consultant.projects.map(p => p.project_id));
-        return projects.filter(p => !assignedIds.has(p.id));
+        const assignedIds = new Set(consultant.projects.map((p) => p.project_id));
+        return projects.filter((p) => !assignedIds.has(p.id));
     };
 
     // Count active permissions
@@ -345,7 +365,8 @@ export const AdminSettingsConsultants: React.FC = () => {
                         External Consultants
                     </h2>
                     <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">
-                        Manage external advisors with project-level access. Consultants don't consume your paid seat pool.
+                        Manage external advisors with project-level access. Consultants don't consume your paid seat
+                        pool.
                     </p>
                 </div>
                 <button
@@ -366,8 +387,9 @@ export const AdminSettingsConsultants: React.FC = () => {
                 <div className="text-sm text-blue-300">
                     <p className="font-medium mb-1">Free consultant seats with access codes</p>
                     <p className="text-blue-400/80">
-                        Consultants invited with an access code don't count against your organization's paid seats.
-                        This encourages consultants to use the platform widely. Generate codes when inviting or use existing ones.
+                        Consultants invited with an access code don't count against your organization's paid seats. This
+                        encourages consultants to use the platform widely. Generate codes when inviting or use existing
+                        ones.
                     </p>
                 </div>
             </div>
@@ -411,7 +433,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                 </td>
                             </tr>
                         ) : (
-                            consultants.map(consultant => (
+                            consultants.map((consultant) => (
                                 <React.Fragment key={consultant.consultant_id}>
                                     <tr className="hover:bg-white/[0.02] transition-colors">
                                         <td className="px-6 py-4">
@@ -443,11 +465,12 @@ export const AdminSettingsConsultants: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-slate-400">
-                                                {consultant.projects.length} project{consultant.projects.length !== 1 ? 's' : ''}
+                                                {consultant.projects.length} project
+                                                {consultant.projects.length !== 1 ? 's' : ''}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {consultant.projects.some(p => p.status === 'ACTIVE') ? (
+                                            {consultant.projects.some((p) => p.status === 'ACTIVE') ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
                                                     <CheckCircle size={12} /> Active
                                                 </span>
@@ -488,7 +511,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
                                                         Project Access
                                                     </p>
-                                                    {consultant.projects.map(project => (
+                                                    {consultant.projects.map((project) => (
                                                         <div
                                                             key={project.access_id}
                                                             className="flex items-center justify-between bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-lg p-3"
@@ -496,22 +519,29 @@ export const AdminSettingsConsultants: React.FC = () => {
                                                             <div className="flex items-center gap-3">
                                                                 <Briefcase className="w-4 h-4 text-slate-500" />
                                                                 <div>
-                                                                    <p className="font-medium text-navy-900 dark:text-white">{project.projectName}</p>
+                                                                    <p className="font-medium text-navy-900 dark:text-white">
+                                                                        {project.projectName}
+                                                                    </p>
                                                                     <p className="text-xs text-slate-500">
-                                                                        {countActivePermissions(project.permissions)} permissions active
+                                                                        {countActivePermissions(project.permissions)}{' '}
+                                                                        permissions active
                                                                         {project.access_code && (
                                                                             <span className="ml-2 text-blue-400">
-                                                                                • Free seat (code: {project.access_code})
+                                                                                • Free seat (code: {project.access_code}
+                                                                                )
                                                                             </span>
                                                                         )}
                                                                     </p>
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <span className={`text-xs px-2 py-1 rounded ${project.status === 'ACTIVE'
-                                                                        ? 'bg-green-500/10 text-green-400'
-                                                                        : 'bg-amber-500/10 text-amber-400'
-                                                                    }`}>
+                                                                <span
+                                                                    className={`text-xs px-2 py-1 rounded ${
+                                                                        project.status === 'ACTIVE'
+                                                                            ? 'bg-green-500/10 text-green-400'
+                                                                            : 'bg-amber-500/10 text-amber-400'
+                                                                    }`}
+                                                                >
                                                                     {project.status}
                                                                 </span>
                                                                 <button
@@ -525,7 +555,9 @@ export const AdminSettingsConsultants: React.FC = () => {
                                                                     <Settings size={14} />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleRevokeAccess(project.access_id)}
+                                                                    onClick={() =>
+                                                                        handleRevokeAccess(project.access_id)
+                                                                    }
                                                                     className="text-slate-500 hover:text-red-400 transition-colors p-1.5 hover:bg-red-500/10 rounded"
                                                                     title="Revoke access"
                                                                 >
@@ -551,7 +583,9 @@ export const AdminSettingsConsultants: React.FC = () => {
                     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center flex-shrink-0">
                             <div>
-                                <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Invite Consultant</h3>
+                                <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
+                                    Invite Consultant
+                                </h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                                     Assign to a project with specific permissions
                                 </p>
@@ -577,7 +611,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                             type="email"
                                             required
                                             value={inviteEmail}
-                                            onChange={e => setInviteEmail(e.target.value)}
+                                            onChange={(e) => setInviteEmail(e.target.value)}
                                             placeholder="consultant@firm.com"
                                             className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
                                         />
@@ -592,12 +626,18 @@ export const AdminSettingsConsultants: React.FC = () => {
                                     <select
                                         required
                                         value={inviteProjectId}
-                                        onChange={e => setInviteProjectId(e.target.value)}
+                                        onChange={(e) => setInviteProjectId(e.target.value)}
                                         className="w-full px-4 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 dark:text-white"
                                     >
-                                        <option value="" className="bg-white dark:bg-navy-900">Select a project...</option>
-                                        {projects.map(project => (
-                                            <option key={project.id} value={project.id} className="bg-white dark:bg-navy-900">
+                                        <option value="" className="bg-white dark:bg-navy-900">
+                                            Select a project...
+                                        </option>
+                                        {projects.map((project) => (
+                                            <option
+                                                key={project.id}
+                                                value={project.id}
+                                                className="bg-white dark:bg-navy-900"
+                                            >
                                                 {project.name}
                                             </option>
                                         ))}
@@ -617,7 +657,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                             <input
                                                 type="checkbox"
                                                 checked={inviteGenerateCode}
-                                                onChange={e => {
+                                                onChange={(e) => {
                                                     setInviteGenerateCode(e.target.checked);
                                                     if (e.target.checked) setInviteAccessCode('');
                                                 }}
@@ -631,14 +671,15 @@ export const AdminSettingsConsultants: React.FC = () => {
                                         <input
                                             type="text"
                                             value={inviteAccessCode}
-                                            onChange={e => setInviteAccessCode(e.target.value.toUpperCase())}
+                                            onChange={(e) => setInviteAccessCode(e.target.value.toUpperCase())}
                                             placeholder="Enter existing code (e.g., CONS-A1B2C3D4)"
                                             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white font-mono placeholder:text-slate-600"
                                         />
                                     )}
 
                                     <p className="text-xs text-blue-400/70 mt-2">
-                                        With an access code, this consultant won't consume your organization's paid seat pool.
+                                        With an access code, this consultant won't consume your organization's paid seat
+                                        pool.
                                     </p>
                                 </div>
 
@@ -649,7 +690,8 @@ export const AdminSettingsConsultants: React.FC = () => {
                                             Initial Permissions
                                         </label>
                                         <span className="text-xs text-slate-500">
-                                            {countActivePermissions(invitePermissions)}/{Object.keys(defaultPermissions).length} enabled
+                                            {countActivePermissions(invitePermissions)}/
+                                            {Object.keys(defaultPermissions).length} enabled
                                         </span>
                                     </div>
 
@@ -661,7 +703,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                                         {category}
                                                     </p>
                                                     <div className="grid grid-cols-2 gap-2">
-                                                        {perms.map(perm => (
+                                                        {perms.map((perm) => (
                                                             <label
                                                                 key={perm.key}
                                                                 className="flex items-center gap-2 p-2 rounded hover:bg-white/5 cursor-pointer"
@@ -669,15 +711,21 @@ export const AdminSettingsConsultants: React.FC = () => {
                                                                 <input
                                                                     type="checkbox"
                                                                     checked={invitePermissions[perm.key] || false}
-                                                                    onChange={e => setInvitePermissions({
-                                                                        ...invitePermissions,
-                                                                        [perm.key]: e.target.checked
-                                                                    })}
+                                                                    onChange={(e) =>
+                                                                        setInvitePermissions({
+                                                                            ...invitePermissions,
+                                                                            [perm.key]: e.target.checked,
+                                                                        })
+                                                                    }
                                                                     className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
                                                                 />
                                                                 <div>
-                                                                    <span className="text-sm text-white">{perm.label}</span>
-                                                                    <p className="text-xs text-slate-500">{perm.description}</p>
+                                                                    <span className="text-sm text-white">
+                                                                        {perm.label}
+                                                                    </span>
+                                                                    <p className="text-xs text-slate-500">
+                                                                        {perm.description}
+                                                                    </p>
                                                                 </div>
                                                             </label>
                                                         ))}
@@ -733,9 +781,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                         <div className="p-6 border-b border-white/10 flex justify-between items-center">
                             <div>
                                 <h3 className="text-lg font-semibold text-white">Add to Project</h3>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    {selectedConsultant.email}
-                                </p>
+                                <p className="text-sm text-slate-500 mt-1">{selectedConsultant.email}</p>
                             </div>
                             <button
                                 onClick={() => setShowAddProjectModal(false)}
@@ -746,9 +792,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                         </div>
 
                         <div className="p-6">
-                            <p className="text-sm text-slate-400 mb-4">
-                                Select a project to add this consultant to:
-                            </p>
+                            <p className="text-sm text-slate-400 mb-4">Select a project to add this consultant to:</p>
 
                             {getUnassignedProjects(selectedConsultant).length === 0 ? (
                                 <p className="text-slate-500 text-center py-4">
@@ -756,7 +800,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                 </p>
                             ) : (
                                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                                    {getUnassignedProjects(selectedConsultant).map(project => (
+                                    {getUnassignedProjects(selectedConsultant).map((project) => (
                                         <button
                                             key={project.id}
                                             onClick={() => handleAddProject(project.id)}
@@ -807,9 +851,7 @@ const PermissionsModal: React.FC<{
     onClose: () => void;
     onSave: (permissions: Record<string, boolean>) => void;
 }> = ({ projectAccess, groupedPermissions, onClose, onSave }) => {
-    const [permissions, setPermissions] = useState<Record<string, boolean>>(
-        projectAccess.permissions || {}
-    );
+    const [permissions, setPermissions] = useState<Record<string, boolean>>(projectAccess.permissions || {});
     const [saving, setSaving] = useState(false);
 
     const handleSave = async () => {
@@ -824,19 +866,19 @@ const PermissionsModal: React.FC<{
     // Quick actions
     const enableAll = () => {
         const newPerms = { ...permissions };
-        Object.keys(newPerms).forEach(key => newPerms[key] = true);
+        Object.keys(newPerms).forEach((key) => (newPerms[key] = true));
         setPermissions(newPerms);
     };
 
     const disableAll = () => {
         const newPerms = { ...permissions };
-        Object.keys(newPerms).forEach(key => newPerms[key] = false);
+        Object.keys(newPerms).forEach((key) => (newPerms[key] = false));
         setPermissions(newPerms);
     };
 
     const enableViewOnly = () => {
         const newPerms = { ...permissions };
-        Object.keys(newPerms).forEach(key => {
+        Object.keys(newPerms).forEach((key) => {
             newPerms[key] = key.startsWith('canView');
         });
         setPermissions(newPerms);
@@ -848,14 +890,9 @@ const PermissionsModal: React.FC<{
                 <div className="p-6 border-b border-white/10 flex justify-between items-center flex-shrink-0">
                     <div>
                         <h3 className="text-lg font-semibold text-white">Edit Permissions</h3>
-                        <p className="text-sm text-slate-500 mt-1">
-                            {projectAccess.projectName}
-                        </p>
+                        <p className="text-sm text-slate-500 mt-1">{projectAccess.projectName}</p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-slate-500 hover:text-white transition-colors"
-                    >
+                    <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -898,25 +935,30 @@ const PermissionsModal: React.FC<{
                                     {category}
                                 </p>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {perms.map(perm => (
+                                    {perms.map((perm) => (
                                         <label
                                             key={perm.key}
-                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${permissions[perm.key]
+                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                                                permissions[perm.key]
                                                     ? 'bg-blue-500/10 border border-blue-500/20'
                                                     : 'bg-white/[0.02] border border-white/5 hover:bg-white/5'
-                                                }`}
+                                            }`}
                                         >
                                             <input
                                                 type="checkbox"
                                                 checked={permissions[perm.key] || false}
-                                                onChange={e => setPermissions({
-                                                    ...permissions,
-                                                    [perm.key]: e.target.checked
-                                                })}
+                                                onChange={(e) =>
+                                                    setPermissions({
+                                                        ...permissions,
+                                                        [perm.key]: e.target.checked,
+                                                    })
+                                                }
                                                 className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500"
                                             />
                                             <div>
-                                                <span className={`text-sm ${permissions[perm.key] ? 'text-white' : 'text-slate-300'}`}>
+                                                <span
+                                                    className={`text-sm ${permissions[perm.key] ? 'text-white' : 'text-slate-300'}`}
+                                                >
                                                     {perm.label}
                                                 </span>
                                                 <p className="text-xs text-slate-500">{perm.description}</p>

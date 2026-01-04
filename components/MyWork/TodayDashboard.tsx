@@ -1,10 +1,11 @@
+import { AlertCircle, Loader2, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Plus, AlertCircle } from 'lucide-react';
+
 import { Api } from '../../services/api';
-import { PersonalExecutionBar } from './PersonalExecutionBar';
-import { PMOStatusBanner } from '../PMO/PMOStatusBanner';
 import { usePMOStore } from '../../store/usePMOStore';
+import { PMOStatusBanner } from '../PMO/PMOStatusBanner';
+import { PersonalExecutionBar } from './PersonalExecutionBar';
 
 interface TodayDashboardProps {
     onEditTask: (id: string) => void;
@@ -35,15 +36,17 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
     };
 
     if (loading) {
-        return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" size={32} /></div>;
+        return (
+            <div className="flex justify-center p-12">
+                <Loader2 className="animate-spin text-blue-600" size={32} />
+            </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             {/* PMO Status Banner - Phase awareness */}
-            {currentPhase && (
-                <PMOStatusBanner />
-            )}
+            {currentPhase && <PMOStatusBanner />}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Stats Cards */}
@@ -54,7 +57,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
                     </div>
                     <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-white/5">
                         <div className="text-sm text-slate-500">Due This Week</div>
-                        <div className="text-2xl font-bold text-navy-900 dark:text-white">{data?.dueThisWeekCount || 0}</div>
+                        <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                            {data?.dueThisWeekCount || 0}
+                        </div>
                     </div>
                     <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-white/5">
                         <div className="text-sm text-slate-500">Blocked</div>
@@ -66,7 +71,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
                             <AlertCircle size={12} />
                             {t('pmo.blockingProgress', 'Blocking Progress')}
                         </div>
-                        <div className={`text-2xl font-bold ${blockingIssues.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        <div
+                            className={`text-2xl font-bold ${blockingIssues.length > 0 ? 'text-red-600' : 'text-green-600'}`}
+                        >
                             {blockingIssues.length}
                         </div>
                     </div>
@@ -88,12 +95,22 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <div className="font-semibold text-navy-900 dark:text-white">{task.title}</div>
-                                            <div className="text-xs text-slate-500 mt-1">{task.projectName || 'No Project'}</div>
+                                            <div className="font-semibold text-navy-900 dark:text-white">
+                                                {task.title}
+                                            </div>
+                                            <div className="text-xs text-slate-500 mt-1">
+                                                {task.projectName || 'No Project'}
+                                            </div>
                                         </div>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium uppercase ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                                            task.priority === 'high' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                                            }`}>
+                                        <span
+                                            className={`px-2 py-1 rounded text-xs font-medium uppercase ${
+                                                task.priority === 'urgent'
+                                                    ? 'bg-red-100 text-red-700'
+                                                    : task.priority === 'high'
+                                                      ? 'bg-orange-100 text-orange-700'
+                                                      : 'bg-blue-100 text-blue-700'
+                                            }`}
+                                        >
                                             {task.priority}
                                         </span>
                                     </div>
@@ -103,7 +120,10 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
                     ) : (
                         <div className="bg-white dark:bg-navy-800 p-8 rounded-xl text-center border border-dashed border-slate-300 dark:border-white/10">
                             <div className="text-slate-400 mb-2">No tasks prioritized for today</div>
-                            <button onClick={onCreateTask} className="text-blue-600 text-sm font-medium hover:underline">
+                            <button
+                                onClick={onCreateTask}
+                                className="text-blue-600 text-sm font-medium hover:underline"
+                            >
                                 Create a task to get started
                             </button>
                         </div>
@@ -113,12 +133,14 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
                 {/* Side Panel (Quick Actions / Blocked) */}
                 <div className="space-y-6">
                     {data && (
-                        <PersonalExecutionBar stats={{
-                            total: data.totalCount || 0,
-                            completed: data.completedCount || 0,
-                            overdue: data.overdueCount || 0,
-                            blocked: data.blockedCount || 0
-                        }} />
+                        <PersonalExecutionBar
+                            stats={{
+                                total: data.totalCount || 0,
+                                completed: data.completedCount || 0,
+                                overdue: data.overdueCount || 0,
+                                blocked: data.blockedCount || 0,
+                            }}
+                        />
                     )}
 
                     {/* PMO Blocking Issues Alert */}
@@ -135,9 +157,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ onEditTask, onCr
                                     </li>
                                 ))}
                                 {blockingIssues.length > 3 && (
-                                    <li className="text-xs opacity-70">
-                                        +{blockingIssues.length - 3} more...
-                                    </li>
+                                    <li className="text-xs opacity-70">+{blockingIssues.length - 3} more...</li>
                                 )}
                             </ul>
                         </div>

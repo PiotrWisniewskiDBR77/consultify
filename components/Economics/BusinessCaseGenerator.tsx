@@ -1,18 +1,29 @@
 /**
  * Business Case Generator Component
- * 
+ *
  * Generates comprehensive business case documents from economic analysis data.
  * Supports multiple formats and customizable sections.
  */
 
-import React, { useState } from 'react';
-import { 
-    FileText, Download, Settings, Check, Loader2,
-    FileSpreadsheet, Languages, Eye, ChevronDown,
-    AlertCircle, Building2, TrendingUp, Shield
+import {
+    AlertCircle,
+    Building2,
+    Check,
+    ChevronDown,
+    Download,
+    Eye,
+    FileSpreadsheet,
+    FileText,
+    Languages,
+    Loader2,
+    Settings,
+    Shield,
+    TrendingUp,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface BusinessCaseGeneratorProps {
     analysisId: string;
@@ -47,17 +58,17 @@ const defaultOptions: GenerationOptions = {
         financialAnalysis: true,
         riskAssessment: true,
         implementation: true,
-        recommendations: true
+        recommendations: true,
     },
     includeCharts: true,
-    includeAppendices: false
+    includeAppendices: false,
 };
 
 export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
     analysisId,
     analysisName,
     hasFinancialData = false,
-    onGenerate
+    onGenerate,
 }) => {
     const [options, setOptions] = useState<GenerationOptions>(defaultOptions);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -71,22 +82,22 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         financialAnalysis: { label: 'Analiza finansowa', icon: <TrendingUp size={16} /> },
         riskAssessment: { label: 'Ocena ryzyka', icon: <Shield size={16} /> },
         implementation: { label: 'Plan wdrożenia', icon: <Settings size={16} /> },
-        recommendations: { label: 'Rekomendacje', icon: <Check size={16} /> }
+        recommendations: { label: 'Rekomendacje', icon: <Check size={16} /> },
     };
 
     const toggleSection = (section: keyof GenerationOptions['sections']) => {
-        setOptions(prev => ({
+        setOptions((prev) => ({
             ...prev,
             sections: {
                 ...prev.sections,
-                [section]: !prev.sections[section]
-            }
+                [section]: !prev.sections[section],
+            },
         }));
     };
 
     const handleGenerate = async () => {
         // Validate at least one section selected
-        const hasSelectedSections = Object.values(options.sections).some(v => v);
+        const hasSelectedSections = Object.values(options.sections).some((v) => v);
         if (!hasSelectedSections) {
             toast.error('Wybierz co najmniej jedną sekcję dokumentu');
             return;
@@ -99,12 +110,12 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                 language: options.language,
                 includeExecutiveSummary: options.sections.executiveSummary,
                 includeFinancialAnalysis: options.sections.financialAnalysis,
-                includeRiskAssessment: options.sections.riskAssessment
+                includeRiskAssessment: options.sections.riskAssessment,
             });
 
             setLastGenerated({ url: result.downloadUrl, timestamp: new Date() });
             toast.success('Business Case wygenerowany pomyślnie');
-            
+
             if (onGenerate) {
                 onGenerate(result.downloadUrl);
             }
@@ -149,28 +160,38 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
             {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <button
-                    onClick={() => setOptions(prev => ({ ...prev, format: 'pdf' }))}
+                    onClick={() => setOptions((prev) => ({ ...prev, format: 'pdf' }))}
                     className={`p-4 rounded-xl border transition-all ${
                         options.format === 'pdf'
                             ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
                             : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                 >
-                    <FileText size={24} className={`mx-auto mb-2 ${options.format === 'pdf' ? 'text-indigo-500' : 'text-slate-400'}`} />
-                    <p className={`text-sm font-medium ${options.format === 'pdf' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                    <FileText
+                        size={24}
+                        className={`mx-auto mb-2 ${options.format === 'pdf' ? 'text-indigo-500' : 'text-slate-400'}`}
+                    />
+                    <p
+                        className={`text-sm font-medium ${options.format === 'pdf' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
+                    >
                         PDF
                     </p>
                 </button>
                 <button
-                    onClick={() => setOptions(prev => ({ ...prev, format: 'docx' }))}
+                    onClick={() => setOptions((prev) => ({ ...prev, format: 'docx' }))}
                     className={`p-4 rounded-xl border transition-all ${
                         options.format === 'docx'
                             ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
                             : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                 >
-                    <FileSpreadsheet size={24} className={`mx-auto mb-2 ${options.format === 'docx' ? 'text-indigo-500' : 'text-slate-400'}`} />
-                    <p className={`text-sm font-medium ${options.format === 'docx' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                    <FileSpreadsheet
+                        size={24}
+                        className={`mx-auto mb-2 ${options.format === 'docx' ? 'text-indigo-500' : 'text-slate-400'}`}
+                    />
+                    <p
+                        className={`text-sm font-medium ${options.format === 'docx' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
+                    >
                         Word (DOCX)
                     </p>
                 </button>
@@ -187,7 +208,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                         </label>
                         <div className="flex gap-2">
                             <button
-                                onClick={() => setOptions(prev => ({ ...prev, language: 'pl' }))}
+                                onClick={() => setOptions((prev) => ({ ...prev, language: 'pl' }))}
                                 className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors ${
                                     options.language === 'pl'
                                         ? 'bg-indigo-500 text-white'
@@ -197,7 +218,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                                 🇵🇱 Polski
                             </button>
                             <button
-                                onClick={() => setOptions(prev => ({ ...prev, language: 'en' }))}
+                                onClick={() => setOptions((prev) => ({ ...prev, language: 'en' }))}
                                 className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors ${
                                     options.language === 'en'
                                         ? 'bg-indigo-500 text-white'
@@ -215,7 +236,12 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                             Sekcje dokumentu ({selectedSectionsCount}/{totalSections})
                         </label>
                         <div className="grid grid-cols-2 gap-2">
-                            {(Object.entries(sectionLabels) as [keyof GenerationOptions['sections'], { label: string; icon: React.ReactNode }][]).map(([key, { label, icon }]) => (
+                            {(
+                                Object.entries(sectionLabels) as [
+                                    keyof GenerationOptions['sections'],
+                                    { label: string; icon: React.ReactNode },
+                                ][]
+                            ).map(([key, { label, icon }]) => (
                                 <button
                                     key={key}
                                     onClick={() => toggleSection(key)}
@@ -243,7 +269,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                             <input
                                 type="checkbox"
                                 checked={options.includeCharts}
-                                onChange={(e) => setOptions(prev => ({ ...prev, includeCharts: e.target.checked }))}
+                                onChange={(e) => setOptions((prev) => ({ ...prev, includeCharts: e.target.checked }))}
                                 className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
                             <span className="text-sm text-slate-600 dark:text-slate-400">Wykresy i wizualizacje</span>
@@ -252,7 +278,9 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                             <input
                                 type="checkbox"
                                 checked={options.includeAppendices}
-                                onChange={(e) => setOptions(prev => ({ ...prev, includeAppendices: e.target.checked }))}
+                                onChange={(e) =>
+                                    setOptions((prev) => ({ ...prev, includeAppendices: e.target.checked }))
+                                }
                                 className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
                             <span className="text-sm text-slate-600 dark:text-slate-400">Załączniki</span>
@@ -298,9 +326,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-sm">
                             <Check size={16} />
-                            <span>
-                                Wygenerowano {lastGenerated.timestamp.toLocaleTimeString('pl-PL')}
-                            </span>
+                            <span>Wygenerowano {lastGenerated.timestamp.toLocaleTimeString('pl-PL')}</span>
                         </div>
                         <a
                             href={lastGenerated.url}
@@ -326,12 +352,4 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
 };
 
 export default BusinessCaseGenerator;
-
-
-
-
-
-
-
-
 

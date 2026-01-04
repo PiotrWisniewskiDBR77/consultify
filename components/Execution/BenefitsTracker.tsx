@@ -1,28 +1,28 @@
 /**
  * BenefitsTracker Component
- * 
+ *
  * PMO Benefits Realization Tracking
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Benefits Realization (Clause 4.6)
  * - PMI PMBOK 7th Edition - Benefits Management
  * - PRINCE2 - Benefits Review
- * 
+ *
  * PMO Domain: BENEFITS_REALIZATION
  */
 
-import React, { useState } from 'react';
 import {
-    TrendingUp,
-    DollarSign,
-    Clock,
-    Users,
-    CheckCircle2,
-    Target,
-    Calendar,
     BarChart3,
-    PieChart
+    Calendar,
+    CheckCircle2,
+    Clock,
+    DollarSign,
+    PieChart,
+    Target,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 export type BenefitStatus = 'PLANNED' | 'PARTIALLY_REALIZED' | 'FULLY_REALIZED' | 'NOT_ACHIEVED';
 export type BenefitType = 'FINANCIAL' | 'EFFICIENCY' | 'QUALITY' | 'STRATEGIC' | 'COMPLIANCE';
@@ -48,26 +48,26 @@ interface BenefitsTrackerProps {
 }
 
 const STATUS_CONFIG: Record<BenefitStatus, { color: string; bgColor: string; label: string }> = {
-    PLANNED: { 
-        color: 'text-slate-600', 
-        bgColor: 'bg-slate-100 dark:bg-slate-800', 
-        label: 'Planned'
+    PLANNED: {
+        color: 'text-slate-600',
+        bgColor: 'bg-slate-100 dark:bg-slate-800',
+        label: 'Planned',
     },
-    PARTIALLY_REALIZED: { 
-        color: 'text-amber-600', 
-        bgColor: 'bg-amber-100 dark:bg-amber-900/20', 
-        label: 'Partial'
+    PARTIALLY_REALIZED: {
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-100 dark:bg-amber-900/20',
+        label: 'Partial',
     },
-    FULLY_REALIZED: { 
-        color: 'text-green-600', 
-        bgColor: 'bg-green-100 dark:bg-green-900/20', 
-        label: 'Achieved'
+    FULLY_REALIZED: {
+        color: 'text-green-600',
+        bgColor: 'bg-green-100 dark:bg-green-900/20',
+        label: 'Achieved',
     },
-    NOT_ACHIEVED: { 
-        color: 'text-red-600', 
-        bgColor: 'bg-red-100 dark:bg-red-900/20', 
-        label: 'Not Achieved'
-    }
+    NOT_ACHIEVED: {
+        color: 'text-red-600',
+        bgColor: 'bg-red-100 dark:bg-red-900/20',
+        label: 'Not Achieved',
+    },
 };
 
 const TYPE_CONFIG: Record<BenefitType, { icon: React.ElementType; color: string }> = {
@@ -75,13 +75,10 @@ const TYPE_CONFIG: Record<BenefitType, { icon: React.ElementType; color: string 
     EFFICIENCY: { icon: Clock, color: 'text-blue-500' },
     QUALITY: { icon: CheckCircle2, color: 'text-purple-500' },
     STRATEGIC: { icon: Target, color: 'text-amber-500' },
-    COMPLIANCE: { icon: Users, color: 'text-cyan-500' }
+    COMPLIANCE: { icon: Users, color: 'text-cyan-500' },
 };
 
-export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
-    projectId,
-    benefits = []
-}) => {
+export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, benefits = [] }) => {
     const [selectedType, setSelectedType] = useState<'all' | BenefitType>('all');
 
     // Mock benefits
@@ -97,7 +94,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
             unit: 'PLN',
             targetDate: '2025-06-30',
             linkedInitiativeName: 'Digital Process Automation',
-            measurementCriteria: 'Total annual OpEx reduction in automated departments'
+            measurementCriteria: 'Total annual OpEx reduction in automated departments',
         },
         {
             id: 'ben-2',
@@ -110,7 +107,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
             unit: '%',
             targetDate: '2024-12-31',
             linkedInitiativeName: 'Workflow Optimization',
-            measurementCriteria: 'Average time from request to completion'
+            measurementCriteria: 'Average time from request to completion',
         },
         {
             id: 'ben-3',
@@ -122,7 +119,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
             currentValue: 42,
             unit: 'NPS',
             targetDate: '2025-03-31',
-            measurementCriteria: 'Quarterly NPS survey results'
+            measurementCriteria: 'Quarterly NPS survey results',
         },
         {
             id: 'ben-4',
@@ -135,7 +132,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
             unit: '%',
             targetDate: '2025-09-30',
             linkedInitiativeName: 'BI Dashboard Implementation',
-            measurementCriteria: 'Audit of management decisions with data evidence'
+            measurementCriteria: 'Audit of management decisions with data evidence',
         },
         {
             id: 'ben-5',
@@ -147,33 +144,32 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
             currentValue: 100,
             unit: '%',
             targetDate: '2024-06-30',
-            measurementCriteria: 'Internal audit results'
-        }
+            measurementCriteria: 'Internal audit results',
+        },
     ]);
 
-    const filteredBenefits = selectedType === 'all' 
-        ? localBenefits 
-        : localBenefits.filter(b => b.type === selectedType);
+    const filteredBenefits =
+        selectedType === 'all' ? localBenefits : localBenefits.filter((b) => b.type === selectedType);
 
     // Calculate totals
     const totalFinancialTarget = localBenefits
-        .filter(b => b.type === 'FINANCIAL')
+        .filter((b) => b.type === 'FINANCIAL')
         .reduce((sum, b) => sum + b.targetValue, 0);
     const totalFinancialCurrent = localBenefits
-        .filter(b => b.type === 'FINANCIAL')
+        .filter((b) => b.type === 'FINANCIAL')
         .reduce((sum, b) => sum + b.currentValue, 0);
 
     const stats = {
         total: localBenefits.length,
-        achieved: localBenefits.filter(b => b.status === 'FULLY_REALIZED').length,
-        partial: localBenefits.filter(b => b.status === 'PARTIALLY_REALIZED').length,
-        planned: localBenefits.filter(b => b.status === 'PLANNED').length,
+        achieved: localBenefits.filter((b) => b.status === 'FULLY_REALIZED').length,
+        partial: localBenefits.filter((b) => b.status === 'PARTIALLY_REALIZED').length,
+        planned: localBenefits.filter((b) => b.status === 'PLANNED').length,
         avgRealization: Math.round(
             localBenefits.reduce((sum, b) => {
                 const rate = b.targetValue > 0 ? (b.currentValue / b.targetValue) * 100 : 0;
                 return sum + Math.min(rate, 100);
-            }, 0) / localBenefits.length
-        )
+            }, 0) / localBenefits.length,
+        ),
     };
 
     return (
@@ -195,12 +191,8 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white">
                     <div className="text-sm opacity-80 mb-1">Financial Benefits</div>
-                    <div className="text-2xl font-bold">
-                        {(totalFinancialCurrent / 1000).toFixed(0)}k PLN
-                    </div>
-                    <div className="text-xs opacity-70 mt-1">
-                        of {(totalFinancialTarget / 1000).toFixed(0)}k target
-                    </div>
+                    <div className="text-2xl font-bold">{(totalFinancialCurrent / 1000).toFixed(0)}k PLN</div>
+                    <div className="text-xs opacity-70 mt-1">of {(totalFinancialTarget / 1000).toFixed(0)}k target</div>
                 </div>
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Avg. Realization</div>
@@ -216,15 +208,13 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
                 </div>
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">In Progress</div>
-                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                        {stats.partial}
-                    </div>
+                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.partial}</div>
                 </div>
             </div>
 
             {/* Type Filter */}
             <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                {(['all', 'FINANCIAL', 'EFFICIENCY', 'QUALITY', 'STRATEGIC', 'COMPLIANCE'] as const).map(type => {
+                {(['all', 'FINANCIAL', 'EFFICIENCY', 'QUALITY', 'STRATEGIC', 'COMPLIANCE'] as const).map((type) => {
                     const config = type !== 'all' ? TYPE_CONFIG[type] : null;
                     return (
                         <button
@@ -245,13 +235,12 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
 
             {/* Benefits Cards */}
             <div className="space-y-4">
-                {filteredBenefits.map(benefit => {
+                {filteredBenefits.map((benefit) => {
                     const statusConfig = STATUS_CONFIG[benefit.status];
                     const typeConfig = TYPE_CONFIG[benefit.type];
                     const TypeIcon = typeConfig.icon;
-                    const realizationPercent = benefit.targetValue > 0 
-                        ? Math.round((benefit.currentValue / benefit.targetValue) * 100) 
-                        : 0;
+                    const realizationPercent =
+                        benefit.targetValue > 0 ? Math.round((benefit.currentValue / benefit.targetValue) * 100) : 0;
                     const isOverAchieved = realizationPercent > 100;
 
                     return (
@@ -261,15 +250,17 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
                         >
                             <div className="flex items-start justify-between gap-4 mb-4">
                                 <div className="flex items-start gap-3">
-                                    <div className={`w-10 h-10 rounded-lg ${typeConfig.color} bg-opacity-10 flex items-center justify-center`}>
+                                    <div
+                                        className={`w-10 h-10 rounded-lg ${typeConfig.color} bg-opacity-10 flex items-center justify-center`}
+                                    >
                                         <TypeIcon size={20} className={typeConfig.color} />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h4 className="font-bold text-navy-900 dark:text-white">
-                                                {benefit.name}
-                                            </h4>
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+                                            <h4 className="font-bold text-navy-900 dark:text-white">{benefit.name}</h4>
+                                            <span
+                                                className={`px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+                                            >
                                                 {statusConfig.label}
                                             </span>
                                         </div>
@@ -295,19 +286,19 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
                                     <div className="flex items-end justify-between mb-2">
                                         <div>
                                             <span className="text-2xl font-bold text-navy-900 dark:text-white">
-                                                {benefit.type === 'FINANCIAL' 
+                                                {benefit.type === 'FINANCIAL'
                                                     ? `${(benefit.currentValue / 1000).toFixed(0)}k`
-                                                    : benefit.currentValue
-                                                }
+                                                    : benefit.currentValue}
                                             </span>
                                             <span className="text-sm text-slate-400 ml-1">{benefit.unit}</span>
                                         </div>
                                         <div className="text-right">
                                             <span className="text-sm text-slate-500">
-                                                Target: {benefit.type === 'FINANCIAL' 
+                                                Target:{' '}
+                                                {benefit.type === 'FINANCIAL'
                                                     ? `${(benefit.targetValue / 1000).toFixed(0)}k`
-                                                    : benefit.targetValue
-                                                } {benefit.unit}
+                                                    : benefit.targetValue}{' '}
+                                                {benefit.unit}
                                             </span>
                                         </div>
                                     </div>
@@ -316,9 +307,13 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
                                     <div className="h-3 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all ${
-                                                isOverAchieved ? 'bg-green-500' : 
-                                                realizationPercent >= 80 ? 'bg-green-500' :
-                                                realizationPercent >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                                isOverAchieved
+                                                    ? 'bg-green-500'
+                                                    : realizationPercent >= 80
+                                                      ? 'bg-green-500'
+                                                      : realizationPercent >= 50
+                                                        ? 'bg-amber-500'
+                                                        : 'bg-red-500'
                                             }`}
                                             style={{ width: `${Math.min(realizationPercent, 100)}%` }}
                                         />
@@ -346,18 +341,28 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
                                             fill="transparent"
                                             strokeDasharray={`${Math.min(realizationPercent, 100) * 2.2} 220`}
                                             className={
-                                                isOverAchieved ? 'text-green-500' : 
-                                                realizationPercent >= 80 ? 'text-green-500' :
-                                                realizationPercent >= 50 ? 'text-amber-500' : 'text-red-500'
+                                                isOverAchieved
+                                                    ? 'text-green-500'
+                                                    : realizationPercent >= 80
+                                                      ? 'text-green-500'
+                                                      : realizationPercent >= 50
+                                                        ? 'text-amber-500'
+                                                        : 'text-red-500'
                                             }
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className={`text-lg font-bold ${
-                                            isOverAchieved ? 'text-green-600' : 
-                                            realizationPercent >= 80 ? 'text-green-600' :
-                                            realizationPercent >= 50 ? 'text-amber-600' : 'text-red-600'
-                                        }`}>
+                                        <span
+                                            className={`text-lg font-bold ${
+                                                isOverAchieved
+                                                    ? 'text-green-600'
+                                                    : realizationPercent >= 80
+                                                      ? 'text-green-600'
+                                                      : realizationPercent >= 50
+                                                        ? 'text-amber-600'
+                                                        : 'text-red-600'
+                                            }`}
+                                        >
                                             {realizationPercent}%
                                         </span>
                                     </div>
@@ -382,12 +387,4 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({
         </div>
     );
 };
-
-
-
-
-
-
-
-
 

@@ -1,30 +1,31 @@
 /**
  * SCIM Provisioning View
- * 
+ *
  * Manages SCIM 2.0 provisioning configuration for enterprise organizations.
  * Allows configuration of tokens, group mappings, and sync monitoring.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Users,
-    Key,
-    RefreshCw,
-    Plus,
-    Trash2,
-    Copy,
-    Check,
     AlertTriangle,
-    Settings,
-    History,
-    Link2,
-    Shield,
+    Check,
+    ChevronRight,
+    Copy,
+    Download,
     Eye,
     EyeOff,
-    Download,
-    ChevronRight,
+    History,
+    Key,
+    Link2,
+    Plus,
+    RefreshCw,
+    Settings,
+    Shield,
+    Trash2,
+    Users,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { api } from '../../services/api';
 
 interface SCIMToken {
@@ -77,13 +78,13 @@ const SCIMProvisioningView: React.FC = () => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [loading, setLoading] = useState(false);
-    
+
     // Data state
     const [serviceProvider, setServiceProvider] = useState<ServiceProvider | null>(null);
     const [tokens, setTokens] = useState<SCIMToken[]>([]);
     const [groupMappings, setGroupMappings] = useState<GroupMapping[]>([]);
     const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
-    
+
     // UI state
     const [showTokenModal, setShowTokenModal] = useState(false);
     const [showMappingModal, setShowMappingModal] = useState(false);
@@ -139,7 +140,7 @@ const SCIMProvisioningView: React.FC = () => {
     // Generate Token
     const handleGenerateToken = async () => {
         if (!newToken.name) return;
-        
+
         try {
             const response = await api.post('/scim/admin/tokens', newToken);
             setGeneratedToken(response.data.data.token);
@@ -152,10 +153,10 @@ const SCIMProvisioningView: React.FC = () => {
     // Revoke Token
     const handleRevokeToken = async (tokenId: string) => {
         if (!confirm('Are you sure you want to revoke this token? This action cannot be undone.')) return;
-        
+
         try {
             await api.delete(`/scim/admin/tokens/${tokenId}`);
-            setTokens(tokens.filter(t => t.id !== tokenId));
+            setTokens(tokens.filter((t) => t.id !== tokenId));
         } catch (error) {
             console.error('[SCIM] Revoke token error:', error);
         }
@@ -164,7 +165,7 @@ const SCIMProvisioningView: React.FC = () => {
     // Create Group Mapping
     const handleCreateMapping = async () => {
         if (!newMapping.externalGroupId || !newMapping.externalGroupName) return;
-        
+
         try {
             const response = await api.post('/scim/admin/group-mappings', newMapping);
             fetchData();
@@ -178,10 +179,10 @@ const SCIMProvisioningView: React.FC = () => {
     // Delete Group Mapping
     const handleDeleteMapping = async (mappingId: string) => {
         if (!confirm('Delete this group mapping?')) return;
-        
+
         try {
             await api.delete(`/scim/admin/group-mappings/${mappingId}`);
-            setGroupMappings(groupMappings.filter(m => m.id !== mappingId));
+            setGroupMappings(groupMappings.filter((m) => m.id !== mappingId));
         } catch (error) {
             console.error('[SCIM] Delete mapping error:', error);
         }
@@ -207,16 +208,18 @@ const SCIMProvisioningView: React.FC = () => {
             <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            serviceProvider?.isActive ? 'bg-green-500/20' : 'bg-gray-700'
-                        }`}>
+                        <div
+                            className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                serviceProvider?.isActive ? 'bg-green-500/20' : 'bg-gray-700'
+                            }`}
+                        >
                             <Link2 className={serviceProvider?.isActive ? 'text-green-400' : 'text-gray-400'} />
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-white">SCIM 2.0 Provisioning</h3>
                             <p className="text-sm text-gray-400">
-                                {serviceProvider?.isActive 
-                                    ? 'Automatic user provisioning is active' 
+                                {serviceProvider?.isActive
+                                    ? 'Automatic user provisioning is active'
                                     : 'Enable to sync users from your identity provider'}
                             </p>
                         </div>
@@ -243,7 +246,7 @@ const SCIMProvisioningView: React.FC = () => {
                         </div>
                         <div className="bg-gray-900/50 rounded-lg p-4">
                             <div className="text-2xl font-bold text-white">
-                                {syncLogs.filter(l => l.status === 'success').length}
+                                {syncLogs.filter((l) => l.status === 'success').length}
                             </div>
                             <div className="text-sm text-gray-400">Successful Syncs (24h)</div>
                         </div>
@@ -297,13 +300,23 @@ const SCIMProvisioningView: React.FC = () => {
                     {[
                         { step: 1, text: 'Generate a SCIM API token in the Tokens tab', done: tokens.length > 0 },
                         { step: 2, text: 'Configure your IdP with the SCIM endpoint URL', done: false },
-                        { step: 3, text: 'Set up group mappings to assign roles automatically', done: groupMappings.length > 0 },
-                        { step: 4, text: 'Test provisioning with a test user', done: syncLogs.some(l => l.status === 'success') },
+                        {
+                            step: 3,
+                            text: 'Set up group mappings to assign roles automatically',
+                            done: groupMappings.length > 0,
+                        },
+                        {
+                            step: 4,
+                            text: 'Test provisioning with a test user',
+                            done: syncLogs.some((l) => l.status === 'success'),
+                        },
                     ].map((item) => (
                         <div key={item.step} className="flex items-center gap-3">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                item.done ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-400'
-                            }`}>
+                            <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                    item.done ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-400'
+                                }`}
+                            >
                                 {item.done ? <Check size={14} /> : item.step}
                             </div>
                             <span className={item.done ? 'text-gray-300' : 'text-gray-400'}>{item.text}</span>
@@ -342,16 +355,19 @@ const SCIMProvisioningView: React.FC = () => {
                         <div key={token.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                        token.isActive ? 'bg-green-500/20' : 'bg-red-500/20'
-                                    }`}>
+                                    <div
+                                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                            token.isActive ? 'bg-green-500/20' : 'bg-red-500/20'
+                                        }`}
+                                    >
                                         <Key className={token.isActive ? 'text-green-400' : 'text-red-400'} size={20} />
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-white">{token.name}</h4>
                                         <p className="text-sm text-gray-400">
                                             {token.tokenPrefix}••••••••
-                                            {token.lastUsedAt && ` • Last used: ${new Date(token.lastUsedAt).toLocaleDateString()}`}
+                                            {token.lastUsedAt &&
+                                                ` • Last used: ${new Date(token.lastUsedAt).toLocaleDateString()}`}
                                         </p>
                                     </div>
                                 </div>
@@ -412,7 +428,11 @@ const SCIMProvisioningView: React.FC = () => {
                                     onClick={() => {
                                         setShowTokenModal(false);
                                         setGeneratedToken(null);
-                                        setNewToken({ name: '', description: '', scopes: ['users:read', 'users:write', 'groups:read', 'groups:write'] });
+                                        setNewToken({
+                                            name: '',
+                                            description: '',
+                                            scopes: ['users:read', 'users:write', 'groups:read', 'groups:write'],
+                                        });
                                     }}
                                     className="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
                                 >
@@ -446,23 +466,36 @@ const SCIMProvisioningView: React.FC = () => {
                                     <div>
                                         <label className="block text-sm text-gray-400 mb-2">Scopes</label>
                                         <div className="grid grid-cols-2 gap-2">
-                                            {['users:read', 'users:write', 'groups:read', 'groups:write'].map((scope) => (
-                                                <label key={scope} className="flex items-center gap-2 text-sm text-gray-300">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={newToken.scopes.includes(scope)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setNewToken({ ...newToken, scopes: [...newToken.scopes, scope] });
-                                                            } else {
-                                                                setNewToken({ ...newToken, scopes: newToken.scopes.filter(s => s !== scope) });
-                                                            }
-                                                        }}
-                                                        className="rounded border-gray-600 bg-gray-900 text-violet-500"
-                                                    />
-                                                    {scope}
-                                                </label>
-                                            ))}
+                                            {['users:read', 'users:write', 'groups:read', 'groups:write'].map(
+                                                (scope) => (
+                                                    <label
+                                                        key={scope}
+                                                        className="flex items-center gap-2 text-sm text-gray-300"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={newToken.scopes.includes(scope)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setNewToken({
+                                                                        ...newToken,
+                                                                        scopes: [...newToken.scopes, scope],
+                                                                    });
+                                                                } else {
+                                                                    setNewToken({
+                                                                        ...newToken,
+                                                                        scopes: newToken.scopes.filter(
+                                                                            (s) => s !== scope,
+                                                                        ),
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="rounded border-gray-600 bg-gray-900 text-violet-500"
+                                                        />
+                                                        {scope}
+                                                    </label>
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -516,7 +549,9 @@ const SCIMProvisioningView: React.FC = () => {
                     <table className="w-full">
                         <thead className="bg-gray-900/50">
                             <tr>
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">External Group</th>
+                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">
+                                    External Group
+                                </th>
                                 <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">→</th>
                                 <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Internal Role</th>
                                 <th className="text-right px-4 py-3 text-sm font-medium text-gray-400">Actions</th>
@@ -573,7 +608,9 @@ const SCIMProvisioningView: React.FC = () => {
                                 <input
                                     type="text"
                                     value={newMapping.externalGroupName}
-                                    onChange={(e) => setNewMapping({ ...newMapping, externalGroupName: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewMapping({ ...newMapping, externalGroupName: e.target.value })
+                                    }
                                     placeholder="e.g., Consultify Admins"
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
                                 />
@@ -641,10 +678,15 @@ const SCIMProvisioningView: React.FC = () => {
                         <div key={log.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${
-                                        log.status === 'success' ? 'bg-green-400' : 
-                                        log.status === 'error' ? 'bg-red-400' : 'bg-yellow-400'
-                                    }`} />
+                                    <div
+                                        className={`w-2 h-2 rounded-full ${
+                                            log.status === 'success'
+                                                ? 'bg-green-400'
+                                                : log.status === 'error'
+                                                  ? 'bg-red-400'
+                                                  : 'bg-yellow-400'
+                                        }`}
+                                    />
                                     <span className="text-white font-medium">{log.operation}</span>
                                     <span className="text-gray-400">{log.resourceType}</span>
                                     {log.externalId && (
@@ -720,10 +762,4 @@ const SCIMProvisioningView: React.FC = () => {
 };
 
 export default SCIMProvisioningView;
-
-
-
-
-
-
 

@@ -1,4 +1,4 @@
-const notificationService = import('notificationService.js');
+const notificationService = import('../services/notificationService.js');
 
 /**
  * Alert Watchdog Middleware

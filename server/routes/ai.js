@@ -13,8 +13,8 @@ import * as AIMemoryManagerModule from '../services/ai/aiMemoryManager.js';
 import * as AIOrchestratorModule from '../services/ai/aiOrchestrator.js';
 import * as AIActionExecutorModule from '../services/ai/aiActionExecutor.js';
 import * as AIAuditLoggerModule from '../services/ai/aiAuditLogger.js';
-import logger from '../utils/logger.js';
-import ActionProposalEngine from '../ai/actionProposalEngine.js';
+import logger from '../dist/utils/logger.js';
+import ActionProposalEngine from '../services/ai/actionProposalEngine.js';
 
 // Resolve default exports if necessary
 const AIContextBuilder = AIContextBuilderModule.default || AIContextBuilderModule;
@@ -28,7 +28,7 @@ const router = express.Router();
 
 // ==================== CONTEXT ====================
 
-// GET /api/ai/context
+// GET /a../services/ai/context
 router.get('/context', verifyToken, async (req, res) => {
     try {
         const context = await AIContextBuilder.buildContext(
@@ -43,7 +43,7 @@ router.get('/context', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/context/:projectId
+// GET /a../services/ai/context/:projectId
 router.get('/context/:projectId', verifyToken, async (req, res) => {
     try {
         const context = await AIContextBuilder.buildContext(
@@ -60,7 +60,7 @@ router.get('/context/:projectId', verifyToken, async (req, res) => {
 
 // ==================== CHAT ====================
 
-// POST /api/ai/chat/stream
+// POST /a../services/ai/chat/stream
 // Enhanced with connection monitoring, partial save, and reconnection support
 router.post('/chat/stream', verifyToken, async (req, res) => {
     const { message, history, systemInstruction, context, roleName, language, conversationId, resumeFromPartial } = req.body;
@@ -92,7 +92,7 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
     // Use New Professional AIPipeline
-    const { AIPipeline   } = await import('../ai/aiPipeline.js');
+    const { AIPipeline   } = await import('../services/ai/aiPipeline.js');
     const aiPipeline = new AIPipeline();
 
     // Set headers for SSE BEFORE any data is written
@@ -121,8 +121,8 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
 
     // Helper: Save partial response to database
     const savePartialResponse = async (sessionId, content, userId, orgId) => {
-        const { getDatabase } = await import('../src/database/Database.js');
-        const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+        
 
         return new Promise((resolve, reject) => {
             db.run(`
@@ -141,8 +141,8 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     try {
         // RESUME FROM PARTIAL: Check if we should resume from saved partial
         if (resumeFromPartial && conversationId) {
-            const { getDatabase } = await import('../src/database/Database.js');
-            const db = getDatabase();
+            const { getDatabase } = await import('../src/database/index.js');
+            
             const partial = await new Promise((resolve) => {
                 db.get(`SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
                     [conversationId, req.userId], (err, row) => {
@@ -215,8 +215,8 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
                 res.write('data: [DONE]\n\n');
 
                 // Delete partial response on successful completion
-                const { getDatabase } = await import('../src/database/Database.js');
-                const db = getDatabase();
+                const { getDatabase } = await import('../src/database/index.js');
+                
                 db.run(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId], () => { });
             }
             res.end();
@@ -253,10 +253,10 @@ router.post('/chat/stream', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/stream/partial/:sessionId - Get partial response for resume
+// GET /a../services/ai/stream/partial/:sessionId - Get partial response for resume
 router.get('/stream/partial/:sessionId', verifyToken, async (req, res) => {
-    const { getDatabase } = await import('../src/database/Database.js');
-    const db = getDatabase();
+    const { getDatabase } = await import('../src/database/index.js');
+    
 
     db.get(`
         SELECT content, updated_at 
@@ -276,7 +276,7 @@ router.get('/stream/partial/:sessionId', verifyToken, async (req, res) => {
 });
 
 
-// POST /api/ai/chat
+// POST /a../services/ai/chat
 router.post('/chat', verifyToken, async (req, res) => {
     const { message, projectId, currentScreen, selectedObjectId, selectedObjectType } = req.body;
 
@@ -324,7 +324,7 @@ router.post('/chat', verifyToken, async (req, res) => {
 
 // ==================== POLICY ====================
 
-// GET /api/ai/policy
+// GET /a../services/ai/policy
 router.get('/policy', verifyToken, async (req, res) => {
     try {
         const policy = await AIPolicyEngine.getPolicySummary(req.organizationId);
@@ -334,7 +334,7 @@ router.get('/policy', verifyToken, async (req, res) => {
     }
 });
 
-// PATCH /api/ai/policy (Admin only)
+// PATCH /a../services/ai/policy (Admin only)
 router.patch('/policy', verifyToken, async (req, res) => {
     if (!req.can('edit_organization_settings')) {
         return res.status(403).json({ error: 'Admin required' });
@@ -348,7 +348,7 @@ router.patch('/policy', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/policy/can-perform/:actionType
+// GET /a../services/ai/policy/can-perform/:actionType
 router.get('/policy/can-perform/:actionType', verifyToken, async (req, res) => {
     const { projectId } = req.query;
     try {
@@ -363,7 +363,7 @@ router.get('/policy/can-perform/:actionType', verifyToken, async (req, res) => {
 
 // ==================== MEMORY ====================
 
-// GET /api/ai/memory/project/:projectId
+// GET /a../services/ai/memory/project/:projectId
 router.get('/memory/project/:projectId', verifyToken, async (req, res) => {
     try {
         const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
@@ -373,7 +373,7 @@ router.get('/memory/project/:projectId', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/memory/project/:projectId/decision
+// POST /a../services/ai/memory/project/:projectId/decision
 router.post('/memory/project/:projectId/decision', verifyToken, async (req, res) => {
     const { decisionId, title, outcome, rationale } = req.body;
 
@@ -387,7 +387,7 @@ router.post('/memory/project/:projectId/decision', verifyToken, async (req, res)
     }
 });
 
-// GET /api/ai/memory/user
+// GET /a../services/ai/memory/user
 router.get('/memory/user', verifyToken, async (req, res) => {
     try {
         const preferences = await AIMemoryManager.getUserPreferences(req.userId);
@@ -397,7 +397,7 @@ router.get('/memory/user', verifyToken, async (req, res) => {
     }
 });
 
-// PATCH /api/ai/memory/user
+// PATCH /a../services/ai/memory/user
 router.patch('/memory/user', verifyToken, async (req, res) => {
     try {
         const result = await AIMemoryManager.updateUserPreferences(req.userId, req.body);
@@ -407,7 +407,7 @@ router.patch('/memory/user', verifyToken, async (req, res) => {
     }
 });
 
-// DELETE /api/ai/memory/project/:projectId (Admin)
+// DELETE /a../services/ai/memory/project/:projectId (Admin)
 router.delete('/memory/project/:projectId', verifyToken, async (req, res) => {
     if (!req.can('edit_project_settings')) {
         return res.status(403).json({ error: 'Permission denied' });
@@ -423,7 +423,7 @@ router.delete('/memory/project/:projectId', verifyToken, async (req, res) => {
 
 // ==================== ACTIONS ====================
 
-// POST /api/ai/actions/draft
+// POST /a../services/ai/actions/draft
 router.post('/actions/draft', verifyToken, async (req, res) => {
     const { draftType, content, projectId } = req.body;
 
@@ -441,7 +441,7 @@ router.post('/actions/draft', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/actions/pending
+// GET /a../services/ai/actions/pending
 router.get('/actions/pending', verifyToken, async (req, res) => {
     const { projectId } = req.query;
     try {
@@ -454,7 +454,7 @@ router.get('/actions/pending', verifyToken, async (req, res) => {
     }
 });
 
-// PATCH /api/ai/actions/:id/approve
+// PATCH /a../services/ai/actions/:id/approve
 router.patch('/actions/:id/approve', verifyToken, async (req, res) => {
     try {
         const result = await AIActionExecutor.approveAction(req.params.id, req.userId);
@@ -464,7 +464,7 @@ router.patch('/actions/:id/approve', verifyToken, async (req, res) => {
     }
 });
 
-// PATCH /api/ai/actions/:id/reject
+// PATCH /a../services/ai/actions/:id/reject
 router.patch('/actions/:id/reject', verifyToken, async (req, res) => {
     const { reason } = req.body;
     try {
@@ -475,7 +475,7 @@ router.patch('/actions/:id/reject', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/actions/:id/execute
+// POST /a../services/ai/actions/:id/execute
 router.post('/actions/:id/execute', verifyToken, async (req, res) => {
     try {
         const result = await AIActionExecutor.executeAction(req.params.id, req.userId);
@@ -485,7 +485,7 @@ router.post('/actions/:id/execute', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/actions/proposals
+// GET /a../services/ai/actions/proposals
 router.get('/actions/proposals', verifyToken, async (req, res) => {
     // RBAC: ADMIN or SUPERADMIN
     if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
@@ -513,7 +513,7 @@ router.get('/actions/proposals', verifyToken, async (req, res) => {
         });
 
         // Use the correct paths for AI components
-        const AIContextBuilderModule = await import('../ai/aiContextBuilder.js');
+        const AIContextBuilderModule = await import('../services/ai/aiContextBuilder.js');
         const AIContextBuilder = AIContextBuilderModule.default || AIContextBuilderModule;
 
 
@@ -543,7 +543,7 @@ router.post('/recommend', verifyToken, async (req, res) => {
     }
 
     try {
-        const { AIPipeline   } = await import('../ai/aiPipeline.js');
+        const { AIPipeline   } = await import('../services/ai/aiPipeline.js');
         const aiPipeline = new AIPipeline();
 
         // Build a rich prompt for initiative generation
@@ -683,7 +683,7 @@ router.post('/roadmap', verifyToken, async (req, res) => {
     }
 
     try {
-        const { AIPipeline   } = await import('../ai/aiPipeline.js');
+        const { AIPipeline   } = await import('../services/ai/aiPipeline.js');
         const aiPipeline = new AIPipeline();
 
         // Format initiatives for the prompt
@@ -761,7 +761,7 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
     }
 });
 
-// GET /api/ai/audit
+// GET /a../services/ai/audit
 router.get('/audit', verifyToken, async (req, res) => {
     if (!req.can('view_audit_logs')) {
         return res.status(403).json({ error: 'Permission denied' });
@@ -781,7 +781,7 @@ router.get('/audit', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/audit/stats
+// GET /a../services/ai/audit/stats
 router.get('/audit/stats', verifyToken, async (req, res) => {
     const { projectId } = req.query;
     try {
@@ -792,7 +792,7 @@ router.get('/audit/stats', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/audit/:id/decision
+// POST /a../services/ai/audit/:id/decision
 router.post('/audit/:id/decision', verifyToken, async (req, res) => {
     const { decision, feedback } = req.body;
     try {
@@ -805,7 +805,7 @@ router.post('/audit/:id/decision', verifyToken, async (req, res) => {
 
 // ==================== EXPLAINABILITY ====================
 
-// GET /api/ai/explanations/:projectId - Get AI explanations for a project
+// GET /a../services/ai/explanations/:projectId - Get AI explanations for a project
 router.get('/explanations/:projectId', verifyToken, async (req, res) => {
     if (!req.can('view_audit_logs')) {
         return res.status(403).json({ error: 'Permission denied' });
@@ -840,7 +840,7 @@ router.get('/explanations/:projectId', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/explanations/export - Export all explanations as JSON for compliance
+// GET /a../services/ai/explanations/export - Export all explanations as JSON for compliance
 router.get('/explanations/export', verifyToken, async (req, res) => {
     if (!req.can('view_audit_logs')) {
         return res.status(403).json({ error: 'Permission denied' });
@@ -901,10 +901,10 @@ router.get('/explanations/export', verifyToken, async (req, res) => {
 
 // ==================== HEALTH MONITORING ====================
 
-// GET /api/ai/health - AI System Health Status
+// GET /a../services/ai/health - AI System Health Status
 router.get('/health', async (req, res) => {
     try {
-        const { healthMonitor   } = await import('../ai/healthMonitor.js');
+        const { healthMonitor   } = await import('../services/ai/healthMonitor.js');
         const status = healthMonitor.getStatus();
 
         res.json({
@@ -923,10 +923,10 @@ router.get('/health', async (req, res) => {
     }
 });
 
-// POST /api/ai/health/diagnose - Run Full Diagnostics
+// POST /a../services/ai/health/diagnose - Run Full Diagnostics
 router.post('/health/diagnose', verifyToken, async (req, res) => {
     try {
-        const { healthMonitor   } = await import('../ai/healthMonitor.js');
+        const { healthMonitor   } = await import('../services/ai/healthMonitor.js');
         const results = await healthMonitor.runDiagnostics();
 
         res.json(results);
@@ -940,11 +940,11 @@ router.post('/health/diagnose', verifyToken, async (req, res) => {
 
 // ==================== SMART SUGGESTIONS ====================
 
-// GET /api/ai/suggestions - Get context-aware suggestions
+// GET /a../services/ai/suggestions - Get context-aware suggestions
 router.get('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
-        const smartSuggestionsModule = await import('../ai/smartSuggestions.js');
+        const smartSuggestionsModule = await import('../services/ai/smartSuggestions.js');
         const smartSuggestions = smartSuggestionsModule.default || smartSuggestionsModule;
 
         const suggestions = await smartSuggestions.getCachedSuggestions(
@@ -963,11 +963,11 @@ router.get('/suggestions', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/suggestions - Get suggestions with conversation context
+// POST /a../services/ai/suggestions - Get suggestions with conversation context
 router.post('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId, conversationContext } = req.body;
-        const smartSuggestionsModule = await import('../ai/smartSuggestions.js');
+        const smartSuggestionsModule = await import('../services/ai/smartSuggestions.js');
         const smartSuggestions = smartSuggestionsModule.default || smartSuggestionsModule;
 
         const suggestions = await smartSuggestions.getSuggestions(
@@ -992,7 +992,7 @@ const ApprovalPatternServiceModule = await import('../services/approvalPatternSe
 
 const ApprovalPatternService = ApprovalPatternServiceModule.default || ApprovalPatternServiceModule;
 
-// GET /api/ai/patterns - Get user's approval patterns
+// GET /a../services/ai/patterns - Get user's approval patterns
 router.get('/patterns', verifyToken, async (req, res) => {
     try {
         const { actionType } = req.query;
@@ -1004,7 +1004,7 @@ router.get('/patterns', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/patterns/stats - Get pattern statistics
+// GET /a../services/ai/patterns/stats - Get pattern statistics
 router.get('/patterns/stats', verifyToken, async (req, res) => {
     try {
         const stats = await ApprovalPatternService.getPatternStats(req.userId);
@@ -1015,7 +1015,7 @@ router.get('/patterns/stats', verifyToken, async (req, res) => {
     }
 });
 
-// PATCH /api/ai/patterns/:patternId/auto-apply - Toggle auto-apply
+// PATCH /a../services/ai/patterns/:patternId/auto-apply - Toggle auto-apply
 router.patch('/patterns/:patternId/auto-apply', verifyToken, async (req, res) => {
     try {
         const { enabled } = req.body;
@@ -1031,7 +1031,7 @@ router.patch('/patterns/:patternId/auto-apply', verifyToken, async (req, res) =>
     }
 });
 
-// DELETE /api/ai/patterns/:patternId - Delete a pattern
+// DELETE /a../services/ai/patterns/:patternId - Delete a pattern
 router.delete('/patterns/:patternId', verifyToken, async (req, res) => {
     try {
         const result = await ApprovalPatternService.deletePattern(
@@ -1045,7 +1045,7 @@ router.delete('/patterns/:patternId', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/actions/:actionId/approve - Approve action with pattern learning
+// POST /a../services/ai/actions/:actionId/approve - Approve action with pattern learning
 router.post('/actions/:actionId/approve', verifyToken, async (req, res) => {
     try {
         const { alwaysApprove } = req.body;
@@ -1061,7 +1061,7 @@ router.post('/actions/:actionId/approve', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/actions/:actionId/reject - Reject action with pattern learning
+// POST /a../services/ai/actions/:actionId/reject - Reject action with pattern learning
 router.post('/actions/:actionId/reject', verifyToken, async (req, res) => {
     try {
         const { reason, alwaysReject } = req.body;
@@ -1078,7 +1078,7 @@ router.post('/actions/:actionId/reject', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/actions/pending - Get pending actions with pattern info
+// GET /a../services/ai/actions/pending - Get pending actions with pattern info
 router.get('/actions/pending', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
@@ -1110,7 +1110,7 @@ router.get('/actions/pending', verifyToken, async (req, res) => {
 // ==================== FEEDBACK & REPORTING ====================
 
 /**
- * POST /api/ai/feedback
+ * POST /a../services/ai/feedback
  * Report user feedback on an AI message (thumbs up/down)
  */
 router.post('/feedback', verifyToken, async (req, res) => {
@@ -1123,7 +1123,7 @@ router.post('/feedback', verifyToken, async (req, res) => {
 
         // Store in audit log for tracking (non-blocking)
         try {
-            const aiLoggerModule = await import('../ai/logger.js');
+            const aiLoggerModule = await import('../services/ai/logger.js');
             const aiLogger = aiLoggerModule.default || aiLoggerModule;
             await aiLogger.log('feedback', {
                 userId,
@@ -1143,7 +1143,7 @@ router.post('/feedback', verifyToken, async (req, res) => {
 });
 
 /**
- * POST /api/ai/report
+ * POST /a../services/ai/report
  * Report a problematic AI message
  */
 router.post('/report', verifyToken, async (req, res) => {
@@ -1156,7 +1156,7 @@ router.post('/report', verifyToken, async (req, res) => {
 
         // Store in audit log for review (non-blocking)
         try {
-            const aiLoggerModule = await import('../ai/logger.js');
+            const aiLoggerModule = await import('../services/ai/logger.js');
             const aiLogger = aiLoggerModule.default || aiLoggerModule;
             await aiLogger.log('report', {
                 userId,
@@ -1179,12 +1179,12 @@ router.post('/report', verifyToken, async (req, res) => {
 // ==================== MEMORY METRICS (Enterprise Dashboard) ====================
 
 /**
- * GET /api/ai/memory/metrics
+ * GET /a../services/ai/memory/metrics
  * Get memory metrics for dashboard visualization
  */
 router.get('/memory/metrics', verifyToken, async (req, res) => {
     try {
-        const AIMemoryMetricsServiceModule = await import('../ai/aiMemoryMetricsService.js');
+        const AIMemoryMetricsServiceModule = await import('../services/ai/aiMemoryMetricsService.js');
         const AIMemoryMetricsService = AIMemoryMetricsServiceModule.default || AIMemoryMetricsServiceModule;
         const { period = 7 } = req.query;
 
@@ -1201,12 +1201,12 @@ router.get('/memory/metrics', verifyToken, async (req, res) => {
 });
 
 /**
- * GET /api/ai/memory/current
+ * GET /a../services/ai/memory/current
  * Get current memory state for a project
  */
 router.get('/memory/current', verifyToken, async (req, res) => {
     try {
-        const AIMemoryMetricsServiceModule = await import('../ai/aiMemoryMetricsService.js');
+        const AIMemoryMetricsServiceModule = await import('../services/ai/aiMemoryMetricsService.js');
         const AIMemoryMetricsService = AIMemoryMetricsServiceModule.default || AIMemoryMetricsServiceModule;
         const { projectId } = req.query;
 
@@ -1223,12 +1223,12 @@ router.get('/memory/current', verifyToken, async (req, res) => {
 });
 
 /**
- * GET /api/ai/memory/latency
+ * GET /a../services/ai/memory/latency
  * Get memory operation latency percentiles
  */
 router.get('/memory/latency', verifyToken, async (req, res) => {
     try {
-        const AIMemoryMetricsServiceModule = await import('../ai/aiMemoryMetricsService.js');
+        const AIMemoryMetricsServiceModule = await import('../services/ai/aiMemoryMetricsService.js');
         const AIMemoryMetricsService = AIMemoryMetricsServiceModule.default || AIMemoryMetricsServiceModule;
         const { hours = 24 } = req.query;
 
@@ -1249,7 +1249,7 @@ router.get('/memory/latency', verifyToken, async (req, res) => {
 const ProactiveSuggestionsService = await import('../services/ai/proactiveSuggestionsService.js').then(m => m.default || m);
 const ResponseQualityService = await import('../services/ai/responseQualityService.js').then(m => m.default || m);
 
-// GET /api/ai/suggestions - Get proactive suggestions based on context
+// GET /a../services/ai/suggestions - Get proactive suggestions based on context
 router.get('/suggestions', verifyToken, async (req, res) => {
     try {
         const { projectId, screenContext } = req.query;
@@ -1269,7 +1269,7 @@ router.get('/suggestions', verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/ai/suggestions/action - Record suggestion action (accepted/dismissed)
+// POST /a../services/ai/suggestions/action - Record suggestion action (accepted/dismissed)
 router.post('/suggestions/action', verifyToken, async (req, res) => {
     try {
         const { suggestionId, action, feedback } = req.body;
@@ -1297,7 +1297,7 @@ router.post('/suggestions/action', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/suggestions/metrics - Get suggestion effectiveness metrics
+// GET /a../services/ai/suggestions/metrics - Get suggestion effectiveness metrics
 router.get('/suggestions/metrics', verifyToken, async (req, res) => {
     try {
         const { days = 30 } = req.query;
@@ -1316,7 +1316,7 @@ router.get('/suggestions/metrics', verifyToken, async (req, res) => {
 
 // ==================== RESPONSE QUALITY ====================
 
-// POST /api/ai/quality/calculate - Calculate quality metrics for a response
+// POST /a../services/ai/quality/calculate - Calculate quality metrics for a response
 router.post('/quality/calculate', verifyToken, async (req, res) => {
     try {
         const { query, response, context, sources } = req.body;
@@ -1342,7 +1342,7 @@ router.post('/quality/calculate', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/quality/aggregate - Get aggregate quality metrics
+// GET /a../services/ai/quality/aggregate - Get aggregate quality metrics
 router.get('/quality/aggregate', verifyToken, async (req, res) => {
     try {
         const { days = 30 } = req.query;
@@ -1359,7 +1359,7 @@ router.get('/quality/aggregate', verifyToken, async (req, res) => {
     }
 });
 
-// GET /api/ai/quality/trends - Get quality trends over time
+// GET /a../services/ai/quality/trends - Get quality trends over time
 router.get('/quality/trends', verifyToken, async (req, res) => {
     try {
         const { days = 30 } = req.query;

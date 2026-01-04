@@ -1,14 +1,12 @@
 /**
  * Status Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadStatusservice = createCachedLazyService('../../services/statusService.js');
+import service from '../../services/statusService.js';
 
 // Export default instance (for backward compatibility)
-export default loadStatusservice();
+export default service;

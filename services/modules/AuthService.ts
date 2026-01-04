@@ -1,7 +1,7 @@
-import { User, SessionMode } from '../../types';
-import { tokenService } from '../tokenService';
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from '../apiUtils';
 import { UserSchema } from '../../schemas/user.schema';
+import { SessionMode, User } from '../../types';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../apiUtils';
+import { tokenService } from '../tokenService';
 
 export const AuthService = {
     login: async (email: string, password: string): Promise<User> => {
@@ -9,7 +9,7 @@ export const AuthService = {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
         });
         const data = await handleResponse(res, 'Login failed');
         tokenService.saveTokens(data.token, data.refreshToken);
@@ -22,7 +22,7 @@ export const AuthService = {
         const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
+            body: JSON.stringify(userData),
         });
         const data = await handleResponse(res, 'Registration failed');
         if (data.status === 'pending') return data;
@@ -34,7 +34,7 @@ export const AuthService = {
         console.log('AuthService.demoLogin called');
         const res = await fetch(`${API_URL}/auth/demo-login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
         });
         const data = await handleResponse(res, 'Demo login failed');
         tokenService.saveTokens(data.token, data.refreshToken);
@@ -54,7 +54,7 @@ export const AuthService = {
         try {
             await fetch(`${API_URL}/auth/logout`, {
                 method: 'POST',
-                headers: getHeaders()
+                headers: getHeaders(),
             });
         } catch (error) {
             console.warn('Logout API call failed, clearing token anyway:', error);
@@ -73,7 +73,7 @@ export const AuthService = {
         const res = await fetch(`${API_URL}/auth/access-code/validate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ code }),
         });
         return handleResponse(res, 'Failed to validate access code');
     },
@@ -82,7 +82,7 @@ export const AuthService = {
         const res = await fetch(`${API_URL}/auth/access-code/accept`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ code }),
         });
         return handleResponse(res, 'Failed to accept access code');
     },
@@ -91,21 +91,21 @@ export const AuthService = {
         const res = await fetchWithRetry(`${API_URL}/auth/change-password`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ currentPassword, newPassword })
+            body: JSON.stringify({ currentPassword, newPassword }),
         });
         return handleResponse(res, 'Failed to change password');
     },
 
     getActiveSessions: async (): Promise<{ sessions: any[] }> => {
         const res = await fetchWithRetry(`${API_URL}/auth/sessions`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch sessions');
     },
 
     getLoginHistory: async (): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/auth/login-history`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await handleResponse(res, 'Failed to fetch login history');
         return data.data || [];
@@ -114,7 +114,7 @@ export const AuthService = {
     revokeSession: async (sessionId: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/auth/sessions/${sessionId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to revoke session');
     },
@@ -122,7 +122,7 @@ export const AuthService = {
     revokeAllSessions: async (): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/auth/sessions/revoke-all`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to revoke all sessions');
     },
@@ -130,7 +130,7 @@ export const AuthService = {
     resendVerificationEmail: async (): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/auth/resend-verification`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to send verification email');
     },
@@ -139,7 +139,7 @@ export const AuthService = {
         const res = await fetch(`${API_URL}/auth/verify-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
+            body: JSON.stringify({ token }),
         });
         return handleResponse(res, 'Email verification failed');
     },
@@ -148,7 +148,7 @@ export const AuthService = {
         const res = await fetch(`${API_URL}/auth/reset-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email }),
         });
         return handleResponse(res, 'Failed to reset password');
     },
@@ -156,8 +156,8 @@ export const AuthService = {
     revertImpersonation: async (): Promise<{ token: string }> => {
         const res = await fetch(`${API_URL}/auth/revert-impersonation`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to revert impersonation');
-    }
+    },
 };

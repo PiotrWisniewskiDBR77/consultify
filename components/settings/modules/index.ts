@@ -1,12 +1,6 @@
-export { GeneralPreferencesSettings } from './GeneralPreferencesSettings';
 export { BillingSubscriptionModule } from './BillingSubscriptionModule';
-export { PersonalAutomationSettings } from './PersonalAutomationSettings';
+export { GeneralPreferencesSettings } from './GeneralPreferencesSettings';
 export { PersonalAnalyticsModule } from './PersonalAnalyticsModule';
+export { PersonalAutomationSettings } from './PersonalAutomationSettings';
 export { QuickActionsSettings } from './QuickActionsSettings';
-
-
-
-
-
-
 

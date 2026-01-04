@@ -1,26 +1,19 @@
 /**
  * AIModelSelectionSettings - AI model selection
- * 
+ *
  * Features:
  * - Select enabled models
  * - Set preferred model
  * - Model information display
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Brain,
-    CheckCircle,
-    Circle,
-    Save,
-    Loader2,
-    AlertCircle,
-    Info
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, Brain, CheckCircle, Circle, Info, Loader2, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface AIModelSelectionSettingsProps {
     currentUser: User;
@@ -34,13 +27,10 @@ const DEFAULT_MODELS = [
     { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', description: 'Fast and efficient' },
     { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', description: 'Best for complex tasks' },
     { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', description: 'Balanced performance' },
-    { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', description: 'Google\'s latest model' },
+    { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', description: "Google's latest model" },
 ] as const;
 
-export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [enabledModels, setEnabledModels] = useState<string[]>([]);
     const [preferredModel, setPreferredModel] = useState<string>('');
@@ -64,7 +54,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
     const toggleModel = (modelId: string) => {
         if (enabledModels.includes(modelId)) {
-            setEnabledModels(enabledModels.filter(id => id !== modelId));
+            setEnabledModels(enabledModels.filter((id) => id !== modelId));
             if (preferredModel === modelId) {
                 setPreferredModel('');
             }
@@ -76,16 +66,16 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/ai/model-selection', {
                 enabledModels,
-                preferredModel: preferredModel || null
+                preferredModel: preferredModel || null,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.ai.modelSelection.saved', 'Model preferences saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -103,7 +93,10 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     {t('settings.ai.modelSelection.title', 'AI Model Selection')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.ai.modelSelection.subtitle', 'Choose which AI models are available and set your preferred model')}
+                    {t(
+                        'settings.ai.modelSelection.subtitle',
+                        'Choose which AI models are available and set your preferred model',
+                    )}
                 </p>
             </div>
 
@@ -112,7 +105,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 {DEFAULT_MODELS.map((model) => {
                     const isEnabled = enabledModels.includes(model.id);
                     const isPreferred = preferredModel === model.id;
-                    
+
                     return (
                         <div
                             key={model.id}
@@ -155,10 +148,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                                                 : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-500/20'
                                         }`}
                                     >
-                                        {isPreferred 
+                                        {isPreferred
                                             ? t('settings.ai.modelSelection.setAsPreferred', 'Preferred')
-                                            : t('settings.ai.modelSelection.setPreferred', 'Set as Preferred')
-                                        }
+                                            : t('settings.ai.modelSelection.setPreferred', 'Set as Preferred')}
                                     </button>
                                 )}
                             </div>
@@ -175,7 +167,10 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                         {t('settings.ai.modelSelection.infoTitle', 'About Model Selection')}
                     </p>
                     <p className="text-xs">
-                        {t('settings.ai.modelSelection.infoDesc', 'You can enable multiple models and switch between them. The preferred model will be used by default.')}
+                        {t(
+                            'settings.ai.modelSelection.infoDesc',
+                            'You can enable multiple models and switch between them. The preferred model will be used by default.',
+                        )}
                     </p>
                 </div>
             </div>
@@ -219,4 +214,3 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 };
 
 export default AIModelSelectionSettings;
-

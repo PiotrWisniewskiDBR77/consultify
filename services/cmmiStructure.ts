@@ -1,10 +1,10 @@
 /**
  * CMMI (Capability Maturity Model Integration) Structure
- * 
+ *
  * CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute).
  * Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser.
  * Implementacja w Consultify służy celom edukacyjnym.
- * 
+ *
  * Structure:
  * - 5 Maturity Levels (Initial → Optimizing)
  * - 20 Practice Areas in 3 Categories (Doing, Managing, Enabling)
@@ -193,7 +193,7 @@ export const CMMI_CATEGORIES: Record<CMMICategory, CMMICategoryConfig> = {
 // PRACTICE AREAS
 // ============================================
 
-const PRACTICE_AREA_LEVELS: FrameworkLevel[] = CMMI_MATURITY_LEVELS.map(l => ({
+const PRACTICE_AREA_LEVELS: FrameworkLevel[] = CMMI_MATURITY_LEVELS.map((l) => ({
     level: l.level,
     title: l.name,
     description: l.description,
@@ -301,7 +301,7 @@ export const CMMI_PRACTICE_AREAS: CMMIPracticeArea[] = [
         descriptionPL: 'Wykazanie, że produkt spełnia zamierzone zastosowanie',
         levels: PRACTICE_AREA_LEVELS,
     },
-    
+
     // MANAGING - Manage Work
     {
         id: 'CAR',
@@ -353,7 +353,7 @@ export const CMMI_PRACTICE_AREAS: CMMIPracticeArea[] = [
         descriptionPL: 'Zarządzanie nabywaniem produktów i usług od dostawców',
         levels: PRACTICE_AREA_LEVELS,
     },
-    
+
     // ENABLING - Enable Capability
     {
         id: 'GOV',
@@ -415,14 +415,14 @@ export const CMMI_PRACTICE_AREAS: CMMIPracticeArea[] = [
  * Get practice area by ID
  */
 export function getCMMIPracticeArea(practiceAreaId: string): CMMIPracticeArea | undefined {
-    return CMMI_PRACTICE_AREAS.find(pa => pa.id === practiceAreaId || pa.code === practiceAreaId);
+    return CMMI_PRACTICE_AREAS.find((pa) => pa.id === practiceAreaId || pa.code === practiceAreaId);
 }
 
 /**
  * Get practice areas for a category
  */
 export function getPracticeAreasForCategory(category: CMMICategory): CMMIPracticeArea[] {
-    return CMMI_PRACTICE_AREAS.filter(pa => pa.category === category);
+    return CMMI_PRACTICE_AREAS.filter((pa) => pa.category === category);
 }
 
 /**
@@ -436,7 +436,7 @@ export function getAllCategories(): CMMICategory[] {
  * Get maturity level description
  */
 export function getMaturityLevelInfo(level: number): CMMIMaturityLevel | undefined {
-    return CMMI_MATURITY_LEVELS.find(l => l.level === level);
+    return CMMI_MATURITY_LEVELS.find((l) => l.level === level);
 }
 
 /**
@@ -445,9 +445,9 @@ export function getMaturityLevelInfo(level: number): CMMIMaturityLevel | undefin
 export function calculateCategoryScore(practiceAreaScores: Record<string, number>, category: CMMICategory): number {
     const categoryConfig = CMMI_CATEGORIES[category];
     const relevantScores = categoryConfig.practiceAreaIds
-        .map(id => practiceAreaScores[id])
-        .filter(score => score !== undefined && score !== null && score > 0);
-    
+        .map((id) => practiceAreaScores[id])
+        .filter((score) => score !== undefined && score !== null && score > 0);
+
     if (relevantScores.length === 0) return 0;
     return Math.round((relevantScores.reduce((a, b) => a + b, 0) / relevantScores.length) * 10) / 10;
 }
@@ -457,9 +457,9 @@ export function calculateCategoryScore(practiceAreaScores: Record<string, number
  * CMMI requires ALL practice areas at a level to achieve that level
  */
 export function calculateOverallMaturityLevel(practiceAreaScores: Record<string, number>): number {
-    const scores = Object.values(practiceAreaScores).filter(s => s !== undefined && s !== null && s > 0);
+    const scores = Object.values(practiceAreaScores).filter((s) => s !== undefined && s !== null && s > 0);
     if (scores.length === 0) return 1;
-    
+
     // Overall level is the minimum across all practice areas
     // (CMMI requires all areas at a level to achieve that level)
     return Math.min(...scores);
@@ -469,7 +469,7 @@ export function calculateOverallMaturityLevel(practiceAreaScores: Record<string,
  * Calculate average score (for comparison, not certification)
  */
 export function calculateAverageScore(practiceAreaScores: Record<string, number>): number {
-    const scores = Object.values(practiceAreaScores).filter(s => s !== undefined && s !== null && s > 0);
+    const scores = Object.values(practiceAreaScores).filter((s) => s !== undefined && s !== null && s > 0);
     if (scores.length === 0) return 0;
     return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10;
 }
@@ -479,26 +479,26 @@ export function calculateAverageScore(practiceAreaScores: Record<string, number>
  */
 export function mapCMMIPracticeAreaToDRD(practiceAreaId: string): string {
     const mapping: Record<string, string> = {
-        'EST': 'processes',
-        'PAD': 'processes',
-        'MC': 'processes',
-        'PI': 'processes',
-        'PQA': 'processes',
-        'RDM': 'digitalProducts',
-        'RM': 'processes',
-        'TS': 'digitalProducts',
-        'VER': 'processes',
-        'VAL': 'processes',
-        'CAR': 'dataManagement',
-        'CM': 'processes',
-        'DAR': 'businessModels',
-        'RSKM': 'processes',
-        'SAM': 'processes',
-        'GOV': 'culture',
-        'II': 'processes',
-        'OT': 'culture',
-        'PCM': 'processes',
-        'MPM': 'dataManagement',
+        EST: 'processes',
+        PAD: 'processes',
+        MC: 'processes',
+        PI: 'processes',
+        PQA: 'processes',
+        RDM: 'digitalProducts',
+        RM: 'processes',
+        TS: 'digitalProducts',
+        VER: 'processes',
+        VAL: 'processes',
+        CAR: 'dataManagement',
+        CM: 'processes',
+        DAR: 'businessModels',
+        RSKM: 'processes',
+        SAM: 'processes',
+        GOV: 'culture',
+        II: 'processes',
+        OT: 'culture',
+        PCM: 'processes',
+        MPM: 'dataManagement',
     };
     return mapping[practiceAreaId] || 'processes';
 }
@@ -508,16 +508,16 @@ export function mapCMMIPracticeAreaToDRD(practiceAreaId: string): string {
  */
 export function createEmptyCMMIAssessment(): CMMIAssessmentData {
     const practiceAreas: Record<string, CMMIPracticeAreaScore> = {};
-    CMMI_PRACTICE_AREAS.forEach(pa => {
+    CMMI_PRACTICE_AREAS.forEach((pa) => {
         practiceAreas[pa.id] = { level: 0 };
     });
-    
+
     const categories: Record<CMMICategory, CMMICategoryScore> = {
         DOING: { averageLevel: 0, practiceAreaScores: {} },
         MANAGING: { averageLevel: 0, practiceAreaScores: {} },
         ENABLING: { averageLevel: 0, practiceAreaScores: {} },
     };
-    
+
     return {
         maturityLevel: 1,
         practiceAreas,
@@ -537,11 +537,11 @@ export function createEmptyCMMIAssessment(): CMMIAssessmentData {
  */
 export function getCMMIGaps(
     practiceAreaScores: Record<string, CMMIPracticeAreaScore>,
-    targetLevel: number
+    targetLevel: number,
 ): { practiceArea: CMMIPracticeArea; currentLevel: number; gap: number }[] {
     const gaps: { practiceArea: CMMIPracticeArea; currentLevel: number; gap: number }[] = [];
-    
-    CMMI_PRACTICE_AREAS.forEach(pa => {
+
+    CMMI_PRACTICE_AREAS.forEach((pa) => {
         const score = practiceAreaScores[pa.id];
         const currentLevel = score?.level || 0;
         if (currentLevel < targetLevel) {
@@ -552,7 +552,7 @@ export function getCMMIGaps(
             });
         }
     });
-    
+
     return gaps.sort((a, b) => b.gap - a.gap);
 }
 
@@ -561,12 +561,4 @@ export default {
     CMMI_CATEGORIES,
     CMMI_PRACTICE_AREAS,
 };
-
-
-
-
-
-
-
-
 

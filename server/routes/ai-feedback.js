@@ -7,7 +7,7 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { aiLogger  } from '../services/ai/logger.js';
@@ -300,7 +300,7 @@ function generateSuggestion(area) {
 // Response Feedback Endpoints (AI Response Personalization)
 // =====================================================
 
-const { adaptiveResponseService   } = await import('../ai/adaptiveResponseService.js');
+const { adaptiveResponseService   } = await import('../services/ai/adaptiveResponseService.js');
 
 /**
  * POST /api/ai-feedback/response

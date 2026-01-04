@@ -65,3 +65,4 @@ echo "📁 Backup: $BACKUP_DIR"
 echo ""
 echo "✅ Gotowe!"
 
+

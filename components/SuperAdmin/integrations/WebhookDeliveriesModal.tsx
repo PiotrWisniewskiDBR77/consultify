@@ -1,28 +1,29 @@
 /**
  * WebhookDeliveriesModal - Webhook Delivery History
- * 
+ *
  * Features:
  * - Delivery history
  * - Request/response viewer
  * - Retry failed deliveries
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    X,
-    RefreshCw,
+    AlertTriangle,
     CheckCircle2,
-    XCircle,
-    Clock,
-    RotateCcw,
     ChevronDown,
     ChevronRight,
+    Clock,
     Code,
     Loader2,
-    AlertTriangle
+    RefreshCw,
+    RotateCcw,
+    X,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface Delivery {
     id: string;
@@ -69,7 +70,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
     }, [fetchDeliveries]);
 
     const handleRetry = async (deliveryId: string) => {
-        setRetryingIds(prev => new Set(prev).add(deliveryId));
+        setRetryingIds((prev) => new Set(prev).add(deliveryId));
         try {
             await Api.post(`/settings/webhooks/deliveries/${deliveryId}/retry`, {});
             toast.success('Retry initiated');
@@ -78,7 +79,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
             const errorMessage = error instanceof Error ? error.message : 'Failed to retry delivery';
             toast.error(errorMessage);
         } finally {
-            setRetryingIds(prev => {
+            setRetryingIds((prev) => {
                 const next = new Set(prev);
                 next.delete(deliveryId);
                 return next;
@@ -126,10 +127,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                         >
                             <RefreshCw size={18} className={`text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                         </button>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-                        >
+                        <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
                             <X size={18} className="text-slate-400" />
                         </button>
                     </div>
@@ -148,13 +146,13 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {deliveries.map(delivery => (
-                                <div 
+                            {deliveries.map((delivery) => (
+                                <div
                                     key={delivery.id}
                                     className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden"
                                 >
                                     {/* Delivery Header */}
-                                    <div 
+                                    <div
                                         className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-800/80 transition-colors"
                                         onClick={() => setExpandedId(expandedId === delivery.id ? null : delivery.id)}
                                     >
@@ -162,9 +160,13 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                                             {getStatusIcon(delivery)}
                                             <div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="font-medium text-white">{delivery.event_type}</span>
+                                                    <span className="font-medium text-white">
+                                                        {delivery.event_type}
+                                                    </span>
                                                     {delivery.response_status && (
-                                                        <span className={`font-mono text-sm ${getStatusColor(delivery.response_status)}`}>
+                                                        <span
+                                                            className={`font-mono text-sm ${getStatusColor(delivery.response_status)}`}
+                                                        >
                                                             {delivery.response_status}
                                                         </span>
                                                     )}
@@ -180,7 +182,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex items-center gap-2">
                                             {!delivery.success && (
                                                 <button
@@ -212,8 +214,13 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                                         <div className="border-t border-white/[0.06] p-4 space-y-4">
                                             {delivery.error_message && (
                                                 <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                                                    <AlertTriangle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                                                    <span className="text-sm text-red-300">{delivery.error_message}</span>
+                                                    <AlertTriangle
+                                                        size={16}
+                                                        className="text-red-400 flex-shrink-0 mt-0.5"
+                                                    />
+                                                    <span className="text-sm text-red-300">
+                                                        {delivery.error_message}
+                                                    </span>
                                                 </div>
                                             )}
 
@@ -221,7 +228,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <Code size={14} className="text-slate-400" />
-                                                    <span className="text-sm font-medium text-slate-300">Request Payload</span>
+                                                    <span className="text-sm font-medium text-slate-300">
+                                                        Request Payload
+                                                    </span>
                                                 </div>
                                                 <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto font-mono">
                                                     {formatJson(delivery.payload)}
@@ -233,7 +242,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <Code size={14} className="text-slate-400" />
-                                                        <span className="text-sm font-medium text-slate-300">Response Body</span>
+                                                        <span className="text-sm font-medium text-slate-300">
+                                                            Response Body
+                                                        </span>
                                                     </div>
                                                     <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto font-mono max-h-48 overflow-y-auto">
                                                         {formatJson(delivery.response_body)}
@@ -246,7 +257,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <Code size={14} className="text-slate-400" />
-                                                        <span className="text-sm font-medium text-slate-300">Request Headers</span>
+                                                        <span className="text-sm font-medium text-slate-300">
+                                                            Request Headers
+                                                        </span>
                                                     </div>
                                                     <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto font-mono">
                                                         {formatJson(delivery.request_headers)}
@@ -266,7 +279,3 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
 };
 
 export default WebhookDeliveriesModal;
-
-
-
-

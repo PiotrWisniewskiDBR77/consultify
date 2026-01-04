@@ -1,16 +1,16 @@
 /**
  * MAX Mode Toggle Component
- * 
+ *
  * Enables users to switch to MAX Mode (o1 reasoning models) for:
  * - Deep analytical tasks
  * - Strategic planning
  * - Complex problem solving
- * 
+ *
  * Warning: MAX Mode uses 3x tokens for premium reasoning.
  */
 
+import { AlertTriangle, Brain, Sparkles, Zap } from 'lucide-react';
 import React, { useState } from 'react';
-import { Zap, AlertTriangle, Brain, Sparkles } from 'lucide-react';
 
 interface MAXModeToggleProps {
     enabled: boolean;
@@ -27,7 +27,7 @@ export function MAXModeToggle({
     tokenMultiplier = 3,
     disabled = false,
     showWarning = true,
-    compact = false
+    compact = false,
 }: MAXModeToggleProps) {
     const [showTooltip, setShowTooltip] = useState(false);
 
@@ -56,26 +56,30 @@ export function MAXModeToggle({
 
     return (
         <div className="relative">
-            <div 
+            <div
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                    enabled 
-                        ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 border-purple-300 dark:border-purple-700' 
+                    enabled
+                        ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 border-purple-300 dark:border-purple-700'
                         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                 }`}
             >
                 {/* Icon */}
-                <div className={`p-2 rounded-full ${
-                    enabled 
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                }`}>
+                <div
+                    className={`p-2 rounded-full ${
+                        enabled
+                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                    }`}
+                >
                     {enabled ? <Zap className="w-5 h-5" /> : <Brain className="w-5 h-5" />}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${enabled ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <span
+                            className={`font-semibold ${enabled ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}
+                        >
                             MAX Mode
                         </span>
                         {enabled && (
@@ -86,10 +90,9 @@ export function MAXModeToggle({
                         )}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {enabled 
-                            ? 'Głęboka analiza z modelami o1 (reasoning)' 
-                            : 'Włącz dla złożonych zadań analitycznych'
-                        }
+                        {enabled
+                            ? 'Głęboka analiza z modelami o1 (reasoning)'
+                            : 'Włącz dla złożonych zadań analitycznych'}
                     </p>
                 </div>
 
@@ -100,14 +103,14 @@ export function MAXModeToggle({
                     onMouseEnter={() => setShowTooltip(true)}
                     onMouseLeave={() => setShowTooltip(false)}
                     className={`relative w-12 h-6 rounded-full transition-all ${
-                        enabled 
-                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600' 
-                            : 'bg-gray-300 dark:bg-gray-600'
+                        enabled ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                     } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform ${
-                        enabled ? 'translate-x-7' : 'translate-x-1'
-                    }`} />
+                    <div
+                        className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform ${
+                            enabled ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                    />
                 </button>
 
                 {/* Tooltip */}
@@ -152,33 +155,17 @@ export function MAXModeIndicator({ enabled }: { enabled: boolean }) {
 /**
  * MAX Mode cost indicator
  */
-export function MAXModeCostBadge({ 
-    baseTokens, 
-    multiplier = 3 
-}: { 
-    baseTokens: number; 
-    multiplier?: number;
-}) {
+export function MAXModeCostBadge({ baseTokens, multiplier = 3 }: { baseTokens: number; multiplier?: number }) {
     const totalTokens = baseTokens * multiplier;
 
     return (
         <div className="flex items-center gap-2 text-xs">
             <span className="text-gray-500">Szacowany koszt:</span>
-            <span className="font-medium text-purple-600">
-                ~{totalTokens.toLocaleString()} tokenów
-            </span>
+            <span className="font-medium text-purple-600">~{totalTokens.toLocaleString()} tokenów</span>
             <span className="text-gray-400">({multiplier}x MAX)</span>
         </div>
     );
 }
 
 export default MAXModeToggle;
-
-
-
-
-
-
-
-
 

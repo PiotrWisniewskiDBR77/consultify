@@ -1,6 +1,6 @@
 /**
  * AIBehaviorSettings - AI Behavior Configuration
- * 
+ *
  * Features:
  * - Auto-suggestions toggle
  * - AI in comments toggle
@@ -9,27 +9,28 @@
  * - AI personality (professional, casual, technical)
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
+    BookOpen,
     Brain,
-    Lightbulb,
-    MessageCircle,
-    ListTodo,
-    GraduationCap,
-    Smile,
     Briefcase,
     Code,
-    BookOpen,
-    Save,
-    Loader2,
+    GraduationCap,
     Info,
+    Lightbulb,
+    ListTodo,
+    Loader2,
+    MessageCircle,
+    Save,
+    Smile,
+    Sparkles,
     Wand2,
-    Sparkles
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface AIBehaviorSettingsProps {
@@ -47,13 +48,13 @@ interface BehaviorSettings {
     enableLearningFromWork: boolean;
     enableProactiveInsights: boolean;
     enableAutocomplete: boolean;
-    
+
     // Personality
     personality: AIPersonality;
     responseLength: 'brief' | 'moderate' | 'detailed';
     formality: number; // 0-100
     technicalLevel: number; // 0-100
-    
+
     // Context
     useProjectContext: boolean;
     useHistoricalData: boolean;
@@ -73,7 +74,7 @@ const defaultSettings: BehaviorSettings = {
     technicalLevel: 50,
     useProjectContext: true,
     useHistoricalData: true,
-    useTeamPatterns: false
+    useTeamPatterns: false,
 };
 
 const personalities: { id: AIPersonality; label: string; icon: React.ElementType; description: string }[] = [
@@ -81,13 +82,10 @@ const personalities: { id: AIPersonality; label: string; icon: React.ElementType
     { id: 'casual', label: 'Casual', icon: Smile, description: 'Friendly, conversational tone' },
     { id: 'technical', label: 'Technical', icon: Code, description: 'Detailed, technical explanations' },
     { id: 'creative', label: 'Creative', icon: Sparkles, description: 'Imaginative, innovative suggestions' },
-    { id: 'concise', label: 'Concise', icon: BookOpen, description: 'Brief, to-the-point answers' }
+    { id: 'concise', label: 'Concise', icon: BookOpen, description: 'Brief, to-the-point answers' },
 ];
 
-export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -130,14 +128,18 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
         title: string;
         description: string;
     }> = ({ enabled, onChange, icon: Icon, title, description }) => (
-        <div className={`p-4 rounded-xl border-2 transition-all ${
-            enabled 
-                ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10' 
-                : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950'
-        }`}>
+        <div
+            className={`p-4 rounded-xl border-2 transition-all ${
+                enabled
+                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10'
+                    : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950'
+            }`}
+        >
             <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${enabled ? 'bg-violet-100 dark:bg-violet-500/20' : 'bg-white dark:bg-navy-900'}`}>
+                    <div
+                        className={`p-2 rounded-lg ${enabled ? 'bg-violet-100 dark:bg-violet-500/20' : 'bg-white dark:bg-navy-900'}`}
+                    >
                         <Icon size={18} className={enabled ? 'text-violet-600' : 'text-slate-400'} />
                     </div>
                     <div>
@@ -151,9 +153,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                         enabled ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                 >
-                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                        enabled ? 'left-7' : 'left-1'
-                    }`} />
+                    <span
+                        className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                            enabled ? 'left-7' : 'left-1'
+                        }`}
+                    />
                 </button>
             </div>
         </div>
@@ -170,7 +174,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-ai-behavior" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -198,7 +202,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                     <Wand2 size={20} className="text-pink-500" />
                     AI Features
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ToggleCard
                         enabled={settings.enableAutoSuggestions}
@@ -252,9 +256,9 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                     AI Personality
                 </h3>
                 <p className="text-sm text-slate-500">Choose how AI communicates with you</p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {personalities.map(p => {
+                    {personalities.map((p) => {
                         const Icon = p.icon;
                         return (
                             <button
@@ -266,17 +270,22 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                                         : 'border-slate-200 dark:border-white/10 hover:border-amber-300'
                                 }`}
                             >
-                                <Icon size={24} className={settings.personality === p.id ? 'text-amber-600' : 'text-slate-400'} />
+                                <Icon
+                                    size={24}
+                                    className={settings.personality === p.id ? 'text-amber-600' : 'text-slate-400'}
+                                />
                                 <p className="font-medium text-slate-900 dark:text-white mt-2 text-sm">{p.label}</p>
                             </button>
                         );
                     })}
                 </div>
-                
+
                 <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        <span className="font-medium">{personalities.find(p => p.id === settings.personality)?.label}:</span>{' '}
-                        {personalities.find(p => p.id === settings.personality)?.description}
+                        <span className="font-medium">
+                            {personalities.find((p) => p.id === settings.personality)?.label}:
+                        </span>{' '}
+                        {personalities.find((p) => p.id === settings.personality)?.description}
                     </p>
                 </div>
             </div>
@@ -284,12 +293,12 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             {/* Response Style */}
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Response Style</h3>
-                
+
                 {/* Response Length */}
                 <div className="space-y-3">
                     <label className="font-medium text-slate-900 dark:text-white">Response Length</label>
                     <div className="flex gap-3">
-                        {(['brief', 'moderate', 'detailed'] as const).map(length => (
+                        {(['brief', 'moderate', 'detailed'] as const).map((length) => (
                             <button
                                 key={length}
                                 onClick={() => setSettings({ ...settings, responseLength: length })}
@@ -353,7 +362,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                     Context Sources
                 </h3>
                 <p className="text-sm text-slate-500">What information AI can use for better responses</p>
-                
+
                 <div className="space-y-3">
                     <ToggleCard
                         enabled={settings.useProjectContext}
@@ -383,10 +392,4 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
 };
 
 export default AIBehaviorSettings;
-
-
-
-
-
-
 

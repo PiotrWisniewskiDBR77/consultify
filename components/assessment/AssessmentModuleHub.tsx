@@ -1,63 +1,64 @@
 /**
  * AssessmentModuleHub
- * 
+ *
  * Main hub component for Assessment Module with 4-button top menu:
  * 1. Assessment - Table of assessments (done/in progress/new)
  * 2. Map - Assessment editor tool (context-specific for each framework)
  * 3. Reports - Table of reports (created from approved assessments)
  * 4. Initiatives - Table of initiatives (created from approved reports)
- * 
+ *
  * Each submodule (DRD, SIRI, ADMA, CMMI, Lean) uses this hub with its own context.
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import toast from 'react-hot-toast';
 import {
-    FileText,
-    Map,
-    FileOutput,
-    Lightbulb,
-    Plus,
-    ArrowRight,
     Activity,
+    AlertCircle,
+    ArrowRight,
+    Check,
+    ChevronRight,
     Cpu,
     Database,
+    FileOutput,
+    FileText,
+    History,
     Layers,
-    Workflow,
-    ChevronRight,
     LayoutDashboard,
+    Lightbulb,
     Loader2,
+    Map,
+    Plus,
     Save,
-    Check,
-    AlertCircle,
-    History
+    Workflow,
 } from 'lucide-react';
-import { useAppStore } from '../../store/useAppStore';
-import { AppView } from '../../types';
-import { useDeviceType } from '../../hooks/useDeviceType';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { useAppStore } from '../../store/useAppStore';
+// Multi-framework store
+import { AssessmentFramework, useMultiFrameworkStore } from '../../store/useMultiFrameworkStore';
+import { AppView } from '../../types';
+import { DRDAxis } from '../../types';
+import { AssessmentAxisWorkspace } from './AssessmentAxisWorkspace';
+import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
+// Sub-components
 // Sub-components
 import { AssessmentTable } from './AssessmentTable';
-import { ReportsTable } from './ReportsTable';
-import { InitiativesTable } from './InitiativesTable';
-import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
-import { AssessmentAxisWorkspace } from './AssessmentAxisWorkspace';
-import { VersionHistoryPanel } from './panels/VersionHistoryPanel';
-import { WorkflowStatusBar } from './WorkflowStatusBar';
-import { DocumentTabsBar, OpenDocument, DocumentType } from './DocumentTabsBar';
-import { ReportEditor } from './ReportEditor';
-import { ReportBuilderWorkspace } from './ReportBuilderWorkspace';
-import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
-import { DRDAxis } from '../../types';
-
+import { DocumentTabsBar, DocumentType, OpenDocument } from './DocumentTabsBar';
 // Multi-framework assessment maps
-import { SIRIAssessmentMap } from './maps/SIRIAssessmentMap';
-import { ADMAAssessmentMap } from './maps/ADMAAssessmentMap';
-import { CMPracticeMap } from './maps/CMPracticeMap';
-import { DBR77LeanMap } from './maps/DBR77LeanMap';
+import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
+import { VersionHistoryPanel } from './panels/VersionHistoryPanel';
+import { ReportEditor } from './ReportEditor';
+import { WorkflowStatusBar } from './WorkflowStatusBar';
 
-// Multi-framework store
-import { useMultiFrameworkStore, AssessmentFramework } from '../../store/useMultiFrameworkStore';
+// Lazy load heavy components
+const InitiativesTable = React.lazy(() => import('./InitiativesTable').then(m => ({ default: m.InitiativesTable })));
+const ADMAAssessmentMap = React.lazy(() => import('./maps/ADMAAssessmentMap').then(m => ({ default: m.ADMAAssessmentMap })));
+const CMPracticeMap = React.lazy(() => import('./maps/CMPracticeMap').then(m => ({ default: m.CMPracticeMap })));
+const DBR77LeanMap = React.lazy(() => import('./maps/DBR77LeanMap').then(m => ({ default: m.DBR77LeanMap })));
+const SIRIAssessmentMap = React.lazy(() => import('./maps/SIRIAssessmentMap').then(m => ({ default: m.SIRIAssessmentMap })));
+const ReportBuilderWorkspace = React.lazy(() => import('./ReportBuilderWorkspace').then(m => ({ default: m.ReportBuilderWorkspace })));
+const ReportsTable = React.lazy(() => import('./ReportsTable').then(m => ({ default: m.ReportsTable })));
 
 // Type for axis selection including dashboard
 type AxisSelection = 'dashboard' | DRDAxis;
@@ -80,26 +81,26 @@ const TABS: TabConfig[] = [
         id: 'assessment',
         label: 'Assessment',
         icon: <FileText size={16} />,
-        description: 'Manage your assessments'
+        description: 'Manage your assessments',
     },
     {
         id: 'map',
         label: 'Map',
         icon: <Map size={16} />,
-        description: 'Assessment Editor'
+        description: 'Assessment Editor',
     },
     {
         id: 'reports',
         label: 'Reports',
         icon: <FileOutput size={16} />,
-        description: 'Assessment reports'
+        description: 'Assessment reports',
     },
     {
         id: 'initiatives',
         label: 'Initiatives',
         icon: <Lightbulb size={16} />,
-        description: 'Transformation initiatives'
-    }
+        description: 'Transformation initiatives',
+    },
 ];
 
 // Framework metadata
@@ -108,32 +109,32 @@ const FRAMEWORK_CONFIG: Record<string, { name: string; icon: React.ReactNode; co
         name: 'Digital Readiness Diagnosis',
         icon: <Activity size={24} />,
         color: 'purple',
-        description: '7-axis digital maturity assessment'
+        description: '7-axis digital maturity assessment',
     },
     SIRI: {
         name: 'Smart Industry Readiness Index',
         icon: <Cpu size={24} />,
         color: 'blue',
-        description: 'Industry 4.0 readiness assessment'
+        description: 'Industry 4.0 readiness assessment',
     },
     ADMA: {
         name: 'Advanced Digital Maturity Assessment',
         icon: <Database size={24} />,
         color: 'green',
-        description: 'Comprehensive digital maturity model'
+        description: 'Comprehensive digital maturity model',
     },
     CMMI: {
         name: 'Capability Maturity Model Integration',
         icon: <Layers size={24} />,
         color: 'orange',
-        description: 'Process improvement framework'
+        description: 'Process improvement framework',
     },
     LEAN: {
         name: 'Lean 4.0',
         icon: <Workflow size={24} />,
         color: 'cyan',
-        description: 'Lean manufacturing maturity assessment'
-    }
+        description: 'Lean manufacturing maturity assessment',
+    },
 };
 
 interface AssessmentModuleHubProps {
@@ -147,7 +148,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     framework,
     initialTab = 'assessment',
     initialAssessmentId,
-    onNavigate
+    onNavigate,
 }) => {
     const { currentProjectId, setCurrentView } = useAppStore();
     const { isTablet, isMobile, isTouchDevice } = useDeviceType();
@@ -159,7 +160,11 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
     const [selectedAxis, setSelectedAxis] = useState<AxisSelection>('dashboard');
     const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
-    const [assessmentMeta, setAssessmentMeta] = useState<{ name: string; isNew: boolean; status?: WorkflowStatus } | null>(null);
+    const [assessmentMeta, setAssessmentMeta] = useState<{
+        name: string;
+        isNew: boolean;
+        status?: WorkflowStatus;
+    } | null>(null);
 
     // SAFE ACCESS: Handle potential missing config
     const frameworkConfig = FRAMEWORK_CONFIG[framework];
@@ -188,13 +193,16 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     ];
 
     // Navigation handler
-    const handleNavigate = useCallback((view: AppView, params?: any) => {
-        if (onNavigate) {
-            onNavigate(view, params);
-        } else {
-            setCurrentView(view);
-        }
-    }, [onNavigate, setCurrentView]);
+    const handleNavigate = useCallback(
+        (view: AppView, params?: any) => {
+            if (onNavigate) {
+                onNavigate(view, params);
+            } else {
+                setCurrentView(view);
+            }
+        },
+        [onNavigate, setCurrentView],
+    );
 
     // Open assessment in Map editor
     const handleOpenInMap = useCallback((assessmentId: string) => {
@@ -225,9 +233,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
     // Open document in a new tab
     const handleOpenDocument = useCallback((id: string, type: DocumentType, name: string, status?: string) => {
-        setOpenDocuments(prev => {
+        setOpenDocuments((prev) => {
             // Check if already open
-            const existing = prev.find(doc => doc.id === id);
+            const existing = prev.find((doc) => doc.id === id);
             if (existing) {
                 return prev;
             }
@@ -238,21 +246,24 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     }, []);
 
     // Close document tab
-    const handleCloseDocument = useCallback((id: string) => {
-        setOpenDocuments(prev => {
-            const filtered = prev.filter(doc => doc.id !== id);
-            // If closing active document, select another one or show list
-            if (activeDocumentId === id) {
-                if (filtered.length > 0) {
-                    setActiveDocumentId(filtered[filtered.length - 1].id);
-                } else {
-                    setActiveDocumentId(null);
-                    setShowListView(true);
+    const handleCloseDocument = useCallback(
+        (id: string) => {
+            setOpenDocuments((prev) => {
+                const filtered = prev.filter((doc) => doc.id !== id);
+                // If closing active document, select another one or show list
+                if (activeDocumentId === id) {
+                    if (filtered.length > 0) {
+                        setActiveDocumentId(filtered[filtered.length - 1].id);
+                    } else {
+                        setActiveDocumentId(null);
+                        setShowListView(true);
+                    }
                 }
-            }
-            return filtered;
-        });
-    }, [activeDocumentId]);
+                return filtered;
+            });
+        },
+        [activeDocumentId],
+    );
 
     // Select document tab
     const handleSelectDocument = useCallback((id: string) => {
@@ -274,35 +285,54 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     }, []);
 
     // Open report in tab
-    const handleOpenReport = useCallback((reportId: string, reportName: string, status?: string) => {
-        handleOpenDocument(reportId, 'report', reportName, status);
-    }, [handleOpenDocument]);
+    const handleOpenReport = useCallback(
+        (reportId: string, reportName: string, status?: string) => {
+            handleOpenDocument(reportId, 'report', reportName, status);
+        },
+        [handleOpenDocument],
+    );
 
     // Open initiative in tab
-    const handleOpenInitiative = useCallback((initiativeId: string, initiativeName: string, status?: string) => {
-        handleOpenDocument(initiativeId, 'initiative', initiativeName, status);
-    }, [handleOpenDocument]);
+    const handleOpenInitiative = useCallback(
+        (initiativeId: string, initiativeName: string, status?: string) => {
+            handleOpenDocument(initiativeId, 'initiative', initiativeName, status);
+        },
+        [handleOpenDocument],
+    );
 
     // Clear tabs when switching main tabs (Assessment/Map/Reports/Initiatives)
-    const handleTabChange = useCallback((tab: HubTab) => {
-        // Only clear tabs when switching between Reports and Initiatives
-        if ((activeTab === 'reports' || activeTab === 'initiatives') &&
-            (tab === 'reports' || tab === 'initiatives') &&
-            activeTab !== tab) {
-            setOpenDocuments([]);
-            setActiveDocumentId(null);
-            setShowListView(true);
-        }
-        setActiveTab(tab);
-    }, [activeTab]);
+    const handleTabChange = useCallback(
+        (tab: HubTab) => {
+            // Only clear tabs when switching between Reports and Initiatives
+            if (
+                (activeTab === 'reports' || activeTab === 'initiatives') &&
+                (tab === 'reports' || tab === 'initiatives') &&
+                activeTab !== tab
+            ) {
+                setOpenDocuments([]);
+                setActiveDocumentId(null);
+                setShowListView(true);
+            }
+            setActiveTab(tab);
+        },
+        [activeTab],
+    );
 
     // Calculate assessment progress based on filled axes
     const calculateProgress = useCallback(() => {
         const assessmentData = useAppStore.getState().fullSessionData?.assessment || {};
-        const axes: DRDAxis[] = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+        const axes: DRDAxis[] = [
+            'processes',
+            'digitalProducts',
+            'businessModels',
+            'dataManagement',
+            'culture',
+            'cybersecurity',
+            'aiMaturity',
+        ];
 
         let filledAxes = 0;
-        axes.forEach(axis => {
+        axes.forEach((axis) => {
             const axisData = assessmentData[axis];
             if (axisData && (axisData.actual > 0 || axisData.target > 0 || axisData.areaScores)) {
                 filledAxes++;
@@ -326,7 +356,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             let worked = 0;
             let rated = 0;
 
-            areaKeys.forEach(key => {
+            areaKeys.forEach((key) => {
                 const scores = axisData.areaScores?.[key] || [0, 0];
                 if (scores[0] > 0 || scores[1] > 0) worked++;
                 if (scores[0] > 0 && scores[1] > 0) rated++;
@@ -346,7 +376,6 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         return 'empty';
     }, []);
 
-
     // Save assessment to database
     const handleSaveAssessment = useCallback(async () => {
         setIsSaving(true);
@@ -364,15 +393,15 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             const response = await fetch(endpoint, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     name: assessmentMeta?.name || 'Nowy Assessment',
                     axisData: assessmentData,
                     projectId: currentProjectId,
-                    framework: framework
-                })
+                    framework: framework,
+                }),
             });
 
             if (response.ok) {
@@ -384,7 +413,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 // If new assessment was created, update the selected ID
                 if (data.id && !selectedAssessmentId) {
                     setSelectedAssessmentId(data.id);
-                    setAssessmentMeta(prev => prev ? { ...prev, isNew: false } : null);
+                    setAssessmentMeta((prev) => (prev ? { ...prev, isNew: false } : null));
                 }
             } else {
                 const errorData = await response.json();
@@ -402,7 +431,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
     // Handle assessment name change
     const handleNameChange = useCallback((newName: string) => {
-        setAssessmentMeta(prev => prev ? { ...prev, name: newName } : { name: newName, isNew: true });
+        setAssessmentMeta((prev) => (prev ? { ...prev, name: newName } : { name: newName, isNew: true }));
         setHasUnsavedChanges(true);
     }, []);
 
@@ -462,7 +491,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/assessments/${assessmentId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -476,14 +505,22 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         ...fullSessionData.assessment,
                         ...data.axisData,
                         completedAxes: data.isComplete
-                            ? ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity']
-                            : fullSessionData.assessment?.completedAxes || []
-                    }
+                            ? [
+                                'processes',
+                                'digitalProducts',
+                                'businessModels',
+                                'dataManagement',
+                                'culture',
+                                'cybersecurity',
+                                'aiMaturity',
+                            ]
+                            : fullSessionData.assessment?.completedAxes || [],
+                    },
                 });
 
                 setAssessmentMeta({
                     name: data.name,
-                    isNew: false
+                    isNew: false,
                 });
             } else {
                 console.warn('[AssessmentModuleHub] Assessment not found or error');
@@ -517,15 +554,15 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             return (
                 <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950/50">
                     <div className="text-center max-w-md">
-                        <div className={`w-20 h-20 rounded-2xl bg-${frameworkConfig.color}-100 dark:bg-${frameworkConfig.color}-900/30 flex items-center justify-center mx-auto mb-6`}>
+                        <div
+                            className={`w-20 h-20 rounded-2xl bg-${frameworkConfig.color}-100 dark:bg-${frameworkConfig.color}-900/30 flex items-center justify-center mx-auto mb-6`}
+                        >
                             {frameworkConfig.icon}
                         </div>
                         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-3">
                             {frameworkConfig.name}
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-2">
-                            {frameworkConfig.description}
-                        </p>
+                        <p className="text-slate-500 dark:text-slate-400 mb-2">{frameworkConfig.description}</p>
                         <span className="inline-block px-4 py-2 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full text-sm font-medium">
                             Coming Soon
                         </span>
@@ -533,6 +570,12 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 </div>
             );
         }
+
+        const FallbackLoader = () => (
+            <div className="h-full flex items-center justify-center bg-transparent">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+        );
 
         switch (activeTab) {
             case 'assessment':
@@ -590,13 +633,13 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                             ...fullSessionData,
                             assessment: {
                                 ...fullSessionData.assessment,
-                                [selectedAxis as DRDAxis]: newData
-                            }
+                                [selectedAxis as DRDAxis]: newData,
+                            },
                         });
                     };
 
                     const handleAxisNext = () => {
-                        const currentIndex = drdAxes.findIndex(a => a.id === selectedAxis);
+                        const currentIndex = drdAxes.findIndex((a) => a.id === selectedAxis);
                         if (currentIndex < drdAxes.length - 1) {
                             setSelectedAxis(drdAxes[currentIndex + 1].id);
                         } else {
@@ -613,7 +656,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                             context={{
                                 goals: [],
                                 challenges: [],
-                                industry: ''
+                                industry: '',
                             }}
                             projectId={currentProjectId || undefined}
                             assessmentId={selectedAssessmentId || undefined}
@@ -621,107 +664,95 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                     );
                 }
 
-                // SIRI Assessment Map
-                if (framework === 'SIRI') {
-                    const siriData = useMultiFrameworkStore.getState().siriData;
-                    const setSIRIData = (data: any) => {
-                        setHasUnsavedChanges(true);
-                        useMultiFrameworkStore.getState().setFrameworkData('SIRI', data);
-                    };
-                    return (
-                        <SIRIAssessmentMap
-                            data={siriData || undefined}
-                            onChange={setSIRIData}
-                            readOnly={false}
-                            showLegalNotice={true}
-                        />
-                    );
-                }
+                return (
+                    <React.Suspense fallback={<FallbackLoader />}>
+                        {/* SIRI Assessment Map */}
+                        {framework === 'SIRI' && (
+                            <SIRIAssessmentMap
+                                data={useMultiFrameworkStore.getState().siriData || undefined}
+                                onChange={(data) => {
+                                    setHasUnsavedChanges(true);
+                                    useMultiFrameworkStore.getState().setFrameworkData('SIRI', data);
+                                }}
+                                readOnly={false}
+                                showLegalNotice={true}
+                            />
+                        )}
 
-                // ADMA Assessment Map
-                if (framework === 'ADMA') {
-                    const admaData = useMultiFrameworkStore.getState().admaData;
-                    const setADMAData = (data: any) => {
-                        setHasUnsavedChanges(true);
-                        useMultiFrameworkStore.getState().setFrameworkData('ADMA', data);
-                    };
-                    return (
-                        <ADMAAssessmentMap
-                            data={admaData || undefined}
-                            onChange={setADMAData}
-                            readOnly={false}
-                            showLegalNotice={true}
-                        />
-                    );
-                }
+                        {/* ADMA Assessment Map */}
+                        {framework === 'ADMA' && (
+                            <ADMAAssessmentMap
+                                data={useMultiFrameworkStore.getState().admaData || undefined}
+                                onChange={(data) => {
+                                    setHasUnsavedChanges(true);
+                                    useMultiFrameworkStore.getState().setFrameworkData('ADMA', data);
+                                }}
+                                readOnly={false}
+                                showLegalNotice={true}
+                            />
+                        )}
 
-                // CMMI Assessment Map
-                if (framework === 'CMMI') {
-                    const cmmiData = useMultiFrameworkStore.getState().cmmiData;
-                    const setCMMIData = (data: any) => {
-                        setHasUnsavedChanges(true);
-                        useMultiFrameworkStore.getState().setFrameworkData('CMMI', data);
-                    };
-                    return (
-                        <CMPracticeMap
-                            data={cmmiData || undefined}
-                            onChange={setCMMIData}
-                            readOnly={false}
-                            showLegalNotice={true}
-                        />
-                    );
-                }
+                        {/* CMMI Assessment Map */}
+                        {framework === 'CMMI' && (
+                            <CMPracticeMap
+                                data={useMultiFrameworkStore.getState().cmmiData || undefined}
+                                onChange={(data) => {
+                                    setHasUnsavedChanges(true);
+                                    useMultiFrameworkStore.getState().setFrameworkData('CMMI', data);
+                                }}
+                                readOnly={false}
+                                showLegalNotice={true}
+                            />
+                        )}
 
-                // Lean 4.0 / DBR77 Assessment Map
-                if (framework === 'LEAN') {
-                    const leanData = useMultiFrameworkStore.getState().leanData;
-                    const setLeanData = (data: any) => {
-                        setHasUnsavedChanges(true);
-                        useMultiFrameworkStore.getState().setFrameworkData('LEAN', data);
-                    };
-                    return (
-                        <DBR77LeanMap
-                            data={leanData || undefined}
-                            onChange={setLeanData}
-                            readOnly={false}
-                        />
-                    );
-                }
-
-                return null;
+                        {/* Lean 4.0 / DBR77 Assessment Map */}
+                        {framework === 'LEAN' && (
+                            <DBR77LeanMap
+                                data={useMultiFrameworkStore.getState().leanData || undefined}
+                                onChange={(data) => {
+                                    setHasUnsavedChanges(true);
+                                    useMultiFrameworkStore.getState().setFrameworkData('LEAN', data);
+                                }}
+                                readOnly={false}
+                            />
+                        )}
+                    </React.Suspense>
+                );
 
             case 'reports': {
                 // Get active document if it's a report
-                const activeReport = openDocuments.find(
-                    doc => doc.id === activeDocumentId && doc.type === 'report'
-                );
+                const activeReport = openDocuments.find((doc) => doc.id === activeDocumentId && doc.type === 'report');
 
                 // If a report is selected and we're not in list view, show the full Report Builder
                 if (activeReport && !showListView) {
                     return (
-                        <ReportBuilderWorkspace
-                            reportId={activeReport.id}
-                            onClose={() => handleCloseDocument(activeReport.id)}
-                        />
+                        <React.Suspense fallback={<FallbackLoader />}>
+                            <ReportBuilderWorkspace
+                                reportId={activeReport.id}
+                                onClose={() => handleCloseDocument(activeReport.id)}
+                            />
+                        </React.Suspense>
                     );
                 }
 
                 // Otherwise show the table
                 return (
-                    <ReportsTable
-                        projectId={currentProjectId || ''}
-                        framework={framework}
-                        onCreateInitiatives={handleCreateInitiatives}
-                        pendingAssessmentId={selectedAssessmentId}
-                        onOpenReport={handleOpenReport}
-                    />
+                    <React.Suspense fallback={<FallbackLoader />}>
+                        <ReportsTable
+                            projectId={currentProjectId || ''}
+                            framework={framework}
+                            onCreateInitiatives={handleCreateInitiatives}
+                            pendingAssessmentId={selectedAssessmentId}
+                            onOpenReport={handleOpenReport}
+                        />
+                    </React.Suspense>
                 );
             }
 
             case 'initiatives': {
                 // Get active document if it's an initiative
                 const activeInitiative = openDocuments.find(
-                    doc => doc.id === activeDocumentId && doc.type === 'initiative'
+                    (doc) => doc.id === activeDocumentId && doc.type === 'initiative',
                 );
 
                 // If an initiative is selected and we're not in list view, show the details
@@ -749,12 +780,14 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
                 // Otherwise show the table
                 return (
-                    <InitiativesTable
-                        projectId={currentProjectId || ''}
-                        framework={framework}
-                        pendingReportId={selectedReportId}
-                        onOpenInitiative={handleOpenInitiative}
-                    />
+                    <React.Suspense fallback={<FallbackLoader />}>
+                        <InitiativesTable
+                            projectId={currentProjectId || ''}
+                            framework={framework}
+                            pendingReportId={selectedReportId}
+                            onOpenInitiative={handleOpenInitiative}
+                        />
+                    </React.Suspense>
                 );
             }
 
@@ -782,21 +815,37 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     return (
         <div className="flex flex-col h-full bg-white dark:bg-navy-900">
             {/* Framework Header - Compact on mobile */}
-            <div className={`shrink-0 bg-gradient-to-r from-slate-50 to-white dark:from-navy-950 dark:to-navy-900 border-b border-slate-200 dark:border-white/10 ${isCompact ? 'px-4 py-3' : 'px-6 py-4'}`}>
+            <div
+                className={`shrink-0 bg-gradient-to-r from-slate-50 to-white dark:from-navy-950 dark:to-navy-900 border-b border-slate-200 dark:border-white/10 ${isCompact ? 'px-4 py-3' : 'px-6 py-4'}`}
+            >
                 <div className="flex items-center gap-3">
-                    <div className={`rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 ${isCompact ? 'w-10 h-10' : 'w-12 h-12'}`}>
-                        {React.cloneElement(frameworkConfig.icon as React.ReactElement<{ size?: number }>, { size: isCompact ? 20 : 24 })}
+                    <div
+                        className={`rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 ${isCompact ? 'w-10 h-10' : 'w-12 h-12'}`}
+                    >
+                        {React.cloneElement(frameworkConfig.icon as React.ReactElement<{ size?: number }>, {
+                            size: isCompact ? 20 : 24,
+                        })}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h1 className={`font-bold text-navy-900 dark:text-white truncate ${isCompact ? 'text-lg' : 'text-xl'}`}>{framework}</h1>
-                        <p className={`text-slate-500 dark:text-slate-400 truncate ${isCompact ? 'text-xs' : 'text-sm'}`}>{frameworkConfig.name}</p>
+                        <h1
+                            className={`font-bold text-navy-900 dark:text-white truncate ${isCompact ? 'text-lg' : 'text-xl'}`}
+                        >
+                            {framework}
+                        </h1>
+                        <p
+                            className={`text-slate-500 dark:text-slate-400 truncate ${isCompact ? 'text-xs' : 'text-sm'}`}
+                        >
+                            {frameworkConfig.name}
+                        </p>
                     </div>
                 </div>
             </div>
 
             {/* Top Menu - Horizontal scrollable on mobile/tablet */}
             <div className="shrink-0 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950">
-                <div className={`flex items-center gap-2 overflow-x-auto scrollbar-hide scroll-snap-x momentum-scroll ${isCompact ? 'p-2 px-4' : 'p-2 px-6'}`}>
+                <div
+                    className={`flex items-center gap-2 overflow-x-auto scrollbar-hide scroll-snap-x momentum-scroll ${isCompact ? 'p-2 px-4' : 'p-2 px-6'}`}
+                >
                     {TABS.map((tab) => {
                         const isActive = activeTab === tab.id;
                         return (
@@ -816,7 +865,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                     }
                                 `}
                             >
-                                {React.cloneElement(tab.icon as React.ReactElement<{ size?: number }>, { size: isCompact ? 14 : 16 })}
+                                {React.cloneElement(tab.icon as React.ReactElement<{ size?: number }>, {
+                                    size: isCompact ? 14 : 16,
+                                })}
                                 <span>{tab.label}</span>
                             </button>
                         );
@@ -826,7 +877,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
             {/* Secondary Navigation Bar - always visible for DRD */}
             {framework === 'DRD' && (
-                <div className={`shrink-0 bg-slate-100 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/10 ${isCompact ? 'px-4 py-1' : 'px-6 py-1'} relative`}>
+                <div
+                    className={`shrink-0 bg-slate-100 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/10 ${isCompact ? 'px-4 py-1' : 'px-6 py-1'} relative`}
+                >
                     {/* Scroll fade indicators */}
                     <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-100 dark:from-navy-950/50 to-transparent z-10 opacity-0 peer-scroll-left:opacity-100" />
                     <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-100 dark:from-navy-950/50 to-transparent z-10" />
@@ -887,14 +940,15 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                                 }
                                             `}
                                         >
-                                            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${getIndicatorClasses()}`}>
+                                            <span
+                                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${getIndicatorClasses()}`}
+                                            >
                                                 {progressStatus === 'complete' && !isActive ? '✓' : index + 1}
                                             </span>
                                             {isCompact ? axis.label.slice(0, 3) : axis.label}
                                         </button>
                                     );
                                 })}
-
                             </>
                         )}
 
@@ -929,8 +983,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             {/* Document Tabs Bar - visible for Reports and Initiatives tabs when documents are open */}
             {(activeTab === 'reports' || activeTab === 'initiatives') && (
                 <DocumentTabsBar
-                    openDocuments={openDocuments.filter(doc =>
-                        activeTab === 'reports' ? doc.type === 'report' : doc.type === 'initiative'
+                    openDocuments={openDocuments.filter((doc) =>
+                        activeTab === 'reports' ? doc.type === 'report' : doc.type === 'initiative',
                     )}
                     activeDocumentId={activeDocumentId}
                     onSelectDocument={handleSelectDocument}
@@ -943,7 +997,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
             {/* Save Bar - Only visible in Map tab */}
             {activeTab === 'map' && framework === 'DRD' && (
-                <div className={`shrink-0 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 ${isCompact ? 'px-4 py-2' : 'px-6 py-2'}`}>
+                <div
+                    className={`shrink-0 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 ${isCompact ? 'px-4 py-2' : 'px-6 py-2'}`}
+                >
                     <div className="flex items-center justify-between">
                         {/* Progress Indicator */}
                         <div className="flex items-center gap-3">
@@ -967,21 +1023,19 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                             {lastSaved && !hasUnsavedChanges && (
                                 <span className="text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
                                     <Check size={12} />
-                                    Auto-saved {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                                    Auto-saved{' '}
+                                    {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             )}
                         </div>
 
                         {/* Save Button & Status */}
                         <div className="flex items-center gap-3">
-                            {saveError && (
-                                <span className="text-xs text-red-500 dark:text-red-400">
-                                    {saveError}
-                                </span>
-                            )}
+                            {saveError && <span className="text-xs text-red-500 dark:text-red-400">{saveError}</span>}
                             {lastSaved && !saveError && (
                                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                                    Zapisano: {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                                    Zapisano:{' '}
+                                    {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             )}
                             {/* Version History Button */}
@@ -1031,9 +1085,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             )}
 
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden momentum-scroll">
-                {renderContent()}
-            </div>
+            <div className="flex-1 overflow-hidden momentum-scroll">{renderContent()}</div>
 
             {/* Version History Panel */}
             {selectedAssessmentId && (
@@ -1052,4 +1104,3 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         </div>
     );
 };
-

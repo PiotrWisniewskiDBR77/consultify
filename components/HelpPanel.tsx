@@ -1,16 +1,17 @@
 /**
  * Help Panel Component
- * 
+ *
  * Slide-out panel showing available playbooks and contextual help.
- * 
+ *
  * Step 6: Enterprise+ Ready
  */
 
-import React, { useState, useEffect } from 'react';
-import { useHelp, Playbook, PlaybookStep } from '../contexts/HelpContext';
-import { usePolicySnapshot } from '../contexts/AccessPolicyContext';
+import { ArrowRight, BookOpen, CheckCircle, ChevronRight, Lightbulb, X, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, ChevronRight, CheckCircle, XCircle, BookOpen, Lightbulb, ArrowRight } from 'lucide-react';
+
+import { usePolicySnapshot } from '../contexts/AccessPolicyContext';
+import { Playbook, PlaybookStep, useHelp } from '../contexts/HelpContext';
 
 interface HelpPanelProps {
     isOpen: boolean;
@@ -57,7 +58,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
 
     const handleNextStep = () => {
         if (selectedPlaybook?.steps && currentStep < selectedPlaybook.steps.length - 1) {
-            setCurrentStep(prev => prev + 1);
+            setCurrentStep((prev) => prev + 1);
         } else {
             handleComplete();
         }
@@ -65,7 +66,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
 
     const handlePrevStep = () => {
         if (currentStep > 0) {
-            setCurrentStep(prev => prev - 1);
+            setCurrentStep((prev) => prev - 1);
         }
     };
 
@@ -73,9 +74,21 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
 
     // Get context badge text
     const getOrgTypeBadge = () => {
-        if (snapshot?.isDemo) return { text: t('demo.indicator'), color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
-        if (snapshot?.isTrial) return { text: `${t('auth.demoMode')} (${snapshot.trialDaysLeft}d ${t('step1.months')})`, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
-        if (snapshot?.isPaid) return { text: t('demo.badge.getFullAccess'), color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+        if (snapshot?.isDemo)
+            return {
+                text: t('demo.indicator'),
+                color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+            };
+        if (snapshot?.isTrial)
+            return {
+                text: `${t('auth.demoMode')} (${snapshot.trialDaysLeft}d ${t('step1.months')})`,
+                color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+            };
+        if (snapshot?.isPaid)
+            return {
+                text: t('demo.badge.getFullAccess'),
+                color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            };
         return null;
     };
 
@@ -84,10 +97,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
     return (
         <>
             {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-                onClick={onClose}
-            />
+            <div className="fixed inset-0 bg-black/50 z-40 transition-opacity" onClick={onClose} />
 
             {/* Panel */}
             <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-900 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
@@ -95,7 +105,9 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                         <BookOpen className="w-5 h-5 text-blue-500" />
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('help.panel.header')}</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {t('help.panel.header')}
+                        </h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -108,7 +120,9 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                 {/* Context Badge */}
                 {orgBadge && (
                     <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${orgBadge.color}`}>
+                        <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${orgBadge.color}`}
+                        >
                             {orgBadge.text}
                         </span>
                     </div>
@@ -139,12 +153,17 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                     {/* Progress */}
                                     <div className="flex items-center gap-2 mb-3">
                                         <span className="text-xs text-gray-500">
-                                            {t('help.panel.stepProgress', { current: currentStep + 1, total: selectedPlaybook.steps.length })}
+                                            {t('help.panel.stepProgress', {
+                                                current: currentStep + 1,
+                                                total: selectedPlaybook.steps.length,
+                                            })}
                                         </span>
                                         <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">
                                             <div
                                                 className="h-full bg-blue-500 rounded-full transition-all"
-                                                style={{ width: `${((currentStep + 1) / selectedPlaybook.steps.length) * 100}%` }}
+                                                style={{
+                                                    width: `${((currentStep + 1) / selectedPlaybook.steps.length) * 100}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -161,7 +180,10 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                         {/* Action Button */}
                                         {selectedPlaybook.steps[currentStep].actionType === 'CTA' && (
                                             <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium">
-                                                {t(selectedPlaybook.steps[currentStep].actionPayload?.label || 'help.panel.takeAction')}
+                                                {t(
+                                                    selectedPlaybook.steps[currentStep].actionPayload?.label ||
+                                                        'help.panel.takeAction',
+                                                )}
                                             </button>
                                         )}
                                     </div>
@@ -179,7 +201,9 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                             onClick={handleNextStep}
                                             className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-600 font-medium"
                                         >
-                                            {currentStep === selectedPlaybook.steps.length - 1 ? t('help.panel.complete') : t('help.panel.next')}
+                                            {currentStep === selectedPlaybook.steps.length - 1
+                                                ? t('help.panel.complete')
+                                                : t('help.panel.next')}
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -190,7 +214,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                         /* Playbook List View */
                         <div className="space-y-4">
                             {/* Recommended Section */}
-                            {playbooks.filter(p => p.isRecommended && p.status === 'AVAILABLE').length > 0 && (
+                            {playbooks.filter((p) => p.isRecommended && p.status === 'AVAILABLE').length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
                                         <Lightbulb className="w-4 h-4" />
@@ -198,60 +222,57 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
                                     </h3>
                                     <div className="space-y-2">
                                         {playbooks
-                                            .filter(p => p.isRecommended && p.status === 'AVAILABLE')
-                                            .map(playbook => (
+                                            .filter((p) => p.isRecommended && p.status === 'AVAILABLE')
+                                            .map((playbook) => (
                                                 <PlaybookCard
                                                     key={playbook.id}
                                                     playbook={playbook}
                                                     onClick={() => handlePlaybookClick(playbook)}
                                                     onDismiss={() => handleDismiss(playbook)}
                                                 />
-                                            ))
-                                        }
+                                            ))}
                                     </div>
                                 </div>
                             )}
 
                             {/* All Available */}
-                            {playbooks.filter(p => !p.isRecommended && p.status === 'AVAILABLE').length > 0 && (
+                            {playbooks.filter((p) => !p.isRecommended && p.status === 'AVAILABLE').length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                                         {t('help.panel.moreTopics')}
                                     </h3>
                                     <div className="space-y-2">
                                         {playbooks
-                                            .filter(p => !p.isRecommended && p.status === 'AVAILABLE')
-                                            .map(playbook => (
+                                            .filter((p) => !p.isRecommended && p.status === 'AVAILABLE')
+                                            .map((playbook) => (
                                                 <PlaybookCard
                                                     key={playbook.id}
                                                     playbook={playbook}
                                                     onClick={() => handlePlaybookClick(playbook)}
                                                     onDismiss={() => handleDismiss(playbook)}
                                                 />
-                                            ))
-                                        }
+                                            ))}
                                     </div>
                                 </div>
                             )}
 
                             {/* Completed */}
-                            {playbooks.filter(p => p.status === 'COMPLETED').length > 0 && (
+                            {playbooks.filter((p) => p.status === 'COMPLETED').length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                                         {t('help.panel.completed')}
                                     </h3>
                                     <div className="space-y-2 opacity-60">
                                         {playbooks
-                                            .filter(p => p.status === 'COMPLETED')
-                                            .map(playbook => (
+                                            .filter((p) => p.status === 'COMPLETED')
+                                            .map((playbook) => (
                                                 <PlaybookCard
                                                     key={playbook.id}
                                                     playbook={playbook}
                                                     onClick={() => handlePlaybookClick(playbook)}
                                                     completed
                                                 />
-                                            ))
-                                        }
+                                            ))}
                                     </div>
                                 </div>
                             )}
@@ -290,19 +311,13 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
                         {completed && <CheckCircle className="w-4 h-4 text-green-500" />}
-                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                            {t(playbook.title)}
-                        </h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">{t(playbook.title)}</h4>
                     </div>
                     {playbook.description && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                            {t(playbook.description)}
-                        </p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{t(playbook.description)}</p>
                     )}
                     {playbook.recommendationReason && (
-                        <p className="text-xs text-blue-500 mt-1">
-                            {t(playbook.recommendationReason)}
-                        </p>
+                        <p className="text-xs text-blue-500 mt-1">{t(playbook.recommendationReason)}</p>
                     )}
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />

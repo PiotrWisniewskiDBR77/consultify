@@ -1,24 +1,36 @@
-import React, { useState } from 'react';
-import { FullSession, FullInitiative, Language } from '../types';
 import {
-    Layout, Users, Calendar, Activity,
-    AlertOctagon, Megaphone, TrendingUp, Flag,
-    CheckCircle2, FileText, Shield, BarChart3, UserCog,
-    GitBranch, Layers
+    Activity,
+    AlertOctagon,
+    BarChart3,
+    Calendar,
+    CheckCircle2,
+    FileText,
+    Flag,
+    GitBranch,
+    Layers,
+    Layout,
+    Megaphone,
+    Shield,
+    TrendingUp,
+    UserCog,
+    Users,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { FullInitiative, FullSession, Language } from '../types';
 import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
-import { RolloutStrategyTab } from './RolloutStrategyTab';
-import { RolloutTeamsTab } from './RolloutTeamsTab';
-import { RolloutPlanTab } from './RolloutPlanTab';
-import { RolloutRisksTab } from './RolloutRisksTab';
-import { RolloutChangeTab } from './RolloutChangeTab';
-import { RolloutKPITab } from './RolloutKPITab';
-import { RolloutClosureTab } from './RolloutClosureTab';
-import { DecisionBoard, CapacityView, StatusReportBuilder } from './Implementation';
+import { CapacityView, DecisionBoard, StatusReportBuilder } from './Implementation';
 import { GateStatus } from './PMO/GateStatus';
+import { PMOHealthSection } from './PMO/PMOHealthSection';
 import { RACIMatrix } from './PMO/RACIMatrix';
 import { WorkstreamBoard } from './PMO/WorkstreamBoard';
-import { PMOHealthSection } from './PMO/PMOHealthSection';
+import { RolloutChangeTab } from './RolloutChangeTab';
+import { RolloutClosureTab } from './RolloutClosureTab';
+import { RolloutKPITab } from './RolloutKPITab';
+import { RolloutPlanTab } from './RolloutPlanTab';
+import { RolloutRisksTab } from './RolloutRisksTab';
+import { RolloutStrategyTab } from './RolloutStrategyTab';
+import { RolloutTeamsTab } from './RolloutTeamsTab';
 
 interface FullRolloutWorkspaceProps {
     fullSession: FullSession;
@@ -29,7 +41,17 @@ interface FullRolloutWorkspaceProps {
     projectId?: string;
 }
 
-type RolloutTab = 'dashboard' | 'governance' | 'workstreams' | 'teams' | 'capacity' | 'plan' | 'risks' | 'change' | 'reports' | 'closure';
+type RolloutTab =
+    | 'dashboard'
+    | 'governance'
+    | 'workstreams'
+    | 'teams'
+    | 'capacity'
+    | 'plan'
+    | 'risks'
+    | 'change'
+    | 'reports'
+    | 'closure';
 
 export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     fullSession,
@@ -37,7 +59,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     onUpdateSession,
     onNextStep,
     language,
-    projectId = 'default'
+    projectId = 'default',
 }) => {
     const [activeTab, setActiveTab] = useState<RolloutTab>('dashboard'); // Default to Dashboard (Kanban) which is most used
     const [showChangeModal, setShowChangeModal] = useState(false);
@@ -58,10 +80,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
             </div>
 
             {/* Decision Board */}
-            <DecisionBoard
-                projectId={projectId}
-                {...({ canApprove: true } as any)}
-            />
+            <DecisionBoard projectId={projectId} {...({ canApprove: true } as any)} />
 
             {/* RACI Matrix */}
             <div className="bg-navy-900 rounded-xl border border-white/10 p-6">
@@ -73,10 +92,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     // Workstreams Tab
     const renderWorkstreams = () => (
         <div className="p-6">
-            <WorkstreamBoard
-                projectId={projectId}
-                canManage={true}
-            />
+            <WorkstreamBoard projectId={projectId} canManage={true} />
         </div>
     );
 
@@ -87,7 +103,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
+                        rollout: { ...fullSession.rollout, ...updatedData },
                     });
                 }
             }}
@@ -109,7 +125,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
+                        rollout: { ...fullSession.rollout, ...updatedData },
                     });
                 }
             }}
@@ -123,7 +139,6 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 fullSession={fullSession}
                 onUpdateInitiative={onUpdateInitiative}
                 onNextStep={onNextStep}
-
             />
         </div>
     );
@@ -136,7 +151,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
+                        rollout: { ...fullSession.rollout, ...updatedData },
                     });
                 }
             }}
@@ -150,7 +165,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
+                        rollout: { ...fullSession.rollout, ...updatedData },
                     });
                 }
             }}
@@ -174,7 +189,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
-                        rollout: { ...fullSession.rollout, ...updatedData }
+                        rollout: { ...fullSession.rollout, ...updatedData },
                     });
                 }
             }}
@@ -189,9 +204,9 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                                 lessonsLearned: [],
                                 ...fullSession.rollout?.closure,
                                 isClosed: true,
-                                closedAt: new Date().toISOString()
-                            }
-                        }
+                                closedAt: new Date().toISOString(),
+                            },
+                        },
                     });
                 }
             }}
@@ -200,17 +215,28 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard': return renderDashboard();
-            case 'governance': return renderGovernance();
-            case 'workstreams': return renderWorkstreams();
-            case 'teams': return renderTeams();
-            case 'capacity': return renderCapacity();
-            case 'plan': return renderPlan();
-            case 'risks': return renderRisks();
-            case 'change': return renderChange();
-            case 'reports': return renderReports();
-            case 'closure': return renderClosure();
-            default: return null;
+            case 'dashboard':
+                return renderDashboard();
+            case 'governance':
+                return renderGovernance();
+            case 'workstreams':
+                return renderWorkstreams();
+            case 'teams':
+                return renderTeams();
+            case 'capacity':
+                return renderCapacity();
+            case 'plan':
+                return renderPlan();
+            case 'risks':
+                return renderRisks();
+            case 'change':
+                return renderChange();
+            case 'reports':
+                return renderReports();
+            case 'closure':
+                return renderClosure();
+            default:
+                return null;
         }
     };
 
@@ -242,7 +268,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
                     { id: 'change', label: 'Changes', icon: GitBranch, group: 'governance' },
                     { id: 'reports', label: 'Reports', icon: BarChart3, group: 'monitoring' },
                     { id: 'closure', label: 'Closure', icon: Flag, group: 'governance' },
-                ].map(tab => (
+                ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as RolloutTab)}

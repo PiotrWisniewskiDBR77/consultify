@@ -1,6 +1,6 @@
 /**
  * SuperAdminAISettings - Global AI Platform Settings
- * 
+ *
  * SuperAdmin interface for managing platform-wide AI configuration:
  * - Default provider selection
  * - Fallback chain configuration
@@ -10,31 +10,31 @@
  * - Circuit breaker configuration
  */
 
-import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
 import {
-    Settings,
-    Server,
-    Shield,
-    Zap,
-    Save,
-    RefreshCw,
+    Activity,
     AlertTriangle,
     CheckCircle,
-    Globe,
-    Lock,
-    Gauge,
-    Activity,
+    ChevronDown,
+    ChevronUp,
     Database,
     Eye,
-    ChevronUp,
-    ChevronDown,
+    Gauge,
+    Globe,
     GripVertical,
-    Trash2,
+    Info,
+    Lock,
     Plus,
-    Info
+    RefreshCw,
+    Save,
+    Server,
+    Settings,
+    Shield,
+    Trash2,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
 interface SuperAdminSettings {
     id: string;
@@ -69,13 +69,23 @@ const DATA_RESIDENCY_OPTIONS = [
     { value: null, label: 'No Restriction', description: 'Data can be processed globally' },
     { value: 'EU', label: 'European Union', description: 'Data stays within EU boundaries' },
     { value: 'US', label: 'United States', description: 'Data processed in US data centers' },
-    { value: 'APAC', label: 'Asia Pacific', description: 'Data processed in APAC region' }
+    { value: 'APAC', label: 'Asia Pacific', description: 'Data processed in APAC region' },
 ];
 
 const PII_SENSITIVITY_OPTIONS = [
     { value: 'low', label: 'Low', description: 'Basic PII detection (emails, phone numbers)', color: 'text-green-400' },
-    { value: 'medium', label: 'Medium', description: 'Standard detection (+ names, addresses)', color: 'text-yellow-400' },
-    { value: 'high', label: 'High', description: 'Aggressive detection (+ financial, health data)', color: 'text-red-400' }
+    {
+        value: 'medium',
+        label: 'Medium',
+        description: 'Standard detection (+ names, addresses)',
+        color: 'text-yellow-400',
+    },
+    {
+        value: 'high',
+        label: 'High',
+        description: 'Aggressive detection (+ financial, health data)',
+        color: 'text-red-400',
+    },
 ];
 
 export const SuperAdminAISettings: React.FC = () => {
@@ -97,11 +107,11 @@ export const SuperAdminAISettings: React.FC = () => {
         try {
             const [settingsRes, providersRes] = await Promise.all([
                 fetch('/api/ai-settings/superadmin', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 }),
                 fetch('/api/llm/providers', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                })
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }),
             ]);
 
             if (settingsRes.ok) {
@@ -129,16 +139,16 @@ export const SuperAdminAISettings: React.FC = () => {
         try {
             const payload = {
                 ...settings,
-                fallbackChain
+                fallbackChain,
             };
 
             const res = await fetch('/api/ai-settings/superadmin', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             });
 
             if (res.ok) {
@@ -157,23 +167,23 @@ export const SuperAdminAISettings: React.FC = () => {
     };
 
     const updateSetting = <K extends keyof SuperAdminSettings>(key: K, value: SuperAdminSettings[K]) => {
-        setSettings(prev => prev ? { ...prev, [key]: value } : null);
+        setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
         setHasChanges(true);
     };
 
     const updateNestedSetting = <K extends 'circuitBreakerConfig' | 'globalRateLimit'>(
         parent: K,
         key: keyof SuperAdminSettings[K],
-        value: number
+        value: number,
     ) => {
-        setSettings(prev => {
+        setSettings((prev) => {
             if (!prev) return null;
             return {
                 ...prev,
                 [parent]: {
                     ...prev[parent],
-                    [key]: value
-                }
+                    [key]: value,
+                },
             };
         });
         setHasChanges(true);
@@ -187,7 +197,7 @@ export const SuperAdminAISettings: React.FC = () => {
     };
 
     const removeFromFallbackChain = (providerId: string) => {
-        setFallbackChain(fallbackChain.filter(id => id !== providerId));
+        setFallbackChain(fallbackChain.filter((id) => id !== providerId));
         setHasChanges(true);
     };
 
@@ -258,17 +268,17 @@ export const SuperAdminAISettings: React.FC = () => {
 
                     {/* Default Provider */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Default Provider
-                        </label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Default Provider</label>
                         <select
                             value={settings.defaultProvider || ''}
                             onChange={(e) => updateSetting('defaultProvider', e.target.value || null)}
                             className="w-full px-4 py-3 bg-navy-900/50 border border-white/10 rounded-xl text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
                         >
                             <option value="">Auto-select</option>
-                            {providers.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} ({p.provider})</option>
+                            {providers.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name} ({p.provider})
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -279,7 +289,7 @@ export const SuperAdminAISettings: React.FC = () => {
                             Fallback Chain
                             <span className="text-slate-500 font-normal ml-2">(drag to reorder)</span>
                         </label>
-                        
+
                         <Reorder.Group
                             axis="y"
                             values={fallbackChain}
@@ -291,7 +301,7 @@ export const SuperAdminAISettings: React.FC = () => {
                         >
                             <AnimatePresence>
                                 {fallbackChain.map((providerId, index) => {
-                                    const provider = providers.find(p => p.id === providerId);
+                                    const provider = providers.find((p) => p.id === providerId);
                                     return (
                                         <Reorder.Item
                                             key={providerId}
@@ -323,9 +333,11 @@ export const SuperAdminAISettings: React.FC = () => {
                         >
                             <option value="">+ Add provider to fallback chain</option>
                             {providers
-                                .filter(p => !fallbackChain.includes(p.id))
-                                .map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                .filter((p) => !fallbackChain.includes(p.id))
+                                .map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                    </option>
                                 ))}
                         </select>
                     </div>
@@ -345,25 +357,29 @@ export const SuperAdminAISettings: React.FC = () => {
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Requests per Minute
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Requests per Minute</label>
                             <input
                                 type="number"
                                 value={settings.globalRateLimit?.requestsPerMinute || 60}
-                                onChange={(e) => updateNestedSetting('globalRateLimit', 'requestsPerMinute', parseInt(e.target.value))}
+                                onChange={(e) =>
+                                    updateNestedSetting(
+                                        'globalRateLimit',
+                                        'requestsPerMinute',
+                                        parseInt(e.target.value),
+                                    )
+                                }
                                 className="w-full px-4 py-3 bg-navy-900/50 border border-white/10 rounded-xl text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Requests per Hour
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Requests per Hour</label>
                             <input
                                 type="number"
                                 value={settings.globalRateLimit?.requestsPerHour || 1000}
-                                onChange={(e) => updateNestedSetting('globalRateLimit', 'requestsPerHour', parseInt(e.target.value))}
+                                onChange={(e) =>
+                                    updateNestedSetting('globalRateLimit', 'requestsPerHour', parseInt(e.target.value))
+                                }
                                 className="w-full px-4 py-3 bg-navy-900/50 border border-white/10 rounded-xl text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                             />
                         </div>
@@ -431,7 +447,7 @@ export const SuperAdminAISettings: React.FC = () => {
                                 PII Detection Sensitivity
                             </label>
                             <div className="space-y-2">
-                                {PII_SENSITIVITY_OPTIONS.map(option => (
+                                {PII_SENSITIVITY_OPTIONS.map((option) => (
                                     <label
                                         key={option.value}
                                         className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
@@ -445,10 +461,14 @@ export const SuperAdminAISettings: React.FC = () => {
                                             name="piiSensitivity"
                                             value={option.value}
                                             checked={settings.piiDetectionSensitivity === option.value}
-                                            onChange={(e) => updateSetting('piiDetectionSensitivity', e.target.value as any)}
+                                            onChange={(e) =>
+                                                updateSetting('piiDetectionSensitivity', e.target.value as any)
+                                            }
                                             className="sr-only"
                                         />
-                                        <div className={`w-3 h-3 rounded-full ${option.color.replace('text-', 'bg-')}`} />
+                                        <div
+                                            className={`w-3 h-3 rounded-full ${option.color.replace('text-', 'bg-')}`}
+                                        />
                                         <div className="flex-1">
                                             <div className={`font-medium ${option.color}`}>{option.label}</div>
                                             <div className="text-sm text-slate-400">{option.description}</div>
@@ -502,14 +522,20 @@ export const SuperAdminAISettings: React.FC = () => {
                                 <Zap size={18} className="text-amber-400" />
                                 <span className="font-medium text-white">Circuit Breaker</span>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm text-slate-400 mb-1">Failure Threshold</label>
                                     <input
                                         type="number"
                                         value={settings.circuitBreakerConfig?.failureThreshold || 5}
-                                        onChange={(e) => updateNestedSetting('circuitBreakerConfig', 'failureThreshold', parseInt(e.target.value))}
+                                        onChange={(e) =>
+                                            updateNestedSetting(
+                                                'circuitBreakerConfig',
+                                                'failureThreshold',
+                                                parseInt(e.target.value),
+                                            )
+                                        }
                                         className="w-full px-3 py-2 bg-navy-900/50 border border-white/10 rounded-lg text-white text-sm"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">failures before trip</p>
@@ -519,7 +545,13 @@ export const SuperAdminAISettings: React.FC = () => {
                                     <input
                                         type="number"
                                         value={settings.circuitBreakerConfig?.cooldownSeconds || 60}
-                                        onChange={(e) => updateNestedSetting('circuitBreakerConfig', 'cooldownSeconds', parseInt(e.target.value))}
+                                        onChange={(e) =>
+                                            updateNestedSetting(
+                                                'circuitBreakerConfig',
+                                                'cooldownSeconds',
+                                                parseInt(e.target.value),
+                                            )
+                                        }
                                         className="w-full px-3 py-2 bg-navy-900/50 border border-white/10 rounded-lg text-white text-sm"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">before retry</p>
@@ -529,11 +561,9 @@ export const SuperAdminAISettings: React.FC = () => {
 
                         {/* Data Residency */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-3">
-                                Data Residency
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-3">Data Residency</label>
                             <div className="grid grid-cols-2 gap-2">
-                                {DATA_RESIDENCY_OPTIONS.map(option => (
+                                {DATA_RESIDENCY_OPTIONS.map((option) => (
                                     <label
                                         key={option.value || 'none'}
                                         className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
@@ -551,7 +581,14 @@ export const SuperAdminAISettings: React.FC = () => {
                                             className="sr-only"
                                         />
                                         <div className="flex items-center gap-2 mb-1">
-                                            <Globe size={16} className={settings.dataResidency === option.value ? 'text-violet-400' : 'text-slate-400'} />
+                                            <Globe
+                                                size={16}
+                                                className={
+                                                    settings.dataResidency === option.value
+                                                        ? 'text-violet-400'
+                                                        : 'text-slate-400'
+                                                }
+                                            />
                                             <span className="font-medium text-white">{option.label}</span>
                                         </div>
                                         <span className="text-xs text-slate-400">{option.description}</span>
@@ -575,11 +612,4 @@ export const SuperAdminAISettings: React.FC = () => {
 };
 
 export default SuperAdminAISettings;
-
-
-
-
-
-
-
 

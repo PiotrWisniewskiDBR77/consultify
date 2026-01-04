@@ -1,12 +1,12 @@
 /**
  * OrgUnitNode - Organization chart unit
- * 
+ *
  * Card-style node for organization charts with role and department info.
  */
 
+import { Building2, User, Users } from 'lucide-react';
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
-import { User, Building2, Users } from 'lucide-react';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 interface OrgUnitData {
     label: string;
@@ -17,11 +17,7 @@ interface OrgUnitData {
     reportCount?: number;
 }
 
-export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
-    data,
-    selected,
-    isConnectable
-}: any) => {
+export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({ data, selected, isConnectable }: any) => {
     const { label, role, department, avatarUrl, type = 'person', reportCount } = data;
 
     const typeConfig = {
@@ -29,20 +25,20 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
             icon: User,
             borderColor: 'border-blue-500',
             iconBg: 'bg-blue-500/20',
-            iconColor: 'text-blue-400'
+            iconColor: 'text-blue-400',
         },
         department: {
             icon: Building2,
             borderColor: 'border-purple-500',
             iconBg: 'bg-purple-500/20',
-            iconColor: 'text-purple-400'
+            iconColor: 'text-purple-400',
         },
         team: {
             icon: Users,
             borderColor: 'border-cyan-500',
             iconBg: 'bg-cyan-500/20',
-            iconColor: 'text-cyan-400'
-        }
+            iconColor: 'text-cyan-400',
+        },
     };
 
     const config = (typeConfig as any)[type];
@@ -78,14 +74,8 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-white truncate">
-                        {label || 'Name'}
-                    </div>
-                    {role && (
-                        <div className="text-xs text-slate-400 truncate">
-                            {role}
-                        </div>
-                    )}
+                    <div className="font-medium text-sm text-white truncate">{label || 'Name'}</div>
+                    {role && <div className="text-xs text-slate-400 truncate">{role}</div>}
                 </div>
             </div>
 
@@ -121,12 +111,4 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(({
 OrgUnitNode.displayName = 'OrgUnitNode';
 
 export default OrgUnitNode;
-
-
-
-
-
-
-
-
 

@@ -1,15 +1,18 @@
 /**
  * Activity Logging Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/activityService.js (ES Modules) to TypeScript (ES Modules)
  * Logs user actions for audit trail and SuperAdmin dashboard
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+
+import type RequestStore from '../utils/RequestStore.js';
 
 // ==========================================
 // TYPES
@@ -54,29 +57,35 @@ interface ActivityStats {
     last_7d: number;
 }
 
+interface ISiemService {
+    stream(event: any): Promise<void>;
+}
+
 // ==========================================
 // SERVICE
 // ==========================================
 
 let db: IDatabase = getDatabase();
-let requestStore: any;
-let siemService: any;
+let requestStore: typeof RequestStore | undefined;
+let siemService: ISiemService | undefined;
 
 async function initDeps(): Promise<void> {
     if (!requestStore) {
         const requestStoreModule = await import('../utils/RequestStore.js');
-        requestStore = requestStoreModule.default || requestStoreModule;
+        requestStore = requestStoreModule.default;
     }
     if (!siemService) {
         const siemServiceModule = await import('./siemService.js');
-        siemService = siemServiceModule.default || siemServiceModule;
+        siemService = (siemServiceModule.default || siemServiceModule) as unknown as ISiemService;
     }
 }
 
 /**
  * Set dependencies for testing
  */
-export function setDependencies(newDeps: { db?: IDatabase; requestStore?: any; siemService?: any } = {}): void {
+export function setDependencies(
+    newDeps: { db?: IDatabase; requestStore?: typeof RequestStore; siemService?: ISiemService } = {},
+): void {
     if (newDeps.db) {
         db = newDeps.db;
     }
@@ -93,8 +102,8 @@ export function setDependencies(newDeps: { db?: IDatabase; requestStore?: any; s
  */
 export async function log(params: LogActivityParams): Promise<void> {
     await initDeps();
-    
-    const correlationId = requestStore.getCorrelationId ? requestStore.getCorrelationId() : null;
+
+    const correlationId = requestStore && requestStore.getCorrelationId ? requestStore.getCorrelationId() : null;
     const {
         organizationId,
         userId,
@@ -105,7 +114,7 @@ export async function log(params: LogActivityParams): Promise<void> {
         oldValue,
         newValue,
         ipAddress,
-        userAgent
+        userAgent,
     } = params;
 
     const activityId = uuidv4();
@@ -128,22 +137,24 @@ export async function log(params: LogActivityParams): Promise<void> {
                 newValue ? JSON.stringify(newValue) : null,
                 ipAddress || null,
                 userAgent || null,
-                correlationId
-            ]
+                correlationId,
+            ],
         );
 
         // Prestige Layer: Stream to external SIEM
         try {
-            await siemService.stream({
-                id: activityId,
-                organizationId,
-                userId,
-                action,
-                entityType,
-                entityId,
-                correlationId,
-                metadata: { ipAddress, userAgent }
-            });
+            if (siemService) {
+                await siemService.stream({
+                    id: activityId,
+                    organizationId,
+                    userId,
+                    action,
+                    entityType,
+                    entityId,
+                    correlationId,
+                    metadata: { ipAddress, userAgent },
+                });
+            }
         } catch {
             // Ignore SIEM errors
         }
@@ -172,7 +183,7 @@ export async function getRecent(limit: number = 50): Promise<ActivityLogRow[]> {
         LEFT JOIN organizations o ON al.organization_id = o.id
         ORDER BY al.created_at DESC
         LIMIT ?`,
-        [limit]
+        [limit],
     );
 
     return rows || [];
@@ -193,7 +204,7 @@ export async function getByOrganization(organizationId: string, limit: number = 
         WHERE al.organization_id = ?
         ORDER BY al.created_at DESC
         LIMIT ?`,
-        [organizationId, limit]
+        [organizationId, limit],
     );
 
     return rows || [];
@@ -210,7 +221,7 @@ export async function getStats(): Promise<ActivityStats> {
             COUNT(CASE WHEN created_at > datetime('now', '-1 hour') THEN 1 END) as last_hour,
             COUNT(CASE WHEN created_at > datetime('now', '-24 hours') THEN 1 END) as last_24h,
             COUNT(CASE WHEN created_at > datetime('now', '-7 days') THEN 1 END) as last_7d
-        FROM activity_logs`
+        FROM activity_logs`,
     );
 
     return row || { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
@@ -222,7 +233,7 @@ const ActivityService = {
     log,
     getRecent,
     getByOrganization,
-    getStats
+    getStats,
 };
 
 export default ActivityService;

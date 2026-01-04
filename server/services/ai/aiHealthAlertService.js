@@ -9,7 +9,8 @@
  * @version 1.0.0
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import NotificationService from '../notificationService.js';
 import SlackService from '../slackService.js';
@@ -345,6 +346,7 @@ const AIHealthAlertService = {
 };
 
 export default AIHealthAlertService;
+
 
 
 

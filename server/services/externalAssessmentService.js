@@ -5,7 +5,8 @@
  * Handles file upload, framework-specific parsing, score normalization, and DRD mapping.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import PDFParserService from './pdfParserService.js';
 import { v4 as uuidv4 } from 'uuid';
 

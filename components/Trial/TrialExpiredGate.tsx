@@ -1,6 +1,7 @@
 import React from 'react';
-import { useTrial } from '../../contexts/TrialContext';
 import { useNavigate } from 'react-router-dom';
+
+import { useTrial } from '../../contexts/TrialContext';
 
 export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isTrial, isExpired, loading } = useTrial();
@@ -14,7 +15,12 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
                 <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 text-center animate-in fade-in zoom-in duration-300">
                     <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
                         </svg>
                     </div>
 
@@ -43,7 +49,8 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
 
                     <div className="mt-8 pt-8 border-t border-slate-100">
                         <p className="text-sm text-slate-500">
-                            Need to export your data? <button className="text-indigo-600 hover:underline">Download Archive</button>
+                            Need to export your data?{' '}
+                            <button className="text-indigo-600 hover:underline">Download Archive</button>
                         </p>
                     </div>
                 </div>

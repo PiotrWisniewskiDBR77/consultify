@@ -1,25 +1,26 @@
 /**
  * IntegrationsPanel - Full Implementation
- * 
+ *
  * Complete integration management with webhooks and connectors
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
 import {
-    Webhook,
-    Plus,
-    Edit,
-    Trash2,
-    RefreshCw,
+    Activity,
     CheckCircle,
-    XCircle,
+    Edit,
     Loader2,
+    Plus,
+    RefreshCw,
     Search,
     Settings,
-    Activity
+    Trash2,
+    Webhook,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface Integration {
     id: string;
@@ -108,9 +109,7 @@ export const IntegrationsPanel: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white mb-2">Integrations Hub</h2>
-                    <p className="text-slate-400 text-sm">
-                        Connect Consultify with your existing tools
-                    </p>
+                    <p className="text-slate-400 text-sm">Connect Consultify with your existing tools</p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
@@ -125,19 +124,21 @@ export const IntegrationsPanel: React.FC = () => {
             <div className="flex gap-2 border-b border-white/10">
                 <button
                     onClick={() => setActiveTab('integrations')}
-                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'integrations'
-                        ? 'text-cyan-400 border-b-2 border-cyan-400'
-                        : 'text-slate-400 hover:text-white'
-                        }`}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'integrations'
+                            ? 'text-cyan-400 border-b-2 border-cyan-400'
+                            : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                     Integrations
                 </button>
                 <button
                     onClick={() => setActiveTab('webhooks')}
-                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'webhooks'
-                        ? 'text-cyan-400 border-b-2 border-cyan-400'
-                        : 'text-slate-400 hover:text-white'
-                        }`}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'webhooks'
+                            ? 'text-cyan-400 border-b-2 border-cyan-400'
+                            : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                     Webhooks
                 </button>
@@ -174,8 +175,13 @@ export const IntegrationsPanel: React.FC = () => {
                                             <p className="text-xs text-slate-500">
                                                 Last sync: {new Date(integration.last_sync_at).toLocaleString()}
                                                 {integration.last_sync_status && (
-                                                    <span className={`ml-2 ${integration.last_sync_status === 'success' ? 'text-green-400' : 'text-red-400'
-                                                        }`}>
+                                                    <span
+                                                        className={`ml-2 ${
+                                                            integration.last_sync_status === 'success'
+                                                                ? 'text-green-400'
+                                                                : 'text-red-400'
+                                                        }`}
+                                                    >
                                                         ({integration.last_sync_status})
                                                     </span>
                                                 )}

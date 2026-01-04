@@ -10,7 +10,7 @@ import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
 import assessmentWorkflowModule from '../services/assessmentWorkflowService.js';
 const AssessmentWorkflowService = assessmentWorkflowModule.AssessmentWorkflowService || assessmentWorkflowModule;
 const WORKFLOW_STATES = assessmentWorkflowModule.WORKFLOW_STATES || {};
-import AssessmentAuditLogger from '../utils/assessmentAuditLogger.js';
+import AssessmentAuditLogger from '../dist/utils/assessmentAuditLogger.js';
 import path from 'path';
 
 /**

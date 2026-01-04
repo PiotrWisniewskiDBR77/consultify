@@ -1,23 +1,19 @@
 /**
  * TextNode - Simple text annotation
- * 
+ *
  * Basic text node for annotations and notes.
  */
 
-import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
 import { StickyNote } from 'lucide-react';
+import React, { memo } from 'react';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 interface TextNodeData {
     label: string;
     color?: 'yellow' | 'blue' | 'green' | 'red' | 'purple';
 }
 
-export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
-    data,
-    selected,
-    isConnectable
-}: any) => {
+export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({ data, selected, isConnectable }: any) => {
     const { label, color = 'yellow' } = data;
 
     const colorClasses = {
@@ -25,7 +21,7 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
         blue: 'border-blue-500/50 bg-blue-500/10 text-blue-200',
         green: 'border-green-500/50 bg-green-500/10 text-green-200',
         red: 'border-red-500/50 bg-red-500/10 text-red-200',
-        purple: 'border-purple-500/50 bg-purple-500/10 text-purple-200'
+        purple: 'border-purple-500/50 bg-purple-500/10 text-purple-200',
     };
 
     return (
@@ -47,9 +43,7 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
             {/* Content */}
             <div className="flex items-start gap-2">
                 <StickyNote size={14} className="shrink-0 mt-0.5 opacity-60" />
-                <div className="text-xs whitespace-pre-wrap break-words">
-                    {label || 'Note'}
-                </div>
+                <div className="text-xs whitespace-pre-wrap break-words">{label || 'Note'}</div>
             </div>
 
             <Handle
@@ -65,12 +59,4 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(({
 TextNode.displayName = 'TextNode';
 
 export default TextNode;
-
-
-
-
-
-
-
-
 

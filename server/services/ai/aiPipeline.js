@@ -10,7 +10,8 @@ import { aiLogger } from './logger.js';
 import { createTrace, calculateCost } from './observability.js';
 import metrics from './metrics.js';
 import crypto from 'crypto';
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 
 // Enterprise AI Services Integration
 import { qualityChecker } from './qualityChecker.js';
@@ -333,8 +334,13 @@ class AIPipeline extends BaseService {
             this.ragService = ragService;
         }
         if (!this.settingsService) {
-            const { aiSettingsService } = await import('../aiSettingsService.js');
+            const { default: aiSettingsService } = await import('../aiSettingsService.js');
             this.settingsService = aiSettingsService;
+        }
+        if (!this.mcpServer) {
+            const { mcpServer } = await import('./mcpServer.js');
+            this.mcpServer = mcpServer;
+            await import('./tools/index.js'); // Ensure tools are registered
         }
     }
 
@@ -670,7 +676,7 @@ class AIPipeline extends BaseService {
             let responseModeConfig = null;
             let responseModePrompt = '';
             try {
-                const { adaptiveResponseService } = require('./adaptiveResponseService');
+                const { adaptiveResponseService } = await import('./adaptiveResponseService.js');
                 const userPreferences = request.aiPreferences || {};
 
                 responseModeConfig = await adaptiveResponseService.determineResponseMode(
@@ -989,8 +995,7 @@ class AIPipeline extends BaseService {
      * @param {string} tier - Model tier for selecting appropriate chain
      */
     getFallbackModel(modelId, excludeModels = [], tier = 'STANDARD') {
-        const { TIER_FALLBACK_CHAINS } = require('./modelRouter');
-        const chain = TIER_FALLBACK_CHAINS[tier] || TIER_FALLBACK_CHAINS['STANDARD'];
+        const chain = this.modelRouter.getFallbackChain(tier);
 
         // Add current model to exclude list
         const excluded = new Set([...excludeModels, modelId]);
@@ -1133,11 +1138,18 @@ class AIPipeline extends BaseService {
     /**
      * Get available tools for the pipeline
      */
+    /**
+     * Get available tools for the pipeline
+     */
     getAvailableTools() {
         try {
-            const { mcpServer } = require('./mcpServer');
-            require('./tools'); // Ensure registered
-            return mcpServer.getToolDefinitions();
+            if (this.mcpServer) {
+                return this.mcpServer.getToolDefinitions();
+            }
+            // If not initialized yet (shouldn't happen if initDeps handled), return empty or try lazy import?
+            // Since this method is synchronous, we cannot await.
+            // Assuming initDeps was called.
+            return [];
         } catch (e) {
             console.warn('[AIPipeline] Failed to load tools:', e.message);
             return [];
@@ -1738,7 +1750,6 @@ export {
     CAPABILITY_REGISTRY,
     getCapabilityConfig,
     FALLBACK_ROLES,
-    // World-Class Chat 2025: Thinking & Artifacts
     extractThinkingSteps,
     extractArtifacts,
     enhanceResponse

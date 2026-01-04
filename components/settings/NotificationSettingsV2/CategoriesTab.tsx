@@ -3,12 +3,13 @@
  * Configure desktop and mobile push notifications
  */
 
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Bell, Smartphone } from 'lucide-react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import type { NotificationPreferences, NotificationCategory } from '../../../hooks/useUserNotificationPreferences';
+import { useTranslation } from 'react-i18next';
+
 import type { UserIntegration } from '../../../hooks/useUserIntegrations';
+import type { NotificationCategory, NotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
 
 interface CategoriesTabProps {
     preferences: NotificationPreferences;
@@ -25,13 +26,11 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
     integrations,
     onToggleCategory,
     onToggleChannel,
-    onToggleType
+    onToggleType,
 }) => {
     const { t } = useTranslation();
     const [pushEnabled, setPushEnabled] = useState(false);
-    const [desktopEnabled, setDesktopEnabled] = useState(
-        preferences.categories.tasks?.channels?.push ?? true
-    );
+    const [desktopEnabled, setDesktopEnabled] = useState(preferences.categories.tasks?.channels?.push ?? true);
 
     const requestPermission = async () => {
         if ('Notification' in window) {
@@ -39,7 +38,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
             if (permission === 'granted') {
                 setPushEnabled(true);
                 toast.success(t('settings.notifications.pushEnabled', 'Push notifications enabled'));
-                
+
                 // Update all categories to enable push
                 for (const category of Object.keys(preferences.categories)) {
                     await onToggleChannel(category, 'push', true);
@@ -53,7 +52,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
     const toggleDesktop = async () => {
         const newValue = !desktopEnabled;
         setDesktopEnabled(newValue);
-        
+
         // Update all categories
         for (const category of Object.keys(preferences.categories)) {
             await onToggleChannel(category, 'push', newValue);
@@ -86,12 +85,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
                     </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={desktopEnabled}
-                        onChange={toggleDesktop}
-                        className="sr-only peer"
-                    />
+                    <input type="checkbox" checked={desktopEnabled} onChange={toggleDesktop} className="sr-only peer" />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
             </div>
@@ -110,11 +104,4 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
 };
 
 export default CategoriesTab;
-
-
-
-
-
-
-
 

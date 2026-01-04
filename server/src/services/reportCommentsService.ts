@@ -1,14 +1,12 @@
 /**
  * Reportcomments Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadReportcommentsservice = createCachedLazyService('../../services/reportCommentsService.js');
+import service from '../../services/reportCommentsService.js';
 
 // Export default instance (for backward compatibility)
-export default loadReportcommentsservice();
+export default service;

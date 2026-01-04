@@ -4,7 +4,7 @@
  * Provides Promise-based wrappers and helpers for database queries.
  * Eliminates callback hell and provides consistent error handling.
  */
-import db from '../database';
+import db from '../database.js';
 /**
  * Promise-based wrapper for db.all
  */
@@ -50,7 +50,7 @@ export function queryRun(sql, params = []) {
             else {
                 resolve({
                     lastID: this.lastID,
-                    changes: this.changes
+                    changes: this.changes,
                 });
             }
         });
@@ -60,7 +60,7 @@ export function queryRun(sql, params = []) {
  * Execute multiple queries in parallel
  */
 export async function queryParallel(queries) {
-    const promises = queries.map(q => {
+    const promises = queries.map((q) => {
         if (q.type === 'all') {
             return queryAll(q.sql, q.params || []);
         }
@@ -82,13 +82,13 @@ export function buildInPlaceholders(values) {
 /**
  * Build WHERE clause for organization filtering
  */
-export function buildOrgFilter(tableAlias, orgId) {
+export function buildOrgFilter(tableAlias, _orgId) {
     return `${tableAlias}.organization_id = ?`;
 }
 /**
  * Build WHERE clause for user filtering (assignee or reporter)
  */
-export function buildUserFilter(tableAlias, userId) {
+export function buildUserFilter(tableAlias, _userId) {
     return `(${tableAlias}.assignee_id = ? OR ${tableAlias}.reporter_id = ?)`;
 }
 /**
@@ -128,7 +128,7 @@ export function parseJsonFields(row, jsonFields = ['checklist', 'attachments', '
     if (!row)
         return row;
     const parsed = { ...row };
-    jsonFields.forEach(field => {
+    jsonFields.forEach((field) => {
         if (parsed[field] && typeof parsed[field] === 'string') {
             try {
                 parsed[field] = JSON.parse(parsed[field]);
@@ -148,7 +148,7 @@ export function transformRow(row, fieldMap = {}) {
     if (!row)
         return null;
     const transformed = {};
-    Object.keys(row).forEach(key => {
+    Object.keys(row).forEach((key) => {
         // Use custom mapping if provided
         if (fieldMap[key]) {
             transformed[fieldMap[key]] = row[key];

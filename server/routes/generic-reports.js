@@ -163,8 +163,8 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
         const organizationId = req.user.organizationId;
 
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         const sql = `DELETE FROM generic_assessment_reports WHERE id = ? AND organization_id = ?`;
 
         db.run(sql, [id, organizationId], function (err) {

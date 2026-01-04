@@ -1,16 +1,24 @@
 /**
  * Financial Metrics Panel
- * 
+ *
  * Displays calculated financial metrics (NPV, IRR, Payback Period, ROI)
  * with visual indicators and explanations.
  */
 
-import React from 'react';
-import { 
-    TrendingUp, TrendingDown, Clock, Percent, 
-    DollarSign, AlertCircle, CheckCircle, Info,
-    ArrowUpRight, ArrowDownRight, Minus
+import {
+    AlertCircle,
+    ArrowDownRight,
+    ArrowUpRight,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Info,
+    Minus,
+    Percent,
+    TrendingDown,
+    TrendingUp,
 } from 'lucide-react';
+import React from 'react';
 
 interface FinancialMetrics {
     npv: number | null;
@@ -35,7 +43,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
     currency = 'PLN',
     discountRate = 10,
     horizon = 5,
-    isLoading = false
+    isLoading = false,
 }) => {
     const formatCurrency = (value: number | null) => {
         if (value === null) return '—';
@@ -43,7 +51,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
             style: 'currency',
             currency,
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(value);
     };
 
@@ -63,12 +71,12 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
 
     const getMetricStatus = (metricType: string, value: number | null): 'positive' | 'negative' | 'neutral' => {
         if (value === null) return 'neutral';
-        
+
         switch (metricType) {
             case 'npv':
                 return value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
             case 'irr':
-                return value > (discountRate / 100) ? 'positive' : value < (discountRate / 100) ? 'negative' : 'neutral';
+                return value > discountRate / 100 ? 'positive' : value < discountRate / 100 ? 'negative' : 'neutral';
             case 'payback':
                 return value <= horizon * 0.5 ? 'positive' : value > horizon ? 'negative' : 'neutral';
             case 'roi':
@@ -83,20 +91,20 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
             bg: 'bg-emerald-50 dark:bg-emerald-500/10',
             border: 'border-emerald-200 dark:border-emerald-500/30',
             text: 'text-emerald-600 dark:text-emerald-400',
-            icon: CheckCircle
+            icon: CheckCircle,
         },
         negative: {
             bg: 'bg-red-50 dark:bg-red-500/10',
             border: 'border-red-200 dark:border-red-500/30',
             text: 'text-red-600 dark:text-red-400',
-            icon: AlertCircle
+            icon: AlertCircle,
         },
         neutral: {
             bg: 'bg-slate-50 dark:bg-slate-500/10',
             border: 'border-slate-200 dark:border-white/10',
             text: 'text-slate-600 dark:text-slate-400',
-            icon: Info
-        }
+            icon: Info,
+        },
     };
 
     const MetricCard: React.FC<{
@@ -111,13 +119,15 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
         const StatusIcon = colors.icon;
 
         return (
-            <div 
+            <div
                 className={`relative p-5 rounded-2xl border ${colors.bg} ${colors.border} transition-all hover:shadow-md group`}
                 title={tooltip}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${status === 'positive' ? 'bg-emerald-500/20' : status === 'negative' ? 'bg-red-500/20' : 'bg-slate-500/20'}`}>
+                    <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${status === 'positive' ? 'bg-emerald-500/20' : status === 'negative' ? 'bg-red-500/20' : 'bg-slate-500/20'}`}
+                    >
                         {icon}
                     </div>
                     <StatusIcon size={20} className={colors.text} />
@@ -125,10 +135,14 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
 
                 {/* Value */}
                 <div className="mb-1">
-                    <span className={`text-2xl font-bold ${status === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : status === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'}`}>
+                    <span
+                        className={`text-2xl font-bold ${status === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : status === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-navy-900 dark:text-white'}`}
+                    >
                         {isLoading ? (
                             <span className="inline-block w-20 h-8 bg-slate-200 dark:bg-white/10 animate-pulse rounded" />
-                        ) : value}
+                        ) : (
+                            value
+                        )}
                     </span>
                 </div>
 
@@ -156,25 +170,33 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
                     icon={<DollarSign size={20} className={statusColors[npvStatus].text} />}
                     tooltip="Net Present Value - suma zdyskontowanych przepływów pieniężnych"
                 />
-                
+
                 <MetricCard
                     title="IRR (Wewn. stopa zwrotu)"
                     value={formatPercent(metrics.irr)}
-                    subtitle={metrics.irr && metrics.irr > (discountRate / 100) ? 'powyżej progu rentowności' : 'poniżej progu rentowności'}
+                    subtitle={
+                        metrics.irr && metrics.irr > discountRate / 100
+                            ? 'powyżej progu rentowności'
+                            : 'poniżej progu rentowności'
+                    }
                     status={irrStatus}
                     icon={<Percent size={20} className={statusColors[irrStatus].text} />}
                     tooltip="Internal Rate of Return - stopa dyskontowa przy której NPV = 0"
                 />
-                
+
                 <MetricCard
                     title="Okres zwrotu"
                     value={formatYears(metrics.paybackPeriod)}
-                    subtitle={metrics.paybackPeriod && metrics.paybackPeriod <= horizon ? 'w horyzoncie inwestycji' : 'poza horyzontem'}
+                    subtitle={
+                        metrics.paybackPeriod && metrics.paybackPeriod <= horizon
+                            ? 'w horyzoncie inwestycji'
+                            : 'poza horyzontem'
+                    }
                     status={paybackStatus}
                     icon={<Clock size={20} className={statusColors[paybackStatus].text} />}
                     tooltip="Czas potrzebny do odzyskania początkowej inwestycji"
                 />
-                
+
                 <MetricCard
                     title="ROI (Zwrot z inwestycji)"
                     value={formatPercent(metrics.roi)}
@@ -204,14 +226,20 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
                 <SummaryCard
                     title="Korzyść netto"
                     value={formatCurrency(metrics.netBenefit)}
-                    icon={metrics.netBenefit >= 0 ? <TrendingUp size={18} className="text-blue-500" /> : <TrendingDown size={18} className="text-orange-500" />}
+                    icon={
+                        metrics.netBenefit >= 0 ? (
+                            <TrendingUp size={18} className="text-blue-500" />
+                        ) : (
+                            <TrendingDown size={18} className="text-orange-500" />
+                        )
+                    }
                     color={metrics.netBenefit >= 0 ? 'blue' : 'orange'}
                     isLoading={isLoading}
                 />
             </div>
 
             {/* Investment Decision Indicator */}
-            <InvestmentDecisionCard 
+            <InvestmentDecisionCard
                 npv={metrics.npv}
                 irr={metrics.irr}
                 roi={metrics.roi}
@@ -234,7 +262,7 @@ const SummaryCard: React.FC<{
         red: 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20',
         green: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20',
         blue: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20',
-        orange: 'bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20'
+        orange: 'bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20',
     };
 
     return (
@@ -296,7 +324,7 @@ const InvestmentDecisionCard: React.FC<{
     }
 
     const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-    
+
     let recommendation: 'strong' | 'moderate' | 'weak' | 'negative';
     let recommendationText: string;
     let recommendationColor: string;
@@ -350,11 +378,11 @@ const InvestmentDecisionCard: React.FC<{
             <div className="p-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {criteria.map((criterion, index) => (
-                        <div 
+                        <div
                             key={index}
                             className={`p-3 rounded-lg ${
-                                criterion.met 
-                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30' 
+                                criterion.met
+                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30'
                                     : 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30'
                             }`}
                         >
@@ -364,7 +392,9 @@ const InvestmentDecisionCard: React.FC<{
                                 ) : (
                                     <AlertCircle size={16} className="text-red-500" />
                                 )}
-                                <span className={`text-xs font-medium ${criterion.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>
+                                <span
+                                    className={`text-xs font-medium ${criterion.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+                                >
                                     {criterion.label}
                                 </span>
                             </div>
@@ -377,12 +407,4 @@ const InvestmentDecisionCard: React.FC<{
 };
 
 export default FinancialMetricsPanel;
-
-
-
-
-
-
-
-
 

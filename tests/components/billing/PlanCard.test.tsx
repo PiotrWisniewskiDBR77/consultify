@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PlanCard } from '../../../components/billing/PlanCard';
+import { PlanCard } from '../../components/billing/PlanCard';
 
 const mockPlan = {
     id: 'pro',
@@ -209,6 +209,7 @@ describe('PlanCard Component', () => {
         });
     });
 });
+
 
 
 

@@ -1,28 +1,29 @@
 /**
  * Help Chatbot Component
- * 
+ *
  * AI-powered help assistant that answers questions using
  * the help content knowledge base.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    MessageCircle,
-    Send,
-    X,
     Bot,
-    User,
-    RefreshCw,
-    ThumbsUp,
-    ThumbsDown,
-    Sparkles,
-    Minimize2,
-    Maximize2,
+    ExternalLink,
     HelpCircle,
-    ExternalLink
+    Maximize2,
+    MessageCircle,
+    Minimize2,
+    RefreshCw,
+    Send,
+    Sparkles,
+    ThumbsDown,
+    ThumbsUp,
+    User,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import Api from '../../services/api';
 
 interface Message {
@@ -40,132 +41,134 @@ interface HelpChatbotProps {
     contextModule?: string;
 }
 
-export const HelpChatbot: React.FC<HelpChatbotProps> = ({
-    onClose,
-    initialQuestion,
-    contextModule
-}) => {
+export const HelpChatbot: React.FC<HelpChatbotProps> = ({ onClose, initialQuestion, contextModule }) => {
     const { i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
-    
+
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState(initialQuestion || '');
     const [isLoading, setIsLoading] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(true);
-    
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    
+
     // Scroll to bottom
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, []);
-    
+
     useEffect(() => {
         scrollToBottom();
     }, [messages, scrollToBottom]);
-    
+
     // Focus input on mount
     useEffect(() => {
         inputRef.current?.focus();
     }, []);
-    
+
     // Add welcome message
     useEffect(() => {
         const welcomeMessage: Message = {
             id: 'welcome',
             role: 'assistant',
-            content: lang === 'pl' 
-                ? 'Cześć! Jestem Twoim asystentem Consultify. Jak mogę Ci dzisiaj pomóc? Możesz zapytać o dowolną funkcję aplikacji.'
-                : 'Hi! I\'m your Consultify assistant. How can I help you today? Feel free to ask about any feature of the application.',
-            timestamp: new Date()
+            content:
+                lang === 'pl'
+                    ? 'Cześć! Jestem Twoim asystentem Consultify. Jak mogę Ci dzisiaj pomóc? Możesz zapytać o dowolną funkcję aplikacji.'
+                    : "Hi! I'm your Consultify assistant. How can I help you today? Feel free to ask about any feature of the application.",
+            timestamp: new Date(),
         };
         setMessages([welcomeMessage]);
     }, [lang]);
-    
+
     // Suggested questions
-    const suggestions = lang === 'pl' ? [
-        'Jak stworzyć nową inicjatywę?',
-        'Jak zarządzać zespołem projektu?',
-        'Jak używać AI do analizy?',
-        'Jak generować raporty?'
-    ] : [
-        'How do I create a new initiative?',
-        'How do I manage project team?',
-        'How to use AI for analysis?',
-        'How to generate reports?'
-    ];
-    
+    const suggestions =
+        lang === 'pl'
+            ? [
+                  'Jak stworzyć nową inicjatywę?',
+                  'Jak zarządzać zespołem projektu?',
+                  'Jak używać AI do analizy?',
+                  'Jak generować raporty?',
+              ]
+            : [
+                  'How do I create a new initiative?',
+                  'How do I manage project team?',
+                  'How to use AI for analysis?',
+                  'How to generate reports?',
+              ];
+
     // Send message
-    const handleSend = useCallback(async (messageText?: string) => {
-        const text = messageText || input.trim();
-        if (!text || isLoading) return;
-        
-        setShowSuggestions(false);
-        setInput('');
-        
-        // Add user message
-        const userMessage: Message = {
-            id: `user-${Date.now()}`,
-            role: 'user',
-            content: text,
-            timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage]);
-        
-        setIsLoading(true);
-        
-        try {
-            const response = await Api.post('/help/chat', {
-                message: text,
-                context: contextModule,
-                history: messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
-            });
-            
-            const assistantMessage: Message = {
-                id: `assistant-${Date.now()}`,
-                role: 'assistant',
-                content: response.data.message,
+    const handleSend = useCallback(
+        async (messageText?: string) => {
+            const text = messageText || input.trim();
+            if (!text || isLoading) return;
+
+            setShowSuggestions(false);
+            setInput('');
+
+            // Add user message
+            const userMessage: Message = {
+                id: `user-${Date.now()}`,
+                role: 'user',
+                content: text,
                 timestamp: new Date(),
-                sources: response.data.sources
             };
-            setMessages(prev => [...prev, assistantMessage]);
-        } catch (error) {
-            console.error('Chat error:', error);
-            const errorMessage: Message = {
-                id: `error-${Date.now()}`,
-                role: 'assistant',
-                content: lang === 'pl' 
-                    ? 'Przepraszam, wystąpił błąd. Spróbuj ponownie później.'
-                    : 'Sorry, an error occurred. Please try again later.',
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [input, isLoading, contextModule, messages, lang]);
-    
+            setMessages((prev) => [...prev, userMessage]);
+
+            setIsLoading(true);
+
+            try {
+                const response = await Api.post('/help/chat', {
+                    message: text,
+                    context: contextModule,
+                    history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+                });
+
+                const assistantMessage: Message = {
+                    id: `assistant-${Date.now()}`,
+                    role: 'assistant',
+                    content: response.data.message,
+                    timestamp: new Date(),
+                    sources: response.data.sources,
+                };
+                setMessages((prev) => [...prev, assistantMessage]);
+            } catch (error) {
+                console.error('Chat error:', error);
+                const errorMessage: Message = {
+                    id: `error-${Date.now()}`,
+                    role: 'assistant',
+                    content:
+                        lang === 'pl'
+                            ? 'Przepraszam, wystąpił błąd. Spróbuj ponownie później.'
+                            : 'Sorry, an error occurred. Please try again later.',
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, errorMessage]);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [input, isLoading, contextModule, messages, lang],
+    );
+
     // Handle feedback
     const handleFeedback = useCallback(async (messageId: string, isHelpful: boolean) => {
-        setMessages(prev => prev.map(m => 
-            m.id === messageId 
-                ? { ...m, feedback: isHelpful ? 'helpful' : 'not_helpful' }
-                : m
-        ));
-        
+        setMessages((prev) =>
+            prev.map((m) => (m.id === messageId ? { ...m, feedback: isHelpful ? 'helpful' : 'not_helpful' } : m)),
+        );
+
         try {
             await Api.post('/help/feedback', {
                 content_type: 'chat',
                 content_id: messageId,
-                is_helpful: isHelpful
+                is_helpful: isHelpful,
             });
         } catch (error) {
             console.error('Failed to submit feedback:', error);
         }
     }, []);
-    
+
     // Handle key press
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -173,20 +176,23 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             handleSend();
         }
     };
-    
+
     // Clear chat
     const handleClear = () => {
-        setMessages([{
-            id: 'welcome-new',
-            role: 'assistant',
-            content: lang === 'pl' 
-                ? 'Rozmowa została wyczyszczona. Jak mogę Ci pomóc?'
-                : 'Chat has been cleared. How can I help you?',
-            timestamp: new Date()
-        }]);
+        setMessages([
+            {
+                id: 'welcome-new',
+                role: 'assistant',
+                content:
+                    lang === 'pl'
+                        ? 'Rozmowa została wyczyszczona. Jak mogę Ci pomóc?'
+                        : 'Chat has been cleared. How can I help you?',
+                timestamp: new Date(),
+            },
+        ]);
         setShowSuggestions(true);
     };
-    
+
     // Text
     const t = {
         title: { en: 'Help Assistant', pl: 'Asystent Pomocy' },
@@ -197,9 +203,9 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
         sources: { en: 'Sources', pl: 'Źródła' },
         helpful: { en: 'Was this helpful?', pl: 'Czy to było pomocne?' },
         suggestions: { en: 'Suggested questions', pl: 'Sugerowane pytania' },
-        poweredBy: { en: 'Powered by AI', pl: 'Napędzany przez AI' }
+        poweredBy: { en: 'Powered by AI', pl: 'Napędzany przez AI' },
     };
-    
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -239,16 +245,13 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         <RefreshCw size={18} />
                     </button>
                     {onClose && (
-                        <button
-                            onClick={onClose}
-                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                        >
+                        <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
                             <X size={18} />
                         </button>
                     )}
                 </div>
             </div>
-            
+
             {/* Messages */}
             <div className="flex-grow overflow-y-auto p-4 space-y-4">
                 <AnimatePresence>
@@ -261,25 +264,33 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         >
                             <div className={`max-w-[85%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
                                 {/* Avatar */}
-                                <div className={`flex items-start gap-2 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                        message.role === 'user' 
-                                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600' 
-                                            : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
-                                    }`}>
+                                <div
+                                    className={`flex items-start gap-2 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+                                >
+                                    <div
+                                        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                            message.role === 'user'
+                                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
+                                                : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
+                                        }`}
+                                    >
                                         {message.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                                     </div>
-                                    
-                                    <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+
+                                    <div
+                                        className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}
+                                    >
                                         {/* Message bubble */}
-                                        <div className={`px-4 py-2.5 rounded-2xl ${
-                                            message.role === 'user'
-                                                ? 'bg-purple-600 text-white rounded-tr-md'
-                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-md'
-                                        }`}>
+                                        <div
+                                            className={`px-4 py-2.5 rounded-2xl ${
+                                                message.role === 'user'
+                                                    ? 'bg-purple-600 text-white rounded-tr-md'
+                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-md'
+                                            }`}
+                                        >
                                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                                         </div>
-                                        
+
                                         {/* Sources */}
                                         {message.sources && message.sources.length > 0 && (
                                             <div className="mt-2 text-xs text-slate-500">
@@ -299,39 +310,49 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         {/* Feedback */}
-                                        {message.role === 'assistant' && message.id !== 'welcome' && !message.feedback && (
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className="text-xs text-slate-400">{t.helpful[lang]}</span>
-                                                <button
-                                                    onClick={() => handleFeedback(message.id, true)}
-                                                    className="p-1 text-slate-400 hover:text-green-500 transition-colors"
-                                                >
-                                                    <ThumbsUp size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleFeedback(message.id, false)}
-                                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                                                >
-                                                    <ThumbsDown size={14} />
-                                                </button>
-                                            </div>
-                                        )}
+                                        {message.role === 'assistant' &&
+                                            message.id !== 'welcome' &&
+                                            !message.feedback && (
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-xs text-slate-400">{t.helpful[lang]}</span>
+                                                    <button
+                                                        onClick={() => handleFeedback(message.id, true)}
+                                                        className="p-1 text-slate-400 hover:text-green-500 transition-colors"
+                                                    >
+                                                        <ThumbsUp size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleFeedback(message.id, false)}
+                                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <ThumbsDown size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         {message.feedback && (
-                                            <div className={`text-xs mt-1 ${
-                                                message.feedback === 'helpful' ? 'text-green-500' : 'text-red-500'
-                                            }`}>
-                                                {message.feedback === 'helpful' 
-                                                    ? (lang === 'pl' ? '✓ Dziękujemy za opinię!' : '✓ Thanks for your feedback!')
-                                                    : (lang === 'pl' ? '✓ Przepraszamy, postaramy się poprawić!' : '✓ Sorry, we\'ll try to improve!')
-                                                }
+                                            <div
+                                                className={`text-xs mt-1 ${
+                                                    message.feedback === 'helpful' ? 'text-green-500' : 'text-red-500'
+                                                }`}
+                                            >
+                                                {message.feedback === 'helpful'
+                                                    ? lang === 'pl'
+                                                        ? '✓ Dziękujemy za opinię!'
+                                                        : '✓ Thanks for your feedback!'
+                                                    : lang === 'pl'
+                                                      ? '✓ Przepraszamy, postaramy się poprawić!'
+                                                      : "✓ Sorry, we'll try to improve!"}
                                             </div>
                                         )}
-                                        
+
                                         {/* Timestamp */}
                                         <span className="text-[10px] text-slate-400 mt-1">
-                                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {message.timestamp.toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}
                                         </span>
                                     </div>
                                 </div>
@@ -339,30 +360,35 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         </motion.div>
                     ))}
                 </AnimatePresence>
-                
+
                 {/* Loading indicator */}
                 {isLoading && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex items-start gap-2"
-                    >
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-2">
                         <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
                             <Bot size={14} />
                         </div>
                         <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-tl-md">
                             <div className="flex items-center gap-1">
-                                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                <span
+                                    className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                                    style={{ animationDelay: '0ms' }}
+                                />
+                                <span
+                                    className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                                    style={{ animationDelay: '150ms' }}
+                                />
+                                <span
+                                    className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                                    style={{ animationDelay: '300ms' }}
+                                />
                             </div>
                         </div>
                     </motion.div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
             </div>
-            
+
             {/* Suggestions */}
             {showSuggestions && messages.length <= 1 && (
                 <div className="px-4 pb-2">
@@ -380,7 +406,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     </div>
                 </div>
             )}
-            
+
             {/* Input */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-end gap-2">
@@ -412,12 +438,4 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
 };
 
 export default HelpChatbot;
-
-
-
-
-
-
-
-
 

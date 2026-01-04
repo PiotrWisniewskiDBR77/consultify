@@ -1,7 +1,7 @@
 /**
  * AI Schema Validator
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enforces strict typing and structure on AI-generated responses.
  * Uses Zod for runtime validation.
  */
@@ -16,7 +16,7 @@ export const GapRecommendationSchema = z.object({
     title: z.string(),
     description: z.string(),
     priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).or(z.string()), // Allow string fallback if AI gets creative
-    timeframe: z.string()
+    timeframe: z.string(),
 });
 
 export const GapAnalysisSchema = z.array(GapRecommendationSchema);
@@ -31,7 +31,7 @@ export const InitiativeSchema = z.object({
     estimatedDuration: z.string(),
     estimatedBudget: z.string(),
     expectedImpact: z.string(),
-    dependencies: z.array(z.string()).optional()
+    dependencies: z.array(z.string()).optional(),
 });
 
 export const InitiativeListSchema = z.array(InitiativeSchema);
@@ -41,7 +41,7 @@ export const PrioritizedInitiativeSchema = z.object({
     name: z.string(),
     priorityScore: z.number(),
     reasoning: z.string(),
-    recommendedQuarter: z.string()
+    recommendedQuarter: z.string(),
 });
 
 export const PrioritizedListSchema = z.array(PrioritizedInitiativeSchema);
@@ -54,7 +54,7 @@ export const ROIEstimateSchema = z.object({
     roiPercentage3Years: z.string(),
     confidenceLevel: z.enum(['HIGH', 'MEDIUM', 'LOW']).or(z.string()),
     assumptions: z.array(z.string()),
-    risks: z.array(z.string())
+    risks: z.array(z.string()),
 });
 
 // ==========================================
@@ -68,11 +68,7 @@ export const ROIEstimateSchema = z.object({
  * @param fallback - Fallback value if validation fails
  * @returns Validated data or fallback
  */
-export function validateOrFallback<T>(
-    data: unknown,
-    schema: z.ZodSchema<T>,
-    fallback: T
-): T {
+export function validateOrFallback<T>(data: unknown, schema: z.ZodSchema<T>, fallback: T): T {
     try {
         const result = schema.safeParse(data);
         if (result.success) {
@@ -86,7 +82,4 @@ export function validateOrFallback<T>(
         return fallback;
     }
 }
-
-
-
 

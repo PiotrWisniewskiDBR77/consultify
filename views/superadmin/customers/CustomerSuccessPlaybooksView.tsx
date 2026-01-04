@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/Admin/shared/Card';
 import {
-    Plus,
-    Play,
-    Trash2,
-    Edit,
-    CheckCircle2,
-    Clock,
-    AlertTriangle,
-    Zap,
-    Settings,
-    Users,
-    Building2,
-    Target,
     Activity,
+    AlertTriangle,
+    Building2,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    Edit,
     Loader2,
-    ChevronRight
+    Play,
+    Plus,
+    Settings,
+    Target,
+    Trash2,
+    Users,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card } from '../../../components/Admin/shared/Card';
 import Api from '../../../services/api';
 
 interface Playbook {
@@ -80,7 +81,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
         name: '',
         description: '',
         triggerConditions: { type: 'onboarding_complete', conditions: {} },
-        actions: [] as { type: string; config: Record<string, any> }[]
+        actions: [] as { type: string; config: Record<string, any> }[],
     });
 
     const [executeOrgId, setExecuteOrgId] = useState('');
@@ -96,7 +97,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
             const [playbooksData, actionsData, statsData] = await Promise.all([
                 Api.getSuccessPlaybooks(),
                 Api.getSuccessActions(),
-                Api.getPlaybookStats()
+                Api.getPlaybookStats(),
             ]);
             setPlaybooks(playbooksData || []);
             setActions(actionsData || []);
@@ -122,7 +123,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                 name: '',
                 description: '',
                 triggerConditions: { type: 'onboarding_complete', conditions: {} },
-                actions: []
+                actions: [],
             });
             fetchData();
         } catch (error) {
@@ -163,7 +164,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
     const addActionToPlaybook = (actionType: string) => {
         setNewPlaybook({
             ...newPlaybook,
-            actions: [...newPlaybook.actions, { type: actionType, config: {} }]
+            actions: [...newPlaybook.actions, { type: actionType, config: {} }],
         });
     };
 
@@ -174,11 +175,11 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
     };
 
     const getActionLabel = (type: string) => {
-        return ACTION_TYPES.find(a => a.id === type)?.label || type;
+        return ACTION_TYPES.find((a) => a.id === type)?.label || type;
     };
 
     const getActionIcon = (type: string) => {
-        return ACTION_TYPES.find(a => a.id === type)?.icon || '⚡';
+        return ACTION_TYPES.find((a) => a.id === type)?.icon || '⚡';
     };
 
     const formatDate = (dateStr?: string) => {
@@ -279,12 +280,12 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                     </button>
                                 </div>
                             ) : (
-                                playbooks.map(playbook => {
+                                playbooks.map((playbook) => {
                                     let actionsCount = 0;
                                     try {
                                         actionsCount = JSON.parse(playbook.actions_json || '[]').length;
                                     } catch {}
-                                    
+
                                     return (
                                         <div
                                             key={playbook.id}
@@ -297,14 +298,18 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                         >
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <Zap className={`w-4 h-4 ${playbook.is_active ? 'text-green-400' : 'text-gray-400'}`} />
+                                                    <Zap
+                                                        className={`w-4 h-4 ${playbook.is_active ? 'text-green-400' : 'text-gray-400'}`}
+                                                    />
                                                     <span className="text-white font-medium">{playbook.name}</span>
                                                 </div>
-                                                <span className={`text-xs px-2 py-1 rounded ${
-                                                    playbook.is_active
-                                                        ? 'bg-green-500/20 text-green-400'
-                                                        : 'bg-gray-500/20 text-gray-400'
-                                                }`}>
+                                                <span
+                                                    className={`text-xs px-2 py-1 rounded ${
+                                                        playbook.is_active
+                                                            ? 'bg-green-500/20 text-green-400'
+                                                            : 'bg-gray-500/20 text-gray-400'
+                                                    }`}
+                                                >
                                                     {playbook.is_active ? 'Active' : 'Inactive'}
                                                 </span>
                                             </div>
@@ -313,9 +318,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                                     {playbook.description}
                                                 </p>
                                             )}
-                                            <p className="text-gray-500 text-xs mt-2">
-                                                {actionsCount} actions
-                                            </p>
+                                            <p className="text-gray-500 text-xs mt-2">{actionsCount} actions</p>
                                         </div>
                                     );
                                 })
@@ -334,18 +337,18 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-xl font-bold text-white">{selectedPlaybook.name}</h3>
-                                            <span className={`text-xs px-2 py-1 rounded ${
-                                                selectedPlaybook.is_active
-                                                    ? 'bg-green-500/20 text-green-400'
-                                                    : 'bg-gray-500/20 text-gray-400'
-                                            }`}>
+                                            <span
+                                                className={`text-xs px-2 py-1 rounded ${
+                                                    selectedPlaybook.is_active
+                                                        ? 'bg-green-500/20 text-green-400'
+                                                        : 'bg-gray-500/20 text-gray-400'
+                                                }`}
+                                            >
                                                 {selectedPlaybook.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                         {selectedPlaybook.description && (
-                                            <p className="text-gray-400 text-sm mt-1">
-                                                {selectedPlaybook.description}
-                                            </p>
+                                            <p className="text-gray-400 text-sm mt-1">{selectedPlaybook.description}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -370,7 +373,11 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                     <h4 className="text-sm font-medium text-gray-300 mb-2">Trigger Conditions</h4>
                                     <div className="bg-gray-700/50 rounded-lg p-3">
                                         <pre className="text-xs text-gray-300 overflow-x-auto">
-                                            {JSON.stringify(JSON.parse(selectedPlaybook.trigger_conditions_json || '{}'), null, 2)}
+                                            {JSON.stringify(
+                                                JSON.parse(selectedPlaybook.trigger_conditions_json || '{}'),
+                                                null,
+                                                2,
+                                            )}
                                         </pre>
                                     </div>
                                 </div>
@@ -390,16 +397,19 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                                             key={idx}
                                                             className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg"
                                                         >
-                                                            <span className="text-xl">{getActionIcon(action.type)}</span>
+                                                            <span className="text-xl">
+                                                                {getActionIcon(action.type)}
+                                                            </span>
                                                             <div>
                                                                 <p className="text-white font-medium">
                                                                     {getActionLabel(action.type)}
                                                                 </p>
-                                                                {action.config && Object.keys(action.config).length > 0 && (
-                                                                    <p className="text-xs text-gray-400">
-                                                                        {JSON.stringify(action.config)}
-                                                                    </p>
-                                                                )}
+                                                                {action.config &&
+                                                                    Object.keys(action.config).length > 0 && (
+                                                                        <p className="text-xs text-gray-400">
+                                                                            {JSON.stringify(action.config)}
+                                                                        </p>
+                                                                    )}
                                                             </div>
                                                         </div>
                                                     ))
@@ -415,16 +425,14 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                             {/* Recent Executions */}
                             <Card className="bg-gray-800 p-4">
                                 <h4 className="text-lg font-semibold text-white mb-4">Recent Executions</h4>
-                                {actions.filter(a => a.playbook_id === selectedPlaybook.id).length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4">
-                                        No executions yet
-                                    </p>
+                                {actions.filter((a) => a.playbook_id === selectedPlaybook.id).length === 0 ? (
+                                    <p className="text-gray-500 text-sm text-center py-4">No executions yet</p>
                                 ) : (
                                     <div className="space-y-2">
                                         {actions
-                                            .filter(a => a.playbook_id === selectedPlaybook.id)
+                                            .filter((a) => a.playbook_id === selectedPlaybook.id)
                                             .slice(0, 10)
-                                            .map(action => (
+                                            .map((action) => (
                                                 <div
                                                     key={action.id}
                                                     className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg"
@@ -441,13 +449,15 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className={`text-xs px-2 py-1 rounded ${
-                                                            action.status === 'completed'
-                                                                ? 'bg-green-500/20 text-green-400'
-                                                                : action.status === 'failed'
-                                                                    ? 'bg-red-500/20 text-red-400'
-                                                                    : 'bg-yellow-500/20 text-yellow-400'
-                                                        }`}>
+                                                        <span
+                                                            className={`text-xs px-2 py-1 rounded ${
+                                                                action.status === 'completed'
+                                                                    ? 'bg-green-500/20 text-green-400'
+                                                                    : action.status === 'failed'
+                                                                      ? 'bg-red-500/20 text-red-400'
+                                                                      : 'bg-yellow-500/20 text-yellow-400'
+                                                            }`}
+                                                        >
                                                             {action.status}
                                                         </span>
                                                         <p className="text-xs text-gray-500 mt-1">
@@ -464,9 +474,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                         <Card className="bg-gray-800 p-8">
                             <div className="flex flex-col items-center justify-center h-64">
                                 <Zap className="w-16 h-16 text-gray-600 mb-4" />
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Select a Playbook
-                                </h3>
+                                <h3 className="text-xl font-semibold text-white mb-2">Select a Playbook</h3>
                                 <p className="text-gray-400 text-center">
                                     Choose a playbook from the list or create a new one
                                 </p>
@@ -483,9 +491,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Create Customer Success Playbook</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Playbook Name
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Playbook Name</label>
                                 <input
                                     type="text"
                                     value={newPlaybook.name}
@@ -495,9 +501,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Description
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                                 <textarea
                                     value={newPlaybook.description}
                                     onChange={(e) => setNewPlaybook({ ...newPlaybook, description: e.target.value })}
@@ -506,26 +510,29 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Trigger
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Trigger</label>
                                 <select
                                     value={newPlaybook.triggerConditions.type}
-                                    onChange={(e) => setNewPlaybook({
-                                        ...newPlaybook,
-                                        triggerConditions: { ...newPlaybook.triggerConditions, type: e.target.value }
-                                    })}
+                                    onChange={(e) =>
+                                        setNewPlaybook({
+                                            ...newPlaybook,
+                                            triggerConditions: {
+                                                ...newPlaybook.triggerConditions,
+                                                type: e.target.value,
+                                            },
+                                        })
+                                    }
                                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                 >
-                                    {TRIGGER_TYPES.map(t => (
-                                        <option key={t.id} value={t.id}>{t.label}</option>
+                                    {TRIGGER_TYPES.map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Actions
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Actions</label>
                                 <div className="space-y-2 mb-2">
                                     {newPlaybook.actions.map((action, idx) => (
                                         <div
@@ -546,7 +553,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                     ))}
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {ACTION_TYPES.map(at => (
+                                    {ACTION_TYPES.map((at) => (
                                         <button
                                             key={at.id}
                                             onClick={() => addActionToPlaybook(at.id)}
@@ -587,9 +594,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                 Execute "{selectedPlaybook?.name}" for a specific organization.
                             </p>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Organization ID
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Organization ID</label>
                                 <input
                                     type="text"
                                     value={executeOrgId}
@@ -622,6 +627,3 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
 };
 
 export default CustomerSuccessPlaybooksView;
-
-
-

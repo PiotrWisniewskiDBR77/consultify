@@ -3,7 +3,8 @@
  * Manages password policies for organizations
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -135,6 +136,7 @@ const PasswordPolicyService = {
 };
 
 export default PasswordPolicyService;
+
 
 
 

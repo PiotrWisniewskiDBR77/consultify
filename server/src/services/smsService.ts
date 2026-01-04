@@ -1,17 +1,17 @@
 /**
  * SMS Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enterprise-grade SMS delivery service using Twilio.
  * Fully migrated from server/services/smsService.js
- * 
+ *
  * Features:
  * - SMS delivery via Twilio
  * - Rate limiting (5 SMS per phone per hour)
  * - Delivery status tracking
  * - Fallback to mock mode for development
  * - OTP code generation and verification
- * 
+ *
  * Environment Variables Required:
  * - TWILIO_ACCOUNT_SID
  * - TWILIO_AUTH_TOKEN
@@ -19,14 +19,15 @@
  * - SMS_MOCK_MODE (optional, for development)
  */
 
-import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import twilio, { type Twilio } from 'twilio';
-import type { IDatabase } from '../database/IDatabase.js';
+import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -63,7 +64,7 @@ interface TwilioStatusCallback {
     ErrorMessage?: string;
 }
 
-interface SMSDeliveryLog {
+interface _SMSDeliveryLog {
     id: string;
     user_id: string | null;
     phone_number: string;
@@ -88,7 +89,7 @@ interface SMSVerificationCode {
     created_at: string;
 }
 
-interface SMSRateLimit {
+interface _SMSRateLimit {
     phone_number: string;
     user_id: string | null;
     window_start: string;
@@ -110,7 +111,7 @@ const CONFIG = {
     MAX_OTP_ATTEMPTS: 3,
     RATE_LIMIT_PER_HOUR: 5,
     RATE_LIMIT_PER_DAY: 20,
-    MOCK_MODE: process.env.SMS_MOCK_MODE === 'true' || !process.env.TWILIO_ACCOUNT_SID
+    MOCK_MODE: process.env.SMS_MOCK_MODE === 'true' || !process.env.TWILIO_ACCOUNT_SID,
 };
 
 // ==========================================
@@ -118,7 +119,7 @@ const CONFIG = {
 // ==========================================
 
 class SMSServiceClass {
-    private db: IDatabase;
+    private _db: IDatabase;
     private twilioClient: Twilio | null = null;
 
     constructor(deps?: SMSServiceDependencies) {
@@ -132,12 +133,12 @@ class SMSServiceClass {
     private getTwilioClient(): Twilio | null {
         if (!this.twilioClient && !CONFIG.MOCK_MODE) {
             try {
-                this.twilioClient = twilio(
-                    process.env.TWILIO_ACCOUNT_SID!,
-                    process.env.TWILIO_AUTH_TOKEN!
-                );
+                this.twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!);
             } catch (error: unknown) {
-                logger.warn('[SMS] Twilio not configured, using mock mode:', error instanceof Error ? error.message : String(error));
+                logger.warn(
+                    '[SMS] Twilio not configured, using mock mode:',
+                    error instanceof Error ? error.message : String(error),
+                );
                 return null;
             }
         }
@@ -165,7 +166,7 @@ class SMSServiceClass {
     /**
      * Database helper: Get all rows
      */
-    private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
+    private async _dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return await DbPromise.all<T>(sql, params);
     }
 
@@ -176,7 +177,7 @@ class SMSServiceClass {
         phoneNumber: string,
         message: string,
         userId: string | null = null,
-        messageType: string = 'verification'
+        messageType: string = 'verification',
     ): Promise<SendSMSResult> {
         const logId = uuidv4();
 
@@ -211,7 +212,7 @@ class SMSServiceClass {
             const result = await client.messages.create({
                 body: message,
                 from: process.env.TWILIO_PHONE_NUMBER!,
-                to: phoneNumber
+                to: phoneNumber,
             });
 
             // Update log with success
@@ -221,7 +222,6 @@ class SMSServiceClass {
             await this._incrementRateLimit(phoneNumber, userId);
 
             return { success: true, messageSid: result.sid };
-
         } catch (error: unknown) {
             logger.error('[SMS] Send failed:', error);
 
@@ -233,7 +233,11 @@ class SMSServiceClass {
                     error_message = ?,
                     updated_at = datetime('now')
                  WHERE id = ?`,
-                [(error as { code?: string }).code || 'UNKNOWN', error instanceof Error ? error.message : String(error), logId]
+                [
+                    (error as { code?: string }).code || 'UNKNOWN',
+                    error instanceof Error ? error.message : String(error),
+                    logId,
+                ],
             );
 
             return { success: false, error: error instanceof Error ? error.message : 'Failed to send SMS' };
@@ -246,7 +250,7 @@ class SMSServiceClass {
     async sendOTP(
         userId: string,
         phoneNumber: string,
-        purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login'
+        purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login',
     ): Promise<SendOTPResult> {
         try {
             // Invalidate existing codes for this user/purpose
@@ -254,7 +258,7 @@ class SMSServiceClass {
                 `UPDATE sms_verification_codes 
                  SET used_at = datetime('now') 
                  WHERE user_id = ? AND purpose = ? AND used_at IS NULL`,
-                [userId, purpose]
+                [userId, purpose],
             );
 
             // Generate 6-digit OTP
@@ -266,7 +270,7 @@ class SMSServiceClass {
             await this.dbRun(
                 `INSERT INTO sms_verification_codes (id, user_id, phone_number, code, purpose, expires_at)
                  VALUES (?, ?, ?, ?, ?, ?)`,
-                [uuidv4(), userId, phoneNumber, hashedCode, purpose, expiresAt]
+                [uuidv4(), userId, phoneNumber, hashedCode, purpose, expiresAt],
             );
 
             // Send SMS
@@ -274,11 +278,16 @@ class SMSServiceClass {
                 phone_verify: `Your Consultify verification code is: ${code}. Valid for ${CONFIG.OTP_EXPIRY_MINUTES} minutes.`,
                 mfa_login: `Your Consultify login code is: ${code}. Do not share this code with anyone.`,
                 mfa_setup: `Your Consultify MFA setup code is: ${code}. Valid for ${CONFIG.OTP_EXPIRY_MINUTES} minutes.`,
-                password_reset: `Your Consultify password reset code is: ${code}. If you didn't request this, ignore this message.`
+                password_reset: `Your Consultify password reset code is: ${code}. If you didn't request this, ignore this message.`,
             };
 
             const message = messages[purpose] || messages.mfa_login;
-            const result = await this.sendSMS(phoneNumber, message, userId, purpose === 'mfa_login' ? 'mfa' : 'verification');
+            const result = await this.sendSMS(
+                phoneNumber,
+                message,
+                userId,
+                purpose === 'mfa_login' ? 'mfa' : 'verification',
+            );
 
             if (!result.success) {
                 return result;
@@ -290,7 +299,6 @@ class SMSServiceClass {
             }
 
             return { success: true, expiresAt };
-
         } catch (error: unknown) {
             logger.error('[SMS] Send OTP failed:', error);
             return { success: false, error: 'Failed to send verification code' };
@@ -303,7 +311,7 @@ class SMSServiceClass {
     async verifyOTP(
         userId: string,
         code: string,
-        purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login'
+        purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login',
     ): Promise<VerifyOTPResult> {
         try {
             // Get latest valid code
@@ -311,7 +319,7 @@ class SMSServiceClass {
                 `SELECT * FROM sms_verification_codes 
                  WHERE user_id = ? AND purpose = ? AND used_at IS NULL AND expires_at > datetime('now')
                  ORDER BY created_at DESC LIMIT 1`,
-                [userId, purpose]
+                [userId, purpose],
             );
 
             if (!record) {
@@ -320,18 +328,14 @@ class SMSServiceClass {
 
             // Check max attempts
             if (record.attempts >= CONFIG.MAX_OTP_ATTEMPTS) {
-                await this.dbRun(
-                    `UPDATE sms_verification_codes SET used_at = datetime('now') WHERE id = ?`,
-                    [record.id]
-                );
+                await this.dbRun(`UPDATE sms_verification_codes SET used_at = datetime('now') WHERE id = ?`, [
+                    record.id,
+                ]);
                 return { success: false, error: 'Too many attempts. Please request a new code.' };
             }
 
             // Increment attempt counter
-            await this.dbRun(
-                `UPDATE sms_verification_codes SET attempts = attempts + 1 WHERE id = ?`,
-                [record.id]
-            );
+            await this.dbRun(`UPDATE sms_verification_codes SET attempts = attempts + 1 WHERE id = ?`, [record.id]);
 
             // Verify code
             const isValid = bcrypt.compareSync(code, record.code);
@@ -340,18 +344,14 @@ class SMSServiceClass {
                 const remainingAttempts = CONFIG.MAX_OTP_ATTEMPTS - record.attempts - 1;
                 return {
                     success: false,
-                    error: `Invalid code. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Please request a new code.'}`
+                    error: `Invalid code. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Please request a new code.'}`,
                 };
             }
 
             // Mark code as used
-            await this.dbRun(
-                `UPDATE sms_verification_codes SET used_at = datetime('now') WHERE id = ?`,
-                [record.id]
-            );
+            await this.dbRun(`UPDATE sms_verification_codes SET used_at = datetime('now') WHERE id = ?`, [record.id]);
 
             return { success: true };
-
         } catch (error: unknown) {
             logger.error('[SMS] Verify OTP failed:', error);
             return { success: false, error: 'Verification failed' };
@@ -363,10 +363,7 @@ class SMSServiceClass {
      */
     async initiatePhoneVerification(userId: string, phoneNumber: string): Promise<SendOTPResult> {
         // Update user's phone number (unverified)
-        await this.dbRun(
-            `UPDATE users SET phone_number = ?, phone_verified = 0 WHERE id = ?`,
-            [phoneNumber, userId]
-        );
+        await this.dbRun(`UPDATE users SET phone_number = ?, phone_verified = 0 WHERE id = ?`, [phoneNumber, userId]);
 
         // Send verification OTP
         return this.sendOTP(userId, phoneNumber, 'phone_verify');
@@ -388,7 +385,7 @@ class SMSServiceClass {
                 phone_verified = 1, 
                 phone_verified_at = datetime('now')
              WHERE id = ?`,
-            [userId]
+            [userId],
         );
 
         return { success: true };
@@ -400,7 +397,7 @@ class SMSServiceClass {
     async getPhoneStatus(userId: string): Promise<PhoneStatusResult> {
         const user = await this.dbGet<{ phone_number: string | null; phone_verified: number }>(
             `SELECT phone_number, phone_verified FROM users WHERE id = ?`,
-            [userId]
+            [userId],
         );
 
         if (!user || !user.phone_number) {
@@ -410,7 +407,7 @@ class SMSServiceClass {
         return {
             hasPhone: true,
             verified: !!user.phone_verified,
-            phoneNumber: this._maskPhoneNumber(user.phone_number)
+            phoneNumber: this._maskPhoneNumber(user.phone_number),
         };
     }
 
@@ -428,7 +425,7 @@ class SMSServiceClass {
                     error_message = ?,
                     updated_at = datetime('now')
                  WHERE message_sid = ?`,
-                [MessageStatus, ErrorCode || null, ErrorMessage || null, MessageSid]
+                [MessageStatus, ErrorCode || null, ErrorMessage || null, MessageSid],
             );
         } catch (error: unknown) {
             logger.error('[SMS] Status callback update failed:', error);
@@ -464,7 +461,7 @@ class SMSServiceClass {
         const hourlyCount = await this.dbGet<{ count: number }>(
             `SELECT COUNT(*) as count FROM sms_delivery_log 
              WHERE phone_number = ? AND created_at > ? AND status != 'failed'`,
-            [phoneNumber, hourAgo]
+            [phoneNumber, hourAgo],
         );
 
         if (hourlyCount && hourlyCount.count >= CONFIG.RATE_LIMIT_PER_HOUR) {
@@ -475,7 +472,7 @@ class SMSServiceClass {
         const dailyCount = await this.dbGet<{ count: number }>(
             `SELECT COUNT(*) as count FROM sms_delivery_log 
              WHERE phone_number = ? AND created_at > ? AND status != 'failed'`,
-            [phoneNumber, dayAgo]
+            [phoneNumber, dayAgo],
         );
 
         if (dailyCount && dailyCount.count >= CONFIG.RATE_LIMIT_PER_DAY) {
@@ -493,7 +490,7 @@ class SMSServiceClass {
                 `INSERT INTO sms_rate_limits (phone_number, user_id, window_start, count)
                  VALUES (?, ?, ?, 1)
                  ON CONFLICT(phone_number, window_start) DO UPDATE SET count = count + 1`,
-                [phoneNumber, userId, windowStart]
+                [phoneNumber, userId, windowStart],
             );
         } catch (error: unknown) {
             // Ignore duplicate key errors
@@ -509,7 +506,7 @@ class SMSServiceClass {
         phoneNumber: string,
         messageType: string,
         status: string,
-        messageSid: string | null = null
+        messageSid: string | null = null,
     ): Promise<void> {
         await this.dbRun(
             `INSERT INTO sms_delivery_log (id, user_id, phone_number, message_type, message_sid, status)
@@ -518,7 +515,7 @@ class SMSServiceClass {
                 status = excluded.status,
                 message_sid = COALESCE(excluded.message_sid, sms_delivery_log.message_sid),
                 updated_at = datetime('now')`,
-            [id, userId, phoneNumber, messageType, messageSid, status]
+            [id, userId, phoneNumber, messageType, messageSid, status],
         );
     }
 }
@@ -541,19 +538,21 @@ export const sendSMS = (
     phoneNumber: string,
     message: string,
     userId: string | null = null,
-    messageType: string = 'verification'
+    messageType: string = 'verification',
 ) => smsService.sendSMS(phoneNumber, message, userId, messageType);
 export const sendOTP = (
     userId: string,
     phoneNumber: string,
-    purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login'
+    purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login',
 ) => smsService.sendOTP(userId, phoneNumber, purpose);
 export const verifyOTP = (
     userId: string,
     code: string,
-    purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login'
+    purpose: 'phone_verify' | 'mfa_login' | 'mfa_setup' | 'password_reset' = 'mfa_login',
 ) => smsService.verifyOTP(userId, code, purpose);
-export const initiatePhoneVerification = (userId: string, phoneNumber: string) => smsService.initiatePhoneVerification(userId, phoneNumber);
-export const completePhoneVerification = (userId: string, code: string) => smsService.completePhoneVerification(userId, code);
+export const initiatePhoneVerification = (userId: string, phoneNumber: string) =>
+    smsService.initiatePhoneVerification(userId, phoneNumber);
+export const completePhoneVerification = (userId: string, code: string) =>
+    smsService.completePhoneVerification(userId, code);
 export const getPhoneStatus = (userId: string) => smsService.getPhoneStatus(userId);
 export const handleStatusCallback = (data: TwilioStatusCallback) => smsService.handleStatusCallback(data);

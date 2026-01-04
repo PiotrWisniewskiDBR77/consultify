@@ -1,7 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, ShieldCheck, Cpu, BarChart3, Users, Zap, ChevronDown, HelpCircle, Bell, CheckSquare, Rocket, GitBranch, ChevronLeft, ChevronRight, Clock, AlertTriangle, Target, TrendingUp, GraduationCap, Map } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+    AlertTriangle,
+    BarChart3,
+    Bell,
+    CheckCircle,
+    CheckSquare,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Cpu,
+    GitBranch,
+    GraduationCap,
+    HelpCircle,
+    Map,
+    Rocket,
+    ShieldCheck,
+    Target,
+    TrendingUp,
+    Users,
+    Zap,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { DemoButton, RegionalDemoButtons } from './DemoButton';
 
 // App Feature Carousel Slides
@@ -20,9 +42,30 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                 </div>
                 <div className="space-y-3 flex-1">
                     {[
-                        { icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10', title: 'Initiative Deadline', desc: 'Industry 4.0 Roadmap due in 2 days', time: '2h ago' },
-                        { icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-500/10', title: 'Task Completed', desc: 'Assessment phase finished by team', time: '4h ago' },
-                        { icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', title: 'New Comment', desc: 'Dr. Kowalski commented on ROI analysis', time: '6h ago' },
+                        {
+                            icon: AlertTriangle,
+                            color: 'text-amber-400',
+                            bg: 'bg-amber-500/10',
+                            title: 'Initiative Deadline',
+                            desc: 'Industry 4.0 Roadmap due in 2 days',
+                            time: '2h ago',
+                        },
+                        {
+                            icon: CheckSquare,
+                            color: 'text-emerald-400',
+                            bg: 'bg-emerald-500/10',
+                            title: 'Task Completed',
+                            desc: 'Assessment phase finished by team',
+                            time: '4h ago',
+                        },
+                        {
+                            icon: Users,
+                            color: 'text-blue-400',
+                            bg: 'bg-blue-500/10',
+                            title: 'New Comment',
+                            desc: 'Dr. Kowalski commented on ROI analysis',
+                            time: '6h ago',
+                        },
                     ].map((item, i) => (
                         <motion.div
                             key={i}
@@ -31,7 +74,9 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                             transition={{ delay: i * 0.1 }}
                             className={`p-4 rounded-2xl ${item.bg} border border-white/5 flex items-start gap-3`}
                         >
-                            <div className={`w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0`}>
+                            <div
+                                className={`w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0`}
+                            >
                                 <item.icon size={16} className={item.color} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -56,7 +101,9 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                         </div>
                         <span className="text-white font-bold text-lg">My Tasks</span>
                     </div>
-                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">12 Active</span>
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">
+                        12 Active
+                    </span>
                 </div>
                 <div className="space-y-3 flex-1">
                     {[
@@ -73,10 +120,14 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${task.status === 'in_progress' ? 'bg-blue-400' : 'bg-slate-500'}`} />
+                                    <div
+                                        className={`w-2 h-2 rounded-full ${task.status === 'in_progress' ? 'bg-blue-400' : 'bg-slate-500'}`}
+                                    />
                                     <span className="text-white font-semibold text-sm">{task.title}</span>
                                 </div>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                <span
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
+                                >
                                     {task.priority}
                                 </span>
                             </div>
@@ -105,7 +156,9 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                         </div>
                         <span className="text-white font-bold text-lg">Initiatives</span>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold">4 Active</span>
+                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold">
+                        4 Active
+                    </span>
                 </div>
                 <div className="space-y-3 flex-1">
                     {[
@@ -122,7 +175,9 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                         >
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-white font-semibold text-sm">{init.name}</span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${init.status === 'On Track' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                <span
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${init.status === 'On Track' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
+                                >
                                     {init.status}
                                 </span>
                             </div>
@@ -153,7 +208,9 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                     </div>
                     <span className="text-white font-bold text-lg">Decisions</span>
                 </div>
-                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-bold">2 Pending</span>
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-bold">
+                    2 Pending
+                </span>
             </div>
             <div className="space-y-3 flex-1">
                 {[
@@ -170,7 +227,9 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                     >
                         <div className="flex items-start justify-between mb-2">
                             <span className="text-white font-semibold text-sm">{dec.title}</span>
-                            <span className="px-2 py-0.5 bg-white/10 rounded text-[10px] font-medium text-slate-300">{dec.type}</span>
+                            <span className="px-2 py-0.5 bg-white/10 rounded text-[10px] font-medium text-slate-300">
+                                {dec.type}
+                            </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-4">
@@ -183,9 +242,7 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
                                     <span>{dec.deadline}</span>
                                 </div>
                             </div>
-                            {dec.deadline === 'Completed' && (
-                                <CheckCircle size={16} className="text-emerald-400" />
-                            )}
+                            {dec.deadline === 'Completed' && <CheckCircle size={16} className="text-emerald-400" />}
                         </div>
                     </motion.div>
                 ))}
@@ -198,7 +255,12 @@ const AppFeatureSlide: React.FC<{ type: 'notifications' | 'tasks' | 'initiatives
 const FeatureCarousel: React.FC = () => {
     const { t } = useTranslation();
     const [currentSlide, setCurrentSlide] = useState(0);
-    const slides: Array<'notifications' | 'tasks' | 'initiatives' | 'decisions'> = ['notifications', 'tasks', 'initiatives', 'decisions'];
+    const slides: Array<'notifications' | 'tasks' | 'initiatives' | 'decisions'> = [
+        'notifications',
+        'tasks',
+        'initiatives',
+        'decisions',
+    ];
     const slideLabels = ['Notifications', 'Tasks', 'Initiatives', 'Decisions'];
 
     // Auto-advance slides
@@ -278,13 +340,13 @@ const FeatureCarousel: React.FC = () => {
 
 // FAQ Accordion Item
 const FAQItem: React.FC<{ question: string; answer: string; isOpen: boolean; onClick: () => void }> = ({
-    question, answer, isOpen, onClick
+    question,
+    answer,
+    isOpen,
+    onClick,
 }) => (
     <div className="border-b border-slate-200 dark:border-white/10 last:border-0">
-        <button
-            onClick={onClick}
-            className="w-full py-5 flex items-center justify-between text-left group"
-        >
+        <button onClick={onClick} className="w-full py-5 flex items-center justify-between text-left group">
             <span className="font-bold text-navy-950 dark:text-white pr-8 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 {question}
             </span>
@@ -302,9 +364,7 @@ const FAQItem: React.FC<{ question: string; answer: string; isOpen: boolean; onC
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                 >
-                    <p className="pb-5 text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {answer}
-                    </p>
+                    <p className="pb-5 text-slate-600 dark:text-slate-400 leading-relaxed">{answer}</p>
                 </motion.div>
             )}
         </AnimatePresence>
@@ -318,27 +378,45 @@ export const InfoSections: React.FC = () => {
     const faqs = [
         {
             q: t('landing.faq.items.0.q', 'What is Consultinity?'),
-            a: t('landing.faq.items.0.a', 'Consultinity is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports.')
+            a: t(
+                'landing.faq.items.0.a',
+                'Consultinity is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports.',
+            ),
         },
         {
             q: t('landing.faq.items.1.q', 'How is this different from traditional consulting?'),
-            a: t('landing.faq.items.1.a', 'Traditional consulting delivers PowerPoint decks. Consultinity delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf.')
+            a: t(
+                'landing.faq.items.1.a',
+                'Traditional consulting delivers PowerPoint decks. Consultinity delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf.',
+            ),
         },
         {
             q: t('landing.faq.items.2.q', 'Is my data secure?'),
-            a: t('landing.faq.items.2.a', 'Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK).')
+            a: t(
+                'landing.faq.items.2.a',
+                'Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK).',
+            ),
         },
         {
             q: t('landing.faq.items.3.q', 'Do I need technical expertise to use it?'),
-            a: t('landing.faq.items.3.a', 'No. Consultinity is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team.')
+            a: t(
+                'landing.faq.items.3.a',
+                'No. Consultinity is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team.',
+            ),
         },
         {
             q: t('landing.faq.items.4.q', 'Can I try before I buy?'),
-            a: t('landing.faq.items.4.a', 'Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case.')
+            a: t(
+                'landing.faq.items.4.a',
+                'Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case.',
+            ),
         },
         {
             q: t('landing.faq.items.5.q', 'What industries do you serve?'),
-            a: t('landing.faq.items.5.a', 'We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges.')
+            a: t(
+                'landing.faq.items.5.a',
+                'We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges.',
+            ),
         },
     ];
 
@@ -346,18 +424,18 @@ export const InfoSections: React.FC = () => {
         {
             icon: GraduationCap,
             title: t('landing.steps.diagnostic.title'),
-            desc: t('landing.steps.diagnostic.desc')
+            desc: t('landing.steps.diagnostic.desc'),
         },
         {
             icon: Map,
             title: t('landing.steps.roadmap.title'),
-            desc: t('landing.steps.roadmap.desc')
+            desc: t('landing.steps.roadmap.desc'),
         },
         {
             icon: Rocket,
             title: t('landing.steps.approval.title'),
-            desc: t('landing.steps.approval.desc')
-        }
+            desc: t('landing.steps.approval.desc'),
+        },
     ];
 
     return (
@@ -394,7 +472,9 @@ export const InfoSections: React.FC = () => {
                                         <Icon size={36} strokeWidth={1.5} />
                                     </div>
                                     <div className="space-y-3">
-                                        <h4 className="text-2xl font-black text-navy-950 dark:text-white tracking-tight">{step.title}</h4>
+                                        <h4 className="text-2xl font-black text-navy-950 dark:text-white tracking-tight">
+                                            {step.title}
+                                        </h4>
                                         <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed font-medium">
                                             {step.desc}
                                         </p>
@@ -413,7 +493,11 @@ export const InfoSections: React.FC = () => {
                     >
                         <div className="text-center mb-8">
                             <h4 className="text-lg font-bold text-navy-950 dark:text-white mb-2">
-                                {t('landing.regional.title', 'Schedule a')} <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">{t('landing.regional.demo', 'Demo')}</span> {t('landing.regional.titleEnd', 'in Your Region')}
+                                {t('landing.regional.title', 'Schedule a')}{' '}
+                                <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                                    {t('landing.regional.demo', 'Demo')}
+                                </span>{' '}
+                                {t('landing.regional.titleEnd', 'in Your Region')}
                             </h4>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {t('landing.regional.subtitle', 'Choose your timezone for the best experience')}
@@ -441,13 +525,20 @@ export const InfoSections: React.FC = () => {
                                 {t('landing.trust.heading', 'Intelligence Guided by Human Approval.')}
                             </h3>
                             <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                                {t('landing.trust.description', 'AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.')}
+                                {t(
+                                    'landing.trust.description',
+                                    'AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.',
+                                )}
                             </p>
 
                             <ul className="space-y-4">
                                 {(Array.isArray(t('landing.trust.points', { returnObjects: true }))
-                                    ? t('landing.trust.points', { returnObjects: true }) as string[]
-                                    : ['Full accountability for every roadmap item', 'Multi-tenant data isolation & military-grade security', 'SOC2 compliant infrastructure logic']
+                                    ? (t('landing.trust.points', { returnObjects: true }) as string[])
+                                    : [
+                                          'Full accountability for every roadmap item',
+                                          'Multi-tenant data isolation & military-grade security',
+                                          'SOC2 compliant infrastructure logic',
+                                      ]
                                 ).map((item: string, i: number) => (
                                     <li key={i} className="flex items-center gap-4 text-base font-bold text-slate-200">
                                         <div className="w-6 h-6 rounded-full bg-purple-600/20 flex items-center justify-center">
@@ -459,8 +550,8 @@ export const InfoSections: React.FC = () => {
                             </ul>
 
                             <div className="pt-4">
-                                <a 
-                                    href="/security" 
+                                <a
+                                    href="/security"
                                     className="inline-block px-8 py-4 bg-white text-navy-950 rounded-full text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95"
                                 >
                                     {t('landing.trust.cta', 'View Security Overview')}
@@ -514,11 +605,14 @@ export const InfoSections: React.FC = () => {
                     <div className="text-center mt-8 space-y-6">
                         <p className="text-slate-500 dark:text-slate-400">
                             {t('landing.faq.more', 'Have more questions?')}{' '}
-                            <a href="/contact" className="text-purple-600 dark:text-purple-400 font-semibold hover:underline">
+                            <a
+                                href="/contact"
+                                className="text-purple-600 dark:text-purple-400 font-semibold hover:underline"
+                            >
                                 {t('landing.faq.contact', 'Contact us')}
                             </a>
                         </p>
-                        
+
                         {/* Demo CTA after FAQ - framed button */}
                         <div className="pt-6">
                             <DemoButton variant="framed" />

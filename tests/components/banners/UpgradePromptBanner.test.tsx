@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UpgradePromptBanner } from '../../../components/banners/UpgradePromptBanner';
+import { UpgradePromptBanner } from '../../components/banners/UpgradePromptBanner';
 
 describe('UpgradePromptBanner Component', () => {
     const user = userEvent.setup();
@@ -25,6 +25,7 @@ describe('UpgradePromptBanner Component', () => {
         expect(onUpgrade).toHaveBeenCalled();
     });
 });
+
 
 
 

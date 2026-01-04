@@ -1,6 +1,6 @@
 /**
  * AIChatWelcomeView - Complete AI Chat Experience
- * 
+ *
  * Features:
  * - Collapsible conversation history sidebar
  * - Time-aware personalized greetings
@@ -12,29 +12,29 @@
  * - Action execution capabilities
  */
 
-import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { PanelLeft, Plus } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAppStore } from '../store/useAppStore';
-import { usePMOStore } from '../store/usePMOStore';
-import { useConversationStore, Conversation } from '../store/useConversationStore';
-import { useAIStream } from '../hooks/useAIStream';
-import { useAIContext } from '../contexts/AIContext';
-import { useTextToSpeech, cleanTextForSpeech } from '../hooks/useTextToSpeech';
-import { useVoiceConversation } from '../hooks/useVoiceConversation';
-import { useActionHandler, ActionPayload, ACTION_TYPES } from '../hooks/useActionHandler';
-import { ChatMessage, ChatCitation, ChatResponseAction } from '../types';
 
+import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
-import { ChatExportModal } from '../components/AIChat/ChatExportModal';
-import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
-import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
 import { CitationList } from '../components/AIChat/CitationList';
-import { ResponseActions } from '../components/AIChat/ResponseActions';
+import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
+import { ResponseActions } from '../components/AIChat/ResponseActions';
+import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
+import { useAIContext } from '../contexts/AIContext';
+import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
+import { useAIStream } from '../hooks/useAIStream';
+import { cleanTextForSpeech, useTextToSpeech } from '../hooks/useTextToSpeech';
+import { useVoiceConversation } from '../hooks/useVoiceConversation';
 import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+import { Conversation, useConversationStore } from '../store/useConversationStore';
+import { usePMOStore } from '../store/usePMOStore';
+import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
-import { PanelLeft, Plus } from 'lucide-react';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -44,21 +44,21 @@ const getTimeContext = () => {
             greetingKey: 'morning',
             greetingFallback: 'Good morning',
             subtitleKey: 'subtitle.morning',
-            subtitleFallback: 'Ready to drive your transformation forward?'
+            subtitleFallback: 'Ready to drive your transformation forward?',
         };
     } else if (hour >= 12 && hour < 18) {
         return {
             greetingKey: 'afternoon',
             greetingFallback: 'Good afternoon',
             subtitleKey: 'subtitle.afternoon',
-            subtitleFallback: "Let's make progress on your initiatives"
+            subtitleFallback: "Let's make progress on your initiatives",
         };
     } else {
         return {
             greetingKey: 'evening',
             greetingFallback: 'Good evening',
             subtitleKey: 'subtitle.evening',
-            subtitleFallback: 'Review your transformation journey'
+            subtitleFallback: 'Review your transformation journey',
         };
     }
 };
@@ -68,11 +68,15 @@ export const AIChatWelcomeView: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // App state
-    const { currentUser, currentProjectId, activeChatMessages, addChatMessage, clearChat, setChatSlidingPanelOpen } = useAppStore();
+    const { currentUser, currentProjectId, activeChatMessages, addChatMessage, clearChat, setChatSlidingPanelOpen } =
+        useAppStore();
     const { projectName } = usePMOStore();
 
     // Derived state for compatibility
-    const selectedProject = useMemo(() => currentProjectId ? { id: currentProjectId, name: projectName } : null, [currentProjectId, projectName]);
+    const selectedProject = useMemo(
+        () => (currentProjectId ? { id: currentProjectId, name: projectName } : null),
+        [currentProjectId, projectName],
+    );
 
     // Conversation store
     const {
@@ -84,36 +88,39 @@ export const AIChatWelcomeView: React.FC = () => {
         updateLastMessage,
         setActiveConversation,
         clearActiveChat,
-        generateTitle
+        generateTitle,
     } = useConversationStore();
 
     // AI stream with persistence callback
-    const handleStreamDone = useCallback(async (fullText: string) => {
-        // Persist AI response to conversation store (backend)
-        try {
-            await addMessage({
-                conversationId: activeConversationId!,
-                role: 'ai',
-                content: fullText,
-                messageType: 'text'
-            });
+    const handleStreamDone = useCallback(
+        async (fullText: string) => {
+            // Persist AI response to conversation store (backend)
+            try {
+                await addMessage({
+                    conversationId: activeConversationId!,
+                    role: 'ai',
+                    content: fullText,
+                    messageType: 'text',
+                });
 
-            // Trigger title generation after first AI response
-            if (isFirstExchangeRef.current && activeConversationId) {
-                isFirstExchangeRef.current = false;
-                console.log('[Chat] First exchange complete, generating title...');
-                // Use small delay to ensure messages are persisted
-                setTimeout(() => {
-                    generateTitle(activeConversationId);
-                }, 500);
+                // Trigger title generation after first AI response
+                if (isFirstExchangeRef.current && activeConversationId) {
+                    isFirstExchangeRef.current = false;
+                    console.log('[Chat] First exchange complete, generating title...');
+                    // Use small delay to ensure messages are persisted
+                    setTimeout(() => {
+                        generateTitle(activeConversationId);
+                    }, 500);
+                }
+            } catch (err) {
+                console.error('[Chat] Failed to persist AI response:', err);
             }
-        } catch (err) {
-            console.error('[Chat] Failed to persist AI response:', err);
-        }
-    }, [addMessage, activeConversationId, generateTitle]);
+        },
+        [addMessage, activeConversationId, generateTitle],
+    );
 
     const { isStreaming, streamedContent, startStream } = useAIStream({
-        onStreamDone: handleStreamDone
+        onStreamDone: handleStreamDone,
     });
 
     // AI context
@@ -129,7 +136,7 @@ export const AIChatWelcomeView: React.FC = () => {
         stopContinuousMode,
         speak: voiceSpeak,
         stopSpeaking: voiceStopSpeaking,
-        isSupported: voiceSupported
+        isSupported: voiceSupported,
     } = useVoiceConversation({
         onTranscript: (text, isFinal) => {
             if (isFinal && text.trim()) {
@@ -143,17 +150,12 @@ export const AIChatWelcomeView: React.FC = () => {
             language: 'pl-PL',
             continuousListening: true,
             autoSpeak: true,
-            silenceTimeout: 2500
-        }
+            silenceTimeout: 2500,
+        },
     });
 
     // Action handler for AI-initiated actions
-    const {
-        executeAction,
-        confirmAction,
-        pendingActions,
-        isExecuting: isActionExecuting
-    } = useActionHandler();
+    const { executeAction, confirmAction, pendingActions, isExecuting: isActionExecuting } = useActionHandler();
 
     // Local state
     const [citationsCollapsed, setCitationsCollapsed] = useState(false);
@@ -176,8 +178,8 @@ export const AIChatWelcomeView: React.FC = () => {
             try {
                 const response = await fetch('/api/ai-memory/context', {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -214,16 +216,19 @@ export const AIChatWelcomeView: React.FC = () => {
     }, [activeChatMessages, voiceModeEnabled, ttsSupported, isStreaming, speak]);
 
     // Handle voice mode change
-    const handleVoiceModeChange = useCallback((enabled: boolean) => {
-        setVoiceModeEnabled(enabled);
-        if (!enabled) {
-            stopSpeaking();
-            if (continuousVoiceMode) {
-                stopContinuousMode();
-                setContinuousVoiceMode(false);
+    const handleVoiceModeChange = useCallback(
+        (enabled: boolean) => {
+            setVoiceModeEnabled(enabled);
+            if (!enabled) {
+                stopSpeaking();
+                if (continuousVoiceMode) {
+                    stopContinuousMode();
+                    setContinuousVoiceMode(false);
+                }
             }
-        }
-    }, [stopSpeaking, continuousVoiceMode, stopContinuousMode]);
+        },
+        [stopSpeaking, continuousVoiceMode, stopContinuousMode],
+    );
 
     // Handle continuous voice mode toggle
     const handleContinuousVoiceToggle = useCallback(() => {
@@ -238,106 +243,113 @@ export const AIChatWelcomeView: React.FC = () => {
     }, [continuousVoiceMode, startContinuousMode, stopContinuousMode]);
 
     // Handle AI action execution
-    const handleAIAction = useCallback(async (action: any) => {
-        const actionPayload: ActionPayload = {
-            type: action.type || ACTION_TYPES.NAVIGATE,
-            payload: action.payload || action,
-            requiresConfirmation: action.requiresConfirmation || false
-        };
-
-        const result = await executeAction(actionPayload);
-
-        if (result.status === 'success' && result.result?.message) {
-            // Add feedback message to chat
-            const feedbackMsg: ChatMessage = {
-                id: Date.now().toString(),
-                role: 'ai',
-                content: `✅ ${result.result.message}`,
-                timestamp: new Date()
+    const handleAIAction = useCallback(
+        async (action: any) => {
+            const actionPayload: ActionPayload = {
+                type: action.type || ACTION_TYPES.NAVIGATE,
+                payload: action.payload || action,
+                requiresConfirmation: action.requiresConfirmation || false,
             };
-            addChatMessage(feedbackMsg);
-        }
 
-        return result;
-    }, [executeAction, addChatMessage]);
+            const result = await executeAction(actionPayload);
+
+            if (result.status === 'success' && result.result?.message) {
+                // Add feedback message to chat
+                const feedbackMsg: ChatMessage = {
+                    id: Date.now().toString(),
+                    role: 'ai',
+                    content: `✅ ${result.result.message}`,
+                    timestamp: new Date(),
+                };
+                addChatMessage(feedbackMsg);
+            }
+
+            return result;
+        },
+        [executeAction, addChatMessage],
+    );
 
     // Handle pending action confirmation
-    const handleConfirmPendingAction = useCallback(async (actionId: string, confirmed: boolean) => {
-        const result = await confirmAction(actionId, confirmed);
+    const handleConfirmPendingAction = useCallback(
+        async (actionId: string, confirmed: boolean) => {
+            const result = await confirmAction(actionId, confirmed);
 
-        if (result.status === 'success') {
-            const feedbackMsg: ChatMessage = {
-                id: Date.now().toString(),
-                role: 'ai',
-                content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
-                timestamp: new Date()
-            };
-            addChatMessage(feedbackMsg);
-        }
-    }, [confirmAction, addChatMessage]);
+            if (result.status === 'success') {
+                const feedbackMsg: ChatMessage = {
+                    id: Date.now().toString(),
+                    role: 'ai',
+                    content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
+                    timestamp: new Date(),
+                };
+                addChatMessage(feedbackMsg);
+            }
+        },
+        [confirmAction, addChatMessage],
+    );
 
     // Handle sending a message
-    const handleSend = useCallback(async (message: string) => {
-        if (!message.trim() || isStreaming) return;
+    const handleSend = useCallback(
+        async (message: string) => {
+            if (!message.trim() || isStreaming) return;
 
-        let conversationId = activeConversationId;
+            let conversationId = activeConversationId;
 
-        // Create new conversation if needed
-        if (!conversationId) {
-            const newConv = await createConversation({
-                projectId: selectedProject?.id
-            });
-            conversationId = newConv.id;
-        }
+            // Create new conversation if needed
+            if (!conversationId) {
+                const newConv = await createConversation({
+                    projectId: selectedProject?.id,
+                });
+                conversationId = newConv.id;
+            }
 
-        // Add user message
-        const userMsg: ChatMessage = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: message.trim(),
-            timestamp: new Date()
-        };
-
-        // Add to legacy store for backwards compatibility
-        addChatMessage(userMsg);
-
-        // Also persist to conversation store (backend)
-        try {
-            await addMessage({
-                conversationId: conversationId!,
+            // Add user message
+            const userMsg: ChatMessage = {
+                id: Date.now().toString(),
                 role: 'user',
                 content: message.trim(),
-                messageType: 'text'
-            });
-        } catch (err) {
-            console.error('[Chat] Failed to persist user message:', err);
-        }
+                timestamp: new Date(),
+            };
 
-        // Add placeholder AI message
-        const aiMsg: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            role: 'ai',
-            content: '',
-            timestamp: new Date()
-        };
-        addChatMessage(aiMsg);
+            // Add to legacy store for backwards compatibility
+            addChatMessage(userMsg);
 
-        // Build context
-        const history = activeChatMessages.map(m => ({
-            role: m.role === 'user' ? 'user' : 'model',
-            parts: [{ text: m.content }]
-        }));
+            // Also persist to conversation store (backend)
+            try {
+                await addMessage({
+                    conversationId: conversationId!,
+                    role: 'user',
+                    content: message.trim(),
+                    messageType: 'text',
+                });
+            } catch (err) {
+                console.error('[Chat] Failed to persist user message:', err);
+            }
 
-        const fullContext = {
-            ...screenContext,
-            pmo: pmoContext,
-            global: globalContext,
-            isWelcomeScreen: activeMessages.length === 0,
-            conversationId
-        };
+            // Add placeholder AI message
+            const aiMsg: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                role: 'ai',
+                content: '',
+                timestamp: new Date(),
+            };
+            addChatMessage(aiMsg);
 
-        // Harvard-Level Co-Thinker System Prompt
-        let systemPrompt = `You are an elite Digital Transformation Consultant with a Harvard MBA and PhD, 20+ years of experience with McKinsey, BCG, and Fortune 500 companies.
+            // Build context
+            const history = activeChatMessages.map((m) => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.content }],
+            }));
+
+            const fullContext = {
+                ...screenContext,
+                pmo: pmoContext,
+                global: globalContext,
+                isWelcomeScreen: activeMessages.length === 0,
+                conversationId,
+            };
+
+            // Harvard-Level Co-Thinker System Prompt
+            let systemPrompt = `You are an elite Digital Transformation Consultant with a Harvard MBA and PhD, 20+ years of experience with McKinsey, BCG, and Fortune 500 companies.
 
 YOUR PERSONA:
 - Name: Senior Partner at DBR77 Industrial Intelligence
@@ -376,12 +388,12 @@ You can execute actions on the user's behalf. When appropriate, respond with:
 ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "payload": {...}}
 `;
 
-        // Append AI memory context if available
-        if (aiMemoryContext) {
-            systemPrompt += `\n${aiMemoryContext}\n`;
-        }
+            // Append AI memory context if available
+            if (aiMemoryContext) {
+                systemPrompt += `\n${aiMemoryContext}\n`;
+            }
 
-        systemPrompt += `
+            systemPrompt += `
 Focus on practical recommendations for transformation initiatives, roadmaps, and organizational change.
 
 MEMORY INSTRUCTIONS:
@@ -389,47 +401,64 @@ If the user explicitly asks you to remember something, include a line in your re
 REMEMBER: [key]: [value]
 For example: REMEMBER: preferred_language: Polish`;
 
-        startStream(message.trim(), history, systemPrompt, fullContext);
+            startStream(message.trim(), history, systemPrompt, fullContext);
 
-        // Auto-speak in voice mode
-        if (voiceModeEnabled && ttsSupported) {
-            // Speech will be triggered when streaming completes
-        }
-    }, [activeConversationId, activeChatMessages, selectedProject, currentUser, isStreaming, coThinkerPhase, voiceModeEnabled, ttsSupported]);
+            // Auto-speak in voice mode
+            if (voiceModeEnabled && ttsSupported) {
+                // Speech will be triggered when streaming completes
+            }
+        },
+        [
+            activeConversationId,
+            activeChatMessages,
+            selectedProject,
+            currentUser,
+            isStreaming,
+            coThinkerPhase,
+            voiceModeEnabled,
+            ttsSupported,
+        ],
+    );
 
     // Handle suggestion click
-    const handleSuggestionClick = useCallback(async (suggestion: any) => {
-        if (suggestion.action?.type === 'chat' && suggestion.action.prompt) {
-            // Special handling for daily brief
-            if (suggestion.action.prompt === '__DAILY_BRIEF__') {
-                try {
-                    const response = await fetch(`/api/daily-brief${selectedProject?.id ? `?projectId=${selectedProject.id}` : ''}`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+    const handleSuggestionClick = useCallback(
+        async (suggestion: any) => {
+            if (suggestion.action?.type === 'chat' && suggestion.action.prompt) {
+                // Special handling for daily brief
+                if (suggestion.action.prompt === '__DAILY_BRIEF__') {
+                    try {
+                        const response = await fetch(
+                            `/api/daily-brief${selectedProject?.id ? `?projectId=${selectedProject.id}` : ''}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                },
+                            },
+                        );
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Add the brief as an AI message directly
+                            const briefMsg: ChatMessage = {
+                                id: Date.now().toString(),
+                                role: 'ai',
+                                content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
+                                timestamp: new Date(),
+                            };
+                            addChatMessage(briefMsg);
+                        } else {
+                            handleSend('Pokaż mi dzienny brief - podsumowanie moich zadań, decyzji i inicjatyw');
                         }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Add the brief as an AI message directly
-                        const briefMsg: ChatMessage = {
-                            id: Date.now().toString(),
-                            role: 'ai',
-                            content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
-                            timestamp: new Date()
-                        };
-                        addChatMessage(briefMsg);
-                    } else {
+                    } catch (err) {
+                        console.error('[DailyBrief] Error:', err);
                         handleSend('Pokaż mi dzienny brief - podsumowanie moich zadań, decyzji i inicjatyw');
                     }
-                } catch (err) {
-                    console.error('[DailyBrief] Error:', err);
-                    handleSend('Pokaż mi dzienny brief - podsumowanie moich zadań, decyzji i inicjatyw');
+                } else {
+                    handleSend(suggestion.action.prompt);
                 }
-            } else {
-                handleSend(suggestion.action.prompt);
             }
-        }
-    }, [handleSend, selectedProject, addChatMessage]);
+        },
+        [handleSend, selectedProject, addChatMessage],
+    );
 
     // Handle new chat
     const handleNewChat = useCallback(() => {
@@ -448,18 +477,21 @@ For example: REMEMBER: preferred_language: Polish`;
     // Handle daily brief
     const handleDailyBrief = useCallback(async () => {
         try {
-            const response = await fetch(`/api/daily-brief${selectedProject?.id ? `?projectId=${selectedProject.id}` : ''}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            const response = await fetch(
+                `/api/daily-brief${selectedProject?.id ? `?projectId=${selectedProject.id}` : ''}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                },
+            );
             if (response.ok) {
                 const data = await response.json();
                 const briefMsg: ChatMessage = {
                     id: Date.now().toString(),
                     role: 'ai',
                     content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
-                    timestamp: new Date()
+                    timestamp: new Date(),
                 };
                 addChatMessage(briefMsg);
             }
@@ -470,13 +502,13 @@ For example: REMEMBER: preferred_language: Polish`;
 
     // Handle message feedback (thumbs up/down)
     const handleFeedback = useCallback((messageId: string, feedback: MessageFeedback) => {
-        setMessageFeedback(prev => ({
+        setMessageFeedback((prev) => ({
             ...prev,
-            [messageId]: feedback
+            [messageId]: feedback,
         }));
 
         // Report to backend for analytics
-        Api.reportMessageFeedback?.(messageId, feedback.rating).catch(err => {
+        Api.reportMessageFeedback?.(messageId, feedback.rating).catch((err) => {
             console.error('[Feedback] Failed to report:', err);
         });
 
@@ -495,9 +527,15 @@ For example: REMEMBER: preferred_language: Polish`;
                 <span class="text-2xl">⚠️</span>
                 <div>
                     <div class="font-bold">Zgłoszono problem</div>
-                    <div class="text-sm opacity-90">${reason === 'harmful' ? 'Szkodliwa treść' :
-                reason === 'incorrect' ? 'Błędne informacje' :
-                    reason === 'unhelpful' ? 'Nieprzydatne' : 'Inny problem'}</div>
+                    <div class="text-sm opacity-90">${
+                        reason === 'harmful'
+                            ? 'Szkodliwa treść'
+                            : reason === 'incorrect'
+                              ? 'Błędne informacje'
+                              : reason === 'unhelpful'
+                                ? 'Nieprzydatne'
+                                : 'Inny problem'
+                    }</div>
                 </div>
             </div>
         `;
@@ -510,22 +548,25 @@ For example: REMEMBER: preferred_language: Polish`;
         }, 4000);
 
         // Report to backend
-        Api.reportMessage?.(messageId, reason).catch(err => {
+        Api.reportMessage?.(messageId, reason).catch((err) => {
             console.error('[Report] Failed to send report:', err);
         });
     }, []);
 
     // Handle message regenerate
-    const handleRegenerate = useCallback((messageId: string) => {
-        // Find the user message before this AI message and resend
-        const msgIndex = activeChatMessages.findIndex(m => m.id === messageId);
-        if (msgIndex > 0) {
-            const previousUserMsg = activeChatMessages[msgIndex - 1];
-            if (previousUserMsg && previousUserMsg.role === 'user') {
-                handleSend(previousUserMsg.content);
+    const handleRegenerate = useCallback(
+        (messageId: string) => {
+            // Find the user message before this AI message and resend
+            const msgIndex = activeChatMessages.findIndex((m) => m.id === messageId);
+            if (msgIndex > 0) {
+                const previousUserMsg = activeChatMessages[msgIndex - 1];
+                if (previousUserMsg && previousUserMsg.role === 'user') {
+                    handleSend(previousUserMsg.content);
+                }
             }
-        }
-    }, [activeChatMessages, handleSend]);
+        },
+        [activeChatMessages, handleSend],
+    );
 
     const hasMessages = activeChatMessages.length > 0;
 
@@ -559,7 +600,9 @@ For example: REMEMBER: preferred_language: Polish`;
                                 title={t('aiChat.newChat', 'New Chat')}
                             >
                                 <Plus size={18} className="text-primary-600 dark:text-primary-400" />
-                                <span className="font-medium text-sm hidden sm:inline">{t('aiChat.newChat', 'New Chat')}</span>
+                                <span className="font-medium text-sm hidden sm:inline">
+                                    {t('aiChat.newChat', 'New Chat')}
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -579,14 +622,14 @@ For example: REMEMBER: preferred_language: Polish`;
                                 }
 
                                 return (
-                                    <div
-                                        key={msg.id}
-                                        className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}
-                                    >
-                                        <div className={`inline-block max-w-[85%] ${msg.role === 'user'
-                                            ? 'bg-primary-600 text-white rounded-2xl rounded-br-md px-4 py-3'
-                                            : 'text-navy-900 dark:text-slate-200'
-                                            }`}>
+                                    <div key={msg.id} className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                                        <div
+                                            className={`inline-block max-w-[85%] ${
+                                                msg.role === 'user'
+                                                    ? 'bg-primary-600 text-white rounded-2xl rounded-br-md px-4 py-3'
+                                                    : 'text-navy-900 dark:text-slate-200'
+                                            }`}
+                                        >
                                             <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
                                                 {displayContent}
                                                 {isStreamingThis && (
@@ -604,15 +647,18 @@ For example: REMEMBER: preferred_language: Polish`;
                                             )}
 
                                             {/* Actions */}
-                                            {isAiMessage && msg.actions && msg.actions.length > 0 && !isStreamingThis && (
-                                                <ResponseActions
-                                                    actions={msg.actions}
-                                                    onActionComplete={(action) => {
-                                                        console.log('[Chat] Action completed:', action.id);
-                                                        handleAIAction(action);
-                                                    }}
-                                                />
-                                            )}
+                                            {isAiMessage &&
+                                                msg.actions &&
+                                                msg.actions.length > 0 &&
+                                                !isStreamingThis && (
+                                                    <ResponseActions
+                                                        actions={msg.actions}
+                                                        onActionComplete={(action) => {
+                                                            console.log('[Chat] Action completed:', action.id);
+                                                            handleAIAction(action);
+                                                        }}
+                                                    />
+                                                )}
 
                                             {/* Voice Mode Indicator */}
                                             {isAiMessage && !isStreamingThis && voiceModeEnabled && ttsSupported && (
@@ -635,12 +681,16 @@ For example: REMEMBER: preferred_language: Polish`;
                                                         role: 'ai',
                                                         content: displayContent,
                                                         timestamp: msg.timestamp,
-                                                        feedback: messageFeedback[msg.id]
+                                                        feedback: messageFeedback[msg.id],
                                                     }}
                                                     onFeedback={handleFeedback}
                                                     onReport={handleReport}
                                                     onRegenerate={handleRegenerate}
-                                                    onSpeak={ttsSupported ? (content) => speak(cleanTextForSpeech(content)) : undefined}
+                                                    onSpeak={
+                                                        ttsSupported
+                                                            ? (content) => speak(cleanTextForSpeech(content))
+                                                            : undefined
+                                                    }
                                                     showAlwaysVisible={true}
                                                 />
                                             </div>
@@ -657,7 +707,7 @@ For example: REMEMBER: preferred_language: Polish`;
                     {pendingActions.length > 0 && (
                         <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
                             <div className="max-w-3xl mx-auto">
-                                {pendingActions.map(pa => (
+                                {pendingActions.map((pa) => (
                                     <div key={pa.actionId} className="flex items-center justify-between text-sm">
                                         <span className="text-yellow-800 dark:text-yellow-200">
                                             🔔 {pa.confirmationMessage}
@@ -686,9 +736,15 @@ For example: REMEMBER: preferred_language: Polish`;
                     {continuousVoiceMode && (
                         <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
                             <div className="max-w-3xl mx-auto flex items-center justify-center gap-3 text-sm">
-                                <span className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`} />
+                                <span
+                                    className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`}
+                                />
                                 <span className="text-primary-700 dark:text-primary-300">
-                                    {voiceState.isListening ? 'Słucham...' : voiceState.isSpeaking ? 'Mówię...' : 'Tryb głosowy aktywny'}
+                                    {voiceState.isListening
+                                        ? 'Słucham...'
+                                        : voiceState.isSpeaking
+                                          ? 'Mówię...'
+                                          : 'Tryb głosowy aktywny'}
                                 </span>
                                 {voiceState.interimTranscript && (
                                     <span className="text-slate-500 italic truncate max-w-xs">
@@ -721,10 +777,11 @@ For example: REMEMBER: preferred_language: Polish`;
                                 <div className="flex justify-center mt-2">
                                     <button
                                         onClick={handleContinuousVoiceToggle}
-                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${continuousVoiceMode
-                                            ? 'bg-primary-500 text-white'
-                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                            }`}
+                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                                            continuousVoiceMode
+                                                ? 'bg-primary-500 text-white'
+                                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                        }`}
                                     >
                                         {continuousVoiceMode ? '🎙️ Tryb rozmowy włączony' : '🎙️ Włącz rozmowę głosową'}
                                     </button>
@@ -735,10 +792,7 @@ For example: REMEMBER: preferred_language: Polish`;
                 </div>
 
                 {/* Export Modal */}
-                <ChatExportModal
-                    isOpen={showExportModal}
-                    onClose={() => setShowExportModal(false)}
-                />
+                <ChatExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} />
             </div>
         );
     }
@@ -772,14 +826,15 @@ For example: REMEMBER: preferred_language: Polish`;
                             title={t('aiChat.newChat', 'New Chat')}
                         >
                             <Plus size={18} className="text-primary-600 dark:text-primary-400" />
-                            <span className="font-medium text-sm hidden sm:inline">{t('aiChat.newChat', 'New Chat')}</span>
+                            <span className="font-medium text-sm hidden sm:inline">
+                                {t('aiChat.newChat', 'New Chat')}
+                            </span>
                         </button>
                     </div>
                 </div>
 
                 {/* Centered Content */}
                 <div className="flex-1 flex flex-col items-center justify-center px-4">
-
                     {/* Personalized Greeting */}
                     <div className="text-center mb-10">
                         <h1 className="text-4xl md:text-5xl font-semibold text-navy-900 dark:text-white">
@@ -806,12 +861,15 @@ For example: REMEMBER: preferred_language: Polish`;
                             <div className="flex justify-center mt-3">
                                 <button
                                     onClick={handleContinuousVoiceToggle}
-                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${continuousVoiceMode
-                                        ? 'bg-primary-500 text-white'
-                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                        }`}
+                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${
+                                        continuousVoiceMode
+                                            ? 'bg-primary-500 text-white'
+                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                    }`}
                                 >
-                                    <span className={`w-2 h-2 rounded-full ${continuousVoiceMode ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
+                                    <span
+                                        className={`w-2 h-2 rounded-full ${continuousVoiceMode ? 'bg-white animate-pulse' : 'bg-slate-400'}`}
+                                    />
                                     {continuousVoiceMode ? 'Rozmowa głosowa aktywna' : 'Rozpocznij rozmowę głosową'}
                                 </button>
                             </div>
@@ -837,10 +895,7 @@ For example: REMEMBER: preferred_language: Polish`;
             </div>
 
             {/* Export Modal */}
-            <ChatExportModal
-                isOpen={showExportModal}
-                onClose={() => setShowExportModal(false)}
-            />
+            <ChatExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} />
         </div>
     );
 };

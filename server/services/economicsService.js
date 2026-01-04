@@ -5,10 +5,11 @@
  * Provides CRUD operations and scoring calculations
  */
 
-import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
+import { queryAll, queryOne, queryRun } from '../dist/utils/queryHelpers.js';
 
 const queryHelpers = { queryAll, queryOne, queryRun };
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 

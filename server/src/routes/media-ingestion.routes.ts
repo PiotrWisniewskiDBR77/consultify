@@ -1,7 +1,7 @@
 /**
  * MediaIngestion Routes
  * API endpoints for media-ingestion
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof media_ingestionRoutesJS === 'function' || (media_ingestionRoutesJS && typeof media_ingestionRoutesJS.handle === 'function')) {
+if (
+    typeof media_ingestionRoutesJS === 'function' ||
+    (media_ingestionRoutesJS && typeof media_ingestionRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(media_ingestionRoutesJS);
 } else {

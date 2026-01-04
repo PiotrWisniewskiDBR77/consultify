@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { RAIDLog } from '../../../components/Implementation/RAIDLog';
+import { RAIDLog } from '../../components/Implementation/RAIDLog';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -48,6 +48,7 @@ describe('RAIDLog Component', () => {
         });
     });
 });
+
 
 
 

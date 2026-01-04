@@ -1,5 +1,6 @@
+import { AlertCircle, Cpu, ShieldAlert } from 'lucide-react';
 import React from 'react';
-import { AlertCircle, ShieldAlert, Cpu } from 'lucide-react';
+
 import { useAppStore } from '../store/useAppStore';
 
 export const AIFreezeBanner: React.FC = () => {
@@ -16,7 +17,8 @@ export const AIFreezeBanner: React.FC = () => {
                 <div>
                     <span className="font-bold text-sm tracking-wide">AI FREEZE ACTIVE:</span>
                     <span className="text-sm ml-2 text-amber-50 opacity-90">
-                        Budget hard limit reached ({aiFreezeStatus.scope || 'Global'}). AI functionality is temporarily restricted.
+                        Budget hard limit reached ({aiFreezeStatus.scope || 'Global'}). AI functionality is temporarily
+                        restricted.
                     </span>
                 </div>
             </div>
@@ -27,7 +29,7 @@ export const AIFreezeBanner: React.FC = () => {
                     <span className="text-[11px] font-medium uppercase tracking-tighter">Budget Control Protocol</span>
                 </div>
                 <button
-                    onClick={() => window.location.href = '/settings/billing'}
+                    onClick={() => (window.location.href = '/settings/billing')}
                     className="bg-white text-amber-700 hover:bg-amber-50 px-4 py-1 rounded-lg text-xs font-bold transition-all shadow-sm border border-transparent active:scale-95"
                 >
                     Increase Budget

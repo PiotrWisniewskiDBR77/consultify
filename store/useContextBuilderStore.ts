@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { DynamicListItem } from '../views/ContextBuilder/shared/DynamicList';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
 import { Api } from '../services/api';
+import { DynamicListItem } from '../views/ContextBuilder/shared/DynamicList';
 
 // Define the types for each module's data
 interface CompanyProfileState {
@@ -79,7 +80,7 @@ interface ChallengesState {
 
 interface TrendState {
     selectedIndustry: string;
-    // We might not need to store full megatrend objects here if they come from another store, 
+    // We might not need to store full megatrend objects here if they come from another store,
     // but we should store WHICH ones are selected/prioritized if that's a feature.
     // For now, let's assume the Megatrend module manages its own selection or we use the existing useMegatrendStore.
     // We'll add fields if we need to cross-reference them in Synthesis.
@@ -140,13 +141,13 @@ const initialCompanyProfile: CompanyProfileState = {
         demographics: '',
         turnover: '',
         digitalReadiness: '',
-        changeAppetite: ''
+        changeAppetite: '',
     },
     processes: [],
     stakeholders: [],
     initiatives: [],
     activeConstraints: [],
-    constraintDetails: {}
+    constraintDetails: {},
 };
 
 const initialGoals: GoalsState = {
@@ -161,21 +162,21 @@ const initialGoals: GoalsState = {
     noGo: [],
     transformationArchetype: '',
     aiRole: '',
-    steeringCadence: ''
+    steeringCadence: '',
 };
 
 const initialChallenges: ChallengesState = {
     declaredChallenges: [],
     rootCauseAnswers: {},
     evidence: [],
-    activeBlockers: []
+    activeBlockers: [],
 };
 
 const initialSynthesis: SynthesisState = {
     risks: [],
     strengths: [],
     selectedScenarioId: 'balanced',
-    scenarios: []
+    scenarios: [],
 };
 
 export const useContextBuilderStore = create<ContextBuilderState>()(
@@ -187,38 +188,46 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
             synthesis: initialSynthesis,
             isGenerating: false,
 
-            setCompanyProfile: (data) => set((state) => ({
-                companyProfile: { ...state.companyProfile, ...data }
-            })),
+            setCompanyProfile: (data) =>
+                set((state) => ({
+                    companyProfile: { ...state.companyProfile, ...data },
+                })),
 
-            setGoals: (data) => set((state) => ({
-                goals: { ...state.goals, ...data }
-            })),
+            setGoals: (data) =>
+                set((state) => ({
+                    goals: { ...state.goals, ...data },
+                })),
 
-            setChallenges: (data) => set((state) => ({
-                challenges: { ...state.challenges, ...data }
-            })),
+            setChallenges: (data) =>
+                set((state) => ({
+                    challenges: { ...state.challenges, ...data },
+                })),
 
-            setSynthesis: (data) => set((state) => ({
-                synthesis: { ...state.synthesis, ...data }
-            })),
+            setSynthesis: (data) =>
+                set((state) => ({
+                    synthesis: { ...state.synthesis, ...data },
+                })),
 
             // List Helpers
-            updateCompanyList: (listName, items) => set((state) => ({
-                companyProfile: { ...state.companyProfile, [listName]: items }
-            })),
+            updateCompanyList: (listName, items) =>
+                set((state) => ({
+                    companyProfile: { ...state.companyProfile, [listName]: items },
+                })),
 
-            updateGoalsList: (listName, items) => set((state) => ({
-                goals: { ...state.goals, [listName]: items }
-            })),
+            updateGoalsList: (listName, items) =>
+                set((state) => ({
+                    goals: { ...state.goals, [listName]: items },
+                })),
 
-            updateChallengesList: (listName, items) => set((state) => ({
-                challenges: { ...state.challenges, [listName]: items }
-            })),
+            updateChallengesList: (listName, items) =>
+                set((state) => ({
+                    challenges: { ...state.challenges, [listName]: items },
+                })),
 
-            updateSynthesisList: (listName, items) => set((state) => ({
-                synthesis: { ...state.synthesis, [listName]: items }
-            })),
+            updateSynthesisList: (listName, items) =>
+                set((state) => ({
+                    synthesis: { ...state.synthesis, [listName]: items },
+                })),
 
             generateAnalysis: async () => {
                 set({ isGenerating: true });
@@ -243,7 +252,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                     const response = await Api.chatWithAI(
                         `Based on this company context, suggest 1-2 key risks and 1-2 strategic opportunities. Output as JSON: {"risks":[{"risk":"","why":"","severity":"High/Medium/Low","mitigation":""}], "strengths":[{"enabler":"","seen":"","leverage":""}]}. Context: ${contextSummary}`,
                         [],
-                        'You are a strategic consultant. Output only valid JSON.'
+                        'You are a strategic consultant. Output only valid JSON.',
                     );
 
                     const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -263,17 +272,20 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                         risk: `Unresolved Operational Issues`,
                         why: `High volume of declared challenges (${challenges.declaredChallenges.length}) may derail focus.`,
                         severity: 'High',
-                        mitigation: 'Prioritize "Quick Wins" track.'
+                        mitigation: 'Prioritize "Quick Wins" track.',
                     });
                 }
 
-                if (companyProfile.activeConstraints.includes('culture') || companyProfile.workforceDynamics.changeAppetite === 'Resistant / Fatigued') {
+                if (
+                    companyProfile.activeConstraints.includes('culture') ||
+                    companyProfile.workforceDynamics.changeAppetite === 'Resistant / Fatigued'
+                ) {
                     newRisks.push({
                         id: 'r2',
                         risk: 'Culture Clash',
                         why: 'Workforce identified as resistant to change.',
                         severity: 'Critical',
-                        mitigation: 'Heavy investment in Change Mgmt.'
+                        mitigation: 'Heavy investment in Change Mgmt.',
                     });
                 }
                 if (companyProfile.activeConstraints.includes('it')) {
@@ -282,12 +294,18 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                         risk: 'Technical Debt Swamp',
                         why: 'Legacy IT systems identified as hard constraint.',
                         severity: 'Medium',
-                        mitigation: 'Parallel IT modernization stream.'
+                        mitigation: 'Parallel IT modernization stream.',
                     });
                 }
 
                 if (newRisks.length === 0) {
-                    newRisks.push({ id: 'r_def', risk: 'General Execution Risk', why: 'Standard transformation complexity.', severity: 'Medium', mitigation: 'Robust Governance.' });
+                    newRisks.push({
+                        id: 'r_def',
+                        risk: 'General Execution Risk',
+                        why: 'Standard transformation complexity.',
+                        severity: 'Medium',
+                        mitigation: 'Robust Governance.',
+                    });
                 }
 
                 // AI Suggested Risks (from real AI if available)
@@ -299,7 +317,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                             why: r.why || 'Identified by AI analysis',
                             severity: r.severity || 'Medium',
                             mitigation: r.mitigation || 'Review and address.',
-                            isAiSuggested: true
+                            isAiSuggested: true,
                         });
                     });
                 } else {
@@ -310,7 +328,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                         why: 'Audit 2023 showed missing logs in legacy systems.',
                         severity: 'High',
                         mitigation: 'Implement immediate logging wrapper.',
-                        isAiSuggested: true
+                        isAiSuggested: true,
                     });
                 }
 
@@ -318,13 +336,28 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                 const newStrengths: DynamicListItem[] = [];
 
                 if (goals.topPriorities.includes('inv')) {
-                    newStrengths.push({ id: 's1', enabler: 'Innovation Mandate', seen: 'Explicit top-priority set by leadership', leverage: 'Create "Innovation Lab" pilot.' });
+                    newStrengths.push({
+                        id: 's1',
+                        enabler: 'Innovation Mandate',
+                        seen: 'Explicit top-priority set by leadership',
+                        leverage: 'Create "Innovation Lab" pilot.',
+                    });
                 }
                 if (companyProfile.growthStage === 'Startup / Scaling') {
-                    newStrengths.push({ id: 's2', enabler: 'Agility Advantage', seen: 'Startup growth stage', leverage: 'Iterate fast, fail fast.' });
+                    newStrengths.push({
+                        id: 's2',
+                        enabler: 'Agility Advantage',
+                        seen: 'Startup growth stage',
+                        leverage: 'Iterate fast, fail fast.',
+                    });
                 }
                 if (newStrengths.length === 0) {
-                    newStrengths.push({ id: 's_def', enabler: 'Executive Sponsorship', seen: 'Initiative launched by CEO', leverage: 'Maintain steerco visibility.' });
+                    newStrengths.push({
+                        id: 's_def',
+                        enabler: 'Executive Sponsorship',
+                        seen: 'Initiative launched by CEO',
+                        leverage: 'Maintain steerco visibility.',
+                    });
                 }
 
                 // AI Suggested Opportunities (from real AI if available)
@@ -335,7 +368,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                             enabler: s.enabler || 'AI Identified Opportunity',
                             seen: s.seen || 'Identified by AI analysis',
                             leverage: s.leverage || 'Explore and leverage.',
-                            isAiSuggested: true
+                            isAiSuggested: true,
                         });
                     });
                 } else {
@@ -345,7 +378,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                         enabler: 'Market Gap: AI in ' + companyProfile.subIndustry,
                         seen: 'Competitor Analysis',
                         leverage: 'First-mover advantage recommended.',
-                        isAiSuggested: true
+                        isAiSuggested: true,
                     });
                 }
 
@@ -353,22 +386,23 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                     synthesis: {
                         ...state.synthesis,
                         risks: newRisks,
-                        strengths: newStrengths
+                        strengths: newStrengths,
                     },
-                    isGenerating: false
+                    isGenerating: false,
                 }));
             },
 
-            reset: () => set({
-                companyProfile: initialCompanyProfile,
-                goals: initialGoals,
-                challenges: initialChallenges,
-                synthesis: initialSynthesis
-            })
+            reset: () =>
+                set({
+                    companyProfile: initialCompanyProfile,
+                    goals: initialGoals,
+                    challenges: initialChallenges,
+                    synthesis: initialSynthesis,
+                }),
         }),
         {
             name: 'consultify-context-builder',
             storage: createJSONStorage(() => localStorage),
-        }
-    )
+        },
+    ),
 );

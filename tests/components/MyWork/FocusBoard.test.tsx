@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FocusBoard } from '../../../components/MyWork/Focus/FocusBoard';
+import { FocusBoard } from '../../components/MyWork/Focus/FocusBoard';
 import { Api } from '../../../services/api';
 
 // Mock dependencies
@@ -481,6 +481,7 @@ describe('FocusBoard Component', () => {
         });
     });
 });
+
 
 
 

@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Activity, AlertCircle, FileCode, Clock, ChevronDown, ChevronUp, Download, Loader2 } from 'lucide-react';
+import {
+    Activity,
+    AlertCircle,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Download,
+    FileCode,
+    FileText,
+    Loader2,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import ConfidenceBadge from './ConfidenceBadge';
 
 interface Evidence {
@@ -41,28 +52,28 @@ const EVIDENCE_TYPE_CONFIG: Record<string, { icon: React.ReactNode; label: strin
     METRIC_SNAPSHOT: {
         icon: <Activity className="w-4 h-4" />,
         label: 'Metric',
-        color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+        color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     },
     SIGNAL: {
         icon: <AlertCircle className="w-4 h-4" />,
         label: 'Signal',
-        color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+        color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
     },
     DOC_REF: {
         icon: <FileText className="w-4 h-4" />,
         label: 'Document',
-        color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+        color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
     },
     USER_EVENT: {
         icon: <Clock className="w-4 h-4" />,
         label: 'User Event',
-        color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+        color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     },
     SYSTEM_EVENT: {
         icon: <FileCode className="w-4 h-4" />,
         label: 'System Event',
-        color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-    }
+        color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    },
 };
 
 const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, token }) => {
@@ -85,9 +96,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
 
                 const response = await fetch(`/api/ai/explain/${entityType}/${entityId}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
                 });
 
                 if (!response.ok) {
@@ -114,9 +125,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
 
             const response = await fetch(`/api/ai/explain/${entityType}/${entityId}/export?format=json`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -187,9 +198,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
             {/* Header with Confidence and Export */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Evidence & Reasoning
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Evidence & Reasoning</h3>
                     <ConfidenceBadge confidence={explanation.confidence} />
                 </div>
                 <button
@@ -197,11 +206,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
                     disabled={exporting}
                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
-                    {exporting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                        <Download className="w-4 h-4" />
-                    )}
+                    {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     Export Evidence Pack
                 </button>
             </div>
@@ -209,12 +214,8 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
             {/* Reasoning Section */}
             {latestReasoning && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
-                        Reasoning Summary
-                    </h4>
-                    <p className="text-gray-700 dark:text-gray-300 mb-3">
-                        {latestReasoning.reasoning_summary}
-                    </p>
+                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Reasoning Summary</h4>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">{latestReasoning.reasoning_summary}</p>
 
                     {latestReasoning.assumptions && latestReasoning.assumptions.length > 0 && (
                         <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
@@ -223,7 +224,10 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
                             </h5>
                             <ul className="space-y-1">
                                 {latestReasoning.assumptions.map((assumption, idx) => (
-                                    <li key={idx} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                                    <li
+                                        key={idx}
+                                        className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"
+                                    >
                                         <span className="text-blue-500 mt-1">•</span>
                                         {assumption}
                                     </li>
@@ -245,9 +249,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
                 </h4>
 
                 {explanation.evidences.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        No evidence objects linked.
-                    </p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No evidence objects linked.</p>
                 ) : (
                     <div className="space-y-3">
                         {explanation.evidences.map((evidence) => {
@@ -264,7 +266,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
                                         onClick={() => toggleEvidence(evidence.link_id)}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${config.color}`}>
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${config.color}`}
+                                            >
                                                 {config.icon}
                                                 {config.label}
                                             </span>

@@ -183,7 +183,8 @@ const ManagementReportsService = {
         let totalInitiatives = 0;
         let initiativesOnTrack = 0;
 
-        for (const project of projects) {
+        // Parallelize project data fetching to avoid N+1 sequential latency
+        const projectResults = await Promise.all(projects.map(async (project) => {
             const [completed, inProgress, blockers, decisions, planned, summary] = await Promise.all([
                 ManagementReportsService._getCompletedWork(project.id, periodStart, periodEnd),
                 ManagementReportsService._getWorkInProgress(project.id),
@@ -194,37 +195,29 @@ const ManagementReportsService = {
             ]);
 
             // Add project context to items
-            completed.forEach(item => {
-                item.projectId = project.id;
-                item.projectName = project.name;
-                allCompleted.push(item);
-            });
+            const enrich = (items) => items.map(item => ({ ...item, projectId: project.id, projectName: project.name }));
 
-            inProgress.forEach(item => {
-                item.projectId = project.id;
-                item.projectName = project.name;
-                allInProgress.push(item);
-            });
+            return {
+                completed: enrich(completed),
+                inProgress: enrich(inProgress),
+                blockers: enrich(blockers),
+                decisions: enrich(decisions),
+                planned: enrich(planned),
+                summary,
+                project
+            };
+        }));
 
-            blockers.forEach(item => {
-                item.projectId = project.id;
-                item.projectName = project.name;
-                allBlockers.push(item);
-            });
+        // Aggregate results
+        for (const res of projectResults) {
+            allCompleted.push(...res.completed);
+            allInProgress.push(...res.inProgress);
+            allBlockers.push(...res.blockers);
+            allDecisions.push(...res.decisions);
+            allPlanned.push(...res.planned);
 
-            decisions.forEach(item => {
-                item.projectId = project.id;
-                item.projectName = project.name;
-                allDecisions.push(item);
-            });
+            const { summary, project, blockers } = res;
 
-            planned.forEach(item => {
-                item.projectId = project.id;
-                item.projectName = project.name;
-                allPlanned.push(item);
-            });
-
-            // Accumulate totals
             totalTasks += summary.tasksTotal;
             completedTasks += summary.tasksCompleted;
             blockedTasks += summary.tasksBlocked;
@@ -232,7 +225,6 @@ const ManagementReportsService = {
             totalInitiatives += summary.initiativesTotal;
             initiativesOnTrack += summary.initiativesOnTrack;
 
-            // Project breakdown
             projectBreakdown.push({
                 projectId: project.id,
                 projectName: project.name,
@@ -240,7 +232,7 @@ const ManagementReportsService = {
                 tasksCompleted: summary.tasksCompleted,
                 tasksTotal: summary.tasksTotal,
                 blockers: blockers.length,
-                highlights: completed.slice(0, 2).map(c => c.title)
+                highlights: res.completed.slice(0, 2).map(c => c.title)
             });
         }
 
@@ -480,7 +472,8 @@ const ManagementReportsService = {
         const allKPIs = [];
         const projectStatuses = [];
 
-        for (const project of projects) {
+        // Parallelize project data fetching
+        const projectResults = await Promise.all(projects.map(async (project) => {
             const [status, risks, decisions, kpis] = await Promise.all([
                 ManagementReportsService._getOverallRAGStatus(project.id, null),
                 ManagementReportsService._getRisksAndIssues(project.id),
@@ -488,25 +481,30 @@ const ManagementReportsService = {
                 ManagementReportsService._getKPIs(project.id)
             ]);
 
-            risks.forEach(r => {
-                r.projectId = project.id;
-                r.projectName = project.name;
-                allRisks.push(r);
-            });
+            const enrich = (items) => items.map(item => ({ ...item, projectId: project.id, projectName: project.name }));
 
-            decisions.forEach(d => {
-                d.projectId = project.id;
-                d.projectName = project.name;
-                allDecisions.push(d);
-            });
+            return {
+                status,
+                risks: enrich(risks),
+                decisions: enrich(decisions),
+                kpis,
+                project
+            };
+        }));
+
+        // Aggregate
+        for (const res of projectResults) {
+            allRisks.push(...res.risks);
+            allDecisions.push(...res.decisions);
+            // allKPIs logic seems missing in original code (loop didn't push to allKPIs?), preserving original behavior of just declaring it
 
             projectStatuses.push({
-                projectId: project.id,
-                projectName: project.name,
-                owner: project.owner_name || 'Unassigned',
-                phase: project.current_phase || 'Unknown',
-                status,
-                keyIssues: risks.filter(r => r.severity === 'CRITICAL' || r.severity === 'HIGH').map(r => r.title).slice(0, 3)
+                projectId: res.project.id,
+                projectName: res.project.name,
+                owner: res.project.owner_name || 'Unassigned',
+                phase: res.project.current_phase || 'Unknown',
+                status: res.status,
+                keyIssues: res.risks.filter(r => r.severity === 'CRITICAL' || r.severity === 'HIGH').map(r => r.title).slice(0, 3)
             });
         }
 

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { InfoSections } from '../../../components/Landing/InfoSections';
+import { InfoSections } from '../../components/Landing/InfoSections';
 
 describe('InfoSections Component', () => {
     it('renders info sections', () => {
@@ -19,6 +19,7 @@ describe('InfoSections Component', () => {
         expect(cards.length).toBeGreaterThan(0);
     });
 });
+
 
 
 

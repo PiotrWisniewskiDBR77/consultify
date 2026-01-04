@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
@@ -6,9 +7,8 @@ export const useBreadcrumbs = () => {
     const { t } = useTranslation();
     const { currentView } = useAppStore();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sidebarT = t('sidebar', { returnObjects: true }) as Record<string, any>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const step1T = t('step1', { returnObjects: true }) as Record<string, any>;
 
     // Default values

@@ -2,12 +2,23 @@
  * SettingsExportImport - Export and Import all settings
  */
 
+import {
+    AlertTriangle,
+    Calendar,
+    CheckCircle,
+    Copy,
+    Download,
+    FileJson,
+    FileText,
+    Loader2,
+    Upload,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
-import { Download, Upload, FileJson, CheckCircle, AlertTriangle, Loader2, Copy, FileText, Calendar } from 'lucide-react';
-import { Api } from '../../../services/api';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsExportImportProps {
@@ -38,12 +49,14 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
         notifications: true,
         integrations: true,
         appearance: true,
-        keyboard: true
+        keyboard: true,
     });
     const [importFile, setImportFile] = useState<File | null>(null);
     const [importPreview, setImportPreview] = useState<any>(null);
-    const [importValidation, setImportValidation] = useState<{valid: boolean; warnings: string[]; errors: string[]}>({
-        valid: true, warnings: [], errors: []
+    const [importValidation, setImportValidation] = useState<{ valid: boolean; warnings: string[]; errors: string[] }>({
+        valid: true,
+        warnings: [],
+        errors: [],
     });
 
     const categories = [
@@ -54,28 +67,60 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
         { key: 'notifications', label: 'Notifications', icon: '🔔' },
         { key: 'integrations', label: 'Integrations', icon: '🔗' },
         { key: 'appearance', label: 'Appearance', icon: '🎨' },
-        { key: 'keyboard', label: 'Keyboard Shortcuts', icon: '⌨️' }
+        { key: 'keyboard', label: 'Keyboard Shortcuts', icon: '⌨️' },
     ];
 
     const handleExport = async () => {
         try {
             setExporting(true);
-            
+
             // Generate export data
             const exportData = {
                 version: '1.0.0',
                 exportedAt: new Date().toISOString(),
                 userId: currentUser.id,
                 settings: {
-                    ...(exportConfig.profile && { profile: { /* profile data */ } }),
-                    ...(exportConfig.security && { security: { /* security data */ } }),
-                    ...(exportConfig.privacy && { privacy: { /* privacy data */ } }),
-                    ...(exportConfig.aiPreferences && { aiPreferences: { /* ai data */ } }),
-                    ...(exportConfig.notifications && { notifications: { /* notif data */ } }),
-                    ...(exportConfig.integrations && { integrations: { /* integration data */ } }),
-                    ...(exportConfig.appearance && { appearance: { /* appearance data */ } }),
-                    ...(exportConfig.keyboard && { keyboard: { /* keyboard data */ } })
-                }
+                    ...(exportConfig.profile && {
+                        profile: {
+                            /* profile data */
+                        },
+                    }),
+                    ...(exportConfig.security && {
+                        security: {
+                            /* security data */
+                        },
+                    }),
+                    ...(exportConfig.privacy && {
+                        privacy: {
+                            /* privacy data */
+                        },
+                    }),
+                    ...(exportConfig.aiPreferences && {
+                        aiPreferences: {
+                            /* ai data */
+                        },
+                    }),
+                    ...(exportConfig.notifications && {
+                        notifications: {
+                            /* notif data */
+                        },
+                    }),
+                    ...(exportConfig.integrations && {
+                        integrations: {
+                            /* integration data */
+                        },
+                    }),
+                    ...(exportConfig.appearance && {
+                        appearance: {
+                            /* appearance data */
+                        },
+                    }),
+                    ...(exportConfig.keyboard && {
+                        keyboard: {
+                            /* keyboard data */
+                        },
+                    }),
+                },
             };
 
             // Create download
@@ -114,19 +159,20 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
             if (!data.version) errors.push('Missing version information');
             if (!data.settings) errors.push('Missing settings data');
-            if (data.version && data.version !== '1.0.0') warnings.push('Different settings version - some options may not apply');
+            if (data.version && data.version !== '1.0.0')
+                warnings.push('Different settings version - some options may not apply');
             if (data.userId && data.userId !== currentUser.id) warnings.push('Settings from different user account');
 
             setImportValidation({
                 valid: errors.length === 0,
                 warnings,
-                errors
+                errors,
             });
         } catch (error) {
             setImportValidation({
                 valid: false,
                 warnings: [],
-                errors: ['Invalid JSON file']
+                errors: ['Invalid JSON file'],
             });
         }
     };
@@ -136,10 +182,10 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
         try {
             setImporting(true);
-            
+
             // In real implementation, would call API to apply settings
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
             toast.success('Settings imported successfully');
             setImportFile(null);
             setImportPreview(null);
@@ -159,14 +205,14 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             notifications: checked,
             integrations: checked,
             appearance: checked,
-            keyboard: checked
+            keyboard: checked,
         });
     };
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in relative">
             <InfoButton cardId="settings-export-import" position="top-right" />
-            
+
             <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                     <FileJson size={28} className="text-emerald-500" />
@@ -207,10 +253,13 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                             className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                         />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-3">
-                        {categories.map(cat => (
-                            <label key={cat.key} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800">
+                        {categories.map((cat) => (
+                            <label
+                                key={cat.key}
+                                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800"
+                            >
                                 <div className="flex items-center gap-3">
                                     <span className="text-xl">{cat.icon}</span>
                                     <span className="font-medium text-slate-700 dark:text-slate-300">{cat.label}</span>
@@ -218,7 +267,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                                 <input
                                     type="checkbox"
                                     checked={exportConfig[cat.key as keyof ExportConfig]}
-                                    onChange={(e) => setExportConfig({...exportConfig, [cat.key]: e.target.checked})}
+                                    onChange={(e) => setExportConfig({ ...exportConfig, [cat.key]: e.target.checked })}
                                     className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                                 />
                             </label>
@@ -242,7 +291,9 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                 {!importFile ? (
                     <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
                         <FileText size={48} className="text-slate-400 mb-3" />
-                        <p className="font-medium text-slate-700 dark:text-slate-300">Drop settings file here or click to browse</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-300">
+                            Drop settings file here or click to browse
+                        </p>
                         <p className="text-sm text-slate-500 mt-1">Accepts .json files exported from Consultify</p>
                         <input type="file" accept=".json" onChange={handleFileSelect} className="hidden" />
                     </label>
@@ -260,7 +311,13 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => { setImportFile(null); setImportPreview(null); }} className="p-2 text-slate-400 hover:text-slate-600">
+                            <button
+                                onClick={() => {
+                                    setImportFile(null);
+                                    setImportPreview(null);
+                                }}
+                                className="p-2 text-slate-400 hover:text-slate-600"
+                            >
                                 ×
                             </button>
                         </div>
@@ -273,7 +330,9 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                                     Errors Found
                                 </div>
                                 <ul className="text-sm text-red-600 dark:text-red-300 space-y-1">
-                                    {importValidation.errors.map((err, i) => <li key={i}>• {err}</li>)}
+                                    {importValidation.errors.map((err, i) => (
+                                        <li key={i}>• {err}</li>
+                                    ))}
                                 </ul>
                             </div>
                         )}
@@ -285,7 +344,9 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                                     Warnings
                                 </div>
                                 <ul className="text-sm text-yellow-600 dark:text-yellow-300 space-y-1">
-                                    {importValidation.warnings.map((warn, i) => <li key={i}>• {warn}</li>)}
+                                    {importValidation.warnings.map((warn, i) => (
+                                        <li key={i}>• {warn}</li>
+                                    ))}
                                 </ul>
                             </div>
                         )}
@@ -302,10 +363,15 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                         {/* Preview */}
                         {importPreview?.settings && (
                             <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Settings to import:</p>
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Settings to import:
+                                </p>
                                 <div className="flex flex-wrap gap-2">
-                                    {Object.keys(importPreview.settings).map(key => (
-                                        <span key={key} className="px-2 py-1 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded text-sm">
+                                    {Object.keys(importPreview.settings).map((key) => (
+                                        <span
+                                            key={key}
+                                            className="px-2 py-1 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded text-sm"
+                                        >
                                             {key}
                                         </span>
                                     ))}
@@ -340,10 +406,4 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 };
 
 export default SettingsExportImport;
-
-
-
-
-
-
 

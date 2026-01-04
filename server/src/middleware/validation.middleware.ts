@@ -1,11 +1,11 @@
 /**
  * Validation Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Higher-order function to validate request body against a Zod schema.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 
 // ==========================================
@@ -23,15 +23,16 @@ export const validateBody = (schema: z.ZodSchema) => {
             const result = schema.safeParse(req.body);
             if (!result.success) {
                 // Format Zod errors into a readable structure
-                const errors = result.error?.errors?.map(err => ({
-                    field: err.path.join('.'),
-                    message: err.message,
-                    code: err.code
-                })) || [];
+                const errors =
+                    result.error?.errors?.map((err: Error | null) => ({
+                        field: err.path.join('.'),
+                        message: err.message,
+                        code: err.code,
+                    })) || [];
 
                 res.status(400).json({
                     error: 'Validation Error',
-                    details: errors
+                    details: errors,
                 });
                 return;
             }
@@ -56,15 +57,16 @@ export const validateQuery = (schema: z.ZodSchema) => {
         try {
             const result = schema.safeParse(req.query);
             if (!result.success) {
-                const errors = result.error?.errors?.map(err => ({
-                    field: err.path.join('.'),
-                    message: err.message,
-                    code: err.code
-                })) || [];
+                const errors =
+                    result.error?.errors?.map((err: Error | null) => ({
+                        field: err.path.join('.'),
+                        message: err.message,
+                        code: err.code,
+                    })) || [];
 
                 res.status(400).json({
                     error: 'Validation Error',
-                    details: errors
+                    details: errors,
                 });
                 return;
             }
@@ -88,15 +90,16 @@ export const validateParams = (schema: z.ZodSchema) => {
         try {
             const result = schema.safeParse(req.params);
             if (!result.success) {
-                const errors = result.error?.errors?.map(err => ({
-                    field: err.path.join('.'),
-                    message: err.message,
-                    code: err.code
-                })) || [];
+                const errors =
+                    result.error?.errors?.map((err: Error | null) => ({
+                        field: err.path.join('.'),
+                        message: err.message,
+                        code: err.code,
+                    })) || [];
 
                 res.status(400).json({
                     error: 'Validation Error',
-                    details: errors
+                    details: errors,
                 });
                 return;
             }

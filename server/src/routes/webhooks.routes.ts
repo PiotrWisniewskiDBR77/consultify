@@ -1,29 +1,31 @@
 /**
  * Webhooks Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Webhook management endpoints and Stripe webhook handler
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import {
-    WebhookIdParamSchema,
-    GetWebhooksQuerySchema,
-    GetDeliveriesQuerySchema,
     CreateWebhookBodySchema,
-    UpdateWebhookBodySchema,
-    TestWebhookBodySchema,
+    GetDeliveriesQuerySchema,
+    GetWebhooksQuerySchema,
     RetryDeliveryBodySchema,
+    TestWebhookBodySchema,
+    UpdateWebhookBodySchema,
+    WebhookIdParamSchema,
 } from '../validators/webhooks.validators.js';
 
 const router = Router();
-import webhookService from '../services/WebhookService.js';
+import Stripe from 'stripe';
+
 import type { DunningService } from '../services/DunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
-import Stripe from 'stripe';
+import webhookService from '../services/WebhookService.js';
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
@@ -93,19 +95,19 @@ router.get(
     '/',
     validateQuery(GetWebhooksQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId || req.query.organizationId as string;
+        const orgId = req.user?.organizationId || (req.query.organizationId as string);
         if (!orgId) {
             res.status(400).json({ error: 'Organization ID required' });
             return;
         }
 
         const { enabled } = req.query;
-        const filters = { 
-            enabled: enabled === 'true' ? true : enabled === 'false' ? false : undefined 
+        const filters = {
+            enabled: enabled === 'true' ? true : enabled === 'false' ? false : undefined,
         };
         const webhooks = await webhookService.getWebhooks(orgId, filters);
         res.json(webhooks);
-    })
+    }),
 );
 
 /**
@@ -125,7 +127,7 @@ router.get(
         }
 
         res.json(webhook);
-    })
+    }),
 );
 
 /**
@@ -136,7 +138,7 @@ router.post(
     '/',
     validateBody(CreateWebhookBodySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId || req.body.organization_id as string;
+        const orgId = req.user?.organizationId || (req.body.organization_id as string);
         if (!orgId) {
             res.status(400).json({ error: 'Organization ID required' });
             return;
@@ -145,12 +147,12 @@ router.post(
         const webhookData = {
             ...req.body,
             organization_id: orgId,
-            created_by: req.user?.id
+            created_by: req.user?.id,
         };
 
         const webhook = await webhookService.createWebhook(webhookData);
         res.status(201).json(webhook);
-    })
+    }),
 );
 
 /**
@@ -165,7 +167,7 @@ router.put(
         const { id } = req.params;
         const webhook = await webhookService.updateWebhook(id, req.body);
         res.json(webhook);
-    })
+    }),
 );
 
 /**
@@ -179,7 +181,7 @@ router.delete(
         const { id } = req.params;
         const result = await webhookService.deleteWebhook(id);
         res.json(result);
-    })
+    }),
 );
 
 /**
@@ -196,7 +198,7 @@ router.post(
 
         const result = await webhookService.testWebhook(id, payload);
         res.json(result);
-    })
+    }),
 );
 
 /**
@@ -212,14 +214,14 @@ router.get(
         const { status, eventType, page = '1', pageSize = '50' } = req.query;
 
         const filters = { status, eventType };
-        const pagination = { 
-            page: parseInt(page as string), 
-            pageSize: parseInt(pageSize as string) 
+        const pagination = {
+            page: parseInt(page as string),
+            pageSize: parseInt(pageSize as string),
         };
 
         const deliveries = await webhookService.getDeliveries(id, filters, pagination);
         res.json(deliveries);
-    })
+    }),
 );
 
 /**
@@ -239,7 +241,7 @@ router.post(
 
         const result = await webhookService.retryDelivery(deliveryId);
         res.json(result);
-    })
+    }),
 );
 
 /**
@@ -264,7 +266,7 @@ router.post(
                     // Convert Invoice to PaymentIntent-like structure for DunningService
                     const invoice = data as Stripe.Invoice;
                     const paymentIntentId = invoice.payment_intent as string | undefined;
-                    
+
                     if (paymentIntentId) {
                         // If we have payment_intent, we can handle it directly
                         // For now, we'll start dunning process based on invoice data
@@ -281,10 +283,10 @@ router.post(
                                     metadata: invoice.metadata || {},
                                     last_payment_error: {
                                         code: 'payment_failed',
-                                        message: invoice.last_payment_error?.message || 'Payment failed'
-                                    }
+                                        message: invoice.last_payment_error?.message || 'Payment failed',
+                                    },
                                 } as Stripe.PaymentIntent;
-                                
+
                                 await dunning.handlePaymentFailed(mockPaymentIntent);
                             }
                         }
@@ -295,18 +297,18 @@ router.post(
                 case 'invoice.payment_succeeded': {
                     const invoice = data as Stripe.Invoice;
                     const paymentIntentId = invoice.payment_intent as string | undefined;
-                    
+
                     if (paymentIntentId) {
                         const mockPaymentIntent = {
                             id: paymentIntentId,
                             amount: invoice.amount_paid || 0,
                             currency: invoice.currency || 'usd',
-                            metadata: invoice.metadata || {}
+                            metadata: invoice.metadata || {},
                         } as Stripe.PaymentIntent;
-                        
+
                         await dunning.handlePaymentSucceeded(mockPaymentIntent);
                     }
-                    
+
                     await invoice.createFromStripe(invoice);
                     break;
                 }
@@ -321,8 +323,7 @@ router.post(
             console.error('[Webhook] Error processing event:', error);
             res.status(500).json({ error: 'Webhook processing failed' });
         }
-    })
+    }),
 );
 
 export default router;
-

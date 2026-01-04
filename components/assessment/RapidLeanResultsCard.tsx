@@ -2,8 +2,8 @@
  * RapidLean Results Display
  */
 
+import { Award, BarChart3, CheckCircle, Eye, Layers, Link, RefreshCw, Target, Trash2, TrendingUp } from 'lucide-react';
 import React from 'react';
-import { TrendingUp, Trash2, Layers, CheckCircle, RefreshCw, Eye, Award, Target, BarChart3, Link } from 'lucide-react';
 
 interface RapidLeanResultsCardProps {
     assessment: {
@@ -29,7 +29,7 @@ const DIMENSION_ICONS: Record<string, any> = {
     flow_pull: Layers,
     quality_source: CheckCircle,
     continuous_improvement: RefreshCw,
-    visual_management: Eye
+    visual_management: Eye,
 };
 
 const DIMENSION_NAMES: Record<string, string> = {
@@ -38,7 +38,7 @@ const DIMENSION_NAMES: Record<string, string> = {
     flow_pull: 'Flow & Pull',
     quality_source: 'Quality at Source',
     continuous_improvement: 'Continuous Improvement',
-    visual_management: 'Visual Management'
+    visual_management: 'Visual Management',
 };
 
 export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ assessment }) => {
@@ -82,7 +82,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
             {/* Dimension Scores */}
             <div className="space-y-3 mb-6">
                 <h4 className="font-semibold text-gray-700 dark:text-gray-300">Dimension Breakdown</h4>
-                {Object.keys(DIMENSION_ICONS).map(dimension => {
+                {Object.keys(DIMENSION_ICONS).map((dimension) => {
                     const score = assessment[`${dimension}_score` as keyof typeof assessment] as number;
                     const Icon = DIMENSION_ICONS[dimension];
                     const percentage = (score / 5) * 100;
@@ -97,10 +97,9 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
                                 </div>
                                 <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full transition-all duration-500 ${score >= 4 ? 'bg-green-500' :
-                                                score >= 3 ? 'bg-yellow-500' :
-                                                    'bg-red-500'
-                                            }`}
+                                        className={`h-full transition-all duration-500 ${
+                                            score >= 4 ? 'bg-green-500' : score >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                        }`}
                                         style={{ width: `${percentage}%` }}
                                     />
                                 </div>
@@ -171,9 +170,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
             {/* AI Recommendations */}
             {assessment.ai_recommendations && assessment.ai_recommendations.length > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4">
-                    <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2">
-                        💡 AI Recommendations
-                    </h4>
+                    <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2">💡 AI Recommendations</h4>
                     <div className="space-y-3">
                         {assessment.ai_recommendations.slice(0, 3).map((rec, index) => (
                             <div key={index} className="text-sm">

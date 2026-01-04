@@ -34,7 +34,7 @@ async function initDeps() {
         deps._uuidv4 = v4;
     }
     if (!deps._db) {
-        const { default: db } = await import('../database.js');
+        const { default: db } = await import('../src/database/index.js');
         deps._db = db;
     }
 }

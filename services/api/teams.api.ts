@@ -26,7 +26,7 @@ export const TeamApi = {
     // ==========================================
     // TEAMS CRUD
     // ==========================================
-    
+
     getTeams: async (): Promise<Team[]> => {
         const res = await fetch(`${API_URL}/teams`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch teams');
@@ -43,7 +43,7 @@ export const TeamApi = {
         const res = await fetch(`${API_URL}/teams`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(team)
+            body: JSON.stringify(team),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create team');
@@ -54,7 +54,7 @@ export const TeamApi = {
         const res = await fetch(`${API_URL}/teams/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update team');
     },
@@ -62,7 +62,7 @@ export const TeamApi = {
     deleteTeam: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/teams/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete team');
     },
@@ -70,12 +70,12 @@ export const TeamApi = {
     // ==========================================
     // TEAM MEMBERS
     // ==========================================
-    
+
     addTeamMember: async (teamId: string, userId: string, role = 'member'): Promise<void> => {
         const res = await fetch(`${API_URL}/teams/${teamId}/members`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId, role })
+            body: JSON.stringify({ userId, role }),
         });
         if (!res.ok) throw new Error('Failed to add team member');
     },
@@ -83,10 +83,8 @@ export const TeamApi = {
     removeTeamMember: async (teamId: string, userId: string): Promise<void> => {
         const res = await fetch(`${API_URL}/teams/${teamId}/members/${userId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to remove team member');
-    }
+    },
 };
-
-

@@ -14,7 +14,8 @@
 import fs from 'fs/promises'; // Changed to fs/promises to maintain async fs operations
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);

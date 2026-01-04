@@ -42,7 +42,7 @@ const FinancialService = {
     simulatePortfolio: (initiatives, revenueBase = 10000000) => {
         let totalCost = 0;
         let totalBenefit = 0;
-        const detailedInitiatives = initiatives.map(i => {
+        const detailedInitiatives = initiatives.map((i) => {
             const { cost, costRange } = FinancialService.estimateCost(i.complexity);
             const { benefit, benefitRange } = FinancialService.estimateBenefit(i.priority, cost);
             totalCost += cost;
@@ -52,7 +52,7 @@ const FinancialService = {
                 estimatedCost: cost,
                 costRange,
                 estimatedAnnualBenefit: benefit,
-                benefitRange
+                benefitRange,
             };
         });
         const roi = totalCost > 0 ? (totalBenefit / totalCost) * 100 : 0;
@@ -66,9 +66,9 @@ const FinancialService = {
             efficiencyGains: parseFloat(efficiencyGains.toFixed(2)),
             roi: parseFloat(roi.toFixed(1)),
             paybackPeriodMonths: parseFloat(paybackMonths.toFixed(1)),
-            initiatives: detailedInitiatives
+            initiatives: detailedInitiatives,
         };
-    }
+    },
 };
 export default FinancialService;
 //# sourceMappingURL=financialService.js.map

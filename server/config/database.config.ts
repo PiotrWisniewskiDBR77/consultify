@@ -1,6 +1,6 @@
 /**
  * Database Configuration
- * 
+ *
  * Supports both SQLite (development) and PostgreSQL (production)
  * Switch by setting DATABASE_URL environment variable
  */
@@ -20,7 +20,10 @@ const getDatabaseType = () => {
     if (process.env.DB_TYPE) {
         if (process.env.DB_TYPE === 'postgres') {
             if (!databaseUrl && !process.env.DB_HOST) {
-                console.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.');
+                console.error(
+                    '\n\x1b[31m%s\x1b[0m',
+                    'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.',
+                );
                 console.error('Please configure your .env file with the correct database credentials.\n');
                 process.exit(1);
             }
@@ -59,10 +62,13 @@ function parsePostgresUrl(url: string) {
             database: parsed.pathname.slice(1), // Remove leading /
             user: parsed.username,
             password: parsed.password,
-            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' } : false,
+            ssl:
+                process.env.DB_SSL === 'true'
+                    ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+                    : false,
             max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
+            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
         };
     } catch (e: any) {
         console.error('Failed to parse DATABASE_URL:', e.message);
@@ -78,39 +84,46 @@ const config = {
         path: sqlitePath,
         // SQLite connection options
         options: {
-            verbose: !isProduction
-        }
+            verbose: !isProduction,
+        },
     },
 
     // PostgreSQL config (parsed from DATABASE_URL)
-    postgres: databaseUrl ? parsePostgresUrl(databaseUrl) : (() => {
-        // Determine SSL configuration
-        let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
-        if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
-            sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
-        } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
-            sslConfig = false;
-        } else {
-            // Default: No SSL for Railway/internal connections
-            sslConfig = false;
-        }
+    postgres: databaseUrl
+        ? parsePostgresUrl(databaseUrl)
+        : (() => {
+            // Determine SSL configuration
+            let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
+            if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
+                sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+            } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
+                sslConfig = false;
+            } else {
+                // Default: No SSL for Railway/internal connections
+                sslConfig = false;
+            }
 
-        return {
-            host: process.env.DB_HOST || 'localhost',
-            port: parseInt(process.env.DB_PORT || '5432', 10),
-            database: process.env.DB_NAME || 'consultify',
-            user: process.env.DB_USER || 'postgres',
-            password: process.env.DB_PASSWORD || '',
-            ssl: sslConfig,
-            max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000')
-        };
-    })(),
+            return {
+                host: process.env.DB_HOST || 'localhost',
+                port: parseInt(process.env.DB_PORT || '5432', 10),
+                database: process.env.DB_NAME || 'consultify',
+                user: process.env.DB_USER || 'postgres',
+                password: process.env.DB_PASSWORD || '',
+                ssl: sslConfig,
+                max: parseInt(process.env.DB_POOL_SIZE || '10', 10),
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
+            };
+        })(),
+
+    // Read Replica Configuration (Optional)
+    readReplica: process.env.DATABASE_READ_URL
+        ? parsePostgresUrl(process.env.DATABASE_READ_URL)
+        : null,
 
     // Common settings
     debug: process.env.DB_DEBUG === 'true',
-    logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true'
+    logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true',
 };
 
 export default config;

@@ -1,13 +1,14 @@
 /**
  * InfoButton Component
- * 
+ *
  * Reusable documentation button that shows help content for cards/sections.
  * Click opens a slide-out panel with documentation.
  * Features subtle animated color pulse for discoverability.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { HelpCircle, X, Book, Lightbulb, CheckCircle2, ExternalLink, ChevronRight } from 'lucide-react';
+import { Book, CheckCircle2, ChevronRight, ExternalLink, HelpCircle, Lightbulb, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { CARD_DOCS, CardDocumentation } from '../../config/cardDocumentation';
 
 // CSS for card info button animation
@@ -48,7 +49,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
     size = 'md',
     className = '',
     showLabel = false,
-    label = 'Help'
+    label = 'Help',
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
@@ -103,18 +104,16 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
     const sizeClasses = {
         sm: 'w-6 h-6',
         md: 'w-8 h-8',
-        lg: 'w-10 h-10'
+        lg: 'w-10 h-10',
     };
 
     const iconSizes = {
         sm: 14,
         md: 16,
-        lg: 20
+        lg: 20,
     };
 
-    const positionClasses = position === 'top-right'
-        ? 'absolute top-3 right-3'
-        : 'relative inline-flex';
+    const positionClasses = position === 'top-right' ? 'absolute top-3 right-3' : 'relative inline-flex';
 
     return (
         <>
@@ -134,20 +133,18 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                     group
                     ${className}
                 `}
-                style={{ 
+                style={{
                     animation: isOpen ? 'none' : 'infoColorPulse 5s ease-in-out infinite',
                     background: isOpen ? 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)' : undefined,
                 }}
                 title="View documentation"
                 aria-label="View documentation"
             >
-                <HelpCircle 
+                <HelpCircle
                     size={iconSizes[size]}
                     style={{ animation: isOpen ? 'none' : 'infoIconGlow 5s ease-in-out infinite' }}
                 />
-                {showLabel && (
-                    <span className="text-sm font-medium">{label}</span>
-                )}
+                {showLabel && <span className="text-sm font-medium">{label}</span>}
             </button>
 
             {/* Documentation Panel - Slide out from right */}
@@ -171,12 +168,8 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                     <Book size={20} />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                                        {docs.title}
-                                    </h2>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        Documentation
-                                    </p>
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{docs.title}</h2>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Documentation</p>
                                 </div>
                             </div>
                             <button
@@ -249,10 +242,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                     </h3>
                                     <ul className="space-y-2">
                                         {docs.tips.map((tip, index) => (
-                                            <li
-                                                key={index}
-                                                className="text-sm text-amber-700 dark:text-amber-300/80"
-                                            >
+                                            <li key={index} className="text-sm text-amber-700 dark:text-amber-300/80">
                                                 • {tip}
                                             </li>
                                         ))}
@@ -279,7 +269,10 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                                 <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                                                     {doc.title}
                                                 </span>
-                                                <ExternalLink size={14} className="text-slate-400 group-hover:text-blue-500 ml-auto" />
+                                                <ExternalLink
+                                                    size={14}
+                                                    className="text-slate-400 group-hover:text-blue-500 ml-auto"
+                                                />
                                             </a>
                                         ))}
                                     </div>
@@ -301,4 +294,3 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
 };
 
 export default InfoButton;
-

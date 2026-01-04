@@ -1,6 +1,6 @@
 /**
  * EnterpriseFeatureFlags - Advanced Feature Flag Management
- * 
+ *
  * Features:
  * - Boolean, percentage rollout, and targeting rules
  * - A/B testing with variants
@@ -10,39 +10,40 @@
  * - Real-time evaluation preview
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Flag,
-    Plus,
-    Edit,
-    Trash2,
-    ToggleLeft,
-    ToggleRight,
-    Search,
-    Filter,
-    History,
-    Settings,
-    Loader2,
-    Check,
-    X,
-    Users,
-    Target,
-    Percent,
     Beaker,
-    Copy,
-    Eye,
+    Building,
+    Check,
     ChevronDown,
     ChevronRight,
-    RefreshCw,
     Code,
+    Copy,
+    Edit,
+    Eye,
+    Filter,
+    Flag,
     Globe,
-    Building,
-    User,
+    Hash,
+    History,
+    Loader2,
     Mail,
-    Hash
+    Percent,
+    Plus,
+    RefreshCw,
+    Search,
+    Settings,
+    Target,
+    ToggleLeft,
+    ToggleRight,
+    Trash2,
+    User,
+    Users,
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface FeatureFlag {
     id: string;
@@ -189,7 +190,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         if (flag.flag_type === 'ab_test' && flag.variants) {
             if (testContext.userId) {
                 const hash = hashCode(testContext.userId + flag.flag_key);
-                let totalWeight = flag.variants.reduce((acc, v) => acc + v.weight, 0);
+                const totalWeight = flag.variants.reduce((acc, v) => acc + v.weight, 0);
                 let bucket = Math.abs(hash % totalWeight);
                 for (const variant of flag.variants) {
                     bucket -= variant.weight;
@@ -231,11 +232,11 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             case 'not_in':
                 return !rule.values.includes(value);
             case 'contains':
-                return rule.values.some(v => value.includes(v));
+                return rule.values.some((v) => value.includes(v));
             case 'starts_with':
-                return rule.values.some(v => value.startsWith(v));
+                return rule.values.some((v) => value.startsWith(v));
             case 'ends_with':
-                return rule.values.some(v => value.endsWith(v));
+                return rule.values.some((v) => value.endsWith(v));
             default:
                 return false;
         }
@@ -245,14 +246,15 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
+            hash = (hash << 5) - hash + char;
             hash |= 0;
         }
         return hash;
     };
 
-    const filteredFlags = flags.filter(flag => {
-        const matchesSearch = !searchTerm ||
+    const filteredFlags = flags.filter((flag) => {
+        const matchesSearch =
+            !searchTerm ||
             flag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             flag.flag_key.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = filterType === 'all' || flag.flag_type === filterType;
@@ -294,26 +296,24 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                 </div>
                 <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
                     <div className="text-sm text-slate-400">Enabled</div>
-                    <div className="text-2xl font-bold text-emerald-400">
-                        {flags.filter(f => f.enabled).length}
-                    </div>
+                    <div className="text-2xl font-bold text-emerald-400">{flags.filter((f) => f.enabled).length}</div>
                 </div>
                 <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
                     <div className="text-sm text-slate-400">Rollouts</div>
                     <div className="text-2xl font-bold text-blue-400">
-                        {flags.filter(f => f.flag_type === 'percentage').length}
+                        {flags.filter((f) => f.flag_type === 'percentage').length}
                     </div>
                 </div>
                 <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
                     <div className="text-sm text-slate-400">A/B Tests</div>
                     <div className="text-2xl font-bold text-amber-400">
-                        {flags.filter(f => f.flag_type === 'ab_test').length}
+                        {flags.filter((f) => f.flag_type === 'ab_test').length}
                     </div>
                 </div>
                 <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
                     <div className="text-sm text-slate-400">Production</div>
                     <div className="text-2xl font-bold text-purple-400">
-                        {flags.filter(f => f.environment === 'production' && f.enabled).length}
+                        {flags.filter((f) => f.environment === 'production' && f.enabled).length}
                     </div>
                 </div>
             </div>
@@ -336,8 +336,10 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                     className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                     <option value="all">All Environments</option>
-                    {ENVIRONMENTS.map(env => (
-                        <option key={env} value={env}>{env.charAt(0).toUpperCase() + env.slice(1)}</option>
+                    {ENVIRONMENTS.map((env) => (
+                        <option key={env} value={env}>
+                            {env.charAt(0).toUpperCase() + env.slice(1)}
+                        </option>
                     ))}
                 </select>
                 <select
@@ -347,7 +349,9 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                 >
                     <option value="all">All Types</option>
                     {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
-                        <option key={key} value={key}>{config.label}</option>
+                        <option key={key} value={key}>
+                            {config.label}
+                        </option>
                     ))}
                 </select>
                 <button
@@ -449,7 +453,9 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                                         <Code className="w-3 h-3" />
                                                         {flag.flag_key}
                                                     </button>
-                                                    <span className={`px-2 py-0.5 text-xs rounded ${typeConfig.bg} ${typeConfig.color}`}>
+                                                    <span
+                                                        className={`px-2 py-0.5 text-xs rounded ${typeConfig.bg} ${typeConfig.color}`}
+                                                    >
                                                         {typeConfig.label}
                                                     </span>
                                                     <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
@@ -463,12 +469,14 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {/* Evaluation Preview */}
-                                            <div className={`px-3 py-1 text-xs rounded-full ${
-                                                evaluation.enabled
-                                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                                    : 'bg-slate-700 text-slate-400'
-                                            }`}>
-                                                {evaluation.enabled ? (evaluation.variant || 'ON') : 'OFF'}
+                                            <div
+                                                className={`px-3 py-1 text-xs rounded-full ${
+                                                    evaluation.enabled
+                                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                                        : 'bg-slate-700 text-slate-400'
+                                                }`}
+                                            >
+                                                {evaluation.enabled ? evaluation.variant || 'ON' : 'OFF'}
                                             </div>
                                             <button
                                                 onClick={(e) => {
@@ -555,14 +563,24 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                                             <div
                                                                 key={rule.id || i}
                                                                 className={`p-2 rounded-lg ${
-                                                                    rule.enabled ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-slate-800/50'
+                                                                    rule.enabled
+                                                                        ? 'bg-purple-500/10 border border-purple-500/30'
+                                                                        : 'bg-slate-800/50'
                                                                 }`}
                                                             >
                                                                 <div className="flex items-center gap-2 text-sm">
-                                                                    <span className={rule.enabled ? 'text-purple-400' : 'text-slate-500'}>
+                                                                    <span
+                                                                        className={
+                                                                            rule.enabled
+                                                                                ? 'text-purple-400'
+                                                                                : 'text-slate-500'
+                                                                        }
+                                                                    >
                                                                         {rule.type}
                                                                     </span>
-                                                                    <span className="text-slate-500">{rule.operator}</span>
+                                                                    <span className="text-slate-500">
+                                                                        {rule.operator}
+                                                                    </span>
                                                                     <code className="text-xs bg-slate-800 px-1 rounded text-slate-300">
                                                                         {rule.values.join(', ')}
                                                                     </code>
@@ -588,12 +606,18 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                                                 }`}
                                                             >
                                                                 <div className="flex items-center justify-between">
-                                                                    <span className={`font-medium ${
-                                                                        evaluation.variant === variant.name ? 'text-amber-400' : 'text-white'
-                                                                    }`}>
+                                                                    <span
+                                                                        className={`font-medium ${
+                                                                            evaluation.variant === variant.name
+                                                                                ? 'text-amber-400'
+                                                                                : 'text-white'
+                                                                        }`}
+                                                                    >
                                                                         {variant.name}
                                                                     </span>
-                                                                    <span className="text-sm text-slate-400">{variant.weight}%</span>
+                                                                    <span className="text-sm text-slate-400">
+                                                                        {variant.weight}%
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -605,16 +629,22 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                                                 <div>
                                                     <span className="text-slate-500">Created</span>
-                                                    <div className="text-slate-300">{new Date(flag.created_at).toLocaleDateString()}</div>
+                                                    <div className="text-slate-300">
+                                                        {new Date(flag.created_at).toLocaleDateString()}
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <span className="text-slate-500">Updated</span>
-                                                    <div className="text-slate-300">{new Date(flag.updated_at).toLocaleDateString()}</div>
+                                                    <div className="text-slate-300">
+                                                        {new Date(flag.updated_at).toLocaleDateString()}
+                                                    </div>
                                                 </div>
                                                 {flag.organization_id && (
                                                     <div>
                                                         <span className="text-slate-500">Org-specific</span>
-                                                        <div className="text-slate-300">{flag.organization_id.slice(0, 8)}...</div>
+                                                        <div className="text-slate-300">
+                                                            {flag.organization_id.slice(0, 8)}...
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -645,10 +675,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
 
             {/* History Modal */}
             {selectedFlagHistory && (
-                <FlagHistoryModal
-                    flagId={selectedFlagHistory}
-                    onClose={() => setSelectedFlagHistory(null)}
-                />
+                <FlagHistoryModal flagId={selectedFlagHistory} onClose={() => setSelectedFlagHistory(null)} />
             )}
         </div>
     );
@@ -716,7 +743,12 @@ const FeatureFlagModal: React.FC<{
                                 type="text"
                                 required
                                 value={formData.flag_key}
-                                onChange={(e) => setFormData({ ...formData, flag_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        flag_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+                                    })
+                                }
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                                 placeholder="new_feature"
                             />
@@ -752,7 +784,9 @@ const FeatureFlagModal: React.FC<{
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             >
                                 {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
-                                    <option key={key} value={key}>{config.label}</option>
+                                    <option key={key} value={key}>
+                                        {config.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -763,8 +797,10 @@ const FeatureFlagModal: React.FC<{
                                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             >
-                                {ENVIRONMENTS.map(env => (
-                                    <option key={env} value={env}>{env.charAt(0).toUpperCase() + env.slice(1)}</option>
+                                {ENVIRONMENTS.map((env) => (
+                                    <option key={env} value={env}>
+                                        {env.charAt(0).toUpperCase() + env.slice(1)}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -780,7 +816,9 @@ const FeatureFlagModal: React.FC<{
                                 min="0"
                                 max="100"
                                 value={formData.rollout_percentage}
-                                onChange={(e) => setFormData({ ...formData, rollout_percentage: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, rollout_percentage: parseInt(e.target.value) })
+                                }
                                 className="w-full"
                             />
                         </div>
@@ -886,10 +924,4 @@ const FlagHistoryModal: React.FC<{
 };
 
 export default EnterpriseFeatureFlags;
-
-
-
-
-
-
 

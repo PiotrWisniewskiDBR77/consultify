@@ -8,7 +8,7 @@ import crypto from 'crypto';
 
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import verifyToken from '../middleware/authMiddleware.js';
 import { requireRole  } from '../middleware/rbac.js';

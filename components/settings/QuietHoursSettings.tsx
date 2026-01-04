@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Moon, Bell, BellOff, Clock, Calendar, MessageCircle,
-    Save, Loader2, CheckCircle, AlertTriangle, Plus, Trash2
+import {
+    AlertTriangle,
+    Bell,
+    BellOff,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Loader2,
+    MessageCircle,
+    Moon,
+    Plus,
+    Save,
+    Trash2,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
-import { User, QuietHoursSettings as QuietHoursType } from '../../types';
+import { QuietHoursSettings as QuietHoursType, User } from '../../types';
 
 interface QuietHoursSettingsProps {
     currentUser: User;
@@ -22,14 +33,11 @@ const DAYS_OF_WEEK = [
     { value: 6, label: 'Sat', fullLabel: 'Saturday' },
 ];
 
-export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    
+
     const [quietHours, setQuietHours] = useState<QuietHoursType>({
         enabled: false,
         startTime: '22:00',
@@ -39,7 +47,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
         allowMentions: false,
         allowDirectMessages: false,
         autoReplyEnabled: false,
-        autoReplyMessage: ''
+        autoReplyMessage: '',
     });
 
     // Load preferences
@@ -74,35 +82,37 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
     };
 
     const toggleDay = (day: number) => {
-        setQuietHours(prev => ({
+        setQuietHours((prev) => ({
             ...prev,
             daysOfWeek: prev.daysOfWeek.includes(day)
-                ? prev.daysOfWeek.filter(d => d !== day)
-                : [...prev.daysOfWeek, day].sort()
+                ? prev.daysOfWeek.filter((d) => d !== day)
+                : [...prev.daysOfWeek, day].sort(),
         }));
     };
 
     // Styling
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
-    const inputClass = "w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const labelClass = "text-xs font-medium text-slate-500 dark:text-slate-400";
-    const toggleClass = (enabled: boolean) => `relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-    }`;
-    const toggleKnobClass = (enabled: boolean) => `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-        enabled ? 'left-7' : 'left-1'
-    }`;
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    const inputClass =
+        'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    const toggleClass = (enabled: boolean) =>
+        `relative w-12 h-6 rounded-full transition-colors ${
+            enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+        }`;
+    const toggleKnobClass = (enabled: boolean) =>
+        `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
-    const ToggleSwitch = ({ 
-        enabled, 
-        onChange, 
-        label, 
-        description 
-    }: { 
-        enabled: boolean; 
-        onChange: (value: boolean) => void; 
-        label: string; 
+    const ToggleSwitch = ({
+        enabled,
+        onChange,
+        label,
+        description,
+    }: {
+        enabled: boolean;
+        onChange: (value: boolean) => void;
+        label: string;
         description: string;
     }) => (
         <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5 last:border-0">
@@ -110,10 +120,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                 <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{description}</p>
             </div>
-            <button
-                onClick={() => onChange(!enabled)}
-                className={toggleClass(enabled)}
-            >
+            <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
                 <span className={toggleKnobClass(enabled)} />
             </button>
         </div>
@@ -122,18 +129,18 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
     // Calculate if currently in quiet hours
     const isCurrentlyQuiet = (): boolean => {
         if (!quietHours.enabled) return false;
-        
+
         const now = new Date();
         const currentDay = now.getDay();
         const currentTime = now.getHours() * 60 + now.getMinutes();
-        
+
         const [startH, startM] = quietHours.startTime.split(':').map(Number);
         const [endH, endM] = quietHours.endTime.split(':').map(Number);
         const startMinutes = startH * 60 + startM;
         const endMinutes = endH * 60 + endM;
-        
+
         if (!quietHours.daysOfWeek.includes(currentDay)) return false;
-        
+
         if (startMinutes < endMinutes) {
             return currentTime >= startMinutes && currentTime < endMinutes;
         } else {
@@ -186,7 +193,9 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
             <div className={cardClass}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${quietHours.enabled ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-white/10'}`}>
+                        <div
+                            className={`p-2 rounded-lg ${quietHours.enabled ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+                        >
                             {quietHours.enabled ? (
                                 <BellOff size={20} className="text-indigo-600 dark:text-indigo-400" />
                             ) : (
@@ -203,7 +212,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                         </div>
                     </div>
                     <button
-                        onClick={() => setQuietHours(prev => ({ ...prev, enabled: !prev.enabled }))}
+                        onClick={() => setQuietHours((prev) => ({ ...prev, enabled: !prev.enabled }))}
                         className={toggleClass(quietHours.enabled)}
                     >
                         <span className={toggleKnobClass(quietHours.enabled)} />
@@ -219,39 +228,35 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                             <Clock size={16} className="text-purple-500" />
                             {t('settings.quietHours.schedule', 'Schedule')}
                         </h4>
-                        
+
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
-                                <label className={labelClass}>
-                                    {t('settings.quietHours.startTime', 'Start Time')}
-                                </label>
+                                <label className={labelClass}>{t('settings.quietHours.startTime', 'Start Time')}</label>
                                 <input
                                     type="time"
                                     value={quietHours.startTime}
-                                    onChange={e => setQuietHours(prev => ({ ...prev, startTime: e.target.value }))}
-                                    className={inputClass + " mt-1.5"}
+                                    onChange={(e) => setQuietHours((prev) => ({ ...prev, startTime: e.target.value }))}
+                                    className={inputClass + ' mt-1.5'}
                                 />
                             </div>
                             <div>
-                                <label className={labelClass}>
-                                    {t('settings.quietHours.endTime', 'End Time')}
-                                </label>
+                                <label className={labelClass}>{t('settings.quietHours.endTime', 'End Time')}</label>
                                 <input
                                     type="time"
                                     value={quietHours.endTime}
-                                    onChange={e => setQuietHours(prev => ({ ...prev, endTime: e.target.value }))}
-                                    className={inputClass + " mt-1.5"}
+                                    onChange={(e) => setQuietHours((prev) => ({ ...prev, endTime: e.target.value }))}
+                                    className={inputClass + ' mt-1.5'}
                                 />
                             </div>
                         </div>
 
                         {/* Days */}
                         <div>
-                            <label className={labelClass + " mb-2 block"}>
+                            <label className={labelClass + ' mb-2 block'}>
                                 {t('settings.quietHours.activeDays', 'Active on these days')}
                             </label>
                             <div className="flex flex-wrap gap-2">
-                                {DAYS_OF_WEEK.map(day => (
+                                {DAYS_OF_WEEK.map((day) => (
                                     <button
                                         key={day.value}
                                         onClick={() => toggleDay(day.value)}
@@ -275,29 +280,41 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                             <AlertTriangle size={16} className="text-purple-500" />
                             {t('settings.quietHours.exceptions', 'Exceptions')}
                         </h4>
-                        
+
                         <p className="text-sm text-slate-500 mb-4">
-                            {t('settings.quietHours.exceptionsDesc', 'Allow certain types of notifications even during quiet hours')}
+                            {t(
+                                'settings.quietHours.exceptionsDesc',
+                                'Allow certain types of notifications even during quiet hours',
+                            )}
                         </p>
 
                         <div className="space-y-1">
                             <ToggleSwitch
                                 enabled={quietHours.allowUrgent}
-                                onChange={(val) => setQuietHours(prev => ({ ...prev, allowUrgent: val }))}
+                                onChange={(val) => setQuietHours((prev) => ({ ...prev, allowUrgent: val }))}
                                 label={t('settings.quietHours.allowUrgent', 'Allow urgent notifications')}
-                                description={t('settings.quietHours.allowUrgentDesc', 'High-priority alerts will still come through')}
+                                description={t(
+                                    'settings.quietHours.allowUrgentDesc',
+                                    'High-priority alerts will still come through',
+                                )}
                             />
                             <ToggleSwitch
                                 enabled={quietHours.allowMentions}
-                                onChange={(val) => setQuietHours(prev => ({ ...prev, allowMentions: val }))}
+                                onChange={(val) => setQuietHours((prev) => ({ ...prev, allowMentions: val }))}
                                 label={t('settings.quietHours.allowMentions', 'Allow @mentions')}
-                                description={t('settings.quietHours.allowMentionsDesc', 'Get notified when someone mentions you')}
+                                description={t(
+                                    'settings.quietHours.allowMentionsDesc',
+                                    'Get notified when someone mentions you',
+                                )}
                             />
                             <ToggleSwitch
                                 enabled={quietHours.allowDirectMessages}
-                                onChange={(val) => setQuietHours(prev => ({ ...prev, allowDirectMessages: val }))}
+                                onChange={(val) => setQuietHours((prev) => ({ ...prev, allowDirectMessages: val }))}
                                 label={t('settings.quietHours.allowDMs', 'Allow direct messages')}
-                                description={t('settings.quietHours.allowDMsDesc', 'Private messages will still notify you')}
+                                description={t(
+                                    'settings.quietHours.allowDMsDesc',
+                                    'Private messages will still notify you',
+                                )}
                             />
                         </div>
                     </div>
@@ -308,18 +325,23 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                             <MessageCircle size={16} className="text-purple-500" />
                             {t('settings.quietHours.autoReply', 'Auto Reply')}
                         </h4>
-                        
+
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <p className="text-sm font-medium text-navy-900 dark:text-white">
                                     {t('settings.quietHours.enableAutoReply', 'Enable auto-reply')}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {t('settings.quietHours.enableAutoReplyDesc', 'Automatically respond to messages during quiet hours')}
+                                    {t(
+                                        'settings.quietHours.enableAutoReplyDesc',
+                                        'Automatically respond to messages during quiet hours',
+                                    )}
                                 </p>
                             </div>
                             <button
-                                onClick={() => setQuietHours(prev => ({ ...prev, autoReplyEnabled: !prev.autoReplyEnabled }))}
+                                onClick={() =>
+                                    setQuietHours((prev) => ({ ...prev, autoReplyEnabled: !prev.autoReplyEnabled }))
+                                }
                                 className={toggleClass(quietHours.autoReplyEnabled)}
                             >
                                 <span className={toggleKnobClass(quietHours.autoReplyEnabled)} />
@@ -333,10 +355,15 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                                 </label>
                                 <textarea
                                     value={quietHours.autoReplyMessage}
-                                    onChange={e => setQuietHours(prev => ({ ...prev, autoReplyMessage: e.target.value }))}
-                                    placeholder={t('settings.quietHours.autoReplyPlaceholder', "I'm currently unavailable. I'll respond when I return.")}
+                                    onChange={(e) =>
+                                        setQuietHours((prev) => ({ ...prev, autoReplyMessage: e.target.value }))
+                                    }
+                                    placeholder={t(
+                                        'settings.quietHours.autoReplyPlaceholder',
+                                        "I'm currently unavailable. I'll respond when I return.",
+                                    )}
                                     rows={3}
-                                    className={inputClass + " resize-none mt-1.5"}
+                                    className={inputClass + ' resize-none mt-1.5'}
                                 />
                             </div>
                         )}
@@ -344,40 +371,44 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
 
                     {/* Quick Presets */}
                     <div className={cardClass}>
-                        <h4 className={sectionTitleClass}>
-                            {t('settings.quietHours.quickPresets', 'Quick Presets')}
-                        </h4>
-                        
+                        <h4 className={sectionTitleClass}>{t('settings.quietHours.quickPresets', 'Quick Presets')}</h4>
+
                         <div className="flex flex-wrap gap-2">
                             <button
-                                onClick={() => setQuietHours(prev => ({
-                                    ...prev,
-                                    startTime: '22:00',
-                                    endTime: '08:00',
-                                    daysOfWeek: [0, 1, 2, 3, 4, 5, 6]
-                                }))}
+                                onClick={() =>
+                                    setQuietHours((prev) => ({
+                                        ...prev,
+                                        startTime: '22:00',
+                                        endTime: '08:00',
+                                        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+                                    }))
+                                }
                                 className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
                             >
                                 {t('settings.quietHours.presetNights', 'Nights (10pm-8am, every day)')}
                             </button>
                             <button
-                                onClick={() => setQuietHours(prev => ({
-                                    ...prev,
-                                    startTime: '00:00',
-                                    endTime: '23:59',
-                                    daysOfWeek: [0, 6]
-                                }))}
+                                onClick={() =>
+                                    setQuietHours((prev) => ({
+                                        ...prev,
+                                        startTime: '00:00',
+                                        endTime: '23:59',
+                                        daysOfWeek: [0, 6],
+                                    }))
+                                }
                                 className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
                             >
                                 {t('settings.quietHours.presetWeekends', 'Weekends only')}
                             </button>
                             <button
-                                onClick={() => setQuietHours(prev => ({
-                                    ...prev,
-                                    startTime: '18:00',
-                                    endTime: '09:00',
-                                    daysOfWeek: [1, 2, 3, 4, 5]
-                                }))}
+                                onClick={() =>
+                                    setQuietHours((prev) => ({
+                                        ...prev,
+                                        startTime: '18:00',
+                                        endTime: '09:00',
+                                        daysOfWeek: [1, 2, 3, 4, 5],
+                                    }))
+                                }
                                 className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
                             >
                                 {t('settings.quietHours.presetAfterWork', 'After work hours (6pm-9am, weekdays)')}

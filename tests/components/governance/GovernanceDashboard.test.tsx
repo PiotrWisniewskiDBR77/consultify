@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { GovernanceDashboard } from '../../../components/governance/GovernanceDashboard';
+import { GovernanceDashboard } from '../../components/governance/GovernanceDashboard';
 
 vi.mock('lucide-react', () => ({
     ShieldCheck: () => <div data-testid="icon-shield" />,
@@ -44,6 +44,7 @@ describe('GovernanceDashboard Component', () => {
         expect(screen.getByText('No critical alerts detected')).toBeInTheDocument();
     });
 });
+
 
 
 

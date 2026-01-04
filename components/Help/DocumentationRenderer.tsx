@@ -1,29 +1,30 @@
 /**
  * Documentation Renderer Component
- * 
+ *
  * Renders help documentation content with proper formatting,
  * table of contents, and rich media support.
  */
 
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    FileText,
-    HelpCircle,
-    Video,
+    AlertCircle,
     Book,
     CheckCircle,
-    Lightbulb,
-    AlertCircle,
-    ExternalLink,
-    Play,
+    ChevronRight,
     Clock,
+    ExternalLink,
+    FileText,
+    HelpCircle,
+    Lightbulb,
+    Play,
     Users,
-    ChevronRight
+    Video,
 } from 'lucide-react';
-import { MODULE_HELP_CONTENT, HelpModuleId } from '../../config/moduleHelpContent';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { CARD_DOCS } from '../../config/cardDocumentation';
 import { FAQ_CONTENT } from '../../config/faqContent';
+import { HelpModuleId, MODULE_HELP_CONTENT } from '../../config/moduleHelpContent';
 import { VIDEO_TUTORIALS } from '../../config/videoTutorialsContent';
 import DynamicIcon from '../shared/DynamicIcon';
 import HelpFeedbackWidget from './HelpFeedbackWidget';
@@ -43,7 +44,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
     contentType,
     contentId,
     language = 'en',
-    showFeedback = true
+    showFeedback = true,
 }) => {
     const { i18n } = useTranslation();
     const lang = language || (i18n.language === 'pl' ? 'pl' : 'en');
@@ -56,9 +57,9 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             case 'card':
                 return CARD_DOCS[contentId];
             case 'faq':
-                return FAQ_CONTENT.find(f => f.id === contentId);
+                return FAQ_CONTENT.find((f) => f.id === contentId);
             case 'video':
-                return VIDEO_TUTORIALS.find(v => v.id === contentId);
+                return VIDEO_TUTORIALS.find((v) => v.id === contentId);
             default:
                 return null;
         }
@@ -100,9 +101,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                             <Lightbulb size={20} className="text-amber-500" />
                             {lang === 'pl' ? 'Cel' : 'Purpose'}
                         </h2>
-                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                            {module.purpose[lang]}
-                        </p>
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{module.purpose[lang]}</p>
                     </section>
 
                     {/* Target Audience */}
@@ -136,7 +135,11 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                                     className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl"
                                 >
                                     <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                                        <DynamicIcon name={feature.icon} size={16} className="text-purple-600 dark:text-purple-400" />
+                                        <DynamicIcon
+                                            name={feature.icon}
+                                            size={16}
+                                            className="text-purple-600 dark:text-purple-400"
+                                        />
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-slate-900 dark:text-white">
@@ -214,9 +217,15 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                                             key={relatedId}
                                             className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
                                         >
-                                            <DynamicIcon name={related.icon} size={16} className="text-slate-600 dark:text-slate-300" />
+                                            <DynamicIcon
+                                                name={related.icon}
+                                                size={16}
+                                                className="text-slate-600 dark:text-slate-300"
+                                            />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                {typeof related.name === 'string' ? related.name : (related.name?.[lang] || '')}
+                                                {typeof related.name === 'string'
+                                                    ? related.name
+                                                    : related.name?.[lang] || ''}
                                             </span>
                                         </button>
                                     );
@@ -253,9 +262,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
 
                 {/* Content */}
                 <div className="p-8 space-y-6">
-                    <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
-                        {card.description}
-                    </p>
+                    <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">{card.description}</p>
 
                     {/* Features */}
                     <section>
@@ -384,12 +391,8 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                         <Clock size={14} className="text-slate-400" />
                         <span className="text-slate-500">{video.duration}</span>
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                        {video.title[lang]}
-                    </h1>
-                    <p className="text-slate-600 dark:text-slate-300 mt-2">
-                        {video.description[lang]}
-                    </p>
+                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">{video.title[lang]}</h1>
+                    <p className="text-slate-600 dark:text-slate-300 mt-2">{video.description[lang]}</p>
                 </div>
 
                 {/* Feedback */}
@@ -406,11 +409,3 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
 };
 
 export default DocumentationRenderer;
-
-
-
-
-
-
-
-

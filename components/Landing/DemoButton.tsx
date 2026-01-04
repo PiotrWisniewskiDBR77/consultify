@@ -1,6 +1,6 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface DemoButtonProps {
@@ -16,7 +16,7 @@ const CALENDAR_URL = 'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a29765
 /**
  * DemoButton - Elegant, gradient text style call-to-action for scheduling demos
  * Style inspired by "Get in Touch" header
- * 
+ *
  * Variants:
  * - default: Elegant gradient text link (like "Get in Touch")
  * - compact: Smaller version for methodology section
@@ -24,22 +24,22 @@ const CALENDAR_URL = 'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a29765
  * - region: Regional button with flag
  * - framed: Button with border frame
  */
-export const DemoButton: React.FC<DemoButtonProps> = ({ 
-    href = CALENDAR_URL, 
+export const DemoButton: React.FC<DemoButtonProps> = ({
+    href = CALENDAR_URL,
     onClick,
     variant = 'default',
     className = '',
-    region
+    region,
 }) => {
     const { t } = useTranslation();
-    
+
     const REGIONS = {
         japan: { flag: '🇯🇵', name: t('landing.regions.japan', 'Japan') },
         saudi: { flag: '🇸🇦', name: t('landing.regions.saudi', 'Saudi Arabia') },
         europe: { flag: '🇪🇺', name: t('landing.regions.europe', 'Europe') },
         usa: { flag: '🇺🇸', name: t('landing.regions.usa', 'United States') },
     };
-    
+
     const handleClick = (e: React.MouseEvent) => {
         if (onClick) {
             e.preventDefault();
@@ -94,7 +94,8 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                 <span className="text-3xl">{regionData.flag}</span>
                 <span className="text-sm font-bold text-white">{regionData.name}</span>
                 <span className="text-xs text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
-                    {t('landing.demo.scheduleShort', 'Schedule')} <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                    {t('landing.demo.scheduleShort', 'Schedule')}{' '}
+                    <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                 </span>
             </motion.a>
         );
@@ -118,16 +119,11 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                     ${className}
                 `}
             >
-                <span className="text-lg font-black text-white">
-                    {t('landing.demo.getA', 'Get a')}
-                </span>
+                <span className="text-lg font-black text-white">{t('landing.demo.getA', 'Get a')}</span>
                 <span className="text-lg font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                     Demo
                 </span>
-                <ArrowRight 
-                    size={20} 
-                    className="text-purple-400 group-hover:translate-x-1 transition-transform" 
-                />
+                <ArrowRight size={20} className="text-purple-400 group-hover:translate-x-1 transition-transform" />
             </motion.a>
         );
     }
@@ -152,10 +148,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                 <span className="text-xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     Demo
                 </span>
-                <ArrowRight 
-                    size={20} 
-                    className="text-purple-500 group-hover:translate-x-1 transition-transform" 
-                />
+                <ArrowRight size={20} className="text-purple-500 group-hover:translate-x-1 transition-transform" />
             </motion.a>
         );
     }
@@ -181,9 +174,9 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                     <span className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent tracking-tight">
                         Demo
                     </span>
-                    <ArrowRight 
-                        size={22} 
-                        className="text-purple-500 group-hover:translate-x-2 transition-transform duration-300" 
+                    <ArrowRight
+                        size={22}
+                        className="text-purple-500 group-hover:translate-x-2 transition-transform duration-300"
                     />
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -212,4 +205,3 @@ export const RegionalDemoButtons: React.FC<{ className?: string }> = ({ classNam
 };
 
 export default DemoButton;
-

@@ -1,12 +1,13 @@
 /**
  * Budgets Routes
  * API endpoints for budget management
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -18,7 +19,9 @@ interface BudgetManagementServiceInterface {
     setProjectBudget?: (orgId: string, projectId: string, budget: unknown) => Promise<void>;
 }
 
-type RequireOrgAccessMiddleware = (options: { roles: string[] }) => Array<(req: unknown, res: unknown, next: () => void) => void>;
+type RequireOrgAccessMiddleware = (options: {
+    roles: string[];
+}) => Array<(req: unknown, res: unknown, next: () => void) => void>;
 
 // Dynamic imports for services/middleware that may not be migrated yet
 let budgetManagementService: BudgetManagementServiceInterface | null = null;
@@ -42,169 +45,212 @@ try {
  * GET /api/budgets/user/:userId
  * Get user budget
  */
-router.get('/user/:userId', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.getBudgetStatus) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.get(
+    '/user/:userId',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.getBudgetStatus) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const { userId } = req.params;
-        const budget = await budgetManagementService.getBudgetStatus(orgId, userId);
-        res.json({ budget });
-    } catch (error: unknown) {
-        console.error('[Budgets] Get user budget error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get user budget' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { userId } = req.params;
+            const budget = await budgetManagementService.getBudgetStatus(orgId, userId);
+            res.json({ budget });
+        } catch (error: unknown) {
+            console.error('[Budgets] Get user budget error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get user budget' });
+        }
+    }),
+);
 
 /**
  * PUT /api/budgets/user/:userId
  * Set user budget
  */
-router.put('/user/:userId', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.setUserBudget) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+    '/user/:userId',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.setUserBudget) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const { userId } = req.params;
-        const budget = req.body;
-        await budgetManagementService.setUserBudget(orgId, userId, budget);
-        res.json({ success: true });
-    } catch (error: unknown) {
-        console.error('[Budgets] Set user budget error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set user budget' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { userId } = req.params;
+            const budget = req.body;
+            await budgetManagementService.setUserBudget(orgId, userId, budget);
+            res.json({ success: true });
+        } catch (error: unknown) {
+            console.error('[Budgets] Set user budget error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set user budget' });
+        }
+    }),
+);
 
 /**
  * GET /api/budgets/project/:projectId
  * Get project budget
  */
-router.get('/project/:projectId', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.getBudgetStatus) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.get(
+    '/project/:projectId',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.getBudgetStatus) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const { projectId } = req.params;
-        const budget = await budgetManagementService.getBudgetStatus(orgId, null, projectId);
-        res.json({ budget });
-    } catch (error: unknown) {
-        console.error('[Budgets] Get project budget error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get project budget' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { projectId } = req.params;
+            const budget = await budgetManagementService.getBudgetStatus(orgId, null, projectId);
+            res.json({ budget });
+        } catch (error: unknown) {
+            console.error('[Budgets] Get project budget error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get project budget' });
+        }
+    }),
+);
 
 /**
  * PUT /api/budgets/project/:projectId
  * Set project budget
  */
-router.put('/project/:projectId', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.setProjectBudget) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+    '/project/:projectId',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.setProjectBudget) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const { projectId } = req.params;
-        const budget = req.body;
-        await budgetManagementService.setProjectBudget(orgId, projectId, budget);
-        res.json({ success: true });
-    } catch (error: unknown) {
-        console.error('[Budgets] Set project budget error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set project budget' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { projectId } = req.params;
+            const budget = req.body;
+            await budgetManagementService.setProjectBudget(orgId, projectId, budget);
+            res.json({ success: true });
+        } catch (error: unknown) {
+            console.error('[Budgets] Set project budget error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set project budget' });
+        }
+    }),
+);
 
 /**
  * GET /api/budgets/organization
  * Get organization budget
  */
-router.get('/organization', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.getBudgetStatus) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.get(
+    '/organization',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.getBudgetStatus) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const budget = await budgetManagementService.getBudgetStatus(orgId);
-        res.json({ budget });
-    } catch (error: unknown) {
-        console.error('[Budgets] Get org budget error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get organization budget' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const budget = await budgetManagementService.getBudgetStatus(orgId);
+            res.json({ budget });
+        } catch (error: unknown) {
+            console.error('[Budgets] Get org budget error:', error);
+            res.status(500).json({
+                error: error instanceof Error ? error.message : 'Failed to get organization budget',
+            });
+        }
+    }),
+);
 
 /**
  * PUT /api/budgets/organization
  * Set organization budget
  */
-router.put('/organization', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.setOrgBudget) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.put(
+    '/organization',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.setOrgBudget) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const budget = req.body;
-        await budgetManagementService.setOrgBudget(orgId, budget);
-        res.json({ success: true });
-    } catch (error: unknown) {
-        console.error('[Budgets] Set org budget error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set organization budget' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const budget = req.body;
+            await budgetManagementService.setOrgBudget(orgId, budget);
+            res.json({ success: true });
+        } catch (error: unknown) {
+            console.error('[Budgets] Set org budget error:', error);
+            res.status(500).json({
+                error: error instanceof Error ? error.message : 'Failed to set organization budget',
+            });
+        }
+    }),
+);
 
 /**
  * GET /api/budgets/status
  * Get status of all budgets
  */
-router.get('/status', verifyToken, requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [], asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!budgetManagementService?.getBudgetStatus) {
-        return res.status(503).json({ error: 'Budget service not available' });
-    }
-
-    try {
-        const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
-        if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.get(
+    '/status',
+    verifyToken,
+    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!budgetManagementService?.getBudgetStatus) {
+            return res.status(503).json({ error: 'Budget service not available' });
         }
 
-        const { userId, projectId } = req.query;
-        const budget = await budgetManagementService.getBudgetStatus(orgId, userId as string | undefined, projectId as string | undefined);
-        res.json({ budget });
-    } catch (error: unknown) {
-        console.error('[Budgets] Get budget status error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get budget status' });
-    }
-}));
+        try {
+            const orgId = (req as { org?: { id?: string } }).org?.id || req.user?.organizationId;
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { userId, projectId } = req.query;
+            const budget = await budgetManagementService.getBudgetStatus(
+                orgId,
+                userId as string | undefined,
+                projectId as string | undefined,
+            );
+            res.json({ budget });
+        } catch (error: unknown) {
+            console.error('[Budgets] Get budget status error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get budget status' });
+        }
+    }),
+);
 
 export default router;

@@ -3,8 +3,9 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { startDunningJob, stopDunningJob, getDunningCron } from '../../../../src/cron/DunningCron.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getDunningCron, startDunningJob, stopDunningJob } from '../../../../src/cron/DunningCron.js';
 
 describe('DunningCron', () => {
     let mockDunningService: { processScheduledRetries: () => Promise<void> };
@@ -74,7 +75,4 @@ describe('DunningCron', () => {
         });
     });
 });
-
-
-
 

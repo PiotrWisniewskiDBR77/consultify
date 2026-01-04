@@ -1,6 +1,6 @@
 /**
  * AuditLogView - Full Audit Log Viewer
- * 
+ *
  * Features:
  * - View all organization activity
  * - Filter by user, action, date
@@ -8,35 +8,36 @@
  * - Real-time updates
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    History,
-    Search,
-    Filter,
-    Download,
-    RefreshCw,
-    User,
-    Settings,
-    Shield,
-    FileText,
-    Trash2,
-    Plus,
-    Edit,
-    Eye,
-    LogIn,
-    LogOut,
-    Key,
     AlertTriangle,
+    Calendar,
     ChevronDown,
     ChevronRight,
-    Calendar,
-    Clock
+    Clock,
+    Download,
+    Edit,
+    Eye,
+    FileText,
+    Filter,
+    History,
+    Key,
+    LogIn,
+    LogOut,
+    Plus,
+    RefreshCw,
+    Search,
+    Settings,
+    Shield,
+    Trash2,
+    User,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 interface AuditLogEntry {
     id: string;
@@ -82,12 +83,12 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             // Use Api.getAuditLogs instead of direct fetch
             const data = await Api.getAuditLogs(
                 {
-                    organizationId: currentOrganization?.id
+                    organizationId: currentOrganization?.id,
                 },
                 {
                     limit: 50,
-                    offset: 0
-                }
+                    offset: 0,
+                },
             );
             setLogs(data.events || data || []);
         } catch (error) {
@@ -113,7 +114,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             params.append('format', 'csv');
 
             const res = await fetch(`/api/organizations/${currentOrganization?.id}/audit-logs/export?${params}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
@@ -134,28 +135,44 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 
     const getActionIcon = (actionType: AuditLogEntry['actionType']) => {
         switch (actionType) {
-            case 'CREATE': return <Plus size={14} className="text-green-500" />;
-            case 'UPDATE': return <Edit size={14} className="text-blue-500" />;
-            case 'DELETE': return <Trash2 size={14} className="text-red-500" />;
-            case 'VIEW': return <Eye size={14} className="text-slate-500" />;
-            case 'LOGIN': return <LogIn size={14} className="text-violet-500" />;
-            case 'LOGOUT': return <LogOut size={14} className="text-slate-500" />;
-            case 'SECURITY': return <Shield size={14} className="text-amber-500" />;
-            case 'EXPORT': return <Download size={14} className="text-cyan-500" />;
-            default: return <FileText size={14} className="text-slate-500" />;
+            case 'CREATE':
+                return <Plus size={14} className="text-green-500" />;
+            case 'UPDATE':
+                return <Edit size={14} className="text-blue-500" />;
+            case 'DELETE':
+                return <Trash2 size={14} className="text-red-500" />;
+            case 'VIEW':
+                return <Eye size={14} className="text-slate-500" />;
+            case 'LOGIN':
+                return <LogIn size={14} className="text-violet-500" />;
+            case 'LOGOUT':
+                return <LogOut size={14} className="text-slate-500" />;
+            case 'SECURITY':
+                return <Shield size={14} className="text-amber-500" />;
+            case 'EXPORT':
+                return <Download size={14} className="text-cyan-500" />;
+            default:
+                return <FileText size={14} className="text-slate-500" />;
         }
     };
 
     const getActionBadgeColor = (actionType: AuditLogEntry['actionType']) => {
         switch (actionType) {
-            case 'CREATE': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
-            case 'UPDATE': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
-            case 'DELETE': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+            case 'CREATE':
+                return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+            case 'UPDATE':
+                return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+            case 'DELETE':
+                return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
             case 'LOGIN':
-            case 'LOGOUT': return 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400';
-            case 'SECURITY': return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
-            case 'EXPORT': return 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400';
-            default: return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+            case 'LOGOUT':
+                return 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400';
+            case 'SECURITY':
+                return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
+            case 'EXPORT':
+                return 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400';
+            default:
+                return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
         }
     };
 
@@ -176,11 +193,11 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
-    const filteredLogs = logs.filter(log => {
+    const filteredLogs = logs.filter((log) => {
         if (searchTerm) {
             const search = searchTerm.toLowerCase();
             return (
@@ -287,7 +304,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             ) : (
                 <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
                     <div className="divide-y divide-slate-200 dark:divide-navy-700">
-                        {filteredLogs.map(log => (
+                        {filteredLogs.map((log) => (
                             <div key={log.id}>
                                 <div
                                     className="p-4 hover:bg-slate-50 dark:hover:bg-navy-700/50 cursor-pointer"
@@ -299,8 +316,12 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-medium text-slate-900 dark:text-white">{log.userName}</span>
-                                                <span className={`px-2 py-0.5 rounded-full text-xs ${getActionBadgeColor(log.actionType)}`}>
+                                                <span className="font-medium text-slate-900 dark:text-white">
+                                                    {log.userName}
+                                                </span>
+                                                <span
+                                                    className={`px-2 py-0.5 rounded-full text-xs ${getActionBadgeColor(log.actionType)}`}
+                                                >
                                                     {log.actionType}
                                                 </span>
                                             </div>
@@ -319,7 +340,11 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
                                             </div>
                                         </div>
                                         <div className="text-slate-400">
-                                            {expandedLog === log.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                            {expandedLog === log.id ? (
+                                                <ChevronDown size={18} />
+                                            ) : (
+                                                <ChevronRight size={18} />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -350,5 +375,3 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 };
 
 export default AuditLogView;
-
-

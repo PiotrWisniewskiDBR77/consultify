@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, Mail, UserPlus, AlertCircle, Loader2, Plus, CreditCard } from 'lucide-react';
+import { AlertCircle, CreditCard, Loader2, Mail, Plus, UserPlus, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 
 interface InviteUserModalProps {
@@ -36,7 +37,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
+
     // Seat management state
     const [seatInfo, setSeatInfo] = useState<SeatInfo | null>(null);
     const [autoAddSeat, setAutoAddSeat] = useState(false);
@@ -48,9 +49,9 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             try {
                 const res = await fetch(`${API_URL}/projects`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -70,9 +71,9 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             try {
                 const res = await fetch(`${API_URL}/billing/seats`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -114,7 +115,9 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
 
         // Check if we need to add a seat first
         if (seatsAreFull && !autoAddSeat) {
-            setError('Please enable "Add seat automatically" to proceed, or contact your administrator to upgrade your plan.');
+            setError(
+                'Please enable "Add seat automatically" to proceed, or contact your administrator to upgrade your plan.',
+            );
             return;
         }
 
@@ -128,10 +131,10 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 const addSeatRes = await fetch(`${API_URL}/billing/seats/add`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ quantity: 1 })
+                    body: JSON.stringify({ quantity: 1 }),
                 });
 
                 const addSeatData = await addSeatRes.json();
@@ -146,15 +149,13 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                     setSeatInfo({
                         ...seatInfo,
                         maxSeats: addSeatData.newMaxSeats,
-                        seatsRemaining: addSeatData.newMaxSeats - seatInfo.seatsUsed
+                        seatsRemaining: addSeatData.newMaxSeats - seatInfo.seatsUsed,
                     });
                 }
             }
 
             // Step 2: Send invitation
-            const endpoint = isProjectInvite
-                ? `${API_URL}/invitations/project`
-                : `${API_URL}/invitations/org`;
+            const endpoint = isProjectInvite ? `${API_URL}/invitations/project` : `${API_URL}/invitations/org`;
 
             const body = isProjectInvite
                 ? { projectId: selectedProject, email, projectRole, orgRole: role }
@@ -163,10 +164,10 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
             });
 
             const data = await res.json();
@@ -195,10 +196,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                         <UserPlus className="w-5 h-5 text-indigo-600" />
                         <h2 className="text-lg font-semibold text-gray-900">Invite User</h2>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -213,10 +211,11 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                                 <div className="flex-1">
                                     <p className="font-medium">Organization has reached maximum seats.</p>
                                     <p className="text-amber-700 text-xs mt-1">
-                                        {seatInfo?.seatsUsed}/{seatInfo?.maxSeats} seats used. 
-                                        {seatInfo?.canAddSeats && ` Add a seat for $${seatInfo?.seatPrice}/month to continue.`}
+                                        {seatInfo?.seatsUsed}/{seatInfo?.maxSeats} seats used.
+                                        {seatInfo?.canAddSeats &&
+                                            ` Add a seat for $${seatInfo?.seatPrice}/month to continue.`}
                                     </p>
-                                    
+
                                     {/* Auto-add seat option */}
                                     {seatInfo?.canAddSeats && (
                                         <label className="flex items-center gap-2 mt-3 cursor-pointer bg-white/50 p-2 rounded-lg border border-amber-300">
@@ -232,7 +231,8 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                                                     Add seat automatically
                                                 </span>
                                                 <span className="text-xs text-amber-600 block">
-                                                    +${seatInfo?.seatPrice}/{seatInfo?.currency}/month will be added to your billing
+                                                    +${seatInfo?.seatPrice}/{seatInfo?.currency}/month will be added to
+                                                    your billing
                                                 </span>
                                             </div>
                                             <CreditCard className="w-4 h-4 text-amber-600" />
@@ -272,27 +272,27 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                     {/* Invitation Type Toggle */}
                     {!projectId && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Invitation Type
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Invitation Type</label>
                             <div className="flex gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsProjectInvite(false)}
-                                    className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${!isProjectInvite
-                                        ? 'bg-indigo-600 text-white border-indigo-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                        }`}
+                                    className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                                        !isProjectInvite
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                    }`}
                                 >
                                     Organization
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setIsProjectInvite(true)}
-                                    className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${isProjectInvite
-                                        ? 'bg-indigo-600 text-white border-indigo-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                        }`}
+                                    className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                                        isProjectInvite
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                    }`}
                                 >
                                     Project
                                 </button>
@@ -380,16 +380,14 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                             <span className="font-medium">{role}</span> account type
                             {isProjectInvite && selectedProject && (
                                 <>
-                                    {' '}and{' '}
-                                    <span className="font-medium">{projectRole.replace(/_/g, ' ')}</span>
-                                    {' '}project role
+                                    {' '}
+                                    and <span className="font-medium">{projectRole.replace(/_/g, ' ')}</span> project
+                                    role
                                 </>
                             )}
                             .
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">
-                            The invitation will expire in 7 days.
-                        </p>
+                        <p className="text-xs text-gray-500 mt-2">The invitation will expire in 7 days.</p>
                     </div>
 
                     {/* Actions */}

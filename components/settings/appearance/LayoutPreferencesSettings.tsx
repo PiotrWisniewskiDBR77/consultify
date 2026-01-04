@@ -1,6 +1,6 @@
 /**
  * LayoutPreferencesSettings - Layout Configuration
- * 
+ *
  * Features:
  * - Default sidebar state
  * - Panel layout (left/right sidebar)
@@ -9,25 +9,26 @@
  * - Toolbar customization
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
+    ChevronRight,
+    Eye,
+    EyeOff,
+    Grip,
     LayoutDashboard,
+    Loader2,
+    Menu,
     PanelLeft,
     PanelRight,
     PanelTop,
-    Menu,
-    ChevronRight,
-    Grip,
+    RotateCcw,
     Save,
-    Loader2,
-    Eye,
-    EyeOff,
-    RotateCcw
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface LayoutPreferencesSettingsProps {
@@ -56,7 +57,7 @@ const defaultSettings: LayoutSettings = {
     stickyHeader: true,
     defaultView: 'dashboard',
     toolbarItems: ['search', 'notifications', 'help', 'profile'],
-    quickAccessItems: ['new_task', 'new_project', 'quick_note']
+    quickAccessItems: ['new_task', 'new_project', 'quick_note'],
 };
 
 const availableToolbarItems = [
@@ -67,7 +68,7 @@ const availableToolbarItems = [
     { id: 'settings', label: 'Settings', icon: '⚙️' },
     { id: 'theme_toggle', label: 'Theme Toggle', icon: '🌙' },
     { id: 'fullscreen', label: 'Fullscreen', icon: '🖥️' },
-    { id: 'quick_add', label: 'Quick Add', icon: '➕' }
+    { id: 'quick_add', label: 'Quick Add', icon: '➕' },
 ];
 
 const availableQuickAccessItems = [
@@ -77,7 +78,7 @@ const availableQuickAccessItems = [
     { id: 'new_initiative', label: 'New Initiative' },
     { id: 'new_report', label: 'New Report' },
     { id: 'schedule_meeting', label: 'Schedule Meeting' },
-    { id: 'start_timer', label: 'Start Timer' }
+    { id: 'start_timer', label: 'Start Timer' },
 ];
 
 const defaultViews = [
@@ -86,13 +87,10 @@ const defaultViews = [
     { id: 'tasks', label: 'Tasks' },
     { id: 'inbox', label: 'Inbox' },
     { id: 'calendar', label: 'Calendar' },
-    { id: 'focus', label: 'Focus Mode' }
+    { id: 'focus', label: 'Focus Mode' },
 ];
 
-export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -130,14 +128,14 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
 
     const toggleToolbarItem = (itemId: string) => {
         const items = settings.toolbarItems.includes(itemId)
-            ? settings.toolbarItems.filter(i => i !== itemId)
+            ? settings.toolbarItems.filter((i) => i !== itemId)
             : [...settings.toolbarItems, itemId];
         setSettings({ ...settings, toolbarItems: items });
     };
 
     const toggleQuickAccessItem = (itemId: string) => {
         const items = settings.quickAccessItems.includes(itemId)
-            ? settings.quickAccessItems.filter(i => i !== itemId)
+            ? settings.quickAccessItems.filter((i) => i !== itemId)
             : [...settings.quickAccessItems, itemId];
         setSettings({ ...settings, quickAccessItems: items });
     };
@@ -153,7 +151,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-layout-preferences" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -161,9 +159,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                         <LayoutDashboard size={28} className="text-blue-500" />
                         {t('settings.appearance.layout.title', 'Layout Preferences')}
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        Configure your workspace layout
-                    </p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure your workspace layout</p>
                 </div>
                 <button
                     onClick={handleSave}
@@ -178,17 +174,19 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
             {/* Sidebar Configuration */}
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Sidebar</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Sidebar State */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Default State</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Default State
+                        </label>
                         <div className="space-y-2">
                             {[
                                 { id: 'expanded', label: 'Expanded', desc: 'Always show full sidebar' },
                                 { id: 'collapsed', label: 'Collapsed', desc: 'Show icons only' },
-                                { id: 'auto', label: 'Auto', desc: 'Collapse on small screens' }
-                            ].map(state => (
+                                { id: 'auto', label: 'Auto', desc: 'Collapse on small screens' },
+                            ].map((state) => (
                                 <label
                                     key={state.id}
                                     className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
@@ -201,7 +199,9 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                                         type="radio"
                                         name="sidebarState"
                                         checked={settings.defaultSidebarState === state.id}
-                                        onChange={() => setSettings({ ...settings, defaultSidebarState: state.id as any })}
+                                        onChange={() =>
+                                            setSettings({ ...settings, defaultSidebarState: state.id as any })
+                                        }
                                         className="hidden"
                                     />
                                     <div>
@@ -215,12 +215,14 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
 
                     {/* Sidebar Position */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Position</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Position
+                        </label>
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 { id: 'left', label: 'Left', icon: PanelLeft },
-                                { id: 'right', label: 'Right', icon: PanelRight }
-                            ].map(pos => {
+                                { id: 'right', label: 'Right', icon: PanelRight },
+                            ].map((pos) => {
                                 const Icon = pos.icon;
                                 return (
                                     <button
@@ -232,7 +234,14 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                                                 : 'border-slate-200 dark:border-white/10 hover:border-blue-300'
                                         }`}
                                     >
-                                        <Icon size={24} className={settings.sidebarPosition === pos.id ? 'text-blue-600 mx-auto' : 'text-slate-400 mx-auto'} />
+                                        <Icon
+                                            size={24}
+                                            className={
+                                                settings.sidebarPosition === pos.id
+                                                    ? 'text-blue-600 mx-auto'
+                                                    : 'text-slate-400 mx-auto'
+                                            }
+                                        />
                                         <p className="font-medium text-slate-900 dark:text-white mt-2">{pos.label}</p>
                                     </button>
                                 );
@@ -245,14 +254,29 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
             {/* UI Elements */}
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">UI Elements</h3>
-                
+
                 <div className="space-y-3">
                     {[
-                        { key: 'showHeader', label: 'Show Header', desc: 'Display the top navigation bar', icon: PanelTop },
-                        { key: 'stickyHeader', label: 'Sticky Header', desc: 'Keep header visible when scrolling', icon: PanelTop },
-                        { key: 'showBreadcrumbs', label: 'Show Breadcrumbs', desc: 'Display navigation breadcrumbs', icon: ChevronRight },
-                        { key: 'showToolbar', label: 'Show Toolbar', desc: 'Display quick action toolbar', icon: Grip }
-                    ].map(item => {
+                        {
+                            key: 'showHeader',
+                            label: 'Show Header',
+                            desc: 'Display the top navigation bar',
+                            icon: PanelTop,
+                        },
+                        {
+                            key: 'stickyHeader',
+                            label: 'Sticky Header',
+                            desc: 'Keep header visible when scrolling',
+                            icon: PanelTop,
+                        },
+                        {
+                            key: 'showBreadcrumbs',
+                            label: 'Show Breadcrumbs',
+                            desc: 'Display navigation breadcrumbs',
+                            icon: ChevronRight,
+                        },
+                        { key: 'showToolbar', label: 'Show Toolbar', desc: 'Display quick action toolbar', icon: Grip },
+                    ].map((item) => {
                         const Icon = item.icon;
                         return (
                             <div
@@ -267,14 +291,18 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })}
+                                    onClick={() =>
+                                        setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
+                                    }
                                     className={`relative w-12 h-6 rounded-full transition-colors ${
                                         (settings as any)[item.key] ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                 >
-                                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                        (settings as any)[item.key] ? 'left-7' : 'left-1'
-                                    }`} />
+                                    <span
+                                        className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                            (settings as any)[item.key] ? 'left-7' : 'left-1'
+                                        }`}
+                                    />
                                 </button>
                             </div>
                         );
@@ -286,9 +314,9 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Startup View</h3>
                 <p className="text-sm text-slate-500">Choose which view to show when you log in</p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {defaultViews.map(view => (
+                    {defaultViews.map((view) => (
                         <button
                             key={view.id}
                             onClick={() => setSettings({ ...settings, defaultView: view.id })}
@@ -308,9 +336,9 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Toolbar Items</h3>
                 <p className="text-sm text-slate-500">Choose which items appear in the header toolbar</p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {availableToolbarItems.map(item => (
+                    {availableToolbarItems.map((item) => (
                         <button
                             key={item.id}
                             onClick={() => toggleToolbarItem(item.id)}
@@ -331,9 +359,9 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Access Menu</h3>
                 <p className="text-sm text-slate-500">Customize quick actions in the + menu</p>
-                
+
                 <div className="flex flex-wrap gap-2">
-                    {availableQuickAccessItems.map(item => (
+                    {availableQuickAccessItems.map((item) => (
                         <button
                             key={item.id}
                             onClick={() => toggleQuickAccessItem(item.id)}
@@ -353,10 +381,4 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
 };
 
 export default LayoutPreferencesSettings;
-
-
-
-
-
-
 

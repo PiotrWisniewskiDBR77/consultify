@@ -1,13 +1,13 @@
 /**
  * Feature Spotlight Component
- * 
+ *
  * Highlights specific UI elements with a spotlight effect and tooltip description.
  * Used for new feature announcements and contextual guidance.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lightbulb, ArrowRight, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, ChevronRight, Lightbulb, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface SpotlightPosition {
@@ -68,15 +68,15 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
     dismissable = true,
     padding = 8,
     onDismiss,
-    showOnce = true
+    showOnce = true,
 }) => {
     const { i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
-    
+
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState<SpotlightPosition | null>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
-    
+
     // Check if already dismissed
     useEffect(() => {
         if (showOnce) {
@@ -85,14 +85,14 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                 return;
             }
         }
-        
+
         // Find target element
         const element = document.querySelector(target);
         if (!element) {
             console.warn(`[FeatureSpotlight] Target not found: ${target}`);
             return;
         }
-        
+
         // Calculate position
         const rect = element.getBoundingClientRect();
         queueMicrotask(() => {
@@ -100,11 +100,11 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                 top: rect.top - padding,
                 left: rect.left - padding,
                 width: rect.width + padding * 2,
-                height: rect.height + padding * 2
+                height: rect.height + padding * 2,
             });
             setIsVisible(true);
         });
-        
+
         // Update position on scroll/resize
         const updatePosition = () => {
             const newRect = element.getBoundingClientRect();
@@ -112,19 +112,19 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                 top: newRect.top - padding,
                 left: newRect.left - padding,
                 width: newRect.width + padding * 2,
-                height: newRect.height + padding * 2
+                height: newRect.height + padding * 2,
             });
         };
-        
+
         window.addEventListener('scroll', updatePosition, true);
         window.addEventListener('resize', updatePosition);
-        
+
         return () => {
             window.removeEventListener('scroll', updatePosition, true);
             window.removeEventListener('resize', updatePosition);
         };
     }, [id, target, padding, showOnce]);
-    
+
     // Handle dismiss
     const handleDismiss = () => {
         setIsVisible(false);
@@ -133,59 +133,59 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
         }
         onDismiss?.();
     };
-    
+
     // Handle CTA click
     const handleCtaClick = () => {
         ctaAction?.();
         handleDismiss();
     };
-    
+
     // Calculate tooltip position
     const getTooltipStyle = (): React.CSSProperties => {
         if (!position) return {};
-        
+
         const baseStyle: React.CSSProperties = {
             position: 'fixed',
             zIndex: 10002,
-            maxWidth: '320px'
+            maxWidth: '320px',
         };
-        
+
         switch (placement) {
             case 'top':
                 return {
                     ...baseStyle,
                     bottom: `calc(100vh - ${position.top}px + 12px)`,
                     left: position.left + position.width / 2,
-                    transform: 'translateX(-50%)'
+                    transform: 'translateX(-50%)',
                 };
             case 'bottom':
                 return {
                     ...baseStyle,
                     top: position.top + position.height + 12,
                     left: position.left + position.width / 2,
-                    transform: 'translateX(-50%)'
+                    transform: 'translateX(-50%)',
                 };
             case 'left':
                 return {
                     ...baseStyle,
                     top: position.top + position.height / 2,
                     right: `calc(100vw - ${position.left}px + 12px)`,
-                    transform: 'translateY(-50%)'
+                    transform: 'translateY(-50%)',
                 };
             case 'right':
                 return {
                     ...baseStyle,
                     top: position.top + position.height / 2,
                     left: position.left + position.width + 12,
-                    transform: 'translateY(-50%)'
+                    transform: 'translateY(-50%)',
                 };
             default:
                 return baseStyle;
         }
     };
-    
+
     if (!isVisible || !position) return null;
-    
+
     return (
         <AnimatePresence>
             {/* Overlay */}
@@ -200,10 +200,10 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                         transparent 0%,
                         transparent 50%,
                         rgba(0, 0, 0, 0.7) 100%
-                    )`
+                    )`,
                 }}
             />
-            
+
             {/* Spotlight Ring */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -217,14 +217,18 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                     height: position.height,
                     borderRadius: 8,
                     border: '2px solid rgba(139, 92, 246, 0.8)',
-                    boxShadow: '0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.4)'
+                    boxShadow: '0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.4)',
                 }}
             />
-            
+
             {/* Tooltip */}
             <motion.div
                 ref={tooltipRef}
-                initial={{ opacity: 0, y: placement === 'top' ? 10 : placement === 'bottom' ? -10 : 0, x: placement === 'left' ? 10 : placement === 'right' ? -10 : 0 }}
+                initial={{
+                    opacity: 0,
+                    y: placement === 'top' ? 10 : placement === 'bottom' ? -10 : 0,
+                    x: placement === 'left' ? 10 : placement === 'right' ? -10 : 0,
+                }}
                 animate={{ opacity: 1, y: 0, x: 0 }}
                 exit={{ opacity: 0 }}
                 style={getTooltipStyle()}
@@ -237,21 +241,16 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                         <span className="font-semibold">{title[lang]}</span>
                     </div>
                     {dismissable && (
-                        <button
-                            onClick={handleDismiss}
-                            className="p-1 hover:bg-white/20 rounded transition-colors"
-                        >
+                        <button onClick={handleDismiss} className="p-1 hover:bg-white/20 rounded transition-colors">
                             <X size={16} />
                         </button>
                     )}
                 </div>
-                
+
                 {/* Content */}
                 <div className="p-4">
-                    <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-                        {description[lang]}
-                    </p>
-                    
+                    <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{description[lang]}</p>
+
                     {/* Actions */}
                     <div className="flex items-center justify-between mt-4">
                         <button
@@ -260,7 +259,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                         >
                             {lang === 'pl' ? 'Rozumiem' : 'Got it'}
                         </button>
-                        
+
                         {ctaText && ctaAction && (
                             <button
                                 onClick={handleCtaClick}
@@ -272,14 +271,17 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
                         )}
                     </div>
                 </div>
-                
+
                 {/* Arrow */}
                 <div
                     className={`absolute w-3 h-3 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 transform rotate-45 ${
-                        placement === 'top' ? 'bottom-[-7px] left-1/2 -translate-x-1/2 border-b border-r' :
-                        placement === 'bottom' ? 'top-[-7px] left-1/2 -translate-x-1/2 border-t border-l' :
-                        placement === 'left' ? 'right-[-7px] top-1/2 -translate-y-1/2 border-r border-t' :
-                        'left-[-7px] top-1/2 -translate-y-1/2 border-l border-b'
+                        placement === 'top'
+                            ? 'bottom-[-7px] left-1/2 -translate-x-1/2 border-b border-r'
+                            : placement === 'bottom'
+                              ? 'top-[-7px] left-1/2 -translate-x-1/2 border-t border-l'
+                              : placement === 'left'
+                                ? 'right-[-7px] top-1/2 -translate-y-1/2 border-r border-t'
+                                : 'left-[-7px] top-1/2 -translate-y-1/2 border-l border-b'
                     }`}
                 />
             </motion.div>
@@ -288,12 +290,3 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
 };
 
 export default FeatureSpotlight;
-
-
-
-
-
-
-
-
-

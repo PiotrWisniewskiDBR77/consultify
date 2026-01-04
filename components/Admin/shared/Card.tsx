@@ -1,9 +1,9 @@
 /**
  * Admin Card Component
- * 
+ *
  * Clean card variants for Admin module
  * Variants: base, bordered, elevated
- * 
+ *
  * Key principles:
  * - No excessive borders
  * - Consistent padding
@@ -24,7 +24,8 @@ interface CardProps {
 const variantClasses: Record<CardVariant, string> = {
     base: 'bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-transparent',
     bordered: 'bg-white dark:bg-transparent border border-slate-200 dark:border-white/[0.06] rounded-xl',
-    elevated: 'bg-white dark:bg-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-black/20 border border-slate-100 dark:border-transparent',
+    elevated:
+        'bg-white dark:bg-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-black/20 border border-slate-100 dark:border-transparent',
 };
 
 const paddingClasses: Record<string, string> = {
@@ -34,17 +35,8 @@ const paddingClasses: Record<string, string> = {
     lg: 'p-6',
 };
 
-export const Card: React.FC<CardProps> = ({
-    variant = 'base',
-    padding = 'md',
-    className = '',
-    children,
-}) => {
-    return (
-        <div className={`${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}>
-            {children}
-        </div>
-    );
+export const Card: React.FC<CardProps> = ({ variant = 'base', padding = 'md', className = '', children }) => {
+    return <div className={`${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}>{children}</div>;
 };
 
 // Card with header
@@ -72,9 +64,7 @@ export const CardWithHeader: React.FC<CardWithHeaderProps> = ({
                 </div>
                 {action && <div>{action}</div>}
             </div>
-            <div className="p-5">
-                {children}
-            </div>
+            <div className="p-5">{children}</div>
         </div>
     );
 };
@@ -86,7 +76,9 @@ interface StatsCardProps {
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({ className = '', children }) => (
-    <div className={`bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-white/[0.04] rounded-lg p-4 ${className}`}>
+    <div
+        className={`bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-white/[0.04] rounded-lg p-4 ${className}`}
+    >
         {children}
     </div>
 );
@@ -100,13 +92,7 @@ interface SectionProps {
     children: React.ReactNode;
 }
 
-export const Section: React.FC<SectionProps> = ({
-    title,
-    subtitle,
-    action,
-    className = '',
-    children,
-}) => {
+export const Section: React.FC<SectionProps> = ({ title, subtitle, action, className = '', children }) => {
     return (
         <section className={className}>
             {(title || action) && (
@@ -126,11 +112,4 @@ export const Section: React.FC<SectionProps> = ({
 };
 
 export default Card;
-
-
-
-
-
-
-
 

@@ -7,7 +7,8 @@
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import ManagementReportsService from './managementReportsService.js';
 import ReportEmailService from './reportEmailService.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -519,6 +520,7 @@ const ScheduledReportsService = {
 };
 
 export default ScheduledReportsService;
+
 
 
 

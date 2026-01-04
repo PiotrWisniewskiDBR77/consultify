@@ -1,10 +1,11 @@
 /**
  * useProactiveNudges Hook
- * 
+ *
  * Manages proactive AI nudges - fetching, displaying, and tracking user interactions.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import api from '../services/api';
 
 export interface Nudge {
@@ -37,11 +38,7 @@ interface UseProactiveNudgesReturn {
 }
 
 export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): UseProactiveNudgesReturn {
-    const { 
-        enabled = true, 
-        pollingInterval = 30000,
-        maxNudges = 1 
-    } = options;
+    const { enabled = true, pollingInterval = 30000, maxNudges = 1 } = options;
 
     const [nudges, setNudges] = useState<Nudge[]>([]);
     const [loading, setLoading] = useState(false);
@@ -55,11 +52,9 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
         try {
             setLoading(true);
             const response = await api.get('/ai/nudges/pending');
-            
+
             if (response.data.success && response.data.data) {
-                const validNudges = response.data.data.filter(
-                    (n: Nudge) => n.expiresAt > Date.now()
-                );
+                const validNudges = response.data.data.filter((n: Nudge) => n.expiresAt > Date.now());
                 setNudges(validNudges.slice(0, maxNudges));
             }
         } catch (err: any) {
@@ -73,7 +68,7 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
     const dismissNudge = useCallback(async (nudgeId: string) => {
         try {
             await api.post('/ai/nudges/dismiss', { nudgeId });
-            setNudges(prev => prev.filter(n => n.nudgeId !== nudgeId));
+            setNudges((prev) => prev.filter((n) => n.nudgeId !== nudgeId));
         } catch (err: any) {
             console.debug('[Nudges] Dismiss failed:', err.message);
         }
@@ -82,38 +77,39 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
     const actOnNudge = useCallback(async (nudgeId: string, action: string) => {
         try {
             await api.post('/ai/nudges/acted', { nudgeId, action });
-            setNudges(prev => prev.filter(n => n.nudgeId !== nudgeId));
+            setNudges((prev) => prev.filter((n) => n.nudgeId !== nudgeId));
         } catch (err: any) {
             console.debug('[Nudges] Act failed:', err.message);
         }
     }, []);
 
-    const trackActivity = useCallback(async (activityType: string, metadata?: Record<string, any>) => {
-        lastActivityRef.current = Date.now();
-        
-        try {
-            const response = await api.post('/ai/nudges/track', {
-                activityType,
-                metadata
-            });
+    const trackActivity = useCallback(
+        async (activityType: string, metadata?: Record<string, any>) => {
+            lastActivityRef.current = Date.now();
 
-            // If tracking returns new nudges, add them
-            if (response.data.nudges && response.data.nudges.length > 0) {
-                setNudges(prev => {
-                    const newNudges = [...prev, ...response.data.nudges];
-                    return newNudges
-                        .sort((a, b) => b.priority - a.priority)
-                        .slice(0, maxNudges);
+            try {
+                const response = await api.post('/ai/nudges/track', {
+                    activityType,
+                    metadata,
                 });
+
+                // If tracking returns new nudges, add them
+                if (response.data.nudges && response.data.nudges.length > 0) {
+                    setNudges((prev) => {
+                        const newNudges = [...prev, ...response.data.nudges];
+                        return newNudges.sort((a, b) => b.priority - a.priority).slice(0, maxNudges);
+                    });
+                }
+            } catch (err: any) {
+                // Silently fail
+                console.debug('[Nudges] Track failed:', err.message);
             }
-        } catch (err: any) {
-            // Silently fail
-            console.debug('[Nudges] Track failed:', err.message);
-        }
-    }, [maxNudges]);
+        },
+        [maxNudges],
+    );
 
     const clearNudge = useCallback(() => {
-        setNudges(prev => prev.slice(1));
+        setNudges((prev) => prev.slice(1));
     }, []);
 
     // Start polling
@@ -163,17 +159,9 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
         dismissNudge,
         actOnNudge,
         trackActivity,
-        clearNudge
+        clearNudge,
     };
 }
 
 export default useProactiveNudges;
-
-
-
-
-
-
-
-
 

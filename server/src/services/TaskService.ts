@@ -4,9 +4,10 @@
  * Handles all task-related business logic with full type safety
  */
 
-import type { Task, TaskStatus, TaskPriority, User } from '../types';
-import { ValidationError, NotFoundError, AuthorizationError } from '../types';
 import { z } from 'zod';
+
+import type { Task, TaskPriority, TaskStatus, User } from '../types/index.js';
+import { AuthorizationError, NotFoundError } from '../types/index.js';
 
 // ==========================================
 // VALIDATION SCHEMAS (Zod)
@@ -44,7 +45,7 @@ export class TaskService {
      */
     async getTasks(filters: TaskFilters): Promise<Task[]> {
         const { projectId, status, assigneeId, priority, initiativeId } = filters;
-        
+
         let query = `
             SELECT t.*, u.name as assignee_name, u.avatar_url as assignee_avatar
             FROM tasks t
@@ -90,7 +91,7 @@ export class TaskService {
              FROM tasks t
              LEFT JOIN users u ON t.assignee_id = u.id
              WHERE t.id = $1`,
-            [id]
+            [id],
         );
 
         if (!result.rows[0]) {
@@ -128,8 +129,8 @@ export class TaskService {
                 validated.estimatedHours || null,
                 validated.tags ? JSON.stringify(validated.tags) : null,
                 validated.initiativeId || null,
-                userId
-            ]
+                userId,
+            ],
         );
 
         // Notify assignee if assigned
@@ -162,7 +163,7 @@ export class TaskService {
             if (value !== undefined) {
                 const dbKey = this.camelToSnake(key);
                 updates.push(`${dbKey} = $${paramIndex++}`);
-                
+
                 if (key === 'tags') {
                     params.push(JSON.stringify(value));
                 } else if (key === 'dueDate' && value) {
@@ -182,7 +183,7 @@ export class TaskService {
 
         const result = await this.db.query<TaskRow>(
             `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
-            params
+            params,
         );
 
         // Track status change for metrics
@@ -214,7 +215,7 @@ export class TaskService {
     async getTaskStats(projectId: string): Promise<TaskStats> {
         const result = await this.db.query<{ status: TaskStatus; count: string }>(
             `SELECT status, COUNT(*) as count FROM tasks WHERE project_id = $1 GROUP BY status`,
-            [projectId]
+            [projectId],
         );
 
         const stats: TaskStats = {
@@ -224,13 +225,13 @@ export class TaskService {
                 in_progress: 0,
                 review: 0,
                 done: 0,
-                blocked: 0
+                blocked: 0,
             },
             completionRate: 0,
-            overdueCount: 0
+            overdueCount: 0,
         };
 
-        result.rows.forEach(row => {
+        result.rows.forEach((row) => {
             const count = parseInt(row.count, 10);
             stats.total += count;
             stats.byStatus[row.status] = count;
@@ -244,7 +245,7 @@ export class TaskService {
         const overdueResult = await this.db.query<{ count: string }>(
             `SELECT COUNT(*) as count FROM tasks 
              WHERE project_id = $1 AND due_date < NOW() AND status NOT IN ('done', 'blocked')`,
-            [projectId]
+            [projectId],
         );
         stats.overdueCount = parseInt(overdueResult.rows[0]?.count || '0', 10);
 
@@ -260,7 +261,7 @@ export class TaskService {
             `SELECT p.id FROM projects p
              LEFT JOIN project_members pm ON p.id = pm.project_id
              WHERE p.id = $1 AND (p.owner_id = $2 OR pm.user_id = $2)`,
-            [projectId, userId]
+            [projectId, userId],
         );
 
         if (!result.rows[0]) {
@@ -272,7 +273,7 @@ export class TaskService {
         await this.db.query(
             `INSERT INTO notifications (user_id, type, category, title, message, link)
              VALUES ($1, 'info', 'task', 'New task assigned', 'You have been assigned a new task', $2)`,
-            [assigneeId, `/tasks/${taskId}`]
+            [assigneeId, `/tasks/${taskId}`],
         );
     }
 
@@ -280,12 +281,12 @@ export class TaskService {
         taskId: string,
         oldStatus: TaskStatus,
         newStatus: TaskStatus,
-        userId: string
+        userId: string,
     ): Promise<void> {
         await this.db.query(
             `INSERT INTO task_status_history (task_id, old_status, new_status, changed_by)
              VALUES ($1, $2, $3, $4)`,
-            [taskId, oldStatus, newStatus, userId]
+            [taskId, oldStatus, newStatus, userId],
         );
     }
 
@@ -303,12 +304,12 @@ export class TaskService {
             actualHours: row.actual_hours,
             tags: row.tags ? JSON.parse(row.tags) : undefined,
             createdAt: row.created_at,
-            updatedAt: row.updated_at
+            updatedAt: row.updated_at,
         };
     }
 
     private camelToSnake(str: string): string {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
     }
 }
 
@@ -354,5 +355,3 @@ interface TaskStats {
 interface DatabaseClient {
     query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
-
-

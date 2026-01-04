@@ -1,29 +1,19 @@
 /**
  * KeyboardShortcutsSettings - Keyboard Shortcuts Configuration
- * 
+ *
  * Features:
  * - Custom keyboard shortcuts
  * - Keyboard shortcuts reference
  * - Vim mode toggle
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
-import {
-    Keyboard,
-    Search,
-    Save,
-    Loader2,
-    Edit2,
-    X,
-    Check,
-    Info,
-    RotateCcw,
-    Command
-} from 'lucide-react';
-import { Api } from '../../../services/api';
+import { Check, Command, Edit2, Info, Keyboard, Loader2, RotateCcw, Save, Search, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface KeyboardShortcutsSettingsProps {
@@ -48,45 +38,126 @@ interface ShortcutSettings {
 
 const defaultShortcuts: Shortcut[] = [
     // Navigation
-    { id: 'go_dashboard', label: 'Go to Dashboard', description: 'Navigate to dashboard', category: 'Navigation', defaultKeys: 'g d' },
-    { id: 'go_projects', label: 'Go to Projects', description: 'Navigate to projects', category: 'Navigation', defaultKeys: 'g p' },
-    { id: 'go_tasks', label: 'Go to Tasks', description: 'Navigate to tasks', category: 'Navigation', defaultKeys: 'g t' },
-    { id: 'go_inbox', label: 'Go to Inbox', description: 'Navigate to inbox', category: 'Navigation', defaultKeys: 'g i' },
-    { id: 'go_settings', label: 'Go to Settings', description: 'Navigate to settings', category: 'Navigation', defaultKeys: 'g s' },
-    
+    {
+        id: 'go_dashboard',
+        label: 'Go to Dashboard',
+        description: 'Navigate to dashboard',
+        category: 'Navigation',
+        defaultKeys: 'g d',
+    },
+    {
+        id: 'go_projects',
+        label: 'Go to Projects',
+        description: 'Navigate to projects',
+        category: 'Navigation',
+        defaultKeys: 'g p',
+    },
+    {
+        id: 'go_tasks',
+        label: 'Go to Tasks',
+        description: 'Navigate to tasks',
+        category: 'Navigation',
+        defaultKeys: 'g t',
+    },
+    {
+        id: 'go_inbox',
+        label: 'Go to Inbox',
+        description: 'Navigate to inbox',
+        category: 'Navigation',
+        defaultKeys: 'g i',
+    },
+    {
+        id: 'go_settings',
+        label: 'Go to Settings',
+        description: 'Navigate to settings',
+        category: 'Navigation',
+        defaultKeys: 'g s',
+    },
+
     // Actions
     { id: 'new_task', label: 'New Task', description: 'Create a new task', category: 'Actions', defaultKeys: 'n t' },
-    { id: 'new_project', label: 'New Project', description: 'Create a new project', category: 'Actions', defaultKeys: 'n p' },
-    { id: 'quick_add', label: 'Quick Add', description: 'Open quick add menu', category: 'Actions', defaultKeys: 'Cmd+K' },
+    {
+        id: 'new_project',
+        label: 'New Project',
+        description: 'Create a new project',
+        category: 'Actions',
+        defaultKeys: 'n p',
+    },
+    {
+        id: 'quick_add',
+        label: 'Quick Add',
+        description: 'Open quick add menu',
+        category: 'Actions',
+        defaultKeys: 'Cmd+K',
+    },
     { id: 'search', label: 'Search', description: 'Open search', category: 'Actions', defaultKeys: 'Cmd+/' },
     { id: 'save', label: 'Save', description: 'Save current item', category: 'Actions', defaultKeys: 'Cmd+S' },
-    
+
     // View
-    { id: 'toggle_sidebar', label: 'Toggle Sidebar', description: 'Show/hide sidebar', category: 'View', defaultKeys: '[' },
-    { id: 'toggle_fullscreen', label: 'Toggle Fullscreen', description: 'Enter/exit fullscreen', category: 'View', defaultKeys: 'f' },
-    { id: 'toggle_theme', label: 'Toggle Theme', description: 'Switch light/dark mode', category: 'View', defaultKeys: 'Cmd+Shift+L' },
+    {
+        id: 'toggle_sidebar',
+        label: 'Toggle Sidebar',
+        description: 'Show/hide sidebar',
+        category: 'View',
+        defaultKeys: '[',
+    },
+    {
+        id: 'toggle_fullscreen',
+        label: 'Toggle Fullscreen',
+        description: 'Enter/exit fullscreen',
+        category: 'View',
+        defaultKeys: 'f',
+    },
+    {
+        id: 'toggle_theme',
+        label: 'Toggle Theme',
+        description: 'Switch light/dark mode',
+        category: 'View',
+        defaultKeys: 'Cmd+Shift+L',
+    },
     { id: 'zoom_in', label: 'Zoom In', description: 'Increase UI scale', category: 'View', defaultKeys: 'Cmd+=' },
     { id: 'zoom_out', label: 'Zoom Out', description: 'Decrease UI scale', category: 'View', defaultKeys: 'Cmd+-' },
-    
+
     // Task Management
-    { id: 'complete_task', label: 'Complete Task', description: 'Mark task as complete', category: 'Tasks', defaultKeys: 'c' },
-    { id: 'delete_task', label: 'Delete Task', description: 'Delete selected task', category: 'Tasks', defaultKeys: 'Backspace' },
+    {
+        id: 'complete_task',
+        label: 'Complete Task',
+        description: 'Mark task as complete',
+        category: 'Tasks',
+        defaultKeys: 'c',
+    },
+    {
+        id: 'delete_task',
+        label: 'Delete Task',
+        description: 'Delete selected task',
+        category: 'Tasks',
+        defaultKeys: 'Backspace',
+    },
     { id: 'edit_task', label: 'Edit Task', description: 'Edit selected task', category: 'Tasks', defaultKeys: 'e' },
-    { id: 'priority_high', label: 'High Priority', description: 'Set high priority', category: 'Tasks', defaultKeys: '1' },
-    { id: 'priority_medium', label: 'Medium Priority', description: 'Set medium priority', category: 'Tasks', defaultKeys: '2' },
-    { id: 'priority_low', label: 'Low Priority', description: 'Set low priority', category: 'Tasks', defaultKeys: '3' }
+    {
+        id: 'priority_high',
+        label: 'High Priority',
+        description: 'Set high priority',
+        category: 'Tasks',
+        defaultKeys: '1',
+    },
+    {
+        id: 'priority_medium',
+        label: 'Medium Priority',
+        description: 'Set medium priority',
+        category: 'Tasks',
+        defaultKeys: '2',
+    },
+    { id: 'priority_low', label: 'Low Priority', description: 'Set low priority', category: 'Tasks', defaultKeys: '3' },
 ];
 
 const defaultSettings: ShortcutSettings = {
     enabled: true,
     vimMode: false,
-    customShortcuts: {}
+    customShortcuts: {},
 };
 
-export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -159,8 +230,8 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                 ...settings,
                 customShortcuts: {
                     ...settings.customShortcuts,
-                    [editingShortcut]: recordedKeys
-                }
+                    [editingShortcut]: recordedKeys,
+                },
             });
         }
         setEditingShortcut(null);
@@ -182,20 +253,24 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
         return settings.customShortcuts[shortcut.id] || shortcut.defaultKeys;
     };
 
-    const categories = ['all', ...Array.from(new Set(defaultShortcuts.map(s => s.category)))];
+    const categories = ['all', ...Array.from(new Set(defaultShortcuts.map((s) => s.category)))];
 
-    const filteredShortcuts = defaultShortcuts.filter(s => {
-        const matchesSearch = s.label.toLowerCase().includes(search.toLowerCase()) ||
-                            s.description.toLowerCase().includes(search.toLowerCase());
+    const filteredShortcuts = defaultShortcuts.filter((s) => {
+        const matchesSearch =
+            s.label.toLowerCase().includes(search.toLowerCase()) ||
+            s.description.toLowerCase().includes(search.toLowerCase());
         const matchesCategory = selectedCategory === 'all' || s.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    const groupedShortcuts = filteredShortcuts.reduce((acc, shortcut) => {
-        if (!acc[shortcut.category]) acc[shortcut.category] = [];
-        acc[shortcut.category].push(shortcut);
-        return acc;
-    }, {} as Record<string, Shortcut[]>);
+    const groupedShortcuts = filteredShortcuts.reduce(
+        (acc, shortcut) => {
+            if (!acc[shortcut.category]) acc[shortcut.category] = [];
+            acc[shortcut.category].push(shortcut);
+            return acc;
+        },
+        {} as Record<string, Shortcut[]>,
+    );
 
     if (loading) {
         return (
@@ -208,7 +283,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-keyboard-shortcuts" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -242,7 +317,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
             {/* Global Settings */}
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Settings</h3>
-                
+
                 <div className="space-y-3">
                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div>
@@ -255,9 +330,11 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 settings.enabled ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'
                             }`}
                         >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                settings.enabled ? 'left-7' : 'left-1'
-                            }`} />
+                            <span
+                                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                    settings.enabled ? 'left-7' : 'left-1'
+                                }`}
+                            />
                         </button>
                     </div>
 
@@ -272,9 +349,11 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 settings.vimMode ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'
                             }`}
                         >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                settings.vimMode ? 'left-7' : 'left-1'
-                            }`} />
+                            <span
+                                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                    settings.vimMode ? 'left-7' : 'left-1'
+                                }`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -297,8 +376,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg capitalize"
                 >
-                    {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
+                    {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                            {cat === 'all' ? 'All Categories' : cat}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -306,12 +387,15 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
             {/* Shortcuts List */}
             <div className="space-y-6">
                 {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
-                    <div key={category} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+                    <div
+                        key={category}
+                        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden"
+                    >
                         <div className="px-6 py-3 bg-slate-50 dark:bg-navy-950 border-b border-slate-200 dark:border-white/10">
                             <h3 className="font-semibold text-slate-900 dark:text-white">{category}</h3>
                         </div>
                         <div className="divide-y divide-slate-100 dark:divide-white/5">
-                            {shortcuts.map(shortcut => {
+                            {shortcuts.map((shortcut) => {
                                 const isEditing = editingShortcut === shortcut.id;
                                 const isCustomized = settings.customShortcuts[shortcut.id];
                                 const currentKeys = getShortcutKeys(shortcut);
@@ -324,7 +408,9 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                         }`}
                                     >
                                         <div>
-                                            <p className="font-medium text-slate-900 dark:text-white">{shortcut.label}</p>
+                                            <p className="font-medium text-slate-900 dark:text-white">
+                                                {shortcut.label}
+                                            </p>
                                             <p className="text-sm text-slate-500">{shortcut.description}</p>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -351,12 +437,18 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <div className={`flex items-center gap-1 ${isCustomized ? 'text-amber-600' : ''}`}>
+                                                    <div
+                                                        className={`flex items-center gap-1 ${isCustomized ? 'text-amber-600' : ''}`}
+                                                    >
                                                         {currentKeys.split('+').map((key, i) => (
                                                             <React.Fragment key={i}>
                                                                 {i > 0 && <span className="text-slate-300">+</span>}
                                                                 <kbd className="px-2 py-1 bg-slate-100 dark:bg-navy-950 rounded text-sm font-mono border border-slate-200 dark:border-white/10">
-                                                                    {key === 'Cmd' ? <Command size={12} className="inline" /> : key}
+                                                                    {key === 'Cmd' ? (
+                                                                        <Command size={12} className="inline" />
+                                                                    ) : (
+                                                                        key
+                                                                    )}
                                                                 </kbd>
                                                             </React.Fragment>
                                                         ))}
@@ -408,7 +500,3 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
 };
 
 export default KeyboardShortcutsSettings;
-
-
-
-

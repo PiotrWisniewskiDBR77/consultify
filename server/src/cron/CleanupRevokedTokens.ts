@@ -1,15 +1,15 @@
 /**
  * Cron: Cleanup Revoked Tokens
  * Removes expired entries from the revoked_tokens table
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
 import { getConfig } from '../config/Config.js';
-import logger from '../utils/Logger.js';
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import { run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -42,10 +42,7 @@ class CleanupRevokedTokensCron {
         logger.info('[Cron] Cleaning up expired revoked tokens...');
 
         try {
-            const runResult = await dbRun(
-                "DELETE FROM revoked_tokens WHERE expires_at < datetime('now')",
-                []
-            );
+            const runResult = await dbRun("DELETE FROM revoked_tokens WHERE expires_at < datetime('now')", []);
 
             if (!runResult.success) {
                 throw new Error(runResult.error || 'Failed to cleanup revoked tokens');
@@ -129,4 +126,3 @@ export const cleanupRevokedTokens = async (deps?: Partial<Dependencies>): Promis
 };
 
 export default CleanupRevokedTokensCron;
-

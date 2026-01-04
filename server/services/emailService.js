@@ -3,14 +3,14 @@
  * Handles sending system notifications and alerts.
  * Currently configured for console output, ready for SMTP integration.
  */
-import db from '../database.js';
 import nodemailer from 'nodemailer';
-import config from '../config';
+import config from '../config.js';
+import db from '../database.js';
 // Dependency injection for testing
 const deps = {
     db: db,
     nodemailer,
-    config
+    config,
 };
 const EmailService = {
     /**
@@ -31,7 +31,7 @@ const EmailService = {
                 if (err || !rows)
                     return resolve({});
                 const s = {};
-                rows.forEach(r => s[r.key] = r.value);
+                rows.forEach((r) => (s[r.key] = r.value));
                 resolve(s);
             });
         });
@@ -41,9 +41,9 @@ const EmailService = {
             secure: false, // true for 465, false for other ports
             auth: {
                 user: settings['smtp_user'] || process.env.SMTP_USER,
-                pass: settings['smtp_pass'] || process.env.SMTP_PASS
+                pass: settings['smtp_pass'] || process.env.SMTP_PASS,
             },
-            from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>'
+            from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>',
         };
         // For logging and debugging
         const displayHtml = html || `Template: ${template}`;
@@ -60,8 +60,9 @@ const EmailService = {
                     from: smtpConfig.from,
                     to,
                     subject,
-                    html: html || `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
-                    attachments
+                    html: html ||
+                        `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
+                    attachments,
                 });
                 console.log('[EMAIL SERVICE] Sent successfully via SMTP');
             }
@@ -76,7 +77,7 @@ const EmailService = {
      */
     sendEmail: async (to, subject, html) => {
         return EmailService.send({ to, subject, html });
-    }
+    },
 };
 export default EmailService;
 //# sourceMappingURL=emailService.js.map

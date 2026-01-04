@@ -2,8 +2,9 @@ import express from 'express';
 const router = express.Router();
 import * as AccessPolicyServiceModule from '../services/accessPolicyService.js';
 const AccessPolicyService = AccessPolicyServiceModule.default || AccessPolicyServiceModule;
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';

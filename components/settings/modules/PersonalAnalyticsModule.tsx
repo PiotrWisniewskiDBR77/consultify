@@ -1,6 +1,6 @@
 /**
  * PersonalAnalyticsModule - Personal Analytics & Reports
- * 
+ *
  * Features:
  * - Personal productivity analytics
  * - Time tracking reports
@@ -9,23 +9,24 @@
  * - Custom reports builder
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
+    ArrowDown,
+    ArrowUp,
     BarChart3,
-    TrendingUp,
-    Clock,
-    CheckCircle,
     Calendar,
+    CheckCircle,
+    Clock,
     Download,
     Filter,
     Loader2,
-    ArrowUp,
-    ArrowDown,
-    Target
+    Target,
+    TrendingUp,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface PersonalAnalyticsModuleProps {
@@ -51,10 +52,7 @@ interface DailyActivity {
     score: number;
 }
 
-export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('week');
@@ -77,7 +75,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
                 productivityScore: 87,
                 productivityChange: 8,
                 focusTime: 24,
-                focusTimeChange: 15
+                focusTimeChange: 15,
             });
 
             // Generate mock activity data
@@ -89,7 +87,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
                     date: date.toISOString(),
                     tasks: Math.floor(Math.random() * 10),
                     hours: Math.random() * 8,
-                    score: Math.floor(Math.random() * 40) + 60
+                    score: Math.floor(Math.random() * 40) + 60,
                 });
             }
             setDailyActivity(activity.reverse());
@@ -125,7 +123,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
     const ActivityHeatmap: React.FC<{ data: DailyActivity[] }> = ({ data }) => {
         const weeks: DailyActivity[][] = [];
         let currentWeek: DailyActivity[] = [];
-        
+
         data.forEach((day, i) => {
             currentWeek.push(day);
             if (currentWeek.length === 7 || i === data.length - 1) {
@@ -170,7 +168,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-personal-analytics" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -258,14 +256,16 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
 
             {/* Weekly Breakdown */}
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    Daily Breakdown
-                </h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Daily Breakdown</h3>
                 <div className="space-y-3">
                     {dailyActivity.slice(-7).map((day, i) => (
                         <div key={i} className="flex items-center gap-4">
                             <span className="text-sm text-slate-500 w-24">
-                                {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                {new Date(day.date).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
                             </span>
                             <div className="flex-1 h-4 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                                 <div
@@ -294,12 +294,18 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
                     {[
                         { label: 'Complete 50 tasks', current: 45, target: 50 },
                         { label: 'Log 40 hours', current: 38.5, target: 40 },
-                        { label: 'Maintain 85% productivity', current: 87, target: 85 }
+                        { label: 'Maintain 85% productivity', current: 87, target: 85 },
                     ].map((goal, i) => (
                         <div key={i}>
                             <div className="flex items-center justify-between text-sm mb-1">
                                 <span className="text-slate-600 dark:text-slate-400">{goal.label}</span>
-                                <span className={goal.current >= goal.target ? 'text-green-600' : 'text-slate-900 dark:text-white'}>
+                                <span
+                                    className={
+                                        goal.current >= goal.target
+                                            ? 'text-green-600'
+                                            : 'text-slate-900 dark:text-white'
+                                    }
+                                >
                                     {goal.current} / {goal.target}
                                 </span>
                             </div>
@@ -320,10 +326,4 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
 };
 
 export default PersonalAnalyticsModule;
-
-
-
-
-
-
 

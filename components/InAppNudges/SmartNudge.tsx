@@ -1,10 +1,10 @@
+import { ArrowRight, Lightbulb, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Lightbulb, X, ArrowRight } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 /**
  * SmartNudge — In-app guidance triggered by inactivity
- * 
+ *
  * Detects idle time and suggests next steps based on current view.
  */
 
@@ -21,16 +21,16 @@ interface NudgeConfig {
 const NUDGES: NudgeConfig[] = [
     {
         pathPattern: /\/full-step1/,
-        message: "Wygląda na to, że analizujesz obecny stan. Potrzebujesz pomocy AI w ocenie?",
-        actionLabel: "Zapytaj AI",
-        actionUrl: "#ai-chat"
+        message: 'Wygląda na to, że analizujesz obecny stan. Potrzebujesz pomocy AI w ocenie?',
+        actionLabel: 'Zapytaj AI',
+        actionUrl: '#ai-chat',
     },
     {
         pathPattern: /\/drd/,
-        message: "Stworzenie osi decyzyjnej to kluczowy krok. Możesz zacząć od szablonu.",
-        actionLabel: "Użyj szablonu",
-        actionUrl: "#templates"
-    }
+        message: 'Stworzenie osi decyzyjnej to kluczowy krok. Możesz zacząć od szablonu.',
+        actionLabel: 'Użyj szablonu',
+        actionUrl: '#templates',
+    },
 ];
 
 export const SmartNudge: React.FC = () => {
@@ -49,7 +49,7 @@ export const SmartNudge: React.FC = () => {
 
         const checkAndShowNudge = () => {
             const path = location.pathname;
-            const nudge = NUDGES.find(n => n.pathPattern.test(path));
+            const nudge = NUDGES.find((n) => n.pathPattern.test(path));
 
             if (nudge) {
                 setActiveNudge(nudge);
@@ -88,9 +88,7 @@ export const SmartNudge: React.FC = () => {
                     <Lightbulb size={20} className="text-amber-500" />
                 </div>
                 <div>
-                    <h4 className="font-bold text-navy-900 dark:text-white text-sm mb-1">
-                        Utknąłeś?
-                    </h4>
+                    <h4 className="font-bold text-navy-900 dark:text-white text-sm mb-1">Utknąłeś?</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
                         {activeNudge.message}
                     </p>

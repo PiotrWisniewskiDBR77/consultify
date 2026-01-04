@@ -1,6 +1,6 @@
 /**
  * SpendingAlertsView - Spending Alerts Configuration
- * 
+ *
  * Features:
  * - Configure spending thresholds
  * - Set alert recipients
@@ -8,37 +8,43 @@
  * - View alert history
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Bell,
-    Plus,
-    Edit,
-    Trash2,
-    Check,
-    RefreshCw,
     AlertTriangle,
+    Bell,
+    Check,
     DollarSign,
-    Zap,
+    Edit,
     HardDrive,
-    Users,
     Mail,
     Pause,
-    Play
+    Play,
+    Plus,
+    RefreshCw,
+    Trash2,
+    Users,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
-import { SpendingAlert } from '../../types';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
 import Api from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { SpendingAlert } from '../../types';
 
 // Alert types
 const ALERT_TYPES = [
     { id: 'AI_TOKENS', label: 'AI Tokens', icon: Zap, description: 'Alert when token usage reaches threshold' },
     { id: 'STORAGE', label: 'Storage', icon: HardDrive, description: 'Alert when storage usage reaches threshold' },
     { id: 'USERS', label: 'User Seats', icon: Users, description: 'Alert when seat usage reaches threshold' },
-    { id: 'TOTAL_SPEND', label: 'Total Spend', icon: DollarSign, description: 'Alert when monthly spend reaches threshold' }
+    {
+        id: 'TOTAL_SPEND',
+        label: 'Total Spend',
+        icon: DollarSign,
+        description: 'Alert when monthly spend reaches threshold',
+    },
 ];
 
 interface SpendingAlertsViewProps {
@@ -63,7 +69,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         thresholdType: 'PERCENTAGE' as SpendingAlert['thresholdType'],
         action: 'NOTIFY' as SpendingAlert['action'],
         notifyEmails: [currentUser?.email || ''],
-        isActive: true
+        isActive: true,
     });
 
     // Load alerts and usage data on mount
@@ -86,7 +92,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         setLoading(true);
         try {
             const res = await fetch(`/api/billing/spending-alerts`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -110,7 +116,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
             thresholdType: 'PERCENTAGE',
             action: 'NOTIFY',
             notifyEmails: [currentUser?.email || ''],
-            isActive: true
+            isActive: true,
         });
         setShowCreateModal(true);
     };
@@ -123,13 +129,13 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
             thresholdType: alert.thresholdType,
             action: alert.action,
             notifyEmails: alert.notifyEmails,
-            isActive: alert.isActive
+            isActive: alert.isActive,
         });
         setShowCreateModal(true);
     };
 
     const handleSaveAlert = async () => {
-        if (formData.notifyEmails.filter(e => e.trim()).length === 0) {
+        if (formData.notifyEmails.filter((e) => e.trim()).length === 0) {
             toast.error('Please add at least one notification email');
             return;
         }
@@ -144,12 +150,12 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 method: editingAlert ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     ...formData,
-                    notifyEmails: formData.notifyEmails.filter(e => e.trim())
-                })
+                    notifyEmails: formData.notifyEmails.filter((e) => e.trim()),
+                }),
             });
 
             if (res.ok) {
@@ -167,18 +173,16 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
     };
 
     const handleToggleActive = async (alertId: string) => {
-        const alert = alerts.find(a => a.id === alertId);
+        const alert = alerts.find((a) => a.id === alertId);
         if (!alert) return;
 
         try {
             const res = await fetch(`/api/billing/spending-alerts/${alertId}/toggle`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
-                setAlerts(prev => prev.map(a =>
-                    a.id === alertId ? { ...a, isActive: !a.isActive } : a
-                ));
+                setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, isActive: !a.isActive } : a)));
                 toast.success(alert.isActive ? 'Alert paused' : 'Alert activated');
             }
         } catch (error) {
@@ -193,10 +197,10 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         try {
             const res = await fetch(`/api/billing/spending-alerts/${alertId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
-                setAlerts(prev => prev.filter(a => a.id !== alertId));
+                setAlerts((prev) => prev.filter((a) => a.id !== alertId));
                 toast.success('Alert deleted');
             }
         } catch (error) {
@@ -206,28 +210,28 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
     };
 
     const addEmailField = () => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            notifyEmails: [...prev.notifyEmails, '']
+            notifyEmails: [...prev.notifyEmails, ''],
         }));
     };
 
     const removeEmailField = (index: number) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            notifyEmails: prev.notifyEmails.filter((_, i) => i !== index)
+            notifyEmails: prev.notifyEmails.filter((_, i) => i !== index),
         }));
     };
 
     const updateEmail = (index: number, value: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            notifyEmails: prev.notifyEmails.map((e, i) => i === index ? value : e)
+            notifyEmails: prev.notifyEmails.map((e, i) => (i === index ? value : e)),
         }));
     };
 
     const getAlertTypeInfo = (type: SpendingAlert['type']) => {
-        return ALERT_TYPES.find(t => t.id === type) || ALERT_TYPES[0];
+        return ALERT_TYPES.find((t) => t.id === type) || ALERT_TYPES[0];
     };
 
     if (loading) {
@@ -264,9 +268,9 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
 
             {/* Current Usage Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {ALERT_TYPES.map(type => {
+                {ALERT_TYPES.map((type) => {
                     const Icon = type.icon;
-                    const hasAlert = alerts.some(a => a.type === type.id && a.isActive);
+                    const hasAlert = alerts.some((a) => a.type === type.id && a.isActive);
 
                     // Calculate real usage percentage from usageData
                     let usagePercent = 0;
@@ -298,11 +302,11 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <Icon size={16} className="text-slate-500" />
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{type.label}</span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {type.label}
+                                    </span>
                                 </div>
-                                {hasAlert && (
-                                    <Bell size={14} className="text-violet-500" />
-                                )}
+                                {hasAlert && <Bell size={14} className="text-violet-500" />}
                             </div>
                             <div className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                                 {usageData ? `${usagePercent}%` : '--'}
@@ -310,8 +314,13 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                             <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
                                 {usageData && (
                                     <div
-                                        className={`h-2 rounded-full ${usagePercent > 80 ? 'bg-red-500' : usagePercent > 60 ? 'bg-amber-500' : 'bg-green-500'
-                                            }`}
+                                        className={`h-2 rounded-full ${
+                                            usagePercent > 80
+                                                ? 'bg-red-500'
+                                                : usagePercent > 60
+                                                  ? 'bg-amber-500'
+                                                  : 'bg-green-500'
+                                        }`}
                                         style={{ width: `${Math.min(usagePercent, 100)}%` }}
                                     />
                                 )}
@@ -336,27 +345,32 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {alerts.map(alert => {
+                    {alerts.map((alert) => {
                         const typeInfo = getAlertTypeInfo(alert.type);
                         const Icon = typeInfo.icon;
 
                         return (
                             <div
                                 key={alert.id}
-                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${alert.isActive
-                                    ? 'border-slate-200 dark:border-navy-700'
-                                    : 'border-slate-200 dark:border-navy-700 opacity-60'
-                                    }`}
+                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
+                                    alert.isActive
+                                        ? 'border-slate-200 dark:border-navy-700'
+                                        : 'border-slate-200 dark:border-navy-700 opacity-60'
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-lg ${alert.isActive
-                                            ? 'bg-violet-100 dark:bg-violet-900/30'
-                                            : 'bg-slate-100 dark:bg-navy-700'
-                                            }`}>
-                                            <Icon className={
-                                                alert.isActive ? 'text-violet-600' : 'text-slate-400'
-                                            } size={20} />
+                                        <div
+                                            className={`p-3 rounded-lg ${
+                                                alert.isActive
+                                                    ? 'bg-violet-100 dark:bg-violet-900/30'
+                                                    : 'bg-slate-100 dark:bg-navy-700'
+                                            }`}
+                                        >
+                                            <Icon
+                                                className={alert.isActive ? 'text-violet-600' : 'text-slate-400'}
+                                                size={20}
+                                            />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -370,7 +384,8 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                                                 )}
                                             </div>
                                             <p className="text-sm text-slate-500 mt-0.5">
-                                                Alert at {alert.threshold}{alert.thresholdType === 'PERCENTAGE' ? '%' : ' USD'} •
+                                                Alert at {alert.threshold}
+                                                {alert.thresholdType === 'PERCENTAGE' ? '%' : ' USD'} •
                                                 {alert.action === 'NOTIFY' && ' Notify only'}
                                                 {alert.action === 'NOTIFY_AND_PAUSE' && ' Notify & Pause'}
                                                 {alert.action === 'HARD_LIMIT' && ' Hard limit'}
@@ -441,8 +456,10 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
                                     >
-                                        {ALERT_TYPES.map(type => (
-                                            <option key={type.id} value={type.id}>{type.label}</option>
+                                        {ALERT_TYPES.map((type) => (
+                                            <option key={type.id} value={type.id}>
+                                                {type.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -455,7 +472,9 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                                         <input
                                             type="number"
                                             value={formData.threshold}
-                                            onChange={(e) => setFormData({ ...formData, threshold: parseInt(e.target.value) || 0 })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, threshold: parseInt(e.target.value) || 0 })
+                                            }
                                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
                                         />
                                     </div>
@@ -465,7 +484,9 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                                         </label>
                                         <select
                                             value={formData.thresholdType}
-                                            onChange={(e) => setFormData({ ...formData, thresholdType: e.target.value as any })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, thresholdType: e.target.value as any })
+                                            }
                                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
                                         >
                                             <option value="PERCENTAGE">Percentage (%)</option>
@@ -553,5 +574,3 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
 };
 
 export default SpendingAlertsView;
-
-

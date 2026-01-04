@@ -1,15 +1,16 @@
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
 import notificationsRouter from './notifications.js';
-import * as ActivityServiceModule from '../services/activityService.js';
+import * as ActivityServiceModule from '../src/services/ActivityService.js';
 const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
 import * as InitiativeServiceModule from '../services/initiativeService.js';
 const InitiativeService = InitiativeServiceModule.default || InitiativeServiceModule;
-import cacheHelper from '../utils/cacheHelper.js';
+import cacheHelper from '../dist/utils/cacheHelper.js';
 import * as TaskAssignmentServiceModule from '../services/taskAssignmentService.js';
 const TaskAssignmentService = TaskAssignmentServiceModule.default || TaskAssignmentServiceModule;
 import * as ProjectMemberServiceModule from '../services/projectMemberService.js';

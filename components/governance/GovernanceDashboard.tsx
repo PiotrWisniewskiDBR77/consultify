@@ -1,5 +1,5 @@
+import { History, Lock, ShieldCheck, UserCheck } from 'lucide-react';
 import React from 'react';
-import { ShieldCheck, Lock, History, UserCheck } from 'lucide-react';
 
 export const GovernanceDashboard: React.FC = () => {
     return (
@@ -39,11 +39,16 @@ export const GovernanceDashboard: React.FC = () => {
                         Recent Audit Log
                     </h3>
                     <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-50 dark:border-gray-700 last:border-0">
+                        {[1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className="flex items-center gap-4 py-3 border-b border-gray-50 dark:border-gray-700 last:border-0"
+                            >
                                 <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">User updated Role permissions</p>
+                                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                        User updated Role permissions
+                                    </p>
                                     <p className="text-xs text-gray-500">2 minutes ago • admin-001</p>
                                 </div>
                             </div>

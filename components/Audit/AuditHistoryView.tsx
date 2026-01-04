@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { History, User, ChevronDown, ChevronUp, Clock, Edit, Plus, Trash, Eye, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Edit, Eye, FileText, History, Plus, Trash, User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 /**
  * AuditHistoryView — Phase F: Team Expansion
- * 
+ *
  * ENTERPRISE SPEC COMPLIANCE:
  * - EPIC-F4: History of changes readable
  * - Shows who did what, when
@@ -33,31 +34,31 @@ interface AuditHistoryViewProps {
 }
 
 const ACTION_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-    'create': Plus,
-    'created': Plus,
-    'update': Edit,
-    'updated': Edit,
-    'delete': Trash,
-    'deleted': Trash,
-    'view': Eye,
-    'viewed': Eye,
-    'default': FileText,
+    create: Plus,
+    created: Plus,
+    update: Edit,
+    updated: Edit,
+    delete: Trash,
+    deleted: Trash,
+    view: Eye,
+    viewed: Eye,
+    default: FileText,
 };
 
 const ACTION_LABELS: Record<string, string> = {
-    'initiative_created': 'Utworzono inicjatywę',
-    'initiative_updated': 'Zaktualizowano inicjatywę',
-    'task_created': 'Utworzono zadanie',
-    'task_updated': 'Zaktualizowano zadanie',
-    'task_assigned': 'Przypisano zadanie',
-    'user_invited': 'Zaproszono użytkownika',
-    'user_joined': 'Użytkownik dołączył',
-    'plan_generated': 'Wygenerowano plan',
-    'plan_accepted': 'Zaakceptowano plan',
-    'context_saved': 'Zapisano kontekst',
-    'demo_created': 'Utworzono demo',
-    'org_created': 'Utworzono organizację',
-    'default': 'Akcja',
+    initiative_created: 'Utworzono inicjatywę',
+    initiative_updated: 'Zaktualizowano inicjatywę',
+    task_created: 'Utworzono zadanie',
+    task_updated: 'Zaktualizowano zadanie',
+    task_assigned: 'Przypisano zadanie',
+    user_invited: 'Zaproszono użytkownika',
+    user_joined: 'Użytkownik dołączył',
+    plan_generated: 'Wygenerowano plan',
+    plan_accepted: 'Zaakceptowano plan',
+    context_saved: 'Zapisano kontekst',
+    demo_created: 'Utworzono demo',
+    org_created: 'Utworzono organizację',
+    default: 'Akcja',
 };
 
 const getActionIcon = (action: string) => {
@@ -91,9 +92,7 @@ const AuditEventCard: React.FC<{ event: AuditEvent }> = ({ event }) => {
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-navy-900 dark:text-white text-sm">
-                        {label}
-                    </span>
+                    <span className="font-medium text-navy-900 dark:text-white text-sm">{label}</span>
                     {event.entityName && (
                         <span className="text-sm text-slate-600 dark:text-slate-400 truncate">
                             — {event.entityName}
@@ -163,12 +162,8 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
                 <div className="flex items-center gap-3">
                     <History size={18} className="text-purple-500" />
                     <div className="text-left">
-                        <h3 className="font-semibold text-navy-900 dark:text-white">
-                            Historia zmian
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {events.length} ostatnich akcji
-                        </p>
+                        <h3 className="font-semibold text-navy-900 dark:text-white">Historia zmian</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{events.length} ostatnich akcji</p>
                     </div>
                 </div>
 

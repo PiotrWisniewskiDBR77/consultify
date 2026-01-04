@@ -4,16 +4,28 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { requirePermission, requireAnyPermission, requireAllPermissions, setDependencies, type AuthRequest } from '../../../../src/middleware/permission.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    requireAllPermissions,
+    requireAnyPermission,
+    requirePermission,
+    setDependencies,
+} from '../../../../src/middleware/permission.middleware.js';
 
 describe('Permission Middleware', () => {
     let mockReq: Partial<AuthRequest>;
     let mockRes: Partial<Response>;
     let mockNext: NextFunction;
     let mockPermissionService: {
-        hasPermission: (userId: string, orgId: string | undefined, permissionKey: string, userRole?: string) => Promise<boolean>;
+        hasPermission: (
+            userId: string,
+            orgId: string | undefined,
+            permissionKey: string,
+            userRole?: string,
+        ) => Promise<boolean>;
     };
 
     beforeEach(() => {
@@ -55,7 +67,7 @@ describe('Permission Middleware', () => {
                 'user-123',
                 'org-123',
                 'read:projects',
-                'ADMIN'
+                'ADMIN',
             );
             expect(mockNext).toHaveBeenCalled();
         });
@@ -70,7 +82,7 @@ describe('Permission Middleware', () => {
                 expect.objectContaining({
                     error: 'Permission denied',
                     required: 'write:projects',
-                })
+                }),
             );
         });
 
@@ -94,9 +106,7 @@ describe('Permission Middleware', () => {
 
     describe('requireAnyPermission', () => {
         it('should allow when any permission granted', async () => {
-            mockPermissionService.hasPermission = vi.fn()
-                .mockResolvedValueOnce(false)
-                .mockResolvedValueOnce(true);
+            mockPermissionService.hasPermission = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
             const middleware = requireAnyPermission(['read:projects', 'write:projects']);
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -122,9 +132,7 @@ describe('Permission Middleware', () => {
         });
 
         it('should deny when any permission missing', async () => {
-            mockPermissionService.hasPermission = vi.fn()
-                .mockResolvedValueOnce(true)
-                .mockResolvedValueOnce(false);
+            mockPermissionService.hasPermission = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
             const middleware = requireAllPermissions(['read:projects', 'write:projects']);
             await middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -132,12 +140,9 @@ describe('Permission Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     missing: ['write:projects'],
-                })
+                }),
             );
         });
     });
 });
-
-
-
 

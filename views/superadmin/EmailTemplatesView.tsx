@@ -1,26 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Mail,
-    Plus,
-    Search,
-    Filter,
-    MoreVertical,
-    Edit,
-    Copy,
-    Trash2,
-    CheckCircle2,
+    AlertCircle,
     Archive,
-    Eye,
-    Send,
-    History,
     BarChart2,
-    Tag,
+    CheckCircle2,
+    Copy,
+    Edit,
+    Eye,
+    Filter,
     FolderOpen,
+    History,
+    Mail,
+    MoreVertical,
+    Plus,
     RefreshCw,
-    AlertCircle
+    Search,
+    Send,
+    Tag,
+    Trash2,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { EmailTemplateEditor } from '../../components/SuperAdmin/EmailTemplateEditor';
-import type { EmailTemplate, ContentCategory, ContentTag, EmailTemplateStatus } from '../../types';
+import type { ContentCategory, ContentTag, EmailTemplate, EmailTemplateStatus } from '../../types';
 
 interface EmailTemplatesViewProps {
     onBack?: () => void;
@@ -62,7 +63,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
             if (categoryFilter) params.append('categoryId', categoryFilter);
 
             const res = await fetch(`/api/content/emails/templates?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to load templates');
@@ -82,11 +83,11 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
         try {
             const [catRes, tagRes] = await Promise.all([
                 fetch('/api/content/categories?contentType=EMAIL', {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 }),
                 fetch('/api/content/tags?contentType=EMAIL', {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
+                    headers: { Authorization: `Bearer ${token}` },
+                }),
             ]);
 
             if (catRes.ok) {
@@ -114,7 +115,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
         try {
             const res = await fetch(`/api/content/emails/templates/${templateId}/publish`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to publish template');
@@ -133,7 +134,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
         try {
             const res = await fetch(`/api/content/emails/templates/${templateId}/deprecate`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to deprecate template');
@@ -154,9 +155,9 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({}),
             });
 
             if (!res.ok) throw new Error('Failed to clone template');
@@ -177,7 +178,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
         try {
             const res = await fetch(`/api/content/emails/templates/${templateId}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to delete template');
@@ -402,10 +403,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                             </thead>
                             <tbody className="divide-y divide-slate-700/30">
                                 {templates.map((template) => (
-                                    <tr
-                                        key={template.id}
-                                        className="hover:bg-slate-700/20 transition-colors"
-                                    >
+                                    <tr key={template.id} className="hover:bg-slate-700/20 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-start gap-3">
                                                 <div
@@ -413,20 +411,18 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                                     style={{
                                                         backgroundColor: template.category?.color
                                                             ? `${template.category.color}20`
-                                                            : '#6366F120'
+                                                            : '#6366F120',
                                                     }}
                                                 >
                                                     <Mail
                                                         size={16}
                                                         style={{
-                                                            color: template.category?.color || '#6366F1'
+                                                            color: template.category?.color || '#6366F1',
                                                         }}
                                                     />
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium text-white">
-                                                        {template.name}
-                                                    </div>
+                                                    <div className="font-medium text-white">{template.name}</div>
                                                     <div className="text-sm text-slate-400 font-mono">
                                                         {template.templateKey}
                                                     </div>
@@ -446,7 +442,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                                         backgroundColor: `${template.category.color}20`,
                                                         color: template.category.color,
                                                         borderColor: `${template.category.color}40`,
-                                                        borderWidth: '1px'
+                                                        borderWidth: '1px',
                                                     }}
                                                 >
                                                     <FolderOpen size={12} />
@@ -456,18 +452,12 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                                 <span className="text-slate-500 text-sm">—</span>
                                             )}
                                         </td>
+                                        <td className="px-6 py-4">{getStatusBadge(template.status)}</td>
                                         <td className="px-6 py-4">
-                                            {getStatusBadge(template.status)}
+                                            <span className="text-sm text-slate-300">v{template.version}</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm text-slate-300">
-                                                v{template.version}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-slate-300">
-                                                {template.usageCount || 0}
-                                            </span>
+                                            <span className="text-sm text-slate-300">{template.usageCount || 0}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
@@ -485,9 +475,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                                     <button
                                                         onClick={() =>
                                                             setActionMenuOpen(
-                                                                actionMenuOpen === template.id
-                                                                    ? null
-                                                                    : template.id
+                                                                actionMenuOpen === template.id ? null : template.id,
                                                             )
                                                         }
                                                         className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
@@ -534,9 +522,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                                                             )}
                                                             {template.status === 'PUBLISHED' && (
                                                                 <button
-                                                                    onClick={() =>
-                                                                        handleDeprecate(template.id)
-                                                                    }
+                                                                    onClick={() => handleDeprecate(template.id)}
                                                                     disabled={actionLoading === template.id}
                                                                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
                                                                 >
@@ -593,21 +579,10 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
             </div>
 
             {/* Click away handler for menus */}
-            {actionMenuOpen && (
-                <div
-                    className="fixed inset-0 z-0"
-                    onClick={() => setActionMenuOpen(null)}
-                />
-            )}
+            {actionMenuOpen && <div className="fixed inset-0 z-0" onClick={() => setActionMenuOpen(null)} />}
         </div>
     );
 };
 
 export default EmailTemplatesView;
-
-
-
-
-
-
 

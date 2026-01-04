@@ -1,7 +1,7 @@
 /**
  * Database Promise Wrapper for SQLite3
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * SQLite3 uses callbacks by default. This module provides Promise-based wrappers
  * with built-in resilience features:
  * - Timeout protection (prevents hanging forever)
@@ -13,10 +13,22 @@
 // TYPES
 // ==========================================
 
-interface Database {
-    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
-    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    run: (sql: string, params: unknown[], callback: (this: { lastID?: number; changes: number }, err: Error | null) => void) => void;
+export interface Database {
+    all: (
+        sql: string,
+        params: unknown[],
+        callback: (err: Error | null, rows: unknown[]) => void,
+    ) => void;
+    get: (
+        sql: string,
+        params: unknown[],
+        callback: (err: Error | null, row: unknown) => void,
+    ) => void;
+    run: (
+        sql: string,
+        params: unknown[],
+        callback: (this: { lastID?: number; changes: number }, err: Error | null) => void,
+    ) => void;
     exec: (sql: string, callback: (err: Error | null) => void) => void;
 }
 
@@ -75,7 +87,7 @@ const dbLogger: DbLogger = {
     },
     error: (msg: string, data?: unknown): void => {
         console.error(`[DB:Promise] ${msg}`, data || '');
-    }
+    },
 };
 
 // ==========================================
@@ -95,24 +107,15 @@ const getDb = (): Database => {
 /**
  * Promise wrapper for db.all() - returns array of rows
  */
+export function all<T = unknown>(sql: string, params?: unknown[], options?: QueryOptions): Promise<T[]>;
+export function all<T = unknown>(db: Database, sql: string, params?: unknown[], options?: QueryOptions): Promise<T[]>;
 export function all<T = unknown>(
-    sql: string,
-    params?: unknown[],
-    options?: QueryOptions
-): Promise<T[]>;
-export function all<T = unknown>(
-    db: any,
-    sql: string,
-    params?: unknown[],
-    options?: QueryOptions
-): Promise<T[]>;
-export function all<T = unknown>(
-    dbOrSql: any,
-    sqlOrParams?: any,
-    paramsOrOptions?: any,
-    options?: any
+    dbOrSql: Database | string,
+    sqlOrParams?: string | unknown[],
+    paramsOrOptions?: unknown[] | QueryOptions,
+    options?: QueryOptions,
 ): Promise<T[]> {
-    let db: any;
+    let db: Database;
     let sql: string;
     let params: unknown[];
     let queryOptions: QueryOptions;
@@ -120,12 +123,12 @@ export function all<T = unknown>(
     if (typeof dbOrSql === 'string') {
         db = getDb();
         sql = dbOrSql;
-        params = sqlOrParams || [];
-        queryOptions = paramsOrOptions || {};
+        params = (sqlOrParams as unknown[]) || [];
+        queryOptions = (paramsOrOptions as QueryOptions) || {};
     } else {
-        db = dbOrSql || getDb();
-        sql = sqlOrParams;
-        params = paramsOrOptions || [];
+        db = dbOrSql;
+        sql = sqlOrParams as string;
+        params = (paramsOrOptions as unknown[]) || [];
         queryOptions = options || {};
     }
 
@@ -173,24 +176,15 @@ export function all<T = unknown>(
 /**
  * Promise wrapper for db.get() - returns single row
  */
+export function get<T = unknown>(sql: string, params?: unknown[], options?: QueryOptions): Promise<T | null>;
+export function get<T = unknown>(db: Database, sql: string, params?: unknown[], options?: QueryOptions): Promise<T | null>;
 export function get<T = unknown>(
-    sql: string,
-    params?: unknown[],
-    options?: QueryOptions
-): Promise<T | null>;
-export function get<T = unknown>(
-    db: any,
-    sql: string,
-    params?: unknown[],
-    options?: QueryOptions
-): Promise<T | null>;
-export function get<T = unknown>(
-    dbOrSql: any,
-    sqlOrParams?: any,
-    paramsOrOptions?: any,
-    options?: any
+    dbOrSql: Database | string,
+    sqlOrParams?: string | unknown[],
+    paramsOrOptions?: unknown[] | QueryOptions,
+    options?: QueryOptions,
 ): Promise<T | null> {
-    let db: any;
+    let db: Database;
     let sql: string;
     let params: unknown[];
     let queryOptions: QueryOptions;
@@ -198,12 +192,12 @@ export function get<T = unknown>(
     if (typeof dbOrSql === 'string') {
         db = getDb();
         sql = dbOrSql;
-        params = sqlOrParams || [];
-        queryOptions = paramsOrOptions || {};
+        params = (sqlOrParams as unknown[]) || [];
+        queryOptions = (paramsOrOptions as QueryOptions) || {};
     } else {
-        db = dbOrSql || getDb();
-        sql = sqlOrParams;
-        params = paramsOrOptions || [];
+        db = dbOrSql;
+        sql = sqlOrParams as string;
+        params = (paramsOrOptions as unknown[]) || [];
         queryOptions = options || {};
     }
 
@@ -250,24 +244,15 @@ export function get<T = unknown>(
 /**
  * Promise wrapper for db.run() - executes INSERT/UPDATE/DELETE
  */
+export function run(sql: string, params?: unknown[], options?: QueryOptions): Promise<RunResult>;
+export function run(db: Database, sql: string, params?: unknown[], options?: QueryOptions): Promise<RunResult>;
 export function run(
-    sql: string,
-    params?: unknown[],
-    options?: QueryOptions
-): Promise<RunResult>;
-export function run(
-    db: any,
-    sql: string,
-    params?: unknown[],
-    options?: QueryOptions
-): Promise<RunResult>;
-export function run(
-    dbOrSql: any,
-    sqlOrParams?: any,
-    paramsOrOptions?: any,
-    options?: any
+    dbOrSql: Database | string,
+    sqlOrParams?: string | unknown[],
+    paramsOrOptions?: unknown[] | QueryOptions,
+    options?: QueryOptions,
 ): Promise<RunResult> {
-    let db: any;
+    let db: Database;
     let sql: string;
     let params: unknown[];
     let queryOptions: QueryOptions;
@@ -275,12 +260,12 @@ export function run(
     if (typeof dbOrSql === 'string') {
         db = getDb();
         sql = dbOrSql;
-        params = sqlOrParams || [];
-        queryOptions = paramsOrOptions || {};
+        params = (sqlOrParams as unknown[]) || [];
+        queryOptions = (paramsOrOptions as QueryOptions) || {};
     } else {
-        db = dbOrSql || getDb();
-        sql = sqlOrParams;
-        params = paramsOrOptions || [];
+        db = dbOrSql;
+        sql = sqlOrParams as string;
+        params = (paramsOrOptions as unknown[]) || [];
         queryOptions = options || {};
     }
 
@@ -291,8 +276,6 @@ export function run(
             dbLogger.warn('Statement timeout', { sql: sql.substring(0, 100), timeout });
             if (fallback) {
                 resolve({ success: false, error: 'timeout' });
-            } else {
-                reject(new Error(`Database statement timeout after ${timeout}ms`));
             }
         }, timeout);
 
@@ -311,7 +294,7 @@ export function run(
                     resolve({
                         success: true,
                         lastID: this.lastID,
-                        changes: this.changes
+                        changes: this.changes,
                     });
                 }
             });
@@ -360,10 +343,9 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
  * Check if a table exists
  */
 export async function tableExists(tableName: string): Promise<boolean> {
-    const result = await get<{ name: string }>(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-        [tableName]
-    );
+    const result = await get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [
+        tableName,
+    ]);
     return result !== null;
 }
 
@@ -412,8 +394,7 @@ export const DbPromise = {
     exec,
     safeAll,
     count,
-    logger: dbLogger
+    logger: dbLogger,
 };
 
 export default DbPromise;
-

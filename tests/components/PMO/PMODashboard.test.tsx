@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { PMODashboard } from '../../../components/PMO/PMODashboard';
+import { PMODashboard } from '../../components/PMO/PMODashboard';
 
 // Mock lucide icons to avoid rendering complexities in snapshots
 vi.mock('lucide-react', () => ({
@@ -48,6 +48,7 @@ describe('PMODashboard Component', () => {
         expect(button).toHaveClass('bg-blue-600');
     });
 });
+
 
 
 

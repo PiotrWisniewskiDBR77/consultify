@@ -1,37 +1,38 @@
 /**
  * BenefitsRealizationView
- * 
+ *
  * Module 5: Benefits Realization / Realizacja
  * Shows completed, blocked, cancelled, and archived initiatives
  * Includes KPI Dashboard for tracking post-implementation benefits
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Search,
-    Lightbulb,
-    RefreshCw,
-    Loader2,
-    TrendingUp,
-    TrendingDown,
-    MapPin,
-    Building2,
-    CheckCircle2,
-    AlertTriangle,
-    Ban,
-    Archive,
-    Target,
-    BarChart3,
-    Plus,
     AlertCircle,
+    AlertTriangle,
+    Archive,
+    Ban,
+    BarChart3,
+    Building2,
     Calendar,
+    CheckCircle2,
     ChevronRight,
-    FileText
+    FileText,
+    Lightbulb,
+    Loader2,
+    MapPin,
+    Plus,
+    RefreshCw,
+    Search,
+    Target,
+    TrendingDown,
+    TrendingUp,
 } from 'lucide-react';
-import { InitiativeStatus, InitiativeKPI } from '../types';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { StatusTransitionDropdown } from '../components/PMO/StatusTransitionDropdown';
 import { Api } from '../services/api';
-import toast from 'react-hot-toast';
+import { InitiativeKPI, InitiativeStatus } from '../types';
 
 interface Initiative {
     id: string;
@@ -64,29 +65,29 @@ const STATUS_CONFIG = {
     [InitiativeStatus.DONE]: {
         label: 'Done',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 size={14} />
+        icon: <CheckCircle2 size={14} />,
     },
     [InitiativeStatus.BLOCKED]: {
         label: 'Blocked',
         color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-        icon: <AlertTriangle size={14} />
+        icon: <AlertTriangle size={14} />,
     },
     [InitiativeStatus.CANCELLED]: {
         label: 'Cancelled',
         color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-        icon: <Ban size={14} />
+        icon: <Ban size={14} />,
     },
     [InitiativeStatus.ARCHIVED]: {
         label: 'Archived',
         color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-        icon: <Archive size={14} />
-    }
+        icon: <Archive size={14} />,
+    },
 };
 
 export const BenefitsRealizationView: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('initiatives');
     const [initiatives, setInitiatives] = useState<Initiative[]>([]);
-    const [kpis, setKpis] = useState<{initiative: Initiative; kpis: InitiativeKPI[]}[]>([]);
+    const [kpis, setKpis] = useState<{ initiative: Initiative; kpis: InitiativeKPI[] }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<InitiativeFilter>('all');
@@ -98,7 +99,7 @@ export const BenefitsRealizationView: React.FC = () => {
         targetValue: '',
         unit: '',
         measurementFrequency: 'MONTHLY',
-        alertThreshold: ''
+        alertThreshold: '',
     });
 
     // Fetch initiatives
@@ -110,7 +111,7 @@ export const BenefitsRealizationView: React.FC = () => {
             setInitiatives(mapped);
 
             // Fetch KPIs for DONE initiatives
-            const doneInitiatives = mapped.filter(i => i.status === InitiativeStatus.DONE);
+            const doneInitiatives = mapped.filter((i) => i.status === InitiativeStatus.DONE);
             const kpiPromises = doneInitiatives.map(async (i) => {
                 try {
                     const kpiResponse = await Api.get(`/initiatives/${i.id}/kpis`);
@@ -135,9 +136,7 @@ export const BenefitsRealizationView: React.FC = () => {
 
     // Handle status change
     const handleStatusChange = useCallback((initiativeId: string, newStatus: InitiativeStatus) => {
-        setInitiatives(prev => prev.map(i => 
-            i.id === initiativeId ? { ...i, status: newStatus } : i
-        ));
+        setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
     }, []);
 
     // Create KPI
@@ -151,7 +150,7 @@ export const BenefitsRealizationView: React.FC = () => {
                 targetValue: newKpi.targetValue ? parseFloat(newKpi.targetValue) : undefined,
                 unit: newKpi.unit || undefined,
                 measurementFrequency: newKpi.measurementFrequency,
-                alertThreshold: newKpi.alertThreshold ? parseFloat(newKpi.alertThreshold) : undefined
+                alertThreshold: newKpi.alertThreshold ? parseFloat(newKpi.alertThreshold) : undefined,
             });
 
             toast.success('KPI created');
@@ -162,7 +161,7 @@ export const BenefitsRealizationView: React.FC = () => {
                 targetValue: '',
                 unit: '',
                 measurementFrequency: 'MONTHLY',
-                alertThreshold: ''
+                alertThreshold: '',
             });
             fetchInitiatives();
         } catch (error: any) {
@@ -171,14 +170,14 @@ export const BenefitsRealizationView: React.FC = () => {
     };
 
     // Filter initiatives
-    const filteredInitiatives = initiatives.filter(initiative => {
+    const filteredInitiatives = initiatives.filter((initiative) => {
         if (filterStatus !== 'all') {
             const statusMap: Record<InitiativeFilter, InitiativeStatus | undefined> = {
                 all: undefined,
                 done: InitiativeStatus.DONE,
                 blocked: InitiativeStatus.BLOCKED,
                 cancelled: InitiativeStatus.CANCELLED,
-                archived: InitiativeStatus.ARCHIVED
+                archived: InitiativeStatus.ARCHIVED,
             };
             if (statusMap[filterStatus] && initiative.status !== statusMap[filterStatus]) return false;
         }
@@ -194,20 +193,23 @@ export const BenefitsRealizationView: React.FC = () => {
 
     // Stats
     const stats = {
-        done: initiatives.filter(i => i.status === InitiativeStatus.DONE).length,
-        blocked: initiatives.filter(i => i.status === InitiativeStatus.BLOCKED).length,
-        cancelled: initiatives.filter(i => i.status === InitiativeStatus.CANCELLED).length,
-        archived: initiatives.filter(i => i.status === InitiativeStatus.ARCHIVED).length
+        done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
+        blocked: initiatives.filter((i) => i.status === InitiativeStatus.BLOCKED).length,
+        cancelled: initiatives.filter((i) => i.status === InitiativeStatus.CANCELLED).length,
+        archived: initiatives.filter((i) => i.status === InitiativeStatus.ARCHIVED).length,
     };
 
     // KPI stats
-    const kpiStats = kpis.reduce((acc, item) => {
-        item.kpis.forEach(kpi => {
-            if (kpi.isOnTarget) acc.onTarget++;
-            else acc.belowTarget++;
-        });
-        return acc;
-    }, { onTarget: 0, belowTarget: 0, total: kpis.reduce((sum, item) => sum + item.kpis.length, 0) });
+    const kpiStats = kpis.reduce(
+        (acc, item) => {
+            item.kpis.forEach((kpi) => {
+                if (kpi.isOnTarget) acc.onTarget++;
+                else acc.belowTarget++;
+            });
+            return acc;
+        },
+        { onTarget: 0, belowTarget: 0, total: kpis.reduce((sum, item) => sum + item.kpis.length, 0) },
+    );
 
     // Format currency
     const formatCurrency = (amount: number | undefined) => {
@@ -223,9 +225,7 @@ export const BenefitsRealizationView: React.FC = () => {
             <div className="shrink-0 px-6 py-4 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                            Benefits Realization
-                        </h1>
+                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Benefits Realization</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Track completed initiatives and measure benefits
                         </p>
@@ -357,9 +357,7 @@ export const BenefitsRealizationView: React.FC = () => {
                         ) : filteredInitiatives.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 text-center">
                                 <Archive className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
-                                <p className="text-slate-500 dark:text-slate-400">
-                                    No initiatives found
-                                </p>
+                                <p className="text-slate-500 dark:text-slate-400">No initiatives found</p>
                             </div>
                         ) : (
                             <div className="grid gap-4">
@@ -371,13 +369,15 @@ export const BenefitsRealizationView: React.FC = () => {
                                             className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4"
                                         >
                                             <div className="flex items-start gap-4">
-                                                <div className={`p-3 rounded-xl shrink-0 ${
-                                                    initiative.status === InitiativeStatus.DONE 
-                                                        ? 'bg-green-100 dark:bg-green-900/30' 
-                                                        : initiative.status === InitiativeStatus.BLOCKED
-                                                        ? 'bg-red-100 dark:bg-red-900/30'
-                                                        : 'bg-slate-100 dark:bg-slate-800'
-                                                }`}>
+                                                <div
+                                                    className={`p-3 rounded-xl shrink-0 ${
+                                                        initiative.status === InitiativeStatus.DONE
+                                                            ? 'bg-green-100 dark:bg-green-900/30'
+                                                            : initiative.status === InitiativeStatus.BLOCKED
+                                                              ? 'bg-red-100 dark:bg-red-900/30'
+                                                              : 'bg-slate-100 dark:bg-slate-800'
+                                                    }`}
+                                                >
                                                     {initiative.status === InitiativeStatus.DONE ? (
                                                         <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
                                                     ) : initiative.status === InitiativeStatus.BLOCKED ? (
@@ -398,16 +398,21 @@ export const BenefitsRealizationView: React.FC = () => {
                                                                     {initiative.summary}
                                                                 </p>
                                                             )}
-                                                            {(initiative.blockedReason || initiative.cancelledReason) && (
+                                                            {(initiative.blockedReason ||
+                                                                initiative.cancelledReason) && (
                                                                 <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                                                                    Reason: {initiative.blockedReason || initiative.cancelledReason}
+                                                                    Reason:{' '}
+                                                                    {initiative.blockedReason ||
+                                                                        initiative.cancelledReason}
                                                                 </p>
                                                             )}
                                                         </div>
 
                                                         <div className="flex items-center gap-2">
                                                             {statusConfig && (
-                                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
+                                                                <span
+                                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
+                                                                >
                                                                     {statusConfig.icon}
                                                                     {statusConfig.label}
                                                                 </span>
@@ -416,7 +421,9 @@ export const BenefitsRealizationView: React.FC = () => {
                                                                 <StatusTransitionDropdown
                                                                     initiativeId={initiative.id}
                                                                     currentStatus={initiative.status}
-                                                                    onStatusChange={(newStatus) => handleStatusChange(initiative.id, newStatus)}
+                                                                    onStatusChange={(newStatus) =>
+                                                                        handleStatusChange(initiative.id, newStatus)
+                                                                    }
                                                                     size="sm"
                                                                 />
                                                             )}
@@ -478,7 +485,9 @@ export const BenefitsRealizationView: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">Total KPIs</p>
-                                        <p className="text-2xl font-bold text-navy-900 dark:text-white">{kpiStats.total}</p>
+                                        <p className="text-2xl font-bold text-navy-900 dark:text-white">
+                                            {kpiStats.total}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -489,7 +498,9 @@ export const BenefitsRealizationView: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">On Target</p>
-                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{kpiStats.onTarget}</p>
+                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                            {kpiStats.onTarget}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -500,7 +511,9 @@ export const BenefitsRealizationView: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">Below Target</p>
-                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">{kpiStats.belowTarget}</p>
+                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                            {kpiStats.belowTarget}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -514,9 +527,7 @@ export const BenefitsRealizationView: React.FC = () => {
                         ) : kpis.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 text-center">
                                 <BarChart3 className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
-                                <p className="text-slate-500 dark:text-slate-400">
-                                    No KPIs defined yet
-                                </p>
+                                <p className="text-slate-500 dark:text-slate-400">No KPIs defined yet</p>
                                 <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
                                     Complete initiatives and add KPIs to track benefits
                                 </p>
@@ -524,7 +535,10 @@ export const BenefitsRealizationView: React.FC = () => {
                         ) : (
                             <div className="space-y-6">
                                 {kpis.map(({ initiative, kpis: initiativeKpis }) => (
-                                    <div key={initiative.id} className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                                    <div
+                                        key={initiative.id}
+                                        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                                    >
                                         <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-white/10">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -553,14 +567,19 @@ export const BenefitsRealizationView: React.FC = () => {
                                         ) : (
                                             <div className="divide-y divide-slate-100 dark:divide-white/5">
                                                 {initiativeKpis.map((kpi) => (
-                                                    <div key={kpi.id} className="p-4 hover:bg-slate-50 dark:hover:bg-white/5">
+                                                    <div
+                                                        key={kpi.id}
+                                                        className="p-4 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                    >
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg ${
-                                                                    kpi.isOnTarget 
-                                                                        ? 'bg-green-100 dark:bg-green-900/30' 
-                                                                        : 'bg-red-100 dark:bg-red-900/30'
-                                                                }`}>
+                                                                <div
+                                                                    className={`p-2 rounded-lg ${
+                                                                        kpi.isOnTarget
+                                                                            ? 'bg-green-100 dark:bg-green-900/30'
+                                                                            : 'bg-red-100 dark:bg-red-900/30'
+                                                                    }`}
+                                                                >
                                                                     {kpi.isOnTarget ? (
                                                                         <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
                                                                     ) : (
@@ -581,17 +600,23 @@ export const BenefitsRealizationView: React.FC = () => {
 
                                                             <div className="flex items-center gap-6">
                                                                 <div className="text-right">
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">Current</p>
-                                                                    <p className={`text-lg font-bold ${
-                                                                        kpi.isOnTarget 
-                                                                            ? 'text-green-600 dark:text-green-400' 
-                                                                            : 'text-red-600 dark:text-red-400'
-                                                                    }`}>
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                        Current
+                                                                    </p>
+                                                                    <p
+                                                                        className={`text-lg font-bold ${
+                                                                            kpi.isOnTarget
+                                                                                ? 'text-green-600 dark:text-green-400'
+                                                                                : 'text-red-600 dark:text-red-400'
+                                                                        }`}
+                                                                    >
                                                                         {kpi.latestValue ?? '-'} {kpi.unit}
                                                                     </p>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">Target</p>
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                        Target
+                                                                    </p>
                                                                     <p className="text-lg font-bold text-navy-900 dark:text-white">
                                                                         {kpi.targetValue ?? '-'} {kpi.unit}
                                                                     </p>
@@ -730,12 +755,4 @@ export const BenefitsRealizationView: React.FC = () => {
 };
 
 export default BenefitsRealizationView;
-
-
-
-
-
-
-
-
 

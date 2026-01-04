@@ -1,25 +1,16 @@
 /**
  * What's New Modal Component
- * 
+ *
  * Shows release notes and new features after platform updates.
  * Automatically displays when new version is detected.
  */
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Bell, Check, ChevronLeft, ChevronRight, ExternalLink, Sparkles, Star, Video, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    X,
-    Sparkles,
-    ChevronRight,
-    ChevronLeft,
-    Check,
-    ExternalLink,
-    Video,
-    Bell,
-    Star
-} from 'lucide-react';
-import { getLatestRelease, ReleaseNote, hasNewRelease, ReleaseFeature } from '../../config/releaseNotes';
+
+import { getLatestRelease, hasNewRelease, ReleaseFeature, ReleaseNote } from '../../config/releaseNotes';
 import DynamicIcon from '../shared/DynamicIcon';
 
 // Storage key for last seen version
@@ -79,18 +70,18 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 
     // Navigate features
     const nextFeature = () => {
-        setCurrentFeatureIndex(i => Math.min(i + 1, release.features.length - 1));
+        setCurrentFeatureIndex((i) => Math.min(i + 1, release.features.length - 1));
     };
 
     const prevFeature = () => {
-        setCurrentFeatureIndex(i => Math.max(i - 1, 0));
+        setCurrentFeatureIndex((i) => Math.max(i - 1, 0));
     };
 
     // Type badge color
     const typeBadgeColor = {
         major: 'bg-purple-500',
         minor: 'bg-blue-500',
-        patch: 'bg-green-500'
+        patch: 'bg-green-500',
     };
 
     // Translations from i18n
@@ -104,7 +95,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
         dontShow: t('help.whatsNew.dontShow'),
         gotIt: t('help.whatsNew.gotIt'),
         learnMore: t('help.whatsNew.learnMore'),
-        changelog: t('help.whatsNew.changelog')
+        changelog: t('help.whatsNew.changelog'),
     };
 
     if (!isOpen) return null;
@@ -139,10 +130,13 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                     <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 px-6 py-8 text-white">
                         {/* Background Pattern */}
                         <div className="absolute inset-0 opacity-10">
-                            <div className="absolute inset-0" style={{
-                                backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                                backgroundSize: '24px 24px'
-                            }} />
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                                    backgroundSize: '24px 24px',
+                                }}
+                            />
                         </div>
 
                         {/* Close Button */}
@@ -161,18 +155,16 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                             </div>
                             <h2 className="text-2xl font-bold mb-2">{release.title[lang]}</h2>
                             <div className="flex items-center gap-3">
-                                <span className={`px-2 py-0.5 ${typeBadgeColor[release.type]} rounded text-xs font-medium uppercase`}>
+                                <span
+                                    className={`px-2 py-0.5 ${typeBadgeColor[release.type]} rounded text-xs font-medium uppercase`}
+                                >
                                     {release.type}
                                 </span>
                                 <span className="text-white/80 text-sm">
                                     {tTrans.version} {release.version} • {new Date(release.date).toLocaleDateString()}
                                 </span>
                             </div>
-                            {release.summary && (
-                                <p className="mt-3 text-white/90 text-sm">
-                                    {release.summary[lang]}
-                                </p>
-                            )}
+                            {release.summary && <p className="mt-3 text-white/90 text-sm">{release.summary[lang]}</p>}
                         </div>
                     </div>
 
@@ -195,7 +187,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                         {/* Icon */}
                                         <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
                                             {currentFeature.icon ? (
-                                                <DynamicIcon name={currentFeature.icon} size={24} className="text-purple-600 dark:text-purple-400" />
+                                                <DynamicIcon
+                                                    name={currentFeature.icon}
+                                                    size={24}
+                                                    className="text-purple-600 dark:text-purple-400"
+                                                />
                                             ) : (
                                                 <Star size={24} className="text-purple-600 dark:text-purple-400" />
                                             )}
@@ -236,10 +232,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                                 <button
                                                     key={i}
                                                     onClick={() => setCurrentFeatureIndex(i)}
-                                                    className={`w-2 h-2 rounded-full transition-colors ${i === currentFeatureIndex
-                                                        ? 'bg-purple-500'
-                                                        : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
-                                                        }`}
+                                                    className={`w-2 h-2 rounded-full transition-colors ${
+                                                        i === currentFeatureIndex
+                                                            ? 'bg-purple-500'
+                                                            : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
+                                                    }`}
                                                 />
                                             ))}
                                         </div>
@@ -266,7 +263,10 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                 </h4>
                                 <ul className="space-y-1">
                                     {release.improvements.slice(0, 3).map((item, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <li
+                                            key={i}
+                                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                                        >
                                             <Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
                                             {item[lang]}
                                         </li>
@@ -282,7 +282,10 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                 </h4>
                                 <ul className="space-y-1">
                                     {release.fixes.slice(0, 3).map((item, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <li
+                                            key={i}
+                                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                                        >
                                             <Check size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
                                             {item[lang]}
                                         </li>
@@ -299,12 +302,10 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                 <input
                                     type="checkbox"
                                     checked={dontShowAgain}
-                                    onChange={e => setDontShowAgain(e.target.checked)}
+                                    onChange={(e) => setDontShowAgain(e.target.checked)}
                                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
                                 />
-                                <span className="text-sm text-slate-600 dark:text-slate-400">
-                                    {tTrans.dontShow}
-                                </span>
+                                <span className="text-sm text-slate-600 dark:text-slate-400">{tTrans.dontShow}</span>
                             </label>
 
                             <div className="flex items-center gap-3">
@@ -332,12 +333,4 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 };
 
 export default WhatsNewModal;
-
-
-
-
-
-
-
-
 

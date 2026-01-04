@@ -1,23 +1,33 @@
-import React, { useState, useEffect } from 'react';
 import {
-    FileText, FolderOpen, User, ChevronRight, ChevronDown,
-    Upload, Download, Trash2, ArrowRight, X, File, FileImage,
-    FileSpreadsheet, Loader2, FolderUp
+    ArrowRight,
+    ChevronDown,
+    ChevronRight,
+    Download,
+    File,
+    FileImage,
+    FileSpreadsheet,
+    FileText,
+    FolderOpen,
+    FolderUp,
+    Loader2,
+    Trash2,
+    Upload,
+    User,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Api } from '../../services/api';
-import { Document } from '../../types';
-import { useAIContext } from '../../contexts/AIContext';
 
+import { useAIContext } from '../../contexts/AIContext';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { Document } from '../../types';
 
 interface DocumentSidePanelProps {
     projectId?: string;
 }
 
-export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
-    projectId
-}) => {
+export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId }) => {
     const { t } = useTranslation();
     const { activeSidePanel, closeSidePanel } = useAppStore();
     const isOpen = activeSidePanel === 'DOCUMENTS';
@@ -62,7 +72,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
         try {
             await Api.uploadDocumentToLibrary(file, {
                 scope: activeTab,
-                projectId: activeTab === 'project' ? projectId : undefined
+                projectId: activeTab === 'project' ? projectId : undefined,
             });
             await loadDocuments();
         } catch (error) {
@@ -110,7 +120,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
 
     const getFileIcon = (fileType: string) => {
         const type = fileType?.toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(type)) return <FileImage size={16} className="text-pink-500" />;
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(type))
+            return <FileImage size={16} className="text-pink-500" />;
         if (['xls', 'xlsx', 'csv'].includes(type)) return <FileSpreadsheet size={16} className="text-green-500" />;
         if (['pdf'].includes(type)) return <FileText size={16} className="text-red-500" />;
         return <File size={16} className="text-slate-400" />;
@@ -164,20 +175,22 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 <div className="flex border-b border-slate-200 dark:border-white/10 shrink-0">
                     <button
                         onClick={() => setActiveTab('project')}
-                        className={`flex-1 py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'project'
-                            ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
+                        className={`flex-1 py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                            activeTab === 'project'
+                                ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
                     >
                         <FolderOpen size={14} />
                         {t('documents.projectDocs')}
                     </button>
                     <button
                         onClick={() => setActiveTab('user')}
-                        className={`flex-1 py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'user'
-                            ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
+                        className={`flex-1 py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                            activeTab === 'user'
+                                ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
                     >
                         <User size={14} />
                         {t('documents.myDocs')}
@@ -187,11 +200,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 {/* Upload Button */}
                 <div className="p-3 border-b border-slate-200 dark:border-white/10 shrink-0">
                     <label className="flex items-center justify-center gap-2 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg cursor-pointer transition-colors">
-                        {uploading ? (
-                            <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                            <Upload size={14} />
-                        )}
+                        {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                         {uploading ? t('documents.uploading') : t('documents.upload')}
                         <input
                             type="file"
@@ -213,10 +222,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                         <div className="text-center py-12 px-4">
                             <FileText size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {activeTab === 'project'
-                                    ? t('documents.noProjectDocs')
-                                    : t('documents.noUserDocs')
-                                }
+                                {activeTab === 'project' ? t('documents.noProjectDocs') : t('documents.noUserDocs')}
                             </p>
                         </div>
                     ) : (
@@ -233,7 +239,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                                                 {doc.originalName || doc.filename}
                                             </p>
                                             <p className="text-[10px] text-slate-400">
-                                                {formatFileSize(doc.fileSize)} • {new Date(doc.createdAt).toLocaleDateString()}
+                                                {formatFileSize(doc.fileSize)} •{' '}
+                                                {new Date(doc.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
@@ -273,10 +280,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({
                 {/* Footer hint */}
                 <div className="p-3 border-t border-slate-200 dark:border-white/10 text-center shrink-0">
                     <p className="text-[10px] text-slate-400">
-                        {activeTab === 'project'
-                            ? t('documents.projectHint')
-                            : t('documents.userHint')
-                        }
+                        {activeTab === 'project' ? t('documents.projectHint') : t('documents.userHint')}
                     </p>
                 </div>
             </div>

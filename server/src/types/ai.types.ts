@@ -7,14 +7,7 @@
 // CAPABILITY TYPES
 // ==========================================
 
-export type AIRole = 
-    | 'CONSULTANT'
-    | 'ANALYST'
-    | 'STRATEGIST'
-    | 'IMPLEMENTER'
-    | 'GATEKEEPER'
-    | 'COACH'
-    | 'AUDITOR';
+export type AIRole = 'CONSULTANT' | 'ANALYST' | 'STRATEGIST' | 'IMPLEMENTER' | 'GATEKEEPER' | 'COACH' | 'AUDITOR';
 
 export type OutputFormat = 'json' | 'text' | 'markdown' | 'structured';
 
@@ -27,7 +20,7 @@ export interface AICapability {
     requiresOrg?: boolean;
 }
 
-export type CapabilityName = 
+export type CapabilityName =
     | 'diagnose'
     | 'deepDiagnose'
     | 'generateList'
@@ -206,14 +199,7 @@ export type StreamCallback = (chunk: StreamChunk) => void;
 // PROVIDER TYPES
 // ==========================================
 
-export type LLMProviderName = 
-    | 'openai'
-    | 'anthropic'
-    | 'google'
-    | 'mistral'
-    | 'azure'
-    | 'ollama'
-    | 'custom';
+export type LLMProviderName = 'openai' | 'anthropic' | 'google' | 'mistral' | 'azure' | 'ollama' | 'custom';
 
 export type LLMTier = 'free' | 'standard' | 'premium' | 'enterprise';
 
@@ -238,14 +224,7 @@ export interface LLMProviderConfig {
     updatedAt: Date;
 }
 
-export type LLMCapability = 
-    | 'text'
-    | 'code'
-    | 'vision'
-    | 'function_calling'
-    | 'streaming'
-    | 'embedding'
-    | 'json_mode';
+export type LLMCapability = 'text' | 'code' | 'vision' | 'function_calling' | 'streaming' | 'embedding' | 'json_mode';
 
 export interface RateLimit {
     requestsPerMinute: number;
@@ -258,13 +237,7 @@ export interface RateLimit {
 // MEMORY TYPES
 // ==========================================
 
-export type MemoryType = 
-    | 'fact'
-    | 'preference'
-    | 'context'
-    | 'instruction'
-    | 'correction'
-    | 'conversation';
+export type MemoryType = 'fact' | 'preference' | 'context' | 'instruction' | 'correction' | 'conversation';
 
 export type MemoryScope = 'user' | 'organization' | 'project' | 'global';
 
@@ -417,5 +390,3 @@ export interface AIAuditLog {
     userAgent?: string;
     createdAt: Date;
 }
-
-

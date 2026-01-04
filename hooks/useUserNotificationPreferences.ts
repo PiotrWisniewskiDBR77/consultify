@@ -1,13 +1,13 @@
 /**
  * useUserNotificationPreferences Hook
- * 
+ *
  * React hook for managing user notification preferences.
  * Handles categories, channels, schedule, digests, and watchers.
- * 
+ *
  * Part of: User-Level Notifications & Integrations System
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Channel configuration
 export interface ChannelSettings {
@@ -34,9 +34,9 @@ export interface CategorySettings {
 // Schedule settings
 export interface ScheduleSettings {
     quietHoursEnabled: boolean;
-    quietHoursStart: string;  // "HH:MM"
-    quietHoursEnd: string;    // "HH:MM"
-    quietDays: string[];      // ['saturday', 'sunday']
+    quietHoursStart: string; // "HH:MM"
+    quietHoursEnd: string; // "HH:MM"
+    quietDays: string[]; // ['saturday', 'sunday']
     timezone: string;
     respectUserStatus: boolean;
 }
@@ -99,32 +99,36 @@ interface UseUserNotificationPreferencesReturn {
     categories: Record<string, NotificationCategory>;
     loading: boolean;
     error: string | null;
-    
+
     // Global
     setGlobalEnabled: (enabled: boolean) => Promise<void>;
-    
+
     // Schedule
     updateSchedule: (schedule: Partial<ScheduleSettings>) => Promise<void>;
     isInQuietHours: () => Promise<boolean>;
-    
+
     // Categories & Channels
     toggleCategory: (category: keyof CategoriesSettings, enabled: boolean) => Promise<void>;
-    toggleChannel: (category: keyof CategoriesSettings, channel: keyof ChannelSettings, enabled: boolean) => Promise<void>;
+    toggleChannel: (
+        category: keyof CategoriesSettings,
+        channel: keyof ChannelSettings,
+        enabled: boolean,
+    ) => Promise<void>;
     toggleNotificationType: (category: keyof CategoriesSettings, type: string, enabled: boolean) => Promise<void>;
     updateDueReminders: (reminders: CategorySettings['dueReminders']) => Promise<void>;
-    
+
     // Digests
     updateDigests: (digests: Partial<DigestSettings>) => Promise<void>;
-    
+
     // Watchers
     addWatcher: (objectType: string, objectId: string, notifyOn?: string) => Promise<void>;
     removeWatcher: (objectType: string, objectId: string) => Promise<void>;
     isWatching: (objectType: string, objectId: string) => boolean;
     refreshWatchers: () => Promise<void>;
-    
+
     // Full update
     updatePreferences: (updates: Partial<NotificationPreferences>) => Promise<void>;
-    
+
     // Utilities
     refresh: () => Promise<void>;
 }
@@ -141,16 +145,16 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
         try {
             setLoading(true);
             setError(null);
-            
+
             const response = await fetch('/api/settings/notifications/preferences', {
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch preferences');
             }
-            
+
             const data = await response.json();
             setPreferences(data.preferences);
         } catch (err) {
@@ -166,9 +170,9 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
         try {
             const response = await fetch('/api/settings/notifications/categories', {
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setCategories(data.categories || {});
@@ -183,9 +187,9 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
         try {
             const response = await fetch('/api/settings/watchers', {
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setWatchers(data.watchers || []);
@@ -207,60 +211,66 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
-        
+
         if (!response.ok) {
             throw new Error('Failed to update preferences');
         }
-        
+
         const data = await response.json();
         setPreferences(data.preferences);
         return data.preferences;
     }, []);
 
     // Set global enabled
-    const setGlobalEnabled = useCallback(async (enabled: boolean) => {
-        try {
-            setError(null);
-            await updatePreferencesApi({ globalEnabled: enabled });
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [updatePreferencesApi]);
+    const setGlobalEnabled = useCallback(
+        async (enabled: boolean) => {
+            try {
+                setError(null);
+                await updatePreferencesApi({ globalEnabled: enabled });
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
+            }
+        },
+        [updatePreferencesApi],
+    );
 
     // Update schedule
-    const updateSchedule = useCallback(async (schedule: Partial<ScheduleSettings>) => {
-        try {
-            setError(null);
-            
-            const response = await fetch('/api/settings/notifications/schedule', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(schedule)
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update schedule');
+    const updateSchedule = useCallback(
+        async (schedule: Partial<ScheduleSettings>) => {
+            try {
+                setError(null);
+
+                const response = await fetch('/api/settings/notifications/schedule', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(schedule),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update schedule');
+                }
+
+                await fetchPreferences();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
             }
-            
-            await fetchPreferences();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [fetchPreferences]);
+        },
+        [fetchPreferences],
+    );
 
     // Check if in quiet hours
     const isInQuietHoursCheck = useCallback(async (): Promise<boolean> => {
         try {
             const response = await fetch('/api/settings/notifications/quiet-hours/status', {
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 return data.isInQuietHours;
@@ -272,189 +282,205 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
     }, []);
 
     // Toggle category
-    const toggleCategory = useCallback(async (category: keyof CategoriesSettings, enabled: boolean) => {
-        if (!preferences) return;
-        
-        try {
-            setError(null);
-            const updatedCategories = {
-                ...preferences.categories,
-                [category]: {
-                    ...preferences.categories[category],
-                    enabled
-                }
-            };
-            await updatePreferencesApi({ categories: updatedCategories });
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [preferences, updatePreferencesApi]);
+    const toggleCategory = useCallback(
+        async (category: keyof CategoriesSettings, enabled: boolean) => {
+            if (!preferences) return;
+
+            try {
+                setError(null);
+                const updatedCategories = {
+                    ...preferences.categories,
+                    [category]: {
+                        ...preferences.categories[category],
+                        enabled,
+                    },
+                };
+                await updatePreferencesApi({ categories: updatedCategories });
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
+            }
+        },
+        [preferences, updatePreferencesApi],
+    );
 
     // Toggle channel
-    const toggleChannel = useCallback(async (
-        category: keyof CategoriesSettings, 
-        channel: keyof ChannelSettings, 
-        enabled: boolean
-    ) => {
-        if (!preferences) return;
-        
-        try {
-            setError(null);
-            const updatedCategories = {
-                ...preferences.categories,
-                [category]: {
-                    ...preferences.categories[category],
-                    channels: {
-                        ...preferences.categories[category].channels,
-                        [channel]: enabled
-                    }
-                }
-            };
-            await updatePreferencesApi({ categories: updatedCategories });
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [preferences, updatePreferencesApi]);
+    const toggleChannel = useCallback(
+        async (category: keyof CategoriesSettings, channel: keyof ChannelSettings, enabled: boolean) => {
+            if (!preferences) return;
+
+            try {
+                setError(null);
+                const updatedCategories = {
+                    ...preferences.categories,
+                    [category]: {
+                        ...preferences.categories[category],
+                        channels: {
+                            ...preferences.categories[category].channels,
+                            [channel]: enabled,
+                        },
+                    },
+                };
+                await updatePreferencesApi({ categories: updatedCategories });
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
+            }
+        },
+        [preferences, updatePreferencesApi],
+    );
 
     // Toggle notification type
-    const toggleNotificationType = useCallback(async (
-        category: keyof CategoriesSettings, 
-        type: string, 
-        enabled: boolean
-    ) => {
-        if (!preferences) return;
-        
-        try {
-            setError(null);
-            const updatedCategories = {
-                ...preferences.categories,
-                [category]: {
-                    ...preferences.categories[category],
-                    types: {
-                        ...preferences.categories[category].types,
-                        [type]: enabled
-                    }
-                }
-            };
-            await updatePreferencesApi({ categories: updatedCategories });
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [preferences, updatePreferencesApi]);
+    const toggleNotificationType = useCallback(
+        async (category: keyof CategoriesSettings, type: string, enabled: boolean) => {
+            if (!preferences) return;
+
+            try {
+                setError(null);
+                const updatedCategories = {
+                    ...preferences.categories,
+                    [category]: {
+                        ...preferences.categories[category],
+                        types: {
+                            ...preferences.categories[category].types,
+                            [type]: enabled,
+                        },
+                    },
+                };
+                await updatePreferencesApi({ categories: updatedCategories });
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
+            }
+        },
+        [preferences, updatePreferencesApi],
+    );
 
     // Update due reminders
-    const updateDueReminders = useCallback(async (reminders: CategorySettings['dueReminders']) => {
-        if (!preferences) return;
-        
-        try {
-            setError(null);
-            const updatedCategories = {
-                ...preferences.categories,
-                tasks: {
-                    ...preferences.categories.tasks,
-                    dueReminders: reminders
-                }
-            };
-            await updatePreferencesApi({ categories: updatedCategories });
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [preferences, updatePreferencesApi]);
+    const updateDueReminders = useCallback(
+        async (reminders: CategorySettings['dueReminders']) => {
+            if (!preferences) return;
+
+            try {
+                setError(null);
+                const updatedCategories = {
+                    ...preferences.categories,
+                    tasks: {
+                        ...preferences.categories.tasks,
+                        dueReminders: reminders,
+                    },
+                };
+                await updatePreferencesApi({ categories: updatedCategories });
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
+            }
+        },
+        [preferences, updatePreferencesApi],
+    );
 
     // Update digests
-    const updateDigests = useCallback(async (digests: Partial<DigestSettings>) => {
-        try {
-            setError(null);
-            
-            const response = await fetch('/api/settings/notifications/digests', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(digests)
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update digests');
+    const updateDigests = useCallback(
+        async (digests: Partial<DigestSettings>) => {
+            try {
+                setError(null);
+
+                const response = await fetch('/api/settings/notifications/digests', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(digests),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update digests');
+                }
+
+                await fetchPreferences();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
             }
-            
-            await fetchPreferences();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [fetchPreferences]);
+        },
+        [fetchPreferences],
+    );
 
     // Add watcher
-    const addWatcher = useCallback(async (objectType: string, objectId: string, notifyOn: string = 'all') => {
-        try {
-            setError(null);
-            
-            const response = await fetch('/api/settings/watchers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ objectType, objectId, notifyOn })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to add watcher');
+    const addWatcher = useCallback(
+        async (objectType: string, objectId: string, notifyOn: string = 'all') => {
+            try {
+                setError(null);
+
+                const response = await fetch('/api/settings/watchers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ objectType, objectId, notifyOn }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add watcher');
+                }
+
+                await fetchWatchers();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to add watcher');
+                throw err;
             }
-            
-            await fetchWatchers();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to add watcher');
-            throw err;
-        }
-    }, [fetchWatchers]);
+        },
+        [fetchWatchers],
+    );
 
     // Remove watcher
-    const removeWatcher = useCallback(async (objectType: string, objectId: string) => {
-        try {
-            setError(null);
-            
-            const response = await fetch(`/api/settings/watchers/${objectType}/${objectId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to remove watcher');
+    const removeWatcher = useCallback(
+        async (objectType: string, objectId: string) => {
+            try {
+                setError(null);
+
+                const response = await fetch(`/api/settings/watchers/${objectType}/${objectId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to remove watcher');
+                }
+
+                await fetchWatchers();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to remove watcher');
+                throw err;
             }
-            
-            await fetchWatchers();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to remove watcher');
-            throw err;
-        }
-    }, [fetchWatchers]);
+        },
+        [fetchWatchers],
+    );
 
     // Check if watching
-    const isWatching = useCallback((objectType: string, objectId: string): boolean => {
-        return watchers.some(w => w.objectType === objectType && w.objectId === objectId);
-    }, [watchers]);
+    const isWatching = useCallback(
+        (objectType: string, objectId: string): boolean => {
+            return watchers.some((w) => w.objectType === objectType && w.objectId === objectId);
+        },
+        [watchers],
+    );
 
     // Full update
-    const updatePreferences = useCallback(async (updates: Partial<NotificationPreferences>) => {
-        try {
-            setError(null);
-            await updatePreferencesApi(updates);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update');
-            throw err;
-        }
-    }, [updatePreferencesApi]);
+    const updatePreferences = useCallback(
+        async (updates: Partial<NotificationPreferences>) => {
+            try {
+                setError(null);
+                await updatePreferencesApi(updates);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update');
+                throw err;
+            }
+        },
+        [updatePreferencesApi],
+    );
 
     // Refresh all
     const refresh = useCallback(async () => {
-        await Promise.all([
-            fetchPreferences(),
-            fetchWatchers()
-        ]);
+        await Promise.all([fetchPreferences(), fetchWatchers()]);
     }, [fetchPreferences, fetchWatchers]);
 
     return {
@@ -464,43 +490,36 @@ export const useUserNotificationPreferences = (): UseUserNotificationPreferences
         categories,
         loading,
         error,
-        
+
         // Global
         setGlobalEnabled,
-        
+
         // Schedule
         updateSchedule,
         isInQuietHours: isInQuietHoursCheck,
-        
+
         // Categories & Channels
         toggleCategory,
         toggleChannel,
         toggleNotificationType,
         updateDueReminders,
-        
+
         // Digests
         updateDigests,
-        
+
         // Watchers
         addWatcher,
         removeWatcher,
         isWatching,
         refreshWatchers: fetchWatchers,
-        
+
         // Full update
         updatePreferences,
-        
+
         // Utilities
-        refresh
+        refresh,
     };
 };
 
 export default useUserNotificationPreferences;
-
-
-
-
-
-
-
 

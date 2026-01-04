@@ -26,7 +26,7 @@ import verifyToken from '../middleware/authMiddleware.js';
 import * as AssessmentOverviewServiceModule from '../services/assessmentOverviewService.js';
 const AssessmentOverviewService = AssessmentOverviewServiceModule.default || AssessmentOverviewServiceModule;
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 import PDFDocument from 'pdfkit';
 import XLSX from 'xlsx';
 const db = getDatabase();
@@ -179,7 +179,7 @@ router.post('/import', verifyToken, importUpload.single('reportFile'), async (re
         }
 
         // Dynamically import ReportParserService to avoid circular dependency
-        const ReportParserServiceModule = await import('../ai/reportParserService.js');
+        const ReportParserServiceModule = await import('../services/ai/reportParserService.js');
         const ReportParserService = ReportParserServiceModule.default || ReportParserServiceModule;
 
         // Parse the uploaded file
@@ -224,15 +224,15 @@ router.post('/import', verifyToken, importUpload.single('reportFile'), async (re
         });
     } catch (error) {
         console.error('[Assessment Reports API] Import error:', error);
-        
+
         // Clean up file on error
         if (req.file && fs.existsSync(req.file.path)) {
             fs.unlinkSync(req.file.path);
         }
-        
-        res.status(500).json({ 
+
+        res.status(500).json({
             error: 'Failed to import report',
-            details: error.message 
+            details: error.message
         });
     }
 });
@@ -342,10 +342,10 @@ router.put('/:id', verifyToken, async (req, res) => {
                 return res.status(404).json({ error: 'Report not found or already finalized' });
             }
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 id,
-                updatedAt: now 
+                updatedAt: now
             });
         });
     } catch (error) {
@@ -464,7 +464,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
 
                 // Generate PDF with full sections
 
-                const doc = new PDFDocument({ 
+                const doc = new PDFDocument({
                     margin: 50,
                     size: 'A4',
                     bufferPages: true,
@@ -549,7 +549,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     const rowHeight = 18;
                     const maturityLevels = ['7.Auto', '6.AI', '5.Opt', '4.Zaut', '3.Zint', '2.Dig', '1.Pod'];
                     const areaKeys = Object.keys(BUSINESS_AREAS);
-                    
+
                     let y = startY;
                     let x = startX;
 
@@ -577,7 +577,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     for (let level = 7; level >= 1; level--) {
                         x = startX;
                         const bgColor = level % 2 === 0 ? '#ffffff' : '#f8fafc';
-                        
+
                         doc.rect(x, y, headerWidth, rowHeight).fillAndStroke(bgColor, '#e2e8f0');
                         doc.font('Helvetica').fontSize(7).fillColor('#334155')
                             .text(maturityLevels[7 - level], x + 4, y + 5, { width: headerWidth - 8 });
@@ -587,17 +587,17 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                             const areaData = axisAreas.find(a => a.area_id === areaId);
                             const current = areaData?.current_level || 0;
                             const target = areaData?.target_level || 0;
-                            
+
                             doc.rect(x, y, colWidth, rowHeight).fillAndStroke(bgColor, '#e2e8f0');
-                            
+
                             // Draw markers
                             if (current === level) {
-                                doc.circle(x + colWidth/2, y + rowHeight/2, 5).fill('#3b82f6'); // Current - blue
+                                doc.circle(x + colWidth / 2, y + rowHeight / 2, 5).fill('#3b82f6'); // Current - blue
                             }
                             if (target === level) {
-                                doc.circle(x + colWidth/2, y + rowHeight/2, 5).strokeColor('#10b981').lineWidth(2).stroke(); // Target - green outline
+                                doc.circle(x + colWidth / 2, y + rowHeight / 2, 5).strokeColor('#10b981').lineWidth(2).stroke(); // Target - green outline
                             }
-                            
+
                             x += colWidth;
                         });
                         y += rowHeight;
@@ -613,7 +613,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     summaryRows.forEach((sumRow, i) => {
                         x = startX;
                         const bgColor = i % 2 === 0 ? '#e0f2fe' : '#dcfce7';
-                        
+
                         doc.rect(x, y, headerWidth, rowHeight).fillAndStroke(bgColor, '#e2e8f0');
                         doc.font('Helvetica-Bold').fontSize(7).fillColor('#334155')
                             .text(sumRow.label, x + 4, y + 5, { width: headerWidth - 8 });
@@ -622,7 +622,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                         areaKeys.forEach(areaId => {
                             const areaData = axisAreas.find(a => a.area_id === areaId);
                             const value = sumRow.getValue(areaData);
-                            
+
                             doc.rect(x, y, colWidth, rowHeight).fillAndStroke(bgColor, '#e2e8f0');
                             doc.font('Helvetica-Bold').fontSize(8).fillColor(sumRow.color)
                                 .text(value > 0 && sumRow.label === 'Luka' ? `+${value}` : String(value), x + 2, y + 5, { width: colWidth - 4, align: 'center' });
@@ -681,8 +681,8 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     let interviewNotes = [];
                     try {
                         interviewNotes = areaData?.interview_notes ? JSON.parse(areaData.interview_notes) : [];
-                    } catch (e) {}
-                    
+                    } catch (e) { }
+
                     if (interviewNotes.length > 0) {
                         doc.font('Helvetica-Bold').fontSize(10).fillColor('#334155').text('Notatki z wywiadu:', marginX, y);
                         y += 14;
@@ -698,8 +698,8 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     let recommendations = [];
                     try {
                         recommendations = areaData?.recommendations ? JSON.parse(areaData.recommendations) : [];
-                    } catch (e) {}
-                    
+                    } catch (e) { }
+
                     if (recommendations.length > 0) {
                         doc.font('Helvetica-Bold').fontSize(10).fillColor('#334155').text('Rekomendacje rozwojowe:', marginX, y);
                         y += 14;
@@ -707,7 +707,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                             const recText = typeof rec === 'string' ? rec : rec.action || rec.title || '';
                             const time = typeof rec === 'object' ? rec.time || rec.timeline : '';
                             const budget = typeof rec === 'object' ? rec.budget : '';
-                            
+
                             doc.font('Helvetica').fontSize(9).fillColor('#334155')
                                 .text(`${i + 1}. ${recText}`, marginX + 10, y, { width: contentWidth - 20 });
                             y = doc.y + 2;
@@ -724,8 +724,8 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     let risks = [];
                     try {
                         risks = areaData?.risks ? JSON.parse(areaData.risks) : [];
-                    } catch (e) {}
-                    
+                    } catch (e) { }
+
                     if (risks.length > 0) {
                         doc.font('Helvetica-Bold').fontSize(10).fillColor('#ef4444').text('Ryzyka:', marginX, y);
                         y += 14;
@@ -742,8 +742,8 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     let kpis = [];
                     try {
                         kpis = areaData?.kpis ? JSON.parse(areaData.kpis) : [];
-                    } catch (e) {}
-                    
+                    } catch (e) { }
+
                     if (kpis.length > 0) {
                         doc.font('Helvetica-Bold').fontSize(10).fillColor('#10b981').text('KPI do monitorowania:', marginX, y);
                         y += 14;
@@ -768,7 +768,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                 if (sections && sections.length > 0) {
                     for (let i = 0; i < sections.length; i++) {
                         const section = sections[i];
-                        
+
                         // Add page break for each major section (except cover page)
                         if (i > 0 && ['executive_summary', 'methodology', 'maturity_overview', 'gap_analysis', 'initiatives', 'roadmap', 'appendix'].includes(section.section_type)) {
                             doc.addPage();
@@ -826,7 +826,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                         if (section.section_type === 'axis_detail' && section.axis_id) {
                             const axisId = section.axis_id;
                             const axisAreas = areasByAxis[axisId] || [];
-                            
+
                             // If we have area assessments, render the full enterprise structure
                             if (axisAreas.length > 0) {
                                 // Axis summary header
@@ -842,7 +842,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                                 doc.fontSize(12).font('Helvetica-Bold').fillColor('#1e3a5f')
                                     .text('Macierz Dojrzałości Obszarów');
                                 doc.moveDown(0.3);
-                                
+
                                 const matrixEndY = drawAreaMatrix(axisAreas, 50, doc.y);
                                 doc.y = matrixEndY;
                                 doc.moveDown(1);
@@ -853,7 +853,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                                 doc.moveDown(0.5);
 
                                 const areaOrder = ['sales', 'marketing', 'technology', 'purchasing', 'logistics', 'production', 'quality', 'finance', 'hr'];
-                                
+
                                 // Sort areas by gap (highest priority first)
                                 const sortedAreas = areaOrder.map(areaId => {
                                     return axisAreas.find(a => a.area_id === areaId) || { area_id: areaId, current_level: 0, target_level: 0 };
@@ -882,7 +882,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                         const plainContent = markdownToText(section.content);
                         if (plainContent) {
                             doc.fontSize(11).font('Helvetica').fillColor('#334155')
-                                .text(plainContent, { 
+                                .text(plainContent, {
                                     align: 'justify',
                                     lineGap: 3
                                 });
@@ -903,7 +903,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                     let content = {};
                     try {
                         content = row.report_content ? JSON.parse(row.report_content) : {};
-                    } catch (e) {}
+                    } catch (e) { }
 
                     // Executive Summary
                     if (content.executiveSummary) {
@@ -929,7 +929,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                         doc.addPage();
                         doc.fontSize(16).font('Helvetica-Bold').text('Gap Analysis Summary');
                         doc.moveDown(0.5);
-                
+
                         const axisLabels = {
                             processes: 'Processes',
                             digitalProducts: 'Digital Products',
@@ -1065,7 +1065,7 @@ router.get('/:id/export/excel', verifyToken, async (req, res) => {
                     gapData.push([axisLabels[axis] || axis, data.actual || 0, data.target || 0, gap]);
                 }
             });
-            
+
             if (gapData.length > 1) {
                 const gapSheet = XLSX.utils.aoa_to_sheet(gapData);
                 XLSX.utils.book_append_sheet(workbook, gapSheet, 'Gap Analysis');
@@ -1151,7 +1151,7 @@ router.get('/:id/full', verifyToken, async (req, res) => {
                     let dataSnapshot = {};
                     try {
                         dataSnapshot = s.data_snapshot ? JSON.parse(s.data_snapshot) : {};
-                    } catch (e) {}
+                    } catch (e) { }
                     return {
                         ...s,
                         dataSnapshot,
@@ -1219,7 +1219,7 @@ router.post('/:id/generate', verifyToken, async (req, res) => {
 
             // Get template (use default if not specified)
             const effectiveTemplateId = templateId || 'default-drd-report';
-            
+
             db.get('SELECT * FROM report_templates WHERE id = ?', [effectiveTemplateId], async (err, template) => {
                 let sectionConfig;
                 try {
@@ -1234,7 +1234,7 @@ router.post('/:id/generate', verifyToken, async (req, res) => {
                 try {
                     axisData = report.axis_data ? JSON.parse(report.axis_data) : {};
                     transformationContext = report.transformation_context ? JSON.parse(report.transformation_context) : {};
-                } catch (e) {}
+                } catch (e) { }
 
                 // Delete existing sections
                 db.run('DELETE FROM report_sections WHERE report_id = ?', [id], async (err) => {
@@ -1248,7 +1248,7 @@ router.post('/:id/generate', verifyToken, async (req, res) => {
                         return new Promise((resolve, reject) => {
                             const sectionId = uuidv4();
                             const title = config.title || SECTION_TYPES[config.type]?.title || 'Section';
-                            
+
                             // Create data snapshot for this section
                             const dataSnapshot = createSectionDataSnapshot(
                                 config.type,
@@ -1354,8 +1354,8 @@ router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
 
             try {
                 // Import comprehensive report generator
-                const { comprehensiveReportGenerator   } = await import('../ai/comprehensiveReportGenerator.js');
-                
+                const { comprehensiveReportGenerator } = await import('../services/ai/comprehensiveReportGenerator.js');
+
                 // Generate comprehensive report
                 const result = await comprehensiveReportGenerator.generateReport(
                     report.assessment_id,
@@ -1363,9 +1363,9 @@ router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
                 );
 
                 if (!result.success) {
-                    return res.status(500).json({ 
-                        error: 'Report generation failed', 
-                        details: result.error 
+                    return res.status(500).json({
+                        error: 'Report generation failed',
+                        details: result.error
                     });
                 }
 
@@ -1387,7 +1387,7 @@ router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
                     const sectionId = uuidv4();
                     const sectionType = section.type || 'custom';
                     const title = section.axisName || getSectionTitle(sectionType);
-                    const content = typeof section.content === 'object' 
+                    const content = typeof section.content === 'object'
                         ? JSON.stringify(section.content, null, 2)
                         : section.content || '';
 
@@ -1438,7 +1438,7 @@ router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
 
             } catch (genError) {
                 console.error('[Assessment Reports API] Comprehensive generation error:', genError);
-                res.status(500).json({ 
+                res.status(500).json({
                     error: 'Failed to generate comprehensive report',
                     details: genError.message
                 });
@@ -1500,7 +1500,7 @@ router.get('/:id/sections', verifyToken, async (req, res) => {
                         let dataSnapshot = {};
                         try {
                             dataSnapshot = s.data_snapshot ? JSON.parse(s.data_snapshot) : {};
-                        } catch (e) {}
+                        } catch (e) { }
                         return {
                             id: s.id,
                             reportId: s.report_id,
@@ -1580,7 +1580,7 @@ router.post('/:id/sections', verifyToken, async (req, res) => {
                     userId,
                     now,
                     now
-                ], function(err) {
+                ], function (err) {
                     if (err) {
                         console.error('[Report Builder API] Add section error:', err);
                         return res.status(500).json({ error: 'Failed to add section' });
@@ -1655,7 +1655,7 @@ router.put('/:id/sections/:sectionId', verifyToken, async (req, res) => {
                     WHERE id = ?
                 `;
 
-                db.run(sql, [title, content, newVersion, userId, now, sectionId], function(err) {
+                db.run(sql, [title, content, newVersion, userId, now, sectionId], function (err) {
                     if (err) {
                         console.error('[Report Builder API] Update section error:', err);
                         return res.status(500).json({ error: 'Failed to update section' });
@@ -1708,7 +1708,7 @@ router.delete('/:id/sections/:sectionId', verifyToken, async (req, res) => {
                 db.run(
                     'DELETE FROM report_sections WHERE id = ? AND report_id = ?',
                     [sectionId, id],
-                    function(err) {
+                    function (err) {
                         if (err) {
                             console.error('[Report Builder API] Delete section error:', err);
                             return res.status(500).json({ error: 'Failed to delete section' });
@@ -1774,7 +1774,7 @@ router.post('/:id/sections/:sectionId/ai', verifyToken, async (req, res) => {
                 assessmentSnapshot = section.assessment_snapshot ? JSON.parse(section.assessment_snapshot) : {};
                 axisData = assessmentSnapshot.axisScores || {};
                 dataSnapshot = section.data_snapshot ? JSON.parse(section.data_snapshot) : {};
-            } catch (e) {}
+            } catch (e) { }
 
             // Generate AI content based on action
             const aiContent = await generateAISectionContent(
@@ -1807,7 +1807,7 @@ router.post('/:id/sections/:sectionId/ai', verifyToken, async (req, res) => {
             db.run(
                 `UPDATE report_sections SET content = ?, version = ?, is_ai_generated = 1, ai_model_used = ?, last_edited_by = ?, updated_at = ? WHERE id = ?`,
                 [aiContent, newVersion, 'gemini-1.5-flash', userId, now, sectionId],
-                function(err) {
+                function (err) {
                     if (err) {
                         console.error('[Report Builder API] AI section update error:', err);
                         return res.status(500).json({ error: 'Failed to update section' });
@@ -1863,7 +1863,7 @@ router.put('/:id/sections/reorder', verifyToken, async (req, res) => {
                         db.run(
                             'UPDATE report_sections SET order_index = ?, updated_at = ? WHERE id = ? AND report_id = ?',
                             [orderIndex, now, sectionId, id],
-                            function(err) {
+                            function (err) {
                                 if (err) reject(err);
                                 else resolve(this.changes);
                             }
@@ -1932,7 +1932,7 @@ router.post('/:id/ai-edit', verifyToken, async (req, res) => {
                     assessmentSnapshot = report.assessment_snapshot ? JSON.parse(report.assessment_snapshot) : {};
                     axisData = assessmentSnapshot.axisScores || {};
                     transformationContext = report.transformation_context ? JSON.parse(report.transformation_context) : {};
-                } catch (e) {}
+                } catch (e) { }
 
                 // Process AI edit request
                 const result = await processAIEditRequest(
@@ -2124,9 +2124,9 @@ ${organizationName || (isPolish ? 'Organizacja' : 'Organization')} ${isPolish ? 
             return `## ${isPolish ? 'Metodologia DRD' : 'DRD Methodology'}
 
 ### ${isPolish ? 'Czym jest DRD?' : 'What is DRD?'}
-${isPolish 
-    ? 'Digital Readiness Diagnosis (DRD) to kompleksowa metodologia oceny dojrzałości cyfrowej organizacji, opracowana na bazie wieloletniego doświadczenia w transformacji przedsiębiorstw produkcyjnych i usługowych.'
-    : 'Digital Readiness Diagnosis (DRD) is a comprehensive methodology for assessing organizational digital maturity, developed based on years of experience in transforming manufacturing and service enterprises.'}
+${isPolish
+                    ? 'Digital Readiness Diagnosis (DRD) to kompleksowa metodologia oceny dojrzałości cyfrowej organizacji, opracowana na bazie wieloletniego doświadczenia w transformacji przedsiębiorstw produkcyjnych i usługowych.'
+                    : 'Digital Readiness Diagnosis (DRD) is a comprehensive methodology for assessing organizational digital maturity, developed based on years of experience in transforming manufacturing and service enterprises.'}
 
 ### ${isPolish ? '7 Osi Transformacji' : '7 Transformation Axes'}
 1. **${isPolish ? 'Procesy Cyfrowe' : 'Digital Processes'}** - ${isPolish ? 'Digitalizacja procesów operacyjnych' : 'Digitization of operational processes'}
@@ -2152,9 +2152,9 @@ ${isPolish ? 'Każda oś oceniana jest w skali 1-7:' : 'Each axis is assessed on
 | ${isPolish ? 'Oś' : 'Axis'} | ${isPolish ? 'Aktualny' : 'Current'} | ${isPolish ? 'Docelowy' : 'Target'} | ${isPolish ? 'Luka' : 'Gap'} |
 |------|----------|---------|-----|
 ${Object.entries(DRD_AXES).map(([id, config]) => {
-    const data = axisData[id] || {};
-    return `| ${config.name} | ${data.actual || '-'} | ${data.target || '-'} | ${(data.target || 0) - (data.actual || 0)} |`;
-}).join('\n')}
+                const data = axisData[id] || {};
+                return `| ${config.name} | ${data.actual || '-'} | ${data.target || '-'} | ${(data.target || 0) - (data.actual || 0)} |`;
+            }).join('\n')}
 
 *${isPolish ? 'Wykres radarowy zostanie wygenerowany automatycznie w eksporcie PDF.' : 'Radar chart will be automatically generated in PDF export.'}*`;
 
@@ -2187,11 +2187,11 @@ ${axis.justification || (isPolish ? '*Brak uzasadnienia*' : '*No justification p
 | ${isPolish ? 'Oś' : 'Axis'} | ${isPolish ? 'Luka' : 'Gap'} | ${isPolish ? 'Priorytet' : 'Priority'} | ${isPolish ? 'Szacowany czas' : 'Est. Time'} |
 |------|-----|----------|------------|
 ${Object.entries(DRD_AXES).map(([id, config]) => {
-    const data = axisData[id] || {};
-    const gap = (data.target || 0) - (data.actual || 0);
-    const priority = gap >= 3 ? (isPolish ? 'WYSOKI' : 'HIGH') : gap >= 2 ? (isPolish ? 'ŚREDNI' : 'MEDIUM') : gap > 0 ? (isPolish ? 'NISKI' : 'LOW') : '-';
-    return `| ${config.name} | ${gap} | ${priority} | ${gap > 0 ? `${gap * 3}-${gap * 4} ${isPolish ? 'mies.' : 'mo.'}` : '-'} |`;
-}).join('\n')}
+                const data = axisData[id] || {};
+                const gap = (data.target || 0) - (data.actual || 0);
+                const priority = gap >= 3 ? (isPolish ? 'WYSOKI' : 'HIGH') : gap >= 2 ? (isPolish ? 'ŚREDNI' : 'MEDIUM') : gap > 0 ? (isPolish ? 'NISKI' : 'LOW') : '-';
+                return `| ${config.name} | ${gap} | ${priority} | ${gap > 0 ? `${gap * 3}-${gap * 4} ${isPolish ? 'mies.' : 'mo.'}` : '-'} |`;
+            }).join('\n')}
 
 ### ${isPolish ? 'Analiza Priorytetów' : 'Priority Analysis'}
 *${isPolish ? 'Do uzupełnienia...' : 'To be completed...'}*`;
@@ -2269,19 +2269,19 @@ async function generateAISectionContent(action, currentContent, context) {
     switch (action) {
         case 'expand':
             return currentContent + `\n\n### ${isPolish ? 'Dodatkowe szczegóły' : 'Additional Details'}\n*${isPolish ? 'Rozszerzona treść wygenerowana przez AI...' : 'Expanded content generated by AI...'}*`;
-        
+
         case 'summarize':
             return `## ${title}\n\n**${isPolish ? 'Podsumowanie' : 'Summary'}:**\n${isPolish ? 'Skrócona wersja treści...' : 'Condensed version of content...'}`;
-        
+
         case 'improve':
             return `${currentContent}\n\n---\n*${isPolish ? 'Treść została ulepszona przez AI.' : 'Content has been improved by AI.'}*`;
-        
+
         case 'translate':
             return `## ${title}\n\n*${isPolish ? 'Treść przetłumaczona...' : 'Translated content...'}*\n\n${currentContent}`;
-        
+
         case 'regenerate':
             return generateInitialSectionContent(sectionType, context.axisId, context, language);
-        
+
         default:
             return currentContent;
     }
@@ -2290,12 +2290,12 @@ async function generateAISectionContent(action, currentContent, context) {
 async function processAIEditRequest(message, context, userId) {
     // Parse user intent and identify target section
     const { sections, focusSectionId } = context;
-    
+
     // Simple intent detection (in production, use actual NLP/AI)
     const lowerMessage = message.toLowerCase();
     let targetSection = focusSectionId ? sections.find(s => s.id === focusSectionId) : null;
     let action = 'improve';
-    
+
     if (lowerMessage.includes('rozwiń') || lowerMessage.includes('expand')) {
         action = 'expand';
     } else if (lowerMessage.includes('skróć') || lowerMessage.includes('summar')) {
@@ -2309,7 +2309,7 @@ async function processAIEditRequest(message, context, userId) {
     // Try to identify target section from message if not focused
     if (!targetSection) {
         for (const section of sections) {
-            if (lowerMessage.includes(section.title.toLowerCase()) || 
+            if (lowerMessage.includes(section.title.toLowerCase()) ||
                 lowerMessage.includes(section.type.replace('_', ' '))) {
                 targetSection = section;
                 break;
@@ -2324,7 +2324,7 @@ async function processAIEditRequest(message, context, userId) {
             targetSection: targetSection?.id || null,
             targetSectionTitle: targetSection?.title || null
         },
-        message: targetSection 
+        message: targetSection
             ? `Rozpoznano intencję: ${action} dla sekcji "${targetSection.title}". Użyj endpointu /sections/${targetSection.id}/ai z akcją "${action}" aby zastosować zmianę.`
             : 'Nie udało się zidentyfikować sekcji do edycji. Proszę sprecyzować, którą sekcję chcesz zmodyfikować.',
         suggestedEndpoint: targetSection ? `/api/assessment-reports/${context.reportId}/sections/${targetSection.id}/ai` : null,
@@ -2418,8 +2418,8 @@ router.post('/:id/generate-enterprise', verifyToken, async (req, res) => {
                 parsedProfile = { ...orgProfile };
                 jsonFields.forEach(field => {
                     if (parsedProfile[field]) {
-                        parsedProfile[field] = typeof parsedProfile[field] === 'string' 
-                            ? JSON.parse(parsedProfile[field]) 
+                        parsedProfile[field] = typeof parsedProfile[field] === 'string'
+                            ? JSON.parse(parsedProfile[field])
                             : parsedProfile[field];
                     }
                 });
@@ -2448,7 +2448,7 @@ router.post('/:id/generate-enterprise', verifyToken, async (req, res) => {
         // Run pipeline
         const generator = Pipeline.generateReport(assessmentData, parsedProfile, options);
         let lastResult = null;
-        
+
         for await (const progress of generator) {
             lastResult = progress;
             // Could emit via WebSocket here for real-time updates
@@ -2464,9 +2464,9 @@ router.post('/:id/generate-enterprise', verifyToken, async (req, res) => {
                 metadata: lastResult.pipelineMetadata
             });
         } else {
-            return res.status(500).json({ 
+            return res.status(500).json({
                 error: 'Generation incomplete',
-                lastPhase: lastResult?.phase 
+                lastPhase: lastResult?.phase
             });
         }
 
@@ -2491,7 +2491,7 @@ router.get('/:id/generation-status', verifyToken, async (req, res) => {
             const sql = generationId
                 ? 'SELECT * FROM enterprise_report_generations WHERE id = ? AND organization_id = ?'
                 : 'SELECT * FROM enterprise_report_generations WHERE report_id = ? AND organization_id = ? ORDER BY started_at DESC LIMIT 1';
-            
+
             db.get(sql, [generationId || id, organizationId], (err, row) => {
                 err ? reject(err) : resolve(row);
             });
@@ -2556,8 +2556,8 @@ router.post('/:reportId/generate-initiatives', verifyToken, async (req, res) => 
         });
 
         if (!generation) {
-            return res.status(400).json({ 
-                error: 'No completed enterprise report found. Generate enterprise report first.' 
+            return res.status(400).json({
+                error: 'No completed enterprise report found. Generate enterprise report first.'
             });
         }
 
@@ -2581,7 +2581,7 @@ router.post('/:reportId/generate-initiatives', verifyToken, async (req, res) => 
         // Filter by priority threshold
         const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
         const thresholdScore = priorityOrder[priorityThreshold] || 2;
-        
+
         const filteredRecs = recommendations
             .filter(r => (priorityOrder[r.impact] || 2) >= thresholdScore)
             .slice(0, maxInitiatives);

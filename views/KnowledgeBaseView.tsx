@@ -1,33 +1,34 @@
 /**
  * Knowledge Base View
- * 
+ *
  * Full-page documentation portal with navigation, search, and content rendering.
  * Route: /docs or /help
  */
 
-import React, { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-    Search,
+    ArrowLeft,
     Book,
-    ChevronRight,
     ChevronDown,
-    FileText,
-    Video,
-    HelpCircle,
-    ExternalLink,
-    Printer,
+    ChevronRight,
     Download,
+    ExternalLink,
+    FileText,
+    HelpCircle,
     Home,
-    ArrowLeft
+    Printer,
+    Search,
+    Video,
 } from 'lucide-react';
-import { MODULE_HELP_CONTENT, HelpModuleId } from '../config/moduleHelpContent';
-import { CARD_DOCS } from '../config/cardDocumentation';
-import { FAQ_CONTENT, searchFAQs } from '../config/faqContent';
-import { VIDEO_TUTORIALS } from '../config/videoTutorialsContent';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import DocumentationRenderer from '../components/Help/DocumentationRenderer';
 import DynamicIcon from '../components/shared/DynamicIcon';
+import { CARD_DOCS } from '../config/cardDocumentation';
+import { FAQ_CONTENT, searchFAQs } from '../config/faqContent';
+import { HelpModuleId, MODULE_HELP_CONTENT } from '../config/moduleHelpContent';
+import { VIDEO_TUTORIALS } from '../config/videoTutorialsContent';
 
 interface KnowledgeBaseViewProps {
     initialModule?: HelpModuleId;
@@ -44,21 +45,17 @@ interface NavigationItem {
     icon?: string;
 }
 
-export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
-    initialModule,
-    initialSection,
-    onBack
-}) => {
+export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialModule, initialSection, onBack }) => {
     const { i18n, t } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
     // State
     const [selectedModule, setSelectedModule] = useState<HelpModuleId | null>(initialModule || null);
     const [selectedContent, setSelectedContent] = useState<{ type: ContentType; id: string } | null>(
-        initialSection ? { type: 'overview', id: initialSection } : null
+        initialSection ? { type: 'overview', id: initialSection } : null,
     );
     const [expandedModules, setExpandedModules] = useState<Set<HelpModuleId>>(
-        initialModule ? new Set([initialModule]) : new Set()
+        initialModule ? new Set([initialModule]) : new Set(),
     );
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -76,34 +73,30 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                 id,
                 type: 'card' as ContentType,
                 title: card.title,
-                icon: 'FileText'
+                icon: 'FileText',
             }));
 
         // Get related FAQs
-        const faqs = FAQ_CONTENT
-            .filter(faq => faq.moduleId === selectedModule)
-            .map(faq => ({
-                id: faq.id,
-                type: 'faq' as ContentType,
-                title: lang === 'pl' ? faq.questionPl : faq.question,
-                icon: 'HelpCircle'
-            }));
+        const faqs = FAQ_CONTENT.filter((faq) => faq.moduleId === selectedModule).map((faq) => ({
+            id: faq.id,
+            type: 'faq' as ContentType,
+            title: lang === 'pl' ? faq.questionPl : faq.question,
+            icon: 'HelpCircle',
+        }));
 
         // Get related videos
-        const videos = VIDEO_TUTORIALS
-            .filter(video => video.moduleId === selectedModule)
-            .map(video => ({
-                id: video.id,
-                type: 'video' as ContentType,
-                title: lang === 'pl' ? video.titlePl : video.title,
-                icon: 'Video'
-            }));
+        const videos = VIDEO_TUTORIALS.filter((video) => video.moduleId === selectedModule).map((video) => ({
+            id: video.id,
+            type: 'video' as ContentType,
+            title: lang === 'pl' ? video.titlePl : video.title,
+            icon: 'Video',
+        }));
 
         return {
             module,
             cards,
             faqs,
-            videos
+            videos,
         };
     }, [selectedModule, lang]);
 
@@ -136,34 +129,36 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                     id,
                     title: name,
                     moduleId: id as HelpModuleId,
-                    excerpt: desc.slice(0, 100) + '...'
+                    excerpt: desc.slice(0, 100) + '...',
                 });
             }
         });
 
         // Search cards
         Object.entries(CARD_DOCS).forEach(([id, card]) => {
-            if (card.title.toLowerCase().includes(searchLower) ||
-                card.description.toLowerCase().includes(searchLower)) {
+            if (
+                card.title.toLowerCase().includes(searchLower) ||
+                card.description.toLowerCase().includes(searchLower)
+            ) {
                 results.push({
                     type: 'card',
                     id,
                     title: card.title,
                     moduleId: card.moduleId || 'dashboard',
-                    excerpt: card.description.slice(0, 100) + '...'
+                    excerpt: card.description.slice(0, 100) + '...',
                 });
             }
         });
 
         // Search FAQs
         const matchingFaqs = searchFAQs(searchQuery, lang);
-        matchingFaqs.slice(0, 10).forEach(faq => {
+        matchingFaqs.slice(0, 10).forEach((faq) => {
             results.push({
                 type: 'faq',
                 id: faq.id,
                 title: lang === 'pl' ? faq.questionPl : faq.question,
                 moduleId: faq.moduleId,
-                excerpt: (lang === 'pl' ? faq.answerPl : faq.answer).slice(0, 100) + '...'
+                excerpt: (lang === 'pl' ? faq.answerPl : faq.answer).slice(0, 100) + '...',
             });
         });
 
@@ -201,7 +196,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
         noResults: { en: 'No results found', pl: 'Nie znaleziono wyników' },
         selectTopic: { en: 'Select a topic from the sidebar', pl: 'Wybierz temat z paska bocznego' },
         print: { en: 'Print', pl: 'Drukuj' },
-        download: { en: 'Download PDF', pl: 'Pobierz PDF' }
+        download: { en: 'Download PDF', pl: 'Pobierz PDF' },
     };
 
     return (
@@ -222,9 +217,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                             )}
                             <div className="flex items-center gap-2">
                                 <Book size={24} className="text-purple-600" />
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                                    {text.title[lang]}
-                                </h1>
+                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{text.title[lang]}</h1>
                             </div>
                         </div>
 
@@ -235,7 +228,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                 <input
                                     type="text"
                                     value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder={text.search[lang]}
                                     className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 border border-transparent focus:border-purple-500 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 outline-none"
                                 />
@@ -263,11 +256,15 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                         <nav className="sticky top-24 space-y-1">
                             {/* Home */}
                             <button
-                                onClick={() => { setSelectedModule(null); setSelectedContent(null); }}
-                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${!selectedModule
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                    }`}
+                                onClick={() => {
+                                    setSelectedModule(null);
+                                    setSelectedContent(null);
+                                }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                                    !selectedModule
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
                             >
                                 <Home size={18} />
                                 <span className="font-medium">{text.overview[lang]}</span>
@@ -286,10 +283,11 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                                 setSelectedContent({ type: 'overview', id: id });
                                                 toggleModule(id as HelpModuleId);
                                             }}
-                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${isSelected
-                                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                }`}
+                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                                                isSelected
+                                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                            }`}
                                         >
                                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                             <DynamicIcon name={module.icon} size={18} />
@@ -306,14 +304,18 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                                 exit={{ height: 0, opacity: 0 }}
                                                 className="ml-6 mt-1 space-y-1"
                                             >
-                                                {moduleContent.cards.map(card => (
+                                                {moduleContent.cards.map((card) => (
                                                     <button
                                                         key={card.id}
-                                                        onClick={() => selectContent(id as HelpModuleId, 'card', card.id)}
-                                                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left ${selectedContent?.type === 'card' && selectedContent?.id === card.id
-                                                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                                            }`}
+                                                        onClick={() =>
+                                                            selectContent(id as HelpModuleId, 'card', card.id)
+                                                        }
+                                                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left ${
+                                                            selectedContent?.type === 'card' &&
+                                                            selectedContent?.id === card.id
+                                                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                                        }`}
                                                     >
                                                         <FileText size={14} />
                                                         <span className="truncate">{card.title}</span>
@@ -342,13 +344,25 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                         {searchResults.map((result, i) => (
                                             <button
                                                 key={`${result.type}-${result.id}-${i}`}
-                                                onClick={() => selectContent(result.moduleId, result.type as ContentType, result.id)}
+                                                onClick={() =>
+                                                    selectContent(
+                                                        result.moduleId,
+                                                        result.type as ContentType,
+                                                        result.id,
+                                                    )
+                                                }
                                                 className="w-full flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left transition-colors"
                                             >
                                                 <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                                                    {result.type === 'module' && <Book size={16} className="text-purple-600" />}
-                                                    {result.type === 'card' && <FileText size={16} className="text-purple-600" />}
-                                                    {result.type === 'faq' && <HelpCircle size={16} className="text-purple-600" />}
+                                                    {result.type === 'module' && (
+                                                        <Book size={16} className="text-purple-600" />
+                                                    )}
+                                                    {result.type === 'card' && (
+                                                        <FileText size={16} className="text-purple-600" />
+                                                    )}
+                                                    {result.type === 'faq' && (
+                                                        <HelpCircle size={16} className="text-purple-600" />
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-medium text-slate-900 dark:text-white truncate">
@@ -375,26 +389,32 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                                             {text.title[lang]}
                                         </h2>
-                                        <p className="text-slate-500 dark:text-slate-400">
-                                            {text.selectTopic[lang]}
-                                        </p>
+                                        <p className="text-slate-500 dark:text-slate-400">{text.selectTopic[lang]}</p>
 
                                         {/* Module Grid */}
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
-                                            {Object.entries(MODULE_HELP_CONTENT).slice(0, 9).map(([id, module]) => (
-                                                <button
-                                                    key={id}
-                                                    onClick={() => selectContent(id as HelpModuleId, 'overview', id)}
-                                                    className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                                                >
-                                                    <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                                        <DynamicIcon name={module.icon} size={24} className="text-purple-600 dark:text-purple-400" />
-                                                    </div>
-                                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                        {lang === 'pl' ? module.name?.pl : module.name?.en}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                            {Object.entries(MODULE_HELP_CONTENT)
+                                                .slice(0, 9)
+                                                .map(([id, module]) => (
+                                                    <button
+                                                        key={id}
+                                                        onClick={() =>
+                                                            selectContent(id as HelpModuleId, 'overview', id)
+                                                        }
+                                                        className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                                                    >
+                                                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                                            <DynamicIcon
+                                                                name={module.icon}
+                                                                size={24}
+                                                                className="text-purple-600 dark:text-purple-400"
+                                                            />
+                                                        </div>
+                                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                            {lang === 'pl' ? module.name?.pl : module.name?.en}
+                                                        </span>
+                                                    </button>
+                                                ))}
                                         </div>
                                     </div>
                                 ) : (
@@ -415,11 +435,3 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
 };
 
 export default KnowledgeBaseView;
-
-
-
-
-
-
-
-

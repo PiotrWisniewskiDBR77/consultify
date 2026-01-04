@@ -1,0 +1,42 @@
+{
+  "name": "new-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "tags": ["scope:app", "type:new-app"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "commands": [
+          "npm run build -w apps/new-app/backend",
+          "npm run build -w apps/new-app/frontend"
+        ],
+        "parallel": true
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "commands": [
+          "npm run dev -w apps/new-app/backend",
+          "npm run dev -w apps/new-app/frontend"
+        ],
+        "parallel": true
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npm run test -w apps/new-app/backend",
+          "npm run test -w apps/new-app/frontend"
+        ],
+        "parallel": true
+      }
+    }
+  }
+}
+
+

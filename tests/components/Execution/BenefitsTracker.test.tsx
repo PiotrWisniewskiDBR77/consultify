@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BenefitsTracker } from '../../../components/Execution/BenefitsTracker';
+import { BenefitsTracker } from '../../components/Execution/BenefitsTracker';
 
 describe('BenefitsTracker Component', () => {
     it('renders the component title', () => {

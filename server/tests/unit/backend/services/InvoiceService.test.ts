@@ -1,11 +1,12 @@
 /**
  * InvoiceService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for InvoiceService - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import InvoiceService from '../../../../src/services/InvoiceService.js';
 
@@ -55,7 +56,7 @@ describe('InvoiceService', () => {
             InvoiceService.setDependencies({
                 uuidv4: mockUuidV4,
                 CurrencyService: mockCurrencyService,
-                EmailService: {} as any
+                EmailService: {} as any,
             });
 
             // Mock database calls
@@ -71,7 +72,7 @@ describe('InvoiceService', () => {
             const result = await InvoiceService.createInvoice({
                 organizationId: 'org-1',
                 items: mockItems,
-                currency: 'USD'
+                currency: 'USD',
             });
 
             expect(result.id).toBe(mockUuid);
@@ -87,16 +88,16 @@ describe('InvoiceService', () => {
                 total: 100,
                 currency: 'USD',
                 subtotal: 100,
-                tax_amount: 0
+                tax_amount: 0,
             };
             const mockItems = [{ description: 'Item 1', quantity: 1, unitPrice: 100 }];
 
             const mockCurrencyService = {
-                formatAmount: vi.fn().mockImplementation((val) => `$${val}.00`)
+                formatAmount: vi.fn().mockImplementation((val) => `$${val}.00`),
             };
 
             InvoiceService.setDependencies({
-                CurrencyService: mockCurrencyService
+                CurrencyService: mockCurrencyService,
             });
 
             (mockDb.get as any).mockImplementation((sql: string, params: any, cb: any) => {
@@ -118,9 +119,11 @@ describe('InvoiceService', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

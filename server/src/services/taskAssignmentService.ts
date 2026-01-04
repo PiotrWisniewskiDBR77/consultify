@@ -1,17 +1,17 @@
 /**
  * Task Assignment Service
- * 
+ *
  * PMO Standards Compliant Task Assignment with SLA and Escalation
  */
 
 import { v4 as uuid } from 'uuid';
+
+import ActivityService from '../services/ActivityService.js';
+import NotificationService from '../services/NotificationService.js';
 import DbPromise from '../utils/DbPromise.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 import ProjectMemberService from './projectMemberService.js';
-
-import NotificationService from '../services/NotificationService.js';
-import ActivityService from '../services/ActivityService.js';
 
 /**
  * Default SLA hours by priority
@@ -20,7 +20,7 @@ export const SLA_HOURS_BY_PRIORITY: Record<string, number> = {
     urgent: 8,
     high: 24,
     medium: 48,
-    low: 72
+    low: 72,
 };
 
 /**
@@ -30,7 +30,7 @@ export const ESCALATION_LEVELS = {
     NONE: 0,
     INITIATIVE_OWNER: 1,
     PMO_LEAD: 2,
-    SPONSOR: 3
+    SPONSOR: 3,
 } as const;
 
 /**
@@ -40,7 +40,7 @@ export const ESCALATION_TRIGGERS = {
     SLA_BREACH: 'SLA_BREACH',
     BLOCKED: 'BLOCKED',
     MANUAL: 'MANUAL',
-    PRIORITY_CHANGE: 'PRIORITY_CHANGE'
+    PRIORITY_CHANGE: 'PRIORITY_CHANGE',
 } as const;
 
 export class TaskAssignmentService {
@@ -68,7 +68,7 @@ export class TaskAssignmentService {
             (ProjectMemberService as any).PROJECT_ROLES.TASK_ASSIGNEE,
             (ProjectMemberService as any).PROJECT_ROLES.INITIATIVE_OWNER,
             (ProjectMemberService as any).PROJECT_ROLES.WORKSTREAM_OWNER,
-            (ProjectMemberService as any).PROJECT_ROLES.PMO_LEAD
+            (ProjectMemberService as any).PROJECT_ROLES.PMO_LEAD,
         ].includes(member.projectRole);
 
         if (!canBeAssigned) {
@@ -91,7 +91,7 @@ export class TaskAssignmentService {
            last_escalated_at = NULL,
            updated_at = ?
        WHERE id = ?`,
-            [assigneeId, effectiveSlaHours, slaDueAt, now.toISOString(), taskId]
+            [assigneeId, effectiveSlaHours, slaDueAt, now.toISOString(), taskId],
         );
 
         // Log to audit trail
@@ -100,13 +100,13 @@ export class TaskAssignmentService {
             assigneeId,
             assignedById,
             slaHours: effectiveSlaHours,
-            slaDueAt
+            slaDueAt,
         });
 
         // Create activity entry
         await this._createActivity(projectId, taskId, 'TASK_ASSIGNED', {
             assigneeId,
-            assignedById
+            assignedById,
         });
 
         return this.getTask(taskId);
@@ -128,7 +128,7 @@ export class TaskAssignmentService {
         // Use assignTask for actual assignment
         const result = await this.assignTask(taskId, newAssigneeId, {
             assignedById: reassignedById,
-            slaHours: resetSla ? SLA_HOURS_BY_PRIORITY[task.priority] || 24 : task.sla_hours
+            slaHours: resetSla ? SLA_HOURS_BY_PRIORITY[task.priority] || 24 : task.sla_hours,
         });
 
         // Log reassignment
@@ -137,7 +137,7 @@ export class TaskAssignmentService {
             oldAssigneeId,
             newAssigneeId,
             reassignedById,
-            reason
+            reason,
         });
 
         return result;
@@ -161,12 +161,12 @@ export class TaskAssignmentService {
            last_escalated_at = NULL,
            updated_at = ?
        WHERE id = ?`,
-            [new Date().toISOString(), taskId]
+            [new Date().toISOString(), taskId],
         );
 
         await TaskAssignmentService._logAudit(task.project_id, 'TASK_UNASSIGNED', {
             taskId,
-            previousAssigneeId: task.assignee_id
+            previousAssigneeId: task.assignee_id,
         });
 
         return this.getTask(taskId);
@@ -191,10 +191,7 @@ export class TaskAssignmentService {
         const newLevel = currentLevel + 1;
 
         // Get escalation recipients
-        const recipients = await ProjectMemberService.getEscalationRecipients(
-            task.project_id,
-            newLevel
-        );
+        const recipients = await ProjectMemberService.getEscalationRecipients(task.project_id, newLevel);
 
         if (recipients.length === 0) {
             throw new Error(`No recipients found for escalation level ${newLevel}`);
@@ -211,7 +208,7 @@ export class TaskAssignmentService {
            last_escalated_at = ?,
            updated_at = ?
        WHERE id = ?`,
-            [newLevel, escalatedToId, now, now, taskId]
+            [newLevel, escalatedToId, now, now, taskId],
         );
 
         // Create escalation record
@@ -229,8 +226,8 @@ export class TaskAssignmentService {
                 escalatedToId,
                 reason || 'Escalated due to SLA breach or blocker',
                 triggerType,
-                now
-            ]
+                now,
+            ],
         );
 
         // Log to audit trail
@@ -241,7 +238,7 @@ export class TaskAssignmentService {
             escalatedToId,
             reason,
             triggerType,
-            escalatedById
+            escalatedById,
         });
 
         // Notify escalation recipient
@@ -256,8 +253,8 @@ export class TaskAssignmentService {
                 escalatedTo: recipients[0],
                 reason,
                 triggerType,
-                createdAt: now
-            }
+                createdAt: now,
+            },
         };
     }
 
@@ -267,10 +264,7 @@ export class TaskAssignmentService {
     static async resolveEscalation(escalationId: string, options: any = {}): Promise<any> {
         const { resolutionNote, resolvedById } = options;
 
-        const escalation: any = await DbPromise.get(
-            'SELECT * FROM task_escalations WHERE id = ?',
-            [escalationId]
-        );
+        const escalation: any = await DbPromise.get('SELECT * FROM task_escalations WHERE id = ?', [escalationId]);
         if (!escalation) {
             throw new Error('Escalation not found');
         }
@@ -281,7 +275,7 @@ export class TaskAssignmentService {
             `UPDATE task_escalations 
        SET resolved_at = ?, resolution_note = ?
        WHERE id = ?`,
-            [now, resolutionNote || null, escalationId]
+            [now, resolutionNote || null, escalationId],
         );
 
         // Reset task escalation level if this was the latest
@@ -290,7 +284,7 @@ export class TaskAssignmentService {
        WHERE task_id = ? AND resolved_at IS NULL
        ORDER BY created_at DESC
        LIMIT 1`,
-            [escalation.task_id]
+            [escalation.task_id],
         );
 
         if (!latestEscalation) {
@@ -298,7 +292,7 @@ export class TaskAssignmentService {
                 `UPDATE tasks 
          SET escalation_level = 0, escalated_to_id = NULL
          WHERE id = ?`,
-                [escalation.task_id]
+                [escalation.task_id],
             );
         }
 
@@ -306,7 +300,7 @@ export class TaskAssignmentService {
             escalationId,
             taskId: escalation.task_id,
             resolutionNote,
-            resolvedById
+            resolvedById,
         });
 
         return DbPromise.get('SELECT * FROM task_escalations WHERE id = ?', [escalationId]);
@@ -329,14 +323,14 @@ export class TaskAssignmentService {
          AND (last_escalated_at IS NULL OR last_escalated_at < datetime('now', '-24 hours'))
        ORDER BY sla_due_at ASC
        LIMIT ?`,
-            [now, limit]
+            [now, limit],
         );
 
         const results: any = {
             processed: 0,
             escalated: 0,
             failed: 0,
-            tasks: []
+            tasks: [],
         };
 
         for (const task of overdueTasks) {
@@ -344,14 +338,14 @@ export class TaskAssignmentService {
             try {
                 const result = await this.escalateTask(task.id, {
                     reason: `SLA breached: Task was due at ${task.sla_due_at}`,
-                    triggerType: ESCALATION_TRIGGERS.SLA_BREACH
+                    triggerType: ESCALATION_TRIGGERS.SLA_BREACH,
                 });
                 results.escalated++;
                 results.tasks.push({
                     taskId: task.id,
                     title: task.title,
                     newLevel: result.escalation.toLevel,
-                    success: true
+                    success: true,
                 });
             } catch (err: any) {
                 results.failed++;
@@ -359,7 +353,7 @@ export class TaskAssignmentService {
                     taskId: task.id,
                     title: task.title,
                     success: false,
-                    error: err.message
+                    error: err.message,
                 });
             }
         }
@@ -397,7 +391,7 @@ export class TaskAssignmentService {
         }
 
         const tasks: any[] = await DbPromise.all(query, params);
-        return tasks.map(t => this._formatTask(t));
+        return tasks.map((t) => this._formatTask(t));
     }
 
     /**
@@ -417,10 +411,10 @@ export class TaskAssignmentService {
          AND t.sla_due_at <= ?
          AND t.status NOT IN ('DONE', 'COMPLETED', 'CANCELLED')
        ORDER BY t.sla_due_at ASC`,
-            [projectId, now.toISOString(), threshold]
+            [projectId, now.toISOString(), threshold],
         );
 
-        return tasks.map(t => this._formatTask(t));
+        return tasks.map((t) => this._formatTask(t));
     }
 
     /**
@@ -433,23 +427,21 @@ export class TaskAssignmentService {
        LEFT JOIN users u ON u.id = e.escalated_to_id
        WHERE e.task_id = ?
        ORDER BY e.created_at DESC`,
-            [taskId]
+            [taskId],
         );
 
-        return escalations.map(e => ({
+        return escalations.map((e) => ({
             id: e.id,
             taskId: e.task_id,
             fromLevel: e.from_level,
             toLevel: e.to_level,
             escalatedToId: e.escalated_to_id,
-            escalatedToName: e.first_name && e.last_name
-                ? `${e.first_name} ${e.last_name}`
-                : null,
+            escalatedToName: e.first_name && e.last_name ? `${e.first_name} ${e.last_name}` : null,
             reason: e.reason,
             triggerType: e.trigger_type,
             resolvedAt: e.resolved_at,
             resolutionNote: e.resolution_note,
-            createdAt: e.created_at
+            createdAt: e.created_at,
         }));
     }
 
@@ -468,7 +460,7 @@ export class TaskAssignmentService {
        LEFT JOIN users u ON u.id = t.assignee_id
        LEFT JOIN users e ON e.id = t.escalated_to_id
        WHERE t.id = ?`,
-            [taskId]
+            [taskId],
         );
 
         if (!task) return null;
@@ -522,7 +514,7 @@ export class TaskAssignmentService {
                     projectName: task.project_name,
                     count: 0,
                     overdue: 0,
-                    byStatus: {} as Record<string, number>
+                    byStatus: {} as Record<string, number>,
                 };
             }
             byProject[task.project_id].count++;
@@ -540,7 +532,7 @@ export class TaskAssignmentService {
             overdue,
             atRisk,
             byProject: Object.values(byProject),
-            generatedAt: new Date().toISOString()
+            generatedAt: new Date().toISOString(),
         };
     }
 
@@ -571,9 +563,10 @@ export class TaskAssignmentService {
             status: row.status,
             priority: row.priority,
             assigneeId: row.assignee_id,
-            assigneeName: row.assignee_first_name && row.assignee_last_name
-                ? `${row.assignee_first_name} ${row.assignee_last_name}`
-                : null,
+            assigneeName:
+                row.assignee_first_name && row.assignee_last_name
+                    ? `${row.assignee_first_name} ${row.assignee_last_name}`
+                    : null,
             assigneeEmail: row.assignee_email,
             dueDate: row.due_date,
             slaHours: row.sla_hours,
@@ -581,14 +574,15 @@ export class TaskAssignmentService {
             slaStatus,
             escalationLevel: row.escalation_level || 0,
             escalatedToId: row.escalated_to_id,
-            escalatedToName: row.escalated_to_first_name && row.escalated_to_last_name
-                ? `${row.escalated_to_first_name} ${row.escalated_to_last_name}`
-                : null,
+            escalatedToName:
+                row.escalated_to_first_name && row.escalated_to_last_name
+                    ? `${row.escalated_to_first_name} ${row.escalated_to_last_name}`
+                    : null,
             lastEscalatedAt: row.last_escalated_at,
             progress: row.progress,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
-            completedAt: row.completed_at
+            completedAt: row.completed_at,
         };
     }
 
@@ -599,7 +593,9 @@ export class TaskAssignmentService {
     private static async _createActivity(projectId: string, taskId: string, type: string, data: any): Promise<void> {
         try {
             // Get organization_id from project
-            const project = (await DbPromise.get<any>('SELECT organization_id FROM projects WHERE id = ?', [projectId])) as { organization_id: string } | undefined;
+            const project = (await DbPromise.get<any>('SELECT organization_id FROM projects WHERE id = ?', [
+                projectId,
+            ])) as { organization_id: string } | undefined;
 
             if (ActivityService?.log) {
                 await ActivityService.log({
@@ -609,7 +605,7 @@ export class TaskAssignmentService {
                     entityType: 'TASK',
                     entityId: taskId,
                     entityName: data.taskTitle || null,
-                    newValue: data
+                    newValue: data,
                 });
             }
         } catch (err: any) {
@@ -626,7 +622,7 @@ export class TaskAssignmentService {
             const levelNames: Record<number, string> = {
                 1: 'Initiative Owner',
                 2: 'PMO Lead',
-                3: 'Project Sponsor'
+                3: 'Project Sponsor',
             };
 
             if (NotificationService?.create) {
@@ -641,11 +637,13 @@ export class TaskAssignmentService {
                     relatedObjectType: 'TASK',
                     relatedObjectId: task.id,
                     isActionable: true,
-                    actionUrl: `/projects/${task.project_id}/tasks/${task.id}`
+                    actionUrl: `/projects/${task.project_id}/tasks/${task.id}`,
                 });
             }
 
-            console.log(`[ESCALATION] Notification sent to ${recipient.firstName} ${recipient.lastName} (${recipient.email})`);
+            console.log(
+                `[ESCALATION] Notification sent to ${recipient.firstName} ${recipient.lastName} (${recipient.email})`,
+            );
         } catch (err: any) {
             console.error(`[ESCALATION] Failed to send notification: ${err.message}`);
         }
@@ -681,8 +679,8 @@ export class TaskAssignmentService {
                     mapping?.pmbok7?.term || 'Activity',
                     mapping?.prince2?.term || 'Activity',
                     JSON.stringify(metadata),
-                    new Date().toISOString()
-                ]
+                    new Date().toISOString(),
+                ],
             );
         } catch (err: any) {
             console.error('[TaskAssignmentService] Audit log failed:', err.message);

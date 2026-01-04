@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { Building2, Plus, CreditCard, Users, CheckCircle, AlertCircle, Coins, ShieldCheck, UserCircle, X, Loader2 } from 'lucide-react';
-import { Api } from '../../services/api';
+import {
+    AlertCircle,
+    Building2,
+    CheckCircle,
+    Coins,
+    CreditCard,
+    Loader2,
+    Plus,
+    ShieldCheck,
+    UserCircle,
+    Users,
+    X,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface OrganizationSettingsProps {
@@ -57,7 +70,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 Api.getOrganization(orgId),
                 Api.getOrganizationMembers(orgId),
                 Api.getOrgTokenBalance(orgId).catch(() => null),
-                Api.getOrgTokenLedger(orgId, 20).catch(() => [])
+                Api.getOrgTokenLedger(orgId, 20).catch(() => []),
             ]);
             // Merge token data into org object for display
             setSelectedOrg({
@@ -69,7 +82,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 trialBudgetTotal: tokenData?.trialBudgetTotal ?? null,
                 trialBudgetRemaining: tokenData?.trialBudgetRemaining ?? null,
                 paygoStatus: tokenData?.paygoStatus ?? null,
-                ledger
+                ledger,
             });
             setMembers(orgMembers);
         } catch (error) {
@@ -99,7 +112,8 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             // If error suggests invalid ID, user knows they need ID
             toast.error(error.message || 'Failed to add member');
         }
-    }; const handleActivateBilling = async () => {
+    };
+    const handleActivateBilling = async () => {
         if (!selectedOrg) return;
         try {
             await Api.activateBilling(selectedOrg.id);
@@ -140,7 +154,8 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     <Building2 size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">No Organization Found</h3>
                     <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                        You are not currently a member of any organization. Create one to get started with team collaboration and token sharing.
+                        You are not currently a member of any organization. Create one to get started with team
+                        collaboration and token sharing.
                     </p>
                     <button
                         onClick={() => setIsCreateOrgModalOpen(true)}
@@ -215,7 +230,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         <Building2 className="text-purple-500" />
                         Organization Settings
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage members, billing, and tokens.</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                        Manage members, billing, and tokens.
+                    </p>
                 </div>
                 {organizations.length > 1 && (
                     <select
@@ -223,8 +240,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         value={selectedOrg?.id}
                         onChange={(e) => handleOrgChange(e.target.value)}
                     >
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                 )}
@@ -239,10 +258,13 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     </h3>
                     <div className="flex items-center justify-between mb-4">
                         <span className="text-slate-600 dark:text-slate-300">Status</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedOrg?.billing_status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                            }`}>
+                        <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                selectedOrg?.billing_status === 'ACTIVE'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}
+                        >
                             {selectedOrg?.billing_status || 'TRIAL'}
                         </span>
                     </div>
@@ -251,7 +273,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                             <div className="flex gap-3">
                                 <AlertCircle size={20} className="text-amber-600 dark:text-amber-500 shrink-0" />
                                 <div>
-                                    <h4 className="font-semibold text-amber-900 dark:text-amber-400 text-sm">Trial Active</h4>
+                                    <h4 className="font-semibold text-amber-900 dark:text-amber-400 text-sm">
+                                        Trial Active
+                                    </h4>
                                     <p className="text-amber-700 dark:text-amber-500/80 text-xs mt-1">
                                         Upgrade to a paid plan to unlock full features and remove limits.
                                     </p>
@@ -282,12 +306,16 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
                     {/* Trial Usage Bar - uses API values, no hardcode */}
                     {(selectedOrg?.billing_status === 'TRIAL' || selectedOrg?.organization_type === 'TRIAL') &&
-                        selectedOrg?.trialBudgetTotal && selectedOrg?.trialBudgetRemaining !== null && (
+                        selectedOrg?.trialBudgetTotal &&
+                        selectedOrg?.trialBudgetRemaining !== null && (
                             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                                 {(() => {
                                     const total = selectedOrg.trialBudgetTotal;
                                     const remaining = selectedOrg.trialBudgetRemaining ?? 0;
-                                    const usedPct = Math.min(100, Math.max(0, Math.round((1 - remaining / total) * 100)));
+                                    const usedPct = Math.min(
+                                        100,
+                                        Math.max(0, Math.round((1 - remaining / total) * 100)),
+                                    );
                                     const lowThreshold = total * 0.1;
                                     const medThreshold = total * 0.3;
                                     return (
@@ -298,9 +326,13 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                                             </div>
                                             <div className="w-full bg-slate-200 dark:bg-navy-800 rounded-full h-2.5">
                                                 <div
-                                                    className={`h-2.5 rounded-full transition-all ${remaining < lowThreshold ? 'bg-red-500' :
-                                                        remaining < medThreshold ? 'bg-amber-500' : 'bg-green-500'
-                                                        }`}
+                                                    className={`h-2.5 rounded-full transition-all ${
+                                                        remaining < lowThreshold
+                                                            ? 'bg-red-500'
+                                                            : remaining < medThreshold
+                                                              ? 'bg-amber-500'
+                                                              : 'bg-green-500'
+                                                    }`}
                                                     style={{ width: `${usedPct}%` }}
                                                 />
                                             </div>
@@ -319,8 +351,8 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         {selectedOrg?.billing_status === 'ACTIVE'
                             ? 'Pay-as-you-go billing active'
                             : selectedOrg?.paygoStatus === 'PAYGO_PENDING'
-                                ? '⚠️ Payment required - usage exceeds balance'
-                                : 'Trial tokens refresh on upgrade'}
+                              ? '⚠️ Payment required - usage exceeds balance'
+                              : 'Trial tokens refresh on upgrade'}
                     </div>
                 </div>
             </div>
@@ -340,25 +372,37 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                         <table className="w-full text-sm">
                             <thead className="bg-slate-50 dark:bg-navy-950 sticky top-0">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Reason</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">When</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                        Type
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                        Amount
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                        Reason
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                                        When
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {selectedOrg.ledger.slice(0, 10).map((entry: any) => (
                                     <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="px-4 py-2">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${entry.type === 'CREDIT'
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                                }`}>
+                                            <span
+                                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                    entry.type === 'CREDIT'
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                }`}
+                                            >
                                                 {entry.type}
                                             </span>
                                         </td>
                                         <td className="px-4 py-2 font-mono text-navy-900 dark:text-white">
-                                            {entry.type === 'CREDIT' ? '+' : '-'}{entry.amount?.toLocaleString()}
+                                            {entry.type === 'CREDIT' ? '+' : '-'}
+                                            {entry.amount?.toLocaleString()}
                                         </td>
                                         <td className="px-4 py-2 text-slate-600 dark:text-slate-300 truncate max-w-xs">
                                             {entry.reason || entry.ref_entity_type || '-'}
@@ -394,7 +438,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     <div className="p-4 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/10 animate-in slide-in-from-top-2">
                         <div className="flex gap-4 items-end">
                             <div className="flex-1">
-                                <label className="block text-xs font-semibold text-slate-500 mb-1">User ID / Email</label>
+                                <label className="block text-xs font-semibold text-slate-500 mb-1">
+                                    User ID / Email
+                                </label>
                                 <input
                                     type="text"
                                     value={newMemberEmail}
@@ -431,23 +477,34 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
                 <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {members.map((member) => (
-                        <div key={member.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <div
+                            key={member.id}
+                            className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                        >
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-800 flex items-center justify-center text-slate-500 font-bold">
                                     {member.first_name ? member.first_name[0] : <UserCircle size={20} />}
                                 </div>
                                 <div>
                                     <div className="font-semibold text-navy-900 dark:text-white text-sm">
-                                        {member.first_name} {member.last_name} {member.user_id === currentUser.id && '(You)'}
+                                        {member.first_name} {member.last_name}{' '}
+                                        {member.user_id === currentUser.id && '(You)'}
                                     </div>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">{member.email || member.user_id}</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                                        {member.email || member.user_id}
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${member.role === 'OWNER' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-500/30' :
-                                    member.role === 'ADMIN' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500/30' :
-                                        'bg-slate-100 text-slate-700 border-slate-200 dark:bg-navy-800 dark:text-slate-300 dark:border-slate-700'
-                                    }`}>
+                                <span
+                                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${
+                                        member.role === 'OWNER'
+                                            ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-500/30'
+                                            : member.role === 'ADMIN'
+                                              ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500/30'
+                                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-navy-800 dark:text-slate-300 dark:border-slate-700'
+                                    }`}
+                                >
                                     {member.role === 'OWNER' && <ShieldCheck size={12} className="mr-1" />}
                                     {member.role}
                                 </span>

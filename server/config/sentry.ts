@@ -1,13 +1,13 @@
 /**
  * Sentry Configuration for Backend
- * 
+ *
  * This module initializes Sentry error monitoring for the Express server.
  * Import this at the very top of server/index.js, before other imports.
  */
 
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
-import { Express, Request, Response, NextFunction } from 'express';
+import { Express, NextFunction, Request, Response } from 'express';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isStaging = process.env.NODE_ENV === 'staging';
@@ -76,7 +76,7 @@ export function initSentry(app: Express): SentryHandlers {
             // Remove sensitive data from request body
             if (event.request && event.request.data) {
                 const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
-                sensitiveFields.forEach(field => {
+                sensitiveFields.forEach((field) => {
                     if (typeof event.request.data === 'object' && event.request.data && field in event.request.data) {
                         (event.request.data as Record<string, unknown>)[field] = '[REDACTED]';
                     }
@@ -135,7 +135,7 @@ export function captureException(error: Error, context: Context = {}): void {
         return;
     }
 
-    Sentry.withScope(scope => {
+    Sentry.withScope((scope) => {
         if (context.user) {
             scope.setUser({
                 id: context.user.id,
@@ -160,13 +160,17 @@ export function captureException(error: Error, context: Context = {}): void {
 /**
  * Capture message manually
  */
-export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context: Context = {}): void {
+export function captureMessage(
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info',
+    context: Context = {},
+): void {
     if (!isEnabled) {
         console.log(`[${level.toUpperCase()}]`, message, context);
         return;
     }
 
-    Sentry.withScope(scope => {
+    Sentry.withScope((scope) => {
         if (context.tags) {
             Object.entries(context.tags).forEach(([key, value]) => {
                 scope.setTag(key, value);
@@ -217,4 +221,3 @@ export function clearUser(): void {
 
 // Export raw Sentry for advanced usage
 export { Sentry };
-

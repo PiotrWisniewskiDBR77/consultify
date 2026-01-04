@@ -1,13 +1,14 @@
 /**
  * TaskService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for TaskService - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TaskService } from '../../../../src/services/TaskService.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import { TaskService } from '../../../../src/services/TaskService.js';
 
 describe('TaskService', () => {
     let mockDb: IDatabase;
@@ -32,9 +33,7 @@ describe('TaskService', () => {
     describe('getTasks', () => {
         it('should return tasks with filters', async () => {
             (mockDb.query as ReturnType<typeof vi.fn>).mockResolvedValue({
-                rows: [
-                    { id: 'task-1', title: 'Task 1', status: 'todo' },
-                ],
+                rows: [{ id: 'task-1', title: 'Task 1', status: 'todo' }],
             });
 
             const tasks = await taskService.getTasks({ projectId: 'project-123' });
@@ -109,4 +108,3 @@ describe('TaskService', () => {
         });
     });
 });
-

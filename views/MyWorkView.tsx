@@ -3,13 +3,14 @@
  * 65/35 layout: WorkCenter (left) + NotificationsHub (right)
  */
 
-import React, { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Brain } from 'lucide-react';
-import { SplitLayout } from '../components/SplitLayout';
-import { WorkCenter } from '../components/MyWork/WorkCenter';
+import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { NotificationsHub } from '../components/MyWork/NotificationsHub';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
+import { WorkCenter } from '../components/MyWork/WorkCenter';
+import { SplitLayout } from '../components/SplitLayout';
 
 interface MyWorkViewProps {
     currentUser?: {
@@ -20,12 +21,9 @@ interface MyWorkViewProps {
     onNavigate?: (view: string) => void;
 }
 
-export const MyWorkView: React.FC<MyWorkViewProps> = ({
-    currentUser,
-    onNavigate
-}) => {
+export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate }) => {
     const { t } = useTranslation();
-    
+
     // Task modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -85,10 +83,7 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({
 
                 {/* Notifications Hub - 35% */}
                 <div className="w-[35%] flex flex-col">
-                    <NotificationsHub
-                        onOpenTask={handleTaskClick}
-                        onOpenDecision={handleDecisionClick}
-                    />
+                    <NotificationsHub onOpenTask={handleTaskClick} onOpenDecision={handleDecisionClick} />
                 </div>
             </div>
 

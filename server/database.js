@@ -30,6 +30,18 @@ if (process.env.MOCK_DB === 'true') {
             if (cb) cb();
             return this;
         },
+        prepare: function (sql, params) {
+            return {
+                run: function (params, cb) {
+                    const callback = typeof params === 'function' ? params : cb;
+                    if (typeof callback === 'function') callback.call({ lastID: 1, changes: 1 }, null);
+                    return this;
+                },
+                finalize: function (cb) {
+                    if (typeof cb === 'function') cb();
+                }
+            };
+        },
         on: function () { return this; },
         close: function (cb) {
             if (cb) cb(null);
@@ -52,5 +64,10 @@ if (process.env.MOCK_DB === 'true') {
     }
 }
 
+
+// Export function for compatibility with TypeScript modules
+export function getDatabase() {
+    return db;
+}
 
 export default db;

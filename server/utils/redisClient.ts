@@ -9,8 +9,8 @@ let client: any;
 if (process.env.MOCK_REDIS === 'true') {
     console.log('[Redis] Using Mock Client');
     client = {
-        on: () => { },
-        connect: async () => { },
+        on: () => {},
+        connect: async () => {},
         isOpen: true,
         get: async () => null,
         set: async () => 'OK',
@@ -19,11 +19,11 @@ if (process.env.MOCK_REDIS === 'true') {
         decr: async () => 0,
         expire: async () => true,
         duplicate: () => client,
-        quit: async () => { },
+        quit: async () => {},
     };
 } else {
     client = createClient({
-        url: redisUrl
+        url: redisUrl,
     });
 
     client.on('error', (err: any) => console.error('[Redis] Client Error', err));

@@ -1,6 +1,6 @@
 /**
  * RadarChart (Spider Chart)
- * 
+ *
  * 7-axis visualization for DRD maturity:
  * - Actual level (blue filled area)
  * - Target level (green dashed line)
@@ -12,60 +12,60 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    RadarChart as RechartsRadar,
-    PolarGrid,
+    Legend,
     PolarAngleAxis,
+    PolarGrid,
     PolarRadiusAxis,
     Radar,
+    RadarChart as RechartsRadar,
+    ResponsiveContainer,
     Tooltip,
-    Legend,
-    ResponsiveContainer
 } from 'recharts';
 
 // DRD 7 Axes configuration
 const DRD_AXES = {
-    processes: { 
-        namePl: 'Procesy Cyfrowe', 
-        nameEn: 'Digital Processes', 
+    processes: {
+        namePl: 'Procesy Cyfrowe',
+        nameEn: 'Digital Processes',
         icon: '⚙️',
-        maxLevel: 7
+        maxLevel: 7,
     },
-    digitalProducts: { 
-        namePl: 'Produkty Cyfrowe', 
-        nameEn: 'Digital Products', 
+    digitalProducts: {
+        namePl: 'Produkty Cyfrowe',
+        nameEn: 'Digital Products',
         icon: '📦',
-        maxLevel: 5 
+        maxLevel: 5,
     },
-    businessModels: { 
-        namePl: 'Modele Biznesowe', 
-        nameEn: 'Business Models', 
+    businessModels: {
+        namePl: 'Modele Biznesowe',
+        nameEn: 'Business Models',
         icon: '💼',
-        maxLevel: 5 
+        maxLevel: 5,
     },
-    dataManagement: { 
-        namePl: 'Zarządzanie Danymi', 
-        nameEn: 'Data Management', 
+    dataManagement: {
+        namePl: 'Zarządzanie Danymi',
+        nameEn: 'Data Management',
         icon: '📊',
-        maxLevel: 7 
+        maxLevel: 7,
     },
-    culture: { 
-        namePl: 'Kultura Transformacji', 
-        nameEn: 'Transformation Culture', 
+    culture: {
+        namePl: 'Kultura Transformacji',
+        nameEn: 'Transformation Culture',
         icon: '🎯',
-        maxLevel: 5 
+        maxLevel: 5,
     },
-    cybersecurity: { 
-        namePl: 'Cyberbezpieczeństwo', 
-        nameEn: 'Cybersecurity', 
+    cybersecurity: {
+        namePl: 'Cyberbezpieczeństwo',
+        nameEn: 'Cybersecurity',
         icon: '🔒',
-        maxLevel: 5 
+        maxLevel: 5,
     },
-    aiMaturity: { 
-        namePl: 'Dojrzałość AI', 
-        nameEn: 'AI Maturity', 
+    aiMaturity: {
+        namePl: 'Dojrzałość AI',
+        nameEn: 'AI Maturity',
         icon: '🤖',
-        maxLevel: 5 
-    }
+        maxLevel: 5,
+    },
 };
 
 interface AxisData {
@@ -91,8 +91,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
     if (active && payload && payload.length) {
         const axisKey = Object.keys(DRD_AXES).find(
-            key => DRD_AXES[key as keyof typeof DRD_AXES].namePl === label || 
-                   DRD_AXES[key as keyof typeof DRD_AXES].nameEn === label
+            (key) =>
+                DRD_AXES[key as keyof typeof DRD_AXES].namePl === label ||
+                DRD_AXES[key as keyof typeof DRD_AXES].nameEn === label,
         );
         const axisConfig = axisKey ? DRD_AXES[axisKey as keyof typeof DRD_AXES] : null;
 
@@ -104,20 +105,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 <div className="space-y-1 text-sm">
                     {payload.map((entry: any, index: number) => (
                         <div key={index} className="flex items-center gap-2">
-                            <div 
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                            />
-                            <span className="text-slate-600 dark:text-slate-400">
-                                {entry.name}:
-                            </span>
-                            <span className="font-medium text-navy-900 dark:text-white">
-                                {entry.value.toFixed(1)}
-                            </span>
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                            <span className="text-slate-600 dark:text-slate-400">{entry.name}:</span>
+                            <span className="font-medium text-navy-900 dark:text-white">{entry.value.toFixed(1)}</span>
                             {axisConfig && (
-                                <span className="text-slate-400 dark:text-slate-500">
-                                    / {axisConfig.maxLevel}
-                                </span>
+                                <span className="text-slate-400 dark:text-slate-500">/ {axisConfig.maxLevel}</span>
                             )}
                         </div>
                     ))}
@@ -135,7 +127,7 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
     benchmarkData,
     height = 400,
     animated = true,
-    className = ''
+    className = '',
 }) => {
     const { i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -150,19 +142,19 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
                 actual: data.actual || 0,
                 target: data.target || 0,
                 benchmark: benchmarkData?.[key] || 4, // Default benchmark
-                fullMark: config.maxLevel
+                fullMark: config.maxLevel,
             };
         });
     }, [axisData, benchmarkData, isPolish]);
 
     // Calculate average scores
     const averageActual = useMemo(() => {
-        const values = chartData.map(d => d.actual).filter(v => v > 0);
+        const values = chartData.map((d) => d.actual).filter((v) => v > 0);
         return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
     }, [chartData]);
 
     const averageTarget = useMemo(() => {
-        const values = chartData.map(d => d.target).filter(v => v > 0);
+        const values = chartData.map((d) => d.target).filter((v) => v > 0);
         return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
     }, [chartData]);
 
@@ -173,14 +165,16 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full bg-blue-500" />
                     <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {isPolish ? 'Aktualny' : 'Actual'}: <strong className="text-navy-900 dark:text-white">{averageActual.toFixed(1)}</strong>
+                        {isPolish ? 'Aktualny' : 'Actual'}:{' '}
+                        <strong className="text-navy-900 dark:text-white">{averageActual.toFixed(1)}</strong>
                     </span>
                 </div>
                 {showTarget && (
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-green-500" />
                         <span className="text-sm text-slate-600 dark:text-slate-400">
-                            {isPolish ? 'Docelowy' : 'Target'}: <strong className="text-navy-900 dark:text-white">{averageTarget.toFixed(1)}</strong>
+                            {isPolish ? 'Docelowy' : 'Target'}:{' '}
+                            <strong className="text-navy-900 dark:text-white">{averageTarget.toFixed(1)}</strong>
                         </span>
                     </div>
                 )}
@@ -196,25 +190,19 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
 
             {/* Chart */}
             <ResponsiveContainer width="100%" height={height}>
-                <RechartsRadar 
-                    data={chartData}
-                    margin={{ top: 20, right: 40, bottom: 20, left: 40 }}
-                >
-                    <PolarGrid 
-                        stroke="#e2e8f0" 
-                        className="dark:stroke-white/10"
-                    />
-                    <PolarAngleAxis 
-                        dataKey="axis" 
-                        tick={{ 
-                            fill: '#64748b', 
+                <RechartsRadar data={chartData} margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
+                    <PolarGrid stroke="#e2e8f0" className="dark:stroke-white/10" />
+                    <PolarAngleAxis
+                        dataKey="axis"
+                        tick={{
+                            fill: '#64748b',
                             fontSize: 12,
-                            fontWeight: 500
+                            fontWeight: 500,
                         }}
                         className="dark:fill-slate-400"
                     />
-                    <PolarRadiusAxis 
-                        angle={90} 
+                    <PolarRadiusAxis
+                        angle={90}
                         domain={[0, 7]}
                         tick={{ fill: '#94a3b8', fontSize: 10 }}
                         tickCount={8}
@@ -269,19 +257,17 @@ export const RadarChartComponent: React.FC<RadarChartProps> = ({
                     />
 
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend 
-                        wrapperStyle={{ 
+                    <Legend
+                        wrapperStyle={{
                             paddingTop: '20px',
-                            fontSize: '12px'
+                            fontSize: '12px',
                         }}
                     />
                 </RechartsRadar>
             </ResponsiveContainer>
 
             {/* Axis icons overlay (optional decorative) */}
-            <div className="absolute inset-0 pointer-events-none">
-                {/* Could add floating axis icons here */}
-            </div>
+            <div className="absolute inset-0 pointer-events-none">{/* Could add floating axis icons here */}</div>
         </div>
     );
 };
@@ -294,24 +280,17 @@ export const RadarChartMini: React.FC<{
     const chartData = Object.entries(DRD_AXES).map(([key, config]) => ({
         axis: config.icon,
         actual: axisData[key]?.actual || 0,
-        fullMark: config.maxLevel
+        fullMark: config.maxLevel,
     }));
 
     return (
         <ResponsiveContainer width={size} height={size}>
             <RechartsRadar data={chartData}>
                 <PolarGrid stroke="#e2e8f0" />
-                <Radar
-                    dataKey="actual"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                />
+                <Radar dataKey="actual" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} strokeWidth={2} />
             </RechartsRadar>
         </ResponsiveContainer>
     );
 };
 
 export default RadarChartComponent;
-

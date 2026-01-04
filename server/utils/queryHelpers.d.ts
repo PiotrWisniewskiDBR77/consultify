@@ -45,11 +45,11 @@ export declare function buildInPlaceholders(values: unknown[]): string;
 /**
  * Build WHERE clause for organization filtering
  */
-export declare function buildOrgFilter(tableAlias: string, orgId: string): string;
+export declare function buildOrgFilter(tableAlias: string, _orgId: string): string;
 /**
  * Build WHERE clause for user filtering (assignee or reporter)
  */
-export declare function buildUserFilter(tableAlias: string, userId: string): string;
+export declare function buildUserFilter(tableAlias: string, _userId: string): string;
 /**
  * Execute transaction (for databases that support it)
  */

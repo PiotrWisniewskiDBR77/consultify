@@ -1,23 +1,24 @@
 /**
  * GeneratedInitiativeCard
- * 
+ *
  * Card component for displaying a generated initiative with edit/remove actions.
  */
 
-import React, { useState } from 'react';
 import {
+    AlertTriangle,
     ChevronDown,
     ChevronUp,
+    Clock,
+    DollarSign,
     Edit,
+    Sparkles,
+    Target,
     Trash2,
     TrendingUp,
-    DollarSign,
-    Clock,
-    Target,
-    AlertTriangle,
-    Sparkles
 } from 'lucide-react';
-import { GeneratedInitiative, DRDAxis } from '../../types';
+import React, { useState } from 'react';
+
+import { DRDAxis, GeneratedInitiative } from '../../types';
 
 interface GeneratedInitiativeCardProps {
     initiative: GeneratedInitiative;
@@ -34,7 +35,7 @@ const AXIS_LABELS: Record<DRDAxis, string> = {
     dataManagement: 'Data Management',
     culture: 'Organizational Culture',
     cybersecurity: 'Cybersecurity',
-    aiMaturity: 'AI Maturity'
+    aiMaturity: 'AI Maturity',
 };
 
 const AXIS_COLORS: Record<DRDAxis, string> = {
@@ -44,7 +45,7 @@ const AXIS_COLORS: Record<DRDAxis, string> = {
     dataManagement: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
     culture: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     cybersecurity: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    aiMaturity: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+    aiMaturity: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
 };
 
 export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = ({
@@ -52,7 +53,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
     onEdit,
     onRemove,
     isSelected,
-    onSelect
+    onSelect,
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -76,13 +77,12 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
     };
 
     return (
-        <div className={`
+        <div
+            className={`
             rounded-xl border-2 overflow-hidden transition-all
-            ${isSelected 
-                ? 'border-purple-500 shadow-lg shadow-purple-500/10' 
-                : 'border-slate-200 dark:border-white/10'
-            }
-        `}>
+            ${isSelected ? 'border-purple-500 shadow-lg shadow-purple-500/10' : 'border-slate-200 dark:border-white/10'}
+        `}
+        >
             {/* Header */}
             <div className="p-4 bg-white dark:bg-navy-900">
                 <div className="flex items-start justify-between gap-4">
@@ -94,17 +94,19 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
                                     AI
                                 </span>
                             )}
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${AXIS_COLORS[initiative.sourceAxisId]}`}>
+                            <span
+                                className={`px-2 py-0.5 rounded text-xs font-medium ${AXIS_COLORS[initiative.sourceAxisId]}`}
+                            >
                                 {AXIS_LABELS[initiative.sourceAxisId]}
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getRiskColor(initiative.riskLevel)}`}>
+                            <span
+                                className={`px-2 py-0.5 rounded text-xs font-medium ${getRiskColor(initiative.riskLevel)}`}
+                            >
                                 {initiative.riskLevel} Risk
                             </span>
                         </div>
 
-                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-1">
-                            {initiative.name}
-                        </h3>
+                        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-1">{initiative.name}</h3>
 
                         <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
                             {initiative.description}
@@ -162,9 +164,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
                         </div>
                         <div>
                             <p className="text-xs text-slate-500 dark:text-slate-400">Timeline</p>
-                            <p className="text-sm font-bold text-navy-900 dark:text-white">
-                                {initiative.timeline}
-                            </p>
+                            <p className="text-sm font-bold text-navy-900 dark:text-white">{initiative.timeline}</p>
                         </div>
                     </div>
 
@@ -174,9 +174,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
                         </div>
                         <div>
                             <p className="text-xs text-slate-500 dark:text-slate-400">Priority</p>
-                            <p className="text-sm font-bold text-navy-900 dark:text-white">
-                                #{initiative.priority}
-                            </p>
+                            <p className="text-sm font-bold text-navy-900 dark:text-white">#{initiative.priority}</p>
                         </div>
                     </div>
                 </div>
@@ -188,21 +186,23 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
                 className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-950 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
             >
                 {isExpanded ? (
-                    <>Hide Details <ChevronUp size={16} /></>
+                    <>
+                        Hide Details <ChevronUp size={16} />
+                    </>
                 ) : (
-                    <>Show Details <ChevronDown size={16} /></>
+                    <>
+                        Show Details <ChevronDown size={16} />
+                    </>
                 )}
             </button>
 
             {isExpanded && (
                 <div className="px-4 py-3 bg-slate-50 dark:bg-navy-950 border-t border-slate-200 dark:border-white/10">
-                    <h4 className="text-sm font-medium text-navy-900 dark:text-white mb-2">
-                        Objectives
-                    </h4>
+                    <h4 className="text-sm font-medium text-navy-900 dark:text-white mb-2">Objectives</h4>
                     {initiative.objectives && initiative.objectives.length > 0 ? (
                         <ul className="space-y-1.5">
                             {initiative.objectives.map((obj, idx) => (
-                                <li 
+                                <li
                                     key={idx}
                                     className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
                                 >
@@ -221,7 +221,8 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
                         <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-500/20 flex items-start gap-2">
                             <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
                             <p className="text-sm text-red-600 dark:text-red-400">
-                                High-risk initiative. Ensure proper governance and risk mitigation strategies are in place.
+                                High-risk initiative. Ensure proper governance and risk mitigation strategies are in
+                                place.
                             </p>
                         </div>
                     )}
@@ -230,4 +231,3 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
         </div>
     );
 };
-

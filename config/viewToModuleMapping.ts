@@ -1,6 +1,6 @@
 /**
  * View to Module Mapping
- * 
+ *
  * Maps all AppView values to their corresponding help module.
  * Used by the HelpContext to determine which documentation to show.
  */
@@ -87,7 +87,11 @@ export const VIEW_TO_MODULE_MAP: Record<string, ViewHelpMapping> = {
     [AppView.FULL_STEP1_MODELS]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'models' },
     [AppView.FULL_STEP1_DATA]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'data' },
     [AppView.FULL_STEP1_CULTURE]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'culture' },
-    [AppView.FULL_STEP1_CYBERSECURITY]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'cybersecurity' },
+    [AppView.FULL_STEP1_CYBERSECURITY]: {
+        moduleId: 'assessment',
+        cardId: 'assessment-drd',
+        subSection: 'cybersecurity',
+    },
     [AppView.FULL_STEP1_AI]: { moduleId: 'assessment', cardId: 'assessment-drd', subSection: 'ai' },
 
     // ==========================================
@@ -257,4 +261,3 @@ export function getViewsForModule(moduleId: HelpModuleId): string[] {
         .filter(([_, mapping]) => mapping.moduleId === moduleId)
         .map(([view]) => view);
 }
-

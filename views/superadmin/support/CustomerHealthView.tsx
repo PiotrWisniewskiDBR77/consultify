@@ -2,10 +2,11 @@
  * Customer Health View
  */
 
-import React, { useState, useEffect } from 'react';
-import { Activity, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
-import { Api } from '../../../services/api';
+import { Activity, AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const CustomerHealthView: React.FC = () => {
     const [selectedOrgId, setSelectedOrgId] = useState<string>('');
@@ -51,11 +52,16 @@ export const CustomerHealthView: React.FC = () => {
 
     const getHealthColor = (healthLevel: string) => {
         switch (healthLevel?.toLowerCase()) {
-            case 'excellent': return 'text-green-400';
-            case 'good': return 'text-green-300';
-            case 'fair': return 'text-yellow-400';
-            case 'poor': return 'text-red-400';
-            default: return 'text-slate-400';
+            case 'excellent':
+                return 'text-green-400';
+            case 'good':
+                return 'text-green-300';
+            case 'fair':
+                return 'text-yellow-400';
+            case 'poor':
+                return 'text-red-400';
+            default:
+                return 'text-slate-400';
         }
     };
 
@@ -72,8 +78,10 @@ export const CustomerHealthView: React.FC = () => {
                     className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
                 >
                     <option value="">Select Organization</option>
-                    {organizations.map(org => (
-                        <option key={org.id} value={org.id}>{org.name}</option>
+                    {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                            {org.name}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -101,9 +109,7 @@ export const CustomerHealthView: React.FC = () => {
                             <h3 className="text-slate-400 text-sm">Engagement</h3>
                             <TrendingUp className="text-green-400" size={20} />
                         </div>
-                        <div className="text-3xl font-bold text-white">
-                            {health.engagement_level || 'N/A'}
-                        </div>
+                        <div className="text-3xl font-bold text-white">{health.engagement_level || 'N/A'}</div>
                         {health.adoption_score !== null && (
                             <div className="mt-2 text-sm text-slate-400">
                                 Adoption Score: <span className="text-green-400">{health.adoption_score}%</span>
@@ -115,12 +121,8 @@ export const CustomerHealthView: React.FC = () => {
                             <h3 className="text-slate-400 text-sm">Support</h3>
                             <AlertTriangle className="text-yellow-400" size={20} />
                         </div>
-                        <div className="text-3xl font-bold text-white">
-                            {health.open_tickets_count || 0}
-                        </div>
-                        <div className="mt-2 text-sm text-slate-400">
-                            Open Tickets
-                        </div>
+                        <div className="text-3xl font-bold text-white">{health.open_tickets_count || 0}</div>
+                        <div className="mt-2 text-sm text-slate-400">Open Tickets</div>
                     </div>
                 </div>
             ) : (
@@ -131,10 +133,4 @@ export const CustomerHealthView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

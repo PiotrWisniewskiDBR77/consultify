@@ -12,13 +12,14 @@
 
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
 import * as NotificationServiceModule from '../services/notificationService.js';
 const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
-import * as auditLogger from '../utils/auditLogger.js';
+import * as auditLogger from '../dist/utils/auditLogger.js';
 
 // Request type definitions
 const REQUEST_TYPES = {
@@ -591,6 +592,7 @@ router.get('/stats', verifyToken, async (req, res) => {
 });
 
 export default router;
+
 
 
 

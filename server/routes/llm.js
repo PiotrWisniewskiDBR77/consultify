@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import verifyToken from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
@@ -66,9 +66,9 @@ router.post('/test', verifyToken, async (req, res) => {
 // Returns full health status for all providers, fallback chain, and circuit breaker states
 router.get('/status', async (req, res) => {
     try {
-        const { llmConfigService   } = await import('../ai/llmConfigService.js');
-        const { generateQuickHealthReport, testSingleProvider   } = await import('../ai/startupValidator.js');
-        const circuitBreakerModule = await import('../ai/circuitBreaker.js');
+        const { llmConfigService   } = await import('../services/ai/llmConfigService.js');
+        const { generateQuickHealthReport, testSingleProvider   } = await import('../services/ai/startupValidator.js');
+        const circuitBreakerModule = await import('../services/ai/circuitBreaker.js');
         const circuitBreaker = circuitBreakerModule.default || circuitBreakerModule;
 
         // Initialize if not already
@@ -175,7 +175,7 @@ router.put('/providers/:id/tier', verifyToken, async (req, res) => {
             return res.status(403).json({ success: false, error: 'Unauthorized' });
         }
 
-        const { llmConfigService   } = await import('../ai/llmConfigService.js');
+        const { llmConfigService   } = await import('../services/ai/llmConfigService.js');
         await llmConfigService.initialize();
 
         // Map ID (which might be 'openai', 'google') to provider ID
@@ -209,7 +209,7 @@ router.post('/status/test/:provider', async (req, res) => {
     const { provider } = req.params;
 
     try {
-        const { testSingleProvider   } = await import('../ai/startupValidator.js');
+        const { testSingleProvider   } = await import('../services/ai/startupValidator.js');
         const result = await testSingleProvider(provider);
 
         res.json({
@@ -231,7 +231,7 @@ router.post('/status/test/:provider', async (req, res) => {
 // POST /api/llm/status/refresh - Force refresh all provider health checks
 router.post('/status/refresh', async (req, res) => {
     try {
-        const { validateOnStartup   } = await import('../ai/startupValidator.js');
+        const { validateOnStartup   } = await import('../services/ai/startupValidator.js');
 
         // Run full validation
         const healthReport = await validateOnStartup({
@@ -356,8 +356,8 @@ router.post('/test-fallback', async (req, res) => {
 // POST /api/llm/test - Quick LLM availability test
 router.post('/test', async (req, res) => {
     try {
-        const { LLMService   } = await import('../ai/llmService.js');
-        const { ModelRouter   } = await import('../ai/modelRouter.js');
+        const { LLMService   } = await import('../services/ai/llmService.js');
+        const { ModelRouter   } = await import('../services/ai/modelRouter.js');
 
         const modelRouter = new ModelRouter();
         const llmService = new LLMService();
@@ -395,7 +395,7 @@ router.post('/test', async (req, res) => {
 // GET /api/llm/redis-status - Public Redis status check
 router.get('/redis-status', async (req, res) => {
     try {
-        const { isRedisConnected, healthCheck   } = await import('../ai/redisClient.js');
+        const { isRedisConnected, healthCheck   } = await import('../services/ai/redisClient.js');
         const connected = isRedisConnected();
         const health = await healthCheck();
 
@@ -419,7 +419,7 @@ router.get('/redis-status', async (req, res) => {
 // GET /api/llm/alerting-status - Public alerting status check
 router.get('/alerting-status', async (req, res) => {
     try {
-        const { alertingService   } = await import('../ai/alerting.js');
+        const { alertingService   } = await import('../services/ai/alerting.js');
         const status = alertingService.getStatus();
 
         res.json({
@@ -441,7 +441,7 @@ router.get('/alerting-status', async (req, res) => {
 // GET /api/llm/observability-status - Public observability status check
 router.get('/observability-status', async (req, res) => {
     try {
-        const { getStatus, initLangfuse   } = await import('../ai/observability.js');
+        const { getStatus, initLangfuse   } = await import('../services/ai/observability.js');
         const status = getStatus();
 
         // Try to initialize if not already
@@ -471,9 +471,9 @@ router.get('/observability-status', async (req, res) => {
 // GET /api/llm/comprehensive-report-status - Status of comprehensive report generator
 router.get('/comprehensive-report-status', async (req, res) => {
     try {
-        const { comprehensiveReportGenerator   } = await import('../ai/comprehensiveReportGenerator.js');
-        const { webResearchService   } = await import('../ai/webResearchService.js');
-        const { contextBuilder   } = await import('../ai/aiContext.js');
+        const { comprehensiveReportGenerator   } = await import('../services/ai/comprehensiveReportGenerator.js');
+        const { webResearchService   } = await import('../services/ai/webResearchService.js');
+        const { contextBuilder   } = await import('../services/ai/aiContext.js');
 
         res.json({
             comprehensiveReportGenerator: comprehensiveReportGenerator.getStatus(),
@@ -492,7 +492,7 @@ router.get('/comprehensive-report-status', async (req, res) => {
 // GET /api/llm/metrics - Prometheus-compatible metrics endpoint (PUBLIC for scraping)
 router.get('/metrics', async (req, res) => {
     try {
-        const metricsModule = await import('../ai/metrics.js');
+        const metricsModule = await import('../services/ai/metrics.js');
         const metrics = metricsModule.default || metricsModule;
         const format = req.query.format || 'prometheus';
 
@@ -510,7 +510,7 @@ router.get('/metrics', async (req, res) => {
 // GET /api/llm/health/status - System-wide AI health status
 router.get('/health/status', verifyToken, async (req, res) => {
     try {
-        const { AIHealthService   } = await import('../ai/aiHealthService.js');
+        const { AIHealthService   } = await import('../services/ai/aiHealthService.js');
         const status = await AIHealthService.getStatus();
         res.json(status);
     } catch (err) {
@@ -524,13 +524,13 @@ router.post('/health/test/:capability', verifyToken, async (req, res) => {
     const { context, sendAlerts = false } = req.body;
 
     try {
-        const { AIHealthService   } = await import('../ai/aiHealthService.js');
+        const { AIHealthService   } = await import('../services/ai/aiHealthService.js');
         const results = await AIHealthService.testCapability(capability, context);
         
         // If test failed and alerts are enabled, trigger alert
         if (results.status === 'FAILED' && sendAlerts) {
             try {
-                const AIHealthAlertServiceModule = await import('../ai/aiHealthAlertService.js');
+                const AIHealthAlertServiceModule = await import('../services/ai/aiHealthAlertService.js');
                 const AIHealthAlertService = AIHealthAlertServiceModule.default || AIHealthAlertServiceModule;
                 const alertResult = await AIHealthAlertService.triggerHealthAlert(
                     { results: { [capability]: results } },
@@ -556,13 +556,13 @@ router.post('/health/test-all', verifyToken, async (req, res) => {
     const { sendAlerts = true } = req.body;
     
     try {
-        const { AIHealthService   } = await import('../ai/aiHealthService.js');
+        const { AIHealthService   } = await import('../services/ai/aiHealthService.js');
         const testResults = await AIHealthService.runAllTests();
         
         // If any test failed and alerts are enabled, trigger alerts
         if (!testResults.summary.allPassed && sendAlerts) {
             try {
-                const AIHealthAlertServiceModule = await import('../ai/aiHealthAlertService.js');
+                const AIHealthAlertServiceModule = await import('../services/ai/aiHealthAlertService.js');
                 const AIHealthAlertService = AIHealthAlertServiceModule.default || AIHealthAlertServiceModule;
                 const alertResult = await AIHealthAlertService.triggerHealthAlert(
                     testResults,
@@ -588,7 +588,7 @@ router.get('/health/alerts', verifyToken, async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     
     try {
-        const AIHealthAlertServiceModule = await import('../ai/aiHealthAlertService.js');
+        const AIHealthAlertServiceModule = await import('../services/ai/aiHealthAlertService.js');
         const AIHealthAlertService = AIHealthAlertServiceModule.default || AIHealthAlertServiceModule;
         const alerts = await AIHealthAlertService.getAlertHistory(limit);
         res.json({ alerts, total: alerts.length });
@@ -601,7 +601,7 @@ router.get('/health/alerts', verifyToken, async (req, res) => {
 router.get('/health/probe/:provider', verifyToken, async (req, res) => {
     const { provider } = req.params;
     try {
-        const { AIHealthService   } = await import('../ai/aiHealthService.js');
+        const { AIHealthService   } = await import('../services/ai/aiHealthService.js');
         const result = await AIHealthService.probeProvider(provider);
         res.json(result);
     } catch (err) {
@@ -612,7 +612,7 @@ router.get('/health/probe/:provider', verifyToken, async (req, res) => {
 // GET /api/llm/health/probe-all - Pre-flight health check for all providers
 router.get('/health/probe-all', verifyToken, async (req, res) => {
     try {
-        const { AIHealthService   } = await import('../ai/aiHealthService.js');
+        const { AIHealthService   } = await import('../services/ai/aiHealthService.js');
         const results = await AIHealthService.probeAllProviders();
         res.json(results);
     } catch (err) {
@@ -623,7 +623,7 @@ router.get('/health/probe-all', verifyToken, async (req, res) => {
 // GET /api/llm/circuits - Get circuit breaker status for all providers
 router.get('/circuits', verifyToken, async (req, res) => {
     try {
-        const { circuitBreaker   } = await import('../ai/llmService.js');
+        const { circuitBreaker   } = await import('../services/ai/llmService.js');
         const status = circuitBreaker.getStatus();
         res.json({ circuits: status, timestamp: new Date().toISOString() });
     } catch (err) {
@@ -635,7 +635,7 @@ router.get('/circuits', verifyToken, async (req, res) => {
 router.post('/circuits/:provider/reset', verifyToken, async (req, res) => {
     const { provider } = req.params;
     try {
-        const { circuitBreaker   } = await import('../ai/llmService.js');
+        const { circuitBreaker   } = await import('../services/ai/llmService.js');
         circuitBreaker.reset(provider);
         res.json({ success: true, message: `Circuit reset for ${provider}` });
     } catch (err) {
@@ -646,7 +646,7 @@ router.post('/circuits/:provider/reset', verifyToken, async (req, res) => {
 // GET /api/llm/rate-limits - Get current rate limit status
 router.get('/rate-limits', verifyToken, async (req, res) => {
     try {
-        const { rateLimiter   } = await import('../ai/rateLimiter.js');
+        const { rateLimiter   } = await import('../services/ai/rateLimiter.js');
         const status = await rateLimiter.getStatus({
             userId: req.user?.id,
             organizationId: req.headers['x-org-id']
@@ -735,8 +735,8 @@ router.get('/costs', verifyToken, async (req, res) => {
 // GET /api/llm/observability/status - Get observability status
 router.get('/observability/status', verifyToken, async (req, res) => {
     try {
-        const { getStatus   } = await import('../ai/observability.js');
-        const { alertingService   } = await import('../ai/alerting.js');
+        const { getStatus   } = await import('../services/ai/observability.js');
+        const { alertingService   } = await import('../services/ai/alerting.js');
 
         res.json({
             observability: getStatus(),
@@ -751,7 +751,7 @@ router.get('/observability/status', verifyToken, async (req, res) => {
 // GET /api/llm/metrics/summary - Quick summary of AI metrics
 router.get('/metrics/summary', verifyToken, async (req, res) => {
     try {
-        const metricsModule = await import('../ai/metrics.js');
+        const metricsModule = await import('../services/ai/metrics.js');
         const metrics = metricsModule.default || metricsModule;
         res.json(metrics.getSummary());
     } catch (err) {
@@ -884,7 +884,7 @@ router.get('/diagnose', async (req, res) => {
             const testProvider = activeProviders.find(p => p.provider === 'openai') || activeProviders[0];
 
             if (testProvider && testProvider.api_key && !testProvider.api_key.includes('REPLACE')) {
-                const { LLMService   } = await import('../ai/llmService.js');
+                const { LLMService   } = await import('../services/ai/llmService.js');
                 const llmService = new LLMService();
 
                 // Get full config including API key (already in activeProviders details)
@@ -977,7 +977,7 @@ router.use(verifyToken);
 // GET /api/llm/providers
 router.get('/providers', async (req, res) => {
     try {
-        const { llmConfigService   } = await import('../ai/llmConfigService.js');
+        const { llmConfigService   } = await import('../services/ai/llmConfigService.js');
 
         // If x-org-context header is present and user is admin of that org, return org-specific config
         const orgContext = req.headers['x-org-context'];
@@ -1007,7 +1007,7 @@ router.post('/providers/organization/toggle', verifyToken, async (req, res) => {
     }
 
     try {
-        const { llmConfigService   } = await import('../ai/llmConfigService.js');
+        const { llmConfigService   } = await import('../services/ai/llmConfigService.js');
         await llmConfigService.toggleOrganizationProvider(orgId, providerId, enabled);
         res.json({ success: true, message: `Provider ${enabled ? 'enabled' : 'disabled'} for organization` });
     } catch (err) {
@@ -1151,10 +1151,10 @@ router.post('/magic-wand', async (req, res) => {
     }
 
     try {
-        const { magicWandService   } = await import('../ai/magicWandService.js');
+        const { magicWandService   } = await import('../services/ai/magicWandService.js');
         let projectData = null;
         if (req.body.projectId) {
-            const { mcpServer   } = await import('../ai/mcpServer.js');
+            const { mcpServer   } = await import('../services/ai/mcpServer.js');
             import('../services/ai/tools.js');
             const projectResult = await mcpServer.execute('get_project_details', { projectId: req.body.projectId }, {});
             if (projectResult.status === 'SUCCESS') {
@@ -1186,8 +1186,8 @@ router.post('/magic-wand', async (req, res) => {
 // CONTROL PLANE API
 router.get('/control/usage', verifyToken, async (req, res) => {
     try {
-        const { quotaService   } = await import('../ai/quotaService.js');
-        const { cacheService   } = await import('../ai/cacheService.js');
+        const { quotaService   } = await import('../services/ai/quotaService.js');
+        const { cacheService   } = await import('../services/ai/cacheService.js');
         const orgUsage = await quotaService.getUsage('organization', req.user.organization_id);
         const userUsage = await quotaService.getUsage('user', req.user.id);
         const cacheStats = cacheService.getStats();
@@ -1206,7 +1206,7 @@ router.get('/control/usage', verifyToken, async (req, res) => {
 
 router.get('/control/models', verifyToken, async (req, res) => {
     try {
-        const { CAPABILITY_TIERS, TIER_DEFAULTS   } = await import('../ai/modelRouter.js');
+        const { CAPABILITY_TIERS, TIER_DEFAULTS   } = await import('../services/ai/modelRouter.js');
         const overrides = await dbAll(`SELECT * FROM ai_model_overrides WHERE organization_id = ?`, [req.user.organization_id]);
         res.json({
             tiers: TIER_DEFAULTS,
@@ -1242,7 +1242,7 @@ router.put('/control/models/:capability', verifyToken, async (req, res) => {
 
 router.get('/control/quotas', verifyToken, async (req, res) => {
     try {
-        const { DEFAULT_QUOTAS   } = await import('../ai/quotaService.js');
+        const { DEFAULT_QUOTAS   } = await import('../services/ai/quotaService.js');
         const quotas = await dbAll(`SELECT * FROM ai_usage_quotas WHERE entity_type = 'organization' AND entity_id = ?`, [req.user.organization_id]);
         res.json({ defaults: DEFAULT_QUOTAS, current: quotas || [] });
     } catch (err) {
@@ -1253,7 +1253,7 @@ router.get('/control/quotas', verifyToken, async (req, res) => {
 router.put('/control/quotas', verifyToken, async (req, res) => {
     const { entityType, entityId, dailyLimit, monthlyLimit } = req.body;
     try {
-        const { quotaService   } = await import('../ai/quotaService.js');
+        const { quotaService   } = await import('../services/ai/quotaService.js');
         await quotaService.setQuotaLimits(entityType, entityId, dailyLimit, monthlyLimit);
         res.json({ success: true, message: 'Quota limits updated' });
     } catch (err) {
@@ -1264,7 +1264,7 @@ router.put('/control/quotas', verifyToken, async (req, res) => {
 // AUDIT DASHBOARD API
 router.get('/audit/stats', verifyToken, async (req, res) => {
     try {
-        const { cacheService   } = await import('../ai/cacheService.js');
+        const { cacheService   } = await import('../services/ai/cacheService.js');
         const tokensToday = await dbGet(`SELECT SUM(tokens_used_today) as total FROM ai_usage_quotas WHERE entity_type = 'organization'`);
         const topOrgs = await dbAll(`SELECT entity_id, tokens_used_today, tokens_used_month FROM ai_usage_quotas WHERE entity_type = 'organization' ORDER BY tokens_used_month DESC LIMIT 5`);
         const cacheStats = cacheService.getStats();
@@ -1315,7 +1315,7 @@ router.post('/generate-report', async (req, res) => {
     const { assessmentData, projectData, screenContext } = req.body;
     if (!assessmentData) return res.status(400).json({ error: 'assessmentData is required' });
     try {
-        const { reportGeneratorService   } = await import('../ai/reportGeneratorService.js');
+        const { reportGeneratorService   } = await import('../services/ai/reportGeneratorService.js');
         const result = await reportGeneratorService.generate({ assessmentData, projectData: projectData || null, screenContext: screenContext || null, userId: req.user.id, organizationId: req.user.organization_id });
         if (result.success) res.json(result);
         else res.status(500).json({ error: result.error });
@@ -1329,7 +1329,7 @@ router.post('/generate-section', async (req, res) => {
     const { sectionType, data } = req.body;
     if (!sectionType || !data) return res.status(400).json({ error: 'sectionType and data are required' });
     try {
-        const { reportGeneratorService   } = await import('../ai/reportGeneratorService.js');
+        const { reportGeneratorService   } = await import('../services/ai/reportGeneratorService.js');
         const result = await reportGeneratorService.generateSection({ sectionType, data, userId: req.user.id, organizationId: req.user.organization_id });
         res.json(result);
     } catch (err) {
@@ -1698,7 +1698,7 @@ router.get('/logs', verifyToken, async (req, res) => {
 // NEW LLM DELIVERY SYSTEM - Tier Assignments
 // ==========================================
 
-const { modelRouter, TIER_HIERARCHY   } = await import('../ai/modelRouter.js');
+const { modelRouter, TIER_HIERARCHY   } = await import('../services/ai/modelRouter.js');
 
 /**
  * GET /api/llm/tiers/assignments

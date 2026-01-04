@@ -3,20 +3,20 @@
  * Shows different actions based on notification type
  */
 
-import React from 'react';
 import {
-    ExternalLink,
     Check,
-    Trash2,
     Clock,
-    ThumbsUp,
-    ThumbsDown,
+    ExternalLink,
+    Eye,
     MessageSquare,
     RefreshCw,
-    UserPlus,
     Sparkles,
-    Eye
+    ThumbsDown,
+    ThumbsUp,
+    Trash2,
+    UserPlus,
 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface NotificationData {
@@ -80,7 +80,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
     onReassign,
     onDiscuss,
     onApplyRecommendation,
-    onDismissRecommendation
+    onDismissRecommendation,
 }) => {
     const { t } = useTranslation();
     const typeActions = getTypeActions(notification.type);
@@ -91,7 +91,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             return (
                 <div className="flex gap-2">
                     <button
-                        onClick={(e) => { e.stopPropagation(); onApprove(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onApprove();
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors"
                     >
                         <ThumbsUp size={12} />
@@ -99,7 +102,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                     </button>
                     {onReject && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onReject(); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onReject();
+                            }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors"
                         >
                             <ThumbsDown size={12} />
@@ -115,7 +121,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             return (
                 <div className="flex gap-2">
                     <button
-                        onClick={(e) => { e.stopPropagation(); onApplyRecommendation(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onApplyRecommendation();
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-colors"
                     >
                         <Sparkles size={12} />
@@ -123,7 +132,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                     </button>
                     {onDismissRecommendation && (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onDismissRecommendation(); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDismissRecommendation();
+                            }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg transition-colors"
                         >
                             {t('notifications.actions.dismiss', 'Dismiss')}
@@ -137,7 +149,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
         if (canNavigate) {
             return (
                 <button
-                    onClick={(e) => { e.stopPropagation(); onNavigate(); }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate();
+                    }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
                 >
                     <ExternalLink size={12} />
@@ -154,11 +169,14 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             {/* Primary Actions */}
             <div className="flex items-center gap-2">
                 {renderPrimaryAction()}
-                
+
                 {/* Reassign for tasks */}
                 {typeActions.includes('reassign') && onReassign && (
                     <button
-                        onClick={(e) => { e.stopPropagation(); onReassign(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onReassign();
+                        }}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 text-xs rounded-lg transition-colors"
                     >
                         <UserPlus size={12} />
@@ -169,7 +187,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                 {/* Discuss */}
                 {typeActions.includes('discuss') && onDiscuss && (
                     <button
-                        onClick={(e) => { e.stopPropagation(); onDiscuss(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDiscuss();
+                        }}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 text-xs rounded-lg transition-colors"
                     >
                         <MessageSquare size={12} />
@@ -183,7 +204,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                 {/* Snooze */}
                 {typeActions.includes('snooze') && onSnooze && (
                     <button
-                        onClick={(e) => { e.stopPropagation(); onSnooze(24); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSnooze(24);
+                        }}
                         className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
                         title={t('notifications.actions.snooze', 'Snooze 24h')}
                     >
@@ -194,7 +218,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                 {/* Mark as Read */}
                 {!notification.isRead && (
                     <button
-                        onClick={(e) => { e.stopPropagation(); onMarkRead(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onMarkRead();
+                        }}
                         className="p-1.5 text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
                         title={t('notifications.actions.markRead', 'Mark as read')}
                     >
@@ -204,7 +231,10 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
 
                 {/* Delete */}
                 <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete();
+                    }}
                     className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                     title={t('notifications.actions.delete', 'Delete')}
                 >
@@ -216,12 +246,4 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
 };
 
 export default NotificationQuickActions;
-
-
-
-
-
-
-
-
 

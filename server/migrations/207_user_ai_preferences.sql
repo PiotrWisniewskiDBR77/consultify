@@ -18,3 +18,4 @@ CREATE INDEX IF NOT EXISTS idx_user_ai_preferences_updated ON user_ai_preference
 
 
 
+

@@ -1,35 +1,33 @@
 /**
  * PolicyGovernanceTab - AI Policy & Governance
- * 
+ *
  * Tab 3 of the reorganized AI & Intelligence section
  * Includes: AI Policy Level, AI Roles, Default Proactivity Mode, Governance Rules
- * 
+ *
  * Moved from OrgAISettingsView for centralized AI management
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Shield,
+    AlertTriangle,
     Brain,
+    FileCode,
+    ListChecks,
+    Lock,
+    MessageSquare,
+    RefreshCw,
+    Save,
+    Settings,
+    Shield,
     Users,
     Zap,
-    MessageSquare,
-    FileCode,
-    Save,
-    RefreshCw,
-    AlertTriangle,
-    Settings,
-    ListChecks,
-    Lock
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
-import {
-    SettingsCard,
-    ProactivitySelector
-} from '../../AISettings';
+import { ProactivitySelector, SettingsCard } from '../../AISettings';
 
 // Policy level configurations
 const POLICY_LEVELS = [
@@ -39,7 +37,7 @@ const POLICY_LEVELS = [
         description: 'AI can only explain and suggest. No modifications.',
         icon: MessageSquare,
         color: 'text-slate-400',
-        bgColor: 'from-slate-700 to-slate-800'
+        bgColor: 'from-slate-700 to-slate-800',
     },
     {
         id: 'ASSISTED',
@@ -47,7 +45,7 @@ const POLICY_LEVELS = [
         description: 'AI can create drafts that require approval.',
         icon: FileCode,
         color: 'text-blue-400',
-        bgColor: 'from-blue-700 to-blue-800'
+        bgColor: 'from-blue-700 to-blue-800',
     },
     {
         id: 'PROACTIVE',
@@ -55,7 +53,7 @@ const POLICY_LEVELS = [
         description: 'AI can execute low-risk actions automatically.',
         icon: Zap,
         color: 'text-violet-400',
-        bgColor: 'from-violet-700 to-violet-800'
+        bgColor: 'from-violet-700 to-violet-800',
     },
     {
         id: 'AUTOPILOT',
@@ -63,8 +61,8 @@ const POLICY_LEVELS = [
         description: 'AI operates autonomously within governance rules.',
         icon: Brain,
         color: 'text-emerald-400',
-        bgColor: 'from-emerald-700 to-emerald-800'
-    }
+        bgColor: 'from-emerald-700 to-emerald-800',
+    },
 ];
 
 // AI Roles
@@ -72,7 +70,7 @@ const AI_ROLES = [
     { id: 'ADVISOR', title: 'Advisor', description: 'Provides guidance and recommendations' },
     { id: 'PMO_MANAGER', title: 'PMO Manager', description: 'Manages project methodology' },
     { id: 'EXECUTOR', title: 'Executor', description: 'Executes approved actions' },
-    { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' }
+    { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' },
 ];
 
 export const PolicyGovernanceTab: React.FC = () => {
@@ -94,7 +92,7 @@ export const PolicyGovernanceTab: React.FC = () => {
         setLoading(true);
         try {
             const settingsRes = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (settingsRes.ok) {
                 const data = await settingsRes.json();
@@ -116,9 +114,9 @@ export const PolicyGovernanceTab: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
 
             if (res.ok) {
@@ -136,7 +134,7 @@ export const PolicyGovernanceTab: React.FC = () => {
     };
 
     const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
-        setSettings(prev => prev ? { ...prev, [key]: value } : null);
+        setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
         setHasChanges(true);
     };
 
@@ -144,7 +142,7 @@ export const PolicyGovernanceTab: React.FC = () => {
         if (!settings) return;
         const currentRoles = settings.activeRoles;
         const newRoles = currentRoles.includes(roleId as any)
-            ? currentRoles.filter(r => r !== roleId)
+            ? currentRoles.filter((r) => r !== roleId)
             : [...currentRoles, roleId as any];
         updateSetting('activeRoles', newRoles);
     };
@@ -233,13 +231,17 @@ export const PolicyGovernanceTab: React.FC = () => {
                                             </span>
                                         )}
                                         <div className="flex items-start gap-3">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                isSelected ? 'bg-white/20' : 'bg-slate-200 dark:bg-slate-700/50'
-                                            }`}>
+                                            <div
+                                                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                    isSelected ? 'bg-white/20' : 'bg-slate-200 dark:bg-slate-700/50'
+                                                }`}
+                                            >
                                                 <Icon className={`w-5 h-5 ${level.color}`} />
                                             </div>
                                             <div>
-                                                <h4 className={`font-semibold ${isSelected ? 'text-white' : 'text-navy-900 dark:text-slate-300'}`}>
+                                                <h4
+                                                    className={`font-semibold ${isSelected ? 'text-white' : 'text-navy-900 dark:text-slate-300'}`}
+                                                >
                                                     {level.title}
                                                 </h4>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -285,14 +287,18 @@ export const PolicyGovernanceTab: React.FC = () => {
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                            <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Default Role</label>
+                            <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                Default Role
+                            </label>
                             <select
                                 value={settings.defaultRole}
                                 onChange={(e) => updateSetting('defaultRole', e.target.value as any)}
                                 className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
                             >
-                                {AI_ROLES.filter(r => settings.activeRoles.includes(r.id as any)).map(r => (
-                                    <option key={r.id} value={r.id}>{r.title}</option>
+                                {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id as any)).map((r) => (
+                                    <option key={r.id} value={r.id}>
+                                        {r.title}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -328,7 +334,8 @@ export const PolicyGovernanceTab: React.FC = () => {
                                     <div>
                                         <h4 className="font-medium text-navy-900 dark:text-white">Regulatory Mode</h4>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                            When enabled, AI operates in strict compliance mode. All actions require explicit approval.
+                                            When enabled, AI operates in strict compliance mode. All actions require
+                                            explicit approval.
                                         </p>
                                         <p className="text-xs text-warning-600 dark:text-amber-400 mt-2">
                                             Note: Regulatory Mode can be configured per-project in Project Settings.
@@ -362,5 +369,3 @@ export const PolicyGovernanceTab: React.FC = () => {
 };
 
 export default PolicyGovernanceTab;
-
-

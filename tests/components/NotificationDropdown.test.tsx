@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NotificationDropdown } from '../../../components/NotificationDropdown';
+import { NotificationDropdown } from '../../components/NotificationDropdown';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -184,6 +184,7 @@ describe('NotificationDropdown Component', () => {
         });
     });
 });
+
 
 
 

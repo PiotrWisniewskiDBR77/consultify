@@ -1,12 +1,13 @@
 /**
  * Projects Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for projects routes - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('Projects Routes', () => {
@@ -237,9 +238,11 @@ describe('Projects Routes', () => {
         it('should return notification settings', () => {
             mockReq.params = { id: 'project-123' };
 
-            mockProjectController.getNotificationSettings.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ email_enabled: true, slack_enabled: false });
-            });
+            mockProjectController.getNotificationSettings.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.({ email_enabled: true, slack_enabled: false });
+                },
+            );
 
             // Test would verify notification settings retrieval
             expect(mockProjectController.getNotificationSettings).toBeDefined();
@@ -254,9 +257,11 @@ describe('Projects Routes', () => {
                 slack_enabled: true,
             };
 
-            mockProjectController.updateNotificationSettings.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ email_enabled: true, slack_enabled: true });
-            });
+            mockProjectController.updateNotificationSettings.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.({ email_enabled: true, slack_enabled: true });
+                },
+            );
 
             // Test would verify notification settings update
             expect(mockProjectController.updateNotificationSettings).toBeDefined();
@@ -294,9 +299,11 @@ describe('Projects Routes', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             // Test would verify error handling
             expect(true).toBe(true);
@@ -312,4 +319,3 @@ describe('Projects Routes', () => {
         });
     });
 });
-

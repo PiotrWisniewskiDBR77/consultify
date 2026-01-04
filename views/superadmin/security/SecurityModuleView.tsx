@@ -3,12 +3,13 @@
  * Manages IP whitelisting, device management, MFA, password policies, and security events
  */
 
-import React, { useState, useEffect } from 'react';
-import { Shield, Key, Smartphone, Lock, AlertTriangle } from 'lucide-react';
-import { TabLayout, Tab } from '../../../components/SuperAdmin/TabLayout';
+import { AlertTriangle, Key, Lock, Shield, Smartphone } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import { Api } from '../../../services/api';
-import { IPWhitelistView } from './IPWhitelistView';
 import { DeviceManagementView } from './DeviceManagementView';
+import { IPWhitelistView } from './IPWhitelistView';
 import { MFAView } from './MFAView';
 import { PasswordPolicyView } from './PasswordPolicyView';
 import { SecurityEventsView } from './SecurityEventsView';
@@ -53,10 +54,4 @@ export const SecurityModuleView: React.FC = () => {
         </TabLayout>
     );
 };
-
-
-
-
-
-
 

@@ -17,12 +17,7 @@ type RoiBreakdown = {
 };
 
 export async function calculateRoiDraft(params: RoiParams): Promise<Record<string, unknown>> {
-    const {
-        initialInvestment,
-        annualBenefit,
-        years = 5,
-        discountRate = 0.1
-    } = params;
+    const { initialInvestment, annualBenefit, years = 5, discountRate = 0.1 } = params;
 
     if (initialInvestment <= 0) {
         return { error: 'Initial investment must be positive' };
@@ -45,7 +40,7 @@ export async function calculateRoiDraft(params: RoiParams): Promise<Record<strin
         breakdown.push({
             year,
             cashFlow: annualBenefit,
-            discountedCashFlow: Math.round(discountedCashFlow * 100) / 100
+            discountedCashFlow: Math.round(discountedCashFlow * 100) / 100,
         });
     }
 
@@ -56,7 +51,7 @@ export async function calculateRoiDraft(params: RoiParams): Promise<Record<strin
         npv: Math.round(npv * 100) / 100,
         paybackYears: Math.round(paybackYears * 100) / 100,
         breakdown,
-        summary: generateSummary(roi, npv, paybackYears)
+        summary: generateSummary(roi, npv, paybackYears),
     };
 }
 

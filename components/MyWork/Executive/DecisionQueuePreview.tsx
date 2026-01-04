@@ -3,19 +3,19 @@
  * BCG/McKinsey style: Compact, actionable, context-rich
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import {
-    FileQuestion,
-    CheckCircle2,
-    XCircle,
-    Clock,
     AlertTriangle,
     ArrowRight,
+    CheckCircle2,
+    Clock,
+    FileQuestion,
     User,
+    UserPlus,
+    XCircle,
     Zap,
-    UserPlus
 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface Decision {
@@ -45,14 +45,16 @@ const PriorityBadge: React.FC<{ priority: string }> = ({ priority }) => {
         critical: { bg: 'bg-rose-500', text: 'text-white', icon: Zap },
         high: { bg: 'bg-orange-500', text: 'text-white', icon: AlertTriangle },
         medium: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', icon: null },
-        low: { bg: 'bg-slate-100 dark:bg-white/10', text: 'text-slate-600 dark:text-slate-400', icon: null }
+        low: { bg: 'bg-slate-100 dark:bg-white/10', text: 'text-slate-600 dark:text-slate-400', icon: null },
     };
 
     const cfg = config[priority as keyof typeof config] || config.medium;
     const Icon = cfg.icon;
 
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text}`}>
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text}`}
+        >
             {Icon && <Icon size={10} />}
             {priority.charAt(0).toUpperCase() + priority.slice(1)}
         </span>
@@ -113,9 +115,7 @@ const DecisionItem: React.FC<{
                                 {decision.requestedBy}
                             </span>
                         )}
-                        {decision.projectName && (
-                            <span className="truncate max-w-[120px]">{decision.projectName}</span>
-                        )}
+                        {decision.projectName && <span className="truncate max-w-[120px]">{decision.projectName}</span>}
                         <span className="flex items-center gap-1">
                             <Clock size={10} />
                             {decision.daysWaiting}d waiting
@@ -168,43 +168,46 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
     onReject,
     onDelegate,
     onViewAll,
-    onDecisionClick
+    onDecisionClick,
 }) => {
     const { t } = useTranslation();
 
     // Default/mock decisions
-    const displayDecisions: Decision[] = decisions.length > 0 ? decisions : [
-        {
-            id: '1',
-            title: 'Wybór dostawcy platformy CRM',
-            type: 'GENERAL',
-            priority: 'medium',
-            daysWaiting: 2,
-            requestedBy: 'Tomasz K.',
-            projectName: 'CRM Implementation'
-        },
-        {
-            id: '2',
-            title: 'Zatwierdzenie rozszerzenia zakresu',
-            type: 'SCOPE_CHANGE',
-            priority: 'high',
-            daysWaiting: 5,
-            requestedBy: 'Anna N.',
-            projectName: 'Website Redesign'
-        },
-        {
-            id: '3',
-            title: 'Budget approval for Q2 hiring',
-            type: 'BUDGET',
-            priority: 'critical',
-            daysWaiting: 8,
-            requestedBy: 'HR Team',
-            projectName: 'Talent Acquisition'
-        }
-    ];
+    const displayDecisions: Decision[] =
+        decisions.length > 0
+            ? decisions
+            : [
+                  {
+                      id: '1',
+                      title: 'Wybór dostawcy platformy CRM',
+                      type: 'GENERAL',
+                      priority: 'medium',
+                      daysWaiting: 2,
+                      requestedBy: 'Tomasz K.',
+                      projectName: 'CRM Implementation',
+                  },
+                  {
+                      id: '2',
+                      title: 'Zatwierdzenie rozszerzenia zakresu',
+                      type: 'SCOPE_CHANGE',
+                      priority: 'high',
+                      daysWaiting: 5,
+                      requestedBy: 'Anna N.',
+                      projectName: 'Website Redesign',
+                  },
+                  {
+                      id: '3',
+                      title: 'Budget approval for Q2 hiring',
+                      type: 'BUDGET',
+                      priority: 'critical',
+                      daysWaiting: 8,
+                      requestedBy: 'HR Team',
+                      projectName: 'Talent Acquisition',
+                  },
+              ];
 
-    const criticalCount = displayDecisions.filter(d => d.priority === 'critical').length;
-    const overdueCount = displayDecisions.filter(d => d.daysWaiting > 7).length;
+    const criticalCount = displayDecisions.filter((d) => d.priority === 'critical').length;
+    const overdueCount = displayDecisions.filter((d) => d.daysWaiting > 7).length;
 
     if (loading) {
         return (
@@ -303,12 +306,4 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
 };
 
 export default DecisionQueuePreview;
-
-
-
-
-
-
-
-
 

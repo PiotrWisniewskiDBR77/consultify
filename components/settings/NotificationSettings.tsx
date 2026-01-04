@@ -1,7 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { Bell, Mail, Check, AlertCircle, Slack, MessageCircle, Trello, Database, CheckCircle, Hash } from 'lucide-react';
+import {
+    AlertCircle,
+    Bell,
+    Check,
+    CheckCircle,
+    Database,
+    Hash,
+    Mail,
+    MessageCircle,
+    Slack,
+    Trello,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface NotificationSettingsProps {
@@ -16,7 +28,7 @@ const PROVIDER_ICONS: Record<string, any> = {
     whatsapp: MessageCircle,
     trello: Trello,
     jira: Database,
-    clickup: CheckCircle
+    clickup: CheckCircle,
 };
 
 interface Integration {
@@ -43,14 +55,14 @@ const defaultPreferences: NotificationPreferences = {
     taskAssignment: { email: true, inApp: true },
     taskUpdates: { email: false, inApp: true },
     milestones: { email: true, inApp: true },
-    mentions: { email: true, inApp: true }
+    mentions: { email: true, inApp: true },
 };
 
 export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     // Fetch existing preferences
     useEffect(() => {
@@ -61,7 +73,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
                     setPreferences(data);
                 }
             } catch (err) {
-                console.error("Failed to fetch notification preferences", err);
+                console.error('Failed to fetch notification preferences', err);
             }
         };
         fetchPrefs();
@@ -74,9 +86,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
             try {
                 const data: Integration[] = await Api.getIntegrations(currentUser.organizationId);
                 // Filter only active integrations
-                setIntegrations(data.filter(i => i.status === 'active' || !i.status)); // Assume active if status missing for now
+                setIntegrations(data.filter((i) => i.status === 'active' || !i.status)); // Assume active if status missing for now
             } catch (err) {
-                console.error("Failed to fetch integrations", err);
+                console.error('Failed to fetch integrations', err);
             }
         };
         fetchIntegrations();
@@ -97,12 +109,12 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
     };
 
     const toggle = (category: keyof NotificationPreferences, channel: string) => {
-        setPreferences(prev => ({
+        setPreferences((prev) => ({
             ...prev,
             [category]: {
                 ...prev[category],
-                [channel]: !prev[category][channel]
-            }
+                [channel]: !prev[category][channel],
+            },
         }));
     };
 
@@ -111,11 +123,15 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
             <InfoButton cardId="settings-notifications" position="top-right" />
             <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Notification Preferences</h2>
-                <p className="text-slate-500 dark:text-slate-400">Manage how and when you receive notifications across all channels.</p>
+                <p className="text-slate-500 dark:text-slate-400">
+                    Manage how and when you receive notifications across all channels.
+                </p>
             </div>
 
             {message && (
-                <div className={`p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}>
+                <div
+                    className={`p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}
+                >
                     {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
                     {message.text}
                 </div>
@@ -124,7 +140,6 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                 <div className="p-6">
                     <div className="space-y-6">
-
                         {/* Header Row */}
                         <div className="grid grid-cols-12 gap-4 pb-4 border-b border-slate-200 dark:border-white/10 text-sm font-medium text-slate-500 dark:text-slate-400">
                             <div className="col-span-4">Activity</div>
@@ -137,7 +152,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
                                     <Mail size={16} />
                                     <span>Email</span>
                                 </div>
-                                {integrations.map(int => {
+                                {integrations.map((int) => {
                                     const Icon = PROVIDER_ICONS[int.provider] || Hash;
                                     return (
                                         <div key={int.id} className="text-center flex flex-col items-center gap-1">
@@ -182,7 +197,6 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ curr
                             integrations={integrations}
                             onToggle={toggle}
                         />
-
                     </div>
                 </div>
                 <div className="px-6 py-4 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-white/10 flex justify-end">
@@ -209,10 +223,16 @@ const RenderRow = ({ title, description, category, preferences, integrations, on
             </div>
             <div className="col-span-8 grid grid-cols-4 gap-4">
                 <div className="flex justify-center">
-                    <Toggle checked={preferences[category]?.inApp ?? false} onChange={() => onToggle(category, 'inApp')} />
+                    <Toggle
+                        checked={preferences[category]?.inApp ?? false}
+                        onChange={() => onToggle(category, 'inApp')}
+                    />
                 </div>
                 <div className="flex justify-center">
-                    <Toggle checked={preferences[category]?.email ?? false} onChange={() => onToggle(category, 'email')} />
+                    <Toggle
+                        checked={preferences[category]?.email ?? false}
+                        onChange={() => onToggle(category, 'email')}
+                    />
                 </div>
                 {integrations.map((int: Integration) => (
                     <div key={int.id} className="flex justify-center">
@@ -237,4 +257,3 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void 
         />
     </button>
 );
-

@@ -93,7 +93,7 @@ class RealtimeClient {
     }
     private emit(event: string, data: MessageData) {
         if (this.callbacks.has(event)) {
-            this.callbacks.get(event)!.forEach(callback => {
+            this.callbacks.get(event)!.forEach((callback) => {
                 try {
                     callback(data);
                 } catch (e) {
@@ -106,13 +106,13 @@ class RealtimeClient {
     notifyInitiativeUpdate(initiative: MessageData) {
         this.send({
             type: 'initiative_update',
-            payload: initiative
+            payload: initiative,
         });
     }
     notifyTaskUpdate(task: MessageData) {
         this.send({
             type: 'task_update',
-            payload: task
+            payload: task,
         });
     }
     getConnectionStatus(): boolean {

@@ -1,18 +1,19 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { ChatPanel } from './ChatPanel';
-import { UnifiedChatPanel } from './AIChat/UnifiedChatPanel';
+import { ChevronLeft, ChevronRight, FileCode, Maximize2, MessageSquare, Sparkles, X } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { useAIContext } from '../contexts/AIContext';
+import { useAIStream } from '../hooks/useAIStream';
+import { useDeviceType } from '../hooks/useDeviceType';
 import { useAppStore } from '../store/useAppStore';
+import { useArtifactsStore } from '../store/useArtifactsStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { usePMOContextAutoFetch } from '../store/usePMOStore';
-import { useArtifactsStore } from '../store/useArtifactsStore';
-import { ChatMessage, ChatOption, Artifact, FocusMode, AppView } from '../types';
-import { useAIStream } from '../hooks/useAIStream';
-import { useAIContext } from '../contexts/AIContext';
-import { useDeviceType } from '../hooks/useDeviceType';
-import { X, Sparkles, MessageSquare, FileCode, ChevronRight, ChevronLeft, Maximize2 } from 'lucide-react';
+import { AppView, Artifact, ChatMessage, ChatOption, FocusMode } from '../types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
 import { ArtifactsPanel } from './AIChat/Artifacts/ArtifactsPanel';
 import { FocusModeSelector } from './AIChat/Input/FocusModeSelector';
-import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
+import { UnifiedChatPanel } from './AIChat/UnifiedChatPanel';
+import { ChatPanel } from './ChatPanel';
 
 interface SplitLayoutProps {
     children: React.ReactNode;
@@ -38,7 +39,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     hideSidebar = false,
     useUnifiedChat = true, // Default to unified chat panel
     currentView,
-    contextEntityId
+    contextEntityId,
 }) => {
     const {
         activeChatMessages,
@@ -51,14 +52,10 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         chatPanelWidth,
         setChatPanelWidth,
         currentView: appCurrentView,
-        returnToFullChat
+        returnToFullChat,
     } = useAppStore();
-    
-    const {
-        setDisplayMode,
-        expandToFullScreen,
-        setWorkspaceContext
-    } = useConversationStore();
+
+    const { setDisplayMode, expandToFullScreen, setWorkspaceContext } = useConversationStore();
 
     // Artifacts store for World-Class Chat 2025
     const {
@@ -70,24 +67,24 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         updateArtifact,
         togglePanel: toggleArtifactsPanel,
         toggleFullscreen: toggleArtifactsFullscreen,
-        exportArtifact
+        exportArtifact,
     } = useArtifactsStore();
 
     // Focus mode state
     const [focusMode, setFocusMode] = useState<FocusMode>('all');
-    
+
     // Compute workspace context for AI awareness
     const workspaceContext = useMemo(() => {
         const view = currentView || appCurrentView;
         if (!view) return null;
-        
+
         const type = getDefaultWorkspaceType(view);
         return createWorkspaceContext(view, type, {
             entityId: contextEntityId,
-            projectId: currentProjectId || undefined
+            projectId: currentProjectId || undefined,
         });
     }, [currentView, appCurrentView, contextEntityId, currentProjectId]);
-    
+
     // Update conversation store with workspace context when it changes
     React.useEffect(() => {
         if (workspaceContext) {
@@ -95,7 +92,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
             setDisplayMode('split');
         }
     }, [workspaceContext, setWorkspaceContext, setDisplayMode]);
-    
+
     // Handle expanding to full screen chat
     const handleExpandToFullChat = useCallback(() => {
         expandToFullScreen();
@@ -116,40 +113,43 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     const [isResizing, setIsResizing] = React.useState(false);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
 
-    const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
-        // Disable resizing on touch devices
-        if (isTouchDevice) return;
-        
-        setIsResizing(true);
-        mouseDownEvent.preventDefault();
+    const startResizing = React.useCallback(
+        (mouseDownEvent: React.MouseEvent) => {
+            // Disable resizing on touch devices
+            if (isTouchDevice) return;
 
-        const startX = mouseDownEvent.clientX;
-        const startWidth = chatPanelWidth;
+            setIsResizing(true);
+            mouseDownEvent.preventDefault();
 
-        const doDrag = (mouseMoveEvent: MouseEvent) => {
-            // Calculate new width: original width + delta
-            // If dragging right, delta is positive, sidebar grows.
-            const delta = mouseMoveEvent.clientX - startX;
-            const newWidth = Math.max(280, Math.min(700, startWidth + delta));
-            setChatPanelWidth(newWidth);
-        };
+            const startX = mouseDownEvent.clientX;
+            const startWidth = chatPanelWidth;
 
-        const stopDrag = () => {
-            setIsResizing(false);
-            window.removeEventListener('mousemove', doDrag);
-            window.removeEventListener('mouseup', stopDrag);
-            // Re-enable text selection/cursor
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-        };
+            const doDrag = (mouseMoveEvent: MouseEvent) => {
+                // Calculate new width: original width + delta
+                // If dragging right, delta is positive, sidebar grows.
+                const delta = mouseMoveEvent.clientX - startX;
+                const newWidth = Math.max(280, Math.min(700, startWidth + delta));
+                setChatPanelWidth(newWidth);
+            };
 
-        window.addEventListener('mousemove', doDrag);
-        window.addEventListener('mouseup', stopDrag);
+            const stopDrag = () => {
+                setIsResizing(false);
+                window.removeEventListener('mousemove', doDrag);
+                window.removeEventListener('mouseup', stopDrag);
+                // Re-enable text selection/cursor
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            };
 
-        // Prevent selection while dragging
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-    }, [chatPanelWidth, setChatPanelWidth, isTouchDevice]);
+            window.addEventListener('mousemove', doDrag);
+            window.addEventListener('mouseup', stopDrag);
+
+            // Prevent selection while dragging
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        },
+        [chatPanelWidth, setChatPanelWidth, isTouchDevice],
+    );
 
     // Mobile/Tablet Chat State - Combined for touch devices
     const [isMobileChatOpen, setIsMobileChatOpen] = React.useState(false);
@@ -166,7 +166,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
             id: Date.now().toString(),
             role: 'user',
             content: text,
-            timestamp: new Date()
+            timestamp: new Date(),
         };
         addChatMessage(userMsg);
 
@@ -179,14 +179,14 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
             id: aiMsgId,
             role: 'ai',
             content: '',
-            timestamp: new Date()
+            timestamp: new Date(),
         };
         addChatMessage(aiPlaceholder);
 
         // Prepare history for API
-        const history = activeChatMessages.map(m => ({
+        const history = activeChatMessages.map((m) => ({
             role: m.role === 'user' ? 'user' : 'model',
-            parts: [{ text: m.content }]
+            parts: [{ text: m.content }],
         }));
 
         // System prompt for consulting context
@@ -200,9 +200,12 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
     };
 
     // Handle artifact export
-    const handleExportArtifact = useCallback(async (artifact: Artifact, format: string) => {
-        await exportArtifact(artifact.id, format);
-    }, [exportArtifact]);
+    const handleExportArtifact = useCallback(
+        async (artifact: Artifact, format: string) => {
+            await exportArtifact(artifact.id, format);
+        },
+        [exportArtifact],
+    );
 
     const handleOptionSelect = (option: ChatOption) => {
         handleSendMessage(option.label);
@@ -230,7 +233,18 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                                 className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500"
                                 title="Collapse AI Panel"
                             >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
                             </button>
                         </div>
                     )}
@@ -249,12 +263,15 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                         <ChatPanel
                             messages={
                                 isStreaming
-                                    ? [...activeChatMessages, {
-                                        id: 'streaming-ai',
-                                        role: 'ai',
-                                        content: streamedContent,
-                                        timestamp: new Date()
-                                    } as ChatMessage]
+                                    ? [
+                                          ...activeChatMessages,
+                                          {
+                                              id: 'streaming-ai',
+                                              role: 'ai',
+                                              content: streamedContent,
+                                              timestamp: new Date(),
+                                          } as ChatMessage,
+                                      ]
                                     : activeChatMessages
                             }
                             onSendMessage={handleSendMessage}
@@ -274,7 +291,18 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                         className="w-8 h-8 rounded bg-brand/10 text-brand flex items-center justify-center hover:bg-brand/20 transition-colors"
                         title="Expand Chat"
                     >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
                     </button>
                     <div className="writing-vertical-rl text-xs text-slate-500 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
                         AI Consultant
@@ -295,19 +323,19 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {isMobileChatOpen && (
                 <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
                     {/* Backdrop */}
-                    <div 
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
-                        onClick={() => setIsMobileChatOpen(false)} 
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => setIsMobileChatOpen(false)}
                     />
-                    
+
                     {/* Chat Drawer - Different sizes for mobile vs tablet */}
-                    <div 
+                    <div
                         className={`
                             relative bg-white dark:bg-navy-900 h-full flex flex-col shadow-2xl
                             transition-transform duration-300 ease-out transform
                             ${isMobile ? 'w-full' : 'w-[400px] max-w-[80vw]'}
                         `}
-                        style={{ 
+                        style={{
                             animation: 'slideInFromRight 0.3s ease-out forwards',
                         }}
                     >
@@ -329,7 +357,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         {/* Chat Panel */}
                         <div className="flex-1 overflow-hidden">
                             {useUnifiedChat ? (
@@ -345,12 +373,15 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                                 <ChatPanel
                                     messages={
                                         isStreaming
-                                            ? [...activeChatMessages, {
-                                                id: 'streaming-ai',
-                                                role: 'ai',
-                                                content: streamedContent,
-                                                timestamp: new Date()
-                                            } as ChatMessage]
+                                            ? [
+                                                  ...activeChatMessages,
+                                                  {
+                                                      id: 'streaming-ai',
+                                                      role: 'ai',
+                                                      content: streamedContent,
+                                                      timestamp: new Date(),
+                                                  } as ChatMessage,
+                                              ]
                                             : activeChatMessages
                                     }
                                     onSendMessage={handleSendMessage}
@@ -365,24 +396,21 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
             {/* Center Panel: Workspace */}
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
-
                 {/* Focus Mode Selector - Only for legacy ChatPanel (UnifiedChatPanel has built-in) */}
                 {!useUnifiedChat && !hideSidebar && !isChatCollapsed && (
                     <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
-                        <FocusModeSelector 
-                            value={focusMode} 
-                            onChange={setFocusMode}
-                        />
-                        
+                        <FocusModeSelector value={focusMode} onChange={setFocusMode} />
+
                         {/* Artifacts toggle button */}
                         {artifacts.length > 0 && (
                             <button
                                 onClick={() => toggleArtifactsPanel()}
                                 className={`
                                     flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                                    ${isArtifactsPanelOpen 
-                                        ? 'bg-brand text-white' 
-                                        : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                    ${
+                                        isArtifactsPanelOpen
+                                            ? 'bg-brand text-white'
+                                            : 'bg-brand/10 text-brand hover:bg-brand/20'
                                     }
                                 `}
                             >
@@ -393,7 +421,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                         )}
                     </div>
                 )}
-                
+
                 {/* Artifacts toggle for UnifiedChatPanel */}
                 {useUnifiedChat && !hideSidebar && !isChatCollapsed && artifacts.length > 0 && (
                     <div className="hidden lg:flex items-center justify-end px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
@@ -401,9 +429,10 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                             onClick={() => toggleArtifactsPanel()}
                             className={`
                                 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                                ${isArtifactsPanelOpen 
-                                    ? 'bg-brand text-white' 
-                                    : 'bg-brand/10 text-brand hover:bg-brand/20'
+                                ${
+                                    isArtifactsPanelOpen
+                                        ? 'bg-brand text-white'
+                                        : 'bg-brand/10 text-brand hover:bg-brand/20'
                                 }
                             `}
                         >
@@ -421,32 +450,32 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                         className={`
                             lg:hidden fixed z-40 rounded-full bg-purple-600 text-white shadow-lg shadow-purple-600/30 
                             flex items-center justify-center transition-all touch-ripple touch-target
-                            ${isMobile 
-                                ? 'bottom-20 right-4 w-14 h-14' /* Above bottom nav on mobile */
-                                : 'bottom-6 right-6 w-12 h-12' /* Normal position on tablet */
+                            ${
+                                isMobile
+                                    ? 'bottom-20 right-4 w-14 h-14' /* Above bottom nav on mobile */
+                                    : 'bottom-6 right-6 w-12 h-12' /* Normal position on tablet */
                             }
                             ${isMobileChatOpen ? 'scale-0' : 'scale-100'}
                         `}
                     >
                         <MessageSquare size={isMobile ? 24 : 20} />
-                        
+
                         {/* Notification dot if there are unread messages */}
-                        {activeChatMessages.length > 0 && activeChatMessages[activeChatMessages.length - 1]?.role === 'ai' && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                                <span className="w-2 h-2 bg-white rounded-full animate-ping" />
-                            </span>
-                        )}
+                        {activeChatMessages.length > 0 &&
+                            activeChatMessages[activeChatMessages.length - 1]?.role === 'ai' && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                    <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+                                </span>
+                            )}
                     </button>
                 )}
 
-                <div className="flex-1 overflow-hidden relative momentum-scroll">
-                    {children}
-                </div>
+                <div className="flex-1 overflow-hidden relative momentum-scroll">{children}</div>
             </div>
 
             {/* Right Panel: Artifacts - World-Class Chat 2025 */}
             {isArtifactsPanelOpen && artifacts.length > 0 && (
-                <div 
+                <div
                     className={`
                         hidden lg:block shrink-0 border-l border-slate-200 dark:border-navy-700
                         ${isArtifactsFullscreen ? 'fixed inset-0 z-50' : 'w-[400px] max-w-[40vw]'}
@@ -469,13 +498,13 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {isArtifactsPanelOpen && artifacts.length > 0 && (
                 <div className="lg:hidden fixed inset-0 z-50">
                     {/* Backdrop */}
-                    <div 
+                    <div
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={() => toggleArtifactsPanel(false)}
                     />
-                    
+
                     {/* Drawer from bottom */}
-                    <div 
+                    <div
                         className="absolute bottom-0 left-0 right-0 bg-white dark:bg-navy-900 rounded-t-2xl max-h-[80vh] overflow-hidden"
                         style={{ animation: 'slideInFromBottom 0.3s ease-out forwards' }}
                     >

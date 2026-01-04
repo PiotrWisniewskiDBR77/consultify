@@ -1,46 +1,103 @@
-import React from 'react';
-import { AppView } from './types';
-import { AnimationWrapper } from './components/shared/AnimationWrapper';
-import { LoadingScreen } from './components/LoadingScreen';
 import { Loader2 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingScreen } from './components/LoadingScreen';
+import { AnimationWrapper } from './components/shared/AnimationWrapper';
 import { SplitLayout } from './components/SplitLayout';
+import { AppView } from './types';
 
 // View Imports - These will match the ones in App.tsx
-const SuperAdminView = React.lazy(() => import('./views/superadmin/SuperAdminView').then(m => ({ default: m.SuperAdminView })));
-const AIChatWelcomeView = React.lazy(() => import('./views/AIChatWelcomeView').then(module => ({ default: module.AIChatWelcomeView })));
-const MyWorkView = React.lazy(() => import('./views/MyWorkView').then(m => ({ default: m.MyWorkView })));
-const ProjectIntelligenceView = React.lazy(() => import('./views/ProjectIntelligenceView').then(m => ({ default: m.ProjectIntelligenceView })));
-const FreeAssessmentView = React.lazy(() => import('./views/FreeAssessmentView').then(m => ({ default: m.FreeAssessmentView })));
-const TrialEntryView = React.lazy(() => import('./views/TrialEntryView.tsx').then(m => ({ default: m.default })));
-const Module1ContextView = React.lazy(() => import('./views/Module1ContextView').then(m => ({ default: m.Module1ContextView })));
-const ContextBuilderView = React.lazy(() => import('./views/ContextBuilder/ContextBuilderView').then(m => ({ default: m.ContextBuilderView })));
-const AssessmentModuleHub = React.lazy(() => import('./components/assessment/AssessmentModuleHub').then(module => ({ default: module.AssessmentModuleHub })));
-const FullAssessmentView = React.lazy(() => import('./views/FullAssessmentView').then(m => ({ default: m.FullAssessmentView })));
-const FullInitiativesView = React.lazy(() => import('./views/FullInitiativesView').then(m => ({ default: m.FullInitiativesView })));
-const FullRoadmapView = React.lazy(() => import('./views/FullRoadmapView').then(m => ({ default: m.FullRoadmapView })));
-const FullROIView = React.lazy(() => import('./views/FullROIView').then(m => ({ default: m.FullROIView })));
-const EconomicsView = React.lazy(() => import('./views/EconomicsView').then(m => ({ default: m.EconomicsView })));
-const FullExecutionView = React.lazy(() => import('./views/FullExecutionView').then(m => ({ default: m.FullExecutionView })));
-const ImplementationView = React.lazy(() => import('./views/ImplementationView').then(m => ({ default: m.ImplementationView })));
-const FullRolloutView = React.lazy(() => import('./views/FullRolloutView').then(m => ({ default: m.FullRolloutView })));
-const FullReportsView = React.lazy(() => import('./views/FullReportsView').then(m => ({ default: m.FullReportsView })));
-const DRDAuditReportView = React.lazy(() => import('./views/DRDAuditReportView').then(m => ({ default: m.DRDAuditReportView })));
-const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then(m => ({ default: m.KpiOkrView })));
+const SuperAdminView = React.lazy(() =>
+    import('./views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView })),
+);
+const AIChatWelcomeView = React.lazy(() =>
+    import('./views/AIChatWelcomeView').then((module) => ({ default: module.AIChatWelcomeView })),
+);
+const MyWorkView = React.lazy(() => import('./views/MyWorkView').then((m) => ({ default: m.MyWorkView })));
+const ProjectIntelligenceView = React.lazy(() =>
+    import('./views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView })),
+);
+const FreeAssessmentView = React.lazy(() =>
+    import('./views/FreeAssessmentView').then((m) => ({ default: m.FreeAssessmentView })),
+);
+const TrialEntryView = React.lazy(() => import('./views/TrialEntryView.tsx').then((m) => ({ default: m.default })));
+const Module1ContextView = React.lazy(() =>
+    import('./views/Module1ContextView').then((m) => ({ default: m.Module1ContextView })),
+);
+const ContextBuilderView = React.lazy(() =>
+    import('./views/ContextBuilder/ContextBuilderView').then((m) => ({ default: m.ContextBuilderView })),
+);
+const AssessmentModuleHub = React.lazy(() =>
+    import('./components/assessment/AssessmentModuleHub').then((module) => ({ default: module.AssessmentModuleHub })),
+);
+const FullAssessmentView = React.lazy(() =>
+    import('./views/FullAssessmentView').then((m) => ({ default: m.FullAssessmentView })),
+);
+const FullInitiativesView = React.lazy(() =>
+    import('./views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView })),
+);
+const FullRoadmapView = React.lazy(() =>
+    import('./views/FullRoadmapView').then((m) => ({ default: m.FullRoadmapView })),
+);
+const FullROIView = React.lazy(() => import('./views/FullROIView').then((m) => ({ default: m.FullROIView })));
+const EconomicsView = React.lazy(() => import('./views/EconomicsView').then((m) => ({ default: m.EconomicsView })));
+const FullExecutionView = React.lazy(() =>
+    import('./views/FullExecutionView').then((m) => ({ default: m.FullExecutionView })),
+);
+const ImplementationView = React.lazy(() =>
+    import('./views/ImplementationView').then((m) => ({ default: m.ImplementationView })),
+);
+const FullRolloutView = React.lazy(() =>
+    import('./views/FullRolloutView').then((m) => ({ default: m.FullRolloutView })),
+);
+const FullReportsView = React.lazy(() =>
+    import('./views/FullReportsView').then((m) => ({ default: m.FullReportsView })),
+);
+const DRDAuditReportView = React.lazy(() =>
+    import('./views/DRDAuditReportView').then((m) => ({ default: m.DRDAuditReportView })),
+);
+const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then((m) => ({ default: m.KpiOkrView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
-const BenefitsRealizationView = React.lazy(() => import('./views/BenefitsRealizationView').then(m => ({ default: m.BenefitsRealizationView })));
-const ConsultantPanelView = React.lazy(() => import('./src/views/consultant/ConsultantPanelView').then(module => ({ default: module.ConsultantPanelView })));
-const ConsultantInviteView = React.lazy(() => import('./src/views/consultant/ConsultantInviteView').then(module => ({ default: module.ConsultantInviteView })));
-const OrgSetupWizard = React.lazy(() => import('./views/OrgSetupWizard').then(module => ({ default: module.OrgSetupWizard })));
-const AffiliateDashboardView = React.lazy(() => import('./views/AffiliateDashboardView.tsx').then(m => ({ default: m.default })));
-const OnboardingWizard = React.lazy(() => import('./views/OnboardingWizard').then(module => ({ default: module.OnboardingWizard })));
-const ActionProposalView = React.lazy(() => import('./views/ActionProposalView').then(m => ({ default: m.ActionProposalView })));
-const StudioView = React.lazy(() => import('./views/StudioView').then(m => ({ default: m.StudioView })));
-const AdminView = React.lazy(() => import('./views/admin/AdminView').then(m => ({ default: m.AdminView })));
-const SettingsView = React.lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
-const ExternalDigitalWorkspace = React.lazy(() => import('./components/assessment/ExternalDigitalWorkspace').then(module => ({ default: module.ExternalDigitalWorkspace })));
-const AssessmentHubDashboard = React.lazy(() => import('./components/assessment/AssessmentHubDashboard').then(module => ({ default: module.AssessmentHubDashboard })));
-const GenericReportsWorkspace = React.lazy(() => import('./components/assessment/GenericReportsWorkspace').then(module => ({ default: module.GenericReportsWorkspace })));
+const BenefitsRealizationView = React.lazy(() =>
+    import('./views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView })),
+);
+const ConsultantPanelView = React.lazy(() =>
+    import('./src/views/consultant/ConsultantPanelView').then((module) => ({ default: module.ConsultantPanelView })),
+);
+const ConsultantInviteView = React.lazy(() =>
+    import('./src/views/consultant/ConsultantInviteView').then((module) => ({ default: module.ConsultantInviteView })),
+);
+const OrgSetupWizard = React.lazy(() =>
+    import('./views/OrgSetupWizard').then((module) => ({ default: module.OrgSetupWizard })),
+);
+const AffiliateDashboardView = React.lazy(() =>
+    import('./views/AffiliateDashboardView.tsx').then((m) => ({ default: m.default })),
+);
+const OnboardingWizard = React.lazy(() =>
+    import('./views/OnboardingWizard').then((module) => ({ default: module.OnboardingWizard })),
+);
+const ActionProposalView = React.lazy(() =>
+    import('./views/ActionProposalView').then((m) => ({ default: m.ActionProposalView })),
+);
+const StudioView = React.lazy(() => import('./views/StudioView').then((m) => ({ default: m.StudioView })));
+const AdminView = React.lazy(() => import('./views/admin/AdminView').then((m) => ({ default: m.AdminView })));
+const SettingsView = React.lazy(() => import('./views/SettingsView').then((m) => ({ default: m.SettingsView })));
+const ExternalDigitalWorkspace = React.lazy(() =>
+    import('./components/assessment/ExternalDigitalWorkspace').then((module) => ({
+        default: module.ExternalDigitalWorkspace,
+    })),
+);
+const AssessmentHubDashboard = React.lazy(() =>
+    import('./components/assessment/AssessmentHubDashboard').then((module) => ({
+        default: module.AssessmentHubDashboard,
+    })),
+);
+const GenericReportsWorkspace = React.lazy(() =>
+    import('./components/assessment/GenericReportsWorkspace').then((module) => ({
+        default: module.GenericReportsWorkspace,
+    })),
+);
 
 interface ViewRendererProps {
     currentView: AppView;
@@ -112,7 +169,10 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
         return (
             <React.Suspense fallback={<LoadingScreen />}>
                 <AnimationWrapper variant="slideUp">
-                    <MyWorkView currentUser={currentUser} onNavigate={(view: string) => setCurrentView(view as AppView)} />
+                    <MyWorkView
+                        currentUser={currentUser}
+                        onNavigate={(view: string) => setCurrentView(view as AppView)}
+                    />
                 </AnimationWrapper>
             </React.Suspense>
         );
@@ -145,16 +205,19 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
 
     // Trial Entry View
     if (currentView === AppView.TRIAL_ENTRY) {
-        return (
-            <TrialEntryView onStartTrial={() => setCurrentView(AppView.AUTH as any)} />
-        );
+        return <TrialEntryView onStartTrial={() => setCurrentView(AppView.AUTH as any)} />;
     }
 
     // Full Transformation Views
     if (currentView === AppView.FULL_STEP1_CONTEXT) {
         return (
             <React.Suspense fallback={<LoadingScreen />}>
-                <Module1ContextView currentUser={currentUser} fullSession={fullSessionData} setFullSession={setFullSessionData} onNavigate={setCurrentView} />
+                <Module1ContextView
+                    currentUser={currentUser}
+                    fullSession={fullSessionData}
+                    setFullSession={setFullSessionData}
+                    onNavigate={setCurrentView}
+                />
             </React.Suspense>
         );
     }
@@ -169,12 +232,24 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
     ) {
         let initialTab = 1;
         switch (currentView) {
-            case AppView.CONTEXT_BUILDER_PROFILE: initialTab = 1; break;
-            case AppView.CONTEXT_BUILDER_GOALS: initialTab = 2; break;
-            case AppView.CONTEXT_BUILDER_CHALLENGES: initialTab = 3; break;
-            case AppView.CONTEXT_BUILDER_MEGATRENDS: initialTab = 4; break;
-            case AppView.CONTEXT_BUILDER_STRATEGY: initialTab = 5; break;
-            default: initialTab = 1; break;
+            case AppView.CONTEXT_BUILDER_PROFILE:
+                initialTab = 1;
+                break;
+            case AppView.CONTEXT_BUILDER_GOALS:
+                initialTab = 2;
+                break;
+            case AppView.CONTEXT_BUILDER_CHALLENGES:
+                initialTab = 3;
+                break;
+            case AppView.CONTEXT_BUILDER_MEGATRENDS:
+                initialTab = 4;
+                break;
+            case AppView.CONTEXT_BUILDER_STRATEGY:
+                initialTab = 5;
+                break;
+            default:
+                initialTab = 1;
+                break;
         }
         return (
             <React.Suspense fallback={<LoadingScreen />}>
@@ -338,7 +413,14 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
 
     if (currentView === AppView.CONSULTANT_PANEL) {
         return (
-            <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Consultant Panel...</div>}>
+            <React.Suspense
+                fallback={
+                    <div className="p-8 text-center text-slate-500">
+                        <Loader2 className="animate-spin mx-auto mb-2" />
+                        Loading Consultant Panel...
+                    </div>
+                }
+            >
                 <AnimationWrapper variant="fade">
                     <ConsultantPanelView />
                 </AnimationWrapper>
@@ -348,7 +430,14 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
 
     if (currentView === AppView.CONSULTANT_INVITES) {
         return (
-            <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Invite Tool...</div>}>
+            <React.Suspense
+                fallback={
+                    <div className="p-8 text-center text-slate-500">
+                        <Loader2 className="animate-spin mx-auto mb-2" />
+                        Loading Invite Tool...
+                    </div>
+                }
+            >
                 <AnimationWrapper variant="fade">
                     <ConsultantInviteView />
                 </AnimationWrapper>
@@ -358,7 +447,14 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
 
     if (currentView === AppView.ORG_SETUP_WIZARD) {
         return (
-            <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Organization Setup...</div>}>
+            <React.Suspense
+                fallback={
+                    <div className="p-8 text-center text-slate-500">
+                        <Loader2 className="animate-spin mx-auto mb-2" />
+                        Loading Organization Setup...
+                    </div>
+                }
+            >
                 <AnimationWrapper variant="slideUp">
                     <OrgSetupWizard />
                 </AnimationWrapper>
@@ -376,7 +472,14 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
 
     if (currentView === AppView.ONBOARDING_WIZARD) {
         return (
-            <React.Suspense fallback={<div className="p-8 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-2" />{t('common.loadingOnboarding')}</div>}>
+            <React.Suspense
+                fallback={
+                    <div className="p-8 text-center text-slate-500">
+                        <Loader2 className="animate-spin mx-auto mb-2" />
+                        {t('common.loadingOnboarding')}
+                    </div>
+                }
+            >
                 <AnimationWrapper variant="slideUp">
                     <OnboardingWizard />
                 </AnimationWrapper>
@@ -420,8 +523,10 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
                 <AnimationWrapper variant="fade">
                     <SettingsView
                         currentUser={currentUser}
-                        onUpdateUser={(updates: Partial<any>) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
-                        theme={theme as "light" | "dark" | "system"}
+                        onUpdateUser={(updates: Partial<any>) =>
+                            setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)
+                        }
+                        theme={theme as 'light' | 'dark' | 'system'}
                         toggleTheme={toggleTheme}
                     />
                 </AnimationWrapper>
@@ -488,10 +593,7 @@ export const ViewRenderer: React.FC<ViewRendererProps> = ({
     if (currentView === AppView.ASSESSMENT_SUMMARY || currentView === AppView.ASSESSMENT_OVERVIEW) {
         return (
             <React.Suspense fallback={<LoadingScreen />}>
-                <AssessmentHubDashboard
-                    organizationId={currentUser?.organizationId || ''}
-                    projectId={'default'}
-                />
+                <AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId={'default'} />
             </React.Suspense>
         );
     }

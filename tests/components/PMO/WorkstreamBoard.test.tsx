@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { WorkstreamBoard } from '../../../components/PMO/WorkstreamBoard';
+import { WorkstreamBoard } from '../../components/PMO/WorkstreamBoard';
 import { WorkstreamStatus } from '../../../types';
 
 // Mock API
@@ -323,6 +323,7 @@ describe('WorkstreamBoard Component', () => {
         });
     });
 });
+
 
 
 

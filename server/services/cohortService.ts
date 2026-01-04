@@ -4,7 +4,7 @@
  * Tracks user retention by sign-up cohort (weekly).
  */
 
-import db from '../database';
+import _db from '../database.js';
 
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
@@ -67,7 +67,7 @@ const CohortService: CohortServiceInterface = {
                 else resolve((rows as RetentionRow[]) || []);
             });
         });
-    }
+    },
 };
 
 export default CohortService;

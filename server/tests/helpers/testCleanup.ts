@@ -1,12 +1,12 @@
 /**
  * Test Cleanup Helper
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Helper functions for proper test cleanup to prevent flaky tests
  */
 
-import type { IDatabase } from '../../src/database/IDatabase.js';
 import { getDatabase } from '../../src/database/Database.js';
+import type { IDatabase } from '../../src/database/IDatabase.js';
 
 /**
  * Clean up test data from database
@@ -45,17 +45,13 @@ export async function resetDatabase(db: IDatabase): Promise<void> {
  * Wait for async operations to complete
  */
 export function waitFor(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Retry function with exponential backoff
  */
-export async function retry<T>(
-    fn: () => Promise<T>,
-    maxAttempts: number = 3,
-    delay: number = 100
-): Promise<T> {
+export async function retry<T>(fn: () => Promise<T>, maxAttempts: number = 3, delay: number = 100): Promise<T> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -71,4 +67,3 @@ export async function retry<T>(
 
     throw lastError || new Error('Retry failed');
 }
-

@@ -1,17 +1,18 @@
+import { motion } from 'framer-motion';
+import { ArrowRight, Lightbulb, Rocket, Sparkles, Target, Users } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Rocket, Target, Users, Sparkles, ArrowRight, Lightbulb } from 'lucide-react';
-import { EntryTopBar } from '../../components/Landing/EntryTopBar';
+
 import { EntryFooter } from '../../components/Landing/EntryFooter';
+import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 
 // Company data - UPDATE THESE VALUES
 const COMPANY = {
     name: 'DBR77 Sp. z o.o.',
     founded: '2020',
     location: 'Warszawa, Polska',
-    website: 'https://consultinity.com'
+    website: 'https://consultinity.com',
 };
 
 export const AboutView: React.FC = () => {
@@ -37,8 +38,10 @@ export const AboutView: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
-                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6">
+                        <span
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
+                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6"
+                        >
                             <Sparkles size={16} />
                             About Consultinity
                         </span>
@@ -51,9 +54,8 @@ export const AboutView: React.FC = () => {
                         </h1>
 
                         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                            We believe every leader deserves access to world-class strategic consulting.
-                            Consultinity combines AI intelligence with proven frameworks to democratize
-                            strategic decision-making.
+                            We believe every leader deserves access to world-class strategic consulting. Consultinity
+                            combines AI intelligence with proven frameworks to democratize strategic decision-making.
                         </p>
                     </motion.div>
                 </div>
@@ -69,22 +71,20 @@ export const AboutView: React.FC = () => {
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
                         >
-                            <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-6">
-                                Our Mission
-                            </h2>
+                            <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-6">Our Mission</h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                Traditional consulting is broken. It's expensive, slow, and often delivers
-                                beautiful presentations instead of actionable decisions, reliant on external
-                                providers instead of building internal competencies.
+                                Traditional consulting is broken. It's expensive, slow, and often delivers beautiful
+                                presentations instead of actionable decisions, reliant on external providers instead of
+                                building internal competencies.
                             </p>
                             <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
                                 <strong className="text-navy-900 dark:text-white">Consultinity changes that.</strong>{' '}
-                                We've built a platform that combines the rigor of top-tier consulting
-                                methodologies with the speed and accessibility of AI.
+                                We've built a platform that combines the rigor of top-tier consulting methodologies with
+                                the speed and accessibility of AI.
                             </p>
                             <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                                The result? Strategic decisions in days, not months. At a fraction of the
-                                cost. With full control staying in your hands.
+                                The result? Strategic decisions in days, not months. At a fraction of the cost. With
+                                full control staying in your hands.
                             </p>
                         </motion.div>
 
@@ -108,9 +108,7 @@ export const AboutView: React.FC = () => {
             <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/50">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-4">
-                            Our Values
-                        </h2>
+                        <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-4">Our Values</h2>
                         <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
                             The principles that guide everything we build
                         </p>
@@ -143,21 +141,19 @@ export const AboutView: React.FC = () => {
                         Built by Consultants, for Leaders
                     </h2>
                     <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
-                        Consultinity is developed by {COMPANY.name}, a team of technologists and
-                        strategy professionals based in {COMPANY.location}. We combine deep experience
-                        in enterprise consulting with cutting-edge AI capabilities.
+                        Consultinity is developed by {COMPANY.name}, a team of technologists and strategy professionals
+                        based in {COMPANY.location}. We combine deep experience in enterprise consulting with
+                        cutting-edge AI capabilities.
                     </p>
 
-                    <div className="inline-flex items-center gap-4 px-6 py-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 
-                                    border border-purple-200 dark:border-purple-500/20">
+                    <div
+                        className="inline-flex items-center gap-4 px-6 py-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 
+                                    border border-purple-200 dark:border-purple-500/20"
+                    >
                         <Rocket className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                         <div className="text-left">
-                            <p className="font-semibold text-navy-900 dark:text-white">
-                                Founded in {COMPANY.founded}
-                            </p>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {COMPANY.location}
-                            </p>
+                            <p className="font-semibold text-navy-900 dark:text-white">Founded in {COMPANY.founded}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{COMPANY.location}</p>
                         </div>
                     </div>
                 </div>
@@ -166,12 +162,9 @@ export const AboutView: React.FC = () => {
             {/* CTA Section */}
             <section className="py-20 px-6 bg-gradient-to-br from-purple-600 to-indigo-700">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-3xl font-bold text-white mb-6">
-                        Ready to Transform Your Strategy?
-                    </h2>
+                    <h2 className="text-3xl font-bold text-white mb-6">Ready to Transform Your Strategy?</h2>
                     <p className="text-lg text-purple-100 mb-8 max-w-2xl mx-auto">
-                        Experience the future of strategic consulting. Start with a free demo
-                        or begin your trial today.
+                        Experience the future of strategic consulting. Start with a free demo or begin your trial today.
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -208,8 +201,10 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ number, label }) => {
     return (
-        <div className="p-6 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
-                        shadow-lg text-center">
+        <div
+            className="p-6 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
+                        shadow-lg text-center"
+        >
             <p className="text-3xl font-black text-purple-600 dark:text-purple-400 mb-2">{number}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
         </div>
@@ -225,10 +220,14 @@ interface ValueCardProps {
 
 const ValueCard: React.FC<ValueCardProps> = ({ icon, title, description }) => {
     return (
-        <div className="p-8 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
-                        shadow-lg text-center">
-            <div className="w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center 
-                            text-purple-600 dark:text-purple-400 mx-auto mb-6">
+        <div
+            className="p-8 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 
+                        shadow-lg text-center"
+        >
+            <div
+                className="w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center 
+                            text-purple-600 dark:text-purple-400 mx-auto mb-6"
+            >
                 {icon}
             </div>
             <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-3">{title}</h3>

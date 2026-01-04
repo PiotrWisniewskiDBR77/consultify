@@ -1,12 +1,13 @@
 /**
  * ChatExportModal
- * 
+ *
  * Modal for exporting AI chat conversations to various formats.
  */
 
+import { Check, Code, Download, File, FileText, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Download, FileText, Code, File, Check } from 'lucide-react';
+
 import { useConversationStore } from '../../store/useConversationStore';
 
 interface ChatExportModalProps {
@@ -20,14 +21,10 @@ type ExportFormat = 'markdown' | 'txt' | 'json';
 const FORMAT_OPTIONS: { id: ExportFormat; label: string; icon: React.ElementType; description: string }[] = [
     { id: 'markdown', label: 'Markdown', icon: FileText, description: 'Formatowany dokument (.md)' },
     { id: 'txt', label: 'Tekst', icon: File, description: 'Czysty tekst (.txt)' },
-    { id: 'json', label: 'JSON', icon: Code, description: 'Dane strukturalne (.json)' }
+    { id: 'json', label: 'JSON', icon: Code, description: 'Dane strukturalne (.json)' },
 ];
 
-export const ChatExportModal: React.FC<ChatExportModalProps> = ({
-    isOpen,
-    onClose,
-    conversationId
-}) => {
+export const ChatExportModal: React.FC<ChatExportModalProps> = ({ isOpen, onClose, conversationId }) => {
     const { t } = useTranslation();
     const { activeConversationId } = useConversationStore();
     const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('markdown');
@@ -45,8 +42,8 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
         try {
             const response = await fetch(`/api/conversations/${convId}/export/${selectedFormat}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             if (!response.ok) {
@@ -77,7 +74,6 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
                 onClose();
                 setExportSuccess(false);
             }, 1500);
-
         } catch (err) {
             console.error('[ChatExport] Error:', err);
         } finally {
@@ -90,18 +86,17 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={onClose}
-            />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
-            <div className="
+            <div
+                className="
                 relative w-full max-w-md mx-4
                 bg-white dark:bg-navy-900
                 rounded-2xl shadow-2xl
                 animate-in fade-in zoom-in-95 duration-200
-            ">
+            "
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-800">
                     <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -129,7 +124,7 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
 
                             {/* Format Options */}
                             <div className="space-y-2">
-                                {FORMAT_OPTIONS.map(option => {
+                                {FORMAT_OPTIONS.map((option) => {
                                     const Icon = option.icon;
                                     const isSelected = selectedFormat === option.id;
 
@@ -140,32 +135,36 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
                                             className={`
                                                 w-full flex items-center gap-3 p-3 rounded-xl
                                                 border-2 transition-all duration-200
-                                                ${isSelected
-                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                                                ${
+                                                    isSelected
+                                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                                                 }
                                             `}
                                         >
-                                            <div className={`
+                                            <div
+                                                className={`
                                                 p-2 rounded-lg
-                                                ${isSelected
-                                                    ? 'bg-primary-500 text-white'
-                                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                                                ${
+                                                    isSelected
+                                                        ? 'bg-primary-500 text-white'
+                                                        : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                                                 }
-                                            `}>
+                                            `}
+                                            >
                                                 <Icon size={20} />
                                             </div>
                                             <div className="flex-1 text-left">
-                                                <p className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-navy-900 dark:text-white'}`}>
+                                                <p
+                                                    className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-navy-900 dark:text-white'}`}
+                                                >
                                                     {option.label}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                                     {option.description}
                                                 </p>
                                             </div>
-                                            {isSelected && (
-                                                <Check size={20} className="text-primary-500" />
-                                            )}
+                                            {isSelected && <Check size={20} className="text-primary-500" />}
                                         </button>
                                     );
                                 })}
@@ -194,9 +193,10 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
                             className={`
                                 flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
                                 font-medium transition-all duration-200
-                                ${exportSuccess
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-primary-600 hover:bg-primary-500 text-white'
+                                ${
+                                    exportSuccess
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-primary-600 hover:bg-primary-500 text-white'
                                 }
                                 disabled:opacity-50 disabled:cursor-not-allowed
                             `}
@@ -226,12 +226,4 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
 };
 
 export default ChatExportModal;
-
-
-
-
-
-
-
-
 

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { FullStep6Workspace } from '../../../components/FullStep6Workspace';
+import { FullStep6Workspace } from '../../components/FullStep6Workspace';
 
 const mockSession = {
     id: 'session-1',
@@ -17,6 +17,7 @@ describe('FullStep6Workspace Component', () => {
         expect(screen.getByText(/Step 6/i) || screen.getByText(/Rollout/i)).toBeInTheDocument();
     });
 });
+
 
 
 

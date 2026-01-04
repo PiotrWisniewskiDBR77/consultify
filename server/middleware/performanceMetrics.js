@@ -10,8 +10,11 @@
  * - Error rates
  */
 
-import logger from '../utils/logger.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
+import defaultLogger from '../dist/utils/logger.js';
+import * as defaultQueryHelpers from '../dist/utils/queryHelpers.js';
+
+let logger = defaultLogger;
+let queryHelpers = defaultQueryHelpers;
 
 // Dependency Injection for Testing
 const _setDependencies = (deps) => {

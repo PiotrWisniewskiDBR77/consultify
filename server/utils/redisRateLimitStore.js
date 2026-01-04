@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const client = require('./redisClient');
 /**
  * A simple Redis store for express-rate-limit
@@ -28,7 +27,7 @@ class RedisStore {
             const resetTime = new Date(Date.now() + this.windowMs); // Approximate
             return {
                 totalHits: hits,
-                resetTime
+                resetTime,
             };
         }
         catch (error) {

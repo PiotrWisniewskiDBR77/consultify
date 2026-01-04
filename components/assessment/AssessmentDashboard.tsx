@@ -3,23 +3,24 @@
  * Overview dashboard for Assessment Module with stats and quick actions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FileText,
-    Clock,
-    CheckCircle2,
+    Activity,
     AlertTriangle,
-    Plus,
     ArrowRight,
     Bell,
-    TrendingUp,
-    Activity,
-    RefreshCw,
-    Loader2,
-    Eye,
+    CheckCircle2,
+    Clock,
     Edit,
-    Sparkles
+    Eye,
+    FileText,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Sparkles,
+    TrendingUp,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, WorkflowState } from '../../types';
 
@@ -56,10 +57,7 @@ interface AssessmentDashboardProps {
     onNewAssessment: () => void;
 }
 
-export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
-    onNavigate,
-    onNewAssessment
-}) => {
+export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({ onNavigate, onNewAssessment }) => {
     const { currentUser } = useAppStore();
 
     // State
@@ -77,26 +75,28 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
             // Fetch stats and recent assessments
             const [statsRes, recentRes, actionsRes] = await Promise.all([
                 fetch('/api/assessments/stats', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 }).catch(() => null),
                 fetch('/api/assessments/recent?limit=5', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 }).catch(() => null),
                 fetch('/api/assessment-workflow/pending-actions', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }).catch(() => null)
+                    headers: { Authorization: `Bearer ${token}` },
+                }).catch(() => null),
             ]);
 
             // Parse responses with fallbacks
-            const statsData = statsRes?.ok ? await statsRes.json() : {
-                total: 0,
-                drafts: 0,
-                inReview: 0,
-                approved: 0,
-                rejected: 0,
-                pendingReviews: 0,
-                pendingApprovals: 0
-            };
+            const statsData = statsRes?.ok
+                ? await statsRes.json()
+                : {
+                      total: 0,
+                      drafts: 0,
+                      inReview: 0,
+                      approved: 0,
+                      rejected: 0,
+                      pendingReviews: 0,
+                      pendingApprovals: 0,
+                  };
 
             const recentData = recentRes?.ok ? await recentRes.json() : { assessments: [] };
             const actionsData = actionsRes?.ok ? await actionsRes.json() : { actions: [] };
@@ -104,7 +104,6 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
             setStats(statsData);
             setRecentAssessments(recentData.assessments || []);
             setPendingActions(actionsData.actions || []);
-
         } catch (err) {
             console.error('[AssessmentDashboard] Error:', err);
             // Set fallback data
@@ -115,7 +114,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                 approved: 0,
                 rejected: 0,
                 pendingReviews: 0,
-                pendingApprovals: 0
+                pendingApprovals: 0,
             });
         } finally {
             setIsLoading(false);
@@ -174,9 +173,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                            Assessment Dashboard
-                        </h1>
+                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Assessment Dashboard</h1>
                         <p className="text-slate-500 dark:text-slate-400">
                             Overview of your digital maturity assessments
                         </p>
@@ -256,7 +253,9 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                                     <Eye className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.pendingReviews}</p>
+                                    <p className="text-2xl font-bold text-navy-900 dark:text-white">
+                                        {stats.pendingReviews}
+                                    </p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">To Review</p>
                                 </div>
                             </div>
@@ -282,9 +281,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                         <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                                <h3 className="font-semibold text-navy-900 dark:text-white">
-                                    Pending Actions
-                                </h3>
+                                <h3 className="font-semibold text-navy-900 dark:text-white">Pending Actions</h3>
                             </div>
                             {pendingActions.length > 0 && (
                                 <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">
@@ -302,21 +299,31 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                                 </div>
                             ) : (
                                 pendingActions.slice(0, 5).map((action) => (
-                                    <div 
+                                    <div
                                         key={action.id}
                                         className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors ${
                                             action.isOverdue ? 'bg-red-50/50 dark:bg-red-900/10' : ''
                                         }`}
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className={`p-1.5 rounded-lg ${
-                                                action.type === 'review' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                                                action.type === 'approval' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                                                'bg-red-100 dark:bg-red-900/30'
-                                            }`}>
-                                                {action.type === 'review' && <Eye className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
-                                                {action.type === 'approval' && <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />}
-                                                {action.type === 'revision' && <Edit className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                                            <div
+                                                className={`p-1.5 rounded-lg ${
+                                                    action.type === 'review'
+                                                        ? 'bg-amber-100 dark:bg-amber-900/30'
+                                                        : action.type === 'approval'
+                                                          ? 'bg-purple-100 dark:bg-purple-900/30'
+                                                          : 'bg-red-100 dark:bg-red-900/30'
+                                                }`}
+                                            >
+                                                {action.type === 'review' && (
+                                                    <Eye className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                                )}
+                                                {action.type === 'approval' && (
+                                                    <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                                )}
+                                                {action.type === 'revision' && (
+                                                    <Edit className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
@@ -326,7 +333,8 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                                                     {action.type === 'review' && 'Review requested'}
                                                     {action.type === 'approval' && 'Needs approval'}
                                                     {action.type === 'revision' && 'Needs revision'}
-                                                    {' by '}{action.requestedBy}
+                                                    {' by '}
+                                                    {action.requestedBy}
                                                 </p>
                                                 {action.isOverdue && (
                                                     <span className="text-xs text-red-500 font-medium">Overdue</span>
@@ -355,9 +363,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                         <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                                <h3 className="font-semibold text-navy-900 dark:text-white">
-                                    Recent Assessments
-                                </h3>
+                                <h3 className="font-semibold text-navy-900 dark:text-white">Recent Assessments</h3>
                             </div>
                             <button
                                 onClick={() => onNavigate(AppView.MY_ASSESSMENTS)}
@@ -383,7 +389,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                                 </div>
                             ) : (
                                 recentAssessments.map((assessment) => (
-                                    <div 
+                                    <div
                                         key={assessment.id}
                                         className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
                                     >
@@ -393,23 +399,30 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                                                     <p className="font-medium text-navy-900 dark:text-white truncate">
                                                         {assessment.name}
                                                     </p>
-                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(assessment.status)}`}>
+                                                    <span
+                                                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(assessment.status)}`}
+                                                    >
                                                         {assessment.status.replace('_', ' ')}
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                    {assessment.projectName} • Updated {formatDate(assessment.updatedAt)}
+                                                    {assessment.projectName} • Updated{' '}
+                                                    {formatDate(assessment.updatedAt)}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-4 shrink-0">
                                                 {/* Progress */}
                                                 <div className="w-24">
                                                     <div className="flex items-center justify-between text-xs mb-1">
-                                                        <span className="text-slate-500 dark:text-slate-400">Progress</span>
-                                                        <span className="text-slate-700 dark:text-slate-300 font-medium">{assessment.progress}%</span>
+                                                        <span className="text-slate-500 dark:text-slate-400">
+                                                            Progress
+                                                        </span>
+                                                        <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                            {assessment.progress}%
+                                                        </span>
                                                     </div>
                                                     <div className="h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                                                        <div 
+                                                        <div
                                                             className="h-full bg-purple-500 rounded-full"
                                                             style={{ width: `${assessment.progress}%` }}
                                                         />
@@ -429,11 +442,10 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                 <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl p-6 text-white">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-lg font-semibold mb-1">
-                                Ready to transform your digital maturity?
-                            </h3>
+                            <h3 className="text-lg font-semibold mb-1">Ready to transform your digital maturity?</h3>
                             <p className="text-purple-200 text-sm">
-                                Complete your assessment and generate AI-powered initiatives for your transformation roadmap.
+                                Complete your assessment and generate AI-powered initiatives for your transformation
+                                roadmap.
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -458,4 +470,3 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
         </div>
     );
 };
-

@@ -4,10 +4,11 @@
  */
 
 import { Request, Response } from 'express';
-import type { AuthRequest, LoginRequest } from '../validators/auth.validators';
-import refreshTokenService from '../services/RefreshTokenService';
-import mfaService from '../services/MFAService';
+
 import type { IDatabase } from '../database/IDatabase.js';
+import mfaService from '../services/MFAService.js';
+import refreshTokenService from '../services/RefreshTokenService.js';
+import type { _AuthRequest, LoginRequest } from '../validators/auth.validators.js';
 
 // Dependencies interface for dependency injection
 interface Dependencies {
@@ -43,12 +44,12 @@ const getDeps = async (): Promise<Dependencies> => {
     if (!depsPromise) {
         depsPromise = (async () => {
             const [dbModule, bcryptModule, activityModule, redisModule] = await Promise.all([
-                import('../../database.js'),
+                import('../../src/database/index.js'),
                 import('bcryptjs'),
-                import('../../services/activityService.js').then(m => m.default || m),
-                import('../../utils/redisRateLimitStore.js')
+                import('../services/ActivityService.js').then((m) => m.default || m),
+                import('../../utils/redisRateLimitStore.js'),
             ]);
-            
+
             deps = {
                 db: dbModule.default || dbModule,
                 bcrypt: bcryptModule.default || bcryptModule,
@@ -71,9 +72,7 @@ const getDeps = async (): Promise<Dependencies> => {
 const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
     return Promise.race([
         promise,
-        new Promise<T>((_, reject) => 
-            setTimeout(() => reject(new Error('Operation timeout')), timeoutMs)
-        ),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Operation timeout')), timeoutMs)),
     ]);
 };
 
@@ -83,7 +82,7 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
     const dependencies = await getDeps();
     const body = req.body as LoginRequest;
-    
+
     console.log('[Auth] Login request received for:', body.email || 'no email');
     const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
 
@@ -108,14 +107,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             status: string;
             password: string;
         } | null>((resolve, reject) => {
-            dependencies.db.get(
-                'SELECT * FROM users WHERE email = ?',
-                [email],
-                (err: Error | null, row: unknown) => {
-                    if (err) reject(err);
-                    else resolve(row as typeof row);
-                }
-            );
+            dependencies.db.get('SELECT * FROM users WHERE email = ?', [email], (err: Error | null, row: unknown) => {
+                if (err) reject(err);
+                else resolve(row as typeof row);
+            });
         });
 
         if (!user) {
@@ -151,7 +146,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 (err: Error | null, row: unknown) => {
                     if (err) reject(err);
                     else resolve(row as typeof row);
-                }
+                },
             );
         });
 
@@ -162,15 +157,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         // Check organization status
         if (org.status === 'pending' && user.role !== 'SUPERADMIN') {
-            res.status(403).json({ 
-                error: 'Your organization is waiting for approval.', 
-                status: 'pending' 
+            res.status(403).json({
+                error: 'Your organization is waiting for approval.',
+                status: 'pending',
             });
             return;
         }
         if (org.status === 'blocked' && user.role !== 'SUPERADMIN') {
-            res.status(403).json({ 
-                error: 'Your organization has been blocked. Contact support.' 
+            res.status(403).json({
+                error: 'Your organization has been blocked. Contact support.',
             });
             return;
         }
@@ -180,59 +175,52 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         if (mfaStatus.enabled) {
             if (deviceFingerprint) {
-                const isTrusted = await dependencies.MFAService.isDeviceTrusted(
-                    user.id, 
-                    deviceFingerprint
-                );
+                const isTrusted = await dependencies.MFAService.isDeviceTrusted(user.id, deviceFingerprint);
                 if (!isTrusted && !mfaToken) {
-                    res.json({ 
-                        mfaRequired: true, 
-                        userId: user.id, 
-                        message: 'Please enter your 2FA code' 
+                    res.json({
+                        mfaRequired: true,
+                        userId: user.id,
+                        message: 'Please enter your 2FA code',
                     });
                     return;
                 } else if (!isTrusted) {
                     // Verify Token
                     const verification = await dependencies.MFAService.verifyTOTP(
-                        user.id, 
-                        mfaToken!, 
-                        req.ip, 
-                        req.get('user-agent')
+                        user.id,
+                        mfaToken!,
+                        req.ip,
+                        req.get('user-agent'),
                     );
                     if (!verification.success) {
-                        res.status(401).json({ 
-                            error: verification.error, 
-                            mfaRequired: true 
+                        res.status(401).json({
+                            error: verification.error,
+                            mfaRequired: true,
                         });
                         return;
                     }
                     if (trustDevice) {
                         const deviceName = (req.get('user-agent') || 'Unknown Device').substring(0, 100);
-                        await dependencies.MFAService.trustDevice(
-                            user.id, 
-                            deviceFingerprint, 
-                            deviceName
-                        );
+                        await dependencies.MFAService.trustDevice(user.id, deviceFingerprint, deviceName);
                     }
                 }
             } else if (!mfaToken) {
-                res.json({ 
-                    mfaRequired: true, 
-                    userId: user.id, 
-                    message: 'Please enter your 2FA code' 
+                res.json({
+                    mfaRequired: true,
+                    userId: user.id,
+                    message: 'Please enter your 2FA code',
                 });
                 return;
             } else {
                 const verification = await dependencies.MFAService.verifyTOTP(
-                    user.id, 
-                    mfaToken, 
-                    req.ip, 
-                    req.get('user-agent')
+                    user.id,
+                    mfaToken,
+                    req.ip,
+                    req.get('user-agent'),
                 );
                 if (!verification.success) {
-                    res.status(401).json({ 
-                        error: verification.error, 
-                        mfaRequired: true 
+                    res.status(401).json({
+                        error: verification.error,
+                        mfaRequired: true,
                     });
                     return;
                 }
@@ -241,17 +229,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             res.status(403).json({
                 error: 'Your organization requires two-factor authentication. Please set up MFA first.',
                 mfaSetupRequired: true,
-                gracePeriodRemaining: mfaStatus.gracePeriodRemaining
+                gracePeriodRemaining: mfaStatus.gracePeriodRemaining,
             });
             return;
         }
 
         // Update Last Login
         await new Promise<void>((resolve) => {
-            dependencies.db.run(
-                'UPDATE users SET last_login = datetime("now") WHERE id = ?',
-                [user.id],
-                () => resolve()
+            dependencies.db.run('UPDATE users SET last_login = datetime("now") WHERE id = ?', [user.id], () =>
+                resolve(),
             );
         });
 
@@ -262,13 +248,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 id: user.id,
                 email: user.email,
                 role: user.role,
-                organization_id: user.organization_id
+                organization_id: user.organization_id,
             },
             {
                 deviceInfo,
                 ip: req.ip,
-                userAgent: req.get('user-agent')
-            }
+                userAgent: req.get('user-agent'),
+            },
         );
 
         const safeUser = {
@@ -280,7 +266,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             status: user.status,
             organizationId: user.organization_id,
             companyName: org.name,
-            mfaEnabled: mfaStatus.enabled
+            mfaEnabled: mfaStatus.enabled,
         };
 
         // Log activity
@@ -290,16 +276,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             action: 'login',
             entityType: 'session',
             entityId: 'session',
-            entityName: 'User Login'
+            entityName: 'User Login',
         });
 
         res.json({
             user: safeUser,
             token: tokenPair.accessToken,
             refreshToken: tokenPair.refreshToken,
-            expiresIn: tokenPair.expiresIn
+            expiresIn: tokenPair.expiresIn,
         });
-
     } catch (error: unknown) {
         console.error('[Auth] Login error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -313,4 +298,3 @@ export const setDependencies = async (newDeps: Partial<Dependencies>): Promise<v
     const currentDeps = await getDeps();
     deps = { ...currentDeps, ...newDeps };
 };
-

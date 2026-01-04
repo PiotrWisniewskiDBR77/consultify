@@ -17,7 +17,8 @@
  * @module workModeService
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 /**
  * Work Mode Constants
@@ -483,6 +484,7 @@ const WorkModeService = {
 };
 
 export default WorkModeService;
+
 
 
 

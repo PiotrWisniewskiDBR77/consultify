@@ -1,6 +1,6 @@
 /**
  * ChatMenu
- * 
+ *
  * Floating flyout menu for AI Chat with:
  * - New conversation
  * - Daily brief
@@ -9,22 +9,23 @@
  * - Export conversation
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Plus,
-    History,
-    Star,
-    Download,
-    ChevronRight,
     ChevronDown,
+    ChevronRight,
+    Download,
+    History,
     Menu,
-    X,
     MessageSquare,
+    Plus,
+    Star,
+    Sunrise,
     Trash2,
-    Sunrise
+    X,
 } from 'lucide-react';
-import { useConversationStore, groupConversations, Conversation } from '../../store/useConversationStore';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Conversation, groupConversations, useConversationStore } from '../../store/useConversationStore';
 
 interface PinnedPrompt {
     id: string;
@@ -49,7 +50,7 @@ const GROUP_LABELS: Record<string, { en: string; pl: string }> = {
     yesterday: { en: 'Yesterday', pl: 'Wczoraj' },
     thisWeek: { en: 'This week', pl: 'Ten tydzień' },
     lastMonth: { en: 'Last month', pl: 'Ostatni miesiąc' },
-    older: { en: 'Older', pl: 'Starsze' }
+    older: { en: 'Older', pl: 'Starsze' },
 };
 
 export const ChatMenu: React.FC<ChatMenuProps> = ({
@@ -58,18 +59,18 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
     onExport,
     onDailyBrief,
     onPromptSelect,
-    className = ''
+    className = '',
 }) => {
     const { t, i18n } = useTranslation();
     const menuRef = useRef<HTMLDivElement>(null);
-    
+
     // Menu state
     const [isOpen, setIsOpen] = useState(false);
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [pinnedExpanded, setPinnedExpanded] = useState(false);
     const [pinnedPrompts, setPinnedPrompts] = useState<PinnedPrompt[]>([]);
     const [pinnedLoading, setPinnedLoading] = useState(false);
-    
+
     // Conversation store
     const {
         conversations,
@@ -78,7 +79,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
         fetchConversations,
         setActiveConversation,
         clearActiveChat,
-        toggleSidebar
+        toggleSidebar,
     } = useConversationStore();
 
     // Fetch conversations and pinned prompts when menu opens
@@ -94,8 +95,8 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
         try {
             const response = await fetch('/api/pinned-prompts', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -115,7 +116,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                 setIsOpen(false);
             }
         };
-        
+
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
@@ -158,13 +159,13 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
             await fetch(`/api/pinned-prompts/${prompt.id}/use`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
         } catch (err) {
             console.error('[ChatMenu] Failed to track prompt usage:', err);
         }
-        
+
         onPromptSelect?.(prompt.prompt);
         setIsOpen(false);
     };
@@ -183,9 +184,10 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
                     p-2.5 rounded-xl transition-all duration-200
-                    ${isOpen
-                        ? 'bg-primary-600 text-white shadow-lg'
-                        : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 shadow-md border border-slate-200 dark:border-navy-700'
+                    ${
+                        isOpen
+                            ? 'bg-primary-600 text-white shadow-lg'
+                            : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 shadow-md border border-slate-200 dark:border-navy-700'
                     }
                     hover:shadow-lg
                 `}
@@ -196,14 +198,16 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
 
             {/* Flyout Menu */}
             {isOpen && (
-                <div className="
+                <div
+                    className="
                     absolute top-full left-0 mt-2 w-72
                     bg-white dark:bg-navy-900
                     border border-slate-200 dark:border-navy-700
                     rounded-xl shadow-xl
                     py-2 z-50
                     animate-in fade-in slide-in-from-top-2 duration-200
-                ">
+                "
+                >
                     {/* New Conversation */}
                     <button
                         onClick={handleNewChat}
@@ -273,16 +277,17 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                                                 <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 py-1">
                                                     {isPolish ? GROUP_LABELS[groupKey]?.pl : GROUP_LABELS[groupKey]?.en}
                                                 </p>
-                                                {(items as Conversation[]).slice(0, 5).map(conv => (
+                                                {(items as Conversation[]).slice(0, 5).map((conv) => (
                                                     <button
                                                         key={conv.id}
                                                         onClick={() => handleSelectConversation(conv.id)}
                                                         className={`
                                                             w-full flex items-center gap-2 px-3 py-1.5 rounded-lg
                                                             text-left text-xs truncate
-                                                            ${activeConversationId === conv.id
-                                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+                                                            ${
+                                                                activeConversationId === conv.id
+                                                                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
                                                             }
                                                             transition-colors
                                                         `}
@@ -344,7 +349,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                                         {t('aiChat.noPinnedPrompts', 'Brak przypiętych promptów')}
                                     </p>
                                 ) : (
-                                    pinnedPrompts.map(prompt => (
+                                    pinnedPrompts.map((prompt) => (
                                         <button
                                             key={prompt.id}
                                             onClick={() => handleSelectPrompt(prompt)}
@@ -357,7 +362,9 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                                             "
                                         >
                                             <Star size={12} className="shrink-0 text-amber-400 fill-amber-400" />
-                                            <span className="truncate">{prompt.label || prompt.prompt.slice(0, 40)}</span>
+                                            <span className="truncate">
+                                                {prompt.label || prompt.prompt.slice(0, 40)}
+                                            </span>
                                         </button>
                                     ))
                                 )}
@@ -374,9 +381,10 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                         className={`
                             w-full flex items-center gap-3 px-4 py-2.5
                             text-left text-sm
-                            ${activeConversationId
-                                ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-                                : 'text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                            ${
+                                activeConversationId
+                                    ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                                    : 'text-slate-400 dark:text-slate-600 cursor-not-allowed'
                             }
                             transition-colors
                         `}
@@ -392,4 +400,3 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
 };
 
 export default ChatMenu;
-

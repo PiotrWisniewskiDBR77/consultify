@@ -1,6 +1,6 @@
 /**
  * WorkingHoursSettings - Manage weekly working schedule
- * 
+ *
  * Features:
  * - Set hours for each day of the week
  * - Same hours every day option
@@ -8,15 +8,13 @@
  * - Integration with calendar
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Clock, Save, Loader2, CheckCircle, AlertCircle, 
-    Calendar, Globe, RefreshCw 
-} from 'lucide-react';
-import { User, WorkingHours, DaySchedule } from '../../types';
-import { Api } from '../../services/api';
+import { AlertCircle, Calendar, CheckCircle, Clock, Globe, Loader2, RefreshCw, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { DaySchedule, User, WorkingHours } from '../../types';
 
 interface WorkingHoursSettingsProps {
     currentUser: User;
@@ -33,7 +31,7 @@ const DAYS_OF_WEEK = [
     { key: 'sunday', label: 'Sunday', short: 'Sun' },
 ] as const;
 
-type DayKey = typeof DAYS_OF_WEEK[number]['key'];
+type DayKey = (typeof DAYS_OF_WEEK)[number]['key'];
 
 const DEFAULT_SCHEDULE: DaySchedule = {
     enabled: true,
@@ -53,16 +51,13 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
 });
 
-export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [sameEveryDay, setSameEveryDay] = useState(true);
     const [timezone, setTimezone] = useState(currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-    
+
     const [schedule, setSchedule] = useState<Record<DayKey, DaySchedule>>({
         monday: { ...DEFAULT_SCHEDULE },
         tuesday: { ...DEFAULT_SCHEDULE },
@@ -87,7 +82,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 // Check if all weekday times are the same
                 const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
                 const firstEnabled = response.schedule.monday;
-                const allSame = weekdays.every(day => {
+                const allSame = weekdays.every((day) => {
                     const s = response.schedule[day];
                     return s.startTime === firstEnabled.startTime && s.endTime === firstEnabled.endTime;
                 });
@@ -108,7 +103,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 timezone,
                 schedule,
             });
-            
+
             // Update user's workingHours
             const workingHours: WorkingHours = {
                 timezone,
@@ -124,9 +119,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
     };
 
     const handleDayToggle = (day: DayKey) => {
-        setSchedule(prev => ({
+        setSchedule((prev) => ({
             ...prev,
-            [day]: { ...prev[day], enabled: !prev[day].enabled }
+            [day]: { ...prev[day], enabled: !prev[day].enabled },
         }));
     };
 
@@ -134,16 +129,16 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         if (sameEveryDay) {
             // Update all weekdays
             const newSchedule = { ...schedule };
-            DAYS_OF_WEEK.forEach(d => {
+            DAYS_OF_WEEK.forEach((d) => {
                 if (d.key !== 'saturday' && d.key !== 'sunday') {
                     newSchedule[d.key] = { ...newSchedule[d.key], [field]: value };
                 }
             });
             setSchedule(newSchedule);
         } else {
-            setSchedule(prev => ({
+            setSchedule((prev) => ({
                 ...prev,
-                [day]: { ...prev[day], [field]: value }
+                [day]: { ...prev[day], [field]: value },
             }));
         }
     };
@@ -153,7 +148,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
             // Apply Monday's schedule to all weekdays
             const mondaySchedule = schedule.monday;
             const newSchedule = { ...schedule };
-            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach(day => {
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach((day) => {
                 newSchedule[day as DayKey] = { ...mondaySchedule };
             });
             setSchedule(newSchedule);
@@ -171,8 +166,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
     }, 0);
 
     // Styles
-    const inputClass = "px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer";
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6";
+    const inputClass =
+        'px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer';
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6';
 
     if (loading) {
         return (
@@ -219,7 +215,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         <div>
                             <p className="text-sm text-slate-500">Working Days</p>
                             <p className="text-xl font-bold text-slate-900 dark:text-white">
-                                {DAYS_OF_WEEK.filter(d => schedule[d.key].enabled).length}
+                                {DAYS_OF_WEEK.filter((d) => schedule[d.key].enabled).length}
                             </p>
                         </div>
                     </div>
@@ -231,9 +227,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         </div>
                         <div>
                             <p className="text-sm text-slate-500">Weekly Hours</p>
-                            <p className="text-xl font-bold text-slate-900 dark:text-white">
-                                {totalHours.toFixed(1)}h
-                            </p>
+                            <p className="text-xl font-bold text-slate-900 dark:text-white">{totalHours.toFixed(1)}h</p>
                         </div>
                     </div>
                 </div>
@@ -259,9 +253,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         <h3 className="font-semibold text-slate-900 dark:text-white">
                             {t('settings.workingHours.scheduleType', 'Schedule Type')}
                         </h3>
-                        <p className="text-sm text-slate-500 mt-1">
-                            Choose how you want to set your working hours
-                        </p>
+                        <p className="text-sm text-slate-500 mt-1">Choose how you want to set your working hours</p>
                     </div>
                 </div>
 
@@ -275,18 +267,18 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         }`}
                     >
                         <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 ${
-                                sameEveryDay 
-                                    ? 'border-purple-500 bg-purple-500' 
-                                    : 'border-slate-300 dark:border-slate-600'
-                            }`}>
+                            <div
+                                className={`w-4 h-4 rounded-full border-2 ${
+                                    sameEveryDay
+                                        ? 'border-purple-500 bg-purple-500'
+                                        : 'border-slate-300 dark:border-slate-600'
+                                }`}
+                            >
                                 {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
                             </div>
                             <span className="font-medium text-slate-900 dark:text-white">Same every day</span>
                         </div>
-                        <p className="text-sm text-slate-500 mt-1 text-left">
-                            Use the same hours for all weekdays
-                        </p>
+                        <p className="text-sm text-slate-500 mt-1 text-left">Use the same hours for all weekdays</p>
                     </button>
                     <button
                         onClick={() => setSameEveryDay(false)}
@@ -297,18 +289,18 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         }`}
                     >
                         <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 ${
-                                !sameEveryDay 
-                                    ? 'border-purple-500 bg-purple-500' 
-                                    : 'border-slate-300 dark:border-slate-600'
-                            }`}>
+                            <div
+                                className={`w-4 h-4 rounded-full border-2 ${
+                                    !sameEveryDay
+                                        ? 'border-purple-500 bg-purple-500'
+                                        : 'border-slate-300 dark:border-slate-600'
+                                }`}
+                            >
                                 {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
                             </div>
                             <span className="font-medium text-slate-900 dark:text-white">Custom per day</span>
                         </div>
-                        <p className="text-sm text-slate-500 mt-1 text-left">
-                            Set different hours for each day
-                        </p>
+                        <p className="text-sm text-slate-500 mt-1 text-left">Set different hours for each day</p>
                     </button>
                 </div>
             </div>
@@ -318,7 +310,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 <h3 className="font-semibold text-slate-900 dark:text-white mb-6">
                     {t('settings.workingHours.weeklySchedule', 'Weekly Schedule')}
                 </h3>
-                
+
                 <div className="space-y-3">
                     {DAYS_OF_WEEK.map((day) => {
                         const daySchedule = schedule[day.key];
@@ -326,11 +318,11 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         const isDisabled = sameEveryDay && !isWeekend && day.key !== 'monday';
 
                         return (
-                            <div 
+                            <div
                                 key={day.key}
                                 className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                                    daySchedule.enabled 
-                                        ? 'bg-slate-50 dark:bg-navy-950/50' 
+                                    daySchedule.enabled
+                                        ? 'bg-slate-50 dark:bg-navy-950/50'
                                         : 'bg-slate-100 dark:bg-white/5 opacity-60'
                                 }`}
                             >
@@ -338,23 +330,23 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                                 <button
                                     onClick={() => handleDayToggle(day.key)}
                                     className={`w-12 h-6 rounded-full transition-colors relative ${
-                                        daySchedule.enabled 
-                                            ? 'bg-purple-500' 
-                                            : 'bg-slate-300 dark:bg-slate-600'
+                                        daySchedule.enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                 >
-                                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                        daySchedule.enabled ? 'left-7' : 'left-1'
-                                    }`} />
+                                    <span
+                                        className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                            daySchedule.enabled ? 'left-7' : 'left-1'
+                                        }`}
+                                    />
                                 </button>
 
                                 {/* Day Label */}
                                 <div className="w-28">
-                                    <span className={`font-medium ${
-                                        daySchedule.enabled 
-                                            ? 'text-slate-900 dark:text-white' 
-                                            : 'text-slate-400'
-                                    }`}>
+                                    <span
+                                        className={`font-medium ${
+                                            daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-400'
+                                        }`}
+                                    >
                                         {day.label}
                                     </span>
                                 </div>
@@ -368,8 +360,10 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                                             disabled={isDisabled}
                                             className={inputClass + (isDisabled ? ' opacity-50' : '')}
                                         >
-                                            {TIME_OPTIONS.map(time => (
-                                                <option key={time} value={time}>{time}</option>
+                                            {TIME_OPTIONS.map((time) => (
+                                                <option key={time} value={time}>
+                                                    {time}
+                                                </option>
                                             ))}
                                         </select>
                                         <span className="text-slate-500">to</span>
@@ -379,24 +373,28 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                                             disabled={isDisabled}
                                             className={inputClass + (isDisabled ? ' opacity-50' : '')}
                                         >
-                                            {TIME_OPTIONS.map(time => (
-                                                <option key={time} value={time}>{time}</option>
+                                            {TIME_OPTIONS.map((time) => (
+                                                <option key={time} value={time}>
+                                                    {time}
+                                                </option>
                                             ))}
                                         </select>
-                                        
+
                                         {/* Hours display */}
                                         <span className="text-sm text-slate-500 ml-2">
                                             {(() => {
-                                                const start = parseInt(daySchedule.startTime.split(':')[0]) * 60 + parseInt(daySchedule.startTime.split(':')[1]);
-                                                const end = parseInt(daySchedule.endTime.split(':')[0]) * 60 + parseInt(daySchedule.endTime.split(':')[1]);
+                                                const start =
+                                                    parseInt(daySchedule.startTime.split(':')[0]) * 60 +
+                                                    parseInt(daySchedule.startTime.split(':')[1]);
+                                                const end =
+                                                    parseInt(daySchedule.endTime.split(':')[0]) * 60 +
+                                                    parseInt(daySchedule.endTime.split(':')[1]);
                                                 return ((end - start) / 60).toFixed(1) + 'h';
                                             })()}
                                         </span>
                                     </div>
                                 ) : (
-                                    <div className="flex-1 text-slate-400 text-sm">
-                                        Not working
-                                    </div>
+                                    <div className="flex-1 text-slate-400 text-sm">Not working</div>
                                 )}
                             </div>
                         );
@@ -410,8 +408,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div>
                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                            <strong>Note:</strong> Your working hours are used for scheduling features like 
-                            meeting availability, out-of-office notifications, and focus time suggestions.
+                            <strong>Note:</strong> Your working hours are used for scheduling features like meeting
+                            availability, out-of-office notifications, and focus time suggestions.
                         </p>
                     </div>
                 </div>
@@ -421,10 +419,4 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
 };
 
 export default WorkingHoursSettings;
-
-
-
-
-
-
 

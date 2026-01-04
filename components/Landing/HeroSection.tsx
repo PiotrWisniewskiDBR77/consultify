@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Play, X } from 'lucide-react';
-import { useAppStore } from '../../store/useAppStore';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useAppStore } from '../../store/useAppStore';
 
 interface HeroSectionProps {
     onDemoClick: () => void;
@@ -14,17 +15,12 @@ interface HeroSectionProps {
 // Array of slogan variant keys (1-5)
 const SLOGAN_VARIANTS = [1, 2, 3, 4, 5];
 
-export const HeroSection: React.FC<HeroSectionProps> = ({
-    onDemoClick,
-    onTrialClick,
-    onLoginClick,
-    onExpertClick
-}) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ onDemoClick, onTrialClick, onLoginClick, onExpertClick }) => {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const { theme } = useAppStore();
     const { t } = useTranslation();
     const isDark = theme === 'dark';
-    
+
     // Randomly select a slogan variant based on current second (changes every second)
     // This ensures variety on each page load in production
     const [sloganVariant] = useState(() => {
@@ -42,7 +38,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             image: '/assets/landing/cinematic/demo_digital_twin.png',
             color: 'purple',
             onClick: onDemoClick,
-            className: 'lg:col-span-1 lg:row-span-1'
+            className: 'lg:col-span-1 lg:row-span-1',
         },
         {
             id: 'trial',
@@ -54,7 +50,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             color: 'indigo',
             onClick: onTrialClick,
             primary: true,
-            className: 'lg:col-span-1 lg:row-span-2'
+            className: 'lg:col-span-1 lg:row-span-2',
         },
         {
             id: 'video',
@@ -66,7 +62,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             color: 'black',
             onClick: () => setIsVideoOpen(true),
             isVideo: true,
-            className: 'lg:col-span-2 lg:row-span-1'
+            className: 'lg:col-span-2 lg:row-span-1',
         },
         {
             id: 'expert',
@@ -77,7 +73,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             image: '/assets/landing/cinematic/expert_dialogue.png',
             color: 'emerald',
             onClick: onExpertClick,
-            className: 'lg:col-span-1 lg:row-span-1'
+            className: 'lg:col-span-1 lg:row-span-1',
         },
         {
             id: 'login',
@@ -88,8 +84,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             image: '/assets/landing/cinematic/login_portal.png',
             color: 'navy',
             onClick: onLoginClick,
-            className: 'lg:col-span-1 lg:row-span-1'
-        }
+            className: 'lg:col-span-1 lg:row-span-1',
+        },
     ];
 
     return (
@@ -112,8 +108,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         transition={{ duration: 0.6, delay: 0.1 }}
                         className="text-xl lg:text-2xl text-white/90 leading-relaxed font-medium"
                     >
-                        {t('landing.hero.subtitleLine1', 'Your')} <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">AI Co-Thinker</span> {t('landing.hero.subtitleLine1End', 'for Enterprise Strategy.')}<br />
-                        {t(`landing.hero.slogans.${sloganVariant}`, 'Months of consulting. Minutes of AI. Better results.')}
+                        {t('landing.hero.subtitleLine1', 'Your')}{' '}
+                        <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">
+                            AI Co-Thinker
+                        </span>{' '}
+                        {t('landing.hero.subtitleLine1End', 'for Enterprise Strategy.')}
+                        <br />
+                        {t(
+                            `landing.hero.slogans.${sloganVariant}`,
+                            'Months of consulting. Minutes of AI. Better results.',
+                        )}
                     </motion.p>
                 </div>
 
@@ -122,11 +126,31 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     {cards.map((card, idx) => {
                         // Define border and glow colors for each card type
                         const colorMap: Record<string, { border: string; glow: string; hoverBorder: string }> = {
-                            'purple': { border: 'ring-purple-500/40', glow: 'shadow-purple-500/20', hoverBorder: 'group-hover:ring-purple-400/60' },
-                            'indigo': { border: 'ring-indigo-500/40', glow: 'shadow-indigo-500/20', hoverBorder: 'group-hover:ring-indigo-400/60' },
-                            'black': { border: 'ring-slate-400/40', glow: 'shadow-slate-400/20', hoverBorder: 'group-hover:ring-slate-300/60' },
-                            'emerald': { border: 'ring-emerald-500/40', glow: 'shadow-emerald-500/20', hoverBorder: 'group-hover:ring-emerald-400/60' },
-                            'navy': { border: 'ring-blue-500/40', glow: 'shadow-blue-500/20', hoverBorder: 'group-hover:ring-blue-400/60' }
+                            purple: {
+                                border: 'ring-purple-500/40',
+                                glow: 'shadow-purple-500/20',
+                                hoverBorder: 'group-hover:ring-purple-400/60',
+                            },
+                            indigo: {
+                                border: 'ring-indigo-500/40',
+                                glow: 'shadow-indigo-500/20',
+                                hoverBorder: 'group-hover:ring-indigo-400/60',
+                            },
+                            black: {
+                                border: 'ring-slate-400/40',
+                                glow: 'shadow-slate-400/20',
+                                hoverBorder: 'group-hover:ring-slate-300/60',
+                            },
+                            emerald: {
+                                border: 'ring-emerald-500/40',
+                                glow: 'shadow-emerald-500/20',
+                                hoverBorder: 'group-hover:ring-emerald-400/60',
+                            },
+                            navy: {
+                                border: 'ring-blue-500/40',
+                                glow: 'shadow-blue-500/20',
+                                hoverBorder: 'group-hover:ring-blue-400/60',
+                            },
                         };
                         const colors = colorMap[card.color] || colorMap['purple'];
 
@@ -153,7 +177,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                 `}
                             >
                                 {/* Background Image */}
-                                <div className={`absolute inset-0 rounded-3xl ring-2 ${colors.border} ${colors.hoverBorder} ring-inset transition-all duration-500 pointer-events-none`}>
+                                <div
+                                    className={`absolute inset-0 rounded-3xl ring-2 ${colors.border} ${colors.hoverBorder} ring-inset transition-all duration-500 pointer-events-none`}
+                                >
                                     <img
                                         src={card.image}
                                         alt={card.title}
@@ -168,7 +194,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
                                             <motion.div
                                                 animate={{ scale: [1, 1.05, 1] }}
-                                                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                                                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                                                 className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border-2 border-white/40 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl"
                                             >
                                                 <Play size={32} fill="white" className="text-white ml-1" />
@@ -189,7 +215,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                                         <div className="pt-4 flex items-center gap-2 text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
                                             {card.cta}
-                                            <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
+                                            <motion.span
+                                                animate={{ x: [0, 4, 0] }}
+                                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                            >
                                                 →
                                             </motion.span>
                                         </div>
@@ -198,7 +227,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                                 {/* Glowing accent for primary */}
                                 {card.primary && (
-                                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`} />
+                                    <div
+                                        className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none animate-breathing-glow ${isDark ? 'bg-purple-500/20' : 'bg-purple-600/10'}`}
+                                    />
                                 )}
                             </motion.div>
                         );
@@ -266,11 +297,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             exit={{ scale: 0.9, opacity: 0 }}
                             className="w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative"
                         >
-                            <video
-                                className="w-full h-full object-cover"
-                                controls
-                                autoPlay
-                            >
+                            <video className="w-full h-full object-cover" controls autoPlay>
                                 <source src="/videos/en.mp4" type="video/mp4" />
                                 Your browser does not support the video tag.
                             </video>

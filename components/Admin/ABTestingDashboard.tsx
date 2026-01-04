@@ -1,6 +1,6 @@
 /**
  * A/B Testing Dashboard Component
- * 
+ *
  * Admin dashboard for managing AI A/B tests and experiments.
  * Features:
  * - Experiment management (create, start, stop, archive)
@@ -10,32 +10,33 @@
  * - Real-time results tracking
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FlaskConical,
-    Plus,
-    Play,
-    Pause,
-    Archive,
-    Trophy,
-    BarChart3,
-    Users,
-    Percent,
-    Clock,
-    CheckCircle,
     AlertCircle,
-    Loader2,
+    Archive,
+    BarChart3,
+    CheckCircle,
     ChevronDown,
     ChevronRight,
+    Clock,
+    FlaskConical,
+    Loader2,
+    Pause,
+    Percent,
+    Play,
+    Plus,
     RefreshCw,
-    X,
     Save,
+    Target,
     TrendingUp,
-    Target
+    Trophy,
+    Users,
+    X,
 } from 'lucide-react';
-import api from '../../services/api';
-import { useTranslation } from 'react-i18next';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import api from '../../services/api';
 
 interface ExperimentVariant {
     id: string;
@@ -86,7 +87,7 @@ interface NewExperiment {
 const EXPERIMENT_TYPES = [
     { id: 'PROMPT', name: 'Prompt Variants', icon: '📝' },
     { id: 'MODEL', name: 'Model Comparison', icon: '🤖' },
-    { id: 'PARAMETER', name: 'Parameter Tuning', icon: '⚙️' }
+    { id: 'PARAMETER', name: 'Parameter Tuning', icon: '⚙️' },
 ];
 
 const TARGET_METRICS = [
@@ -94,7 +95,7 @@ const TARGET_METRICS = [
     { id: 'conversion', name: 'Conversion Rate' },
     { id: 'latency', name: 'Response Latency' },
     { id: 'quality', name: 'Quality Score' },
-    { id: 'engagement', name: 'Engagement Rate' }
+    { id: 'engagement', name: 'Engagement Rate' },
 ];
 
 export function ABTestingDashboard() {
@@ -117,8 +118,8 @@ export function ABTestingDashboard() {
         confidenceLevel: 95,
         variants: [
             { name: 'Control', description: 'Current production version', traffic: 50 },
-            { name: 'Variant A', description: 'New version to test', traffic: 50 }
-        ]
+            { name: 'Variant A', description: 'New version to test', traffic: 50 },
+        ],
     });
 
     const fetchExperiments = useCallback(async () => {
@@ -174,8 +175,8 @@ export function ABTestingDashboard() {
                     confidenceLevel: 95,
                     variants: [
                         { name: 'Control', description: '', traffic: 50 },
-                        { name: 'Variant A', description: '', traffic: 50 }
-                    ]
+                        { name: 'Variant A', description: '', traffic: 50 },
+                    ],
                 });
                 await fetchExperiments();
             } else {
@@ -208,7 +209,7 @@ export function ABTestingDashboard() {
 
         try {
             const response = await api.post(`/ai-ab-testing/experiments/${experimentId}/declare-winner`, {
-                winningVariantId: variantId
+                winningVariantId: variantId,
             });
 
             if (response.data.success) {
@@ -238,7 +239,7 @@ export function ABTestingDashboard() {
             RUNNING: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
             PAUSED: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
             COMPLETED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-            ARCHIVED: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+            ARCHIVED: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
         };
 
         return (
@@ -252,34 +253,32 @@ export function ABTestingDashboard() {
         return new Date(dateStr).toLocaleDateString('pl-PL', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
     const addVariant = () => {
-        setNewExperiment(prev => ({
+        setNewExperiment((prev) => ({
             ...prev,
             variants: [
                 ...prev.variants,
-                { name: `Variant ${String.fromCharCode(65 + prev.variants.length - 1)}`, description: '', traffic: 0 }
-            ]
+                { name: `Variant ${String.fromCharCode(65 + prev.variants.length - 1)}`, description: '', traffic: 0 },
+            ],
         }));
     };
 
     const removeVariant = (index: number) => {
         if (newExperiment.variants.length <= 2) return;
-        setNewExperiment(prev => ({
+        setNewExperiment((prev) => ({
             ...prev,
-            variants: prev.variants.filter((_, i) => i !== index)
+            variants: prev.variants.filter((_, i) => i !== index),
         }));
     };
 
     const updateVariant = (index: number, field: string, value: string | number) => {
-        setNewExperiment(prev => ({
+        setNewExperiment((prev) => ({
             ...prev,
-            variants: prev.variants.map((v, i) =>
-                i === index ? { ...v, [field]: value } : v
-            )
+            variants: prev.variants.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
         }));
     };
 
@@ -293,9 +292,7 @@ export function ABTestingDashboard() {
                             <FlaskConical size={24} className="text-purple-500" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                A/B Testing
-                            </h1>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">A/B Testing</h1>
                             <p className="text-slate-500 dark:text-slate-400">
                                 Manage AI experiments and optimize performance
                             </p>
@@ -320,14 +317,15 @@ export function ABTestingDashboard() {
 
                 {/* Status Filter */}
                 <div className="flex items-center gap-2">
-                    {['all', 'RUNNING', 'PAUSED', 'COMPLETED', 'DRAFT'].map(status => (
+                    {['all', 'RUNNING', 'PAUSED', 'COMPLETED', 'DRAFT'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setStatusFilter(status)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${statusFilter === status
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
-                                }`}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                statusFilter === status
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
+                            }`}
                         >
                             {status === 'all' ? 'All' : status}
                         </button>
@@ -357,7 +355,7 @@ export function ABTestingDashboard() {
                             </button>
                         </div>
                     ) : (
-                        experiments.map(experiment => (
+                        experiments.map((experiment) => (
                             <div
                                 key={experiment.id}
                                 className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
@@ -403,13 +401,18 @@ export function ABTestingDashboard() {
                                         <div className="text-right text-sm">
                                             <p className="text-slate-500 dark:text-slate-400">Participants</p>
                                             <p className="font-medium text-slate-900 dark:text-white">
-                                                {experiment.variants.reduce((sum, v) => sum + v.participants, 0).toLocaleString()}
+                                                {experiment.variants
+                                                    .reduce((sum, v) => sum + v.participants, 0)
+                                                    .toLocaleString()}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             {experiment.status === 'DRAFT' && (
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); handleAction(experiment.id, 'start'); }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAction(experiment.id, 'start');
+                                                    }}
                                                     className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                                                     title="Start"
                                                 >
@@ -418,7 +421,10 @@ export function ABTestingDashboard() {
                                             )}
                                             {experiment.status === 'RUNNING' && (
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); handleAction(experiment.id, 'pause'); }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAction(experiment.id, 'pause');
+                                                    }}
                                                     className="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
                                                     title="Pause"
                                                 >
@@ -427,7 +433,10 @@ export function ABTestingDashboard() {
                                             )}
                                             {experiment.status === 'PAUSED' && (
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); handleAction(experiment.id, 'start'); }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAction(experiment.id, 'start');
+                                                    }}
                                                     className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                                                     title="Resume"
                                                 >
@@ -436,7 +445,10 @@ export function ABTestingDashboard() {
                                             )}
                                             {(experiment.status === 'RUNNING' || experiment.status === 'PAUSED') && (
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); handleAction(experiment.id, 'complete'); }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAction(experiment.id, 'complete');
+                                                    }}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                     title="Complete"
                                                 >
@@ -455,13 +467,15 @@ export function ABTestingDashboard() {
                                             <div>
                                                 <p className="text-slate-500 dark:text-slate-400">Type</p>
                                                 <p className="font-medium text-slate-900 dark:text-white">
-                                                    {EXPERIMENT_TYPES.find(t => t.id === experiment.type)?.name || experiment.type}
+                                                    {EXPERIMENT_TYPES.find((t) => t.id === experiment.type)?.name ||
+                                                        experiment.type}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-slate-500 dark:text-slate-400">Target Metric</p>
                                                 <p className="font-medium text-slate-900 dark:text-white">
-                                                    {TARGET_METRICS.find(m => m.id === experiment.targetMetric)?.name || experiment.targetMetric}
+                                                    {TARGET_METRICS.find((m) => m.id === experiment.targetMetric)
+                                                        ?.name || experiment.targetMetric}
                                                 </p>
                                             </div>
                                             <div>
@@ -471,11 +485,17 @@ export function ABTestingDashboard() {
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-500 dark:text-slate-400">Statistical Significance</p>
-                                                <p className={`font-medium ${(experiment.statisticalSignificance || 0) >= experiment.confidenceLevel
-                                                    ? 'text-green-600 dark:text-green-400'
-                                                    : 'text-slate-900 dark:text-white'
-                                                    }`}>
+                                                <p className="text-slate-500 dark:text-slate-400">
+                                                    Statistical Significance
+                                                </p>
+                                                <p
+                                                    className={`font-medium ${
+                                                        (experiment.statisticalSignificance || 0) >=
+                                                        experiment.confidenceLevel
+                                                            ? 'text-green-600 dark:text-green-400'
+                                                            : 'text-slate-900 dark:text-white'
+                                                    }`}
+                                                >
                                                     {experiment.statisticalSignificance?.toFixed(1) || '-'}%
                                                 </p>
                                             </div>
@@ -510,12 +530,15 @@ export function ABTestingDashboard() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                                                    {experiment.variants.map(variant => (
-                                                        <tr key={variant.id} className={
-                                                            experiment.winningVariantId === variant.id
-                                                                ? 'bg-yellow-50 dark:bg-yellow-900/10'
-                                                                : ''
-                                                        }>
+                                                    {experiment.variants.map((variant) => (
+                                                        <tr
+                                                            key={variant.id}
+                                                            className={
+                                                                experiment.winningVariantId === variant.id
+                                                                    ? 'bg-yellow-50 dark:bg-yellow-900/10'
+                                                                    : ''
+                                                            }
+                                                        >
                                                             <td className="px-4 py-3">
                                                                 <div className="flex items-center gap-2">
                                                                     {experiment.winningVariantId === variant.id && (
@@ -542,10 +565,16 @@ export function ABTestingDashboard() {
                                                                 {variant.avgSatisfaction.toFixed(2)}/5
                                                             </td>
                                                             <td className="px-4 py-3 text-center">
-                                                                {(experiment.status === 'RUNNING' || experiment.status === 'COMPLETED') &&
+                                                                {(experiment.status === 'RUNNING' ||
+                                                                    experiment.status === 'COMPLETED') &&
                                                                     !experiment.winningVariantId && (
                                                                         <button
-                                                                            onClick={() => handleDeclareWinner(experiment.id, variant.id)}
+                                                                            onClick={() =>
+                                                                                handleDeclareWinner(
+                                                                                    experiment.id,
+                                                                                    variant.id,
+                                                                                )
+                                                                            }
                                                                             className="px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
                                                                         >
                                                                             Declare Winner
@@ -570,9 +599,7 @@ export function ABTestingDashboard() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                New Experiment
-                            </h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">New Experiment</h3>
                             <button
                                 onClick={() => setShowCreateModal(false)}
                                 className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
@@ -602,7 +629,9 @@ export function ABTestingDashboard() {
                                 </label>
                                 <textarea
                                     value={newExperiment.description}
-                                    onChange={(e) => setNewExperiment({ ...newExperiment, description: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewExperiment({ ...newExperiment, description: e.target.value })
+                                    }
                                     placeholder="Describe what you're testing..."
                                     rows={2}
                                     className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
@@ -617,11 +646,15 @@ export function ABTestingDashboard() {
                                     </label>
                                     <select
                                         value={newExperiment.type}
-                                        onChange={(e) => setNewExperiment({ ...newExperiment, type: e.target.value as any })}
+                                        onChange={(e) =>
+                                            setNewExperiment({ ...newExperiment, type: e.target.value as any })
+                                        }
                                         className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                                     >
-                                        {EXPERIMENT_TYPES.map(t => (
-                                            <option key={t.id} value={t.id}>{t.icon} {t.name}</option>
+                                        {EXPERIMENT_TYPES.map((t) => (
+                                            <option key={t.id} value={t.id}>
+                                                {t.icon} {t.name}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -631,11 +664,15 @@ export function ABTestingDashboard() {
                                     </label>
                                     <select
                                         value={newExperiment.targetMetric}
-                                        onChange={(e) => setNewExperiment({ ...newExperiment, targetMetric: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewExperiment({ ...newExperiment, targetMetric: e.target.value })
+                                        }
                                         className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                                     >
-                                        {TARGET_METRICS.map(m => (
-                                            <option key={m.id} value={m.id}>{m.name}</option>
+                                        {TARGET_METRICS.map((m) => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.name}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -650,7 +687,12 @@ export function ABTestingDashboard() {
                                     <input
                                         type="number"
                                         value={newExperiment.minimumSampleSize}
-                                        onChange={(e) => setNewExperiment({ ...newExperiment, minimumSampleSize: parseInt(e.target.value) || 100 })}
+                                        onChange={(e) =>
+                                            setNewExperiment({
+                                                ...newExperiment,
+                                                minimumSampleSize: parseInt(e.target.value) || 100,
+                                            })
+                                        }
                                         min={10}
                                         className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                                     />
@@ -661,7 +703,12 @@ export function ABTestingDashboard() {
                                     </label>
                                     <select
                                         value={newExperiment.confidenceLevel}
-                                        onChange={(e) => setNewExperiment({ ...newExperiment, confidenceLevel: parseInt(e.target.value) })}
+                                        onChange={(e) =>
+                                            setNewExperiment({
+                                                ...newExperiment,
+                                                confidenceLevel: parseInt(e.target.value),
+                                            })
+                                        }
                                         className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                                     >
                                         <option value={90}>90%</option>
@@ -687,7 +734,10 @@ export function ABTestingDashboard() {
                                 </div>
                                 <div className="space-y-3">
                                     {newExperiment.variants.map((variant, index) => (
-                                        <div key={index} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
+                                        <div
+                                            key={index}
+                                            className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-navy-900 rounded-lg"
+                                        >
                                             <div className="flex-1 grid grid-cols-3 gap-3">
                                                 <input
                                                     type="text"
@@ -699,7 +749,9 @@ export function ABTestingDashboard() {
                                                 <input
                                                     type="text"
                                                     value={variant.description}
-                                                    onChange={(e) => updateVariant(index, 'description', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateVariant(index, 'description', e.target.value)
+                                                    }
                                                     placeholder="Description"
                                                     className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
                                                 />
@@ -707,7 +759,13 @@ export function ABTestingDashboard() {
                                                     <input
                                                         type="number"
                                                         value={variant.traffic}
-                                                        onChange={(e) => updateVariant(index, 'traffic', parseInt(e.target.value) || 0)}
+                                                        onChange={(e) =>
+                                                            updateVariant(
+                                                                index,
+                                                                'traffic',
+                                                                parseInt(e.target.value) || 0,
+                                                            )
+                                                        }
                                                         min={0}
                                                         max={100}
                                                         className="w-20 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"

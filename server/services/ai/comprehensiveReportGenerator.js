@@ -20,7 +20,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { contextBuilder, INDUSTRY_PROFILES, DRD_AXES } from './aiContext.js';
 import { webResearchService } from './webResearchService.js';
 import { memoryManager } from './memoryManager.js';
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 
 // Report section definitions
 const REPORT_SECTIONS = {

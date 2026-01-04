@@ -1,8 +1,9 @@
+import { AlertCircle, CheckCircle, Loader2, Mail, Send, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Mail, AlertCircle, CheckCircle, Loader2, X, Send } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface EmailVerificationBannerProps {
@@ -16,7 +17,7 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
     currentUser,
     onDismiss,
     variant = 'banner',
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const [isSending, setIsSending] = useState(false);
@@ -62,7 +63,9 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
 
     if (variant === 'card') {
         return (
-            <div className={`bg-white dark:bg-navy-900 rounded-2xl border border-amber-200 dark:border-amber-500/30 overflow-hidden ${className}`}>
+            <div
+                className={`bg-white dark:bg-navy-900 rounded-2xl border border-amber-200 dark:border-amber-500/30 overflow-hidden ${className}`}
+            >
                 <div className="h-1.5 bg-gradient-to-r from-amber-400 to-orange-400" />
                 <div className="p-6">
                     <div className="flex items-start gap-4">
@@ -74,7 +77,11 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
                                 {t('auth.verifyEmailTitle', 'Verify your email address')}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                {t('auth.verifyEmailDescription', 'We sent a verification link to {{email}}. Please check your inbox and click the link to verify.', { email: currentUser.email })}
+                                {t(
+                                    'auth.verifyEmailDescription',
+                                    'We sent a verification link to {{email}}. Please check your inbox and click the link to verify.',
+                                    { email: currentUser.email },
+                                )}
                             </p>
                             <div className="mt-4 flex items-center gap-3">
                                 <button
@@ -109,7 +116,9 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
 
     // Default: banner variant
     return (
-        <div className={`relative overflow-hidden rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 ${className}`}>
+        <div
+            className={`relative overflow-hidden rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 ${className}`}
+        >
             <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -152,12 +161,4 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
 };
 
 export default EmailVerificationBanner;
-
-
-
-
-
-
-
-
 

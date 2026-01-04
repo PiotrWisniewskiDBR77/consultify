@@ -3,20 +3,21 @@
  * Shows project context, full message, related object preview, and quick actions
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import {
-    ExternalLink,
-    Clock,
-    Folder,
-    CheckSquare,
-    Target,
-    FileText,
     AlertCircle,
+    CheckSquare,
+    ChevronRight,
+    Clock,
+    ExternalLink,
+    FileText,
+    Folder,
     Sparkles,
-    ChevronRight
+    Target,
 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { NotificationQuickActions } from './NotificationQuickActions';
 
 export interface NotificationData {
@@ -74,19 +75,19 @@ const getSeverityColors = (severity: string) => {
             return {
                 bg: 'bg-red-50 dark:bg-red-900/20',
                 border: 'border-red-200 dark:border-red-800/50',
-                badge: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+                badge: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
             };
         case 'WARNING':
             return {
                 bg: 'bg-amber-50 dark:bg-amber-900/20',
                 border: 'border-amber-200 dark:border-amber-800/50',
-                badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+                badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
             };
         default:
             return {
                 bg: 'bg-slate-50 dark:bg-slate-800/50',
                 border: 'border-slate-200 dark:border-slate-700',
-                badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
             };
     }
 };
@@ -106,7 +107,7 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
     onDelete,
     onSnooze,
     canNavigate,
-    navigationLabel
+    navigationLabel,
 }) => {
     const { t } = useTranslation();
     const severityColors = getSeverityColors(notification.severity);
@@ -122,7 +123,9 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
             <div className={`p-4 ${severityColors.bg}`}>
                 {/* Project Context */}
                 {notification.projectName && (
-                    <div className={`mb-3 p-2 rounded-lg ${severityColors.border} border bg-white/50 dark:bg-navy-900/50`}>
+                    <div
+                        className={`mb-3 p-2 rounded-lg ${severityColors.border} border bg-white/50 dark:bg-navy-900/50`}
+                    >
                         <div className="flex items-center gap-2 text-xs">
                             <Folder size={12} className="text-slate-400" />
                             <span className="font-medium text-navy-900 dark:text-white">
@@ -131,7 +134,9 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
                             {notification.relatedObjectType && (
                                 <>
                                     <ChevronRight size={10} className="text-slate-300" />
-                                    <span className={`px-1.5 py-0.5 rounded ${severityColors.badge} text-[10px] font-medium`}>
+                                    <span
+                                        className={`px-1.5 py-0.5 rounded ${severityColors.badge} text-[10px] font-medium`}
+                                    >
                                         {formatObjectType(notification.relatedObjectType)}
                                     </span>
                                 </>
@@ -142,16 +147,15 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
 
                 {/* Full Message */}
                 <div className="mb-4">
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {notification.message}
-                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{notification.message}</p>
                 </div>
 
                 {/* Related Object Card */}
                 {notification.relatedObjectType && notification.relatedObjectId && (
                     <div className="mb-4">
                         <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1.5 font-medium">
-                            {t('notifications.relatedObject', 'Related')} {formatObjectType(notification.relatedObjectType)}
+                            {t('notifications.relatedObject', 'Related')}{' '}
+                            {formatObjectType(notification.relatedObjectType)}
                         </div>
                         <button
                             onClick={onNavigate}
@@ -169,9 +173,9 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
                                         {notification.title}
                                     </span>
                                 </div>
-                                <ExternalLink 
-                                    size={14} 
-                                    className="text-slate-400 group-hover:text-blue-500 transition-colors" 
+                                <ExternalLink
+                                    size={14}
+                                    className="text-slate-400 group-hover:text-blue-500 transition-colors"
                                 />
                             </div>
                             <div className="mt-1 text-xs text-slate-500 flex items-center gap-2">
@@ -198,12 +202,4 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
 };
 
 export default NotificationDetailPanel;
-
-
-
-
-
-
-
-
 

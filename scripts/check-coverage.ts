@@ -1,7 +1,7 @@
 /**
  * Coverage Check Script
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Checks if coverage meets thresholds (95%+)
  */
 
@@ -53,9 +53,7 @@ function checkCoverage(): void {
 
             // Calculate branches
             totalBranches += Object.keys(b).length;
-            coveredBranches += Object.values(b).filter((counts: number[]) => 
-                counts.some(count => count > 0)
-            ).length;
+            coveredBranches += Object.values(b).filter((counts: number[]) => counts.some((count) => count > 0)).length;
 
             // Calculate lines (approximate from statements)
             totalLines += Object.keys(statementMap).length;
@@ -78,21 +76,29 @@ function checkCoverage(): void {
         const failures: string[] = [];
 
         if (coverageMetrics.lines < THRESHOLDS.lines) {
-            failures.push(`Lines coverage ${coverageMetrics.lines.toFixed(2)}% is below threshold ${THRESHOLDS.lines}%`);
+            failures.push(
+                `Lines coverage ${coverageMetrics.lines.toFixed(2)}% is below threshold ${THRESHOLDS.lines}%`,
+            );
         }
         if (coverageMetrics.functions < THRESHOLDS.functions) {
-            failures.push(`Functions coverage ${coverageMetrics.functions.toFixed(2)}% is below threshold ${THRESHOLDS.functions}%`);
+            failures.push(
+                `Functions coverage ${coverageMetrics.functions.toFixed(2)}% is below threshold ${THRESHOLDS.functions}%`,
+            );
         }
         if (coverageMetrics.branches < THRESHOLDS.branches) {
-            failures.push(`Branches coverage ${coverageMetrics.branches.toFixed(2)}% is below threshold ${THRESHOLDS.branches}%`);
+            failures.push(
+                `Branches coverage ${coverageMetrics.branches.toFixed(2)}% is below threshold ${THRESHOLDS.branches}%`,
+            );
         }
         if (coverageMetrics.statements < THRESHOLDS.statements) {
-            failures.push(`Statements coverage ${coverageMetrics.statements.toFixed(2)}% is below threshold ${THRESHOLDS.statements}%`);
+            failures.push(
+                `Statements coverage ${coverageMetrics.statements.toFixed(2)}% is below threshold ${THRESHOLDS.statements}%`,
+            );
         }
 
         if (failures.length > 0) {
             console.error('❌ Coverage thresholds not met:');
-            failures.forEach(f => console.error(`  - ${f}`));
+            failures.forEach((f) => console.error(`  - ${f}`));
             process.exit(1);
         } else {
             console.log('✅ All coverage thresholds met!');
@@ -105,4 +111,3 @@ function checkCoverage(): void {
 }
 
 checkCoverage();
-

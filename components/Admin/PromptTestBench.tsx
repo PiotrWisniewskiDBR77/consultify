@@ -1,29 +1,29 @@
 /**
  * Prompt Test Bench
- * 
+ *
  * Multi-language testing interface for validating prompt templates
  * across all supported languages.
  */
 
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    TestTube,
-    Play,
-    Languages,
-    CheckCircle,
-    XCircle,
     AlertTriangle,
-    Clock,
-    Hash,
-    Globe,
-    Loader2,
+    Check,
+    CheckCircle,
     ChevronDown,
     ChevronRight,
-    RefreshCw,
+    Clock,
     Copy,
-    Check
+    Globe,
+    Hash,
+    Languages,
+    Loader2,
+    Play,
+    RefreshCw,
+    TestTube,
+    XCircle,
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TestResult {
     language: string;
@@ -54,7 +54,7 @@ const SUPPORTED_LANGUAGES = [
     { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
     { code: 'es', name: 'Español', flag: '🇪🇸' },
     { code: 'ja', name: '日本語', flag: '🇯🇵' },
-    { code: 'ar', name: 'العربية', flag: '🇸🇦' }
+    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
 const SAMPLE_INPUTS = {
@@ -63,14 +63,10 @@ const SAMPLE_INPUTS = {
     de: 'Wie kann ich unseren digitalen Reifegrad verbessern?',
     es: '¿Cómo puedo mejorar nuestra puntuación de madurez digital?',
     ja: 'デジタル成熟度スコアを向上させるにはどうすればよいですか？',
-    ar: 'كيف يمكنني تحسين درجة النضج الرقمي لدينا؟'
+    ar: 'كيف يمكنني تحسين درجة النضج الرقمي لدينا؟',
 };
 
-export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
-    templateCode,
-    onTestComplete,
-    className = ''
-}) => {
+export const PromptTestBench: React.FC<PromptTestBenchProps> = ({ templateCode, onTestComplete, className = '' }) => {
     const { t } = useTranslation();
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en', 'pl', 'de']);
     const [sampleInput, setSampleInput] = useState('How can I improve our digital maturity?');
@@ -81,15 +77,11 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const toggleLanguage = (code: string) => {
-        setSelectedLanguages(prev => 
-            prev.includes(code) 
-                ? prev.filter(l => l !== code)
-                : [...prev, code]
-        );
+        setSelectedLanguages((prev) => (prev.includes(code) ? prev.filter((l) => l !== code) : [...prev, code]));
     };
 
     const selectAllLanguages = () => {
-        setSelectedLanguages(SUPPORTED_LANGUAGES.map(l => l.code));
+        setSelectedLanguages(SUPPORTED_LANGUAGES.map((l) => l.code));
     };
 
     const runTests = async () => {
@@ -105,13 +97,13 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     templateCode,
                     sampleInput,
-                    languages: selectedLanguages
-                })
+                    languages: selectedLanguages,
+                }),
             });
 
             if (!response.ok) throw new Error('Test failed');
@@ -125,14 +117,16 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
             }
         } catch (error) {
             console.error('Test error:', error);
-            setResults([{
-                language: 'error',
-                success: false,
-                expectedLanguage: '',
-                detectedLanguage: '',
-                languageMatch: false,
-                error: 'Test execution failed'
-            }]);
+            setResults([
+                {
+                    language: 'error',
+                    success: false,
+                    expectedLanguage: '',
+                    detectedLanguage: '',
+                    languageMatch: false,
+                    error: 'Test execution failed',
+                },
+            ]);
         } finally {
             setIsRunning(false);
         }
@@ -155,18 +149,18 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
     };
 
     const getLanguageInfo = (code: string) => {
-        return SUPPORTED_LANGUAGES.find(l => l.code === code) || { code, name: code, flag: '🌐' };
+        return SUPPORTED_LANGUAGES.find((l) => l.code === code) || { code, name: code, flag: '🌐' };
     };
 
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 ${className}`}
+        >
             {/* Header */}
             <div className="p-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-2 mb-1">
                     <TestTube className="w-5 h-5 text-purple-500" />
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                        Multi-Language Test Bench
-                    </h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Multi-Language Test Bench</h3>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                     Test prompt templates across all supported languages
@@ -218,9 +212,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                 {/* Language Selection */}
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Test Languages
-                        </label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Test Languages</label>
                         <button
                             onClick={selectAllLanguages}
                             className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
@@ -229,7 +221,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {SUPPORTED_LANGUAGES.map(lang => {
+                        {SUPPORTED_LANGUAGES.map((lang) => {
                             const isSelected = selectedLanguages.includes(lang.code);
                             return (
                                 <button
@@ -274,29 +266,31 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                 <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-800/50">
                     <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                                {summary.tested}
-                            </div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{summary.tested}</div>
                             <div className="text-xs text-slate-500 dark:text-slate-400">Tested</div>
                         </div>
                         <div className="text-center">
-                            <div className={`text-2xl font-bold ${
-                                summary.passed === summary.tested 
-                                    ? 'text-green-600 dark:text-green-400' 
-                                    : 'text-amber-600 dark:text-amber-400'
-                            }`}>
+                            <div
+                                className={`text-2xl font-bold ${
+                                    summary.passed === summary.tested
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-amber-600 dark:text-amber-400'
+                                }`}
+                            >
                                 {summary.passed}/{summary.tested}
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400">Passed</div>
                         </div>
                         <div className="text-center">
-                            <div className={`text-2xl font-bold ${
-                                summary.languageAccuracy === 1 
-                                    ? 'text-green-600 dark:text-green-400' 
-                                    : summary.languageAccuracy >= 0.8
-                                        ? 'text-amber-600 dark:text-amber-400'
-                                        : 'text-red-600 dark:text-red-400'
-                            }`}>
+                            <div
+                                className={`text-2xl font-bold ${
+                                    summary.languageAccuracy === 1
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : summary.languageAccuracy >= 0.8
+                                          ? 'text-amber-600 dark:text-amber-400'
+                                          : 'text-red-600 dark:text-red-400'
+                                }`}
+                            >
                                 {Math.round(summary.languageAccuracy * 100)}%
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400">Language Match</div>
@@ -308,15 +302,13 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
             {/* Test Results */}
             {results.length > 0 && (
                 <div className="p-4 space-y-2">
-                    <h4 className="font-medium text-slate-900 dark:text-white mb-3">
-                        Test Results
-                    </h4>
-                    {results.map(result => {
+                    <h4 className="font-medium text-slate-900 dark:text-white mb-3">Test Results</h4>
+                    {results.map((result) => {
                         const lang = getLanguageInfo(result.language);
                         const isExpanded = expandedResults.has(result.language);
-                        
+
                         return (
-                            <div 
+                            <div
                                 key={result.language}
                                 className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden"
                             >
@@ -334,19 +326,16 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                                             <XCircle className="w-5 h-5 text-red-500" />
                                         )}
                                         <span className="text-lg">{lang.flag}</span>
-                                        <span className="font-medium text-slate-900 dark:text-white">
-                                            {lang.name}
-                                        </span>
+                                        <span className="font-medium text-slate-900 dark:text-white">{lang.name}</span>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         {result.success && (
                                             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                                 <Globe size={14} />
                                                 <span>
-                                                    {result.detectedLanguage === result.expectedLanguage 
-                                                        ? '✓ Correct' 
-                                                        : `Detected: ${result.detectedLanguage}`
-                                                    }
+                                                    {result.detectedLanguage === result.expectedLanguage
+                                                        ? '✓ Correct'
+                                                        : `Detected: ${result.detectedLanguage}`}
                                                 </span>
                                             </div>
                                         )}
@@ -378,7 +367,9 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                                                         AI Response
                                                     </span>
                                                     <button
-                                                        onClick={() => copyResponse(result.response || '', result.language)}
+                                                        onClick={() =>
+                                                            copyResponse(result.response || '', result.language)
+                                                        }
                                                         className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                                                     >
                                                         {copiedId === result.language ? (
@@ -417,4 +408,3 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
 };
 
 export default PromptTestBench;
-

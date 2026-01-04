@@ -5,7 +5,8 @@
  * to answer user questions.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { OpenAI } from 'openai';
 
 // Lazy initialize OpenAI client

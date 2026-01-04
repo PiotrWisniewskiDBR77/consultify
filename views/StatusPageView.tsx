@@ -1,29 +1,30 @@
 /**
  * Status Page View
- * 
+ *
  * Public status page showing system health, incidents, and uptime.
  * Route: /status
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-    CheckCircle,
     AlertTriangle,
-    XCircle,
-    Clock,
-    Server,
-    Database,
-    Cpu,
-    Cloud,
-    Mail,
     Bell,
+    CheckCircle,
     ChevronDown,
     ChevronUp,
+    Clock,
+    Cloud,
+    Cpu,
+    Database,
     ExternalLink,
-    RefreshCw
+    Mail,
+    RefreshCw,
+    Server,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../services/api';
 
 // Types
@@ -69,11 +70,36 @@ interface UptimeStats {
 
 // Status config
 const STATUS_CONFIG = {
-    operational: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/30', label: { en: 'Operational', pl: 'Operacyjny' } },
-    degraded: { icon: AlertTriangle, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-900/30', label: { en: 'Degraded', pl: 'Obniżona wydajność' } },
-    partial_outage: { icon: AlertTriangle, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30', label: { en: 'Partial Outage', pl: 'Częściowa awaria' } },
-    major_outage: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30', label: { en: 'Major Outage', pl: 'Poważna awaria' } },
-    maintenance: { icon: Clock, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30', label: { en: 'Maintenance', pl: 'Konserwacja' } }
+    operational: {
+        icon: CheckCircle,
+        color: 'text-green-500',
+        bg: 'bg-green-100 dark:bg-green-900/30',
+        label: { en: 'Operational', pl: 'Operacyjny' },
+    },
+    degraded: {
+        icon: AlertTriangle,
+        color: 'text-yellow-500',
+        bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+        label: { en: 'Degraded', pl: 'Obniżona wydajność' },
+    },
+    partial_outage: {
+        icon: AlertTriangle,
+        color: 'text-orange-500',
+        bg: 'bg-orange-100 dark:bg-orange-900/30',
+        label: { en: 'Partial Outage', pl: 'Częściowa awaria' },
+    },
+    major_outage: {
+        icon: XCircle,
+        color: 'text-red-500',
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        label: { en: 'Major Outage', pl: 'Poważna awaria' },
+    },
+    maintenance: {
+        icon: Clock,
+        color: 'text-blue-500',
+        bg: 'bg-blue-100 dark:bg-blue-900/30',
+        label: { en: 'Maintenance', pl: 'Konserwacja' },
+    },
 };
 
 const SERVICE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -81,7 +107,7 @@ const SERVICE_ICONS: Record<string, React.ComponentType<{ size?: number; classNa
     database: Database,
     ai: Cpu,
     storage: Cloud,
-    email: Mail
+    email: Mail,
 };
 
 const SERVICE_NAMES: Record<string, { en: string; pl: string }> = {
@@ -89,7 +115,7 @@ const SERVICE_NAMES: Record<string, { en: string; pl: string }> = {
     database: { en: 'Database', pl: 'Baza danych' },
     ai: { en: 'AI Services', pl: 'Usługi AI' },
     storage: { en: 'Storage', pl: 'Przechowywanie' },
-    email: { en: 'Email', pl: 'Email' }
+    email: { en: 'Email', pl: 'Email' },
 };
 
 export const StatusPageView: React.FC = () => {
@@ -119,7 +145,7 @@ export const StatusPageView: React.FC = () => {
                 Api.get('/api/status'),
                 Api.get('/api/status/incidents'),
                 Api.get('/api/status/maintenance'),
-                Api.get('/api/status/uptime')
+                Api.get('/api/status/uptime'),
             ]);
 
             setStatus(statusRes);
@@ -149,7 +175,10 @@ export const StatusPageView: React.FC = () => {
     // Text
     const t = {
         title: { en: 'System Status', pl: 'Status Systemu' },
-        subtitle: { en: 'Current operational status of TechnoLex services', pl: 'Aktualny status operacyjny usług TechnoLex' },
+        subtitle: {
+            en: 'Current operational status of TechnoLex services',
+            pl: 'Aktualny status operacyjny usług TechnoLex',
+        },
         allOperational: { en: 'All Systems Operational', pl: 'Wszystkie systemy działają' },
         services: { en: 'Services', pl: 'Usługi' },
         uptime: { en: 'Uptime', pl: 'Dostępność' },
@@ -158,10 +187,13 @@ export const StatusPageView: React.FC = () => {
         maintenance: { en: 'Scheduled Maintenance', pl: 'Zaplanowana konserwacja' },
         noMaintenance: { en: 'No scheduled maintenance', pl: 'Brak zaplanowanej konserwacji' },
         subscribe: { en: 'Subscribe to Updates', pl: 'Subskrybuj aktualizacje' },
-        subscribeDesc: { en: 'Get notified about incidents and maintenance', pl: 'Otrzymuj powiadomienia o incydentach i konserwacji' },
+        subscribeDesc: {
+            en: 'Get notified about incidents and maintenance',
+            pl: 'Otrzymuj powiadomienia o incydentach i konserwacji',
+        },
         subscribed: { en: 'Subscribed!', pl: 'Zasubskrybowano!' },
         refresh: { en: 'Refresh', pl: 'Odśwież' },
-        lastUpdated: { en: 'Last updated', pl: 'Ostatnia aktualizacja' }
+        lastUpdated: { en: 'Last updated', pl: 'Ostatnia aktualizacja' },
     };
 
     if (loading) {
@@ -172,7 +204,9 @@ export const StatusPageView: React.FC = () => {
         );
     }
 
-    const overallConfig = status ? STATUS_CONFIG[status.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.operational : STATUS_CONFIG.operational;
+    const overallConfig = status
+        ? STATUS_CONFIG[status.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.operational
+        : STATUS_CONFIG.operational;
     const OverallIcon = overallConfig.icon;
 
     return (
@@ -180,12 +214,8 @@ export const StatusPageView: React.FC = () => {
             {/* Header */}
             <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <div className="max-w-4xl mx-auto px-4 py-8">
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                        {t.title[lang]}
-                    </h1>
-                    <p className="text-slate-600 dark:text-slate-400 mt-1">
-                        {t.subtitle[lang]}
-                    </p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t.title[lang]}</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
                 </div>
             </header>
 
@@ -218,41 +248,41 @@ export const StatusPageView: React.FC = () => {
 
                 {/* Services */}
                 <section>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        {t.services[lang]}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t.services[lang]}</h3>
                     <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        {status && Object.entries(status.services).map(([key, service], i) => {
-                            const ServiceIcon = SERVICE_ICONS[key] || Server;
-                            const serviceConfig = STATUS_CONFIG[service.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.operational;
-                            const StatusIcon = serviceConfig.icon;
+                        {status &&
+                            Object.entries(status.services).map(([key, service], i) => {
+                                const ServiceIcon = SERVICE_ICONS[key] || Server;
+                                const serviceConfig =
+                                    STATUS_CONFIG[service.status as keyof typeof STATUS_CONFIG] ||
+                                    STATUS_CONFIG.operational;
+                                const StatusIcon = serviceConfig.icon;
 
-                            return (
-                                <div
-                                    key={key}
-                                    className={`flex items-center justify-between px-6 py-4 ${i > 0 ? 'border-t border-slate-200 dark:border-slate-700' : ''
+                                return (
+                                    <div
+                                        key={key}
+                                        className={`flex items-center justify-between px-6 py-4 ${
+                                            i > 0 ? 'border-t border-slate-200 dark:border-slate-700' : ''
                                         }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <ServiceIcon size={20} className="text-slate-400" />
-                                        <span className="font-medium text-slate-900 dark:text-white">
-                                            {SERVICE_NAMES[key]?.[lang] || key}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {service.latency && (
-                                            <span className="text-sm text-slate-500">
-                                                {service.latency}ms
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <ServiceIcon size={20} className="text-slate-400" />
+                                            <span className="font-medium text-slate-900 dark:text-white">
+                                                {SERVICE_NAMES[key]?.[lang] || key}
                                             </span>
-                                        )}
-                                        <StatusIcon size={18} className={serviceConfig.color} />
-                                        <span className={`text-sm ${serviceConfig.color}`}>
-                                            {serviceConfig.label[lang]}
-                                        </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {service.latency && (
+                                                <span className="text-sm text-slate-500">{service.latency}ms</span>
+                                            )}
+                                            <StatusIcon size={18} className={serviceConfig.color} />
+                                            <span className={`text-sm ${serviceConfig.color}`}>
+                                                {serviceConfig.label[lang]}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
                     </div>
                 </section>
 
@@ -264,9 +294,7 @@ export const StatusPageView: React.FC = () => {
                         </h3>
                         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
                             <div className="text-center mb-6">
-                                <div className="text-5xl font-bold text-green-500">
-                                    {uptime.overall}%
-                                </div>
+                                <div className="text-5xl font-bold text-green-500">{uptime.overall}%</div>
                                 <div className="text-sm text-slate-500 mt-1">
                                     {lang === 'pl' ? 'Ogólna dostępność' : 'Overall Uptime'}
                                 </div>
@@ -289,9 +317,7 @@ export const StatusPageView: React.FC = () => {
 
                 {/* Scheduled Maintenance */}
                 <section>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        {t.maintenance[lang]}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t.maintenance[lang]}</h3>
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                         {maintenance.length === 0 ? (
                             <div className="px-6 py-8 text-center text-slate-500">
@@ -299,12 +325,17 @@ export const StatusPageView: React.FC = () => {
                                 {t.noMaintenance[lang]}
                             </div>
                         ) : (
-                            maintenance.map(item => (
-                                <div key={item.id} className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                            maintenance.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                                >
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
-                                            <p className="text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                {item.description}
+                                            </p>
                                         </div>
                                         <div className="text-sm text-slate-500">
                                             {new Date(item.scheduledStart).toLocaleDateString()}
@@ -318,9 +349,7 @@ export const StatusPageView: React.FC = () => {
 
                 {/* Recent Incidents */}
                 <section>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        {t.incidents[lang]}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t.incidents[lang]}</h3>
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
                         {incidents.length === 0 ? (
                             <div className="px-6 py-8 text-center text-slate-500">
@@ -328,14 +357,21 @@ export const StatusPageView: React.FC = () => {
                                 {t.noIncidents[lang]}
                             </div>
                         ) : (
-                            incidents.map(incident => (
-                                <div key={incident.id} className="border-b border-slate-200 dark:border-slate-700 last:border-0">
+                            incidents.map((incident) => (
+                                <div
+                                    key={incident.id}
+                                    className="border-b border-slate-200 dark:border-slate-700 last:border-0"
+                                >
                                     <button
-                                        onClick={() => setExpandedIncident(expandedIncident === incident.id ? null : incident.id)}
+                                        onClick={() =>
+                                            setExpandedIncident(expandedIncident === incident.id ? null : incident.id)
+                                        }
                                         className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50"
                                     >
                                         <div>
-                                            <h4 className="font-medium text-slate-900 dark:text-white">{incident.title}</h4>
+                                            <h4 className="font-medium text-slate-900 dark:text-white">
+                                                {incident.title}
+                                            </h4>
                                             <p className="text-sm text-slate-600 dark:text-slate-400">
                                                 {new Date(incident.createdAt).toLocaleDateString()} • {incident.status}
                                             </p>
@@ -348,14 +384,18 @@ export const StatusPageView: React.FC = () => {
                                     </button>
                                     {expandedIncident === incident.id && (
                                         <div className="px-6 pb-4">
-                                            <p className="text-slate-600 dark:text-slate-300 mb-4">{incident.description}</p>
+                                            <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                                {incident.description}
+                                            </p>
                                             <div className="space-y-2">
                                                 {incident.updates.map((update, i) => (
                                                     <div key={i} className="flex gap-3 text-sm">
                                                         <span className="text-slate-400">
                                                             {new Date(update.timestamp).toLocaleTimeString()}
                                                         </span>
-                                                        <span className="text-slate-600 dark:text-slate-300">{update.message}</span>
+                                                        <span className="text-slate-600 dark:text-slate-300">
+                                                            {update.message}
+                                                        </span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -371,18 +411,14 @@ export const StatusPageView: React.FC = () => {
                 <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                         <Bell size={20} className="text-purple-500" />
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            {t.subscribe[lang]}
-                        </h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.subscribe[lang]}</h3>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-400 mb-4">
-                        {t.subscribeDesc[lang]}
-                    </p>
+                    <p className="text-slate-600 dark:text-slate-400 mb-4">{t.subscribeDesc[lang]}</p>
                     <form onSubmit={handleSubscribe} className="flex gap-3">
                         <input
                             type="email"
                             value={subscribeEmail}
-                            onChange={e => setSubscribeEmail(e.target.value)}
+                            onChange={(e) => setSubscribeEmail(e.target.value)}
                             placeholder="email@example.com"
                             className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                             required
@@ -391,7 +427,7 @@ export const StatusPageView: React.FC = () => {
                             type="submit"
                             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
                         >
-                            {subscribeSuccess ? t.subscribed[lang] : (lang === 'pl' ? 'Subskrybuj' : 'Subscribe')}
+                            {subscribeSuccess ? t.subscribed[lang] : lang === 'pl' ? 'Subskrybuj' : 'Subscribe'}
                         </button>
                     </form>
                 </section>
@@ -401,12 +437,4 @@ export const StatusPageView: React.FC = () => {
 };
 
 export default StatusPageView;
-
-
-
-
-
-
-
-
 

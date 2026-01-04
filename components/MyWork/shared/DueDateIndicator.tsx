@@ -3,8 +3,8 @@
  * Part of My Work Module PMO Upgrade
  */
 
+import { AlertCircle, CalendarClock, CheckCircle, Clock } from 'lucide-react';
 import React from 'react';
-import { Clock, AlertCircle, CalendarClock, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface DueDateIndicatorProps {
@@ -72,33 +72,33 @@ const statusStyles: Record<DueStatus, { bg: string; text: string; icon: string }
     overdue: {
         bg: 'bg-red-100 dark:bg-red-900/30',
         text: 'text-red-700 dark:text-red-300',
-        icon: 'text-red-500'
+        icon: 'text-red-500',
     },
     due_today: {
         bg: 'bg-amber-100 dark:bg-amber-900/30',
         text: 'text-amber-700 dark:text-amber-300',
-        icon: 'text-amber-500'
+        icon: 'text-amber-500',
     },
     due_soon: {
         bg: 'bg-orange-100 dark:bg-orange-900/30',
         text: 'text-orange-700 dark:text-orange-300',
-        icon: 'text-orange-500'
+        icon: 'text-orange-500',
     },
     upcoming: {
         bg: 'bg-slate-100 dark:bg-slate-800',
         text: 'text-slate-600 dark:text-slate-400',
-        icon: 'text-slate-500'
+        icon: 'text-slate-500',
     },
     completed: {
         bg: 'bg-green-100 dark:bg-green-900/30',
         text: 'text-green-700 dark:text-green-300',
-        icon: 'text-green-500'
+        icon: 'text-green-500',
     },
     no_date: {
         bg: 'bg-slate-50 dark:bg-slate-800/50',
         text: 'text-slate-400 dark:text-slate-500',
-        icon: 'text-slate-400'
-    }
+        icon: 'text-slate-400',
+    },
 };
 
 /**
@@ -128,7 +128,7 @@ export const DueDateIndicator: React.FC<DueDateIndicatorProps> = ({
     isCompleted = false,
     showRelative = true,
     size = 'sm',
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const status = getDueStatus(dueDate, isCompleted);
@@ -136,7 +136,7 @@ export const DueDateIndicator: React.FC<DueDateIndicatorProps> = ({
 
     const sizeClasses = {
         sm: 'text-[10px] px-1.5 py-0.5 gap-1',
-        md: 'text-xs px-2 py-1 gap-1.5'
+        md: 'text-xs px-2 py-1 gap-1.5',
     };
 
     const iconSize = size === 'sm' ? 10 : 12;
@@ -149,10 +149,8 @@ export const DueDateIndicator: React.FC<DueDateIndicatorProps> = ({
         displayText = t('myWork.dueDate.completed', 'Completed');
     } else if (dueDate) {
         const due = new Date(dueDate);
-        displayText = showRelative 
-            ? getRelativeTime(due, t) 
-            : due.toLocaleDateString();
-        
+        displayText = showRelative ? getRelativeTime(due, t) : due.toLocaleDateString();
+
         // Add time if specified
         if (dueTime) {
             displayText += ` • ${dueTime}`;
@@ -170,9 +168,7 @@ export const DueDateIndicator: React.FC<DueDateIndicatorProps> = ({
                 ${className}
             `}
         >
-            <span className={styles.icon}>
-                {getStatusIcon(status, iconSize)}
-            </span>
+            <span className={styles.icon}>{getStatusIcon(status, iconSize)}</span>
             <span className="truncate">{displayText}</span>
         </span>
     );
@@ -192,28 +188,10 @@ export const DueDateText: React.FC<{
 
     if (!dueDate && !isCompleted) return null;
 
-    const displayText = dueDate 
-        ? getRelativeTime(new Date(dueDate), t)
-        : t('myWork.dueDate.completed', 'Completed');
+    const displayText = dueDate ? getRelativeTime(new Date(dueDate), t) : t('myWork.dueDate.completed', 'Completed');
 
-    return (
-        <span className={`${styles.text} ${className}`}>
-            {displayText}
-        </span>
-    );
+    return <span className={`${styles.text} ${className}`}>{displayText}</span>;
 };
 
 export default DueDateIndicator;
-
-
-
-
-
-
-
-
-
-
-
-
 

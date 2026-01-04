@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { WorkloadHeatmap } from '../../../components/MyWork/Dashboard/WorkloadHeatmap';
+import { WorkloadHeatmap } from '../../components/MyWork/Dashboard/WorkloadHeatmap';
 
 const mockData = {
     weeks: ['2024-W1', '2024-W2'],
@@ -19,6 +19,7 @@ describe('WorkloadHeatmap Component', () => {
         expect(screen.getByText(/Workload/i) || screen.getByText(/Heatmap/i)).toBeInTheDocument();
     });
 });
+
 
 
 

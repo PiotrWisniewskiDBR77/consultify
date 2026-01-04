@@ -1,12 +1,12 @@
 /**
  * Analytics Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/analyticsService.js
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -58,13 +58,11 @@ export class AnalyticsServiceClass {
         if (this.#initPromise) return this.#initPromise;
 
         this.#initPromise = (async () => {
-            const [uuidModule] = await Promise.all([
-                import('uuid')
-            ]);
+            const [uuidModule] = await Promise.all([import('uuid')]);
 
             this.#deps = {
                 db: getDatabase(),
-                uuidv4: uuidModule.v4
+                uuidv4: uuidModule.v4,
             };
             this.#initialized = true;
         })();
@@ -87,7 +85,7 @@ export class AnalyticsServiceClass {
         const result = await DbPromise.run(this.#deps!.db, sql, params);
         return {
             lastID: result.lastID,
-            changes: result.changes || 0
+            changes: result.changes || 0,
         };
     }
 
@@ -100,18 +98,26 @@ export class AnalyticsServiceClass {
     // SERVICE METHODS
     // ==========================================
 
-    async logUsage(userId: string, action: string, model: string, inputTokens: number, outputTokens: number, latencyMs: number, topic: string = ''): Promise<void> {
+    async logUsage(
+        userId: string,
+        action: string,
+        model: string,
+        inputTokens: number,
+        outputTokens: number,
+        latencyMs: number,
+        topic: string = '',
+    ): Promise<void> {
         await this.#initDeps();
         const { uuidv4 } = this.#deps!;
 
         await this.dbRun(
             `INSERT INTO ai_logs (id, user_id, action, model, input_tokens, output_tokens, latency_ms, topic) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), userId, action, model, inputTokens, outputTokens, latencyMs, topic]
+            [uuidv4(), userId, action, model, inputTokens, outputTokens, latencyMs, topic],
         );
     }
 
-    async getStats(period: string = '7d'): Promise<AILogStats[]> {
+    async getStats(_period: string = '7d'): Promise<AILogStats[]> {
         await this.#initDeps();
 
         const sql = `
@@ -143,7 +149,12 @@ export class AnalyticsServiceClass {
         return this.dbAll<TopicCount>(sql);
     }
 
-    async saveMaturityScore(organizationId: string, axis: string, score: number, industry: string = 'General'): Promise<void> {
+    async saveMaturityScore(
+        organizationId: string,
+        axis: string,
+        score: number,
+        industry: string = 'General',
+    ): Promise<void> {
         await this.#initDeps();
         const { uuidv4 } = this.#deps!;
 
@@ -151,7 +162,7 @@ export class AnalyticsServiceClass {
             await this.dbRun(
                 `INSERT INTO maturity_scores (id, organization_id, axis, score, industry) 
                  VALUES (?, ?, ?, ?, ?)`,
-                [uuidv4(), organizationId, axis, score, industry]
+                [uuidv4(), organizationId, axis, score, industry],
             );
         } catch (err: unknown) {
             logger.error('[AnalyticsService] Failed to save maturity score:', err);
@@ -184,8 +195,15 @@ export class AnalyticsServiceClass {
 
 const AnalyticsService = new AnalyticsServiceClass();
 
-export const logUsage = (userId: string, action: string, model: string, inputTokens: number, outputTokens: number, latencyMs: number, topic?: string) =>
-    AnalyticsService.logUsage(userId, action, model, inputTokens, outputTokens, latencyMs, topic);
+export const logUsage = (
+    userId: string,
+    action: string,
+    model: string,
+    inputTokens: number,
+    outputTokens: number,
+    latencyMs: number,
+    topic?: string,
+) => AnalyticsService.logUsage(userId, action, model, inputTokens, outputTokens, latencyMs, topic);
 export const getStats = (period?: string) => AnalyticsService.getStats(period);
 export const getTopTopics = () => AnalyticsService.getTopTopics();
 export const saveMaturityScore = (orgId: string, axis: string, score: number, industry?: string) =>

@@ -10,7 +10,8 @@
  * - ISO 21500: Decision management processes
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 // Default SLA: 48 hours
@@ -732,6 +733,7 @@ const ReportApprovalService = {
 };
 
 export default ReportApprovalService;
+
 
 
 

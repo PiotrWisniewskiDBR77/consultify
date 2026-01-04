@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { AlertCircle, PhoneIncoming, MessageSquare, X } from 'lucide-react';
-import { SignalNode } from './SignalNode';
+import { AlertCircle, MessageSquare, PhoneIncoming, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { useOnClickOutside } from '../../hooks/useOnClickOutside'; // Assuming we have this, or I'll implement a simple ref check
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
-import { useOnClickOutside } from '../../hooks/useOnClickOutside'; // Assuming we have this, or I'll implement a simple ref check
+import { SignalNode } from './SignalNode';
 
 interface SignalGroup {
     system: Notification[];
@@ -35,9 +36,9 @@ export const SuperAdminSignalCenter: React.FC = () => {
             const allNotifications = await Api.fetchNotifications();
 
             // Filter and Group
-            const system = allNotifications.filter(n => n.type === 'SYSTEM_ALERT' && !n.isRead);
-            const client = allNotifications.filter(n => n.type === 'CLIENT_TICKET' && !n.isRead);
-            const feedback = allNotifications.filter(n => n.type === 'USER_FEEDBACK' && !n.isRead);
+            const system = allNotifications.filter((n) => n.type === 'SYSTEM_ALERT' && !n.isRead);
+            const client = allNotifications.filter((n) => n.type === 'CLIENT_TICKET' && !n.isRead);
+            const feedback = allNotifications.filter((n) => n.type === 'USER_FEEDBACK' && !n.isRead);
 
             queueMicrotask(() => setNotifications({ system, client, feedback }));
         } catch (error) {
@@ -54,9 +55,13 @@ export const SuperAdminSignalCenter: React.FC = () => {
     // Temp: Seed data for demonstration if empty (to verify UI)
     // REMOVE THIS IN PRODUCTION or if real data exists
     useEffect(() => {
-        if (notifications.system.length === 0 && notifications.client.length === 0 && notifications.feedback.length === 0) {
+        if (
+            notifications.system.length === 0 &&
+            notifications.client.length === 0 &&
+            notifications.feedback.length === 0
+        ) {
             // Simulate for visual check (as per plan's manual verification step)
-            // In real code, we'd rely on the API. 
+            // In real code, we'd rely on the API.
             // I will leave this commented out and rely on manual seeding or real api.
         }
     }, []);
@@ -66,9 +71,9 @@ export const SuperAdminSignalCenter: React.FC = () => {
         try {
             await Api.markNotificationRead(id);
             // Optimistic update
-            setNotifications(prev => ({
+            setNotifications((prev) => ({
                 ...prev,
-                [type]: prev[type].filter(n => n.id !== id)
+                [type]: prev[type].filter((n) => n.id !== id),
             }));
         } catch (error) {
             console.error('Failed to dismiss', error);
@@ -77,23 +82,31 @@ export const SuperAdminSignalCenter: React.FC = () => {
 
     const getTypeLabel = (type: 'system' | 'client' | 'feedback') => {
         switch (type) {
-            case 'system': return 'System Alerts';
-            case 'client': return 'Client Requests';
-            case 'feedback': return 'User Feedback';
+            case 'system':
+                return 'System Alerts';
+            case 'client':
+                return 'Client Requests';
+            case 'feedback':
+                return 'User Feedback';
         }
     };
 
     const getTypeColor = (type: 'system' | 'client' | 'feedback') => {
         switch (type) {
-            case 'system': return 'text-red-500';
-            case 'client': return 'text-amber-500 dark:text-amber-400';
-            case 'feedback': return 'text-cyan-600 dark:text-cyan-400';
+            case 'system':
+                return 'text-red-500';
+            case 'client':
+                return 'text-amber-500 dark:text-amber-400';
+            case 'feedback':
+                return 'text-cyan-600 dark:text-cyan-400';
         }
     };
 
     return (
-        <div className="relative flex items-center gap-2 mr-4 bg-white dark:bg-navy-900/50 p-1.5 rounded-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm shadow-sm dark:shadow-none" ref={containerRef}>
-
+        <div
+            className="relative flex items-center gap-2 mr-4 bg-white dark:bg-navy-900/50 p-1.5 rounded-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm shadow-sm dark:shadow-none"
+            ref={containerRef}
+        >
             {/* SYSTEM - HIGH PRIORITY */}
             <SignalNode
                 type="system"
@@ -138,9 +151,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
                         <h3 className={`font-semibold text-sm ${getTypeColor(selectedType)}`}>
                             {getTypeLabel(selectedType)}
                         </h3>
-                        <span className="text-xs text-slate-500">
-                            {notifications[selectedType].length} Active
-                        </span>
+                        <span className="text-xs text-slate-500">{notifications[selectedType].length} Active</span>
                     </div>
 
                     <div className="max-h-64 overflow-y-auto">
@@ -150,11 +161,18 @@ export const SuperAdminSignalCenter: React.FC = () => {
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-100 dark:divide-white/5">
-                                {notifications[selectedType].map(item => (
-                                    <div key={item.id} className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group relative">
+                                {notifications[selectedType].map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group relative"
+                                    >
                                         <div className="pr-6">
-                                            <p className="text-xs text-slate-800 dark:text-white font-medium mb-1">{item.title || 'Untitled Signal'}</p>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">{item.message || 'No details provided.'}</p>
+                                            <p className="text-xs text-slate-800 dark:text-white font-medium mb-1">
+                                                {item.title || 'Untitled Signal'}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                {item.message || 'No details provided.'}
+                                            </p>
                                         </div>
                                         <button
                                             onClick={(e) => handleDismiss(item.id, selectedType, e)}

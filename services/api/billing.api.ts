@@ -3,14 +3,14 @@
  * Enterprise SaaS Architecture - Subscriptions, Payments, Invoices
  */
 
-import { API_URL, fetchWithRetry, handleResponse, getHeaders, httpClient } from './baseClient';
-import type { SubscriptionPlan, PaymentMethod, Invoice, TokenBalance, TokenTransaction } from './types';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse, httpClient } from './baseClient';
+import type { Invoice, PaymentMethod, SubscriptionPlan, TokenBalance, TokenTransaction } from './types';
 
 export const BillingApi = {
     // ==========================================
     // SUBSCRIPTION PLANS
     // ==========================================
-    
+
     getSubscriptionPlans: async (): Promise<SubscriptionPlan[]> => {
         const res = await fetch(`${API_URL}/billing/plans`, { headers: getHeaders() });
         const json = await res.json();
@@ -42,12 +42,12 @@ export const BillingApi = {
     // ==========================================
     // SUBSCRIPTIONS
     // ==========================================
-    
+
     subscribeToPlan: async (planId: string, paymentMethodId?: string): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/subscribe`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ planId, paymentMethodId })
+            body: JSON.stringify({ planId, paymentMethodId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Subscription failed');
@@ -58,7 +58,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/change-plan`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ newPlanId })
+            body: JSON.stringify({ newPlanId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Plan change failed');
@@ -68,7 +68,7 @@ export const BillingApi = {
     cancelSubscription: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/cancel`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Cancellation failed');
@@ -78,7 +78,7 @@ export const BillingApi = {
     // ==========================================
     // INVOICES
     // ==========================================
-    
+
     getInvoices: async (): Promise<Invoice[]> => {
         const res = await fetch(`${API_URL}/billing/invoices`, { headers: getHeaders() });
         const json = await res.json();
@@ -89,7 +89,7 @@ export const BillingApi = {
     // ==========================================
     // PAYMENT METHODS
     // ==========================================
-    
+
     getPaymentMethods: async (): Promise<{ methods: PaymentMethod[]; defaultId?: string }> => {
         const res = await fetch(`${API_URL}/billing/payment-methods`, { headers: getHeaders() });
         const json = await res.json();
@@ -101,7 +101,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/payment-methods`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ paymentMethodId })
+            body: JSON.stringify({ paymentMethodId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to add payment method');
@@ -111,7 +111,7 @@ export const BillingApi = {
     removePaymentMethod: async (paymentMethodId: string): Promise<void> => {
         const res = await fetch(`${API_URL}/billing/payment-methods/${paymentMethodId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) {
             const json = await res.json().catch(() => ({}));
@@ -122,7 +122,7 @@ export const BillingApi = {
     setDefaultPaymentMethod: async (paymentMethodId: string): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/payment-methods/${paymentMethodId}/default`, {
             method: 'PUT',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set default payment method');
@@ -132,7 +132,7 @@ export const BillingApi = {
     createSetupIntent: async (): Promise<{ clientSecret: string; id: string }> => {
         const res = await fetch(`${API_URL}/billing/setup-intent`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to create setup intent');
@@ -142,7 +142,7 @@ export const BillingApi = {
     // ==========================================
     // BILLING ALERTS
     // ==========================================
-    
+
     getBillingAlerts: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/alerts`, { headers: getHeaders() });
         const json = await res.json();
@@ -154,7 +154,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/alerts`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(alerts)
+            body: JSON.stringify(alerts),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to update billing alerts');
@@ -164,7 +164,7 @@ export const BillingApi = {
     // ==========================================
     // TAX SETTINGS
     // ==========================================
-    
+
     getTaxSettings: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/tax-settings`, { headers: getHeaders() });
         const json = await res.json();
@@ -176,7 +176,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/tax-settings`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(settings)
+            body: JSON.stringify(settings),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to update tax settings');
@@ -186,12 +186,12 @@ export const BillingApi = {
     // ==========================================
     // DISCOUNT CODES
     // ==========================================
-    
+
     validateDiscountCode: async (code: string, planId?: string): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/validate-discount`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ code, planId })
+            body: JSON.stringify({ code, planId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to validate discount code');
@@ -201,7 +201,7 @@ export const BillingApi = {
     // ==========================================
     // SEAT MANAGEMENT
     // ==========================================
-    
+
     getSeatConfiguration: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/billing/seats`, { headers: getHeaders() });
         const json = await res.json();
@@ -213,7 +213,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/seats/purchase`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ quantity, paymentMethodId })
+            body: JSON.stringify({ quantity, paymentMethodId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to purchase seats');
@@ -224,7 +224,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/seats/auto-add`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ enabled, threshold })
+            body: JSON.stringify({ enabled, threshold }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to update auto-add settings');
@@ -242,7 +242,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/seats/release`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId })
+            body: JSON.stringify({ userId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to release seat');
@@ -252,7 +252,7 @@ export const BillingApi = {
     // ==========================================
     // PAY-AS-YOU-GO
     // ==========================================
-    
+
     getPayAsYouGoUsage: async (periodStart?: string, periodEnd?: string): Promise<unknown> => {
         const params = new URLSearchParams();
         if (periodStart) params.append('periodStart', periodStart);
@@ -274,7 +274,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/billing/payg/invoice`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ periodStart, periodEnd })
+            body: JSON.stringify({ periodStart, periodEnd }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to generate PAYG invoice');
@@ -284,7 +284,7 @@ export const BillingApi = {
     // ==========================================
     // TOKEN BILLING
     // ==========================================
-    
+
     getTokenBalance: async (): Promise<TokenBalance> => {
         const res = await fetch(`${API_URL}/token-billing/balance`, { headers: getHeaders() });
         const data = await res.json();
@@ -300,7 +300,9 @@ export const BillingApi = {
     },
 
     getTokenTransactions: async (limit = 50, offset = 0): Promise<TokenTransaction[]> => {
-        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit}&offset=${offset}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit}&offset=${offset}`, {
+            headers: getHeaders(),
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get transactions');
         return data.transactions;
@@ -310,7 +312,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/token-billing/purchase`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ packageId })
+            body: JSON.stringify({ packageId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Purchase failed');
@@ -320,7 +322,7 @@ export const BillingApi = {
     // ==========================================
     // BUDGET MANAGEMENT
     // ==========================================
-    
+
     getUserBudget: async (userId: string): Promise<unknown> => {
         const res = await fetch(`${API_URL}/budgets/user/${userId}`, { headers: getHeaders() });
         const json = await res.json();
@@ -332,7 +334,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/budgets/user/${userId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(budget)
+            body: JSON.stringify(budget),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set user budget');
@@ -350,7 +352,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/budgets/project/${projectId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(budget)
+            body: JSON.stringify(budget),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set project budget');
@@ -368,7 +370,7 @@ export const BillingApi = {
         const res = await fetch(`${API_URL}/budgets/organization`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(budget)
+            body: JSON.stringify(budget),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set organization budget');
@@ -383,7 +385,5 @@ export const BillingApi = {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to get budget status');
         return json.budget;
-    }
+    },
 };
-
-

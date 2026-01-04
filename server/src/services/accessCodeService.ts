@@ -1,10 +1,10 @@
 /**
  * Access Code Service — HARDENED
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/accessCodeService.js (ES Modules) to TypeScript (ES Modules)
  * Unified engine for Referral, Invite, and Consultant codes.
- * 
+ *
  * SECURITY FEATURES:
  * - SHA-256 hashing: codes stored as hash, plaintext only returned once
  * - Atomic consumption: BEGIN IMMEDIATE + conditional UPDATE
@@ -14,8 +14,9 @@
 
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -26,18 +27,18 @@ export const CODE_TYPES = {
     REFERRAL: 'REFERRAL',
     INVITE: 'INVITE',
     CONSULTANT: 'CONSULTANT',
-    TRIAL: 'TRIAL'
+    TRIAL: 'TRIAL',
 } as const;
 
-export type CodeType = typeof CODE_TYPES[keyof typeof CODE_TYPES];
+export type CodeType = (typeof CODE_TYPES)[keyof typeof CODE_TYPES];
 
 export const CODE_STATUS = {
     ACTIVE: 'ACTIVE',
     REVOKED: 'REVOKED',
-    EXPIRED: 'EXPIRED'
+    EXPIRED: 'EXPIRED',
 } as const;
 
-export type CodeStatus = typeof CODE_STATUS[keyof typeof CODE_STATUS];
+export type CodeStatus = (typeof CODE_STATUS)[keyof typeof CODE_STATUS];
 
 // ==========================================
 // TYPES
@@ -135,7 +136,10 @@ interface CodeListRow {
  * Hash a code for secure storage (SHA-256)
  */
 function hashCode(code: string): string {
-    return crypto.createHash('sha256').update(String(code || '').trim()).digest('hex');
+    return crypto
+        .createHash('sha256')
+        .update(String(code || '').trim())
+        .digest('hex');
 }
 
 /**
@@ -214,14 +218,14 @@ export async function generateCode(params: GenerateCodeParams): Promise<Generate
         targetEmail = null,
         maxUses = 1,
         expiresInDays = 30,
-        metadata = {}
+        metadata = {},
     } = params;
 
     if (!Object.values(CODE_TYPES).includes(type)) {
         throw new Error(`Invalid code type: ${type}`);
     }
 
-    const prefix = type === CODE_TYPES.TRIAL ? 'TRIAL' : (type === CODE_TYPES.CONSULTANT ? 'CONS' : 'JOIN');
+    const prefix = type === CODE_TYPES.TRIAL ? 'TRIAL' : type === CODE_TYPES.CONSULTANT ? 'CONS' : 'JOIN';
     const id = `ac-${uuidv4()}`;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -234,11 +238,9 @@ export async function generateCode(params: GenerateCodeParams): Promise<Generate
     while (retries < MAX_RETRIES) {
         code = generateHumanCode(prefix);
         codeHash = hashCode(code);
-        const exists = await DbPromise.get<{ '1': number }>(
-            db,
-            `SELECT 1 FROM access_codes WHERE code_hash = ?`,
-            [codeHash]
-        );
+        const exists = await DbPromise.get<{ '1': number }>(db, `SELECT 1 FROM access_codes WHERE code_hash = ?`, [
+            codeHash,
+        ]);
         if (!exists) break;
         retries++;
     }
@@ -263,8 +265,8 @@ export async function generateCode(params: GenerateCodeParams): Promise<Generate
             targetEmail,
             maxUses,
             expiresAt,
-            JSON.stringify(metadata || {})
-        ]
+            JSON.stringify(metadata || {}),
+        ],
     );
 
     // Return plaintext ONCE (client must store/show it)
@@ -273,7 +275,7 @@ export async function generateCode(params: GenerateCodeParams): Promise<Generate
         code, // Plaintext
         type,
         expiresAt,
-        maxUses
+        maxUses,
     };
 }
 
@@ -295,14 +297,14 @@ export async function validatePublic(code: string): Promise<ValidatePublicResult
         db,
         `SELECT type, status, expires_at, max_uses, uses_count, target_email
          FROM access_codes WHERE code_hash = ?`,
-        [codeHash]
+        [codeHash],
     );
 
     // Constant-time-ish: always same code path for invalid
     if (!row) return { valid: false };
 
     const now = Date.now();
-    const expired = row.expires_at && (new Date(row.expires_at).getTime() < now);
+    const expired = row.expires_at && new Date(row.expires_at).getTime() < now;
     const exhausted = (row.uses_count || 0) >= (row.max_uses || 1);
     const active = row.status === CODE_STATUS.ACTIVE;
 
@@ -311,7 +313,7 @@ export async function validatePublic(code: string): Promise<ValidatePublicResult
     return {
         valid: true,
         type: row.type as CodeType,
-        requiresEmailMatch: !!row.target_email
+        requiresEmailMatch: !!row.target_email,
     };
 }
 
@@ -321,11 +323,7 @@ export async function validatePublic(code: string): Promise<ValidatePublicResult
 export async function validateCode(code: string): Promise<ValidateCodeResult> {
     const codeHash = hashCode(code);
 
-    const row = await DbPromise.get<AccessCodeRow>(
-        db,
-        `SELECT * FROM access_codes WHERE code_hash = ?`,
-        [codeHash]
-    );
+    const row = await DbPromise.get<AccessCodeRow>(db, `SELECT * FROM access_codes WHERE code_hash = ?`, [codeHash]);
 
     if (!row) throw new Error('Invalid access code');
     if (row.status !== CODE_STATUS.ACTIVE) throw new Error(`Code is ${row.status}`);
@@ -340,7 +338,7 @@ export async function validateCode(code: string): Promise<ValidateCodeResult> {
         createdByUserId: row.created_by_user_id || null,
         createdByConsultantId: row.created_by_consultant_id || null,
         targetEmail: row.target_email || null,
-        metadata: safeParseJson(row.metadata_json)
+        metadata: safeParseJson(row.metadata_json),
     };
 }
 
@@ -359,15 +357,19 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
             db,
             `SELECT id, code, type, organization_id, target_email, expires_at, max_uses, uses_count, status, metadata_json, created_by_consultant_id
              FROM access_codes WHERE code_hash = ?`,
-            [codeHash]
+            [codeHash],
         );
 
         if (!row) return { ok: false, error: 'INVALID_CODE' };
 
         // 2. Email match if required
         if (row.target_email) {
-            const pe = String(providedEmail || '').trim().toLowerCase();
-            const te = String(row.target_email || '').trim().toLowerCase();
+            const pe = String(providedEmail || '')
+                .trim()
+                .toLowerCase();
+            const te = String(row.target_email || '')
+                .trim()
+                .toLowerCase();
             if (!pe || pe !== te) return { ok: false, error: 'EMAIL_MISMATCH' };
         }
 
@@ -382,7 +384,7 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
                AND status = 'ACTIVE'
                AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
                AND uses_count < max_uses`,
-            [row.id]
+            [row.id],
         );
 
         if (result.changes !== 1) {
@@ -402,8 +404,8 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
                         code: row.code,
                         type: row.type,
                         consultantId: row.created_by_consultant_id,
-                        campaign: metadata.campaign
-                    }
+                        campaign: metadata.campaign,
+                    },
                 });
             } catch (attrErr) {
                 const error = attrErr as Error;
@@ -416,7 +418,7 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
             await MetricsCollector.recordEvent('access_code_accepted' as any, {
                 userId: actorUserId,
                 codeType: row.type,
-                ip: actorIp
+                ip: actorIp,
             });
         } catch {
             // ignore
@@ -431,7 +433,7 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
             organizationId: row.organization_id || null,
             consultantId: row.created_by_consultant_id || null,
             outcome,
-            metadata: safeParseJson(row.metadata_json)
+            metadata: safeParseJson(row.metadata_json),
         };
     });
 }
@@ -439,17 +441,20 @@ export async function acceptCode(params: AcceptCodeParams): Promise<AcceptCodeRe
 /**
  * List codes created by a user or consultant
  */
-export async function listCodes(userId: string, userIdType: 'USER' | 'CONSULTANT' = 'USER'): Promise<Array<CodeListRow & { metadata: Record<string, unknown> }>> {
+export async function listCodes(
+    userId: string,
+    userIdType: 'USER' | 'CONSULTANT' = 'USER',
+): Promise<Array<CodeListRow & { metadata: Record<string, unknown> }>> {
     const column = userIdType === 'CONSULTANT' ? 'created_by_consultant_id' : 'created_by_user_id';
     const rows = await DbPromise.all<CodeListRow>(
         db,
         `SELECT id, code, type, organization_id, max_uses, uses_count, expires_at, status, created_at, metadata_json
          FROM access_codes WHERE ${column} = ? ORDER BY created_at DESC`,
-        [userId]
+        [userId],
     );
-    return rows.map(r => ({
+    return rows.map((r) => ({
         ...r,
-        metadata: safeParseJson(r.metadata_json)
+        metadata: safeParseJson(r.metadata_json),
     }));
 }
 
@@ -457,11 +462,10 @@ export async function listCodes(userId: string, userIdType: 'USER' | 'CONSULTANT
  * Revoke a code
  */
 export async function revokeCode(codeId: string): Promise<void> {
-    await DbPromise.run(
-        db,
-        `UPDATE access_codes SET status = ?, revoked_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [CODE_STATUS.REVOKED, codeId]
-    );
+    await DbPromise.run(db, `UPDATE access_codes SET status = ?, revoked_at = CURRENT_TIMESTAMP WHERE id = ?`, [
+        CODE_STATUS.REVOKED,
+        codeId,
+    ]);
 }
 
 // Default export for backward compatibility
@@ -474,7 +478,7 @@ const AccessCodeService = {
     validateCode,
     acceptCode,
     listCodes,
-    revokeCode
+    revokeCode,
 };
 
 export default AccessCodeService;

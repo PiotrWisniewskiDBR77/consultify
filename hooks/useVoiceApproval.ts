@@ -1,9 +1,9 @@
 /**
  * useVoiceApproval Hook
- * 
+ *
  * Integrates voice commands with the HITL approval workflow.
  * Extends useUniversalVoice to detect and execute approval commands.
- * 
+ *
  * Commands supported:
  * - "approve" / "akceptuj" - Approve current action
  * - "reject [reason]" / "odrzuć [powód]" - Reject with reason
@@ -11,13 +11,14 @@
  * - "details" / "szczegóły" - Get action details
  * - "always approve this" / "zawsze akceptuj takie" - Learn pattern
  * - "always reject this" / "zawsze odrzucaj takie" - Learn pattern
- * 
+ *
  * @version 1.0.0
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useUniversalVoice, UseUniversalVoiceOptions, VoiceSettings } from './useUniversalVoice';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import api from '../services/api';
+import { useUniversalVoice, UseUniversalVoiceOptions, VoiceSettings } from './useUniversalVoice';
 
 // ============================================================================
 // Types
@@ -100,10 +101,10 @@ const COMMAND_TYPES = {
     ALWAYS_REJECT: 'ALWAYS_REJECT',
     LIST_PENDING: 'LIST_PENDING',
     HELP: 'HELP',
-    UNKNOWN: 'UNKNOWN'
+    UNKNOWN: 'UNKNOWN',
 } as const;
 
-type CommandType = typeof COMMAND_TYPES[keyof typeof COMMAND_TYPES];
+type CommandType = (typeof COMMAND_TYPES)[keyof typeof COMMAND_TYPES];
 
 interface ParsedCommand {
     type: CommandType;
@@ -139,21 +140,27 @@ function parseVoiceCommand(text: string): ParsedCommand {
     }
 
     // ALWAYS APPROVE patterns
-    if (/^(always|zawsze)\s+(approve|akceptuj)/i.test(normalized) ||
+    if (
+        /^(always|zawsze)\s+(approve|akceptuj)/i.test(normalized) ||
         /^(auto.?approve|auto.?akceptuj)/i.test(normalized) ||
-        /^(zapamiętaj|zapamietaj)\s+(że)?\s*(akceptuję|akceptuje)/i.test(normalized)) {
+        /^(zapamiętaj|zapamietaj)\s+(że)?\s*(akceptuję|akceptuje)/i.test(normalized)
+    ) {
         return { type: COMMAND_TYPES.ALWAYS_APPROVE, params: {}, confidence: 0.95 };
     }
 
     // ALWAYS REJECT patterns
-    if (/^(always|zawsze)\s+(reject|odrzuć|odrzucaj)/i.test(normalized) ||
-        /^(auto.?reject|auto.?odrzuć)/i.test(normalized)) {
+    if (
+        /^(always|zawsze)\s+(reject|odrzuć|odrzucaj)/i.test(normalized) ||
+        /^(auto.?reject|auto.?odrzuć)/i.test(normalized)
+    ) {
         return { type: COMMAND_TYPES.ALWAYS_REJECT, params: {}, confidence: 0.95 };
     }
 
     // LIST PENDING patterns
-    if (/^(list|pokaż|pokaz|show)\s+(pending|oczekujące|oczekujace)/i.test(normalized) ||
-        /^ile\s+(mam|jest)/i.test(normalized)) {
+    if (
+        /^(list|pokaż|pokaz|show)\s+(pending|oczekujące|oczekujace)/i.test(normalized) ||
+        /^ile\s+(mam|jest)/i.test(normalized)
+    ) {
         return { type: COMMAND_TYPES.LIST_PENDING, params: {}, confidence: 0.9 };
     }
 
@@ -172,7 +179,7 @@ function parseVoiceCommand(text: string): ParsedCommand {
 function getVoiceResponse(
     commandType: CommandType,
     result: ApprovalCommandResult,
-    language: 'en' | 'pl' = 'en'
+    language: 'en' | 'pl' = 'en',
 ): string {
     const responses: Record<string, Record<CommandType, string>> = {
         en: {
@@ -189,7 +196,7 @@ function getVoiceResponse(
             [COMMAND_TYPES.LIST_PENDING]: result.message,
             [COMMAND_TYPES.HELP]: 'Say approve, reject, skip, or details.',
             [COMMAND_TYPES.UNKNOWN]: 'I did not understand. Try saying approve or reject.',
-            [COMMAND_TYPES.APPROVE_ALL_LOW_RISK]: 'Approved all low risk actions.'
+            [COMMAND_TYPES.APPROVE_ALL_LOW_RISK]: 'Approved all low risk actions.',
         },
         pl: {
             [COMMAND_TYPES.APPROVE]: result.success
@@ -205,8 +212,8 @@ function getVoiceResponse(
             [COMMAND_TYPES.LIST_PENDING]: result.message,
             [COMMAND_TYPES.HELP]: 'Powiedz akceptuj, odrzuć, pomiń lub szczegóły.',
             [COMMAND_TYPES.UNKNOWN]: 'Nie zrozumiałem. Spróbuj powiedzieć akceptuj lub odrzuć.',
-            [COMMAND_TYPES.APPROVE_ALL_LOW_RISK]: 'Zatwierdzono wszystkie akcje o niskim ryzyku.'
-        }
+            [COMMAND_TYPES.APPROVE_ALL_LOW_RISK]: 'Zatwierdzono wszystkie akcje o niskim ryzyku.',
+        },
     };
 
     return responses[language]?.[commandType] || responses.en[commandType] || responses.en[COMMAND_TYPES.UNKNOWN];
@@ -217,13 +224,7 @@ function getVoiceResponse(
 // ============================================================================
 
 export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoiceApprovalReturn {
-    const {
-        onApprovalCommand,
-        onPendingActionsChange,
-        language = 'pl',
-        projectId,
-        ...voiceOptions
-    } = options;
+    const { onApprovalCommand, onPendingActionsChange, language = 'pl', projectId, ...voiceOptions } = options;
 
     // State
     const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
@@ -237,84 +238,87 @@ export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoic
     const currentAction = pendingActions[currentActionIndex] || null;
 
     // Handle transcript from voice
-    const handleTranscript = useCallback(async (text: string, isFinal: boolean) => {
-        if (!isFinal || processingCommandRef.current) return;
+    const handleTranscript = useCallback(
+        async (text: string, isFinal: boolean) => {
+            if (!isFinal || processingCommandRef.current) return;
 
-        const parsed = parseVoiceCommand(text);
+            const parsed = parseVoiceCommand(text);
 
-        // Only process if it looks like a command
-        if (parsed.type === COMMAND_TYPES.UNKNOWN || parsed.confidence < 0.8) {
-            // Pass through to regular chat if configured
-            voiceOptions.onTranscript?.(text, isFinal);
-            return;
-        }
-
-        processingCommandRef.current = true;
-
-        try {
-            let result: ApprovalCommandResult;
-
-            switch (parsed.type) {
-                case COMMAND_TYPES.APPROVE:
-                    result = await approveCurrentAction(false);
-                    break;
-
-                case COMMAND_TYPES.REJECT:
-                    result = await rejectCurrentAction(parsed.params.reason, false);
-                    break;
-
-                case COMMAND_TYPES.SKIP:
-                    skipToNextAction();
-                    result = { success: true, commandType: COMMAND_TYPES.SKIP, message: 'Skipped' };
-                    break;
-
-                case COMMAND_TYPES.DETAILS:
-                    await readCurrentActionDetails();
-                    result = { success: true, commandType: COMMAND_TYPES.DETAILS, message: 'Details read' };
-                    break;
-
-                case COMMAND_TYPES.ALWAYS_APPROVE:
-                    result = await approveCurrentAction(true);
-                    break;
-
-                case COMMAND_TYPES.ALWAYS_REJECT:
-                    result = await rejectCurrentAction(parsed.params.reason, true);
-                    break;
-
-                case COMMAND_TYPES.LIST_PENDING:
-                    await refreshPendingActions();
-                    result = {
-                        success: true,
-                        commandType: COMMAND_TYPES.LIST_PENDING,
-                        message: `You have ${pendingActions.length} pending actions`
-                    };
-                    break;
-
-                case COMMAND_TYPES.HELP:
-                    result = {
-                        success: true,
-                        commandType: COMMAND_TYPES.HELP,
-                        message: language === 'pl'
-                            ? 'Powiedz: akceptuj, odrzuć, pomiń, szczegóły, zawsze akceptuj takie, lub zawsze odrzucaj takie'
-                            : 'Say: approve, reject, skip, details, always approve this, or always reject this'
-                    };
-                    break;
-
-                default:
-                    result = { success: false, commandType: parsed.type, message: 'Unknown command' };
+            // Only process if it looks like a command
+            if (parsed.type === COMMAND_TYPES.UNKNOWN || parsed.confidence < 0.8) {
+                // Pass through to regular chat if configured
+                voiceOptions.onTranscript?.(text, isFinal);
+                return;
             }
 
-            setLastCommandResult(result);
-            onApprovalCommand?.(result);
+            processingCommandRef.current = true;
 
-            // Speak the response
-            const voiceResponse = getVoiceResponse(parsed.type, result, language);
-            await voice.speak(voiceResponse);
+            try {
+                let result: ApprovalCommandResult;
 
-        } finally {
-            processingCommandRef.current = false;
-        }
-    }, [currentAction, pendingActions.length, language, onApprovalCommand]);
+                switch (parsed.type) {
+                    case COMMAND_TYPES.APPROVE:
+                        result = await approveCurrentAction(false);
+                        break;
+
+                    case COMMAND_TYPES.REJECT:
+                        result = await rejectCurrentAction(parsed.params.reason, false);
+                        break;
+
+                    case COMMAND_TYPES.SKIP:
+                        skipToNextAction();
+                        result = { success: true, commandType: COMMAND_TYPES.SKIP, message: 'Skipped' };
+                        break;
+
+                    case COMMAND_TYPES.DETAILS:
+                        await readCurrentActionDetails();
+                        result = { success: true, commandType: COMMAND_TYPES.DETAILS, message: 'Details read' };
+                        break;
+
+                    case COMMAND_TYPES.ALWAYS_APPROVE:
+                        result = await approveCurrentAction(true);
+                        break;
+
+                    case COMMAND_TYPES.ALWAYS_REJECT:
+                        result = await rejectCurrentAction(parsed.params.reason, true);
+                        break;
+
+                    case COMMAND_TYPES.LIST_PENDING:
+                        await refreshPendingActions();
+                        result = {
+                            success: true,
+                            commandType: COMMAND_TYPES.LIST_PENDING,
+                            message: `You have ${pendingActions.length} pending actions`,
+                        };
+                        break;
+
+                    case COMMAND_TYPES.HELP:
+                        result = {
+                            success: true,
+                            commandType: COMMAND_TYPES.HELP,
+                            message:
+                                language === 'pl'
+                                    ? 'Powiedz: akceptuj, odrzuć, pomiń, szczegóły, zawsze akceptuj takie, lub zawsze odrzucaj takie'
+                                    : 'Say: approve, reject, skip, details, always approve this, or always reject this',
+                        };
+                        break;
+
+                    default:
+                        result = { success: false, commandType: parsed.type, message: 'Unknown command' };
+                }
+
+                setLastCommandResult(result);
+                onApprovalCommand?.(result);
+
+                // Speak the response
+                const voiceResponse = getVoiceResponse(parsed.type, result, language);
+                await voice.speak(voiceResponse);
+            } finally {
+                processingCommandRef.current = false;
+            }
+        },
+        [currentAction, pendingActions.length, language, onApprovalCommand],
+    );
 
     // Initialize voice with our transcript handler
     const voice = useUniversalVoice({
@@ -322,15 +326,17 @@ export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoic
         onTranscript: handleTranscript,
         settings: {
             ...voiceOptions.settings,
-            language
-        }
+            language,
+        },
     });
 
     // Fetch pending actions
     const refreshPendingActions = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await (api as any).get?.(`/ai/actions/pending?projectId=${projectId || ''}`) || { data: {} };
+            const response = (await (api as any).get?.(`/ai/actions/pending?projectId=${projectId || ''}`)) || {
+                data: {},
+            };
 
             const actions = response.data?.actions || [];
             setPendingActions(actions);
@@ -348,121 +354,119 @@ export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoic
     }, [projectId, currentActionIndex, onPendingActionsChange]);
 
     // Approve current action
-    const approveCurrentAction = useCallback(async (alwaysApprove = false): Promise<ApprovalCommandResult> => {
-        if (!currentAction) {
-            return {
-                success: false,
-                commandType: COMMAND_TYPES.APPROVE,
-                message: 'No pending action to approve',
-                error: 'No action selected'
-            };
-        }
-
-        setIsLoading(true);
-        try {
-            const response = await api.post(`/ai/actions/${currentAction.id}/approve`, {
-                alwaysApprove
-            });
-
-            if (response.data?.success) {
-                // Remove from list and move to next
-                setPendingActions(prev => prev.filter(a => a.id !== currentAction.id));
-
-                return {
-                    success: true,
-                    commandType: alwaysApprove ? COMMAND_TYPES.ALWAYS_APPROVE : COMMAND_TYPES.APPROVE,
-                    actionId: currentAction.id,
-                    message: 'Action approved',
-                    patternLearned: response.data?.patternLearned
-                };
-            } else {
+    const approveCurrentAction = useCallback(
+        async (alwaysApprove = false): Promise<ApprovalCommandResult> => {
+            if (!currentAction) {
                 return {
                     success: false,
                     commandType: COMMAND_TYPES.APPROVE,
-                    actionId: currentAction.id,
-                    message: 'Approval failed',
-                    error: response.data?.error
+                    message: 'No pending action to approve',
+                    error: 'No action selected',
                 };
             }
-        } catch (error: any) {
-            return {
-                success: false,
-                commandType: COMMAND_TYPES.APPROVE,
-                message: 'Approval failed',
-                error: error.message
-            };
-        } finally {
-            setIsLoading(false);
-        }
-    }, [currentAction]);
+
+            setIsLoading(true);
+            try {
+                const response = await api.post(`/ai/actions/${currentAction.id}/approve`, {
+                    alwaysApprove,
+                });
+
+                if (response.data?.success) {
+                    // Remove from list and move to next
+                    setPendingActions((prev) => prev.filter((a) => a.id !== currentAction.id));
+
+                    return {
+                        success: true,
+                        commandType: alwaysApprove ? COMMAND_TYPES.ALWAYS_APPROVE : COMMAND_TYPES.APPROVE,
+                        actionId: currentAction.id,
+                        message: 'Action approved',
+                        patternLearned: response.data?.patternLearned,
+                    };
+                } else {
+                    return {
+                        success: false,
+                        commandType: COMMAND_TYPES.APPROVE,
+                        actionId: currentAction.id,
+                        message: 'Approval failed',
+                        error: response.data?.error,
+                    };
+                }
+            } catch (error: any) {
+                return {
+                    success: false,
+                    commandType: COMMAND_TYPES.APPROVE,
+                    message: 'Approval failed',
+                    error: error.message,
+                };
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [currentAction],
+    );
 
     // Reject current action
-    const rejectCurrentAction = useCallback(async (
-        reason?: string,
-        alwaysReject = false
-    ): Promise<ApprovalCommandResult> => {
-        if (!currentAction) {
-            return {
-                success: false,
-                commandType: COMMAND_TYPES.REJECT,
-                message: 'No pending action to reject',
-                error: 'No action selected'
-            };
-        }
-
-        setIsLoading(true);
-        try {
-            const response = await api.post(`/ai/actions/${currentAction.id}/reject`, {
-                reason,
-                alwaysReject
-            });
-
-            if (response.data?.success) {
-                // Remove from list
-                setPendingActions(prev => prev.filter(a => a.id !== currentAction.id));
-
-                return {
-                    success: true,
-                    commandType: alwaysReject ? COMMAND_TYPES.ALWAYS_REJECT : COMMAND_TYPES.REJECT,
-                    actionId: currentAction.id,
-                    message: 'Action rejected',
-                    patternLearned: response.data?.patternLearned
-                };
-            } else {
+    const rejectCurrentAction = useCallback(
+        async (reason?: string, alwaysReject = false): Promise<ApprovalCommandResult> => {
+            if (!currentAction) {
                 return {
                     success: false,
                     commandType: COMMAND_TYPES.REJECT,
-                    actionId: currentAction.id,
-                    message: 'Rejection failed',
-                    error: response.data?.error
+                    message: 'No pending action to reject',
+                    error: 'No action selected',
                 };
             }
-        } catch (error: any) {
-            return {
-                success: false,
-                commandType: COMMAND_TYPES.REJECT,
-                message: 'Rejection failed',
-                error: error.message
-            };
-        } finally {
-            setIsLoading(false);
-        }
-    }, [currentAction]);
+
+            setIsLoading(true);
+            try {
+                const response = await api.post(`/ai/actions/${currentAction.id}/reject`, {
+                    reason,
+                    alwaysReject,
+                });
+
+                if (response.data?.success) {
+                    // Remove from list
+                    setPendingActions((prev) => prev.filter((a) => a.id !== currentAction.id));
+
+                    return {
+                        success: true,
+                        commandType: alwaysReject ? COMMAND_TYPES.ALWAYS_REJECT : COMMAND_TYPES.REJECT,
+                        actionId: currentAction.id,
+                        message: 'Action rejected',
+                        patternLearned: response.data?.patternLearned,
+                    };
+                } else {
+                    return {
+                        success: false,
+                        commandType: COMMAND_TYPES.REJECT,
+                        actionId: currentAction.id,
+                        message: 'Rejection failed',
+                        error: response.data?.error,
+                    };
+                }
+            } catch (error: any) {
+                return {
+                    success: false,
+                    commandType: COMMAND_TYPES.REJECT,
+                    message: 'Rejection failed',
+                    error: error.message,
+                };
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [currentAction],
+    );
 
     // Skip to next action
     const skipToNextAction = useCallback(() => {
-        setCurrentActionIndex(prev =>
-            prev < pendingActions.length - 1 ? prev + 1 : 0
-        );
+        setCurrentActionIndex((prev) => (prev < pendingActions.length - 1 ? prev + 1 : 0));
     }, [pendingActions.length]);
 
     // Read current action details (speak them)
     const readCurrentActionDetails = useCallback(async () => {
         if (!currentAction) {
-            await voice.speak(language === 'pl'
-                ? 'Nie ma akcji do wyświetlenia.'
-                : 'No action to show.'
-            );
+            await voice.speak(language === 'pl' ? 'Nie ma akcji do wyświetlenia.' : 'No action to show.');
             return;
         }
 
@@ -546,17 +550,8 @@ export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoic
 
         // Pattern management
         toggleAutoApply,
-        getPatternStats
+        getPatternStats,
     };
 }
 
 export default useVoiceApproval;
-
-
-
-
-
-
-
-
-

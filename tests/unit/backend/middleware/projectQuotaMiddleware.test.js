@@ -18,15 +18,21 @@ describe('Project Quota Middleware (Integration)', () => {
     beforeEach(async () => {
         vi.resetModules();
         vi.clearAllMocks();
-        
-        // Mock dependencies before importing middleware
-        vi.doMock('../../../../server/services/usageService.js', () => mockUsageService);
-        
-        // Import middleware after mocking - must use require() for CommonJS
-        enforceProjectQuota = require('../../../../server/middleware/projectQuotaMiddleware.js');
-        
+
+        // Mock usageService using constants for hoisting support if needed, 
+        // but here we can just use doMock since we import afterwards
+        vi.doMock('../../../../server/services/usageService.js', () => ({
+            default: mockUsageService,
+            // also mock named export if needed
+            checkProjectQuota: mockUsageService.checkProjectQuota
+        }));
+
         // Create dummy file for testing cleanup
         try { fs.writeFileSync(tempFilePath, 'dummy content'); } catch (e) { }
+
+        // Import middleware using dynamic import
+        const middlewareModule = await import('../../../../server/middleware/projectQuotaMiddleware.js');
+        enforceProjectQuota = middlewareModule.default;
 
         req = {
             body: { project_id: 'proj-quota-test' },

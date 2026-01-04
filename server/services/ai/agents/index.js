@@ -6,7 +6,7 @@
  * 
  * Usage:
  * ```javascript
- * import { getCoordinator } from './agents';
+ * import { getCoordinator } from './agents.js';
  * 
  * const coordinator = getCoordinator();
  * const result = await coordinator.processQuery(
@@ -17,7 +17,7 @@
  * 
  * Direct agent access:
  * ```javascript
- * import { StrategyAgent } from './agents';
+ * import { StrategyAgent } from './agents.js';
  * const strategy = new StrategyAgent();
  * const analysis = await strategy.process(query, context);
  * ```
@@ -101,6 +101,7 @@ export default {
     getAvailableDomains,
     getAllAgentMetadata
 };
+
 
 
 

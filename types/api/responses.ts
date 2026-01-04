@@ -1,7 +1,7 @@
 /**
  * API Response Types
  * Enterprise SaaS Architecture - Typed API Responses
- * 
+ *
  * This file contains all API response types to eliminate `: any` usage.
  */
 
@@ -465,16 +465,22 @@ export interface AIStatsResponse {
     totalCost: number;
     avgResponseTime: number;
     successRate: number;
-    byProvider: Record<string, {
-        calls: number;
-        tokens: number;
-        cost: number;
-    }>;
-    byModel: Record<string, {
-        calls: number;
-        tokens: number;
-        cost: number;
-    }>;
+    byProvider: Record<
+        string,
+        {
+            calls: number;
+            tokens: number;
+            cost: number;
+        }
+    >;
+    byModel: Record<
+        string,
+        {
+            calls: number;
+            tokens: number;
+            cost: number;
+        }
+    >;
 }
 
 export interface AIHealthResponse {
@@ -819,5 +825,3 @@ export interface FeedbackListResponse {
     feedback: FeedbackResponse[];
     total: number;
 }
-
-

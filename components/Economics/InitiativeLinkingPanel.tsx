@@ -1,18 +1,28 @@
 /**
  * Initiative Linking Panel
- * 
+ *
  * UI component for linking economic analyses to initiatives.
  * Provides search, selection, and bidirectional linking functionality.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Link2, Search, X, ExternalLink, Check, 
-    AlertCircle, Loader2, Rocket, Calendar,
-    Target, TrendingUp, Building2
+import {
+    AlertCircle,
+    Building2,
+    Calendar,
+    Check,
+    ExternalLink,
+    Link2,
+    Loader2,
+    Rocket,
+    Search,
+    Target,
+    TrendingUp,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface Initiative {
     id: string;
@@ -46,7 +56,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
     analysisId,
     linkedInitiativeId,
     onLink,
-    onUnlink
+    onUnlink,
 }) => {
     const [initiatives, setInitiatives] = useState<Initiative[]>([]);
     const [linkedInitiative, setLinkedInitiative] = useState<Initiative | null>(null);
@@ -60,15 +70,27 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         const loadInitiatives = async () => {
             setIsLoading(true);
             try {
-                const response = await (Api as any).getInitiatives?.() || [];
+                const response = (await (Api as any).getInitiatives?.()) || [];
                 const normalized = normalizeInitiativesPayload((response as any).initiatives || response);
                 setInitiatives(normalized);
             } catch (error) {
                 console.error('Failed to load initiatives:', error);
                 // Mock data for development
                 setInitiatives([
-                    { id: '1', name: 'Wdrożenie systemu ERP', status: 'active', priority: 'high', projectName: 'Transformacja cyfrowa' },
-                    { id: '2', name: 'Automatyzacja procesów HR', status: 'planned', priority: 'medium', projectName: 'HR 2025' },
+                    {
+                        id: '1',
+                        name: 'Wdrożenie systemu ERP',
+                        status: 'active',
+                        priority: 'high',
+                        projectName: 'Transformacja cyfrowa',
+                    },
+                    {
+                        id: '2',
+                        name: 'Automatyzacja procesów HR',
+                        status: 'planned',
+                        priority: 'medium',
+                        projectName: 'HR 2025',
+                    },
                     { id: '3', name: 'Modernizacja infrastruktury IT', status: 'active', priority: 'high' },
                 ]);
             } finally {
@@ -92,26 +114,27 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
             try {
                 let source = initiatives;
                 if (source.length === 0) {
-                    const response = await (Api as any).getInitiatives?.() || [];
+                    const response = (await (Api as any).getInitiatives?.()) || [];
                     source = normalizeInitiativesPayload((response as any).initiatives || response);
                     setInitiatives(source);
                 }
-                const initiative = source.find(i => i.id === linkedInitiativeId);
+                const initiative = source.find((i) => i.id === linkedInitiativeId);
                 if (initiative) {
                     setLinkedInitiative(initiative);
                 }
             } catch (error) {
                 console.error('Failed to load linked initiative:', error);
-                const found = initiatives.find(i => i.id === linkedInitiativeId);
+                const found = initiatives.find((i) => i.id === linkedInitiativeId);
                 if (found) setLinkedInitiative(found);
             }
         };
         loadLinkedInitiative();
     }, [linkedInitiativeId, initiatives]);
 
-    const filteredInitiatives = initiatives.filter(initiative => 
-        initiative.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        initiative.projectName?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredInitiatives = initiatives.filter(
+        (initiative) =>
+            initiative.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            initiative.projectName?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     const handleLink = async (initiative: Initiative) => {
@@ -130,7 +153,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 
     const handleUnlink = async () => {
         if (!onUnlink) return;
-        
+
         setIsLinking(true);
         try {
             await onUnlink();
@@ -145,19 +168,27 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'active': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
-            case 'planned': return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
-            case 'completed': return 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400';
-            default: return 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400';
+            case 'active':
+                return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
+            case 'planned':
+                return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
+            case 'completed':
+                return 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400';
+            default:
+                return 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400';
         }
     };
 
     const getPriorityColor = (priority?: string) => {
         switch (priority) {
-            case 'high': return 'text-red-500';
-            case 'medium': return 'text-yellow-500';
-            case 'low': return 'text-green-500';
-            default: return 'text-slate-400';
+            case 'high':
+                return 'text-red-500';
+            case 'medium':
+                return 'text-yellow-500';
+            case 'low':
+                return 'text-green-500';
+            default:
+                return 'text-slate-400';
         }
     };
 
@@ -199,13 +230,19 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                                 <h4 className="font-bold text-navy-900 dark:text-white truncate">
                                     {linkedInitiative.name}
                                 </h4>
-                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(linkedInitiative.status)}`}>
-                                    {linkedInitiative.status === 'active' ? 'Aktywna' : 
-                                     linkedInitiative.status === 'planned' ? 'Planowana' : 
-                                     linkedInitiative.status === 'completed' ? 'Zakończona' : linkedInitiative.status}
+                                <span
+                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(linkedInitiative.status)}`}
+                                >
+                                    {linkedInitiative.status === 'active'
+                                        ? 'Aktywna'
+                                        : linkedInitiative.status === 'planned'
+                                          ? 'Planowana'
+                                          : linkedInitiative.status === 'completed'
+                                            ? 'Zakończona'
+                                            : linkedInitiative.status}
                                 </span>
                             </div>
-                            
+
                             {linkedInitiative.description && (
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
                                     {linkedInitiative.description}
@@ -220,21 +257,31 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                                     </div>
                                 )}
                                 {linkedInitiative.priority && (
-                                    <div className={`flex items-center gap-1 ${getPriorityColor(linkedInitiative.priority)}`}>
+                                    <div
+                                        className={`flex items-center gap-1 ${getPriorityColor(linkedInitiative.priority)}`}
+                                    >
                                         <Target size={14} />
-                                        Priorytet: {linkedInitiative.priority === 'high' ? 'Wysoki' : 
-                                                    linkedInitiative.priority === 'medium' ? 'Średni' : 'Niski'}
+                                        Priorytet:{' '}
+                                        {linkedInitiative.priority === 'high'
+                                            ? 'Wysoki'
+                                            : linkedInitiative.priority === 'medium'
+                                              ? 'Średni'
+                                              : 'Niski'}
                                     </div>
                                 )}
                                 {linkedInitiative.estimatedBudget && (
                                     <div className="flex items-center gap-1">
                                         <TrendingUp size={14} />
-                                        {new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 }).format(linkedInitiative.estimatedBudget)}
+                                        {new Intl.NumberFormat('pl-PL', {
+                                            style: 'currency',
+                                            currency: 'PLN',
+                                            maximumFractionDigits: 0,
+                                        }).format(linkedInitiative.estimatedBudget)}
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <a 
+                        <a
                             href={`/initiatives/${linkedInitiative.id}`}
                             className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors"
                             title="Otwórz inicjatywę"
@@ -290,7 +337,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                             <p>Brak inicjatyw do wyboru</p>
                         </div>
                     ) : (
-                        filteredInitiatives.map(initiative => (
+                        filteredInitiatives.map((initiative) => (
                             <button
                                 key={initiative.id}
                                 onClick={() => handleLink(initiative)}
@@ -301,16 +348,24 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
-                                        <Rocket size={18} className="text-blue-500 group-hover:text-white transition-colors" />
+                                        <Rocket
+                                            size={18}
+                                            className="text-blue-500 group-hover:text-white transition-colors"
+                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <span className="font-medium text-navy-900 dark:text-white truncate">
                                                 {initiative.name}
                                             </span>
-                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(initiative.status)}`}>
-                                                {initiative.status === 'active' ? 'Aktywna' : 
-                                                 initiative.status === 'planned' ? 'Planowana' : initiative.status}
+                                            <span
+                                                className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(initiative.status)}`}
+                                            >
+                                                {initiative.status === 'active'
+                                                    ? 'Aktywna'
+                                                    : initiative.status === 'planned'
+                                                      ? 'Planowana'
+                                                      : initiative.status}
                                             </span>
                                         </div>
                                         {initiative.projectName && (
@@ -319,7 +374,10 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                                             </p>
                                         )}
                                     </div>
-                                    <Check size={18} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <Check
+                                        size={18}
+                                        className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    />
                                 </div>
                             </button>
                         ))
@@ -343,9 +401,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                 <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-navy-700 flex items-center justify-center mb-4">
                     <Link2 size={32} className="text-slate-400" />
                 </div>
-                <h4 className="font-medium text-navy-900 dark:text-white mb-2">
-                    Brak powiązanej inicjatywy
-                </h4>
+                <h4 className="font-medium text-navy-900 dark:text-white mb-2">Brak powiązanej inicjatywy</h4>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">
                     Powiąż tę analizę ekonomiczną z inicjatywą, aby śledzić realizację korzyści i integrować dane.
                 </p>
@@ -361,10 +417,3 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 };
 
 export default InitiativeLinkingPanel;
-
-
-
-
-
-
-

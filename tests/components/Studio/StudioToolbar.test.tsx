@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { StudioToolbar } from '../../../components/Studio/StudioToolbar';
+import { StudioToolbar } from '../../components/Studio/StudioToolbar';
 
 describe('StudioToolbar', () => {
     const defaultProps = {
@@ -67,6 +67,7 @@ describe('StudioToolbar', () => {
         expect(screen.getByText('More')).toBeInTheDocument();
     });
 });
+
 
 
 

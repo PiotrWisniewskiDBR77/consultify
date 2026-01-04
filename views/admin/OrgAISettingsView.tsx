@@ -1,42 +1,43 @@
 /**
  * OrgAISettingsView
- * 
+ *
  * Admin-level AI settings for organization configuration.
  * Includes policy levels, AI roles, enabled models, limits, and feature toggles.
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
+    AlertTriangle,
     Brain,
-    Shield,
+    ChevronRight,
     Cpu,
     DollarSign,
-    Sparkles,
-    Users,
-    Save,
-    RefreshCw,
-    AlertTriangle,
-    ChevronRight,
-    History,
-    Zap,
     Eye,
+    FileCode,
+    Focus,
+    History,
     MessageSquare,
     Mic,
-    Focus,
-    FileCode
+    RefreshCw,
+    Save,
+    Shield,
+    Sparkles,
+    Users,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
-import { OrgAISettings, LLMProvider } from '../../types';
+
 import {
-    SettingsCard,
-    SettingsToggle,
-    SettingsSlider,
+    AuditLogViewer,
     ProactivitySelector,
-    AuditLogViewer
+    SettingsCard,
+    SettingsSlider,
+    SettingsToggle,
 } from '../../components/AISettings';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
+import { LLMProvider, OrgAISettings } from '../../types';
 
 // Policy level configurations
 const POLICY_LEVELS = [
@@ -46,7 +47,7 @@ const POLICY_LEVELS = [
         description: 'AI can only explain and suggest. No modifications.',
         icon: MessageSquare,
         color: 'text-slate-400',
-        bgColor: 'from-slate-700 to-slate-800'
+        bgColor: 'from-slate-700 to-slate-800',
     },
     {
         id: 'ASSISTED',
@@ -54,7 +55,7 @@ const POLICY_LEVELS = [
         description: 'AI can create drafts that require approval.',
         icon: FileCode,
         color: 'text-blue-400',
-        bgColor: 'from-blue-700 to-blue-800'
+        bgColor: 'from-blue-700 to-blue-800',
     },
     {
         id: 'PROACTIVE',
@@ -62,7 +63,7 @@ const POLICY_LEVELS = [
         description: 'AI can execute low-risk actions automatically.',
         icon: Zap,
         color: 'text-violet-400',
-        bgColor: 'from-violet-700 to-violet-800'
+        bgColor: 'from-violet-700 to-violet-800',
     },
     {
         id: 'AUTOPILOT',
@@ -70,8 +71,8 @@ const POLICY_LEVELS = [
         description: 'AI operates autonomously within governance rules.',
         icon: Brain,
         color: 'text-emerald-400',
-        bgColor: 'from-emerald-700 to-emerald-800'
-    }
+        bgColor: 'from-emerald-700 to-emerald-800',
+    },
 ];
 
 // AI Roles
@@ -79,7 +80,7 @@ const AI_ROLES = [
     { id: 'ADVISOR', title: 'Advisor', description: 'Provides guidance and recommendations' },
     { id: 'PMO_MANAGER', title: 'PMO Manager', description: 'Manages project methodology' },
     { id: 'EXECUTOR', title: 'Executor', description: 'Executes approved actions' },
-    { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' }
+    { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' },
 ];
 
 type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
@@ -108,13 +109,12 @@ export const OrgAISettingsView: React.FC = () => {
         try {
             // Load org settings
             const settingsRes = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (settingsRes.ok) {
                 const data = await settingsRes.json();
                 setSettings(data);
             }
-
         } catch (error) {
             console.error('Failed to load settings:', error);
             toast.error('Failed to load organization AI settings');
@@ -132,9 +132,9 @@ export const OrgAISettingsView: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
 
             if (res.ok) {
@@ -152,7 +152,7 @@ export const OrgAISettingsView: React.FC = () => {
     };
 
     const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
-        setSettings(prev => prev ? { ...prev, [key]: value } : null);
+        setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
         setHasChanges(true);
     };
 
@@ -160,18 +160,16 @@ export const OrgAISettingsView: React.FC = () => {
         if (!settings) return;
         const currentRoles = settings.activeRoles;
         const newRoles = currentRoles.includes(roleId as any)
-            ? currentRoles.filter(r => r !== roleId)
+            ? currentRoles.filter((r) => r !== roleId)
             : [...currentRoles, roleId as any];
         updateSetting('activeRoles', newRoles);
     };
-
-
 
     const tabs = [
         { id: 'policy' as SettingsTab, label: 'Policy & Roles', icon: Shield },
         { id: 'limits' as SettingsTab, label: 'Limits & Budget', icon: DollarSign },
         { id: 'features' as SettingsTab, label: 'Features', icon: Sparkles },
-        { id: 'audit' as SettingsTab, label: 'Audit Log', icon: History }
+        { id: 'audit' as SettingsTab, label: 'Audit Log', icon: History },
     ];
 
     if (loading) {
@@ -190,7 +188,8 @@ export const OrgAISettingsView: React.FC = () => {
                 </div>
                 <h2 className="text-xl font-semibold text-white mb-2">No AI Settings Found</h2>
                 <p className="text-slate-400 max-w-md mb-6">
-                    This organization doesn't have AI settings configured yet. Please contact support or check your permissions.
+                    This organization doesn't have AI settings configured yet. Please contact support or check your
+                    permissions.
                 </p>
                 <button
                     onClick={loadSettings}
@@ -237,9 +236,10 @@ export const OrgAISettingsView: React.FC = () => {
                             disabled={saving || !hasChanges}
                             className={`
                                 flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all
-                                ${hasChanges
-                                    ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                ${
+                                    hasChanges
+                                        ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
+                                        : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                 }
                             `}
                         >
@@ -252,15 +252,16 @@ export const OrgAISettingsView: React.FC = () => {
 
             {/* Tabs */}
             <div className="shrink-0 px-8 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`
                             flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap
-                            ${activeTab === tab.id
-                                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            ${
+                                activeTab === tab.id
+                                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                             }
                         `}
                     >
@@ -273,7 +274,6 @@ export const OrgAISettingsView: React.FC = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-8">
                 <div className="max-w-4xl mx-auto space-y-6">
-
                     {/* Policy & Roles Tab */}
                     {activeTab === 'policy' && settings && (
                         <>
@@ -297,13 +297,16 @@ export const OrgAISettingsView: React.FC = () => {
                                         return (
                                             <motion.button
                                                 key={level.id}
-                                                onClick={() => !isDisabled && updateSetting('policyLevel', level.id as any)}
+                                                onClick={() =>
+                                                    !isDisabled && updateSetting('policyLevel', level.id as any)
+                                                }
                                                 disabled={isDisabled}
                                                 className={`
                                                     relative p-4 rounded-xl text-left transition-all
-                                                    ${isSelected
-                                                        ? `bg-gradient-to-br ${level.bgColor} border-2 border-white/30`
-                                                        : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                                    ${
+                                                        isSelected
+                                                            ? `bg-gradient-to-br ${level.bgColor} border-2 border-white/30`
+                                                            : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
                                                     }
                                                     ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                                 `}
@@ -316,14 +319,18 @@ export const OrgAISettingsView: React.FC = () => {
                                                     </span>
                                                 )}
                                                 <div className="flex items-start gap-3">
-                                                    <div className={`
+                                                    <div
+                                                        className={`
                                                         w-10 h-10 rounded-lg flex items-center justify-center
                                                         ${isSelected ? 'bg-white/20' : 'bg-slate-700/50'}
-                                                    `}>
+                                                    `}
+                                                    >
                                                         <Icon className={`w-5 h-5 ${level.color}`} />
                                                     </div>
                                                     <div>
-                                                        <h4 className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                                                        <h4
+                                                            className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-300'}`}
+                                                        >
                                                             {level.title}
                                                         </h4>
                                                         <p className="text-xs text-slate-400 mt-0.5">
@@ -350,9 +357,10 @@ export const OrgAISettingsView: React.FC = () => {
                                             key={role.id}
                                             className={`
                                                 flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors
-                                                ${settings.activeRoles.includes(role.id as any)
-                                                    ? 'bg-violet-500/10 border border-violet-500/30'
-                                                    : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                                ${
+                                                    settings.activeRoles.includes(role.id as any)
+                                                        ? 'bg-violet-500/10 border border-violet-500/30'
+                                                        : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
                                                 }
                                             `}
                                         >
@@ -377,8 +385,10 @@ export const OrgAISettingsView: React.FC = () => {
                                         onChange={(e) => updateSetting('defaultRole', e.target.value as any)}
                                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                     >
-                                        {AI_ROLES.filter(r => settings.activeRoles.includes(r.id as any)).map(r => (
-                                            <option key={r.id} value={r.id}>{r.title}</option>
+                                        {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id as any)).map((r) => (
+                                            <option key={r.id} value={r.id}>
+                                                {r.title}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -401,7 +411,6 @@ export const OrgAISettingsView: React.FC = () => {
                     )}
 
                     {/* Models Tab */}
-
 
                     {/* Limits & Budget Tab */}
                     {activeTab === 'limits' && settings && (
@@ -447,21 +456,29 @@ export const OrgAISettingsView: React.FC = () => {
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm text-slate-400 mb-2">Monthly Budget (USD)</label>
+                                            <label className="block text-sm text-slate-400 mb-2">
+                                                Monthly Budget (USD)
+                                            </label>
                                             <input
                                                 type="number"
                                                 value={settings.monthlyBudgetUSD}
-                                                onChange={(e) => updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) =>
+                                                    updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
+                                                }
                                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                 placeholder="0 = unlimited"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-slate-400 mb-2">Hard Limit (USD)</label>
+                                            <label className="block text-sm text-slate-400 mb-2">
+                                                Hard Limit (USD)
+                                            </label>
                                             <input
                                                 type="number"
                                                 value={settings.hardLimitUSD}
-                                                onChange={(e) => updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)}
+                                                onChange={(e) =>
+                                                    updateSetting('hardLimitUSD', parseFloat(e.target.value) || 0)
+                                                }
                                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                 placeholder="0 = no hard limit"
                                             />
@@ -585,4 +602,3 @@ export const OrgAISettingsView: React.FC = () => {
 };
 
 export default OrgAISettingsView;
-

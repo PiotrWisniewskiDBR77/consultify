@@ -1,6 +1,6 @@
 /**
  * PrivacySettings Component
- * 
+ *
  * User privacy preferences:
  * - Show online status
  * - Activity visibility
@@ -8,29 +8,30 @@
  * - Allow mentions
  */
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    Shield,
-    Eye,
-    EyeOff,
-    Users,
-    UserCircle,
     AtSign,
-    Save,
-    Loader2,
-    Globe,
-    Lock,
     Building2,
-    FileText,
     Cookie,
     Database,
-    ExternalLink
+    ExternalLink,
+    Eye,
+    EyeOff,
+    FileText,
+    Globe,
+    Loader2,
+    Lock,
+    Save,
+    Shield,
+    UserCircle,
+    Users,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface PrivacySettingsProps {
@@ -53,7 +54,7 @@ const DEFAULT_PREFERENCES: PrivacyPreferences = {
     profileVisibility: 'organization',
     allowMentions: true,
     showInDirectory: true,
-    shareActivityWithAI: true
+    shareActivityWithAI: true,
 };
 
 export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, onUpdateUser }) => {
@@ -92,7 +93,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
     };
 
     const updatePreference = <K extends keyof PrivacyPreferences>(key: K, value: PrivacyPreferences[K]) => {
-        setPreferences(prev => ({ ...prev, [key]: value }));
+        setPreferences((prev) => ({ ...prev, [key]: value }));
     };
 
     if (loading) {
@@ -104,15 +105,45 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
     }
 
     const activityVisibilityOptions = [
-        { value: 'all', label: t('settings.privacy.visibility.all', 'Everyone'), icon: Globe, description: 'All users can see your activity' },
-        { value: 'team', label: t('settings.privacy.visibility.team', 'Team Only'), icon: Users, description: 'Only your team members' },
-        { value: 'private', label: t('settings.privacy.visibility.private', 'Private'), icon: Lock, description: 'Only you can see' }
+        {
+            value: 'all',
+            label: t('settings.privacy.visibility.all', 'Everyone'),
+            icon: Globe,
+            description: 'All users can see your activity',
+        },
+        {
+            value: 'team',
+            label: t('settings.privacy.visibility.team', 'Team Only'),
+            icon: Users,
+            description: 'Only your team members',
+        },
+        {
+            value: 'private',
+            label: t('settings.privacy.visibility.private', 'Private'),
+            icon: Lock,
+            description: 'Only you can see',
+        },
     ];
 
     const profileVisibilityOptions = [
-        { value: 'public', label: t('settings.privacy.profile.public', 'Public'), icon: Globe, description: 'Anyone can view your profile' },
-        { value: 'organization', label: t('settings.privacy.profile.organization', 'Organization'), icon: Building2, description: 'Only organization members' },
-        { value: 'private', label: t('settings.privacy.profile.private', 'Private'), icon: Lock, description: 'Profile hidden from others' }
+        {
+            value: 'public',
+            label: t('settings.privacy.profile.public', 'Public'),
+            icon: Globe,
+            description: 'Anyone can view your profile',
+        },
+        {
+            value: 'organization',
+            label: t('settings.privacy.profile.organization', 'Organization'),
+            icon: Building2,
+            description: 'Only organization members',
+        },
+        {
+            value: 'private',
+            label: t('settings.privacy.profile.private', 'Private'),
+            icon: Lock,
+            description: 'Profile hidden from others',
+        },
     ];
 
     return (
@@ -155,15 +186,21 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                                 {t('settings.privacy.showOnlineStatus', 'Show Online Status')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.showOnlineStatusDescription', 'Let others see when you are online')}
+                                {t(
+                                    'settings.privacy.showOnlineStatusDescription',
+                                    'Let others see when you are online',
+                                )}
                             </p>
                         </div>
                         <button
                             onClick={() => updatePreference('showOnlineStatus', !preferences.showOnlineStatus)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.showOnlineStatus ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
-                                }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                preferences.showOnlineStatus ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
                         >
-                            <span className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -174,15 +211,21 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                                 {t('settings.privacy.showInDirectory', 'Show in Team Directory')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.showInDirectoryDescription', 'Appear in the organization member directory')}
+                                {t(
+                                    'settings.privacy.showInDirectoryDescription',
+                                    'Appear in the organization member directory',
+                                )}
                             </p>
                         </div>
                         <button
                             onClick={() => updatePreference('showInDirectory', !preferences.showInDirectory)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.showInDirectory ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
-                                }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                preferences.showInDirectory ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
                         >
-                            <span className={`${preferences.showInDirectory ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.showInDirectory ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -195,24 +238,35 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                     {t('settings.privacy.activityTitle', 'Activity Visibility')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    {t('settings.privacy.activityDescription', 'Choose who can see your recent activity and contributions')}
+                    {t(
+                        'settings.privacy.activityDescription',
+                        'Choose who can see your recent activity and contributions',
+                    )}
                 </p>
 
                 <div className="grid grid-cols-3 gap-4">
-                    {activityVisibilityOptions.map(option => {
+                    {activityVisibilityOptions.map((option) => {
                         const Icon = option.icon;
                         const isSelected = preferences.activityVisibility === option.value;
                         return (
                             <button
                                 key={option.value}
-                                onClick={() => updatePreference('activityVisibility', option.value as PrivacyPreferences['activityVisibility'])}
-                                className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                                    : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
-                                    }`}
+                                onClick={() =>
+                                    updatePreference(
+                                        'activityVisibility',
+                                        option.value as PrivacyPreferences['activityVisibility'],
+                                    )
+                                }
+                                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                                    isSelected
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                                        : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
+                                }`}
                             >
                                 <Icon size={24} className={isSelected ? 'text-blue-600' : 'text-slate-400'} />
-                                <div className={`mt-2 font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                <div
+                                    className={`mt-2 font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
+                                >
                                     {option.label}
                                 </div>
                                 <div className="text-xs text-slate-500 mt-1">{option.description}</div>
@@ -233,20 +287,28 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                 </p>
 
                 <div className="grid grid-cols-3 gap-4">
-                    {profileVisibilityOptions.map(option => {
+                    {profileVisibilityOptions.map((option) => {
                         const Icon = option.icon;
                         const isSelected = preferences.profileVisibility === option.value;
                         return (
                             <button
                                 key={option.value}
-                                onClick={() => updatePreference('profileVisibility', option.value as PrivacyPreferences['profileVisibility'])}
-                                className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
-                                    }`}
+                                onClick={() =>
+                                    updatePreference(
+                                        'profileVisibility',
+                                        option.value as PrivacyPreferences['profileVisibility'],
+                                    )
+                                }
+                                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                                    isSelected
+                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+                                }`}
                             >
                                 <Icon size={24} className={isSelected ? 'text-purple-600' : 'text-slate-400'} />
-                                <div className={`mt-2 font-medium ${isSelected ? 'text-purple-700 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                <div
+                                    className={`mt-2 font-medium ${isSelected ? 'text-purple-700 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}
+                                >
                                     {option.label}
                                 </div>
                                 <div className="text-xs text-slate-500 mt-1">{option.description}</div>
@@ -271,15 +333,21 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                                 {t('settings.privacy.allowMentions', 'Allow @Mentions')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.allowMentionsDescription', 'Let others mention you in comments and discussions')}
+                                {t(
+                                    'settings.privacy.allowMentionsDescription',
+                                    'Let others mention you in comments and discussions',
+                                )}
                             </p>
                         </div>
                         <button
                             onClick={() => updatePreference('allowMentions', !preferences.allowMentions)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.allowMentions ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                                }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                preferences.allowMentions ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
                         >
-                            <span className={`${preferences.allowMentions ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.allowMentions ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -290,15 +358,21 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
                                 {t('settings.privacy.shareWithAI', 'Share Activity with AI')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.shareWithAIDescription', 'Allow AI assistant to use your activity for personalized recommendations')}
+                                {t(
+                                    'settings.privacy.shareWithAIDescription',
+                                    'Allow AI assistant to use your activity for personalized recommendations',
+                                )}
                             </p>
                         </div>
                         <button
                             onClick={() => updatePreference('shareActivityWithAI', !preferences.shareActivityWithAI)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${preferences.shareActivityWithAI ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
-                                }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                preferences.shareActivityWithAI ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
                         >
-                            <span className={`${preferences.shareActivityWithAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.shareActivityWithAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -369,4 +443,3 @@ const PrivacyDocLink: React.FC<PrivacyDocLinkProps> = ({ to, icon, title, descri
 );
 
 export default PrivacySettings;
-

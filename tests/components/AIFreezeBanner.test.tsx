@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AIFreezeBanner } from '../../../components/AIFreezeBanner';
+import { AIFreezeBanner } from '../../components/AIFreezeBanner';
 import { useAppStore } from '../../../store/useAppStore';
 
 vi.mock('../../../store/useAppStore', () => ({
@@ -84,6 +84,7 @@ describe('AIFreezeBanner Component', () => {
         expect(screen.getByText(/Budget Control Protocol/i)).toBeInTheDocument();
     });
 });
+
 
 
 

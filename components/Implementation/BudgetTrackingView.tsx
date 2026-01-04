@@ -1,37 +1,38 @@
 /**
  * BudgetTrackingView Component
- * 
+ *
  * PMO Budget Management and Tracking
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Cost Management (Clause 4.4.4)
  * - PMI PMBOK 7th Edition - Cost Performance Domain
  * - PRINCE2 - Business Case / Cost Management
- * 
+ *
  * PMO Domain: RESOURCE_RESPONSIBILITY, PERFORMANCE_MONITORING
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    DollarSign,
-    TrendingUp,
-    TrendingDown,
     AlertTriangle,
-    Plus,
-    Download,
-    Calendar,
-    PieChart,
     BarChart3,
-    Receipt,
-    Target,
-    Clock,
+    Calendar,
     CheckCircle2,
-    X,
     ChevronDown,
-    RefreshCw
+    Clock,
+    DollarSign,
+    Download,
+    PieChart,
+    Plus,
+    Receipt,
+    RefreshCw,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface BudgetLineItem {
     id: string;
@@ -114,13 +115,10 @@ const BUDGET_CATEGORIES = [
     { value: 'SOFTWARE', label: 'Software' },
     { value: 'HARDWARE', label: 'Hardware' },
     { value: 'TRAVEL', label: 'Travel' },
-    { value: 'OTHER', label: 'Other' }
+    { value: 'OTHER', label: 'Other' },
 ];
 
-export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
-    initiativeId,
-    initiativeName
-}) => {
+export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({ initiativeId, initiativeName }) => {
     const [budget, setBudget] = useState<BudgetData | null>(null);
     const [burnRate, setBurnRate] = useState<BurnRate | null>(null);
     const [forecast, setForecast] = useState<Forecast | null>(null);
@@ -132,12 +130,12 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
         description: '',
         vendor: '',
         category: 'OTHER',
-        transactionDate: new Date().toISOString().split('T')[0]
+        transactionDate: new Date().toISOString().split('T')[0],
     });
     const [newBudget, setNewBudget] = useState({
         plannedAmount: '',
         budgetType: 'COMBINED',
-        contingencyPercent: '10'
+        contingencyPercent: '10',
     });
 
     const fetchBudget = useCallback(async () => {
@@ -155,7 +153,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 // Fetch burn rate and forecast
                 const [burnRateRes, forecastRes] = await Promise.all([
                     Api.get(`/budget/${response.budget.id}/burn-rate`).catch(() => ({ burnRate: null })),
-                    Api.get(`/budget/${response.budget.id}/forecast`).catch(() => ({ forecast: null }))
+                    Api.get(`/budget/${response.budget.id}/forecast`).catch(() => ({ forecast: null })),
                 ]);
                 setBurnRate(burnRateRes.burnRate);
                 setForecast(forecastRes.forecast);
@@ -181,7 +179,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
             await Api.post(`/budget/initiative/${initiativeId}`, {
                 plannedAmount: parseFloat(newBudget.plannedAmount),
                 budgetType: newBudget.budgetType,
-                contingencyPercent: parseFloat(newBudget.contingencyPercent)
+                contingencyPercent: parseFloat(newBudget.contingencyPercent),
             });
             toast.success('Budget created');
             setShowCreateBudgetModal(false);
@@ -203,7 +201,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 description: newExpense.description,
                 vendor: newExpense.vendor,
                 transactionType: 'EXPENSE',
-                transactionDate: newExpense.transactionDate
+                transactionDate: newExpense.transactionDate,
             });
             toast.success('Expense recorded');
             setShowAddExpenseModal(false);
@@ -212,7 +210,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 description: '',
                 vendor: '',
                 category: 'OTHER',
-                transactionDate: new Date().toISOString().split('T')[0]
+                transactionDate: new Date().toISOString().split('T')[0],
             });
             fetchBudget();
         } catch (error: any) {
@@ -225,27 +223,37 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
             style: 'currency',
             currency: currency,
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(amount);
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'ON_TRACK': return 'text-green-600 dark:text-green-400';
-            case 'WARNING': return 'text-amber-600 dark:text-amber-400';
-            case 'CRITICAL': return 'text-orange-600 dark:text-orange-400';
-            case 'OVERRUN': return 'text-red-600 dark:text-red-400';
-            default: return 'text-slate-600 dark:text-slate-400';
+            case 'ON_TRACK':
+                return 'text-green-600 dark:text-green-400';
+            case 'WARNING':
+                return 'text-amber-600 dark:text-amber-400';
+            case 'CRITICAL':
+                return 'text-orange-600 dark:text-orange-400';
+            case 'OVERRUN':
+                return 'text-red-600 dark:text-red-400';
+            default:
+                return 'text-slate-600 dark:text-slate-400';
         }
     };
 
     const getStatusBgColor = (status: string) => {
         switch (status) {
-            case 'ON_TRACK': return 'bg-green-100 dark:bg-green-900/30';
-            case 'WARNING': return 'bg-amber-100 dark:bg-amber-900/30';
-            case 'CRITICAL': return 'bg-orange-100 dark:bg-orange-900/30';
-            case 'OVERRUN': return 'bg-red-100 dark:bg-red-900/30';
-            default: return 'bg-slate-100 dark:bg-slate-800';
+            case 'ON_TRACK':
+                return 'bg-green-100 dark:bg-green-900/30';
+            case 'WARNING':
+                return 'bg-amber-100 dark:bg-amber-900/30';
+            case 'CRITICAL':
+                return 'bg-orange-100 dark:bg-orange-900/30';
+            case 'OVERRUN':
+                return 'bg-red-100 dark:bg-red-900/30';
+            default:
+                return 'bg-slate-100 dark:bg-slate-800';
         }
     };
 
@@ -289,9 +297,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                         <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-md p-6 m-4">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Create Budget
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Create Budget</h3>
                                 <button
                                     onClick={() => setShowCreateBudgetModal(false)}
                                     className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
@@ -336,7 +342,9 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                                     <input
                                         type="number"
                                         value={newBudget.contingencyPercent}
-                                        onChange={(e) => setNewBudget({ ...newBudget, contingencyPercent: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewBudget({ ...newBudget, contingencyPercent: e.target.value })
+                                        }
                                         className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                                         placeholder="10"
                                     />
@@ -420,9 +428,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 {/* Spent */}
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                            Spent
-                        </span>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Spent</span>
                         <div className={`p-2 rounded-lg ${getStatusBgColor(totals.status)}`}>
                             <Receipt size={16} className={getStatusColor(totals.status)} />
                         </div>
@@ -430,9 +436,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                     <p className={`text-2xl font-bold ${getStatusColor(totals.status)}`}>
                         {formatCurrency(totals.totalActual, budget.currency)}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                        {totals.consumedPercent}% consumed
-                    </p>
+                    <p className="text-xs text-slate-500 mt-1">{totals.consumedPercent}% consumed</p>
                 </div>
 
                 {/* Remaining */}
@@ -441,16 +445,21 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
                             Remaining
                         </span>
-                        <div className={`p-2 rounded-lg ${totals.remaining > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                            <DollarSign size={16} className={totals.remaining > 0 ? 'text-green-600' : 'text-red-600'} />
+                        <div
+                            className={`p-2 rounded-lg ${totals.remaining > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}
+                        >
+                            <DollarSign
+                                size={16}
+                                className={totals.remaining > 0 ? 'text-green-600' : 'text-red-600'}
+                            />
                         </div>
                     </div>
-                    <p className={`text-2xl font-bold ${totals.remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <p
+                        className={`text-2xl font-bold ${totals.remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                    >
                         {formatCurrency(totals.remaining, budget.currency)}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                        {totals.isOverBudget ? 'Over budget!' : 'Available'}
-                    </p>
+                    <p className="text-xs text-slate-500 mt-1">{totals.isOverBudget ? 'Over budget!' : 'Available'}</p>
                 </div>
 
                 {/* Burn Rate */}
@@ -472,18 +481,14 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                     <p className="text-2xl font-bold text-navy-900 dark:text-white">
                         {formatCurrency(burnRate?.monthlyBurnRate || 0, budget.currency)}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                        per month ({burnRate?.trend?.toLowerCase() || 'n/a'})
-                    </p>
+                    <p className="text-xs text-slate-500 mt-1">per month ({burnRate?.trend?.toLowerCase() || 'n/a'})</p>
                 </div>
             </div>
 
             {/* Progress Bar */}
             <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Budget Consumption
-                    </span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Budget Consumption</span>
                     <span className={`text-sm font-bold ${getStatusColor(totals.status)}`}>
                         {totals.consumedPercent}%
                     </span>
@@ -491,9 +496,13 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 <div className="h-4 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
                         className={`h-full rounded-full transition-all ${
-                            totals.status === 'OVERRUN' ? 'bg-red-500' :
-                            totals.status === 'CRITICAL' ? 'bg-orange-500' :
-                            totals.status === 'WARNING' ? 'bg-amber-500' : 'bg-green-500'
+                            totals.status === 'OVERRUN'
+                                ? 'bg-red-500'
+                                : totals.status === 'CRITICAL'
+                                  ? 'bg-orange-500'
+                                  : totals.status === 'WARNING'
+                                    ? 'bg-amber-500'
+                                    : 'bg-green-500'
                         }`}
                         style={{ width: `${Math.min(totals.consumedPercent, 100)}%` }}
                     />
@@ -516,11 +525,13 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
 
             {/* Forecast Section */}
             {forecast && (
-                <div className={`rounded-xl p-4 border ${
-                    forecast.isProjectedOverrun 
-                        ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-500/20' 
-                        : 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-500/20'
-                }`}>
+                <div
+                    className={`rounded-xl p-4 border ${
+                        forecast.isProjectedOverrun
+                            ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-500/20'
+                            : 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-500/20'
+                    }`}
+                >
                     <div className="flex items-start gap-3">
                         {forecast.isProjectedOverrun ? (
                             <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
@@ -528,7 +539,9 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                             <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1">
-                            <h4 className={`font-medium ${forecast.isProjectedOverrun ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}>
+                            <h4
+                                className={`font-medium ${forecast.isProjectedOverrun ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}
+                            >
                                 Forecast at Completion
                             </h4>
                             <div className="grid grid-cols-4 gap-4 mt-3">
@@ -546,21 +559,29 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                                 </div>
                                 <div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">Variance</p>
-                                    <p className={`font-bold ${forecast.varianceAtCompletion > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                        {forecast.varianceAtCompletion > 0 ? '+' : ''}{formatCurrency(forecast.varianceAtCompletion)}
+                                    <p
+                                        className={`font-bold ${forecast.varianceAtCompletion > 0 ? 'text-red-600' : 'text-green-600'}`}
+                                    >
+                                        {forecast.varianceAtCompletion > 0 ? '+' : ''}
+                                        {formatCurrency(forecast.varianceAtCompletion)}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">CPI</p>
-                                    <p className={`font-bold ${forecast.costPerformanceIndex >= 1 ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p
+                                        className={`font-bold ${forecast.costPerformanceIndex >= 1 ? 'text-green-600' : 'text-red-600'}`}
+                                    >
                                         {forecast.costPerformanceIndex.toFixed(2)}
                                     </p>
                                 </div>
                             </div>
                             <p className="text-sm mt-3 text-slate-600 dark:text-slate-400">
-                                {forecast.recommendation === 'REVIEW_SPENDING' && '⚠️ Review spending - cost performance below target'}
-                                {forecast.recommendation === 'MONITOR_CLOSELY' && '👀 Monitor closely - slight cost variance detected'}
-                                {forecast.recommendation === 'ON_TRACK' && '✅ Budget on track - continue current trajectory'}
+                                {forecast.recommendation === 'REVIEW_SPENDING' &&
+                                    '⚠️ Review spending - cost performance below target'}
+                                {forecast.recommendation === 'MONITOR_CLOSELY' &&
+                                    '👀 Monitor closely - slight cost variance detected'}
+                                {forecast.recommendation === 'ON_TRACK' &&
+                                    '✅ Budget on track - continue current trajectory'}
                             </p>
                         </div>
                     </div>
@@ -577,11 +598,9 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-64 overflow-y-auto">
                     {budget.transactions.length === 0 ? (
-                        <div className="p-6 text-center text-slate-400">
-                            No transactions recorded yet
-                        </div>
+                        <div className="p-6 text-center text-slate-400">No transactions recorded yet</div>
                     ) : (
-                        budget.transactions.slice(0, 10).map(tx => (
+                        budget.transactions.slice(0, 10).map((tx) => (
                             <div key={tx.id} className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5">
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -594,8 +613,11 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className={`font-bold text-sm ${tx.type === 'EXPENSE' ? 'text-red-600' : 'text-green-600'}`}>
-                                            {tx.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(tx.amount)}
+                                        <p
+                                            className={`font-bold text-sm ${tx.type === 'EXPENSE' ? 'text-red-600' : 'text-green-600'}`}
+                                        >
+                                            {tx.type === 'EXPENSE' ? '-' : '+'}
+                                            {formatCurrency(tx.amount)}
                                         </p>
                                         <p className="text-xs text-slate-500">{tx.createdBy}</p>
                                     </div>
@@ -611,9 +633,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-md p-6 m-4">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                Record Expense
-                            </h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">Record Expense</h3>
                             <button
                                 onClick={() => setShowAddExpenseModal(false)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
@@ -697,12 +717,4 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
 };
 
 export default BudgetTrackingView;
-
-
-
-
-
-
-
-
 

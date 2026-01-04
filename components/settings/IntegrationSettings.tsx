@@ -1,9 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { User } from '../../types';
-import { Plus, Trash2, ExternalLink, CheckCircle, AlertCircle, Building2, Webhook, Send, Eye, EyeOff, Copy, RefreshCw, Info } from 'lucide-react';
-import { Slack, Trello, MessageCircle, Database, CheckSquare, Calendar, FileText, MessageSquare, Loader2 } from 'lucide-react';
-import { Api } from '../../services/api';
+import {
+    AlertCircle,
+    Building2,
+    CheckCircle,
+    Copy,
+    ExternalLink,
+    Eye,
+    EyeOff,
+    Info,
+    Plus,
+    RefreshCw,
+    Send,
+    Trash2,
+    Webhook,
+} from 'lucide-react';
+import {
+    Calendar,
+    CheckSquare,
+    Database,
+    FileText,
+    Loader2,
+    MessageCircle,
+    MessageSquare,
+    Slack,
+    Trello,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 // Webhook types
@@ -33,7 +58,7 @@ const INTEGRATION_PROVIDERS = [
     { id: 'asana', name: 'Asana', icon: CheckSquare, description: 'Task and project tracking' },
     { id: 'monday', name: 'Monday.com', icon: Calendar, description: 'Work OS and project management' },
     { id: 'notion', name: 'Notion', icon: FileText, description: 'All-in-one workspace' },
-    { id: 'basecamp', name: 'Basecamp', icon: MessageSquare, description: 'Project management and communication' }
+    { id: 'basecamp', name: 'Basecamp', icon: MessageSquare, description: 'Project management and communication' },
 ];
 
 interface IntegrationSettingsProps {
@@ -63,7 +88,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     const [webhookForm, setWebhookForm] = useState({
         name: '',
         targetUrl: '',
-        eventTypes: [] as string[]
+        eventTypes: [] as string[],
     });
     const [testingWebhook, setTestingWebhook] = useState(false);
     const [showSecret, setShowSecret] = useState<string | null>(null);
@@ -118,13 +143,18 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             <div className="max-w-4xl mx-auto space-y-6">
                 <div className="mb-6">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Integrations</h2>
-                    <p className="text-slate-500 dark:text-slate-400">Connect external tools to streamline your workflow.</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        Connect external tools to streamline your workflow.
+                    </p>
                 </div>
                 <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-8 text-center">
                     <Building2 size={48} className="mx-auto text-amber-600 dark:text-amber-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-400 mb-2">Organization Required</h3>
+                    <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-400 mb-2">
+                        Organization Required
+                    </h3>
                     <p className="text-amber-700 dark:text-amber-500/80 text-sm max-w-md mx-auto">
-                        Integrations are configured at the organization level. Please create or join an organization first in the Organization settings.
+                        Integrations are configured at the organization level. Please create or join an organization
+                        first in the Organization settings.
                     </p>
                 </div>
             </div>
@@ -158,10 +188,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             await Api.saveIntegration({
                 organizationId: currentUser.organizationId,
                 provider: selectedProvider,
-                config
+                config,
             });
 
-            toast.success(`${INTEGRATION_PROVIDERS.find(p => p.id === selectedProvider)?.name} connected successfully!`);
+            toast.success(
+                `${INTEGRATION_PROVIDERS.find((p) => p.id === selectedProvider)?.name} connected successfully!`,
+            );
             await fetchIntegrations();
             setIsModalOpen(false);
             setConfigInput('');
@@ -237,12 +269,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         if (webhookForm.eventTypes.includes(eventType)) {
             setWebhookForm({
                 ...webhookForm,
-                eventTypes: webhookForm.eventTypes.filter(e => e !== eventType)
+                eventTypes: webhookForm.eventTypes.filter((e) => e !== eventType),
             });
         } else {
             setWebhookForm({
                 ...webhookForm,
-                eventTypes: [...webhookForm.eventTypes, eventType]
+                eventTypes: [...webhookForm.eventTypes, eventType],
             });
         }
     };
@@ -259,41 +291,46 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Integrations</h2>
                 <p className="text-slate-500 dark:text-slate-400">Connect external tools and configure webhooks.</p>
             </div>
-
             {/* Tabs */}
             <div className="flex gap-1 bg-slate-100 dark:bg-navy-900 p-1 rounded-lg w-fit">
                 <button
                     onClick={() => setActiveTab('integrations')}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'integrations'
-                        ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
-                        : 'text-slate-500 hover:text-slate-700'
-                        }`}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                        activeTab === 'integrations'
+                            ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
+                            : 'text-slate-500 hover:text-slate-700'
+                    }`}
                 >
                     External Tools
                 </button>
                 <button
                     onClick={() => setActiveTab('webhooks')}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'webhooks'
-                        ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
-                        : 'text-slate-500 hover:text-slate-700'
-                        }`}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${
+                        activeTab === 'webhooks'
+                            ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
+                            : 'text-slate-500 hover:text-slate-700'
+                    }`}
                 >
                     <Webhook size={16} />
                     Webhooks
                 </button>
             </div>
-
             {activeTab === 'integrations' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {INTEGRATION_PROVIDERS.map(p => {
-                        const connected = integrations.find(i => i.provider === p.id);
+                    {INTEGRATION_PROVIDERS.map((p) => {
+                        const connected = integrations.find((i) => i.provider === p.id);
                         const Icon = p.icon;
 
                         return (
-                            <div key={p.id} className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                            <div
+                                key={p.id}
+                                className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                            >
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}>
+                                        <div
+                                            className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}
+                                        >
                                             <Icon size={24} />
                                         </div>
                                         <div>
@@ -309,11 +346,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 </div>
 
                                 <button
-                                    onClick={() => connected ? handleDelete(connected.id) : handleConnect(p.id)}
-                                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${connected
-                                        ? 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                                        }`}
+                                    onClick={() => (connected ? handleDelete(connected.id) : handleConnect(p.id))}
+                                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        connected
+                                            ? 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400'
+                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    }`}
                                 >
                                     {connected ? 'Disconnect' : 'Connect'}
                                 </button>
@@ -321,12 +359,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         );
                     })}
                 </div>
-            )}            {/* Connection Modal */}
+            )}{' '}
+            {/* Connection Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
                         <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
-                            Connect {INTEGRATION_PROVIDERS.find(p => p.id === selectedProvider)?.name}
+                            Connect {INTEGRATION_PROVIDERS.find((p) => p.id === selectedProvider)?.name}
                         </h3>
                         <div className="space-y-4">
                             <div>
@@ -336,7 +375,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 <input
                                     type="text"
                                     value={configInput}
-                                    onChange={e => setConfigInput(e.target.value)}
+                                    onChange={(e) => setConfigInput(e.target.value)}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="https://hooks.slack.com/..."
                                 />
@@ -361,7 +400,6 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     </div>
                 </div>
             )}
-
             {/* Webhooks Tab */}
             {activeTab === 'webhooks' && (
                 <div className="space-y-6">
@@ -372,8 +410,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             <div>
                                 <h4 className="font-medium text-blue-900 dark:text-blue-300">Webhooks</h4>
                                 <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                                    Webhooks allow you to receive real-time notifications when events happen in Consultify.
-                                    Configure a URL to receive HTTP POST requests with event data.
+                                    Webhooks allow you to receive real-time notifications when events happen in
+                                    Consultify. Configure a URL to receive HTTP POST requests with event data.
                                 </p>
                             </div>
                         </div>
@@ -394,23 +432,32 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     {webhooks.length === 0 ? (
                         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-12 text-center">
                             <Webhook size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No webhooks configured</h3>
+                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                No webhooks configured
+                            </h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                                 Create a webhook to start receiving real-time event notifications.
                             </p>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {webhooks.map(webhook => (
-                                <div key={webhook.id} className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                            {webhooks.map((webhook) => (
+                                <div
+                                    key={webhook.id}
+                                    className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6"
+                                >
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
                                             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                                 {webhook.name}
                                                 {webhook.isActive ? (
-                                                    <span className="px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 rounded-full">Active</span>
+                                                    <span className="px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 rounded-full">
+                                                        Active
+                                                    </span>
                                                 ) : (
-                                                    <span className="px-2 py-0.5 text-xs font-medium bg-slate-500/10 text-slate-600 rounded-full">Inactive</span>
+                                                    <span className="px-2 py-0.5 text-xs font-medium bg-slate-500/10 text-slate-600 rounded-full">
+                                                        Inactive
+                                                    </span>
                                                 )}
                                             </h3>
                                             <p className="text-sm text-slate-500 dark:text-slate-400 font-mono mt-1 break-all">
@@ -424,7 +471,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 hover:text-violet-600 transition-colors"
                                                 title="Test webhook"
                                             >
-                                                {testingWebhook ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                                                {testingWebhook ? (
+                                                    <Loader2 size={18} className="animate-spin" />
+                                                ) : (
+                                                    <Send size={18} />
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteWebhook(webhook.id)}
@@ -437,8 +488,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                     </div>
 
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                        {webhook.eventTypes.map(event => (
-                                            <span key={event} className="px-2 py-1 text-xs font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded">
+                                        {webhook.eventTypes.map((event) => (
+                                            <span
+                                                key={event}
+                                                className="px-2 py-1 text-xs font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded"
+                                            >
                                                 {event}
                                             </span>
                                         ))}
@@ -452,10 +506,16 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                                     {showSecret === webhook.id ? webhook.secretKey : '••••••••••••••••'}
                                                 </code>
                                                 <button
-                                                    onClick={() => setShowSecret(showSecret === webhook.id ? null : webhook.id)}
+                                                    onClick={() =>
+                                                        setShowSecret(showSecret === webhook.id ? null : webhook.id)
+                                                    }
                                                     className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-400"
                                                 >
-                                                    {showSecret === webhook.id ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                    {showSecret === webhook.id ? (
+                                                        <EyeOff size={14} />
+                                                    ) : (
+                                                        <Eye size={14} />
+                                                    )}
                                                 </button>
                                                 <button
                                                     onClick={() => copyToClipboard(webhook.secretKey || '')}
@@ -472,14 +532,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     )}
                 </div>
             )}
-
             {/* Webhook Modal */}
             {isWebhookModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-white dark:bg-navy-800 rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
-                            Create Webhook
-                        </h3>
+                        <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Create Webhook</h3>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -488,7 +545,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 <input
                                     type="text"
                                     value={webhookForm.name}
-                                    onChange={e => setWebhookForm({ ...webhookForm, name: e.target.value })}
+                                    onChange={(e) => setWebhookForm({ ...webhookForm, name: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                                     placeholder="My Webhook"
                                 />
@@ -501,7 +558,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 <input
                                     type="url"
                                     value={webhookForm.targetUrl}
-                                    onChange={e => setWebhookForm({ ...webhookForm, targetUrl: e.target.value })}
+                                    onChange={(e) => setWebhookForm({ ...webhookForm, targetUrl: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                                     placeholder="https://your-server.com/webhook"
                                 />
@@ -512,14 +569,17 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                     Events to Subscribe *
                                 </label>
                                 <div className="space-y-4 max-h-60 overflow-y-auto border border-slate-200 dark:border-white/10 rounded-lg p-4">
-                                    {availableEvents.map(category => (
+                                    {availableEvents.map((category) => (
                                         <div key={category.category}>
                                             <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                                                 {category.category}
                                             </h4>
                                             <div className="space-y-2">
-                                                {category.events.map(event => (
-                                                    <label key={event.type} className="flex items-center gap-3 cursor-pointer">
+                                                {category.events.map((event) => (
+                                                    <label
+                                                        key={event.type}
+                                                        className="flex items-center gap-3 cursor-pointer"
+                                                    >
                                                         <input
                                                             type="checkbox"
                                                             checked={webhookForm.eventTypes.includes(event.type)}
@@ -527,8 +587,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                                             className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                                                         />
                                                         <div>
-                                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{event.type}</span>
-                                                            <p className="text-xs text-slate-500">{event.description}</p>
+                                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                                {event.type}
+                                                            </span>
+                                                            <p className="text-xs text-slate-500">
+                                                                {event.description}
+                                                            </p>
                                                         </div>
                                                     </label>
                                                 ))}
@@ -550,7 +614,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 </button>
                                 <button
                                     onClick={handleCreateWebhook}
-                                    disabled={connecting || !webhookForm.name || !webhookForm.targetUrl || webhookForm.eventTypes.length === 0}
+                                    disabled={
+                                        connecting ||
+                                        !webhookForm.name ||
+                                        !webhookForm.targetUrl ||
+                                        webhookForm.eventTypes.length === 0
+                                    }
                                     className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 font-medium flex items-center gap-2"
                                 >
                                     {connecting && <Loader2 size={16} className="animate-spin" />}

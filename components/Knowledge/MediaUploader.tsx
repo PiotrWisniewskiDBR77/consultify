@@ -1,33 +1,33 @@
 /**
  * MediaUploader Component
- * 
+ *
  * Unified interface for uploading and processing various media types
  * into the AI knowledge base. Supports drag & drop, YouTube URLs,
  * and web URLs.
- * 
+ *
  * Part of the Multimodal Content Ingestion System
- * 
+ *
  * @version 1.0.0
  */
 
-import React, { useState, useCallback, useRef } from 'react';
 import {
-    Upload,
-    Youtube,
-    Globe,
-    FileText,
-    Music,
-    Video,
-    Image,
-    FileSpreadsheet,
-    Presentation,
-    X,
-    CheckCircle,
     AlertCircle,
-    Loader2,
+    CheckCircle,
+    File,
+    FileSpreadsheet,
+    FileText,
+    Globe,
+    Image,
     Link2,
-    File
+    Loader2,
+    Music,
+    Presentation,
+    Upload,
+    Video,
+    X,
+    Youtube,
 } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
 
 interface ProcessingResult {
     success: boolean;
@@ -58,7 +58,7 @@ const ACCEPTED_TYPES = {
     documents: '.pdf,.docx,.doc,.xlsx,.xls,.csv,.pptx,.txt,.md,.json',
     audio: '.mp3,.wav,.m4a,.webm,.ogg,.flac',
     video: '.mp4,.avi,.mov,.mkv,.wmv',
-    images: '.png,.jpg,.jpeg,.gif,.webp,.bmp,.tiff,.tif'
+    images: '.png,.jpg,.jpeg,.gif,.webp,.bmp,.tiff,.tif',
 };
 
 const ALL_ACCEPTED = Object.values(ACCEPTED_TYPES).join(',');
@@ -68,7 +68,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     onError,
     projectId,
     language = 'pl',
-    maxFiles = 10
+    maxFiles = 10,
 }) => {
     const [activeTab, setActiveTab] = useState<TabType>('upload');
     const [isDragging, setIsDragging] = useState(false);
@@ -98,37 +98,43 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         e.stopPropagation();
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
 
-        const droppedFiles = Array.from(e.dataTransfer.files);
-        if (droppedFiles.length + files.length > maxFiles) {
-            onError?.(`Maximum ${maxFiles} files allowed`);
-            return;
-        }
-        setFiles(prev => [...prev, ...droppedFiles]);
-    }, [files, maxFiles, onError]);
-
-    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const selectedFiles = Array.from(e.target.files);
-            if (selectedFiles.length + files.length > maxFiles) {
+            const droppedFiles = Array.from(e.dataTransfer.files);
+            if (droppedFiles.length + files.length > maxFiles) {
                 onError?.(`Maximum ${maxFiles} files allowed`);
                 return;
             }
-            setFiles(prev => [...prev, ...selectedFiles]);
-        }
-    }, [files, maxFiles, onError]);
+            setFiles((prev) => [...prev, ...droppedFiles]);
+        },
+        [files, maxFiles, onError],
+    );
+
+    const handleFileSelect = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.files) {
+                const selectedFiles = Array.from(e.target.files);
+                if (selectedFiles.length + files.length > maxFiles) {
+                    onError?.(`Maximum ${maxFiles} files allowed`);
+                    return;
+                }
+                setFiles((prev) => [...prev, ...selectedFiles]);
+            }
+        },
+        [files, maxFiles, onError],
+    );
 
     const removeFile = useCallback((index: number) => {
-        setFiles(prev => prev.filter((_, i) => i !== index));
+        setFiles((prev) => prev.filter((_, i) => i !== index));
     }, []);
 
     const getFileIcon = (filename: string) => {
         const ext = filename.split('.').pop()?.toLowerCase() || '';
-        
+
         if (['pdf', 'docx', 'doc', 'txt', 'md'].includes(ext)) return <FileText size={16} />;
         if (['xlsx', 'xls', 'csv'].includes(ext)) return <FileSpreadsheet size={16} />;
         if (['pptx'].includes(ext)) return <Presentation size={16} />;
@@ -146,7 +152,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
         try {
             const formData = new FormData();
-            files.forEach(file => formData.append('files', file));
+            files.forEach((file) => formData.append('files', file));
             formData.append('language', language);
             if (projectId) formData.append('projectId', projectId);
 
@@ -155,7 +161,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             const response = await fetch('/api/media-ingestion/ingest/batch', {
                 method: 'POST',
                 body: formData,
-                credentials: 'include'
+                credentials: 'include',
             });
 
             const data = await response.json();
@@ -163,10 +169,13 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             if (data.success) {
                 setResults(data.results.map((r: ProcessingResult) => ({ ...r, success: true })));
                 data.results.forEach((r: ProcessingResult) => onUploadComplete?.(r));
-                
+
                 if (data.errors?.length > 0) {
                     data.errors.forEach((e: { filename: string; error: string }) => {
-                        setResults(prev => [...prev, { success: false, error: e.error, metadata: { filename: e.filename } }]);
+                        setResults((prev) => [
+                            ...prev,
+                            { success: false, error: e.error, metadata: { filename: e.filename } },
+                        ]);
                     });
                 }
             } else {
@@ -199,9 +208,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 body: JSON.stringify({
                     url: youtubeUrl,
                     language,
-                    projectId
+                    projectId,
                 }),
-                credentials: 'include'
+                credentials: 'include',
             });
 
             const data = await response.json();
@@ -237,9 +246,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: webUrl,
-                    projectId
+                    projectId,
                 }),
-                credentials: 'include'
+                credentials: 'include',
             });
 
             const data = await response.json();
@@ -272,9 +281,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 <button
                     onClick={() => setActiveTab('upload')}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
-                        ${activeTab === 'upload' 
-                            ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400' 
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'}`}
+                        ${
+                            activeTab === 'upload'
+                                ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400'
+                                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                        }`}
                 >
                     <Upload size={18} />
                     File Upload
@@ -282,9 +293,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 <button
                     onClick={() => setActiveTab('youtube')}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
-                        ${activeTab === 'youtube' 
-                            ? 'bg-gray-800 text-red-400 border-b-2 border-red-400' 
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'}`}
+                        ${
+                            activeTab === 'youtube'
+                                ? 'bg-gray-800 text-red-400 border-b-2 border-red-400'
+                                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                        }`}
                 >
                     <Youtube size={18} />
                     YouTube
@@ -292,9 +305,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 <button
                     onClick={() => setActiveTab('url')}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
-                        ${activeTab === 'url' 
-                            ? 'bg-gray-800 text-blue-400 border-b-2 border-blue-400' 
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'}`}
+                        ${
+                            activeTab === 'url'
+                                ? 'bg-gray-800 text-blue-400 border-b-2 border-blue-400'
+                                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                        }`}
                 >
                     <Globe size={18} />
                     Web URL
@@ -314,9 +329,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
                             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
-                                ${isDragging 
-                                    ? 'border-emerald-400 bg-emerald-400/10' 
-                                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'}`}
+                                ${
+                                    isDragging
+                                        ? 'border-emerald-400 bg-emerald-400/10'
+                                        : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                                }`}
                         >
                             <input
                                 ref={fileInputRef}
@@ -326,7 +343,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 onChange={handleFileSelect}
                                 className="hidden"
                             />
-                            
+
                             <div className="flex flex-col items-center gap-3">
                                 <div className={`p-3 rounded-full ${isDragging ? 'bg-emerald-400/20' : 'bg-gray-700'}`}>
                                     <Upload size={24} className={isDragging ? 'text-emerald-400' : 'text-gray-400'} />
@@ -353,9 +370,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                             className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <span className="text-gray-400">
-                                                    {getFileIcon(file.name)}
-                                                </span>
+                                                <span className="text-gray-400">{getFileIcon(file.name)}</span>
                                                 <span className="text-gray-200 text-sm truncate max-w-xs">
                                                     {file.name}
                                                 </span>
@@ -507,14 +522,16 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <p className={`text-sm ${result.success ? 'text-emerald-300' : 'text-red-300'}`}>
-                                        {result.success 
+                                        {result.success
                                             ? result.metadata?.filename || result.metadata?.title || 'Content processed'
                                             : result.error || 'Processing failed'}
                                     </p>
                                     {result.success && result.metadata && (
                                         <p className="text-xs text-gray-400 mt-1">
-                                            {result.metadata.wordCount?.toLocaleString()} words • 
-                                            {result.metadata.processingTimeMs ? ` ${(result.metadata.processingTimeMs / 1000).toFixed(1)}s` : ''}
+                                            {result.metadata.wordCount?.toLocaleString()} words •
+                                            {result.metadata.processingTimeMs
+                                                ? ` ${(result.metadata.processingTimeMs / 1000).toFixed(1)}s`
+                                                : ''}
                                         </p>
                                     )}
                                 </div>
@@ -527,7 +544,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             {/* Footer */}
             <div className="px-6 py-3 bg-gray-800/50 border-t border-gray-700">
                 <p className="text-gray-500 text-xs text-center">
-                    Max file size: 100MB • Audio/Video: max 60 min • Supported: PDF, Word, Excel, PowerPoint, Audio, Video, Images, YouTube, Web URLs
+                    Max file size: 100MB • Audio/Video: max 60 min • Supported: PDF, Word, Excel, PowerPoint, Audio,
+                    Video, Images, YouTube, Web URLs
                 </p>
             </div>
         </div>
@@ -535,4 +553,3 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 };
 
 export default MediaUploader;
-

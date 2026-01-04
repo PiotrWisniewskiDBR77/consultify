@@ -1,31 +1,48 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Hoisted mock - defined inline since imports aren't available yet
+const mockDb = vi.hoisted(() => ({
+    get: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, null));
+    }),
+    all: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, []));
+    }),
+    run: vi.fn(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
+    }),
+    exec: vi.fn((sql, callback) => {
+        if (callback) process.nextTick(() => callback(null));
+    }),
+    serialize: vi.fn((cb) => { if (cb) cb(); }),
+    prepare: vi.fn(),
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    initPromise: Promise.resolve()
+}));
+
+vi.mock('../../../server/database', () => ({ default: mockDb }));
+
 describe('AI Maturity Monitor Service', () => {
     let AIMaturityMonitor;
-    let mockDb;
-    let mockUuid;
 
     beforeEach(async () => {
-        vi.resetModules();
-
-        mockDb = {
-            all: vi.fn(),
-            get: vi.fn(),
-            run: vi.fn()
-        };
-
-        mockUuid = {
-            v4: vi.fn(() => 'mock-uuid-assessment')
-        };
-
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-        vi.doMock('uuid', () => ({ v4: mockUuid.v4 }));
-
-        AIMaturityMonitor = (await import('../../../server/services/aiMaturityMonitor.js')).default;
+        vi.clearAllMocks();
+        
+        const module = await import('../../../server/services/aiMaturityMonitor.js');
+        AIMaturityMonitor = module.default;
+        
+        // Inject mock dependencies
+        AIMaturityMonitor.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'mock-uuid-assessment'
+        });
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Logic: _scoreToLevel', () => {

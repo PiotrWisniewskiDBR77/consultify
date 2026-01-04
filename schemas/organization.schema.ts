@@ -10,11 +10,9 @@ import { z } from 'zod';
 // ==========================================
 
 export const CreateOrganizationSchema = z.object({
-    name: z.string()
-        .min(1, 'Organization name is required')
-        .max(255, 'Organization name too long')
-        .trim(),
-    slug: z.string()
+    name: z.string().min(1, 'Organization name is required').max(255, 'Organization name too long').trim(),
+    slug: z
+        .string()
         .min(3, 'Slug must be at least 3 characters')
         .max(50, 'Slug too long')
         .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes')
@@ -39,8 +37,14 @@ export type UpdateOrganizationInput = z.infer<typeof UpdateOrganizationSchema>;
 // ==========================================
 
 export const UpdateBrandingSchema = z.object({
-    primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
-    secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
+    primaryColor: z
+        .string()
+        .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format')
+        .optional(),
+    secondaryColor: z
+        .string()
+        .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format')
+        .optional(),
     logoUrl: z.string().url().optional().nullable(),
     faviconUrl: z.string().url().optional().nullable(),
     fontFamily: z.string().max(100).optional(),
@@ -59,12 +63,12 @@ export const UpdateOrgSettingsSchema = z.object({
     timeFormat: z.enum(['12h', '24h']).optional(),
     currency: z.string().length(3).optional(),
     weekStartsOn: z.enum(['sunday', 'monday']).optional(),
-    
+
     // Feature toggles
     enableAI: z.boolean().optional(),
     enableCollaboration: z.boolean().optional(),
     enableExternalSharing: z.boolean().optional(),
-    
+
     // Security settings
     enforceSSO: z.boolean().optional(),
     enforceMFA: z.boolean().optional(),
@@ -98,10 +102,7 @@ export type UpdateMemberRoleInput = z.infer<typeof UpdateMemberRoleSchema>;
 // ==========================================
 
 export const CreateTeamSchema = z.object({
-    name: z.string()
-        .min(1, 'Team name is required')
-        .max(100, 'Team name too long')
-        .trim(),
+    name: z.string().min(1, 'Team name is required').max(100, 'Team name too long').trim(),
     description: z.string().max(500).optional(),
     leadId: z.string().uuid().optional(),
     memberIds: z.array(z.string().uuid()).max(100).optional(),
@@ -134,5 +135,3 @@ export const CreateConsultantInviteSchema = z.object({
 });
 
 export type CreateConsultantInviteInput = z.infer<typeof CreateConsultantInviteSchema>;
-
-

@@ -1,6 +1,6 @@
 /**
  * InvoicesView - Invoices & Billing History
- * 
+ *
  * Features:
  * - List all invoices
  * - Download PDF invoices
@@ -8,26 +8,27 @@
  * - View invoice details
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    FileText,
-    Download,
-    Eye,
-    Search,
+    AlertCircle,
     Calendar,
-    Filter,
-    RefreshCw,
     Check,
     Clock,
-    AlertCircle,
+    Download,
+    ExternalLink,
+    Eye,
+    FileText,
+    Filter,
+    RefreshCw,
+    Search,
     X,
-    ExternalLink
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
 
 interface Invoice {
     id: string;
@@ -69,7 +70,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         setLoading(true);
         try {
             const res = await fetch(`/api/billing/invoices`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -84,7 +85,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                     status: inv.status || 'pending',
                     description: inv.description || `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
                     pdfUrl: inv.pdf_url || inv.pdfUrl,
-                    items: inv.items || []
+                    items: inv.items || [],
                 }));
                 setInvoices(invoices);
             } else {
@@ -106,7 +107,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         try {
             // In production, this would download from Stripe or your invoice service
             const res = await fetch(`/api/billing/invoices/${invoice.id}/download`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
@@ -131,14 +132,14 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
             pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
             overdue: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-            void: 'bg-slate-100 dark:bg-slate-700 text-slate-500'
+            void: 'bg-slate-100 dark:bg-slate-700 text-slate-500',
         };
 
         const icons = {
             paid: <Check size={12} />,
             pending: <Clock size={12} />,
             overdue: <AlertCircle size={12} />,
-            void: <X size={12} />
+            void: <X size={12} />,
         };
 
         return (
@@ -153,20 +154,23 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
     const formatCurrency = (amount: number, currency: string) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: currency
+            currency: currency,
         }).format(amount);
     };
 
-    const filteredInvoices = invoices.filter(inv => {
-        if (searchTerm && !inv.number.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !inv.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+    const filteredInvoices = invoices.filter((inv) => {
+        if (
+            searchTerm &&
+            !inv.number.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !inv.description.toLowerCase().includes(searchTerm.toLowerCase())
+        ) {
             return false;
         }
         if (statusFilter !== 'all' && inv.status !== statusFilter) {
@@ -184,7 +188,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         return true;
     });
 
-    const totalPaid = invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amount, 0);
+    const totalPaid = invoices.filter((i) => i.status === 'paid').reduce((sum, i) => sum + i.amount, 0);
 
     if (loading) {
         return (
@@ -262,26 +266,36 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                     <table className="w-full">
                         <thead className="bg-slate-50 dark:bg-navy-900">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Invoice</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Amount</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                    Invoice
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                    Date
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                    Status
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
+                                    Amount
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-                            {filteredInvoices.map(invoice => (
+                            {filteredInvoices.map((invoice) => (
                                 <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
                                     <td className="px-6 py-4">
-                                        <div className="font-medium text-slate-900 dark:text-white">{invoice.number}</div>
+                                        <div className="font-medium text-slate-900 dark:text-white">
+                                            {invoice.number}
+                                        </div>
                                         <div className="text-sm text-slate-500">{invoice.description}</div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                                         {formatDate(invoice.date)}
                                     </td>
-                                    <td className="px-6 py-4">
-                                        {getStatusBadge(invoice.status)}
-                                    </td>
+                                    <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
                                     <td className="px-6 py-4 text-right font-medium text-slate-900 dark:text-white">
                                         {formatCurrency(invoice.amount, invoice.currency)}
                                     </td>
@@ -342,13 +356,23 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                             <div className="p-6 space-y-4">
                                 {/* Line Items */}
                                 <div>
-                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Items</h4>
+                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                                        Items
+                                    </h4>
                                     <div className="space-y-2">
                                         {selectedInvoice.items.map((item, idx) => (
-                                            <div key={idx} className="flex justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+                                            <div
+                                                key={idx}
+                                                className="flex justify-between py-2 border-b border-slate-100 dark:border-navy-700"
+                                            >
                                                 <div>
-                                                    <p className="text-sm text-slate-900 dark:text-white">{item.description}</p>
-                                                    <p className="text-xs text-slate-500">Qty: {item.quantity} × {formatCurrency(item.unitPrice, selectedInvoice.currency)}</p>
+                                                    <p className="text-sm text-slate-900 dark:text-white">
+                                                        {item.description}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Qty: {item.quantity} ×{' '}
+                                                        {formatCurrency(item.unitPrice, selectedInvoice.currency)}
+                                                    </p>
                                                 </div>
                                                 <p className="font-medium text-slate-900 dark:text-white">
                                                     {formatCurrency(item.amount, selectedInvoice.currency)}
@@ -390,5 +414,3 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
 };
 
 export default InvoicesView;
-
-

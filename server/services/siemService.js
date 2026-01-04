@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 /**
  * SIEM Service (Prestige Tier)
  * Handles streaming of audit events to external security collectors.
@@ -43,7 +43,7 @@ class SiemService {
             ...event,
             source: 'consultify-api',
             environment: process.env.NODE_ENV || 'development',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         });
         if (this.buffer.length >= this.batchSize) {
             await this.flush();
@@ -59,8 +59,8 @@ class SiemService {
             // For now, we log the "streaming" action and try to POST to a configured endpoint
             if (this.endpoint) {
                 await this._axios.post(this.endpoint, { logs: batch }, {
-                    headers: { 'Authorization': `Bearer ${this.apiKey}` },
-                    timeout: 5000
+                    headers: { Authorization: `Bearer ${this.apiKey}` },
+                    timeout: 5000,
                 });
             }
             else {

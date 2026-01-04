@@ -1,6 +1,6 @@
 /**
  * UsageAnalyticsDashboard - Advanced AI Usage Analytics
- * 
+ *
  * Provides comprehensive analytics for AI usage including:
  * - Usage trends over time (7d/30d/90d)
  * - Model popularity heatmap
@@ -10,27 +10,28 @@
  * - Export to CSV/PDF
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    BarChart2,
-    TrendingUp,
-    TrendingDown,
-    Clock,
-    DollarSign,
-    Zap,
-    Calendar,
-    Download,
-    RefreshCw,
-    ArrowUpRight,
-    ArrowDownRight,
-    Target,
-    Cpu,
-    Users,
-    Layers,
     Activity,
-    Filter
+    ArrowDownRight,
+    ArrowUpRight,
+    BarChart2,
+    Calendar,
+    Clock,
+    Cpu,
+    DollarSign,
+    Download,
+    Filter,
+    Layers,
+    RefreshCw,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Users,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { useAppStore } from '../../../store/useAppStore';
 
 interface UsageTrend {
@@ -78,7 +79,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
     const { currentOrganization } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState<TimeRange>('30d');
-    
+
     // Analytics data state
     const [trends, setTrends] = useState<UsageTrend[]>([]);
     const [modelUsage, setModelUsage] = useState<ModelUsage[]>([]);
@@ -93,7 +94,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
         avgRequestsPerDay: 0,
         avgCostPerRequest: 0,
         topModel: '',
-        topCapability: ''
+        topCapability: '',
     });
 
     const loadAnalytics = useCallback(async () => {
@@ -102,7 +103,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             // In production, this would be an API call
             // const res = await fetch(`/api/ai-analytics/usage?range=${timeRange}&orgId=${currentOrganization?.id}`);
             // const data = await res.json();
-            
+
             // Generate mock data for demo
             generateMockData();
         } catch (error) {
@@ -118,7 +119,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
 
     const generateMockData = () => {
         const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-        
+
         // Generate trends
         const trendsData: UsageTrend[] = Array.from({ length: days }, (_, i) => {
             const date = new Date();
@@ -128,40 +129,51 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 date: date.toISOString().split('T')[0],
                 requests: Math.floor(baseRequests),
                 tokens: Math.floor(baseRequests * (800 + Math.random() * 400)),
-                cost: Math.round((baseRequests * 0.02) * 100) / 100,
-                uniqueUsers: Math.floor(5 + Math.random() * 15)
+                cost: Math.round(baseRequests * 0.02 * 100) / 100,
+                uniqueUsers: Math.floor(5 + Math.random() * 15),
             };
         });
         setTrends(trendsData);
 
         // Model usage
         const models: ModelUsage[] = [
-            { model: 'gpt-4o', requests: 1250, tokens: 1500000, cost: 45.20, avgResponseTime: 1.8, percentage: 35 },
-            { model: 'gpt-4o-mini', requests: 1680, tokens: 850000, cost: 8.50, avgResponseTime: 0.6, percentage: 47 },
-            { model: 'claude-3.5-sonnet', requests: 420, tokens: 520000, cost: 15.60, avgResponseTime: 2.1, percentage: 12 },
-            { model: 'gemini-1.5-pro', requests: 210, tokens: 180000, cost: 3.20, avgResponseTime: 1.2, percentage: 6 }
+            { model: 'gpt-4o', requests: 1250, tokens: 1500000, cost: 45.2, avgResponseTime: 1.8, percentage: 35 },
+            { model: 'gpt-4o-mini', requests: 1680, tokens: 850000, cost: 8.5, avgResponseTime: 0.6, percentage: 47 },
+            {
+                model: 'claude-3.5-sonnet',
+                requests: 420,
+                tokens: 520000,
+                cost: 15.6,
+                avgResponseTime: 2.1,
+                percentage: 12,
+            },
+            { model: 'gemini-1.5-pro', requests: 210, tokens: 180000, cost: 3.2, avgResponseTime: 1.2, percentage: 6 },
         ];
         setModelUsage(models);
 
         // Capability usage
         const capabilities: CapabilityUsage[] = [
-            { capability: 'Chat', requests: 1850, tokens: 920000, cost: 28.50, percentage: 52 },
-            { capability: 'Report Generation', requests: 420, tokens: 680000, cost: 21.30, percentage: 12 },
-            { capability: 'Task Advice', requests: 680, tokens: 450000, cost: 13.50, percentage: 19 },
-            { capability: 'Initiative Creation', requests: 320, tokens: 380000, cost: 11.40, percentage: 9 },
-            { capability: 'Diagnosis', requests: 290, tokens: 180000, cost: 5.40, percentage: 8 }
+            { capability: 'Chat', requests: 1850, tokens: 920000, cost: 28.5, percentage: 52 },
+            { capability: 'Report Generation', requests: 420, tokens: 680000, cost: 21.3, percentage: 12 },
+            { capability: 'Task Advice', requests: 680, tokens: 450000, cost: 13.5, percentage: 19 },
+            { capability: 'Initiative Creation', requests: 320, tokens: 380000, cost: 11.4, percentage: 9 },
+            { capability: 'Diagnosis', requests: 290, tokens: 180000, cost: 5.4, percentage: 8 },
         ];
         setCapabilityUsage(capabilities);
 
         // Hourly usage heatmap
         const hourly: HourlyUsage[] = Array.from({ length: 24 }, (_, hour) => {
             const isWorkHours = hour >= 9 && hour <= 18;
-            const isPeak = hour >= 10 && hour <= 12 || hour >= 14 && hour <= 16;
-            const intensity = isPeak ? 70 + Math.random() * 30 : isWorkHours ? 40 + Math.random() * 30 : 5 + Math.random() * 15;
+            const isPeak = (hour >= 10 && hour <= 12) || (hour >= 14 && hour <= 16);
+            const intensity = isPeak
+                ? 70 + Math.random() * 30
+                : isWorkHours
+                  ? 40 + Math.random() * 30
+                  : 5 + Math.random() * 15;
             return {
                 hour,
                 requests: Math.floor(intensity * 2),
-                intensity: Math.round(intensity)
+                intensity: Math.round(intensity),
             };
         });
         setHourlyUsage(hourly);
@@ -170,9 +182,9 @@ export const UsageAnalyticsDashboard: React.FC = () => {
         const comparisons: PeriodComparison[] = [
             { metric: 'Requests', current: 3560, previous: 3120, change: 440, changePercent: 14.1 },
             { metric: 'Tokens Used', current: 2850000, previous: 2640000, change: 210000, changePercent: 8.0 },
-            { metric: 'Total Cost', current: 72.50, previous: 68.20, change: 4.30, changePercent: 6.3 },
+            { metric: 'Total Cost', current: 72.5, previous: 68.2, change: 4.3, changePercent: 6.3 },
             { metric: 'Unique Users', current: 24, previous: 21, change: 3, changePercent: 14.3 },
-            { metric: 'Avg Response Time', current: 1.4, previous: 1.6, change: -0.2, changePercent: -12.5 }
+            { metric: 'Avg Response Time', current: 1.4, previous: 1.6, change: -0.2, changePercent: -12.5 },
         ];
         setComparison(comparisons);
 
@@ -185,7 +197,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             avgRequestsPerDay: Math.round(trendsData.reduce((sum, d) => sum + d.requests, 0) / days),
             avgCostPerRequest: 0.02,
             topModel: 'gpt-4o-mini',
-            topCapability: 'Chat'
+            topCapability: 'Chat',
         });
     };
 
@@ -193,8 +205,8 @@ export const UsageAnalyticsDashboard: React.FC = () => {
         if (format === 'csv') {
             // Export CSV
             const headers = ['Date', 'Requests', 'Tokens', 'Cost', 'Unique Users'];
-            const rows = trends.map(t => [t.date, t.requests, t.tokens, t.cost, t.uniqueUsers]);
-            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const rows = trends.map((t) => [t.date, t.requests, t.tokens, t.cost, t.uniqueUsers]);
+            const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -209,11 +221,12 @@ export const UsageAnalyticsDashboard: React.FC = () => {
         }
     };
 
-    const formatNumber = (num: number) => num >= 1000000 
-        ? `${(num / 1000000).toFixed(1)}M` 
-        : num >= 1000 
-            ? `${(num / 1000).toFixed(1)}k` 
-            : num.toString();
+    const formatNumber = (num: number) =>
+        num >= 1000000
+            ? `${(num / 1000000).toFixed(1)}M`
+            : num >= 1000
+              ? `${(num / 1000).toFixed(1)}k`
+              : num.toString();
 
     const formatCurrency = (num: number) => `$${num.toFixed(2)}`;
 
@@ -225,7 +238,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
         return 'bg-violet-100/30';
     };
 
-    const maxTrendValue = Math.max(...trends.map(t => t.requests), 1);
+    const maxTrendValue = Math.max(...trends.map((t) => t.requests), 1);
 
     return (
         <div className="space-y-6">
@@ -248,16 +261,14 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                                 key={range}
                                 onClick={() => setTimeRange(range)}
                                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                                    timeRange === range
-                                        ? 'bg-violet-600 text-white'
-                                        : 'text-slate-400 hover:text-white'
+                                    timeRange === range ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
                                 }`}
                             >
                                 {range}
                             </button>
                         ))}
                     </div>
-                    
+
                     {/* Export */}
                     <div className="flex gap-2">
                         <button
@@ -275,7 +286,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                             PDF Report
                         </button>
                     </div>
-                    
+
                     <button
                         onClick={loadAnalytics}
                         disabled={loading}
@@ -338,19 +349,24 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                         <div key={item.metric} className="p-4 bg-navy-950/50 rounded-lg">
                             <div className="text-xs text-slate-500 uppercase mb-1">{item.metric}</div>
                             <div className="text-xl font-bold text-white mb-1">
-                                {item.metric.includes('Cost') ? formatCurrency(item.current) : 
-                                 item.metric.includes('Time') ? `${item.current}s` : formatNumber(item.current)}
+                                {item.metric.includes('Cost')
+                                    ? formatCurrency(item.current)
+                                    : item.metric.includes('Time')
+                                      ? `${item.current}s`
+                                      : formatNumber(item.current)}
                             </div>
-                            <div className={`flex items-center gap-1 text-sm ${
-                                item.changePercent > 0 
-                                    ? item.metric.includes('Time') ? 'text-red-400' : 'text-emerald-400'
-                                    : item.metric.includes('Time') ? 'text-emerald-400' : 'text-red-400'
-                            }`}>
-                                {item.changePercent > 0 ? (
-                                    <ArrowUpRight size={14} />
-                                ) : (
-                                    <ArrowDownRight size={14} />
-                                )}
+                            <div
+                                className={`flex items-center gap-1 text-sm ${
+                                    item.changePercent > 0
+                                        ? item.metric.includes('Time')
+                                            ? 'text-red-400'
+                                            : 'text-emerald-400'
+                                        : item.metric.includes('Time')
+                                          ? 'text-emerald-400'
+                                          : 'text-red-400'
+                                }`}
+                            >
+                                {item.changePercent > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                                 {Math.abs(item.changePercent).toFixed(1)}%
                             </div>
                         </div>
@@ -372,10 +388,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 ) : (
                     <div className="h-48 flex items-end gap-1">
                         {trends.map((point, idx) => (
-                            <div
-                                key={idx}
-                                className="flex-1 group relative"
-                            >
+                            <div key={idx} className="flex-1 group relative">
                                 <div
                                     className="w-full bg-gradient-to-t from-violet-600 to-violet-400 rounded-t transition-all hover:from-violet-500 hover:to-violet-300"
                                     style={{ height: `${(point.requests / maxTrendValue) * 100}%`, minHeight: '4px' }}
@@ -418,9 +431,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                                             className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all flex items-center justify-end pr-2"
                                             style={{ width: `${model.percentage}%` }}
                                         >
-                                            <span className="text-xs font-medium text-white">
-                                                {model.percentage}%
-                                            </span>
+                                            <span className="text-xs font-medium text-white">{model.percentage}%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -451,9 +462,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                                             className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all flex items-center justify-end pr-2"
                                             style={{ width: `${cap.percentage}%` }}
                                         >
-                                            <span className="text-xs font-medium text-white">
-                                                {cap.percentage}%
-                                            </span>
+                                            <span className="text-xs font-medium text-white">{cap.percentage}%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -485,7 +494,9 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                             </div>
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                                 <div className="bg-slate-900 border border-white/10 rounded px-2 py-1 text-xs whitespace-nowrap">
-                                    <div className="text-white">{hour.hour}:00 - {hour.hour + 1}:00</div>
+                                    <div className="text-white">
+                                        {hour.hour}:00 - {hour.hour + 1}:00
+                                    </div>
                                     <div className="text-cyan-400">{hour.requests} requests</div>
                                 </div>
                             </div>
@@ -571,11 +582,4 @@ const InsightCard: React.FC<{
 );
 
 export default UsageAnalyticsDashboard;
-
-
-
-
-
-
-
 

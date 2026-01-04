@@ -1,6 +1,6 @@
 /**
  * IntegrationHealthSettings - Health Monitoring Dashboard
- * 
+ *
  * Features:
  * - Status dashboard per integration
  * - Health check history
@@ -8,13 +8,22 @@
  * - Automatic reconnection settings
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Activity, AlertTriangle, CheckCircle, XCircle, Clock,
-    RefreshCw, Bell, Settings, Loader2, Zap
+    Activity,
+    AlertTriangle,
+    Bell,
+    CheckCircle,
+    Clock,
+    Loader2,
+    RefreshCw,
+    Settings,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 
 interface IntegrationHealthSettingsProps {
@@ -48,7 +57,7 @@ interface Integration {
 
 export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps> = ({
     className = '',
-    currentUser
+    currentUser,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
@@ -81,7 +90,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
     const fetchIntegrations = async () => {
         try {
             if (!currentUser?.organizationId) return;
-            
+
             const data = await Api.get(`/api/settings/integrations?organizationId=${currentUser.organizationId}`);
             setIntegrations(data || []);
         } catch (error) {
@@ -94,7 +103,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
 
     const fetchAllHealthStatuses = async () => {
         const statuses: Record<string, HealthStatus> = {};
-        
+
         for (const integration of integrations) {
             try {
                 const data = await Api.get(`/api/settings/integrations/${integration.id}/health`);
@@ -106,7 +115,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                 statuses[integration.id] = { status: 'unknown' };
             }
         }
-        
+
         setHealthStatuses(statuses);
     };
 
@@ -114,9 +123,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
         try {
             const data = await Api.get(`/api/settings/integrations/${integrationId}/health`);
             if (data?.history) {
-                setHealthHistory(prev => ({
+                setHealthHistory((prev) => ({
                     ...prev,
-                    [integrationId]: data.history
+                    [integrationId]: data.history,
                 }));
             }
         } catch (error) {
@@ -127,7 +136,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
     const runHealthCheck = async (integrationId: string) => {
         try {
             await Api.post(`/api/settings/integrations/${integrationId}/health-check`, {
-                checkType: 'manual'
+                checkType: 'manual',
             });
             toast.success(t('settings.health.checkStarted', 'Health check started'));
             setTimeout(() => {
@@ -199,7 +208,10 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                 <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
                     <Activity className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
                     <p className="text-slate-500 dark:text-slate-400">
-                        {t('settings.health.noIntegrations', 'No integrations available. Connect an integration to monitor health.')}
+                        {t(
+                            'settings.health.noIntegrations',
+                            'No integrations available. Connect an integration to monitor health.',
+                        )}
                     </p>
                 </div>
             ) : (
@@ -209,7 +221,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                         {integrations.map((integration) => {
                             const status = healthStatuses[integration.id] || { status: 'unknown' };
                             const isHealthy = status.status === 'healthy';
-                            
+
                             return (
                                 <div
                                     key={integration.id}
@@ -217,8 +229,8 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                                         isHealthy
                                             ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                                             : status.status === 'degraded'
-                                                ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
-                                                : 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                                              ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
+                                              : 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
                                     }`}
                                 >
                                     <div className="flex items-start justify-between mb-3">
@@ -235,7 +247,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                                                 )}
                                             </div>
                                         </div>
-                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(status.status)}`}>
+                                        <span
+                                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(status.status)}`}
+                                        >
                                             {t(`settings.health.status.${status.status}`, status.status)}
                                         </span>
                                     </div>
@@ -243,7 +257,9 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                                     {status.latency_ms !== undefined && (
                                         <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 mb-2">
                                             <Zap size={12} />
-                                            <span>{status.latency_ms}ms {t('settings.health.latency', 'latency')}</span>
+                                            <span>
+                                                {status.latency_ms}ms {t('settings.health.latency', 'latency')}
+                                            </span>
                                         </div>
                                     )}
 
@@ -255,7 +271,8 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
 
                                     {status.checked_at && (
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                                            {t('settings.health.lastChecked', 'Last checked')}: {new Date(status.checked_at).toLocaleString()}
+                                            {t('settings.health.lastChecked', 'Last checked')}:{' '}
+                                            {new Date(status.checked_at).toLocaleString()}
                                         </p>
                                     )}
 
@@ -302,10 +319,14 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                                                         {getStatusIcon(check.status)}
                                                         <div>
                                                             <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                                                {t(`settings.health.status.${check.status}`, check.status)}
+                                                                {t(
+                                                                    `settings.health.status.${check.status}`,
+                                                                    check.status,
+                                                                )}
                                                             </p>
                                                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                                {check.check_type} • {check.latency_ms ? `${check.latency_ms}ms` : 'N/A'}
+                                                                {check.check_type} •{' '}
+                                                                {check.latency_ms ? `${check.latency_ms}ms` : 'N/A'}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -343,17 +364,22 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                                             <input
                                                 type="checkbox"
                                                 checked={autoReconnect[selectedIntegration] || false}
-                                                onChange={(e) => setAutoReconnect(prev => ({
-                                                    ...prev,
-                                                    [selectedIntegration]: e.target.checked
-                                                }))}
+                                                onChange={(e) =>
+                                                    setAutoReconnect((prev) => ({
+                                                        ...prev,
+                                                        [selectedIntegration]: e.target.checked,
+                                                    }))
+                                                }
                                                 className="sr-only peer"
                                             />
                                             <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                                         </label>
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {t('settings.health.autoReconnectDesc', 'Automatically attempt to reconnect when connection fails')}
+                                        {t(
+                                            'settings.health.autoReconnectDesc',
+                                            'Automatically attempt to reconnect when connection fails',
+                                        )}
                                     </p>
                                 </div>
 
@@ -368,17 +394,22 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                                             <input
                                                 type="checkbox"
                                                 checked={alertEnabled[selectedIntegration] || false}
-                                                onChange={(e) => setAlertEnabled(prev => ({
-                                                    ...prev,
-                                                    [selectedIntegration]: e.target.checked
-                                                }))}
+                                                onChange={(e) =>
+                                                    setAlertEnabled((prev) => ({
+                                                        ...prev,
+                                                        [selectedIntegration]: e.target.checked,
+                                                    }))
+                                                }
                                                 className="sr-only peer"
                                             />
                                             <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                                         </label>
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {t('settings.health.alertsDesc', 'Receive notifications when integration health degrades')}
+                                        {t(
+                                            'settings.health.alertsDesc',
+                                            'Receive notifications when integration health degrades',
+                                        )}
                                     </p>
                                 </div>
 
@@ -418,10 +449,4 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
 };
 
 export default IntegrationHealthSettings;
-
-
-
-
-
-
 

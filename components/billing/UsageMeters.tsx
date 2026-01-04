@@ -1,5 +1,5 @@
+import { AlertTriangle, Database, HardDrive } from 'lucide-react';
 import React from 'react';
-import { Database, HardDrive, AlertTriangle } from 'lucide-react';
 
 interface UsageData {
     tokens: {
@@ -45,7 +45,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
     // Default values to prevent undefined access
     const tokens = usage?.tokens || { used: 0, limit: 100000, remaining: 100000, percentage: 0 };
     const storage = usage?.storage || { usedGB: 0, limitGB: 5, percentage: 0 };
-    
+
     if (compact) {
         return (
             <div className="flex items-center gap-4">
@@ -58,9 +58,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
                             style={{ width: `${Math.min(100, tokens.percentage)}%` }}
                         />
                     </div>
-                    <span className={`text-xs ${getTextColor(tokens.percentage)}`}>
-                        {tokens.percentage}%
-                    </span>
+                    <span className={`text-xs ${getTextColor(tokens.percentage)}`}>{tokens.percentage}%</span>
                 </div>
 
                 {/* Storage */}
@@ -72,9 +70,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
                             style={{ width: `${Math.min(100, storage.percentage)}%` }}
                         />
                     </div>
-                    <span className={`text-xs ${getTextColor(storage.percentage)}`}>
-                        {storage.percentage}%
-                    </span>
+                    <span className={`text-xs ${getTextColor(storage.percentage)}`}>{storage.percentage}%</span>
                 </div>
             </div>
         );
@@ -109,9 +105,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
                         <span className="text-gray-600 dark:text-gray-400">
                             {formatNumber(tokens.used)} / {formatNumber(tokens.limit)} tokens
                         </span>
-                        <span className={`font-medium ${getTextColor(tokens.percentage)}`}>
-                            {tokens.percentage}%
-                        </span>
+                        <span className={`font-medium ${getTextColor(tokens.percentage)}`}>{tokens.percentage}%</span>
                     </div>
                     <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
@@ -152,9 +146,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
                         <span className="text-gray-600 dark:text-gray-400">
                             {storage.usedGB.toFixed(2)} GB / {storage.limitGB} GB
                         </span>
-                        <span className={`font-medium ${getTextColor(storage.percentage)}`}>
-                            {storage.percentage}%
-                        </span>
+                        <span className={`font-medium ${getTextColor(storage.percentage)}`}>{storage.percentage}%</span>
                     </div>
                     <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div

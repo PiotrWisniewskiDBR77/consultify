@@ -41,7 +41,7 @@ export async function getProjectDetails(params: ProjectParams): Promise<Record<s
          FROM projects p 
          WHERE p.id = ?`,
         [projectId],
-        { fallback: false }
+        { fallback: false },
     );
 
     if (!project) {
@@ -56,7 +56,7 @@ export async function getProjectDetails(params: ProjectParams): Promise<Record<s
              JOIN users u ON pm.user_id = u.id
              WHERE pm.project_id = ?`,
             [projectId],
-            { fallback: true }
+            { fallback: true },
         );
     } catch {
         team = [];
@@ -74,8 +74,8 @@ export async function getProjectDetails(params: ProjectParams): Promise<Record<s
         metrics: {
             daysRemaining: project.end_date
                 ? Math.ceil((new Date(project.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                : null
-        }
+                : null,
+        },
     };
 }
 

@@ -22,45 +22,60 @@ export const TECH_DEBT_DIMENSIONS: TechDebtDimension[] = [
         id: 'code_quality',
         name: 'Code Quality',
         description: 'Code maintainability, readability, and technical quality',
-        weight: 1.5
+        weight: 1.5,
     },
     {
         id: 'architecture',
         name: 'Architecture & Design',
         description: 'System architecture scalability and design patterns',
-        weight: 2.0 // Higher weight - architectural debt is costly
+        weight: 2.0, // Higher weight - architectural debt is costly
     },
     {
         id: 'infrastructure',
         name: 'Infrastructure & DevOps',
         description: 'CI/CD, deployment, monitoring, and operations',
-        weight: 1.0
+        weight: 1.0,
     },
     {
         id: 'security',
         name: 'Security & Compliance',
         description: 'Security vulnerabilities and compliance gaps',
-        weight: 1.8 // High weight - security is critical
+        weight: 1.8, // High weight - security is critical
     },
     {
         id: 'documentation',
         name: 'Documentation',
         description: 'Code documentation, API docs, and knowledge transfer',
-        weight: 0.8
-    }
+        weight: 0.8,
+    },
 ];
 
 // Questionnaire (15 questions, 3 per dimension)
 export const TECH_DEBT_QUESTIONS: TechDebtQuestion[] = [
     // Code Quality
-    { id: 'code_1', text: 'Are automated tests (unit, integration) in place?', dimension: 'code_quality', severity: 'high' },
+    {
+        id: 'code_1',
+        text: 'Are automated tests (unit, integration) in place?',
+        dimension: 'code_quality',
+        severity: 'high',
+    },
     { id: 'code_2', text: 'Is code review mandatory for all changes?', dimension: 'code_quality', severity: 'medium' },
-    { id: 'code_3', text: 'Are code quality metrics (coverage, complexity) monitored?', dimension: 'code_quality', severity: 'medium' },
+    {
+        id: 'code_3',
+        text: 'Are code quality metrics (coverage, complexity) monitored?',
+        dimension: 'code_quality',
+        severity: 'medium',
+    },
 
     // Architecture
     { id: 'arch_1', text: 'Is the system architecture documented?', dimension: 'architecture', severity: 'high' },
     { id: 'arch_2', text: 'Can the system scale horizontally?', dimension: 'architecture', severity: 'critical' },
-    { id: 'arch_3', text: 'Are legacy systems being gradually modernized?', dimension: 'architecture', severity: 'high' },
+    {
+        id: 'arch_3',
+        text: 'Are legacy systems being gradually modernized?',
+        dimension: 'architecture',
+        severity: 'high',
+    },
 
     // Infrastructure
     { id: 'infra_1', text: 'Is CI/CD pipeline automated?', dimension: 'infrastructure', severity: 'high' },
@@ -68,21 +83,43 @@ export const TECH_DEBT_QUESTIONS: TechDebtQuestion[] = [
     { id: 'infra_3', text: 'Is monitoring and alerting comprehensive?', dimension: 'infrastructure', severity: 'high' },
 
     // Security
-    { id: 'security_1', text: 'Are security vulnerabilities scanned automatically?', dimension: 'security', severity: 'critical' },
-    { id: 'security_2', text: 'Is sensitive data encrypted at rest and in transit?', dimension: 'security', severity: 'critical' },
+    {
+        id: 'security_1',
+        text: 'Are security vulnerabilities scanned automatically?',
+        dimension: 'security',
+        severity: 'critical',
+    },
+    {
+        id: 'security_2',
+        text: 'Is sensitive data encrypted at rest and in transit?',
+        dimension: 'security',
+        severity: 'critical',
+    },
     { id: 'security_3', text: 'Are security patches applied regularly?', dimension: 'security', severity: 'high' },
 
     // Documentation
     { id: 'doc_1', text: 'Is API documentation up-to-date?', dimension: 'documentation', severity: 'medium' },
-    { id: 'doc_2', text: 'Are onboarding docs available for new developers?', dimension: 'documentation', severity: 'low' },
-    { id: 'doc_3', text: 'Is architectural decision record (ADR) maintained?', dimension: 'documentation', severity: 'low' }
+    {
+        id: 'doc_2',
+        text: 'Are onboarding docs available for new developers?',
+        dimension: 'documentation',
+        severity: 'low',
+    },
+    {
+        id: 'doc_3',
+        text: 'Is architectural decision record (ADR) maintained?',
+        dimension: 'documentation',
+        severity: 'low',
+    },
 ];
 
 /**
  * Calculate tech debt score (1-7 scale, lower is better)
  * 1 = Minimal debt, 7 = Critical debt
  */
-export const calculateTechDebtScore = (responses: Record<string, number>): {
+export const calculateTechDebtScore = (
+    responses: Record<string, number>,
+): {
     overall: number;
     byDimension: Record<string, number>;
     criticalIssues: string[];
@@ -91,7 +128,7 @@ export const calculateTechDebtScore = (responses: Record<string, number>): {
     const criticalIssues: string[] = [];
 
     // Group responses by dimension
-    TECH_DEBT_QUESTIONS.forEach(q => {
+    TECH_DEBT_QUESTIONS.forEach((q) => {
         if (!dimensionScores[q.dimension]) {
             dimensionScores[q.dimension] = [];
         }
@@ -109,7 +146,7 @@ export const calculateTechDebtScore = (responses: Record<string, number>): {
     let totalWeight = 0;
     const byDimension: Record<string, number> = {};
 
-    TECH_DEBT_DIMENSIONS.forEach(dim => {
+    TECH_DEBT_DIMENSIONS.forEach((dim) => {
         const scores = dimensionScores[dim.id] || [];
         const avg = scores.reduce((sum, s) => sum + s, 0) / scores.length;
         byDimension[dim.id] = avg;
@@ -123,7 +160,7 @@ export const calculateTechDebtScore = (responses: Record<string, number>): {
     return {
         overall: 6 - overall + 1, // Invert: high responses = low debt
         byDimension,
-        criticalIssues
+        criticalIssues,
     };
 };
 

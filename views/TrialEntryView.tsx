@@ -1,11 +1,12 @@
+import { ArrowRight, CheckCircle2, ChevronRight, Info, Lock, MessageSquare, ShieldCheck } from 'lucide-react';
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowRight, Lock, Info, CheckCircle2, ChevronRight, MessageSquare } from 'lucide-react';
-import { Api } from '../services/api';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../services/api';
 
 /**
  * TrialEntryView — Phase C: Trial Entry
- * 
+ *
  * Strategic Intent:
  * - High friction = High quality.
  * - Test organizational readiness.
@@ -58,14 +59,15 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
 
     return (
         <div className="min-h-screen bg-white dark:bg-navy-950 text-navy-900 dark:text-white flex flex-col md:flex-row">
-
             {/* Sidebar — The AI Regulator Narrative */}
             <div className="w-full md:w-1/3 bg-slate-50 dark:bg-navy-900 border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/5 p-8 md:p-12 flex flex-col">
                 <div className="flex items-center gap-3 mb-12">
                     <div className="h-8 px-2 rounded bg-brand-600 flex items-center justify-center">
                         <span className="text-white font-bold text-xs">DBR77</span>
                     </div>
-                    <span className="text-sm font-bold tracking-widest text-navy-900 dark:text-white opacity-40 uppercase">Partner Decyzyjny</span>
+                    <span className="text-sm font-bold tracking-widest text-navy-900 dark:text-white opacity-40 uppercase">
+                        Partner Decyzyjny
+                    </span>
                 </div>
 
                 <div className="flex-1 space-y-10">
@@ -74,11 +76,10 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
                             <MessageSquare size={14} />
                             Status: Selektywny Dostęp
                         </div>
-                        <h2 className="text-2xl font-bold leading-tight">
-                            To nie jest kolejny program "Free Trial".
-                        </h2>
+                        <h2 className="text-2xl font-bold leading-tight">To nie jest kolejny program "Free Trial".</h2>
                         <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-light">
-                            Metoda DBR77 wymaga dyscypliny i zaangażowania. Wchodząc w etap Trial, zaczynasz pracę nad realną strukturą swojej organizacji.
+                            Metoda DBR77 wymaga dyscypliny i zaangażowania. Wchodząc w etap Trial, zaczynasz pracę nad
+                            realną strukturą swojej organizacji.
                         </p>
                     </div>
 
@@ -87,21 +88,27 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
                             <CheckCircle2 className="text-brand-500 mt-1 shrink-0" size={18} />
                             <div>
                                 <h4 className="font-semibold text-sm">Weryfikacja Gotowości</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">AI pomoże Ci ocenić, czy Twoja organizacja jest gotowa na zmianę strategiczną.</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    AI pomoże Ci ocenić, czy Twoja organizacja jest gotowa na zmianę strategiczną.
+                                </p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
                             <CheckCircle2 className="text-brand-500 mt-1 shrink-0" size={18} />
                             <div>
                                 <h4 className="font-semibold text-sm">Praca na Kontekście</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Dostęp do modułów pozwalających na zdefiniowanie osi strategicznych firmy.</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Dostęp do modułów pozwalających na zdefiniowanie osi strategicznych firmy.
+                                </p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
                             <CheckCircle2 className="text-brand-500 mt-1 shrink-0" size={18} />
                             <div>
                                 <h4 className="font-semibold text-sm">Brak Zobowiązań Finansowych</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Liczymy na Twój czas i intelekt, a nie na kartę kredytową na tym etapie.</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Liczymy na Twój czas i intelekt, a nie na kartę kredytową na tym etapie.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -118,7 +125,6 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
             {/* Main Content — Access Code Entry */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 bg-white dark:bg-navy-950">
                 <div className="w-full max-w-md space-y-12">
-
                     <div className="text-center md:text-left space-y-4">
                         <h1 className="text-3xl font-bold tracking-tight">Aktywuj dostęp</h1>
                         <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -180,21 +186,24 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
 
                     <div className="pt-8 grid grid-cols-2 gap-4">
                         <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dla Konsultantów</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                Dla Konsultantów
+                            </div>
                             <button className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group">
                                 Zamów kody dostępowe
                                 <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                             </button>
                         </div>
                         <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ecosystem</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                Ecosystem
+                            </div>
                             <button className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group">
                                 Program poleceń Phase G
                                 <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

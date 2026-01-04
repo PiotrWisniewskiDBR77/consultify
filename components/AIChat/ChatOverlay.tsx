@@ -1,13 +1,14 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { Cpu, MapPin, Maximize2, MessageCircle, Shield, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { useAIContext } from '../../contexts/AIContext';
-import { useAppStore } from '../../store/useAppStore';
-import { ChatPanel } from '../ChatPanel';
 import { useAIStream } from '../../hooks/useAIStream';
-import { MessageCircle, X, Cpu, MapPin, Shield, Maximize2 } from 'lucide-react';
-import { ChatMessage, ChatOption, AppView } from '../../types';
-import { AIRoleBadge } from './AIRoleBadge';
-import { LLMSelector } from '../LLMSelector';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView, ChatMessage, ChatOption } from '../../types';
 import { AIUsageIndicator } from '../AIUsageIndicator';
+import { ChatPanel } from '../ChatPanel';
+import { LLMSelector } from '../LLMSelector';
+import { AIRoleBadge } from './AIRoleBadge';
 
 interface ChatOverlayProps {
     hideTrigger?: boolean;
@@ -15,12 +16,7 @@ interface ChatOverlayProps {
 
 export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false }) => {
     const { isChatOpen, toggleChat, screenContext, pmoContext, globalContext } = useAIContext();
-    const {
-        activeChatMessages,
-        addChatMessage,
-        isBotTyping,
-        setCurrentView
-    } = useAppStore();
+    const { activeChatMessages, addChatMessage, isBotTyping, setCurrentView } = useAppStore();
 
     const { isStreaming, streamedContent, startStream } = useAIStream();
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -37,7 +33,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
             }
             try {
                 const res = await fetch(`/api/projects/${pmoContext.projectId}/regulatory-mode`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -63,8 +59,9 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
             const warningMsg: ChatMessage = {
                 id: `warn-${Date.now()}`,
                 role: 'ai',
-                content: '⚠️ **No Project Selected**\n\nPlease select a project first to get context-aware assistance. I can still help with general questions.',
-                timestamp: new Date()
+                content:
+                    '⚠️ **No Project Selected**\n\nPlease select a project first to get context-aware assistance. I can still help with general questions.',
+                timestamp: new Date(),
             };
             addChatMessage(warningMsg);
         }
@@ -74,21 +71,21 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
             id: Date.now().toString(),
             role: 'user',
             content: text,
-            timestamp: new Date()
+            timestamp: new Date(),
         };
         addChatMessage(userMsg);
 
         // Prepare History
-        const history = activeChatMessages.map(m => ({
+        const history = activeChatMessages.map((m) => ({
             role: m.role === 'user' ? 'user' : 'model',
-            parts: [{ text: m.content }]
+            parts: [{ text: m.content }],
         }));
 
         // Build full context for AI
         const fullContext = {
             screenContext,
             pmo: pmoContext,
-            global: globalContext
+            global: globalContext,
         };
 
         // Start stream with full context
@@ -139,9 +136,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                             <div className="text-sm font-bold text-white leading-tight flex items-center gap-2">
                                 PMO Assistant
                                 {/* AI Roles Model: Display active role badge */}
-                                {pmoContext.projectId && (
-                                    <AIRoleBadge role={pmoContext.aiRole} size="sm" />
-                                )}
+                                {pmoContext.projectId && <AIRoleBadge role={pmoContext.aiRole} size="sm" />}
                             </div>
                             <div className="text-[10px] text-slate-400 flex items-center gap-1">
                                 <MapPin size={8} />
@@ -156,13 +151,14 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                         {/* Thinking Process Info Button */}
                         <button
                             onClick={() => setShowThinking(!showThinking)}
-                            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${showThinking
+                            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
+                                showThinking
                                     ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/50'
                                     : 'text-slate-400 hover:bg-white/10 hover:text-white'
-                                }`}
-                            title={showThinking ? "Hide Thinking Process" : "Show Thinking Process"}
+                            }`}
+                            title={showThinking ? 'Hide Thinking Process' : 'Show Thinking Process'}
                         >
-                            <Cpu size={14} className={showThinking ? "animate-pulse" : ""} />
+                            <Cpu size={14} className={showThinking ? 'animate-pulse' : ''} />
                         </button>
 
                         {/* AI Usage Indicator */}
@@ -208,9 +204,18 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
             {/* Content using ChatPanel */}
             <div className="flex-1 overflow-hidden relative flex flex-col">
                 <ChatPanel
-                    messages={isStreaming
-                        ? [...activeChatMessages, { id: 'stream', role: 'ai', content: streamedContent, timestamp: new Date() } as ChatMessage]
-                        : activeChatMessages
+                    messages={
+                        isStreaming
+                            ? [
+                                  ...activeChatMessages,
+                                  {
+                                      id: 'stream',
+                                      role: 'ai',
+                                      content: streamedContent,
+                                      timestamp: new Date(),
+                                  } as ChatMessage,
+                              ]
+                            : activeChatMessages
                     }
                     isTyping={isBotTyping}
                     onSendMessage={handleSendMessage}

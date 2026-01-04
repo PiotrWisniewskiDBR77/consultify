@@ -121,7 +121,10 @@ export const ListSubscriptionsQuerySchema = z.object({
 });
 
 export const ListPlansQuerySchema = z.object({
-    includeInactive: z.string().transform(val => val === 'true').default('false'),
+    includeInactive: z
+        .string()
+        .transform((val) => val === 'true')
+        .default('false'),
 });
 
 export const UsageQuerySchema = z.object({
@@ -170,4 +173,3 @@ export type SubscriptionIdParam = z.infer<typeof SubscriptionIdParamSchema>;
 export type PlanIdParam = z.infer<typeof PlanIdParamSchema>;
 export type CreditNoteIdParam = z.infer<typeof CreditNoteIdParamSchema>;
 export type SpendingAlertIdParam = z.infer<typeof SpendingAlertIdParamSchema>;
-

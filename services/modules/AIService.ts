@@ -3,23 +3,19 @@
  * Enterprise SaaS Architecture - Typed AI Operations
  */
 
+import { z } from 'zod';
+
+import { AISchemas } from '../../schemas/ai.schema';
 import { LLMProvider } from '../../types';
 import type {
-    AIMessage,
     AIConversation,
+    AIMessage,
+    AIUsageStats,
+    KnowledgeDocument,
     LLMProviderConfig,
     SystemPrompt,
-    KnowledgeDocument,
-    AIUsageStats,
 } from '../../types/domain/ai';
-import {
-    API_URL,
-    getHeaders,
-    fetchWithRetry,
-    handleResponse
-} from '../apiUtils';
-import { AISchemas } from '../../schemas/ai.schema';
-import { z } from 'zod';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../apiUtils';
 
 type UpdateSystemPromptPayload = Partial<SystemPrompt> & { updatedBy?: string | null };
 
@@ -191,13 +187,13 @@ export const AIService = {
         history: ChatMessage[],
         systemInstruction?: string,
         roleName?: string,
-        options?: ChatOptions
+        options?: ChatOptions,
     ): Promise<string> => {
         try {
             const response = await fetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, history, systemInstruction, roleName, options })
+                body: JSON.stringify({ message, history, systemInstruction, roleName, options }),
             });
             const data = await response.json();
             return data.text;
@@ -220,13 +216,13 @@ export const AIService = {
         roleName?: string,
         language?: string,
         onThinking?: (thought: ThoughtEvent) => void,
-        options?: ChatOptions
+        options?: ChatOptions,
     ): Promise<void> => {
         try {
             const response = await fetch(`${API_URL}/ai/chat/stream`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ message, history, systemInstruction, context, roleName, language, options })
+                body: JSON.stringify({ message, history, systemInstruction, context, roleName, language, options }),
             });
 
             if (!response.body) throw new Error('ReadableStream not supported');
@@ -275,7 +271,7 @@ export const AIService = {
                                     useAppStore.getState().setAiFreezeStatus({
                                         isFrozen: true,
                                         reason: data.error,
-                                        scope: data.budgetStatus?.scope || 'Global'
+                                        scope: data.budgetStatus?.scope || 'Global',
                                     });
                                 }
                             }
@@ -297,7 +293,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/diagnose`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ axis, input })
+            body: JSON.stringify({ axis, input }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Diagnosis failed');
@@ -308,7 +304,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/recommend`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ diagnosisReport })
+            body: JSON.stringify({ diagnosisReport }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Recommendation failed');
@@ -319,7 +315,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/roadmap`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ initiatives })
+            body: JSON.stringify({ initiatives }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Roadmap generation failed');
@@ -330,7 +326,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/simulate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ initiatives, revenue })
+            body: JSON.stringify({ initiatives, revenue }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Simulation failed');
@@ -341,7 +337,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/validate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ initiative })
+            body: JSON.stringify({ initiative }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Validation failed');
@@ -352,23 +348,34 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/verify`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ query })
+            body: JSON.stringify({ query }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Verification failed');
         return data;
     },
 
-    aiFeedback: async (feedback: { context: string; prompt: string; response: string; rating: number; correction?: string }): Promise<void> => {
+    aiFeedback: async (feedback: {
+        context: string;
+        prompt: string;
+        response: string;
+        rating: number;
+        correction?: string;
+    }): Promise<void> => {
         const res = await fetch(`${API_URL}/ai/feedback`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(feedback)
+            body: JSON.stringify(feedback),
         });
         if (!res.ok) throw new Error('Failed to save feedback');
     },
 
-    aiDetailFeedback: async (feedback: { action: string; rating: number; user_comment?: string; original_prompt?: string }): Promise<void> => {
+    aiDetailFeedback: async (feedback: {
+        action: string;
+        rating: number;
+        user_comment?: string;
+        original_prompt?: string;
+    }): Promise<void> => {
         const res = await fetch(`${API_URL}/ai/feedback`, {
             method: 'POST',
             headers: getHeaders(),
@@ -377,13 +384,15 @@ export const AIService = {
                 prompt: feedback.original_prompt || '',
                 response: '',
                 rating: feedback.rating,
-                correction: feedback.user_comment
-            })
+                correction: feedback.user_comment,
+            }),
         });
         if (!res.ok) throw new Error('Failed to save feedback');
     },
 
-    getIndustryBenchmarks: async (industry: string = 'General'): Promise<{ axis: string; benchmark: number; industry: string }[]> => {
+    getIndustryBenchmarks: async (
+        industry: string = 'General',
+    ): Promise<{ axis: string; benchmark: number; industry: string }[]> => {
         const res = await fetch(`${API_URL}/ai/benchmarks?industry=${industry}`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch benchmarks');
@@ -406,7 +415,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/ideas`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(idea)
+            body: JSON.stringify(idea),
         });
         if (!res.ok) throw new Error('Failed to create AI idea');
         const json = await res.json();
@@ -421,7 +430,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update AI idea');
         const json = await res.json();
@@ -432,7 +441,7 @@ export const AIService = {
     deleteAIIdea: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/ai/ideas/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete AI idea');
     },
@@ -447,7 +456,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/ai/observations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(observation)
+            body: JSON.stringify(observation),
         });
         if (!res.ok) throw new Error('Failed to create observation');
         return res.json();
@@ -456,7 +465,7 @@ export const AIService = {
     generateGlobalBrainObservations: async (): Promise<{ observations: AIObservation[]; count: number }> => {
         const response = await fetch(`${API_URL}/knowledge/observations/generate`, {
             method: 'GET',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Failed to generate observations');
         return response.json();
@@ -493,15 +502,19 @@ export const AIService = {
 
     getLLMAnalytics: async (days: number = 7): Promise<LLMAnalytics> => {
         const res = await fetch(`${API_URL}/llm/analytics?days=${days}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to fetch analytics');
         return res.json();
     },
 
-    getLLMLogs: async (limit: number = 50, offset: number = 0, onlyErrors: boolean = false): Promise<{ logs: LLMLog[]; total: number }> => {
+    getLLMLogs: async (
+        limit: number = 50,
+        offset: number = 0,
+        onlyErrors: boolean = false,
+    ): Promise<{ logs: LLMLog[]; total: number }> => {
         const res = await fetch(`${API_URL}/llm/logs?limit=${limit}&offset=${offset}&errors=${onlyErrors}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to fetch logs');
         return res.json();
@@ -511,16 +524,18 @@ export const AIService = {
         const res = await fetch(`${API_URL}/llm/providers/organization/toggle`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ providerId, enabled })
+            body: JSON.stringify({ providerId, enabled }),
         });
         return handleResponse(res, 'Failed to toggle provider');
     },
 
-    addLLMProvider: async (provider: Omit<LLMProviderConfig, 'id' | 'createdAt' | 'updatedAt' | 'healthStatus'>): Promise<void> => {
+    addLLMProvider: async (
+        provider: Omit<LLMProviderConfig, 'id' | 'createdAt' | 'updatedAt' | 'healthStatus'>,
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/llm/providers`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(provider)
+            body: JSON.stringify(provider),
         });
         if (!res.ok) throw new Error('Failed to add provider');
     },
@@ -529,7 +544,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/llm/providers/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update provider');
         return res.json();
@@ -539,17 +554,19 @@ export const AIService = {
         const res = await fetch(`${API_URL}/llm/providers/${id}/tier`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ tier })
+            body: JSON.stringify({ tier }),
         });
         if (!res.ok) throw new Error('Failed to update provider tier');
         return res.json();
     },
 
-    testLLMConnection: async (config: Partial<LLMProvider>): Promise<{ success: boolean; message: string; response?: string }> => {
+    testLLMConnection: async (
+        config: Partial<LLMProvider>,
+    ): Promise<{ success: boolean; message: string; response?: string }> => {
         const res = await fetch(`${API_URL}/llm/test`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(config)
+            body: JSON.stringify(config),
         });
         const data = await res.json();
         if (!res.ok) return { success: false, message: data.error || 'Connection failed' };
@@ -559,7 +576,7 @@ export const AIService = {
     deleteLLMProvider: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/llm/providers/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete provider');
     },
@@ -575,7 +592,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/llm/prompts/${key}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update prompt');
     },
@@ -583,7 +600,7 @@ export const AIService = {
     aiSeedSystemPrompts: async (): Promise<void> => {
         await fetch(`${API_URL}/llm/prompts/reset-defaults`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
     },
 
@@ -594,24 +611,28 @@ export const AIService = {
         return res.json();
     },
 
-    testOllamaConnection: async (endpoint: string): Promise<{ success: boolean; message?: string; models?: { name: string; size: number }[]; error?: string }> => {
+    testOllamaConnection: async (
+        endpoint: string,
+    ): Promise<{ success: boolean; message?: string; models?: { name: string; size: number }[]; error?: string }> => {
         const res = await fetch(`${API_URL}/llm/test-ollama`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ endpoint })
+            body: JSON.stringify({ endpoint }),
         });
         return res.json();
     },
 
     getOllamaModels: async (endpoint: string): Promise<{ name: string; size: number }[]> => {
         const res = await fetch(`${API_URL}/llm/ollama-models?endpoint=${encodeURIComponent(endpoint)}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) return [];
         return res.json();
     },
 
-    getOrganizationLLMConfig: async (orgId: string): Promise<{ activeProviderId: string | null; availableProviders: LLMProviderConfig[] }> => {
+    getOrganizationLLMConfig: async (
+        orgId: string,
+    ): Promise<{ activeProviderId: string | null; availableProviders: LLMProviderConfig[] }> => {
         const res = await fetch(`${API_URL}/llm/organization-config/${orgId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization LLM config');
         return res.json();
@@ -621,24 +642,37 @@ export const AIService = {
         const res = await fetch(`${API_URL}/llm/organization-config/${orgId}`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ providerId })
+            body: JSON.stringify({ providerId }),
         });
         if (!res.ok) throw new Error('Failed to update organization LLM config');
     },
 
-    diagnoseLLM: async (): Promise<{ status: string; checks: LLMHealthCheck[]; repairs: string[]; version: string }> => {
+    diagnoseLLM: async (): Promise<{
+        status: string;
+        checks: LLMHealthCheck[];
+        repairs: string[];
+        version: string;
+    }> => {
         const res = await fetch(`${API_URL}/llm/diagnose`);
         if (!res.ok) throw new Error('LLM diagnosis failed');
         return res.json();
     },
 
-    checkLLMProvidersHealth: async (): Promise<{ providers: LLMHealthCheck[]; overall: 'healthy' | 'degraded' | 'unhealthy' }> => {
+    checkLLMProvidersHealth: async (): Promise<{
+        providers: LLMHealthCheck[];
+        overall: 'healthy' | 'degraded' | 'unhealthy';
+    }> => {
         const res = await fetch(`${API_URL}/llm/providers/health`);
         if (!res.ok) throw new Error('Health check failed');
         return res.json();
     },
 
-    getUserAIUsage: async (): Promise<{ tokensUsed: number; tokensLimit: number; callsToday: number; lastCall?: string }> => {
+    getUserAIUsage: async (): Promise<{
+        tokensUsed: number;
+        tokensLimit: number;
+        callsToday: number;
+        lastCall?: string;
+    }> => {
         const res = await fetch(`${API_URL}/llm/user/usage`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch user AI usage');
         return res.json();
@@ -657,11 +691,14 @@ export const AIService = {
     },
 
     // --- AI LEARNING & KNOWLEDGE ---
-    aiExtractInsights: async (text: string, source: string = 'chat'): Promise<{ insights: string[]; topics: string[]; sentiment: string }> => {
+    aiExtractInsights: async (
+        text: string,
+        source: string = 'chat',
+    ): Promise<{ insights: string[]; topics: string[]; sentiment: string }> => {
         const res = await fetch(`${API_URL}/ai/extract-insight`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ text, source })
+            body: JSON.stringify({ text, source }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to extract insights');
@@ -675,11 +712,16 @@ export const AIService = {
         return data;
     },
 
-    submitKnowledgeCandidate: async (content: string, reasoning: string, source: string, topic?: string): Promise<void> => {
+    submitKnowledgeCandidate: async (
+        content: string,
+        reasoning: string,
+        source: string,
+        topic?: string,
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/knowledge/candidates`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ content, reasoning, source, relatedAxis: topic })
+            body: JSON.stringify({ content, reasoning, source, relatedAxis: topic }),
         });
         if (!res.ok) throw new Error('Failed to submit candidate');
     },
@@ -688,16 +730,25 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/candidates/${id}/status`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ status, adminComment })
+            body: JSON.stringify({ status, adminComment }),
         });
         if (!res.ok) throw new Error('Failed to update candidate status');
     },
 
-    updateKnowledgeCandidate: async (id: string, updates: { category?: string; tags?: string[]; implementation_notes?: string; impact_score?: number; status?: string }): Promise<KnowledgeCandidate> => {
+    updateKnowledgeCandidate: async (
+        id: string,
+        updates: {
+            category?: string;
+            tags?: string[];
+            implementation_notes?: string;
+            impact_score?: number;
+            status?: string;
+        },
+    ): Promise<KnowledgeCandidate> => {
         const res = await fetch(`${API_URL}/knowledge/candidates/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update candidate');
@@ -708,7 +759,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/candidates/${ideaId}/link-project`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ project_id: projectId, notes })
+            body: JSON.stringify({ project_id: projectId, notes }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to link idea to project');
@@ -726,7 +777,9 @@ export const AIService = {
     },
 
     getIdeasByCategory: async (category: string): Promise<KnowledgeCandidate[]> => {
-        const res = await fetch(`${API_URL}/knowledge/candidates/by-category/${encodeURIComponent(category)}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/knowledge/candidates/by-category/${encodeURIComponent(category)}`, {
+            headers: getHeaders(),
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch ideas');
         return data;
@@ -746,22 +799,37 @@ export const AIService = {
         return data;
     },
 
-    createGlobalStrategy: async (title: string, description: string, options?: { success_metrics?: string[]; priority?: string; target_date?: string; progress_percentage?: number }): Promise<GlobalStrategy> => {
+    createGlobalStrategy: async (
+        title: string,
+        description: string,
+        options?: { success_metrics?: string[]; priority?: string; target_date?: string; progress_percentage?: number },
+    ): Promise<GlobalStrategy> => {
         const res = await fetch(`${API_URL}/knowledge/strategies`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ title, description, ...options })
+            body: JSON.stringify({ title, description, ...options }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create strategy');
         return data;
     },
 
-    updateGlobalStrategy: async (id: string, updates: { title?: string; description?: string; success_metrics?: string[]; priority?: string; target_date?: string; progress_percentage?: number; is_active?: boolean }): Promise<GlobalStrategy> => {
+    updateGlobalStrategy: async (
+        id: string,
+        updates: {
+            title?: string;
+            description?: string;
+            success_metrics?: string[];
+            priority?: string;
+            target_date?: string;
+            progress_percentage?: number;
+            is_active?: boolean;
+        },
+    ): Promise<GlobalStrategy> => {
         const res = await fetch(`${API_URL}/knowledge/strategies/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update strategy');
@@ -772,7 +840,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/link-document`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ document_id: documentId })
+            body: JSON.stringify({ document_id: documentId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to link document to strategy');
@@ -783,7 +851,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/link-idea`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ idea_id: ideaId })
+            body: JSON.stringify({ idea_id: ideaId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to link idea to strategy');
@@ -793,7 +861,7 @@ export const AIService = {
     unlinkStrategyFromDocument: async (strategyId: string, documentId: string): Promise<{ success: boolean }> => {
         const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/unlink-document/${documentId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to unlink document from strategy');
@@ -803,7 +871,7 @@ export const AIService = {
     unlinkStrategyFromIdea: async (strategyId: string, ideaId: string): Promise<{ success: boolean }> => {
         const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/unlink-idea/${ideaId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to unlink idea from strategy');
@@ -814,14 +882,16 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/progress`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ progress_percentage: progressPercentage })
+            body: JSON.stringify({ progress_percentage: progressPercentage }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update strategy progress');
         return data;
     },
 
-    getStrategyWithRelated: async (strategyId: string): Promise<GlobalStrategy & { documents: KnowledgeDocument[]; ideas: KnowledgeCandidate[] }> => {
+    getStrategyWithRelated: async (
+        strategyId: string,
+    ): Promise<GlobalStrategy & { documents: KnowledgeDocument[]; ideas: KnowledgeCandidate[] }> => {
         const res = await fetch(`${API_URL}/knowledge/strategies/${strategyId}/related`, { headers: getHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch strategy');
@@ -839,7 +909,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/strategies/${id}/toggle`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ isActive })
+            body: JSON.stringify({ isActive }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to toggle strategy');
@@ -867,18 +937,21 @@ export const AIService = {
         const res = await fetch(`${API_URL}/knowledge/documents`, {
             method: 'POST',
             headers: headers,
-            body: formData
+            body: formData,
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to upload document');
         return data;
     },
 
-    updateKnowledgeDocument: async (id: string, updates: { category?: string; tags?: string[]; version?: number; parent_doc_id?: string }): Promise<KnowledgeDocument> => {
+    updateKnowledgeDocument: async (
+        id: string,
+        updates: { category?: string; tags?: string[]; version?: number; parent_doc_id?: string },
+    ): Promise<KnowledgeDocument> => {
         const res = await fetch(`${API_URL}/knowledge/documents/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update document');
@@ -886,7 +959,9 @@ export const AIService = {
     },
 
     getKnowledgeDocumentsByCategory: async (category: string): Promise<KnowledgeDocument[]> => {
-        const res = await fetch(`${API_URL}/knowledge/documents?category=${encodeURIComponent(category)}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/knowledge/documents?category=${encodeURIComponent(category)}`, {
+            headers: getHeaders(),
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch documents');
         return data;
@@ -899,7 +974,10 @@ export const AIService = {
         return data;
     },
 
-    uploadDocument: async (file: File, context?: { tabName?: string, type?: string }): Promise<{ id: string; url: string; filename: string }> => {
+    uploadDocument: async (
+        file: File,
+        context?: { tabName?: string; type?: string },
+    ): Promise<{ id: string; url: string; filename: string }> => {
         const formData = new FormData();
         formData.append('file', file);
         if (context) {
@@ -912,7 +990,7 @@ export const AIService = {
         const res = await fetch(`${API_URL}/documents/upload`, {
             method: 'POST',
             headers: headers,
-            body: formData
+            body: formData,
         });
 
         const data = await res.json();

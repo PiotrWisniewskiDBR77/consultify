@@ -9,7 +9,8 @@
  * - Learning from user actions
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { aiLogger } from './logger.js';
 
 // Nudge triggers and conditions
@@ -388,9 +389,9 @@ class ProactiveNudgesService {
 const proactiveNudgesService = new ProactiveNudgesService();
 
 export {
-ProactiveNudgesService,
+    ProactiveNudgesService,
     proactiveNudgesService,
-    proactiveNudges: proactiveNudgesService, // Alias for API routes
+    proactiveNudgesService as proactiveNudges, // Alias for API routes
     NUDGE_TRIGGERS
 };
 

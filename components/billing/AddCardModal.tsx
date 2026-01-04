@@ -1,14 +1,15 @@
 /**
  * AddCardModal - Add new payment method using Stripe Elements
- * 
+ *
  * Uses Stripe's SetupIntent for secure card collection with 3D Secure support
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { X, CreditCard, Shield, Loader2, AlertCircle, Check } from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, Check, CreditCard, Loader2, Shield, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 // Note: In a real implementation, you would use @stripe/react-stripe-js
 // For now, we'll create a card input that works with mock data in dev mode
@@ -24,7 +25,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
     const [cardReady, setCardReady] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [setupIntent, setSetupIntent] = useState<{ clientSecret: string; id: string } | null>(null);
-    
+
     // Card input state (for mock/development mode)
     const [cardNumber, setCardNumber] = useState('');
     const [expiry, setExpiry] = useState('');
@@ -76,7 +77,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
         try {
             // In development mode (no Stripe), create a mock payment method
             // In production, this would use Stripe.js confirmSetup
-            
+
             // Validate card inputs
             if (!cardNumber || cardNumber.replace(/\s/g, '').length < 16) {
                 throw new Error(t('billing.addCard.invalidCard', 'Please enter a valid card number'));
@@ -94,7 +95,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
             const mockPaymentMethodId = `pm_${Date.now()}_mock`;
 
             await Api.addPaymentMethod(mockPaymentMethodId);
-            
+
             toast.success(t('billing.addCard.success', 'Card added successfully'));
             onSuccess();
         } catch (err: any) {
@@ -212,7 +213,8 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
                     {/* Test Card Info (Development) */}
                     <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
                         <p className="text-xs text-amber-700 dark:text-amber-300">
-                            <strong>Development Mode:</strong> Use test card 4242 4242 4242 4242, any future expiry, any 3-digit CVC.
+                            <strong>Development Mode:</strong> Use test card 4242 4242 4242 4242, any future expiry, any
+                            3-digit CVC.
                         </p>
                     </div>
 
@@ -239,7 +241,10 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
                 {/* Footer */}
                 <div className="px-6 pb-6">
                     <p className="text-xs text-center text-slate-400 dark:text-slate-500">
-                        {t('billing.addCard.termsNote', 'By adding a card, you agree to our Terms of Service and authorize future charges according to your subscription.')}
+                        {t(
+                            'billing.addCard.termsNote',
+                            'By adding a card, you agree to our Terms of Service and authorize future charges according to your subscription.',
+                        )}
                     </p>
                 </div>
             </div>
@@ -248,11 +253,4 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
 };
 
 export default AddCardModal;
-
-
-
-
-
-
-
 

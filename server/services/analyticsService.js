@@ -5,7 +5,7 @@
  * with legacy JavaScript imports.
  */
 
-import AnalyticsService from '../src/services/analyticsService.js';
+import AnalyticsService from '../dist/services/analyticsService.js';
 
 export default AnalyticsService;
 

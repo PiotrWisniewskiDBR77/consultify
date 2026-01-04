@@ -1,21 +1,19 @@
 /**
  * Dunning Cron Job
- * 
+ *
  * Processes scheduled dunning actions:
  * - Payment retries
  * - Stage advancement
  * - Suspension enforcement
- * 
+ *
  * Runs every hour.
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
 import * as cron from 'node-cron';
+
 import logger from '../utils/Logger.js';
-
-
-
 
 // ==========================================
 // TYPES
@@ -51,7 +49,7 @@ class DunningCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.dunningService) {
-            this.deps.dunningService = await import('../../services/dunningService.js').then(m => m.default || m);
+            this.deps.dunningService = await import('../../services/dunningService.js').then((m) => m.default || m);
         }
         return this.deps as Dependencies;
     }
@@ -66,30 +64,34 @@ class DunningCron {
         }
 
         // Every hour at minute 30
-        this.job = cron.schedule('30 * * * *', async () => {
-            const deps = await this.ensureDeps();
-            logger.info('[DunningCron] Starting scheduled dunning processing...');
+        this.job = cron.schedule(
+            '30 * * * *',
+            async () => {
+                const deps = await this.ensureDeps();
+                logger.info('[DunningCron] Starting scheduled dunning processing...');
 
-            try {
-                await deps.dunningService.processScheduledRetries();
-            } catch (error: unknown) {
-                const err = error instanceof Error ? error : new Error(String(error));
-                logger.error('[DunningCron] Processing failed:', err);
+                try {
+                    await deps.dunningService.processScheduledRetries();
+                } catch (error: unknown) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    logger.error('[DunningCron] Processing failed:', err);
 
-                // Report to Sentry if available
-                if (deps.sentry) {
-                    try {
-                        deps.sentry.captureException(err, {
-                            tags: { component: 'dunning', job: 'scheduled' },
-                        });
-                    } catch (e: unknown) {
-                        // Sentry not available
+                    // Report to Sentry if available
+                    if (deps.sentry) {
+                        try {
+                            deps.sentry.captureException(err, {
+                                tags: { component: 'dunning', job: 'scheduled' },
+                            });
+                        } catch (e: unknown) {
+                            // Sentry not available
+                        }
                     }
                 }
-            }
-        }, {
-            timezone: 'UTC',
-        });
+            },
+            {
+                timezone: 'UTC',
+            },
+        );
 
         logger.info('[DunningCron] Scheduled hourly dunning processing at :30');
     }
@@ -132,7 +134,4 @@ export const stopDunningJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default DunningCron;
-
-
-
 

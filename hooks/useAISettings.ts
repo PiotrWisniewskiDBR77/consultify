@@ -1,37 +1,33 @@
 /**
  * useAISettings Hook
- * 
+ *
  * React hook for fetching and managing AI settings.
  * Provides access to effective settings, proactivity mode, and update methods.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { 
-    EffectiveAISettings, 
-    UserAISettings, 
-    AIProactivityMode, 
-    ProactivityBehavior 
-} from '../types';
+import { useCallback, useEffect, useState } from 'react';
+
+import { AIProactivityMode, EffectiveAISettings, ProactivityBehavior, UserAISettings } from '../types';
 
 interface UseAISettingsReturn {
     // Effective settings (merged from all levels)
     effectiveSettings: EffectiveAISettings | null;
-    
+
     // User settings (editable)
     userSettings: UserAISettings | null;
-    
+
     // Proactivity
     proactivityMode: AIProactivityMode;
     proactivityBehavior: ProactivityBehavior;
     setProactivityMode: (mode: AIProactivityMode) => Promise<void>;
-    
+
     // Available models
     availableModels: Array<{ id: string; name: string; provider: string }>;
-    
+
     // State
     loading: boolean;
     error: string | null;
-    
+
     // Actions
     updateUserSettings: (settings: Partial<UserAISettings>) => Promise<void>;
     refresh: () => Promise<void>;
@@ -43,20 +39,20 @@ const PROACTIVITY_BEHAVIORS: Record<AIProactivityMode, ProactivityBehavior> = {
         autoSuggest: false,
         nudges: false,
         contextualHints: false,
-        initiateConversation: false
+        initiateConversation: false,
     },
     BALANCED: {
         autoSuggest: true,
         nudges: true,
         contextualHints: true,
-        initiateConversation: false
+        initiateConversation: false,
     },
     PROACTIVE: {
         autoSuggest: true,
         nudges: true,
         contextualHints: true,
-        initiateConversation: true
-    }
+        initiateConversation: true,
+    },
 };
 
 export const useAISettings = (): UseAISettingsReturn => {
@@ -76,13 +72,13 @@ export const useAISettings = (): UseAISettingsReturn => {
 
         try {
             const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token}` };
 
             // Fetch all settings in parallel
             const [effectiveRes, userRes, modelsRes] = await Promise.all([
                 fetch('/api/ai-settings/effective', { headers }),
                 fetch('/api/ai-settings/user', { headers }),
-                fetch('/api/ai-settings/available-models', { headers })
+                fetch('/api/ai-settings/available-models', { headers }),
             ]);
 
             if (effectiveRes.ok) {
@@ -119,9 +115,9 @@ export const useAISettings = (): UseAISettingsReturn => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ proactivityMode: mode })
+                body: JSON.stringify({ proactivityMode: mode }),
             });
 
             if (!res.ok) {
@@ -129,12 +125,16 @@ export const useAISettings = (): UseAISettingsReturn => {
             }
 
             // Update local state
-            setUserSettings(prev => prev ? { ...prev, proactivityMode: mode } : null);
-            setEffectiveSettings(prev => prev ? {
-                ...prev,
-                proactivityMode: mode,
-                proactivityBehavior: PROACTIVITY_BEHAVIORS[mode]
-            } : null);
+            setUserSettings((prev) => (prev ? { ...prev, proactivityMode: mode } : null));
+            setEffectiveSettings((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          proactivityMode: mode,
+                          proactivityBehavior: PROACTIVITY_BEHAVIORS[mode],
+                      }
+                    : null,
+            );
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update settings');
             throw err;
@@ -142,32 +142,35 @@ export const useAISettings = (): UseAISettingsReturn => {
     }, []);
 
     // Update user settings
-    const updateUserSettings = useCallback(async (settings: Partial<UserAISettings>) => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/ai-settings/user', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(settings)
-            });
+    const updateUserSettings = useCallback(
+        async (settings: Partial<UserAISettings>) => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/ai-settings/user', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(settings),
+                });
 
-            if (!res.ok) {
-                throw new Error('Failed to update settings');
+                if (!res.ok) {
+                    throw new Error('Failed to update settings');
+                }
+
+                const updated = await res.json();
+                setUserSettings(updated);
+
+                // Refresh effective settings
+                await fetchSettings();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to update settings');
+                throw err;
             }
-
-            const updated = await res.json();
-            setUserSettings(updated);
-
-            // Refresh effective settings
-            await fetchSettings();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update settings');
-            throw err;
-        }
-    }, [fetchSettings]);
+        },
+        [fetchSettings],
+    );
 
     return {
         effectiveSettings,
@@ -179,36 +182,35 @@ export const useAISettings = (): UseAISettingsReturn => {
         loading,
         error,
         updateUserSettings,
-        refresh: fetchSettings
+        refresh: fetchSettings,
     };
 };
 
 /**
  * useProactivityMode Hook
- * 
+ *
  * Simplified hook for just proactivity mode and behaviors.
  */
 export const useProactivityMode = () => {
     const { proactivityMode, proactivityBehavior, setProactivityMode, loading } = useAISettings();
-    
+
     return {
         mode: proactivityMode,
         behaviors: proactivityBehavior,
         setMode: setProactivityMode,
         loading,
-        
+
         // Convenience checks
         isReactive: proactivityMode === 'REACTIVE',
         isBalanced: proactivityMode === 'BALANCED',
         isProactive: proactivityMode === 'PROACTIVE',
-        
+
         // Behavior checks
         canAutoSuggest: proactivityBehavior.autoSuggest,
         canShowNudges: proactivityBehavior.nudges,
         canShowHints: proactivityBehavior.contextualHints,
-        canInitiateConversation: proactivityBehavior.initiateConversation
+        canInitiateConversation: proactivityBehavior.initiateConversation,
     };
 };
 
 export default useAISettings;
-

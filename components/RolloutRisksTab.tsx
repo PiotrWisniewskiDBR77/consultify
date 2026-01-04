@@ -1,6 +1,16 @@
+import {
+    AlertOctagon,
+    AlertTriangle,
+    Check,
+    ChevronDown,
+    ChevronRight,
+    HelpCircle,
+    Link as LinkIcon,
+    Plus,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { FullSession, RAIDItem, FullInitiative } from '../types';
-import { AlertOctagon, HelpCircle, AlertTriangle, Link as LinkIcon, Plus, ChevronDown, ChevronRight, Check } from 'lucide-react';
+
+import { FullInitiative, FullSession, RAIDItem } from '../types';
 
 interface RolloutRisksTabProps {
     data: FullSession['rollout'];
@@ -15,10 +25,10 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
     // Mock items if empty
     const items = data?.risks || [];
 
-    const filteredItems = items.filter(i => i.type === activeType);
+    const filteredItems = items.filter((i) => i.type === activeType);
 
     const toggleExpand = (id: string) => {
-        setExpandedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+        setExpandedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     };
 
     const addItem = () => {
@@ -29,22 +39,26 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
             description: '',
             severity: 'Medium',
             status: 'Open',
-            dueDate: new Date().toISOString()
+            dueDate: new Date().toISOString(),
         };
         onUpdate({ ...data, risks: [...items, newItem] });
     };
 
     const updateItem = (id: string, updates: Partial<RAIDItem>) => {
-        const newItems = items.map(i => i.id === id ? { ...i, ...updates } : i);
+        const newItems = items.map((i) => (i.id === id ? { ...i, ...updates } : i));
         onUpdate({ ...data, risks: newItems });
     };
 
     const getSeverityColor = (sev: string) => {
         switch (sev) {
-            case 'Critical': return 'text-red-600 bg-red-100 dark:bg-red-900/50 dark:text-red-400';
-            case 'High': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/50 dark:text-orange-400';
-            case 'Medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/50 dark:text-yellow-400';
-            default: return 'text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400';
+            case 'Critical':
+                return 'text-red-600 bg-red-100 dark:bg-red-900/50 dark:text-red-400';
+            case 'High':
+                return 'text-orange-600 bg-orange-100 dark:bg-orange-900/50 dark:text-orange-400';
+            case 'Medium':
+                return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/50 dark:text-yellow-400';
+            default:
+                return 'text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400';
         }
     };
 
@@ -72,20 +86,21 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                     { id: 'Risk', icon: AlertOctagon, color: 'text-red-500' },
                     { id: 'Issue', icon: AlertTriangle, color: 'text-orange-500' },
                     { id: 'Assumption', icon: HelpCircle, color: 'text-blue-500' },
-                    { id: 'Dependency', icon: LinkIcon, color: 'text-purple-500' }
+                    { id: 'Dependency', icon: LinkIcon, color: 'text-purple-500' },
                 ].map((type) => (
                     <button
                         key={type.id}
                         onClick={() => setActiveType(type.id as any)}
-                        className={`px-4 py-3 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-colors border-b-2 ${activeType === type.id
-                            ? 'bg-slate-50 dark:bg-white/5 border-red-500 text-slate-800 dark:text-white'
-                            : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 border-transparent'
-                            }`}
+                        className={`px-4 py-3 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-colors border-b-2 ${
+                            activeType === type.id
+                                ? 'bg-slate-50 dark:bg-white/5 border-red-500 text-slate-800 dark:text-white'
+                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 border-transparent'
+                        }`}
                     >
                         <type.icon size={16} className={activeType === type.id ? type.color : 'text-slate-400'} />
                         {type.id}s
                         <span className="bg-slate-200 dark:bg-white/20 px-1.5 py-0.5 rounded-full text-[10px] text-slate-600 dark:text-slate-300">
-                            {items.filter(i => i.type === type.id).length}
+                            {items.filter((i) => i.type === type.id).length}
                         </span>
                     </button>
                 ))}
@@ -112,11 +127,18 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                                 </td>
                             </tr>
                         ) : (
-                            filteredItems.map(item => (
+                            filteredItems.map((item) => (
                                 <React.Fragment key={item.id}>
                                     <tr className="hover:bg-slate-50 dark:hover:bg-white/5 group">
-                                        <td className="p-4 text-center cursor-pointer" onClick={() => toggleExpand(item.id)}>
-                                            {expandedIds.includes(item.id) ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+                                        <td
+                                            className="p-4 text-center cursor-pointer"
+                                            onClick={() => toggleExpand(item.id)}
+                                        >
+                                            {expandedIds.includes(item.id) ? (
+                                                <ChevronDown size={16} className="text-slate-400" />
+                                            ) : (
+                                                <ChevronRight size={16} className="text-slate-400" />
+                                            )}
                                         </td>
                                         <td className="p-4">
                                             <input
@@ -126,7 +148,9 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                                             />
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${getSeverityColor(item.severity)}`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs font-bold ${getSeverityColor(item.severity)}`}
+                                            >
                                                 {item.severity}
                                             </span>
                                         </td>
@@ -142,7 +166,7 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                                             </select>
                                         </td>
                                         <td className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                                            {item.ownerId || "Unassigned"}
+                                            {item.ownerId || 'Unassigned'}
                                         </td>
                                         <td className="p-4 text-sm text-slate-500 dark:text-slate-400">
                                             {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : '-'}
@@ -153,10 +177,14 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                                             <td colSpan={6} className="p-4 pl-14">
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div>
-                                                        <label className="block text-xs font-bold text-slate-500 mb-1">Description</label>
+                                                        <label className="block text-xs font-bold text-slate-500 mb-1">
+                                                            Description
+                                                        </label>
                                                         <textarea
                                                             value={item.description}
-                                                            onChange={(e) => updateItem(item.id, { description: e.target.value })}
+                                                            onChange={(e) =>
+                                                                updateItem(item.id, { description: e.target.value })
+                                                            }
                                                             className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm"
                                                             rows={3}
                                                         />
@@ -167,7 +195,9 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
                                                         </label>
                                                         <textarea
                                                             value={item.mitigationPlan || ''}
-                                                            onChange={(e) => updateItem(item.id, { mitigationPlan: e.target.value })}
+                                                            onChange={(e) =>
+                                                                updateItem(item.id, { mitigationPlan: e.target.value })
+                                                            }
                                                             className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded p-2 text-sm"
                                                             rows={3}
                                                             placeholder="What actions are required?"

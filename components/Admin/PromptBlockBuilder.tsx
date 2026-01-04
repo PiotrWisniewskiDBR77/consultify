@@ -1,34 +1,34 @@
 /**
  * Prompt Block Builder
- * 
+ *
  * Visual drag-and-drop interface for composing prompt templates
  * from reusable blocks.
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
+    AlertTriangle,
     Blocks,
-    Plus,
-    Trash2,
-    GripVertical,
+    CheckCircle,
+    CheckSquare,
     ChevronDown,
     ChevronRight,
-    Search,
-    Info,
-    AlertTriangle,
-    CheckCircle,
+    Copy,
+    Database,
     Eye,
     EyeOff,
-    Copy,
-    Loader2,
-    User,
-    Sliders,
     FileText,
+    GripVertical,
+    Info,
+    Loader2,
+    Plus,
+    Search,
     Shield,
-    Database,
-    CheckSquare
+    Sliders,
+    Trash2,
+    User,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Block {
     code: string;
@@ -60,7 +60,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
     OUTPUT: <FileText size={14} />,
     CONSTRAINT: <Shield size={14} />,
     CONTEXT: <Database size={14} />,
-    TASK: <CheckSquare size={14} />
+    TASK: <CheckSquare size={14} />,
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -69,14 +69,14 @@ const CATEGORY_COLORS: Record<string, string> = {
     OUTPUT: 'purple',
     CONSTRAINT: 'red',
     CONTEXT: 'orange',
-    TASK: 'teal'
+    TASK: 'teal',
 };
 
 export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     selectedBlocks,
     onBlocksChange,
     onPreview,
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const [availableBlocks, setAvailableBlocks] = useState<Block[]>([]);
@@ -100,8 +100,8 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
             const token = localStorage.getItem('token');
             const response = await fetch('/api/prompt-assistant/blocks', {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (response.ok) {
@@ -117,7 +117,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     };
 
     // Filter blocks by search
-    const filteredBlocks = availableBlocks.filter(block => {
+    const filteredBlocks = availableBlocks.filter((block) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -128,16 +128,19 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     });
 
     // Group blocks by category
-    const blocksByCategory = filteredBlocks.reduce((acc, block) => {
-        if (!acc[block.category]) acc[block.category] = [];
-        acc[block.category].push(block);
-        return acc;
-    }, {} as Record<string, Block[]>);
+    const blocksByCategory = filteredBlocks.reduce(
+        (acc, block) => {
+            if (!acc[block.category]) acc[block.category] = [];
+            acc[block.category].push(block);
+            return acc;
+        },
+        {} as Record<string, Block[]>,
+    );
 
     // Get selected block details
-    const selectedBlockDetails = selectedBlocks.map(code =>
-        availableBlocks.find(b => b.code === code)
-    ).filter(Boolean) as Block[];
+    const selectedBlockDetails = selectedBlocks
+        .map((code) => availableBlocks.find((b) => b.code === code))
+        .filter(Boolean) as Block[];
 
     const toggleCategory = (category: string) => {
         const newExpanded = new Set(expandedCategories);
@@ -156,7 +159,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     };
 
     const removeBlock = (code: string) => {
-        onBlocksChange(selectedBlocks.filter(b => b !== code));
+        onBlocksChange(selectedBlocks.filter((b) => b !== code));
     };
 
     const moveBlock = (fromIndex: number, toIndex: number) => {
@@ -198,7 +201,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
 
         // Build preview locally from selected blocks
         const preview = selectedBlockDetails
-            .map(block => `# ${block.category}: ${block.name}\n${block.semantic}`)
+            .map((block) => `# ${block.category}: ${block.name}\n${block.semantic}`)
             .join('\n\n---\n\n');
 
         setPreviewContent(preview);
@@ -213,7 +216,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
         return {
             bg: `bg-${color}-100 dark:bg-${color}-900/30`,
             text: `text-${color}-700 dark:text-${color}-400`,
-            border: `border-${color}-200 dark:border-${color}-800`
+            border: `border-${color}-200 dark:border-${color}-800`,
         };
     };
 
@@ -232,9 +235,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                 <div className="p-4 border-b border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-3">
                         <Blocks className="w-5 h-5 text-blue-500" />
-                        <h3 className="font-semibold text-slate-900 dark:text-white">
-                            Block Library
-                        </h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Block Library</h3>
                     </div>
 
                     {/* Search */}
@@ -252,14 +253,19 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {Object.entries(blocksByCategory).map(([category, blocks]) => (
-                        <div key={category} className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
+                        <div
+                            key={category}
+                            className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden"
+                        >
                             {/* Category header */}
                             <button
                                 onClick={() => toggleCategory(category)}
                                 className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                             >
                                 <div className="flex items-center gap-2">
-                                    <span className={`p-1 rounded ${getCategoryColor(category).bg} ${getCategoryColor(category).text}`}>
+                                    <span
+                                        className={`p-1 rounded ${getCategoryColor(category).bg} ${getCategoryColor(category).text}`}
+                                    >
                                         {CATEGORY_ICONS[category]}
                                     </span>
                                     <span className="font-medium text-sm text-slate-900 dark:text-white">
@@ -279,16 +285,19 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                             {/* Blocks in category */}
                             {expandedCategories.has(category) && (
                                 <div className="p-2 space-y-1">
-                                    {blocks.map(block => {
+                                    {blocks.map((block) => {
                                         const isSelected = selectedBlocks.includes(block.code);
                                         return (
                                             <div
                                                 key={block.code}
-                                                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500'
-                                                    : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-700'
-                                                    }`}
-                                                onClick={() => isSelected ? removeBlock(block.code) : addBlock(block.code)}
+                                                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${
+                                                    isSelected
+                                                        ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500'
+                                                        : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-700'
+                                                }`}
+                                                onClick={() =>
+                                                    isSelected ? removeBlock(block.code) : addBlock(block.code)
+                                                }
                                             >
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
@@ -296,7 +305,10 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                                                             {block.name}
                                                         </span>
                                                         {isSelected && (
-                                                            <CheckCircle size={14} className="text-blue-500 flex-shrink-0" />
+                                                            <CheckCircle
+                                                                size={14}
+                                                                className="text-blue-500 flex-shrink-0"
+                                                            />
                                                         )}
                                                     </div>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
@@ -312,10 +324,11 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                                                             addBlock(block.code);
                                                         }
                                                     }}
-                                                    className={`p-1.5 rounded-lg transition-colors ${isSelected
-                                                        ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30'
-                                                        : 'text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 opacity-0 group-hover:opacity-100'
-                                                        }`}
+                                                    className={`p-1.5 rounded-lg transition-colors ${
+                                                        isSelected
+                                                            ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30'
+                                                            : 'text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 opacity-0 group-hover:opacity-100'
+                                                    }`}
                                                 >
                                                     {isSelected ? <Trash2 size={14} /> : <Plus size={14} />}
                                                 </button>
@@ -337,12 +350,8 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <CheckSquare className="w-5 h-5 text-green-500" />
-                                <h3 className="font-semibold text-slate-900 dark:text-white">
-                                    Selected Blocks
-                                </h3>
-                                <span className="text-sm text-slate-500">
-                                    ({selectedBlocks.length})
-                                </span>
+                                <h3 className="font-semibold text-slate-900 dark:text-white">Selected Blocks</h3>
+                                <span className="text-sm text-slate-500">({selectedBlocks.length})</span>
                             </div>
                             <button
                                 onClick={generatePreview}
@@ -369,22 +378,23 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                                     onDragStart={() => handleDragStart(block.code)}
                                     onDragOver={(e) => handleDragOver(e, index)}
                                     onDragEnd={handleDragEnd}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${dragOverIndex === index
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800'
-                                        } ${draggedBlock === block.code ? 'opacity-50' : ''}`}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${
+                                        dragOverIndex === index
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800'
+                                    } ${draggedBlock === block.code ? 'opacity-50' : ''}`}
                                 >
                                     <GripVertical size={16} className="text-slate-400 cursor-move flex-shrink-0" />
-                                    <span className={`p-1 rounded ${getCategoryColor(block.category).bg} ${getCategoryColor(block.category).text}`}>
+                                    <span
+                                        className={`p-1 rounded ${getCategoryColor(block.category).bg} ${getCategoryColor(block.category).text}`}
+                                    >
                                         {CATEGORY_ICONS[block.category]}
                                     </span>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium text-sm text-slate-900 dark:text-white truncate">
                                             {block.name}
                                         </p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {block.category}
-                                        </p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{block.category}</p>
                                     </div>
                                     <button
                                         onClick={() => removeBlock(block.code)}
@@ -402,9 +412,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                 {showPreview && (
                     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10">
                         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10">
-                            <h4 className="font-semibold text-slate-900 dark:text-white text-sm">
-                                Assembled Preview
-                            </h4>
+                            <h4 className="font-semibold text-slate-900 dark:text-white text-sm">Assembled Preview</h4>
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(previewContent);
@@ -421,7 +429,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                 )}
 
                 {/* Validation warnings */}
-                {selectedBlocks.length > 0 && !selectedBlocks.some(b => b.includes('LANGUAGE_ADAPTIVE')) && (
+                {selectedBlocks.length > 0 && !selectedBlocks.some((b) => b.includes('LANGUAGE_ADAPTIVE')) && (
                     <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                         <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -435,9 +443,8 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 };
 
 export default PromptBlockBuilder;
-

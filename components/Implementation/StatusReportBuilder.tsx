@@ -1,40 +1,41 @@
 /**
  * StatusReportBuilder Component
- * 
+ *
  * PMO Status Reporting and Performance Monitoring
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Progress Reporting (Clause 4.5.3)
  * - PMI PMBOK 7th Edition - Status Report / Dashboard
  * - PRINCE2 - Highlight Report
- * 
+ *
  * PMO Domain: PERFORMANCE_MONITORING
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FileText,
+    AlertTriangle,
+    Archive,
+    BarChart3,
     Calendar,
     CheckCircle2,
-    AlertTriangle,
-    TrendingUp,
-    TrendingDown,
+    ChevronRight,
     Clock,
     Download,
-    Share2,
+    Eye,
+    FileText,
+    History,
+    Loader2,
     Plus,
-    ChevronRight,
-    BarChart3,
     RefreshCw,
     Send,
-    Loader2,
+    Share2,
+    TrendingDown,
+    TrendingUp,
     X,
-    Eye,
-    Archive,
-    History
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 type ReportStatus = 'GREEN' | 'AMBER' | 'RED';
 
@@ -97,13 +98,10 @@ interface StatusReportBuilderProps {
 const STATUS_CONFIG: Record<ReportStatus, { color: string; bgColor: string; label: string }> = {
     GREEN: { color: 'text-green-600', bgColor: 'bg-green-500', label: 'On Track' },
     AMBER: { color: 'text-amber-600', bgColor: 'bg-amber-500', label: 'At Risk' },
-    RED: { color: 'text-red-600', bgColor: 'bg-red-500', label: 'Off Track' }
+    RED: { color: 'text-red-600', bgColor: 'bg-red-500', label: 'Off Track' },
 };
 
-export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
-    initiativeId,
-    initiativeName
-}) => {
+export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({ initiativeId, initiativeName }) => {
     const [selectedPeriod, setSelectedPeriod] = useState<'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>('WEEKLY');
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -155,9 +153,9 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
         setIsGenerating(true);
         try {
             const response = await Api.post(`/status-reports/initiative/${initiativeId}/generate`, {
-                periodType: selectedPeriod
+                periodType: selectedPeriod,
             });
-            
+
             setCurrentReport(response.report);
             toast.success('Report generated successfully');
             fetchReportHistory();
@@ -177,8 +175,8 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
         try {
             const response = await fetch(`/api/status-reports/${currentReport.id}/export/${format}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             if (!response.ok) throw new Error('Export failed');
@@ -204,11 +202,14 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             return;
         }
 
-        const emails = recipientEmails.split(',').map(e => e.trim()).filter(Boolean);
-        const recipients = emails.map(email => ({
+        const emails = recipientEmails
+            .split(',')
+            .map((e) => e.trim())
+            .filter(Boolean);
+        const recipients = emails.map((email) => ({
             recipientEmail: email,
             recipientType: 'STAKEHOLDER',
-            distributionMethod: 'EMAIL'
+            distributionMethod: 'EMAIL',
         }));
 
         try {
@@ -250,13 +251,14 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
     const renderStatusIndicator = (status: ReportStatus, size: 'sm' | 'lg' = 'sm') => {
         const config = STATUS_CONFIG[status] || STATUS_CONFIG.GREEN;
         const sizeClasses = size === 'lg' ? 'w-4 h-4' : 'w-3 h-3';
-        return (
-            <div className={`${sizeClasses} rounded-full ${config.bgColor}`} title={config.label} />
-        );
+        return <div className={`${sizeClasses} rounded-full ${config.bgColor}`} title={config.label} />;
     };
 
     const renderSection = (sectionKey: string, section: ReportSection, icon: React.ReactNode) => (
-        <div key={sectionKey} className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+        <div
+            key={sectionKey}
+            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4"
+        >
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     {icon}
@@ -295,13 +297,20 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
 
     const getSectionIcon = (key: string) => {
         switch (key.toUpperCase()) {
-            case 'SCHEDULE': return <Clock size={16} className="text-amber-500" />;
-            case 'BUDGET': return <BarChart3 size={16} className="text-green-500" />;
-            case 'SCOPE': return <FileText size={16} className="text-blue-500" />;
-            case 'QUALITY': return <CheckCircle2 size={16} className="text-purple-500" />;
-            case 'RISKS': return <AlertTriangle size={16} className="text-red-500" />;
-            case 'RESOURCES': return <Clock size={16} className="text-cyan-500" />;
-            default: return <FileText size={16} className="text-slate-500" />;
+            case 'SCHEDULE':
+                return <Clock size={16} className="text-amber-500" />;
+            case 'BUDGET':
+                return <BarChart3 size={16} className="text-green-500" />;
+            case 'SCOPE':
+                return <FileText size={16} className="text-blue-500" />;
+            case 'QUALITY':
+                return <CheckCircle2 size={16} className="text-purple-500" />;
+            case 'RISKS':
+                return <AlertTriangle size={16} className="text-red-500" />;
+            case 'RESOURCES':
+                return <Clock size={16} className="text-cyan-500" />;
+            default:
+                return <FileText size={16} className="text-slate-500" />;
         }
     };
 
@@ -433,20 +442,30 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
 
             {/* Report Status Badge */}
             {currentReport.status && currentReport.status !== 'PUBLISHED' && (
-                <div className={`flex items-center justify-between p-3 rounded-lg ${
-                    currentReport.status === 'DRAFT' ? 'bg-slate-100 dark:bg-navy-800' :
-                    currentReport.status === 'APPROVED' ? 'bg-green-50 dark:bg-green-900/20' : ''
-                }`}>
+                <div
+                    className={`flex items-center justify-between p-3 rounded-lg ${
+                        currentReport.status === 'DRAFT'
+                            ? 'bg-slate-100 dark:bg-navy-800'
+                            : currentReport.status === 'APPROVED'
+                              ? 'bg-green-50 dark:bg-green-900/20'
+                              : ''
+                    }`}
+                >
                     <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            currentReport.status === 'DRAFT' ? 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300' :
-                            currentReport.status === 'APPROVED' ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300' :
-                            'bg-purple-200 text-purple-700'
-                        }`}>
+                        <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                                currentReport.status === 'DRAFT'
+                                    ? 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                                    : currentReport.status === 'APPROVED'
+                                      ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300'
+                                      : 'bg-purple-200 text-purple-700'
+                            }`}
+                        >
                             {currentReport.status}
                         </span>
                         <span className="text-sm text-slate-500">
-                            {currentReport.status === 'DRAFT' && 'This report is a draft. Approve to share with stakeholders.'}
+                            {currentReport.status === 'DRAFT' &&
+                                'This report is a draft. Approve to share with stakeholders.'}
                             {currentReport.status === 'APPROVED' && 'Report approved. Ready to publish.'}
                         </span>
                     </div>
@@ -472,16 +491,20 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             )}
 
             {/* Overall Status Banner */}
-            <div className={`p-6 rounded-xl ${
-                overallStatus === 'GREEN' 
-                    ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20'
-                    : overallStatus === 'AMBER'
-                        ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20'
-                        : 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20'
-            }`}>
+            <div
+                className={`p-6 rounded-xl ${
+                    overallStatus === 'GREEN'
+                        ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20'
+                        : overallStatus === 'AMBER'
+                          ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20'
+                          : 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20'
+                }`}
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className={`w-16 h-16 rounded-xl ${STATUS_CONFIG[overallStatus].bgColor} flex items-center justify-center`}>
+                        <div
+                            className={`w-16 h-16 rounded-xl ${STATUS_CONFIG[overallStatus].bgColor} flex items-center justify-center`}
+                        >
                             {overallStatus === 'GREEN' ? (
                                 <TrendingUp size={32} className="text-white" />
                             ) : overallStatus === 'AMBER' ? (
@@ -501,7 +524,9 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                     </div>
                     <div className="text-right">
                         <div className="text-sm text-slate-500 dark:text-slate-400">Report Period</div>
-                        <div className="text-lg font-medium text-navy-900 dark:text-white">{currentReport.periodLabel}</div>
+                        <div className="text-lg font-medium text-navy-900 dark:text-white">
+                            {currentReport.periodLabel}
+                        </div>
                         <div className="text-xs text-slate-400 flex items-center gap-1 justify-end mt-1">
                             <Calendar size={12} />
                             Generated {new Date(currentReport.createdAt).toLocaleDateString('pl-PL')}
@@ -551,9 +576,9 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             {/* Status Sections Grid */}
             {currentReport.sections && Object.keys(currentReport.sections).length > 0 && (
                 <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(currentReport.sections).map(([key, section]) => (
-                        renderSection(key, section, getSectionIcon(key))
-                    ))}
+                    {Object.entries(currentReport.sections).map(([key, section]) =>
+                        renderSection(key, section, getSectionIcon(key)),
+                    )}
                 </div>
             )}
 
@@ -567,7 +592,10 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                     {currentReport.accomplishments && currentReport.accomplishments.length > 0 ? (
                         <ul className="space-y-2">
                             {currentReport.accomplishments.map((item, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <li
+                                    key={i}
+                                    className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                                >
                                     <ChevronRight size={14} className="text-green-500 mt-1 shrink-0" />
                                     {item}
                                 </li>
@@ -586,7 +614,10 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                     {currentReport.nextSteps && currentReport.nextSteps.length > 0 ? (
                         <ul className="space-y-2">
                             {currentReport.nextSteps.map((item, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <li
+                                    key={i}
+                                    className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                                >
                                     <ChevronRight size={14} className="text-blue-500 mt-1 shrink-0" />
                                     {item}
                                 </li>
@@ -632,9 +663,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[80vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                Report History
-                            </h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">Report History</h3>
                             <button
                                 onClick={() => setShowHistoryModal(false)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
@@ -646,7 +675,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                             {reportHistory.length === 0 ? (
                                 <p className="text-slate-400 text-center py-8">No previous reports</p>
                             ) : (
-                                reportHistory.map(report => (
+                                reportHistory.map((report) => (
                                     <div
                                         key={report.id}
                                         className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 cursor-pointer"
@@ -664,11 +693,15 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`px-2 py-0.5 rounded text-xs ${
-                                                report.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' :
-                                                report.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-slate-200 text-slate-600'
-                                            }`}>
+                                            <span
+                                                className={`px-2 py-0.5 rounded text-xs ${
+                                                    report.status === 'PUBLISHED'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : report.status === 'APPROVED'
+                                                          ? 'bg-blue-100 text-blue-700'
+                                                          : 'bg-slate-200 text-slate-600'
+                                                }`}
+                                            >
                                                 {report.status}
                                             </span>
                                             <Eye size={16} className="text-slate-400" />
@@ -686,9 +719,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-md p-6 m-4">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                Distribute Report
-                            </h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">Distribute Report</h3>
                             <button
                                 onClick={() => setShowDistributeModal(false)}
                                 className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded"

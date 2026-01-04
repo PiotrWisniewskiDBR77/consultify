@@ -1,14 +1,12 @@
 /**
  * Backup Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadBackupservice = createCachedLazyService('../../services/backupService.js');
+import service from '../../services/backupService.js';
 
 // Export default instance (for backward compatibility)
-export default loadBackupservice();
+export default service;

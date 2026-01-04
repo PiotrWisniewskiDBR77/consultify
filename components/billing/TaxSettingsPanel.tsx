@@ -3,21 +3,22 @@
  * Extended tax configuration with VAT validation, tax rates, and Stripe Tax integration
  */
 
-import React, { useState, useEffect } from 'react';
 import {
+    AlertTriangle,
+    Calculator,
+    CheckCircle,
+    Edit2,
     Globe,
     Percent,
-    CheckCircle,
-    XCircle,
-    AlertTriangle,
-    RefreshCw,
     Plus,
-    Edit2,
-    Trash2,
+    RefreshCw,
     Search,
     Shield,
-    Calculator
+    Trash2,
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 interface TaxRate {
@@ -70,7 +71,7 @@ const TAX_TYPES = [
     { value: 'pst', label: 'PST (Provincial Sales Tax)' },
     { value: 'sales_tax', label: 'Sales Tax' },
     { value: 'withholding', label: 'Withholding Tax' },
-    { value: 'other', label: 'Other' }
+    { value: 'other', label: 'Other' },
 ];
 
 const COUNTRIES = [
@@ -88,7 +89,7 @@ const COUNTRIES = [
     { code: 'AT', name: 'Austria' },
     { code: 'ES', name: 'Spain' },
     { code: 'IT', name: 'Italy' },
-    { code: 'SE', name: 'Sweden' }
+    { code: 'SE', name: 'Sweden' },
 ];
 
 export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = false }) => {
@@ -140,7 +141,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
         try {
             const res = await Api.post('/billing/tax/validate-vat', {
                 vatNumber,
-                countryCode: vatCountry
+                countryCode: vatCountry,
             });
             setValidation(res.validation);
         } catch (err: any) {
@@ -159,7 +160,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                 amount: calcAmount,
                 currency: 'USD',
                 country: calcCountry,
-                taxIdNumber: calcTaxId || undefined
+                taxIdNumber: calcTaxId || undefined,
             });
             setCalcResult(res.tax);
         } catch (err: any) {
@@ -194,17 +195,18 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
         }
     };
 
-    const filteredRates = taxRates.filter(rate =>
-        rate.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        rate.jurisdiction?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        rate.country?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredRates = taxRates.filter(
+        (rate) =>
+            rate.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            rate.jurisdiction?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            rate.country?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     const formatCurrency = (amount: number, currency = 'USD') => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency,
-            minimumFractionDigits: 2
+            minimumFractionDigits: 2,
         }).format(amount / 100);
     };
 
@@ -279,11 +281,16 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                             className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                         >
                             <option value="">All Countries</option>
-                            {COUNTRIES.map(c => (
-                                <option key={c.code} value={c.code}>{c.name}</option>
+                            {COUNTRIES.map((c) => (
+                                <option key={c.code} value={c.code}>
+                                    {c.name}
+                                </option>
                             ))}
                         </select>
-                        <button onClick={fetchTaxRates} className="p-2 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
+                        <button
+                            onClick={fetchTaxRates}
+                            className="p-2 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
+                        >
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                         {isAdmin && (
@@ -315,20 +322,36 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                             <table className="w-full">
                                 <thead className="bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-white/10">
                                     <tr>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Country</th>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Type</th>
-                                        <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Rate</th>
-                                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                                        {isAdmin && <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>}
+                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">
+                                            Name
+                                        </th>
+                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">
+                                            Country
+                                        </th>
+                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">
+                                            Type
+                                        </th>
+                                        <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">
+                                            Rate
+                                        </th>
+                                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">
+                                            Status
+                                        </th>
+                                        {isAdmin && (
+                                            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">
+                                                Actions
+                                            </th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-                                    {filteredRates.map(rate => (
+                                    {filteredRates.map((rate) => (
                                         <tr key={rate.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                             <td className="px-4 py-3">
                                                 <div>
-                                                    <p className="font-medium text-slate-900 dark:text-white">{rate.display_name}</p>
+                                                    <p className="font-medium text-slate-900 dark:text-white">
+                                                        {rate.display_name}
+                                                    </p>
                                                     {rate.jurisdiction && (
                                                         <p className="text-xs text-slate-500">{rate.jurisdiction}</p>
                                                     )}
@@ -414,8 +437,10 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                             >
                                 <option value="">Select country...</option>
-                                {COUNTRIES.map(c => (
-                                    <option key={c.code} value={c.code}>{c.name}</option>
+                                {COUNTRIES.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -436,22 +461,20 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                                     disabled={!vatNumber || !vatCountry || validating}
                                     className="px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {validating ? (
-                                        <RefreshCw className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        'Validate'
-                                    )}
+                                    {validating ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Validate'}
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     {validation && (
-                        <div className={`p-4 rounded-lg ${
-                            validation.is_valid 
-                                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-                        }`}>
+                        <div
+                            className={`p-4 rounded-lg ${
+                                validation.is_valid
+                                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                                    : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                            }`}
+                        >
                             <div className="flex items-start gap-3">
                                 {validation.is_valid ? (
                                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
@@ -459,7 +482,9 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                                     <XCircle className="w-5 h-5 text-red-500 mt-0.5" />
                                 )}
                                 <div>
-                                    <p className={`font-medium ${validation.is_valid ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                                    <p
+                                        className={`font-medium ${validation.is_valid ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}
+                                    >
                                         {validation.is_valid ? 'Valid VAT Number' : 'Invalid VAT Number'}
                                     </p>
                                     {validation.company_name && (
@@ -473,7 +498,9 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                                         </p>
                                     )}
                                     {validation.error && (
-                                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">{validation.error}</p>
+                                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                            {validation.error}
+                                        </p>
                                     )}
                                     {validation.cached && (
                                         <p className="text-xs text-slate-500 mt-2">
@@ -490,9 +517,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
             {/* Tax Calculator Tab */}
             {activeTab === 'calculator' && (
                 <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        Tax Calculator
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Tax Calculator</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                         Calculate applicable taxes based on customer location and tax ID.
                     </p>
@@ -519,8 +544,10 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                             >
                                 <option value="">Select country...</option>
-                                {COUNTRIES.map(c => (
-                                    <option key={c.code} value={c.code}>{c.name}</option>
+                                {COUNTRIES.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -542,11 +569,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                                 disabled={!calcAmount || !calcCountry || calculating}
                                 className="w-full px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {calculating ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
-                                ) : (
-                                    'Calculate'
-                                )}
+                                {calculating ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Calculate'}
                             </button>
                         </div>
                     </div>
@@ -628,7 +651,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
         country: rate?.country || '',
         state: rate?.state || '',
         is_active: rate?.is_active !== false,
-        automatic_tax: rate?.automatic_tax || false
+        automatic_tax: rate?.automatic_tax || false,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -651,7 +674,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                         <input
                             type="text"
                             value={formData.display_name}
-                            onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, display_name: e.target.value }))}
                             required
                             placeholder="e.g., Polish VAT 23%"
                             className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800"
@@ -665,12 +688,14 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                             </label>
                             <select
                                 value={formData.tax_type}
-                                onChange={(e) => setFormData(prev => ({ ...prev, tax_type: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, tax_type: e.target.value }))}
                                 required
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800"
                             >
-                                {TAX_TYPES.map(t => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                {TAX_TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>
+                                        {t.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -684,7 +709,9 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                                 min="0"
                                 max="100"
                                 value={formData.percentage}
-                                onChange={(e) => setFormData(prev => ({ ...prev, percentage: parseFloat(e.target.value) || 0 }))}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, percentage: parseFloat(e.target.value) || 0 }))
+                                }
                                 required
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800"
                             />
@@ -698,12 +725,14 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                             </label>
                             <select
                                 value={formData.country}
-                                onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, country: e.target.value }))}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800"
                             >
                                 <option value="">Global</option>
-                                {COUNTRIES.map(c => (
-                                    <option key={c.code} value={c.code}>{c.name}</option>
+                                {COUNTRIES.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -714,7 +743,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                             <input
                                 type="text"
                                 value={formData.jurisdiction}
-                                onChange={(e) => setFormData(prev => ({ ...prev, jurisdiction: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, jurisdiction: e.target.value }))}
                                 placeholder="e.g., Poland"
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800"
                             />
@@ -726,7 +755,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                             <input
                                 type="checkbox"
                                 checked={formData.inclusive}
-                                onChange={(e) => setFormData(prev => ({ ...prev, inclusive: e.target.checked }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, inclusive: e.target.checked }))}
                                 className="w-4 h-4 rounded border-slate-300"
                             />
                             <span className="text-sm text-slate-700 dark:text-slate-300">Tax Inclusive</span>
@@ -735,7 +764,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
                             <input
                                 type="checkbox"
                                 checked={formData.is_active}
-                                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
                                 className="w-4 h-4 rounded border-slate-300"
                             />
                             <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
@@ -764,10 +793,4 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
 };
 
 export default TaxSettingsPanel;
-
-
-
-
-
-
 

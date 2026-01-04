@@ -2,10 +2,11 @@
  * ApiManagementPanel - API Keys Management
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { Key, Plus, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Key, Loader2, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 export const ApiManagementPanel: React.FC = () => {
     const [apiKeys, setApiKeys] = useState<any[]>([]);
@@ -75,10 +76,7 @@ export const ApiManagementPanel: React.FC = () => {
                     </div>
                 ) : (
                     apiKeys.map((key) => (
-                        <div
-                            key={key.id}
-                            className="p-4 bg-white/5 rounded-xl border border-white/10"
-                        >
+                        <div key={key.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
@@ -126,10 +124,4 @@ export const ApiManagementPanel: React.FC = () => {
 };
 
 export default ApiManagementPanel;
-
-
-
-
-
-
 

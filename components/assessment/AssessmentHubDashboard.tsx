@@ -3,10 +3,11 @@
  * Unified view of all assessment types (DRD, RapidLean, External Digital, Generic Reports)
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Award, TrendingUp, FileText, AlertCircle, PlusCircle, BarChart3, Target, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import { AlertCircle, ArrowLeft, Award, BarChart3, FileText, PlusCircle, Target, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { RapidLeanWorkspace } from './RapidLeanWorkspace';
 
 interface AssessmentHubProps {
@@ -28,10 +29,7 @@ interface OverviewData {
     };
 }
 
-export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
-    projectId,
-    organizationId
-}) => {
+export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({ projectId, organizationId }) => {
     const { t } = useTranslation();
     const [overview, setOverview] = useState<OverviewData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -98,9 +96,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     <Award className="w-10 h-10 text-yellow-500" />
                     Assessment Hub
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                    Unified view of all organizational assessments
-                </p>
+                <p className="text-gray-600 dark:text-gray-400">Unified view of all organizational assessments</p>
             </div>
 
             {/* Overall Readiness Score */}
@@ -109,7 +105,8 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     <div>
                         <h2 className="text-2xl font-bold mb-2">Overall Digital Readiness</h2>
                         <p className="text-blue-100">
-                            Based on {consolidated.totalAssessments} assessment(s) across {consolidated.completedModules} module(s)
+                            Based on {consolidated.totalAssessments} assessment(s) across{' '}
+                            {consolidated.completedModules} module(s)
                         </p>
                     </div>
                     <div className="text-right">
@@ -139,7 +136,9 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     details={overview.drd.exists ? `Gap: ${overview.drd.gap.toFixed(1)}` : 'Not started'}
                     color="blue"
                     actionLabel={overview.drd.exists ? 'View Details' : 'Start Assessment'}
-                    onAction={() => {/* Navigate to DRD */ }}
+                    onAction={() => {
+                        /* Navigate to DRD */
+                    }}
                 />
 
                 {/* RapidLean Card */}
@@ -148,7 +147,11 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     icon={<TrendingUp className="w-8 h-8" />}
                     status={overview.rapidLean.exists ? 'complete' : 'pending'}
                     score={overview.rapidLean.exists ? overview.rapidLean.overallScore : null}
-                    details={overview.rapidLean.exists ? `Benchmark: ${overview.rapidLean.benchmark.toFixed(1)}` : 'Not started'}
+                    details={
+                        overview.rapidLean.exists
+                            ? `Benchmark: ${overview.rapidLean.benchmark.toFixed(1)}`
+                            : 'Not started'
+                    }
                     color="green"
                     actionLabel={overview.rapidLean.exists ? 'View Results' : 'Start Assessment'}
                     onAction={() => setShowRapidLeanWorkspace(true)}
@@ -160,12 +163,16 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     icon={<FileText className="w-8 h-8" />}
                     status={overview.externalDigital.exists ? 'complete' : 'pending'}
                     score={null}
-                    details={overview.externalDigital.exists
-                        ? `${overview.externalDigital.totalCount} framework(s)`
-                        : 'No uploads'}
+                    details={
+                        overview.externalDigital.exists
+                            ? `${overview.externalDigital.totalCount} framework(s)`
+                            : 'No uploads'
+                    }
                     color="purple"
                     actionLabel="Upload Report"
-                    onAction={() => {/* Navigate to External */ }}
+                    onAction={() => {
+                        /* Navigate to External */
+                    }}
                 />
 
                 {/* Generic Reports Card */}
@@ -174,12 +181,16 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
                     icon={<FileText className="w-8 h-8" />}
                     status={overview.genericReports.exists ? 'complete' : 'pending'}
                     score={null}
-                    details={overview.genericReports.exists
-                        ? `${overview.genericReports.totalCount} report(s)`
-                        : 'No uploads'}
+                    details={
+                        overview.genericReports.exists
+                            ? `${overview.genericReports.totalCount} report(s)`
+                            : 'No uploads'
+                    }
                     color="orange"
                     actionLabel="Upload Report"
-                    onAction={() => {/* Navigate to Generic Reports */ }}
+                    onAction={() => {
+                        /* Navigate to Generic Reports */
+                    }}
                 />
             </div>
 
@@ -230,7 +241,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
             <div className="mt-8 bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                 <div className="flex flex-wrap gap-3">
-                    <button 
+                    <button
                         onClick={() => setShowRapidLeanWorkspace(true)}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
                     >
@@ -271,13 +282,13 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
     details,
     color,
     actionLabel,
-    onAction
+    onAction,
 }) => {
     const colorClasses = {
         blue: 'from-blue-500 to-blue-600',
         green: 'from-green-500 to-green-600',
         purple: 'from-purple-500 to-purple-600',
-        orange: 'from-orange-500 to-orange-600'
+        orange: 'from-orange-500 to-orange-600',
     };
 
     return (
@@ -285,8 +296,9 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
             <div className={`bg-gradient-to-br ${colorClasses[color]} text-white p-4`}>
                 <div className="flex items-center justify-between mb-2">
                     {icon}
-                    <span className={`px-2 py-1 text-xs rounded ${status === 'complete' ? 'bg-white/20' : 'bg-white/10'
-                        }`}>
+                    <span
+                        className={`px-2 py-1 text-xs rounded ${status === 'complete' ? 'bg-white/20' : 'bg-white/10'}`}
+                    >
                         {status === 'complete' ? 'Complete' : 'Pending'}
                     </span>
                 </div>
@@ -295,13 +307,9 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
 
             <div className="p-4">
                 {score !== null && (
-                    <div className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-                        {score.toFixed(1)}
-                    </div>
+                    <div className="text-3xl font-bold text-gray-800 dark:text-white mb-2">{score.toFixed(1)}</div>
                 )}
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    {details}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{details}</p>
                 <button
                     onClick={onAction}
                     className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"

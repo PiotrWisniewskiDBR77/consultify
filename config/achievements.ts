@@ -1,4 +1,4 @@
-import { Zap, Target, Users, Layout, BookOpen, Flag, Award, Sparkles } from 'lucide-react';
+import { Award, BookOpen, Flag, Layout, Sparkles, Target, Users, Zap } from 'lucide-react';
 
 export interface Achievement {
     id: string;
@@ -15,14 +15,14 @@ export const ACHIEVEMENTS: Achievement[] = [
         title: 'Pierwsze Kroki',
         description: 'Ukończono pierwszą trasę onboardingową',
         icon: Flag,
-        category: 'onboarding'
+        category: 'onboarding',
     },
     {
         id: 'axis_creator',
         title: 'Architekt',
         description: 'Utworzono pierwszą Oś Decyzyjną',
         icon: Layout,
-        category: 'onboarding'
+        category: 'onboarding',
     },
 
     // Social
@@ -31,14 +31,14 @@ export const ACHIEVEMENTS: Achievement[] = [
         title: 'Gracz Zespołowy',
         description: 'Zaproszono pierwszego członka zespołu',
         icon: Users,
-        category: 'social'
+        category: 'social',
     },
     {
         id: 'collaborator',
         title: 'Dyskutant',
         description: 'Dodano 5 komentarzy w dyskusjach',
         icon: MessageSquare,
-        category: 'social'
+        category: 'social',
     },
 
     // Expert
@@ -47,14 +47,14 @@ export const ACHIEVEMENTS: Achievement[] = [
         title: 'Strateg',
         description: 'Zdefiniowano poziomy Actual i Target dla osi',
         icon: Target,
-        category: 'expert'
+        category: 'expert',
     },
     {
         id: 'quick_learner',
         title: 'Prymusek',
         description: 'Przeczytaj 5 artykułów pomocy',
         icon: BookOpen,
-        category: 'expert'
+        category: 'expert',
     },
 
     // Power
@@ -63,19 +63,19 @@ export const ACHIEVEMENTS: Achievement[] = [
         title: 'Konsekwentny',
         description: 'Logowanie przez 3 dni z rzędu',
         icon: Zap,
-        category: 'power'
+        category: 'power',
     },
     {
         id: 'phase_completer',
         title: 'Zwycięzca Fazy',
         description: 'Ukończono fazę E',
         icon: Award,
-        category: 'power'
-    }
+        category: 'power',
+    },
 ];
 
 // Helper to get achievement details
-export const getAchievement = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
+export const getAchievement = (id: string) => ACHIEVEMENTS.find((a) => a.id === id);
 
 // Temporary icon fix import
 import { MessageSquare } from 'lucide-react';

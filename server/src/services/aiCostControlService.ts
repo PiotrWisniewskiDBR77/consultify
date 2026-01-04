@@ -1,15 +1,16 @@
 /**
  * AI Cost Control Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Manages AI usage budgets at global, tenant, and project levels.
  * Provides cost tracking, budget enforcement, and automatic model downgrading.
  * Fully migrated from server/services/aiCostControlService.js
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -22,16 +23,33 @@ interface ModelCost {
 }
 
 type ModelId =
-    | 'gpt-4' | 'gpt-4-turbo' | 'claude-3-opus' | 'gemini-1.5-pro'
-    | 'gpt-3.5-turbo' | 'claude-3-sonnet' | 'gemini-1.5-flash'
-    | 'gpt-4o-mini' | 'claude-3-haiku' | 'glm-4' | 'glm-4-plus'
-    | 'qwen-turbo' | 'command-r-plus' | 'deepseek-chat'
+    | 'gpt-4'
+    | 'gpt-4-turbo'
+    | 'claude-3-opus'
+    | 'gemini-1.5-pro'
+    | 'gpt-3.5-turbo'
+    | 'claude-3-sonnet'
+    | 'gemini-1.5-flash'
+    | 'gpt-4o-mini'
+    | 'claude-3-haiku'
+    | 'glm-4'
+    | 'glm-4-plus'
+    | 'qwen-turbo'
+    | 'command-r-plus'
+    | 'deepseek-chat'
     | 'meta/llama-3.1-405b-instruct';
 
 type ModelCategory = 'reasoning' | 'execution' | 'chat' | 'summarization';
 type ScopeType = 'global' | 'tenant' | 'project';
 type AIRole = 'ADVISOR' | 'PMO_MANAGER' | 'EXECUTOR' | 'EDUCATOR';
-type ActionType = 'chat' | 'analysis' | 'deep_diagnose' | 'generation' | 'task_insight' | 'report' | 'executive_summary';
+type ActionType =
+    | 'chat'
+    | 'analysis'
+    | 'deep_diagnose'
+    | 'generation'
+    | 'task_insight'
+    | 'report'
+    | 'executive_summary';
 
 interface BudgetRow {
     id: string;
@@ -128,7 +146,7 @@ const MODEL_COSTS: Record<ModelId, ModelCost> = {
     'qwen-turbo': { input: 0.002, output: 0.006 },
     'command-r-plus': { input: 0.003, output: 0.015 },
     'deepseek-chat': { input: 0.001, output: 0.002 },
-    'meta/llama-3.1-405b-instruct': { input: 0.003, output: 0.005 }
+    'meta/llama-3.1-405b-instruct': { input: 0.003, output: 0.005 },
 };
 
 // Model categories and their tier mapping
@@ -136,34 +154,34 @@ export const MODEL_CATEGORIES = {
     REASONING: 'reasoning' as const,
     EXECUTION: 'execution' as const,
     CHAT: 'chat' as const,
-    SUMMARIZATION: 'summarization' as const
+    SUMMARIZATION: 'summarization' as const,
 };
 
 // Category to tier preference (higher tier = more expensive but capable)
 const CATEGORY_TIER_PREFERENCE: Record<ModelCategory, number> = {
-    [MODEL_CATEGORIES.REASONING]: 1,      // Premium
-    [MODEL_CATEGORIES.EXECUTION]: 2,      // Standard
-    [MODEL_CATEGORIES.CHAT]: 3,           // Budget
-    [MODEL_CATEGORIES.SUMMARIZATION]: 2   // Standard
+    [MODEL_CATEGORIES.REASONING]: 1, // Premium
+    [MODEL_CATEGORIES.EXECUTION]: 2, // Standard
+    [MODEL_CATEGORIES.CHAT]: 3, // Budget
+    [MODEL_CATEGORIES.SUMMARIZATION]: 2, // Standard
 };
 
 // Role to category mapping
 export const ROLE_TO_CATEGORY: Record<AIRole, ModelCategory> = {
-    'ADVISOR': MODEL_CATEGORIES.CHAT,
-    'PMO_MANAGER': MODEL_CATEGORIES.REASONING,
-    'EXECUTOR': MODEL_CATEGORIES.EXECUTION,
-    'EDUCATOR': MODEL_CATEGORIES.CHAT
+    ADVISOR: MODEL_CATEGORIES.CHAT,
+    PMO_MANAGER: MODEL_CATEGORIES.REASONING,
+    EXECUTOR: MODEL_CATEGORIES.EXECUTION,
+    EDUCATOR: MODEL_CATEGORIES.CHAT,
 };
 
 // Action to category mapping
 export const ACTION_TO_CATEGORY: Record<ActionType, ModelCategory> = {
-    'chat': MODEL_CATEGORIES.CHAT,
-    'analysis': MODEL_CATEGORIES.REASONING,
-    'deep_diagnose': MODEL_CATEGORIES.REASONING,
-    'generation': MODEL_CATEGORIES.EXECUTION,
-    'task_insight': MODEL_CATEGORIES.EXECUTION,
-    'report': MODEL_CATEGORIES.SUMMARIZATION,
-    'executive_summary': MODEL_CATEGORIES.SUMMARIZATION
+    chat: MODEL_CATEGORIES.CHAT,
+    analysis: MODEL_CATEGORIES.REASONING,
+    deep_diagnose: MODEL_CATEGORIES.REASONING,
+    generation: MODEL_CATEGORIES.EXECUTION,
+    task_insight: MODEL_CATEGORIES.EXECUTION,
+    report: MODEL_CATEGORIES.SUMMARIZATION,
+    executive_summary: MODEL_CATEGORIES.SUMMARIZATION,
 };
 
 // ==========================================
@@ -241,14 +259,20 @@ class AICostControlServiceClass {
     /**
      * Set global monthly budget (SuperAdmin only)
      */
-    async setGlobalBudget(monthlyLimitUsd: number, autoDowngrade = true): Promise<{ id: string; monthlyLimitUsd: number; autoDowngrade: boolean }> {
+    async setGlobalBudget(
+        monthlyLimitUsd: number,
+        autoDowngrade = true,
+    ): Promise<{ id: string; monthlyLimitUsd: number; autoDowngrade: boolean }> {
         const id = 'budget-global';
-        await this.dbRun(`
+        await this.dbRun(
+            `
             INSERT INTO ai_budgets (id, scope_type, scope_id, monthly_limit_usd, auto_downgrade)
             VALUES (?, 'global', NULL, ?, ?)
             ON CONFLICT(scope_type, scope_id) 
             DO UPDATE SET monthly_limit_usd = ?, auto_downgrade = ?, updated_at = CURRENT_TIMESTAMP
-        `, [id, monthlyLimitUsd, autoDowngrade ? 1 : 0, monthlyLimitUsd, autoDowngrade ? 1 : 0]);
+        `,
+            [id, monthlyLimitUsd, autoDowngrade ? 1 : 0, monthlyLimitUsd, autoDowngrade ? 1 : 0],
+        );
 
         return { id, monthlyLimitUsd, autoDowngrade };
     }
@@ -256,14 +280,21 @@ class AICostControlServiceClass {
     /**
      * Set tenant (organization) monthly budget
      */
-    async setTenantBudget(organizationId: string, monthlyLimitUsd: number, autoDowngrade = true): Promise<{ id: string; organizationId: string; monthlyLimitUsd: number; autoDowngrade: boolean }> {
+    async setTenantBudget(
+        organizationId: string,
+        monthlyLimitUsd: number,
+        autoDowngrade = true,
+    ): Promise<{ id: string; organizationId: string; monthlyLimitUsd: number; autoDowngrade: boolean }> {
         const id = `budget-tenant-${organizationId}`;
-        await this.dbRun(`
+        await this.dbRun(
+            `
             INSERT INTO ai_budgets (id, scope_type, scope_id, monthly_limit_usd, auto_downgrade)
             VALUES (?, 'tenant', ?, ?, ?)
             ON CONFLICT(scope_type, scope_id) 
             DO UPDATE SET monthly_limit_usd = ?, auto_downgrade = ?, updated_at = CURRENT_TIMESTAMP
-        `, [id, organizationId, monthlyLimitUsd, autoDowngrade ? 1 : 0, monthlyLimitUsd, autoDowngrade ? 1 : 0]);
+        `,
+            [id, organizationId, monthlyLimitUsd, autoDowngrade ? 1 : 0, monthlyLimitUsd, autoDowngrade ? 1 : 0],
+        );
 
         return { id, organizationId, monthlyLimitUsd, autoDowngrade };
     }
@@ -271,14 +302,21 @@ class AICostControlServiceClass {
     /**
      * Set project budget
      */
-    async setProjectBudget(projectId: string, monthlyLimitUsd: number, autoDowngrade = true): Promise<{ id: string; projectId: string; monthlyLimitUsd: number; autoDowngrade: boolean }> {
+    async setProjectBudget(
+        projectId: string,
+        monthlyLimitUsd: number,
+        autoDowngrade = true,
+    ): Promise<{ id: string; projectId: string; monthlyLimitUsd: number; autoDowngrade: boolean }> {
         const id = `budget-project-${projectId}`;
-        await this.dbRun(`
+        await this.dbRun(
+            `
             INSERT INTO ai_budgets (id, scope_type, scope_id, monthly_limit_usd, auto_downgrade)
             VALUES (?, 'project', ?, ?, ?)
             ON CONFLICT(scope_type, scope_id) 
             DO UPDATE SET monthly_limit_usd = ?, auto_downgrade = ?, updated_at = CURRENT_TIMESTAMP
-        `, [id, projectId, monthlyLimitUsd, autoDowngrade ? 1 : 0, monthlyLimitUsd, autoDowngrade ? 1 : 0]);
+        `,
+            [id, projectId, monthlyLimitUsd, autoDowngrade ? 1 : 0, monthlyLimitUsd, autoDowngrade ? 1 : 0],
+        );
 
         return { id, projectId, monthlyLimitUsd, autoDowngrade };
     }
@@ -299,7 +337,11 @@ class AICostControlServiceClass {
      * Check budget status and determine if action is allowed
      * Returns: { allowed, remainingBudget, shouldDowngrade, currentUsage, limit, isFrozen }
      */
-    async checkBudget(organizationId: string, projectId: string | null = null, estimatedCost = 0): Promise<BudgetStatus> {
+    async checkBudget(
+        organizationId: string,
+        projectId: string | null = null,
+        estimatedCost = 0,
+    ): Promise<BudgetStatus> {
         const budgets: Array<BudgetRow & { scope: ScopeType }> = [];
 
         // Check global budget
@@ -326,7 +368,7 @@ class AICostControlServiceClass {
                 shouldDowngrade: false,
                 currentUsage: 0,
                 limit: null,
-                isFrozen: false
+                isFrozen: false,
             };
         }
 
@@ -339,7 +381,7 @@ class AICostControlServiceClass {
             const limit = budget.monthly_limit_usd || Infinity;
             const hardLimit = budget.hard_limit_usd || limit;
             const remaining = limit - currentTotal;
-            const hardRemaining = hardLimit - currentTotal;
+            const _hardRemaining = hardLimit - currentTotal;
 
             // If we are over hard limit AND freeze is enabled, block everything
             if (currentTotal >= hardLimit && budget.freeze_on_limit === 1) {
@@ -348,7 +390,10 @@ class AICostControlServiceClass {
                 break;
             }
 
-            if (!mostRestrictive || remaining < (mostRestrictive.monthly_limit_usd - (mostRestrictive.current_month_usage || 0))) {
+            if (
+                !mostRestrictive ||
+                remaining < mostRestrictive.monthly_limit_usd - (mostRestrictive.current_month_usage || 0)
+            ) {
                 mostRestrictive = budget;
             }
         }
@@ -366,7 +411,7 @@ class AICostControlServiceClass {
                 limit: mostRestrictive.monthly_limit_usd,
                 restrictingScope: mostRestrictive.scope,
                 isFrozen: true,
-                reason: 'BUDGET_EXHAUSTED_FREEZE'
+                reason: 'BUDGET_EXHAUSTED_FREEZE',
             };
         }
 
@@ -386,7 +431,7 @@ class AICostControlServiceClass {
             limit: limit,
             restrictingScope: mostRestrictive.scope,
             percentUsed: Math.round(percentUsed),
-            isFrozen: false
+            isFrozen: false,
         };
     }
 
@@ -399,7 +444,7 @@ class AICostControlServiceClass {
      */
     estimateCost(modelId: string, inputTokens: number, outputTokens = 0): number {
         const costs = MODEL_COSTS[modelId as ModelId] || { input: 0.001, output: 0.002 };
-        return ((inputTokens / 1000) * costs.input) + ((outputTokens / 1000) * costs.output);
+        return (inputTokens / 1000) * costs.input + (outputTokens / 1000) * costs.output;
     }
 
     /**
@@ -410,16 +455,28 @@ class AICostControlServiceClass {
         const estimatedCost = this.estimateCost(params.modelUsed, params.inputTokens, params.outputTokens);
 
         try {
-            await this.dbRun(`
+            await this.dbRun(
+                `
                 INSERT INTO ai_usage_log 
                 (id, organization_id, project_id, user_id, model_used, model_category, action_type, 
                  input_tokens, output_tokens, estimated_cost_usd, was_downgraded, downgrade_reason)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                id, params.organizationId, params.projectId || null, params.userId, params.modelUsed,
-                params.modelCategory, params.actionType, params.inputTokens, params.outputTokens,
-                estimatedCost, params.wasDowngraded ? 1 : 0, params.downgradeReason || null
-            ]);
+            `,
+                [
+                    id,
+                    params.organizationId,
+                    params.projectId || null,
+                    params.userId,
+                    params.modelUsed,
+                    params.modelCategory,
+                    params.actionType,
+                    params.inputTokens,
+                    params.outputTokens,
+                    estimatedCost,
+                    params.wasDowngraded ? 1 : 0,
+                    params.downgradeReason || null,
+                ],
+            );
 
             // Update budget usage
             await this._updateBudgetUsage(params.organizationId, params.projectId || null, estimatedCost);
@@ -430,7 +487,7 @@ class AICostControlServiceClass {
                 inputTokens: params.inputTokens,
                 outputTokens: params.outputTokens,
                 modelUsed: params.modelUsed,
-                modelCategory: params.modelCategory
+                modelCategory: params.modelCategory,
             };
         } catch (err: unknown) {
             logger.error('[AICostControl] Log usage error:', err);
@@ -445,28 +502,37 @@ class AICostControlServiceClass {
         // Update all applicable budgets
         await this.dbSerialize(async () => {
             // Global
-            await this.dbRun(`
+            await this.dbRun(
+                `
                 UPDATE ai_budgets 
                 SET current_month_usage = current_month_usage + ?, updated_at = CURRENT_TIMESTAMP
                 WHERE scope_type = 'global'
-            `, [cost]);
+            `,
+                [cost],
+            );
 
             // Tenant
             if (organizationId) {
-                await this.dbRun(`
+                await this.dbRun(
+                    `
                     UPDATE ai_budgets 
                     SET current_month_usage = current_month_usage + ?, updated_at = CURRENT_TIMESTAMP
                     WHERE scope_type = 'tenant' AND scope_id = ?
-                `, [cost, organizationId]);
+                `,
+                    [cost, organizationId],
+                );
             }
 
             // Project
             if (projectId) {
-                await this.dbRun(`
+                await this.dbRun(
+                    `
                     UPDATE ai_budgets 
                     SET current_month_usage = current_month_usage + ?, updated_at = CURRENT_TIMESTAMP
                     WHERE scope_type = 'project' AND scope_id = ?
-                `, [cost, projectId]);
+                `,
+                    [cost, projectId],
+                );
             }
         });
     }
@@ -534,7 +600,11 @@ class AICostControlServiceClass {
     /**
      * Get usage summary for an organization
      */
-    async getUsageSummary(organizationId: string, startDate: string | null = null, endDate: string | null = null): Promise<UsageSummary> {
+    async getUsageSummary(
+        organizationId: string,
+        startDate: string | null = null,
+        endDate: string | null = null,
+    ): Promise<UsageSummary> {
         let sql = `
             SELECT 
                 COUNT(*) as total_requests,
@@ -579,7 +649,7 @@ class AICostControlServiceClass {
             totalCost: 0,
             downgradedRequests: 0,
             byCategory: {},
-            byModel: {}
+            byModel: {},
         };
 
         for (const row of rows) {
@@ -590,7 +660,8 @@ class AICostControlServiceClass {
             summary.downgradedRequests += row.downgraded_requests || 0;
 
             if (row.model_category) {
-                summary.byCategory[row.model_category] = (summary.byCategory[row.model_category] || 0) + row.total_requests;
+                summary.byCategory[row.model_category] =
+                    (summary.byCategory[row.model_category] || 0) + row.total_requests;
             }
             if (row.model_used) {
                 summary.byModel[row.model_used] = (summary.byModel[row.model_used] || 0) + row.total_requests;
@@ -605,7 +676,8 @@ class AICostControlServiceClass {
      * Get user usage (read-only visibility)
      */
     async getUserUsage(userId: string, organizationId: string, days = 30): Promise<UserUsageRow[]> {
-        const rows = await this.dbAll<UserUsageRow>(`
+        const rows = await this.dbAll<UserUsageRow>(
+            `
             SELECT 
                 DATE(created_at) as date,
                 COUNT(*) as requests,
@@ -616,7 +688,9 @@ class AICostControlServiceClass {
             AND created_at >= datetime('now', '-' || ? || ' days')
             GROUP BY DATE(created_at)
             ORDER BY date DESC
-        `, [userId, organizationId, days]);
+        `,
+            [userId, organizationId, days],
+        );
 
         return rows;
     }
@@ -625,10 +699,13 @@ class AICostControlServiceClass {
      * Get all budgets for admin view
      */
     async getAllBudgets(): Promise<BudgetRow[]> {
-        return this.dbAll<BudgetRow>(`
+        return this.dbAll<BudgetRow>(
+            `
             SELECT * FROM ai_budgets
             ORDER BY scope_type, scope_id
-        `, []);
+        `,
+            [],
+        );
     }
 }
 
@@ -641,19 +718,18 @@ export { AICostControlServiceClass };
 
 // Export constants
 
-
 // Export types
 export type {
+    ActionType,
+    AIRole,
     BudgetRow,
     BudgetStatus,
+    ModelCategory,
+    ScopeType,
     UsageLogParams,
     UsageLogResult,
     UsageSummary,
     UserUsageRow,
-    ModelCategory,
-    ScopeType,
-    AIRole,
-    ActionType
 };
 
 // Create singleton instance

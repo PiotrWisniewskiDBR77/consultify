@@ -1,6 +1,6 @@
 /**
  * IntegrationsManagementPanel - Webhooks & Third-party Integrations
- * 
+ *
  * Features:
  * - Webhooks management
  * - Connected apps (Slack, Jira, etc.)
@@ -8,36 +8,37 @@
  * - Sync status dashboard
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Webhook,
-    Plus,
-    Edit,
-    Trash2,
-    Search,
-    X,
+    AlertTriangle,
     Check,
-    RefreshCw,
-    Link2,
-    Zap,
-    ExternalLink,
+    CheckCircle2,
+    Clock,
     Copy,
+    Edit,
+    ExternalLink,
     Eye,
     EyeOff,
-    AlertTriangle,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    Play,
+    Link2,
     Pause,
+    Play,
+    Plus,
+    RefreshCw,
+    Search,
+    Send,
     Settings,
-    Send
+    Trash2,
+    Webhook,
+    X,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../shared/InfoButton';
 
 // Types
@@ -77,22 +78,110 @@ const WEBHOOK_EVENTS = [
     { id: 'user.joined', label: 'User Joined', category: 'Users' },
     { id: 'user.removed', label: 'User Removed', category: 'Users' },
     { id: 'comment.created', label: 'Comment Created', category: 'Comments' },
-    { id: 'document.uploaded', label: 'Document Uploaded', category: 'Documents' }
+    { id: 'document.uploaded', label: 'Document Uploaded', category: 'Documents' },
 ];
 
 // Available integrations
 const AVAILABLE_INTEGRATIONS: ConnectedApp[] = [
-    { id: 'slack', name: 'Slack', icon: '💬', description: 'Send notifications to Slack channels', status: 'disconnected', lastSync: null, category: 'communication' },
-    { id: 'teams', name: 'Microsoft Teams', icon: '👥', description: 'Integrate with Microsoft Teams', status: 'disconnected', lastSync: null, category: 'communication' },
-    { id: 'jira', name: 'Jira', icon: '🔷', description: 'Sync issues with Jira', status: 'disconnected', lastSync: null, category: 'project' },
-    { id: 'asana', name: 'Asana', icon: '🎯', description: 'Import/export tasks from Asana', status: 'disconnected', lastSync: null, category: 'project' },
-    { id: 'trello', name: 'Trello', icon: '📋', description: 'Sync boards with Trello', status: 'disconnected', lastSync: null, category: 'project' },
-    { id: 'google-drive', name: 'Google Drive', icon: '📁', description: 'Attach files from Google Drive', status: 'disconnected', lastSync: null, category: 'storage' },
-    { id: 'dropbox', name: 'Dropbox', icon: '📦', description: 'Connect Dropbox for file storage', status: 'disconnected', lastSync: null, category: 'storage' },
-    { id: 'google-calendar', name: 'Google Calendar', icon: '📅', description: 'Sync deadlines with Calendar', status: 'disconnected', lastSync: null, category: 'calendar' },
-    { id: 'outlook', name: 'Outlook Calendar', icon: '📆', description: 'Sync with Outlook Calendar', status: 'disconnected', lastSync: null, category: 'calendar' },
-    { id: 'hubspot', name: 'HubSpot', icon: '🧡', description: 'Sync contacts and deals', status: 'disconnected', lastSync: null, category: 'crm' },
-    { id: 'salesforce', name: 'Salesforce', icon: '☁️', description: 'Connect to Salesforce CRM', status: 'disconnected', lastSync: null, category: 'crm' }
+    {
+        id: 'slack',
+        name: 'Slack',
+        icon: '💬',
+        description: 'Send notifications to Slack channels',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'communication',
+    },
+    {
+        id: 'teams',
+        name: 'Microsoft Teams',
+        icon: '👥',
+        description: 'Integrate with Microsoft Teams',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'communication',
+    },
+    {
+        id: 'jira',
+        name: 'Jira',
+        icon: '🔷',
+        description: 'Sync issues with Jira',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'project',
+    },
+    {
+        id: 'asana',
+        name: 'Asana',
+        icon: '🎯',
+        description: 'Import/export tasks from Asana',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'project',
+    },
+    {
+        id: 'trello',
+        name: 'Trello',
+        icon: '📋',
+        description: 'Sync boards with Trello',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'project',
+    },
+    {
+        id: 'google-drive',
+        name: 'Google Drive',
+        icon: '📁',
+        description: 'Attach files from Google Drive',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'storage',
+    },
+    {
+        id: 'dropbox',
+        name: 'Dropbox',
+        icon: '📦',
+        description: 'Connect Dropbox for file storage',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'storage',
+    },
+    {
+        id: 'google-calendar',
+        name: 'Google Calendar',
+        icon: '📅',
+        description: 'Sync deadlines with Calendar',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'calendar',
+    },
+    {
+        id: 'outlook',
+        name: 'Outlook Calendar',
+        icon: '📆',
+        description: 'Sync with Outlook Calendar',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'calendar',
+    },
+    {
+        id: 'hubspot',
+        name: 'HubSpot',
+        icon: '🧡',
+        description: 'Sync contacts and deals',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'crm',
+    },
+    {
+        id: 'salesforce',
+        name: 'Salesforce',
+        icon: '☁️',
+        description: 'Connect to Salesforce CRM',
+        status: 'disconnected',
+        lastSync: null,
+        category: 'crm',
+    },
 ];
 
 // Sample webhook data
@@ -107,7 +196,7 @@ const SAMPLE_WEBHOOKS: WebhookEndpoint[] = [
         lastTriggered: new Date(Date.now() - 3600000).toISOString(),
         lastStatus: 'success',
         createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-        failureCount: 0
+        failureCount: 0,
     },
     {
         id: '2',
@@ -119,8 +208,8 @@ const SAMPLE_WEBHOOKS: WebhookEndpoint[] = [
         lastTriggered: new Date(Date.now() - 86400000).toISOString(),
         lastStatus: 'failed',
         createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
-        failureCount: 3
-    }
+        failureCount: 3,
+    },
 ];
 
 interface IntegrationsManagementPanelProps {
@@ -146,7 +235,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
         name: '',
         url: '',
         events: [] as string[],
-        isActive: true
+        isActive: true,
     });
 
     // Load data
@@ -169,15 +258,17 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
     }, [loadData]);
 
     // Filter webhooks
-    const filteredWebhooks = webhooks.filter(wh =>
-        wh.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wh.url.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredWebhooks = webhooks.filter(
+        (wh) =>
+            wh.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            wh.url.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     // Filter apps
-    const filteredApps = apps.filter(app =>
-        app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredApps = apps.filter(
+        (app) =>
+            app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            app.description.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     // Start creating webhook
@@ -187,7 +278,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             name: '',
             url: '',
             events: [],
-            isActive: true
+            isActive: true,
         });
         setIsCreating(true);
         setIsEditing(false);
@@ -200,7 +291,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             name: webhook.name,
             url: webhook.url,
             events: webhook.events,
-            isActive: webhook.isActive
+            isActive: webhook.isActive,
         });
         setIsEditing(true);
         setIsCreating(false);
@@ -208,11 +299,11 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
 
     // Toggle event selection
     const toggleEvent = (eventId: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             events: prev.events.includes(eventId)
-                ? prev.events.filter(e => e !== eventId)
-                : [...prev.events, eventId]
+                ? prev.events.filter((e) => e !== eventId)
+                : [...prev.events, eventId],
         }));
     };
 
@@ -240,16 +331,12 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                     lastTriggered: null,
                     lastStatus: null,
                     createdAt: new Date().toISOString(),
-                    failureCount: 0
+                    failureCount: 0,
                 };
-                setWebhooks(prev => [...prev, newWebhook]);
+                setWebhooks((prev) => [...prev, newWebhook]);
                 toast.success(t('admin.integrations.webhookCreated', 'Webhook created'));
             } else if (selectedWebhook) {
-                setWebhooks(prev => prev.map(wh =>
-                    wh.id === selectedWebhook.id
-                        ? { ...wh, ...formData }
-                        : wh
-                ));
+                setWebhooks((prev) => prev.map((wh) => (wh.id === selectedWebhook.id ? { ...wh, ...formData } : wh)));
                 toast.success(t('admin.integrations.webhookUpdated', 'Webhook updated'));
             }
 
@@ -263,33 +350,27 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
 
     // Delete webhook
     const deleteWebhook = (webhook: WebhookEndpoint) => {
-        setWebhooks(prev => prev.filter(wh => wh.id !== webhook.id));
+        setWebhooks((prev) => prev.filter((wh) => wh.id !== webhook.id));
         toast.success(t('admin.integrations.webhookDeleted', 'Webhook deleted'));
     };
 
     // Toggle webhook active state
     const toggleWebhookActive = (webhook: WebhookEndpoint) => {
-        setWebhooks(prev => prev.map(wh =>
-            wh.id === webhook.id
-                ? { ...wh, isActive: !wh.isActive }
-                : wh
-        ));
-        toast.success(webhook.isActive 
-            ? t('admin.integrations.webhookDisabled', 'Webhook disabled')
-            : t('admin.integrations.webhookEnabled', 'Webhook enabled')
+        setWebhooks((prev) => prev.map((wh) => (wh.id === webhook.id ? { ...wh, isActive: !wh.isActive } : wh)));
+        toast.success(
+            webhook.isActive
+                ? t('admin.integrations.webhookDisabled', 'Webhook disabled')
+                : t('admin.integrations.webhookEnabled', 'Webhook enabled'),
         );
     };
 
     // Test webhook
     const testWebhook = async (webhook: WebhookEndpoint) => {
-        toast.promise(
-            new Promise(resolve => setTimeout(resolve, 1500)),
-            {
-                loading: t('admin.integrations.testingWebhook', 'Testing webhook...'),
-                success: t('admin.integrations.testSuccess', 'Webhook test successful'),
-                error: t('admin.integrations.testFailed', 'Webhook test failed')
-            }
-        );
+        toast.promise(new Promise((resolve) => setTimeout(resolve, 1500)), {
+            loading: t('admin.integrations.testingWebhook', 'Testing webhook...'),
+            success: t('admin.integrations.testSuccess', 'Webhook test successful'),
+            error: t('admin.integrations.testFailed', 'Webhook test failed'),
+        });
     };
 
     // Connect app
@@ -300,11 +381,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
 
     // Disconnect app
     const disconnectApp = (app: ConnectedApp) => {
-        setApps(prev => prev.map(a =>
-            a.id === app.id
-                ? { ...a, status: 'disconnected', lastSync: null }
-                : a
-        ));
+        setApps((prev) => prev.map((a) => (a.id === app.id ? { ...a, status: 'disconnected', lastSync: null } : a)));
         toast.success(t('admin.integrations.disconnected', 'Integration disconnected'));
     };
 
@@ -332,18 +409,18 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             >
                 <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${
-                            webhook.isActive 
-                                ? 'bg-green-100 dark:bg-green-900/30'
-                                : 'bg-slate-100 dark:bg-slate-800'
-                        }`}>
+                        <div
+                            className={`p-2 rounded-lg ${
+                                webhook.isActive
+                                    ? 'bg-green-100 dark:bg-green-900/30'
+                                    : 'bg-slate-100 dark:bg-slate-800'
+                            }`}
+                        >
                             <Webhook className={webhook.isActive ? 'text-green-500' : 'text-slate-400'} size={20} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-slate-900 dark:text-white">
-                                    {webhook.name}
-                                </h3>
+                                <h3 className="font-semibold text-slate-900 dark:text-white">{webhook.name}</h3>
                                 {webhook.isActive ? (
                                     <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
                                         Active
@@ -369,9 +446,11 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                                     </span>
                                 )}
                                 {webhook.lastStatus && (
-                                    <span className={`text-xs flex items-center gap-1 ${
-                                        webhook.lastStatus === 'success' ? 'text-green-500' : 'text-red-500'
-                                    }`}>
+                                    <span
+                                        className={`text-xs flex items-center gap-1 ${
+                                            webhook.lastStatus === 'success' ? 'text-green-500' : 'text-red-500'
+                                        }`}
+                                    >
                                         {webhook.lastStatus === 'success' ? (
                                             <CheckCircle2 size={12} />
                                         ) : (
@@ -434,16 +513,10 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-slate-900 dark:text-white">
-                                    {app.name}
-                                </h3>
-                                {app.status === 'connected' && (
-                                    <CheckCircle2 className="text-green-500" size={14} />
-                                )}
+                                <h3 className="font-semibold text-slate-900 dark:text-white">{app.name}</h3>
+                                {app.status === 'connected' && <CheckCircle2 className="text-green-500" size={14} />}
                             </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                {app.description}
-                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{app.description}</p>
                             {app.status === 'connected' && app.lastSync && (
                                 <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
                                     <RefreshCw size={12} />
@@ -476,11 +549,14 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
 
     // Render webhook editor
     const renderWebhookEditor = () => {
-        const eventsByCategory = WEBHOOK_EVENTS.reduce((acc, event) => {
-            if (!acc[event.category]) acc[event.category] = [];
-            acc[event.category].push(event);
-            return acc;
-        }, {} as Record<string, typeof WEBHOOK_EVENTS>);
+        const eventsByCategory = WEBHOOK_EVENTS.reduce(
+            (acc, event) => {
+                if (!acc[event.category]) acc[event.category] = [];
+                acc[event.category].push(event);
+                return acc;
+            },
+            {} as Record<string, typeof WEBHOOK_EVENTS>,
+        );
 
         return (
             <div className="space-y-6">
@@ -488,8 +564,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {isCreating
                             ? t('admin.integrations.createWebhook', 'Create Webhook')
-                            : t('admin.integrations.editWebhook', 'Edit Webhook')
-                        }
+                            : t('admin.integrations.editWebhook', 'Edit Webhook')}
                     </h3>
                     <button
                         onClick={cancelEditing}
@@ -507,7 +582,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                         <input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             placeholder={t('admin.integrations.webhookNamePlaceholder', 'My Webhook')}
                         />
@@ -520,7 +595,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                         <input
                             type="url"
                             value={formData.url}
-                            onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
                             placeholder="https://api.example.com/webhooks"
                         />
@@ -565,7 +640,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                                         {category}
                                     </h4>
                                     <div className="space-y-1">
-                                        {events.map(event => (
+                                        {events.map((event) => (
                                             <label
                                                 key={event.id}
                                                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 cursor-pointer"
@@ -594,7 +669,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                         <input
                             type="checkbox"
                             checked={formData.isActive}
-                            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
                             className="w-4 h-4 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -688,7 +763,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                         <Link2 size={16} />
                         {t('admin.integrations.connectedApps', 'Connected Apps')}
                         <span className="px-1.5 py-0.5 text-xs bg-slate-100 dark:bg-navy-700 rounded">
-                            {apps.filter(a => a.status === 'connected').length}
+                            {apps.filter((a) => a.status === 'connected').length}
                         </span>
                     </div>
                 </button>
@@ -728,15 +803,13 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {filteredApps.map(renderAppCard)}
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredApps.map(renderAppCard)}</div>
                     )}
                 </div>
 
                 {/* Editor Panel */}
                 <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-                    {(isEditing || isCreating) ? (
+                    {isEditing || isCreating ? (
                         renderWebhookEditor()
                     ) : (
                         <div className="text-center py-12">
@@ -745,7 +818,10 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                                 {t('admin.integrations.selectOrCreate', 'Select or Create')}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                {t('admin.integrations.selectOrCreateDesc', 'Select a webhook to edit or create a new one')}
+                                {t(
+                                    'admin.integrations.selectOrCreateDesc',
+                                    'Select a webhook to edit or create a new one',
+                                )}
                             </p>
                             <button
                                 onClick={startCreating}
@@ -763,4 +839,3 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
 };
 
 export default IntegrationsManagementPanel;
-

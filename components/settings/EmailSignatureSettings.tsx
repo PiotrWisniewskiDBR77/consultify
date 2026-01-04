@@ -1,6 +1,6 @@
 /**
  * EmailSignatureSettings - Manage email signatures
- * 
+ *
  * Features:
  * - Create multiple signatures
  * - Rich text editing
@@ -8,15 +8,13 @@
  * - Preview
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    FileText, Save, Loader2, Plus, Trash2, Edit2, Check, X,
-    Eye, Star, Copy, AlertCircle
-} from 'lucide-react';
-import { User } from '../../types';
-import { Api } from '../../services/api';
+import { AlertCircle, Check, Copy, Edit2, Eye, FileText, Loader2, Plus, Save, Star, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface EmailSignatureSettingsProps {
     currentUser: User;
@@ -37,7 +35,7 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
     const [signatures, setSignatures] = useState<EmailSignature[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [previewId, setPreviewId] = useState<string | null>(null);
-    
+
     // New/Edit form state
     const [formName, setFormName] = useState('');
     const [formContent, setFormContent] = useState('');
@@ -102,9 +100,9 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
                     name: formName,
                     content: formContent,
                 });
-                setSignatures(signatures.map(s => 
-                    s.id === editingId ? { ...s, name: formName, content: formContent } : s
-                ));
+                setSignatures(
+                    signatures.map((s) => (s.id === editingId ? { ...s, name: formName, content: formContent } : s)),
+                );
                 toast.success('Signature updated');
             }
             handleCancel();
@@ -120,7 +118,7 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
 
         try {
             await Api.delete(`/api/settings/signatures/${id}`);
-            setSignatures(signatures.filter(s => s.id !== id));
+            setSignatures(signatures.filter((s) => s.id !== id));
             toast.success('Signature deleted');
         } catch (error) {
             toast.error('Failed to delete signature');
@@ -130,10 +128,12 @@ export const EmailSignatureSettings: React.FC<EmailSignatureSettingsProps> = ({ 
     const handleSetDefault = async (id: string) => {
         try {
             await Api.put(`/api/settings/signatures/${id}/default`, {});
-            setSignatures(signatures.map(s => ({
-                ...s,
-                isDefault: s.id === id
-            })));
+            setSignatures(
+                signatures.map((s) => ({
+                    ...s,
+                    isDefault: s.id === id,
+                })),
+            );
             toast.success('Default signature updated');
         } catch (error) {
             toast.error('Failed to set default');
@@ -156,9 +156,11 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
     };
 
     // Styles
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl";
-    const inputClass = "w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const textareaClass = "w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all resize-none font-mono text-sm";
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl';
+    const inputClass =
+        'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const textareaClass =
+        'w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all resize-none font-mono text-sm';
 
     if (loading) {
         return (
@@ -198,11 +200,11 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
 
             {/* Create/Edit Form */}
             {(isCreating || editingId) && (
-                <div className={cardClass + " p-6"}>
+                <div className={cardClass + ' p-6'}>
                     <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
                         {isCreating ? 'Create New Signature' : 'Edit Signature'}
                     </h3>
-                    
+
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -216,7 +218,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                                 className={inputClass}
                             />
                         </div>
-                        
+
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                 Signature Content
@@ -267,11 +269,9 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
 
             {/* Signatures List */}
             {signatures.length === 0 && !isCreating ? (
-                <div className={cardClass + " p-8 text-center"}>
+                <div className={cardClass + ' p-8 text-center'}>
                     <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                        No signatures yet
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No signatures yet</h3>
                     <p className="text-slate-500 mb-4">
                         Create your first email signature to use across your communications.
                     </p>
@@ -286,7 +286,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
             ) : (
                 <div className="space-y-4">
                     {signatures.map((signature) => (
-                        <div key={signature.id} className={cardClass + " overflow-hidden"}>
+                        <div key={signature.id} className={cardClass + ' overflow-hidden'}>
                             {/* Header */}
                             <div className="p-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
                                 <div className="flex items-center gap-3">
@@ -376,10 +376,4 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
 };
 
 export default EmailSignatureSettings;
-
-
-
-
-
-
 

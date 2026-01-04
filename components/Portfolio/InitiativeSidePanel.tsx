@@ -1,28 +1,29 @@
 /**
  * Initiative Side Panel
- * 
+ *
  * Slide-in panel with tabbed initiative details.
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    X,
-    FileText,
-    DollarSign,
-    Users,
+    Activity,
     AlertTriangle,
     Calendar,
-    Activity,
-    ExternalLink,
-    Edit2,
-    TrendingUp,
-    Target,
-    Clock,
     CheckCircle2,
-    XCircle
+    Clock,
+    DollarSign,
+    Edit2,
+    ExternalLink,
+    FileText,
+    Target,
+    TrendingUp,
+    Users,
+    X,
+    XCircle,
 } from 'lucide-react';
-import { PortfolioInitiative, InitiativeStatus } from '../../types';
-import { getStatusClasses, getPriorityClasses, getAxisColor } from '../../config/portfolioColors';
+import React, { useEffect, useState } from 'react';
+
+import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
+import { InitiativeStatus, PortfolioInitiative } from '../../types';
 
 interface InitiativeSidePanelProps {
     initiative: PortfolioInitiative | null;
@@ -39,61 +40,54 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'stakeholders', label: 'Stakeholders', icon: <Users size={16} /> },
     { id: 'risks', label: 'Risks', icon: <AlertTriangle size={16} /> },
     { id: 'timeline', label: 'Timeline', icon: <Calendar size={16} /> },
-    { id: 'activity', label: 'Activity', icon: <Activity size={16} /> }
+    { id: 'activity', label: 'Activity', icon: <Activity size={16} /> },
 ];
 
-export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
-    initiative,
-    isOpen,
-    onClose,
-    onUpdate
-}) => {
+export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({ initiative, isOpen, onClose, onUpdate }) => {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
-    
+
     // Reset tab when initiative changes
     useEffect(() => {
         if (initiative) {
             setActiveTab('overview');
         }
     }, [initiative?.id]);
-    
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(amount);
     };
-    
+
     const formatDate = (dateStr: string | undefined) => {
         if (!dateStr) return '-';
         return new Date(dateStr).toLocaleDateString('en-US', {
             month: 'long',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
-    
+
     // ============================================
     // TAB CONTENT RENDERERS
     // ============================================
-    
+
     const renderOverview = () => {
         if (!initiative) return null;
-        
+
         return (
             <div className="space-y-6">
                 {/* Summary */}
                 <div>
-                    <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
-                        Summary
-                    </h4>
+                    <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Summary</h4>
                     <p className="text-sm text-slate-700 dark:text-slate-300">
                         {initiative.summary || 'No summary provided.'}
                     </p>
                 </div>
-                
+
                 {/* Key Metrics */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
@@ -103,7 +97,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                     className="h-full bg-purple-500 rounded-full"
                                     style={{ width: `${initiative.progress}%` }}
                                 />
@@ -113,7 +107,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                             </span>
                         </div>
                     </div>
-                    
+
                     <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
                             <TrendingUp size={14} />
@@ -123,21 +117,25 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                             {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
                         </div>
                     </div>
-                    
+
                     <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
                             <AlertTriangle size={14} />
                             Risk Score
                         </div>
-                        <div className={`text-lg font-semibold ${
-                            (initiative.riskScore || 0) > 70 ? 'text-red-600 dark:text-red-400' :
-                            (initiative.riskScore || 0) > 40 ? 'text-amber-600 dark:text-amber-400' :
-                            'text-green-600 dark:text-green-400'
-                        }`}>
+                        <div
+                            className={`text-lg font-semibold ${
+                                (initiative.riskScore || 0) > 70
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : (initiative.riskScore || 0) > 40
+                                      ? 'text-amber-600 dark:text-amber-400'
+                                      : 'text-green-600 dark:text-green-400'
+                            }`}
+                        >
                             {initiative.riskScore || 0}/100
                         </div>
                     </div>
-                    
+
                     <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
                             <CheckCircle2 size={14} />
@@ -148,12 +146,10 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Details */}
                 <div>
-                    <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
-                        Details
-                    </h4>
+                    <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Details</h4>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                             <span className="text-sm text-slate-500 dark:text-slate-400">Axis</span>
@@ -164,14 +160,14 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                 </span>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                             <span className="text-sm text-slate-500 dark:text-slate-400">Target Quarter</span>
                             <span className="text-sm font-medium text-navy-900 dark:text-white">
                                 {initiative.targetQuarter || '-'}
                             </span>
                         </div>
-                        
+
                         {initiative.waveName && (
                             <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                                 <span className="text-sm text-slate-500 dark:text-slate-400">Wave</span>
@@ -180,7 +176,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                 </span>
                             </div>
                         )}
-                        
+
                         <div className="flex items-center justify-between py-2">
                             <span className="text-sm text-slate-500 dark:text-slate-400">Dependencies</span>
                             <span className="text-sm font-medium text-navy-900 dark:text-white">
@@ -192,22 +188,20 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
         );
     };
-    
+
     const renderFinancials = () => {
         if (!initiative) return null;
-        
+
         return (
             <div className="space-y-6">
                 {/* Budget Overview */}
                 <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl">
-                    <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">
-                        Total Budget
-                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Total Budget</div>
                     <div className="text-3xl font-bold text-green-700 dark:text-green-300">
                         {formatCurrency(initiative.budget)}
                     </div>
                 </div>
-                
+
                 {/* Budget Breakdown */}
                 <div>
                     <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
@@ -222,9 +216,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         </div>
                         <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                             <span className="text-sm text-slate-500 dark:text-slate-400">OpEx (Annual)</span>
-                            <span className="text-sm font-medium text-navy-900 dark:text-white">
-                                -
-                            </span>
+                            <span className="text-sm font-medium text-navy-900 dark:text-white">-</span>
                         </div>
                         <div className="flex items-center justify-between py-2">
                             <span className="text-sm text-slate-500 dark:text-slate-400">Expected ROI</span>
@@ -234,7 +226,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Placeholder for budget tracking */}
                 <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg text-center text-sm text-slate-500 dark:text-slate-400">
                     Detailed budget tracking coming soon
@@ -242,10 +234,10 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
         );
     };
-    
+
     const renderStakeholders = () => {
         if (!initiative) return null;
-        
+
         return (
             <div className="space-y-6">
                 {/* Business Owner */}
@@ -257,7 +249,11 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                             <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-sm font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
                                 {initiative.ownerBusiness.avatarUrl ? (
-                                    <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                    <img
+                                        src={initiative.ownerBusiness.avatarUrl}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                    />
                                 ) : (
                                     `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
                                 )}
@@ -266,9 +262,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                 <div className="font-medium text-navy-900 dark:text-white">
                                     {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
                                 </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400">
-                                    Business Owner
-                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400">Business Owner</div>
                             </div>
                         </div>
                     ) : (
@@ -277,7 +271,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         </div>
                     )}
                 </div>
-                
+
                 {/* Execution Owner */}
                 <div>
                     <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
@@ -287,7 +281,11 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium text-blue-700 dark:text-blue-300 overflow-hidden">
                                 {initiative.ownerExecution.avatarUrl ? (
-                                    <img src={initiative.ownerExecution.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                    <img
+                                        src={initiative.ownerExecution.avatarUrl}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                    />
                                 ) : (
                                     `${initiative.ownerExecution.firstName[0]}${initiative.ownerExecution.lastName[0]}`
                                 )}
@@ -296,9 +294,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                 <div className="font-medium text-navy-900 dark:text-white">
                                     {initiative.ownerExecution.firstName} {initiative.ownerExecution.lastName}
                                 </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400">
-                                    Execution Owner
-                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400">Execution Owner</div>
                             </div>
                         </div>
                     ) : (
@@ -310,7 +306,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
         );
     };
-    
+
     const renderRisks = () => {
         return (
             <div className="space-y-6">
@@ -318,26 +314,32 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                 <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-xl">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">Overall Risk Score</span>
-                        <span className={`text-lg font-bold ${
-                            (initiative?.riskScore || 0) > 70 ? 'text-red-600 dark:text-red-400' :
-                            (initiative?.riskScore || 0) > 40 ? 'text-amber-600 dark:text-amber-400' :
-                            'text-green-600 dark:text-green-400'
-                        }`}>
+                        <span
+                            className={`text-lg font-bold ${
+                                (initiative?.riskScore || 0) > 70
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : (initiative?.riskScore || 0) > 40
+                                      ? 'text-amber-600 dark:text-amber-400'
+                                      : 'text-green-600 dark:text-green-400'
+                            }`}
+                        >
                             {initiative?.riskScore || 0}/100
                         </span>
                     </div>
                     <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className={`h-full rounded-full ${
-                                (initiative?.riskScore || 0) > 70 ? 'bg-red-500' :
-                                (initiative?.riskScore || 0) > 40 ? 'bg-amber-500' :
-                                'bg-green-500'
+                                (initiative?.riskScore || 0) > 70
+                                    ? 'bg-red-500'
+                                    : (initiative?.riskScore || 0) > 40
+                                      ? 'bg-amber-500'
+                                      : 'bg-green-500'
                             }`}
                             style={{ width: `${initiative?.riskScore || 0}%` }}
                         />
                     </div>
                 </div>
-                
+
                 {/* Placeholder for RAID items */}
                 <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg text-center text-sm text-slate-500 dark:text-slate-400">
                     RAID log integration coming soon
@@ -345,10 +347,10 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
         );
     };
-    
+
     const renderTimeline = () => {
         if (!initiative) return null;
-        
+
         return (
             <div className="space-y-6">
                 {/* Timeline Overview */}
@@ -362,7 +364,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                             {formatDate(initiative.plannedStartDate)}
                         </div>
                     </div>
-                    
+
                     <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
                             <CheckCircle2 size={14} />
@@ -373,24 +375,22 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Target Quarter */}
                 <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                    <div className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">
-                        Target Quarter
-                    </div>
+                    <div className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">Target Quarter</div>
                     <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
                         {initiative.targetQuarter || 'Not Set'}
                     </div>
                 </div>
-                
+
                 {/* Dependencies */}
                 <div>
                     <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
                         Dependencies
                     </h4>
                     <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg text-sm text-slate-500 dark:text-slate-400">
-                        {initiative.dependencies?.length 
+                        {initiative.dependencies?.length
                             ? `${initiative.dependencies.length} dependencies`
                             : 'No dependencies defined'}
                     </div>
@@ -398,7 +398,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
         );
     };
-    
+
     const renderActivity = () => {
         return (
             <div className="space-y-4">
@@ -410,35 +410,42 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
         );
     };
-    
+
     const renderTabContent = () => {
         switch (activeTab) {
-            case 'overview': return renderOverview();
-            case 'financials': return renderFinancials();
-            case 'stakeholders': return renderStakeholders();
-            case 'risks': return renderRisks();
-            case 'timeline': return renderTimeline();
-            case 'activity': return renderActivity();
-            default: return null;
+            case 'overview':
+                return renderOverview();
+            case 'financials':
+                return renderFinancials();
+            case 'stakeholders':
+                return renderStakeholders();
+            case 'risks':
+                return renderRisks();
+            case 'timeline':
+                return renderTimeline();
+            case 'activity':
+                return renderActivity();
+            default:
+                return null;
         }
     };
-    
+
     // ============================================
     // MAIN RENDER
     // ============================================
-    
+
     return (
         <>
             {/* Backdrop */}
-            <div 
+            <div
                 className={`fixed inset-0 bg-black/30 z-40 transition-opacity ${
                     isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
                 onClick={onClose}
             />
-            
+
             {/* Panel */}
-            <div 
+            <div
                 className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-50 transform transition-transform duration-300 ease-out ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
@@ -459,15 +466,19 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                         {initiative.name}
                                     </h2>
                                     <div className="flex items-center gap-2 mt-2">
-                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-lg ${getStatusClasses(initiative.status)}`}>
+                                        <span
+                                            className={`px-2 py-0.5 text-xs font-medium rounded-lg ${getStatusClasses(initiative.status)}`}
+                                        >
                                             {initiative.status}
                                         </span>
-                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPriorityClasses(initiative.priority)}`}>
+                                        <span
+                                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPriorityClasses(initiative.priority)}`}
+                                        >
                                             {initiative.priority}
                                         </span>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-2">
                                     <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                                         <ExternalLink size={18} />
@@ -475,7 +486,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                     <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                                         <Edit2 size={18} />
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={onClose}
                                         className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
                                     >
@@ -484,11 +495,11 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                 </div>
                             </div>
                         </div>
-                        
+
                         {/* Tabs */}
                         <div className="shrink-0 px-6 py-2 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
                             <div className="flex items-center gap-1">
-                                {TABS.map(tab => (
+                                {TABS.map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
@@ -504,11 +515,9 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                                 ))}
                             </div>
                         </div>
-                        
+
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6">
-                            {renderTabContent()}
-                        </div>
+                        <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
                     </div>
                 )}
             </div>
@@ -517,12 +526,4 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
 };
 
 export default InitiativeSidePanel;
-
-
-
-
-
-
-
-
 

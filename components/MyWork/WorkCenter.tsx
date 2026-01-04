@@ -3,15 +3,16 @@
  * Contains PillNavigation, QuickFilters, content area, and DecisionDetailModal
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PillNavigation, WorkTab } from './PillNavigation';
-import { QuickFilterBar, QuickFilter } from './QuickFilterBar';
-import { MyTasksList } from './MyTasksList';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { DecisionBottleneckPanel } from './DecisionBottleneckPanel';
+import { DecisionDetailModal } from './DecisionDetailModal';
 import { DecisionsList } from './DecisionsList';
 import { MyProjects } from './MyProjects';
-import { DecisionDetailModal } from './DecisionDetailModal';
-import { DecisionBottleneckPanel } from './DecisionBottleneckPanel';
+import { MyTasksList } from './MyTasksList';
+import { PillNavigation, WorkTab } from './PillNavigation';
+import { QuickFilter, QuickFilterBar } from './QuickFilterBar';
 import { TaskTimeGroup } from './WorkSidebar';
 import { DecisionGroup } from './WorkSidebar';
 
@@ -44,7 +45,7 @@ const filterToTimeGroup: Record<QuickFilter, TaskTimeGroup> = {
     overdue: 'overdue',
     today: 'today',
     week: 'week',
-    urgent: 'all' // Urgent shows all but will filter by priority
+    urgent: 'all', // Urgent shows all but will filter by priority
 };
 
 export const WorkCenter: React.FC<WorkCenterProps> = ({
@@ -52,20 +53,20 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
     onDecisionClick,
     onCreateTask,
     onCreateDecision,
-    onNavigateToObject
+    onNavigateToObject,
 }) => {
     // Tab state
     const [activeTab, setActiveTab] = useState<WorkTab>('tasks');
-    
+
     // Filter state for tasks
     const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilter>('all');
-    
+
     // Decision modal state
     const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null);
-    
+
     // Refresh trigger for decision list
     const [decisionRefreshKey, setDecisionRefreshKey] = useState(0);
-    
+
     // Counts
     const [taskCounts, setTaskCounts] = useState<TaskCounts>({
         total: 0,
@@ -73,22 +74,25 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
         today: 0,
         week: 0,
         later: 0,
-        noDate: 0
+        noDate: 0,
     });
     const [decisionCounts, setDecisionCounts] = useState<DecisionCounts>({
         total: 0,
         my: 0,
-        awaiting: 0
+        awaiting: 0,
     });
     const [urgentCount, setUrgentCount] = useState(0);
 
     // Memoized quick filter counts
-    const quickFilterCounts = useMemo(() => ({
-        overdue: taskCounts.overdue,
-        today: taskCounts.today,
-        week: taskCounts.week,
-        urgent: urgentCount
-    }), [taskCounts, urgentCount]);
+    const quickFilterCounts = useMemo(
+        () => ({
+            overdue: taskCounts.overdue,
+            today: taskCounts.today,
+            week: taskCounts.week,
+            urgent: urgentCount,
+        }),
+        [taskCounts, urgentCount],
+    );
 
     // Handle task counts update
     const handleTaskCountsChange = useCallback((counts: TaskCounts) => {
@@ -132,7 +136,7 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
 
     // Handle decision made - refresh list
     const handleDecisionMade = useCallback(() => {
-        setDecisionRefreshKey(prev => prev + 1);
+        setDecisionRefreshKey((prev) => prev + 1);
     }, []);
 
     // Calculate active time group from quick filter
@@ -155,7 +159,7 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
                     onTabChange={handleTabChange}
                     counts={{
                         tasks: taskCounts.total,
-                        decisions: decisionCounts.total
+                        decisions: decisionCounts.total,
                     }}
                     onCreateNew={handleCreateNew}
                 />
@@ -171,9 +175,7 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
                 {/* Bottleneck Panel (only for decisions tab) */}
                 {activeTab === 'decisions' && (
                     <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5">
-                        <DecisionBottleneckPanel
-                            onDecisionClick={handleDecisionClick}
-                        />
+                        <DecisionBottleneckPanel onDecisionClick={handleDecisionClick} />
                     </div>
                 )}
 

@@ -1,14 +1,12 @@
 /**
  * Adminaudit Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadAdminauditservice = createCachedLazyService('../../services/adminAuditService.js');
+import service from '../../services/adminAuditService.js';
 
 // Export default instance (for backward compatibility)
-export default loadAdminauditservice();
+export default service;

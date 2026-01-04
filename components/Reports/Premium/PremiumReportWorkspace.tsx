@@ -1,26 +1,17 @@
 /**
  * PremiumReportWorkspace
- * 
+ *
  * Full workspace component for premium report editing with
  * split layout, AI assistant, and real-time preview.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { JSONContent } from '@tiptap/react';
-import { PremiumReportEditor } from './Editor/PremiumReportEditor';
-import {
-    FileText,
-    Download,
-    Eye,
-    EyeOff,
-    Settings,
-    ChevronLeft,
-    Loader2,
-    FileDown,
-    Printer
-} from 'lucide-react';
-
 import './Editor/PremiumEditor.css';
+
+import { JSONContent } from '@tiptap/react';
+import { ChevronLeft, Download, Eye, EyeOff, FileDown, FileText, Loader2, Printer, Settings } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { PremiumReportEditor } from './Editor/PremiumReportEditor';
 
 interface PremiumReportWorkspaceProps {
     reportId?: string;
@@ -35,7 +26,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
     assessmentId,
     assessmentName,
     organizationName,
-    onClose
+    onClose,
 }) => {
     const [reportContent, setReportContent] = useState<JSONContent | null>(null);
     const [reportMeta, setReportMeta] = useState<{
@@ -58,7 +49,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
                 setReportMeta({
                     name: 'Nowy Raport',
                     status: 'DRAFT',
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
                 });
                 setIsLoading(false);
                 return;
@@ -66,7 +57,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
 
             try {
                 const response = await fetch(`/api/assessment-reports/${reportId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
 
                 if (response.ok) {
@@ -75,7 +66,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
                     setReportMeta({
                         name: data.name,
                         status: data.status,
-                        updatedAt: data.updated_at
+                        updatedAt: data.updated_at,
                     });
                 }
             } catch (error) {
@@ -89,42 +80,47 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
     }, [reportId]);
 
     // Save report
-    const handleSave = useCallback(async (content: JSONContent) => {
-        setIsSaving(true);
-        try {
-            const endpoint = reportId
-                ? `/api/assessment-reports/${reportId}`
-                : '/api/assessment-reports';
+    const handleSave = useCallback(
+        async (content: JSONContent) => {
+            setIsSaving(true);
+            try {
+                const endpoint = reportId ? `/api/assessment-reports/${reportId}` : '/api/assessment-reports';
 
-            const method = reportId ? 'PUT' : 'POST';
+                const method = reportId ? 'PUT' : 'POST';
 
-            const response = await fetch(endpoint, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    assessmentId,
-                    name: reportMeta?.name || 'Nowy Raport',
-                    content: JSON.stringify(content),
-                    status: reportMeta?.status || 'DRAFT'
-                })
-            });
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                    body: JSON.stringify({
+                        assessmentId,
+                        name: reportMeta?.name || 'Nowy Raport',
+                        content: JSON.stringify(content),
+                        status: reportMeta?.status || 'DRAFT',
+                    }),
+                });
 
-            if (response.ok) {
-                setHasUnsavedChanges(false);
-                setReportMeta(prev => prev ? {
-                    ...prev,
-                    updatedAt: new Date().toISOString()
-                } : null);
+                if (response.ok) {
+                    setHasUnsavedChanges(false);
+                    setReportMeta((prev) =>
+                        prev
+                            ? {
+                                  ...prev,
+                                  updatedAt: new Date().toISOString(),
+                              }
+                            : null,
+                    );
+                }
+            } catch (error) {
+                console.error('Failed to save report:', error);
+            } finally {
+                setIsSaving(false);
             }
-        } catch (error) {
-            console.error('Failed to save report:', error);
-        } finally {
-            setIsSaving(false);
-        }
-    }, [reportId, assessmentId, reportMeta]);
+        },
+        [reportId, assessmentId, reportMeta],
+    );
 
     // Handle content change
     const handleContentChange = useCallback((content: JSONContent) => {
@@ -145,9 +141,9 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({}),
             });
 
             if (response.ok) {
@@ -217,20 +213,21 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
                     </div>
 
                     {/* Status Badge */}
-                    <span className={`
+                    <span
+                        className={`
             px-2 py-1 text-xs font-medium rounded-full
-            ${reportMeta?.status === 'FINAL'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        }
-          `}>
+            ${
+                reportMeta?.status === 'FINAL'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            }
+          `}
+                    >
                         {reportMeta?.status === 'FINAL' ? 'Finalny' : 'Szkic'}
                     </span>
 
                     {hasUnsavedChanges && (
-                        <span className="text-xs text-amber-600 dark:text-amber-400">
-                            • Niezapisane zmiany
-                        </span>
+                        <span className="text-xs text-amber-600 dark:text-amber-400">• Niezapisane zmiany</span>
                     )}
                 </div>
 

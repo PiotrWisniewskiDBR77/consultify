@@ -25,6 +25,19 @@ declare const config: {
         idleTimeoutMillis: number;
         connectionTimeoutMillis: number;
     } | null;
+    readReplica: {
+        host: string;
+        port: number;
+        database: string;
+        user: string;
+        password: string;
+        ssl: boolean | {
+            rejectUnauthorized: boolean;
+        };
+        max: number;
+        idleTimeoutMillis: number;
+        connectionTimeoutMillis: number;
+    } | null;
     debug: boolean;
     logQueries: boolean;
 };

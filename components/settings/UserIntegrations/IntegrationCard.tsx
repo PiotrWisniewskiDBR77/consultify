@@ -1,15 +1,13 @@
 /**
  * IntegrationCard
- * 
+ *
  * Card component for displaying and managing a single integration.
  */
 
+import { AlertTriangle, Check, Clock, ExternalLink, Loader2, RefreshCw, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    Check, X, Loader2, RefreshCw, ExternalLink, 
-    AlertTriangle, Clock
-} from 'lucide-react';
+
 import type { UserIntegration } from '../../../hooks/useUserIntegrations';
 
 interface ProviderConfig {
@@ -38,11 +36,11 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
     isTesting,
     onConnect,
     onDisconnect,
-    onTest
+    onTest,
 }) => {
     const { t } = useTranslation();
     const Icon = provider.icon;
-    
+
     // Determine status
     const status = connection?.status || 'disconnected';
     const isError = status === 'error';
@@ -50,33 +48,33 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
     const needsReauth = isError || isExpired;
 
     return (
-        <div className={`bg-white dark:bg-navy-800 rounded-xl border transition-all ${
-            isConnected 
-                ? 'border-green-200 dark:border-green-900/50' 
-                : needsReauth
-                    ? 'border-amber-200 dark:border-amber-900/50'
-                    : 'border-slate-200 dark:border-white/10'
-        }`}>
+        <div
+            className={`bg-white dark:bg-navy-800 rounded-xl border transition-all ${
+                isConnected
+                    ? 'border-green-200 dark:border-green-900/50'
+                    : needsReauth
+                      ? 'border-amber-200 dark:border-amber-900/50'
+                      : 'border-slate-200 dark:border-white/10'
+            }`}
+        >
             <div className="p-5">
                 <div className="flex items-start justify-between">
                     {/* Provider info */}
                     <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-xl ${
-                            isConnected 
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                                : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
-                        }`}>
+                        <div
+                            className={`p-3 rounded-xl ${
+                                isConnected
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                    : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                            }`}
+                        >
                             <Icon />
                         </div>
-                        
+
                         <div>
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                {provider.name}
-                            </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                                {provider.description}
-                            </p>
-                            
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{provider.name}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{provider.description}</p>
+
                             {/* Connection status */}
                             {isConnected && connection && (
                                 <div className="flex items-center gap-2 mt-2">
@@ -91,16 +89,15 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                                     )}
                                 </div>
                             )}
-                            
+
                             {/* Error status */}
                             {needsReauth && (
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
                                         {isExpired ? <Clock size={12} /> : <AlertTriangle size={12} />}
-                                        {isExpired 
+                                        {isExpired
                                             ? t('settings.integrations.expired', 'Token Expired')
-                                            : t('settings.integrations.error', 'Connection Error')
-                                        }
+                                            : t('settings.integrations.error', 'Connection Error')}
                                     </span>
                                 </div>
                             )}
@@ -108,12 +105,13 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                             {/* Last sync */}
                             {connection?.lastSyncAt && (
                                 <p className="text-xs text-slate-400 mt-1">
-                                    {t('settings.integrations.lastSync', 'Last sync')}: {new Date(connection.lastSyncAt).toLocaleString()}
+                                    {t('settings.integrations.lastSync', 'Last sync')}:{' '}
+                                    {new Date(connection.lastSyncAt).toLocaleString()}
                                 </p>
                             )}
                         </div>
                     </div>
-                    
+
                     {/* Action buttons */}
                     <div className="flex items-center gap-2">
                         {isConnected ? (
@@ -131,7 +129,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                                         <RefreshCw size={18} />
                                     )}
                                 </button>
-                                
+
                                 {/* Disconnect button */}
                                 <button
                                     onClick={onDisconnect}
@@ -157,13 +155,13 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                         )}
                     </div>
                 </div>
-                
+
                 {/* Features */}
                 {provider.features.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                         <div className="flex flex-wrap gap-2">
                             {provider.features.map((feature, idx) => (
-                                <span 
+                                <span
                                     key={idx}
                                     className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700 px-2 py-1 rounded"
                                 >
@@ -173,13 +171,11 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                         </div>
                     </div>
                 )}
-                
+
                 {/* Error message */}
                 {connection?.lastError && (
                     <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                        <p className="text-xs text-red-600 dark:text-red-400">
-                            {connection.lastError}
-                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-400">{connection.lastError}</p>
                     </div>
                 )}
             </div>
@@ -188,11 +184,4 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 };
 
 export default IntegrationCard;
-
-
-
-
-
-
-
 

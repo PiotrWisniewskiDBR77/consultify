@@ -1,14 +1,12 @@
 /**
  * Connectorregistry Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadConnectorregistry = createCachedLazyService('../../services/connectorRegistry.js');
+import service from '../../services/connectorRegistry.js';
 
 // Export default instance (for backward compatibility)
-export default loadConnectorregistry();
+export default service;

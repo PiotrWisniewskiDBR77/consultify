@@ -1,12 +1,13 @@
 /**
  * useFrameworkPermissions Hook
- * 
+ *
  * React hook for checking framework-specific permissions in UI components.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { AssessmentFramework } from '../store/useMultiFrameworkStore';
+import { useCallback, useEffect, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
+import { AssessmentFramework } from '../store/useMultiFrameworkStore';
 
 // ============================================
 // TYPES
@@ -62,12 +63,12 @@ export function useFrameworkPermissions(
         assessmentId?: string;
         projectId?: string;
         organizationId?: string;
-    } = {}
+    } = {},
 ): UseFrameworkPermissionsResult {
     const [permissions, setPermissions] = useState<FrameworkPermissions>(DEFAULT_PERMISSIONS);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     const { currentUser } = useAppStore();
 
     // Fetch permissions from server
@@ -90,10 +91,9 @@ export function useFrameworkPermissions(
                 ...(options.organizationId && { organizationId: options.organizationId }),
             });
 
-            const response = await fetch(
-                `/api/framework-rbac/permissions?${params}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await fetch(`/api/framework-rbac/permissions?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (response.ok) {
                 const data = await response.json();
@@ -130,24 +130,27 @@ export function useFrameworkPermissions(
     }, [fetchPermissions]);
 
     // Check specific permission
-    const checkPermission = useCallback((action: string): boolean => {
-        const actionMap: Record<string, keyof FrameworkPermissions> = {
-            create: 'canCreate',
-            edit: 'canEdit',
-            view: 'canView',
-            delete: 'canDelete',
-            submit: 'canSubmit',
-            review: 'canReview',
-            approve: 'canApprove',
-            certify: 'canCertify',
-            export: 'canExport',
-            report: 'canGenerateReport',
-            initiatives: 'canGenerateInitiatives',
-        };
+    const checkPermission = useCallback(
+        (action: string): boolean => {
+            const actionMap: Record<string, keyof FrameworkPermissions> = {
+                create: 'canCreate',
+                edit: 'canEdit',
+                view: 'canView',
+                delete: 'canDelete',
+                submit: 'canSubmit',
+                review: 'canReview',
+                approve: 'canApprove',
+                certify: 'canCertify',
+                export: 'canExport',
+                report: 'canGenerateReport',
+                initiatives: 'canGenerateInitiatives',
+            };
 
-        const permKey = actionMap[action.toLowerCase()];
-        return permKey ? permissions[permKey] : false;
-    }, [permissions]);
+            const permKey = actionMap[action.toLowerCase()];
+            return permKey ? permissions[permKey] : false;
+        },
+        [permissions],
+    );
 
     return {
         permissions,
@@ -162,10 +165,7 @@ export function useFrameworkPermissions(
 // HELPERS
 // ============================================
 
-function getDefaultPermissionsForUser(
-    user: any,
-    framework: AssessmentFramework
-): FrameworkPermissions {
+function getDefaultPermissionsForUser(user: any, framework: AssessmentFramework): FrameworkPermissions {
     if (!user) return DEFAULT_PERMISSIONS;
 
     const role = user.role || 'VIEWER';
@@ -265,28 +265,17 @@ export function useCanCertify(framework: AssessmentFramework | null): boolean {
 /**
  * Hook to check if assessment is editable based on status and permissions
  */
-export function useIsEditable(
-    framework: AssessmentFramework | null,
-    status: string | null
-): boolean {
+export function useIsEditable(framework: AssessmentFramework | null, status: string | null): boolean {
     const { permissions } = useFrameworkPermissions(framework);
-    
+
     // Can't edit if no edit permission
     if (!permissions.canEdit) return false;
-    
+
     // Can't edit approved or archived
     if (status === 'APPROVED' || status === 'ARCHIVED') return false;
-    
+
     return true;
 }
 
 export default useFrameworkPermissions;
-
-
-
-
-
-
-
-
 

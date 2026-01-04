@@ -1,10 +1,11 @@
 /**
  * Project Member Service
- * 
+ *
  * PMO Standards Compliant Team Management
  */
 
 import { v4 as uuid } from 'uuid';
+
 import { DbPromise } from '../database/Database.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
@@ -23,114 +24,268 @@ export const PROJECT_ROLES = {
     REVIEWER: 'REVIEWER',
     OBSERVER: 'OBSERVER',
     CONSULTANT: 'CONSULTANT',
-    STAKEHOLDER: 'STAKEHOLDER'
+    STAKEHOLDER: 'STAKEHOLDER',
 } as const;
 
-export type ProjectRole = typeof PROJECT_ROLES[keyof typeof PROJECT_ROLES];
+export type ProjectRole = (typeof PROJECT_ROLES)[keyof typeof PROJECT_ROLES];
 
 /**
  * Default permissions by role
  */
 export const DEFAULT_PERMISSIONS: Record<string, any> = {
     [PROJECT_ROLES.SPONSOR]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: true,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: true,
-        canSubmitChangeRequests: false, canApproveChangeRequests: true,
-        canManageTeam: true, canManageWorkstreams: false, canConfigureProject: true,
-        canEscalate: false, canReceiveEscalations: true
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: true,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: true,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: true,
+        canManageTeam: true,
+        canManageWorkstreams: false,
+        canConfigureProject: true,
+        canEscalate: false,
+        canReceiveEscalations: true,
     },
     [PROJECT_ROLES.DECISION_OWNER]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: true,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: true,
-        canSubmitChangeRequests: false, canApproveChangeRequests: true,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: false, canReceiveEscalations: true
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: true,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: true,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: true,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: false,
+        canReceiveEscalations: true,
     },
     [PROJECT_ROLES.PMO_LEAD]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: true,
-        canCreateTasks: true, canAssignTasks: true, canUpdateTasks: true, canDeleteTasks: true,
-        canCreateInitiatives: true, canUpdateInitiatives: true, canDeleteInitiatives: true,
-        canRequestDecisions: true, canApproveDecisions: false,
-        canSubmitChangeRequests: true, canApproveChangeRequests: false,
-        canManageTeam: true, canManageWorkstreams: true, canConfigureProject: true,
-        canEscalate: true, canReceiveEscalations: true
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: true,
+        canCreateTasks: true,
+        canAssignTasks: true,
+        canUpdateTasks: true,
+        canDeleteTasks: true,
+        canCreateInitiatives: true,
+        canUpdateInitiatives: true,
+        canDeleteInitiatives: true,
+        canRequestDecisions: true,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: true,
+        canApproveChangeRequests: false,
+        canManageTeam: true,
+        canManageWorkstreams: true,
+        canConfigureProject: true,
+        canEscalate: true,
+        canReceiveEscalations: true,
     },
     [PROJECT_ROLES.WORKSTREAM_OWNER]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
-        canCreateTasks: true, canAssignTasks: true, canUpdateTasks: true, canDeleteTasks: false,
-        canCreateInitiatives: true, canUpdateInitiatives: true, canDeleteInitiatives: false,
-        canRequestDecisions: true, canApproveDecisions: false,
-        canSubmitChangeRequests: true, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: true, canReceiveEscalations: true
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: false,
+        canCreateTasks: true,
+        canAssignTasks: true,
+        canUpdateTasks: true,
+        canDeleteTasks: false,
+        canCreateInitiatives: true,
+        canUpdateInitiatives: true,
+        canDeleteInitiatives: false,
+        canRequestDecisions: true,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: true,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: true,
+        canReceiveEscalations: true,
     },
     [PROJECT_ROLES.INITIATIVE_OWNER]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
-        canCreateTasks: true, canAssignTasks: true, canUpdateTasks: true, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: true, canDeleteInitiatives: false,
-        canRequestDecisions: true, canApproveDecisions: false,
-        canSubmitChangeRequests: true, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: true, canReceiveEscalations: true
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: false,
+        canCreateTasks: true,
+        canAssignTasks: true,
+        canUpdateTasks: true,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: true,
+        canDeleteInitiatives: false,
+        canRequestDecisions: true,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: true,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: true,
+        canReceiveEscalations: true,
     },
     [PROJECT_ROLES.TASK_ASSIGNEE]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: false, canViewFinancials: false,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: true, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: false,
-        canSubmitChangeRequests: false, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: true, canReceiveEscalations: false
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: false,
+        canViewFinancials: false,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: true,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: true,
+        canReceiveEscalations: false,
     },
     [PROJECT_ROLES.SME]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: false,
-        canSubmitChangeRequests: false, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: false, canReceiveEscalations: false
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: false,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: false,
+        canReceiveEscalations: false,
     },
     [PROJECT_ROLES.REVIEWER]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: false,
-        canSubmitChangeRequests: false, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: false, canReceiveEscalations: false
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: false,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: false,
+        canReceiveEscalations: false,
     },
     [PROJECT_ROLES.OBSERVER]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: false, canViewFinancials: false,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: false,
-        canSubmitChangeRequests: false, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: false, canReceiveEscalations: false
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: false,
+        canViewFinancials: false,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: false,
+        canReceiveEscalations: false,
     },
     [PROJECT_ROLES.CONSULTANT]: {
-        canViewProject: true, canViewTasks: true, canViewInitiatives: true, canViewDecisions: true, canViewFinancials: false,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: false,
-        canSubmitChangeRequests: false, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: false, canReceiveEscalations: false
+        canViewProject: true,
+        canViewTasks: true,
+        canViewInitiatives: true,
+        canViewDecisions: true,
+        canViewFinancials: false,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: false,
+        canReceiveEscalations: false,
     },
     [PROJECT_ROLES.STAKEHOLDER]: {
-        canViewProject: true, canViewTasks: false, canViewInitiatives: true, canViewDecisions: false, canViewFinancials: false,
-        canCreateTasks: false, canAssignTasks: false, canUpdateTasks: false, canDeleteTasks: false,
-        canCreateInitiatives: false, canUpdateInitiatives: false, canDeleteInitiatives: false,
-        canRequestDecisions: false, canApproveDecisions: false,
-        canSubmitChangeRequests: false, canApproveChangeRequests: false,
-        canManageTeam: false, canManageWorkstreams: false, canConfigureProject: false,
-        canEscalate: false, canReceiveEscalations: false
-    }
+        canViewProject: true,
+        canViewTasks: false,
+        canViewInitiatives: true,
+        canViewDecisions: false,
+        canViewFinancials: false,
+        canCreateTasks: false,
+        canAssignTasks: false,
+        canUpdateTasks: false,
+        canDeleteTasks: false,
+        canCreateInitiatives: false,
+        canUpdateInitiatives: false,
+        canDeleteInitiatives: false,
+        canRequestDecisions: false,
+        canApproveDecisions: false,
+        canSubmitChangeRequests: false,
+        canApproveChangeRequests: false,
+        canManageTeam: false,
+        canManageWorkstreams: false,
+        canConfigureProject: false,
+        canEscalate: false,
+        canReceiveEscalations: false,
+    },
 };
 
 /**
@@ -141,59 +296,57 @@ export const RACI_MATRIX: Record<string, Record<string, string>> = {
         [PROJECT_ROLES.PMO_LEAD]: 'R',
         [PROJECT_ROLES.SPONSOR]: 'A',
         [PROJECT_ROLES.CONSULTANT]: 'C',
-        [PROJECT_ROLES.STAKEHOLDER]: 'I'
+        [PROJECT_ROLES.STAKEHOLDER]: 'I',
     },
     INITIATIVE: {
         [PROJECT_ROLES.INITIATIVE_OWNER]: 'R',
         [PROJECT_ROLES.PMO_LEAD]: 'A',
         [PROJECT_ROLES.SME]: 'C',
-        [PROJECT_ROLES.TASK_ASSIGNEE]: 'I'
+        [PROJECT_ROLES.TASK_ASSIGNEE]: 'I',
     },
     TASK: {
         [PROJECT_ROLES.TASK_ASSIGNEE]: 'R',
         [PROJECT_ROLES.INITIATIVE_OWNER]: 'A',
         [PROJECT_ROLES.SME]: 'C',
-        [PROJECT_ROLES.PMO_LEAD]: 'I'
+        [PROJECT_ROLES.PMO_LEAD]: 'I',
     },
     DECISION: {
         [PROJECT_ROLES.DECISION_OWNER]: 'R',
         [PROJECT_ROLES.SPONSOR]: 'A',
         [PROJECT_ROLES.PMO_LEAD]: 'C',
-        [PROJECT_ROLES.STAKEHOLDER]: 'I'
+        [PROJECT_ROLES.STAKEHOLDER]: 'I',
     },
     CHANGE_REQUEST: {
         [PROJECT_ROLES.PMO_LEAD]: 'R',
         [PROJECT_ROLES.SPONSOR]: 'A',
         [PROJECT_ROLES.DECISION_OWNER]: 'C',
-        [PROJECT_ROLES.STAKEHOLDER]: 'I'
+        [PROJECT_ROLES.STAKEHOLDER]: 'I',
     },
     ROADMAP: {
         [PROJECT_ROLES.PMO_LEAD]: 'R',
         [PROJECT_ROLES.SPONSOR]: 'A',
         [PROJECT_ROLES.INITIATIVE_OWNER]: 'C',
-        [PROJECT_ROLES.STAKEHOLDER]: 'I'
+        [PROJECT_ROLES.STAKEHOLDER]: 'I',
     },
     STAGE_GATE: {
         [PROJECT_ROLES.PMO_LEAD]: 'R',
         [PROJECT_ROLES.SPONSOR]: 'A',
         [PROJECT_ROLES.DECISION_OWNER]: 'C',
-        [PROJECT_ROLES.STAKEHOLDER]: 'I'
-    }
+        [PROJECT_ROLES.STAKEHOLDER]: 'I',
+    },
 };
 
 export class ProjectMemberService {
     /**
      * Add a member to a project
      */
-    static async addMember(projectId: string, userId: string, projectRole: ProjectRole, options: any = {}): Promise<any> {
-        const {
-            addedById,
-            workstreamId,
-            allocationPercent = 100,
-            customPermissions,
-            startDate,
-            endDate
-        } = options;
+    static async addMember(
+        projectId: string,
+        userId: string,
+        projectRole: ProjectRole,
+        options: any = {},
+    ): Promise<any> {
+        const { addedById, workstreamId, allocationPercent = 100, customPermissions, startDate, endDate } = options;
 
         // Validate role
         if (!PROJECT_ROLES[projectRole as keyof typeof PROJECT_ROLES]) {
@@ -201,10 +354,10 @@ export class ProjectMemberService {
         }
 
         // Check if user is already a member
-        const existing = await DbPromise.get(
-            'SELECT id FROM project_members WHERE project_id = ? AND user_id = ?',
-            [projectId, userId]
-        );
+        const existing = await DbPromise.get('SELECT id FROM project_members WHERE project_id = ? AND user_id = ?', [
+            projectId,
+            userId,
+        ]);
         if (existing) {
             throw new Error('User is already a member of this project');
         }
@@ -212,7 +365,7 @@ export class ProjectMemberService {
         // Get default permissions for role, merge with custom
         const permissions = {
             ...DEFAULT_PERMISSIONS[projectRole],
-            ...(customPermissions || {})
+            ...(customPermissions || {}),
         };
 
         const id = uuid();
@@ -235,8 +388,8 @@ export class ProjectMemberService {
                 endDate || null,
                 now,
                 now,
-                addedById || null
-            ]
+                addedById || null,
+            ],
         );
 
         // Log to audit trail
@@ -244,7 +397,7 @@ export class ProjectMemberService {
             memberId: id,
             userId,
             projectRole,
-            addedById
+            addedById,
         });
 
         return this.getMember(projectId, userId);
@@ -256,13 +409,20 @@ export class ProjectMemberService {
     static async updateMember(projectId: string, userId: string, updates: any): Promise<any> {
         const existing: any = await DbPromise.get(
             'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-            [projectId, userId]
+            [projectId, userId],
         );
         if (!existing) {
             throw new Error('Member not found in project');
         }
 
-        const allowedFields = ['project_role', 'workstream_id', 'allocation_percent', 'permissions', 'start_date', 'end_date'];
+        const allowedFields = [
+            'project_role',
+            'workstream_id',
+            'allocation_percent',
+            'permissions',
+            'start_date',
+            'end_date',
+        ];
         const setClauses: string[] = [];
         const values: any[] = [];
 
@@ -284,21 +444,22 @@ export class ProjectMemberService {
 
         await DbPromise.run(
             `UPDATE project_members SET ${setClauses.join(', ')} WHERE project_id = ? AND user_id = ?`,
-            values
+            values,
         );
 
         // If role changed, update permissions to new defaults
         if (updates.projectRole && updates.projectRole !== existing.project_role) {
             const newPermissions = DEFAULT_PERMISSIONS[updates.projectRole];
-            await DbPromise.run(
-                'UPDATE project_members SET permissions = ? WHERE project_id = ? AND user_id = ?',
-                [JSON.stringify(newPermissions), projectId, userId]
-            );
+            await DbPromise.run('UPDATE project_members SET permissions = ? WHERE project_id = ? AND user_id = ?', [
+                JSON.stringify(newPermissions),
+                projectId,
+                userId,
+            ]);
 
             await this._logAudit(projectId, 'MEMBER_ROLE_CHANGED', {
                 userId,
                 oldRole: existing.project_role,
-                newRole: updates.projectRole
+                newRole: updates.projectRole,
             });
         }
 
@@ -311,20 +472,17 @@ export class ProjectMemberService {
     static async removeMember(projectId: string, userId: string): Promise<boolean> {
         const existing: any = await DbPromise.get(
             'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
-            [projectId, userId]
+            [projectId, userId],
         );
         if (!existing) {
             throw new Error('Member not found in project');
         }
 
-        await DbPromise.run(
-            'DELETE FROM project_members WHERE project_id = ? AND user_id = ?',
-            [projectId, userId]
-        );
+        await DbPromise.run('DELETE FROM project_members WHERE project_id = ? AND user_id = ?', [projectId, userId]);
 
         await this._logAudit(projectId, 'MEMBER_REMOVED', {
             userId,
-            previousRole: existing.project_role
+            previousRole: existing.project_role,
         });
 
         return true;
@@ -339,7 +497,7 @@ export class ProjectMemberService {
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
        WHERE pm.project_id = ? AND pm.user_id = ?`,
-            [projectId, userId]
+            [projectId, userId],
         );
 
         if (!member) return null;
@@ -372,7 +530,7 @@ export class ProjectMemberService {
         query += ' ORDER BY pm.project_role, u.last_name, u.first_name';
 
         const members: any[] = await DbPromise.all(query, params);
-        return members.map(m => this._formatMember(m));
+        return members.map((m) => this._formatMember(m));
     }
 
     /**
@@ -404,7 +562,7 @@ export class ProjectMemberService {
                     matrix[objectType][raciType].push({
                         userId: member.userId,
                         name: `${member.firstName} ${member.lastName}`,
-                        role: member.projectRole
+                        role: member.projectRole,
                     });
                 }
             }
@@ -413,7 +571,7 @@ export class ProjectMemberService {
         return {
             projectId,
             matrix,
-            generatedAt: new Date().toISOString()
+            generatedAt: new Date().toISOString(),
         };
     }
 
@@ -425,7 +583,7 @@ export class ProjectMemberService {
         const rolesByLevel: Record<number, string[]> = {
             1: [PROJECT_ROLES.INITIATIVE_OWNER, PROJECT_ROLES.WORKSTREAM_OWNER],
             2: [PROJECT_ROLES.PMO_LEAD],
-            3: [PROJECT_ROLES.SPONSOR, PROJECT_ROLES.DECISION_OWNER]
+            3: [PROJECT_ROLES.SPONSOR, PROJECT_ROLES.DECISION_OWNER],
         };
 
         const roles = rolesByLevel[escalationLevel] || rolesByLevel[3];
@@ -436,10 +594,10 @@ export class ProjectMemberService {
        FROM project_members pm
        JOIN users u ON u.id = pm.user_id
        WHERE pm.project_id = ? AND pm.project_role IN (${placeholders})`,
-            [projectId, ...roles]
+            [projectId, ...roles],
         );
 
-        return members.map(m => this._formatMember(m));
+        return members.map((m) => this._formatMember(m));
     }
 
     /**
@@ -458,7 +616,7 @@ export class ProjectMemberService {
             PROJECT_ROLES.TASK_ASSIGNEE,
             PROJECT_ROLES.INITIATIVE_OWNER,
             PROJECT_ROLES.WORKSTREAM_OWNER,
-            PROJECT_ROLES.PMO_LEAD
+            PROJECT_ROLES.PMO_LEAD,
         ];
 
         if (options.workstreamId) {
@@ -469,7 +627,7 @@ export class ProjectMemberService {
         query += ' ORDER BY u.last_name, u.first_name';
 
         const members: any[] = await DbPromise.all(query, params);
-        return members.map(m => this._formatMember(m));
+        return members.map((m) => this._formatMember(m));
     }
 
     /**
@@ -482,7 +640,7 @@ export class ProjectMemberService {
        JOIN users u ON u.id = pm.user_id
        WHERE pm.project_id = ? AND pm.project_role = ?
        LIMIT 1`,
-            [projectId, role]
+            [projectId, role],
         );
 
         return member ? this._formatMember(member) : null;
@@ -494,7 +652,7 @@ export class ProjectMemberService {
     static async getUserRole(projectId: string, userId: string): Promise<string | null> {
         const member: any = await DbPromise.get(
             'SELECT project_role FROM project_members WHERE project_id = ? AND user_id = ?',
-            [projectId, userId]
+            [projectId, userId],
         );
         return member ? member.project_role : null;
     }
@@ -509,16 +667,16 @@ export class ProjectMemberService {
        JOIN projects p ON p.id = pm.project_id
        WHERE pm.user_id = ?
        ORDER BY p.name`,
-            [userId]
+            [userId],
         );
 
-        return projects.map(p => ({
+        return projects.map((p) => ({
             id: p.id,
             name: p.name,
             status: p.status,
             projectRole: p.project_role,
             workstreamId: p.workstream_id,
-            allocationPercent: p.allocation_percent
+            allocationPercent: p.allocation_percent,
         }));
     }
 
@@ -542,7 +700,7 @@ export class ProjectMemberService {
             firstName: row.first_name,
             lastName: row.last_name,
             email: row.email,
-            avatarUrl: row.avatar_url
+            avatarUrl: row.avatar_url,
         };
     }
 
@@ -571,8 +729,8 @@ export class ProjectMemberService {
                     mapping?.pmbok7?.term || 'Team Performance Domain',
                     mapping?.prince2?.term || 'Organization Theme',
                     JSON.stringify(metadata),
-                    new Date().toISOString()
-                ]
+                    new Date().toISOString(),
+                ],
             );
         } catch (err: any) {
             console.error('[ProjectMemberService] Audit log failed:', err.message);

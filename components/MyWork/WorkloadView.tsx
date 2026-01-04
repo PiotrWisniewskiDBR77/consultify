@@ -1,7 +1,7 @@
 /**
  * WorkloadView - Team capacity heatmap
  * Part of My Work Module PMO Upgrade
- * 
+ *
  * Features:
  * - Team member capacity visualization
  * - Workload status indicators
@@ -9,19 +9,12 @@
  * - Team average summary
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-    Users,
-    AlertTriangle,
-    CheckCircle2,
-    User,
-    Loader2,
-    RefreshCw,
-    BarChart3
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertTriangle, BarChart3, CheckCircle2, Loader2, RefreshCw, User, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
 interface TeamMember {
@@ -72,7 +65,7 @@ const CapacityBar: React.FC<{ capacity: number }> = ({ capacity }) => {
  */
 const StatusBadge: React.FC<{ capacity: number }> = ({ capacity }) => {
     const { t } = useTranslation();
-    
+
     if (capacity > 100) {
         return (
             <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium flex items-center gap-1">
@@ -117,23 +110,23 @@ const TeamMemberRow: React.FC<{ member: TeamMember }> = ({ member }) => {
 
             {/* Name & Role */}
             <div className="w-32 min-w-0 shrink-0">
-                <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
-                    {member.name}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {member.role}
-                </p>
+                <p className="text-sm font-medium text-navy-900 dark:text-white truncate">{member.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{member.role}</p>
             </div>
 
             {/* Capacity Bar */}
             <CapacityBar capacity={member.capacity} />
 
             {/* Percentage */}
-            <span className={`w-14 text-sm font-bold text-right shrink-0 ${
-                member.capacity > 100 ? 'text-red-500' : 
-                member.capacity > 80 ? 'text-orange-500' : 
-                'text-navy-900 dark:text-white'
-            }`}>
+            <span
+                className={`w-14 text-sm font-bold text-right shrink-0 ${
+                    member.capacity > 100
+                        ? 'text-red-500'
+                        : member.capacity > 80
+                          ? 'text-orange-500'
+                          : 'text-navy-900 dark:text-white'
+                }`}
+            >
                 {member.capacity}%
             </span>
 
@@ -160,8 +153,8 @@ export const WorkloadView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-    
-    const currentProjectId = useAppStore(state => state.currentProjectId);
+
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
 
     useEffect(() => {
         fetchWorkload();
@@ -174,11 +167,11 @@ export const WorkloadView: React.FC = () => {
             } else {
                 setLoading(true);
             }
-            
-            const url = currentProjectId 
+
+            const url = currentProjectId
                 ? `/my-work/team-workload?projectId=${currentProjectId}`
                 : `/my-work/team-workload`;
-            
+
             const response = await Api.get(url);
             if (response && Array.isArray(response)) {
                 setTeamMembers(response);
@@ -187,11 +180,51 @@ export const WorkloadView: React.FC = () => {
             console.error('Failed to fetch workload:', error);
             // Use mock data for demo
             setTeamMembers([
-                { id: '1', name: 'Anna Kowalska', initials: 'AK', role: 'Project Manager', capacity: 95, tasksAssigned: 8, tasksCompleted: 6 },
-                { id: '2', name: 'Piotr Nowak', initials: 'PN', role: 'Developer', capacity: 120, tasksAssigned: 12, tasksCompleted: 5 },
-                { id: '3', name: 'Marta Wiśniewska', initials: 'MW', role: 'Designer', capacity: 65, tasksAssigned: 5, tasksCompleted: 3 },
-                { id: '4', name: 'Jan Kowalczyk', initials: 'JK', role: 'Analyst', capacity: 40, tasksAssigned: 3, tasksCompleted: 2 },
-                { id: '5', name: 'Karolina Mazur', initials: 'KM', role: 'QA Engineer', capacity: 85, tasksAssigned: 7, tasksCompleted: 4 },
+                {
+                    id: '1',
+                    name: 'Anna Kowalska',
+                    initials: 'AK',
+                    role: 'Project Manager',
+                    capacity: 95,
+                    tasksAssigned: 8,
+                    tasksCompleted: 6,
+                },
+                {
+                    id: '2',
+                    name: 'Piotr Nowak',
+                    initials: 'PN',
+                    role: 'Developer',
+                    capacity: 120,
+                    tasksAssigned: 12,
+                    tasksCompleted: 5,
+                },
+                {
+                    id: '3',
+                    name: 'Marta Wiśniewska',
+                    initials: 'MW',
+                    role: 'Designer',
+                    capacity: 65,
+                    tasksAssigned: 5,
+                    tasksCompleted: 3,
+                },
+                {
+                    id: '4',
+                    name: 'Jan Kowalczyk',
+                    initials: 'JK',
+                    role: 'Analyst',
+                    capacity: 40,
+                    tasksAssigned: 3,
+                    tasksCompleted: 2,
+                },
+                {
+                    id: '5',
+                    name: 'Karolina Mazur',
+                    initials: 'KM',
+                    role: 'QA Engineer',
+                    capacity: 85,
+                    tasksAssigned: 7,
+                    tasksCompleted: 4,
+                },
             ]);
         } finally {
             setLoading(false);
@@ -200,11 +233,12 @@ export const WorkloadView: React.FC = () => {
     };
 
     // Calculate team stats
-    const avgCapacity = teamMembers.length > 0 
-        ? Math.round(teamMembers.reduce((sum, m) => sum + m.capacity, 0) / teamMembers.length)
-        : 0;
-    const overloadedCount = teamMembers.filter(m => m.capacity > 100).length;
-    const availableCount = teamMembers.filter(m => m.capacity < 50).length;
+    const avgCapacity =
+        teamMembers.length > 0
+            ? Math.round(teamMembers.reduce((sum, m) => sum + m.capacity, 0) / teamMembers.length)
+            : 0;
+    const overloadedCount = teamMembers.filter((m) => m.capacity > 100).length;
+    const availableCount = teamMembers.filter((m) => m.capacity < 50).length;
 
     if (loading) {
         return (
@@ -249,9 +283,11 @@ export const WorkloadView: React.FC = () => {
                         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                             {t('workload.avgCapacity', 'Avg Capacity')}
                         </p>
-                        <p className={`text-2xl font-bold ${
-                            avgCapacity > 80 ? 'text-orange-500' : 'text-navy-900 dark:text-white'
-                        }`}>
+                        <p
+                            className={`text-2xl font-bold ${
+                                avgCapacity > 80 ? 'text-orange-500' : 'text-navy-900 dark:text-white'
+                            }`}
+                        >
                             {avgCapacity}%
                         </p>
                     </div>
@@ -259,17 +295,13 @@ export const WorkloadView: React.FC = () => {
                         <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">
                             {t('workload.overloaded', 'Overloaded')}
                         </p>
-                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                            {overloadedCount}
-                        </p>
+                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overloadedCount}</p>
                     </div>
                     <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wider mb-1">
                             {t('workload.available', 'Available')}
                         </p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {availableCount}
-                        </p>
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{availableCount}</p>
                     </div>
                 </div>
             </div>
@@ -287,7 +319,7 @@ export const WorkloadView: React.FC = () => {
                             <div className="w-24 shrink-0">{t('workload.status', 'Status')}</div>
                             <div className="text-right shrink-0">{t('workload.tasks', 'Tasks')}</div>
                         </div>
-                        
+
                         {/* Member Rows */}
                         {teamMembers.map((member, index) => (
                             <motion.div
@@ -316,18 +348,18 @@ export const WorkloadView: React.FC = () => {
                     </span>
                     <div className="flex items-center gap-3">
                         <div className="w-32 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 className={`h-full rounded-full ${
-                                    avgCapacity > 100 ? 'bg-red-500' :
-                                    avgCapacity > 80 ? 'bg-orange-500' :
-                                    'bg-green-500'
+                                    avgCapacity > 100
+                                        ? 'bg-red-500'
+                                        : avgCapacity > 80
+                                          ? 'bg-orange-500'
+                                          : 'bg-green-500'
                                 }`}
                                 style={{ width: `${Math.min(avgCapacity, 100)}%` }}
                             />
                         </div>
-                        <span className="font-bold text-navy-900 dark:text-white">
-                            {avgCapacity}%
-                        </span>
+                        <span className="font-bold text-navy-900 dark:text-white">{avgCapacity}%</span>
                     </div>
                 </div>
             </div>

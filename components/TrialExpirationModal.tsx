@@ -18,7 +18,7 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
     organizationName,
     onUpgradeClick,
     onContactSalesClick,
-    onDismiss
+    onDismiss,
 }) => {
     const { t } = useTranslation();
 
@@ -27,10 +27,7 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={onDismiss}
-            />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onDismiss} />
 
             {/* Modal */}
             <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
@@ -39,12 +36,8 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
                     <div className="flex items-center gap-3">
                         <span className="text-4xl">🔒</span>
                         <div>
-                            <h2 className="text-xl font-bold">
-                                {t('trialExpired.title', 'Trial Expired')}
-                            </h2>
-                            <p className="text-orange-100 text-sm mt-1">
-                                {organizationName}
-                            </p>
+                            <h2 className="text-xl font-bold">{t('trialExpired.title', 'Trial Expired')}</h2>
+                            <p className="text-orange-100 text-sm mt-1">{organizationName}</p>
                         </div>
                     </div>
                 </div>
@@ -52,7 +45,10 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
                 {/* Content */}
                 <div className="p-6">
                     <p className="text-gray-700 mb-4">
-                        {t('trialExpired.message', 'Your trial period has ended. Your data is safe, but your organization is now in read-only mode.')}
+                        {t(
+                            'trialExpired.message',
+                            'Your trial period has ended. Your data is safe, but your organization is now in read-only mode.',
+                        )}
                     </p>
 
                     <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -98,10 +94,7 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
 
                 {/* Footer */}
                 <div className="bg-gray-50 px-6 py-4 text-center">
-                    <button
-                        onClick={onDismiss}
-                        className="text-sm text-gray-500 hover:text-gray-700"
-                    >
+                    <button onClick={onDismiss} className="text-sm text-gray-500 hover:text-gray-700">
                         {t('trialExpired.dismiss', 'Dismiss for now')}
                     </button>
                 </div>

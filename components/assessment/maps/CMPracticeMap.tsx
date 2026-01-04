@@ -1,39 +1,40 @@
 /**
  * CMMI Practice Areas Map Component
- * 
+ *
  * Capability Maturity Model Integration assessment visualization:
  * - 5 Maturity Levels indicator
  * - 20 Practice Areas grouped by 3 Categories (Doing, Managing, Enabling)
  * - Scale 1-5
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
 import {
-    Layers,
-    Rocket,
+    AlertTriangle,
     Briefcase,
     Building,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
-    AlertTriangle,
+    Info,
+    Layers,
+    Rocket,
     Target,
-    CheckCircle2,
-    Info
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import {
-    CMMI_MATURITY_LEVELS,
-    CMMI_CATEGORIES,
-    CMMI_PRACTICE_AREAS,
-    CMMICategory,
-    CMMIPracticeArea,
-    CMMIAssessmentData,
+    calculateAverageScore,
     calculateCategoryScore,
     calculateOverallMaturityLevel,
-    calculateAverageScore,
+    CMMI_CATEGORIES,
+    CMMI_MATURITY_LEVELS,
+    CMMI_PRACTICE_AREAS,
+    CMMIAssessmentData,
+    CMMICategory,
+    CMMIPracticeArea,
     createEmptyCMMIAssessment,
-    getCMMIGaps,
     getAllCategories,
+    getCMMIGaps,
     getPracticeAreasForCategory,
 } from '../../../services/cmmiStructure';
 
@@ -68,18 +69,15 @@ const CMMIMaturityLevelBar: React.FC<{
                     <span className="font-bold text-navy-900 dark:text-white">{averageScore.toFixed(1)}</span>
                 </div>
             </div>
-            
+
             {/* Level Indicator */}
             <div className="flex gap-1 mb-3">
-                {CMMI_MATURITY_LEVELS.map(level => {
+                {CMMI_MATURITY_LEVELS.map((level) => {
                     const isAchieved = currentLevel >= level.level;
                     const isCurrent = currentLevel === level.level;
-                    
+
                     return (
-                        <div
-                            key={level.level}
-                            className={`flex-1 relative group`}
-                        >
+                        <div key={level.level} className={`flex-1 relative group`}>
                             <div
                                 className={`h-12 rounded-lg flex items-center justify-center transition-all ${
                                     isAchieved
@@ -92,7 +90,7 @@ const CMMIMaturityLevelBar: React.FC<{
                                     <div className="text-xs opacity-80">{level.name}</div>
                                 </div>
                             </div>
-                            
+
                             {/* Tooltip */}
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-navy-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                                 <div className="font-bold mb-1">{level.title}</div>
@@ -102,14 +100,20 @@ const CMMIMaturityLevelBar: React.FC<{
                     );
                 })}
             </div>
-            
+
             {/* Current Level Info */}
             {currentLevel > 0 && (
-                <div className={`p-3 rounded-lg bg-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-50 dark:bg-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-900/20`}>
+                <div
+                    className={`p-3 rounded-lg bg-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-50 dark:bg-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-900/20`}
+                >
                     <div className="flex items-start gap-2">
-                        <CheckCircle2 className={`w-5 h-5 text-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-500 shrink-0`} />
+                        <CheckCircle2
+                            className={`w-5 h-5 text-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-500 shrink-0`}
+                        />
                         <div>
-                            <div className={`font-bold text-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-700 dark:text-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-400`}>
+                            <div
+                                className={`font-bold text-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-700 dark:text-${CMMI_MATURITY_LEVELS[currentLevel - 1].color}-400`}
+                            >
                                 {CMMI_MATURITY_LEVELS[currentLevel - 1].title}
                             </div>
                             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
@@ -136,36 +140,37 @@ const CMMICategoryAccordion: React.FC<{
     onToggleExpand: () => void;
 }> = ({ category, practiceAreas, scores, onScoreChange, readOnly, expanded, onToggleExpand }) => {
     const config = CMMI_CATEGORIES[category];
-    
+
     const categoryScore = useMemo(() => {
         return calculateCategoryScore(scores, category);
     }, [scores, category]);
-    
+
     const IconMap: Record<string, React.FC<{ className?: string; size?: number }>> = {
-        'Rocket': Rocket,
-        'Briefcase': Briefcase,
-        'Building': Building,
+        Rocket: Rocket,
+        Briefcase: Briefcase,
+        Building: Building,
     };
     const IconComponent = IconMap[config.icon] || Rocket;
-    
+
     return (
-        <div className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
-            expanded 
-                ? `border-${config.color}-500 shadow-lg` 
-                : 'border-slate-200 dark:border-white/10'
-        }`}>
+        <div
+            className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
+                expanded ? `border-${config.color}-500 shadow-lg` : 'border-slate-200 dark:border-white/10'
+            }`}
+        >
             {/* Header */}
-            <button
-                onClick={onToggleExpand}
-                className="w-full p-4 flex items-center justify-between"
-            >
+            <button onClick={onToggleExpand} className="w-full p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}>
+                    <div
+                        className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}
+                    >
                         <IconComponent className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
                     </div>
                     <div className="text-left">
                         <h3 className="font-bold text-navy-900 dark:text-white">{config.name}</h3>
-                        <p className="text-xs text-slate-500">{config.namePL} • {practiceAreas.length} Practice Areas</p>
+                        <p className="text-xs text-slate-500">
+                            {config.namePL} • {practiceAreas.length} Practice Areas
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -177,20 +182,18 @@ const CMMICategoryAccordion: React.FC<{
                     {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                 </div>
             </button>
-            
+
             {/* Expanded Content */}
             {expanded && (
                 <div className="px-4 pb-4 border-t border-slate-200 dark:border-white/10 pt-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        {config.descriptionPL}
-                    </p>
-                    
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{config.descriptionPL}</p>
+
                     {/* Practice Areas Table */}
                     <div className="space-y-2">
-                        {practiceAreas.map(pa => {
+                        {practiceAreas.map((pa) => {
                             const score = scores[pa.id] || 0;
                             return (
-                                <div 
+                                <div
                                     key={pa.id}
                                     className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg"
                                 >
@@ -203,13 +206,13 @@ const CMMICategoryAccordion: React.FC<{
                                         </div>
                                         <div className="text-xs text-slate-500 truncate">{pa.name}</div>
                                     </div>
-                                    
+
                                     {/* Level Buttons */}
                                     <div className="flex gap-1">
-                                        {[1, 2, 3, 4, 5].map(level => {
+                                        {[1, 2, 3, 4, 5].map((level) => {
                                             const levelConfig = CMMI_MATURITY_LEVELS[level - 1];
                                             const isSelected = score === level;
-                                            
+
                                             return (
                                                 <button
                                                     key={level}
@@ -244,10 +247,9 @@ const CMMILegalNotice: React.FC = () => (
     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>CMMI (Capability Maturity Model Integration)</strong> jest znakiem towarowym{' '}
-            <strong>ISACA</strong> (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga{' '}
-            <strong>akredytowanego Lead Appraiser</strong>. Implementacja w Consultify służy{' '}
-            <strong>celom edukacyjnym</strong>.
+            <strong>CMMI (Capability Maturity Model Integration)</strong> jest znakiem towarowym <strong>ISACA</strong>{' '}
+            (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga <strong>akredytowanego Lead Appraiser</strong>.
+            Implementacja w Consultify służy <strong>celom edukacyjnym</strong>.
         </div>
     </div>
 );
@@ -263,56 +265,55 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
     showLegalNotice = true,
 }) => {
     const { t } = useTranslation();
-    
+
     // Initialize data
-    const [data, setData] = useState<CMMIAssessmentData>(() => 
-        initialData || createEmptyCMMIAssessment()
-    );
-    
+    const [data, setData] = useState<CMMIAssessmentData>(() => initialData || createEmptyCMMIAssessment());
+
     // Track expanded categories
-    const [expandedCategories, setExpandedCategories] = useState<Set<CMMICategory>>(
-        new Set(['DOING'])
-    );
-    
+    const [expandedCategories, setExpandedCategories] = useState<Set<CMMICategory>>(new Set(['DOING']));
+
     // Handlers
-    const handleScoreChange = useCallback((practiceAreaId: string, level: number) => {
-        setData(prev => {
-            const newData = {
-                ...prev,
-                practiceAreas: {
-                    ...prev.practiceAreas,
-                    [practiceAreaId]: {
-                        ...prev.practiceAreas[practiceAreaId],
-                        level,
+    const handleScoreChange = useCallback(
+        (practiceAreaId: string, level: number) => {
+            setData((prev) => {
+                const newData = {
+                    ...prev,
+                    practiceAreas: {
+                        ...prev.practiceAreas,
+                        [practiceAreaId]: {
+                            ...prev.practiceAreas[practiceAreaId],
+                            level,
+                        },
                     },
-                },
-            };
-            
-            // Recalculate scores
-            const paScores: Record<string, number> = {};
-            Object.entries(newData.practiceAreas).forEach(([id, pa]) => {
-                paScores[id] = pa.level;
-            });
-            
-            // Recalculate categories
-            getAllCategories().forEach(cat => {
-                newData.categories[cat] = {
-                    averageLevel: calculateCategoryScore(paScores, cat),
-                    practiceAreaScores: paScores,
                 };
+
+                // Recalculate scores
+                const paScores: Record<string, number> = {};
+                Object.entries(newData.practiceAreas).forEach(([id, pa]) => {
+                    paScores[id] = pa.level;
+                });
+
+                // Recalculate categories
+                getAllCategories().forEach((cat) => {
+                    newData.categories[cat] = {
+                        averageLevel: calculateCategoryScore(paScores, cat),
+                        practiceAreaScores: paScores,
+                    };
+                });
+
+                // Recalculate overall maturity level
+                newData.maturityLevel = calculateOverallMaturityLevel(paScores);
+                newData.overallScore = calculateAverageScore(paScores);
+
+                onChange?.(newData);
+                return newData;
             });
-            
-            // Recalculate overall maturity level
-            newData.maturityLevel = calculateOverallMaturityLevel(paScores);
-            newData.overallScore = calculateAverageScore(paScores);
-            
-            onChange?.(newData);
-            return newData;
-        });
-    }, [onChange]);
-    
+        },
+        [onChange],
+    );
+
     const toggleCategoryExpand = useCallback((category: CMMICategory) => {
-        setExpandedCategories(prev => {
+        setExpandedCategories((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(category)) {
                 newSet.delete(category);
@@ -322,17 +323,17 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
             return newSet;
         });
     }, []);
-    
+
     // Calculate stats
     const stats = useMemo(() => {
         const paScores: Record<string, number> = {};
         Object.entries(data.practiceAreas).forEach(([id, pa]) => {
             paScores[id] = pa.level;
         });
-        
-        const filledPAs = Object.values(data.practiceAreas).filter(pa => pa.level > 0).length;
+
+        const filledPAs = Object.values(data.practiceAreas).filter((pa) => pa.level > 0).length;
         const gaps = getCMMIGaps(data.practiceAreas, 3); // Target level 3
-        
+
         return {
             maturityLevel: data.maturityLevel,
             averageScore: data.overallScore,
@@ -342,7 +343,7 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
             gapsToLevel3: gaps.length,
         };
     }, [data]);
-    
+
     // Prepare scores for category components
     const paScores = useMemo(() => {
         const scores: Record<string, number> = {};
@@ -351,7 +352,7 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
         });
         return scores;
     }, [data.practiceAreas]);
-    
+
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 overflow-hidden">
             {/* Header */}
@@ -362,9 +363,7 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
                             <Layers className="text-orange-500" />
                             CMMI Assessment
                         </h2>
-                        <p className="text-sm text-slate-500">
-                            Capability Maturity Model Integration v2.0
-                        </p>
+                        <p className="text-sm text-slate-500">Capability Maturity Model Integration v2.0</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="bg-orange-100 dark:bg-orange-900/30 px-4 py-2 rounded-xl text-center">
@@ -374,10 +373,10 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
                             <div className="text-xs text-orange-600/70">Maturity</div>
                         </div>
                         <div className="bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-xl text-center">
-                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {stats.progress}%
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.progress}%</div>
+                            <div className="text-xs text-blue-600/70">
+                                {stats.filledPAs}/{stats.totalPAs} PAs
                             </div>
-                            <div className="text-xs text-blue-600/70">{stats.filledPAs}/{stats.totalPAs} PAs</div>
                         </div>
                         <div className="bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-xl text-center">
                             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
@@ -387,35 +386,32 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className="h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all"
                         style={{ width: `${stats.progress}%` }}
                     />
                 </div>
             </div>
-            
+
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Legal Notice */}
                 {showLegalNotice && <CMMILegalNotice />}
-                
+
                 {/* Maturity Level Bar */}
-                <CMMIMaturityLevelBar
-                    currentLevel={stats.maturityLevel}
-                    averageScore={stats.averageScore}
-                />
-                
+                <CMMIMaturityLevelBar currentLevel={stats.maturityLevel} averageScore={stats.averageScore} />
+
                 {/* Categories */}
                 <div className="space-y-3">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                         <Target size={18} />
                         Practice Areas by Category
                     </h3>
-                    
-                    {getAllCategories().map(category => (
+
+                    {getAllCategories().map((category) => (
                         <CMMICategoryAccordion
                             key={category}
                             category={category}
@@ -434,12 +430,4 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
 };
 
 export default CMPracticeMap;
-
-
-
-
-
-
-
-
 

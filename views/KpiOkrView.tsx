@@ -1,6 +1,6 @@
+import { BarChart3, LineChart, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Target, BarChart3, LineChart } from 'lucide-react';
 
 export const KpiOkrView: React.FC = () => {
     const { t } = useTranslation();
@@ -42,7 +42,7 @@ export const KpiOkrView: React.FC = () => {
                         <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto">
                             {t(
                                 'kpiOkr.description',
-                                'Tutaj będziemy analizować projekty po fazie wdrożenia w trakcie realizacji. Moduł umożliwi śledzenie kluczowych wskaźników wydajności (KPI) oraz celów i kluczowych wyników (OKR).'
+                                'Tutaj będziemy analizować projekty po fazie wdrożenia w trakcie realizacji. Moduł umożliwi śledzenie kluczowych wskaźników wydajności (KPI) oraz celów i kluczowych wyników (OKR).',
                             )}
                         </p>
 

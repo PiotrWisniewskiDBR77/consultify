@@ -2,7 +2,8 @@
 // Step 4: Roadmap, Sequencing & Capacity
 
 // Dependency injection for testing
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import DependencyService from './dependencyService.js';
 

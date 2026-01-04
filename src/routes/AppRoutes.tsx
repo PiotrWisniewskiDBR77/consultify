@@ -1,16 +1,17 @@
-import React, { Suspense } from 'react';
-import { useAppStore } from '../../store/useAppStore';
-import { AppView, SessionMode, AuthStep, User } from '../../types';
-import { MainLayout } from '../layouts/MainLayout';
-import { AuthLayout } from '../layouts/AuthLayout';
-import { LoadingScreen } from '../../components/LoadingScreen';
-import { ViewRenderer } from '../../ViewRenderer';
-import { ProductEntryPage } from '../../views/ProductEntryPage';
-import { AuthView } from '../../views/AuthView';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { Suspense } from 'react';
+
+import { LoadingScreen } from '../../components/LoadingScreen';
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView, AuthStep, SessionMode, User } from '../../types';
+import { ViewRenderer } from '../../ViewRenderer';
+import { AuthView } from '../../views/AuthView';
+import { ProductEntryPage } from '../../views/ProductEntryPage';
 import { useBreadcrumbs } from '../hooks/useBreadcrumbs';
+import { AuthLayout } from '../layouts/AuthLayout';
+import { MainLayout } from '../layouts/MainLayout';
 
 export const AppRoutes: React.FC = () => {
     const {
@@ -27,7 +28,7 @@ export const AppRoutes: React.FC = () => {
         fullSessionData,
         setFullSessionData,
         theme,
-        toggleTheme
+        toggleTheme,
     } = useAppStore();
 
     const breadcrumbs = useBreadcrumbs();
@@ -95,14 +96,14 @@ export const AppRoutes: React.FC = () => {
         const validUser = user as User;
         const authenticatedUser: User = {
             ...validUser,
-            isAuthenticated: true
+            isAuthenticated: true,
         };
         setCurrentUser(authenticatedUser);
 
         if (validUser.organizationId) {
             setCurrentOrganization({
                 id: validUser.organizationId,
-                name: validUser.organizationName || 'Organization'
+                name: validUser.organizationName || 'Organization',
             });
         }
 
@@ -157,7 +158,13 @@ export const AppRoutes: React.FC = () => {
 
     return (
         <MainLayout breadcrumbs={breadcrumbs || ['Dashboard', 'Home']}>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>}>
+            <Suspense
+                fallback={
+                    <div className="flex items-center justify-center h-full">
+                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    </div>
+                }
+            >
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentView}

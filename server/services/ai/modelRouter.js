@@ -11,16 +11,17 @@
  * @module server/services/ai/modelRouter
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { aiLogger } from './logger.js';
 
 // Lazy-load LLMConfigService to avoid circular dependencies
-let _llmConfigService = null;
-function getLLMConfigService() {
+const _llmConfigService = null;
+async function getLLMConfigService() {
     if (!_llmConfigService) {
         try {
-            const { llmConfigService } = require('./llmConfigService');
-            _llmConfigService = llmConfigService;
+            const module = await import('./llmConfigService.js');
+            return module.llmConfigService;
         } catch (e) {
             console.warn('[ModelRouter] LLMConfigService not available:', e.message);
         }
@@ -171,7 +172,7 @@ class ModelRouter {
 
         // 1. Determine the tier (user selection or capability mapping)
         const tier = options.tier || params.tier || CAPABILITY_TIERS[capability] || 'STANDARD';
-        
+
         aiLogger.info('ModelRouter', `Selecting model for tier: ${tier}, org: ${organizationId || 'global'}`);
 
         // 2. Check for Organization Override (specific capability override)
@@ -183,11 +184,11 @@ class ModelRouter {
 
         // 3. Get available models for this tier (filtered by org settings)
         const availableModels = await this.getModelsForTier(tier, organizationId);
-        
+
         if (availableModels.length > 0) {
             // 4. Select model using round-robin within the tier
             const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
-            
+
             if (selectedModel) {
                 aiLogger.info('ModelRouter', `Selected via round-robin: ${selectedModel.model_id} (${selectedModel.provider})`);
                 return {
@@ -203,7 +204,7 @@ class ModelRouter {
         }
 
         // 5. Fallback: Try LLMConfigService
-        const configService = getLLMConfigService();
+        const configService = await getLLMConfigService();
         if (configService) {
             try {
                 const fallbackChain = await configService.getFallbackChain(tier);
@@ -369,7 +370,7 @@ class ModelRouter {
 
         // Get last used provider for this tier/org combo
         const lastUsed = await this.getLastUsedProvider(tier, organizationId);
-        
+
         // Find the index of the last used provider
         let lastIndex = -1;
         if (lastUsed) {
@@ -457,7 +458,7 @@ class ModelRouter {
         for (let i = tierIndex - 1; i >= 0; i--) {
             const fallbackTier = TIER_HIERARCHY[i];
             const fallbackModels = await this.getModelsForTier(fallbackTier, organizationId);
-            
+
             for (const model of fallbackModels) {
                 if (!excludeSet.has(model.model_id.toLowerCase())) {
                     aiLogger.info('ModelRouter', `Cross-tier fallback from ${tier} to ${fallbackTier}: ${model.model_id}`);
@@ -475,7 +476,7 @@ class ModelRouter {
         }
 
         // 3. Try LLMConfigService
-        const configService = getLLMConfigService();
+        const configService = await getLLMConfigService();
         if (configService) {
             try {
                 const excludeProviders = excludeModels.map(m => this.inferProvider(m));
@@ -548,7 +549,7 @@ class ModelRouter {
                 INSERT OR REPLACE INTO model_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
                 VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
             `;
-            db.run(query, [id, providerId, tier, priority], function(err) {
+            db.run(query, [id, providerId, tier, priority], function (err) {
                 if (err) {
                     aiLogger.error('ModelRouter', `Failed to assign model to tier: ${err.message}`);
                     reject(err);
@@ -568,7 +569,7 @@ class ModelRouter {
     async removeModelFromTier(providerId, tier) {
         return new Promise((resolve, reject) => {
             const query = `DELETE FROM model_tier_assignments WHERE provider_id = ? AND tier = ?`;
-            db.run(query, [providerId, tier], function(err) {
+            db.run(query, [providerId, tier], function (err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -592,7 +593,7 @@ class ModelRouter {
                 SET priority = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE provider_id = ? AND tier = ?
             `;
-            db.run(query, [priority, providerId, tier], function(err) {
+            db.run(query, [priority, providerId, tier], function (err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -620,7 +621,7 @@ class ModelRouter {
                 (id, organization_id, provider_id, is_enabled, updated_at)
                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             `;
-            db.run(query, [id, organizationId, providerId, isEnabled ? 1 : 0], function(err) {
+            db.run(query, [id, organizationId, providerId, isEnabled ? 1 : 0], function (err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -921,7 +922,7 @@ class ModelRouter {
 const modelRouter = new ModelRouter();
 
 export {
-ModelRouter,
+    ModelRouter,
     modelRouter,
     CAPABILITY_TIERS,
     TIER_DEFAULTS,

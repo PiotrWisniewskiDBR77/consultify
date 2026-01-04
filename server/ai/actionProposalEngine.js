@@ -3,8 +3,9 @@ import RecommendationEngine from './recommendationEngine.js';
 import SimulationEngine from './simulationEngine.js';
 import ActionProposalMapper from './actionProposalMapper.js';
 const PolicyEngine = await import('./policyEngine.js');
-import * as auditLogger from '../utils/auditLogger.js';
-import db from '../database.js';
+import * as auditLogger from '../dist/utils/auditLogger.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import AiService from '../services/aiService.js';
 

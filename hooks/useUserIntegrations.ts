@@ -1,13 +1,13 @@
 /**
  * useUserIntegrations Hook
- * 
+ *
  * React hook for managing user-level integrations (Slack, Teams, Jira, ClickUp).
  * Each user can connect/disconnect their own accounts independently.
- * 
+ *
  * Part of: User-Level Notifications & Integrations System
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Provider configuration
 export interface Provider {
@@ -67,18 +67,18 @@ interface UseUserIntegrationsReturn {
     connectedCount: number;
     loading: boolean;
     error: string | null;
-    
+
     // Actions
     connect: (provider: string) => Promise<void>;
     disconnect: (provider: string) => Promise<boolean>;
     testConnection: (provider: string) => Promise<{ success: boolean; error?: string }>;
     refreshToken: (provider: string) => Promise<boolean>;
     updateConfig: (provider: string, config: Record<string, any>) => Promise<boolean>;
-    
+
     // Status
     getConnectionStatus: (provider: string) => Promise<ConnectionStatus | null>;
     getSyncLogs: (provider: string, limit?: number) => Promise<SyncLog[]>;
-    
+
     // Utilities
     refresh: () => Promise<void>;
     isConnected: (provider: string) => boolean;
@@ -97,20 +97,20 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
         try {
             setLoading(true);
             setError(null);
-            
+
             const response = await fetch('/api/settings/integrations', {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch integrations');
             }
-            
+
             const data = await response.json();
-            
+
             setIntegrations(data.integrations || []);
             setProviders(data.providers || []);
             setConnectedCount(data.connectedCount || 0);
@@ -130,21 +130,21 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
     const connect = useCallback(async (provider: string) => {
         try {
             setError(null);
-            
+
             const response = await fetch(`/api/settings/integrations/${provider}/connect`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to initiate connection');
             }
-            
+
             const data = await response.json();
-            
+
             if (data.authUrl) {
                 // Redirect to OAuth provider
                 window.location.href = data.authUrl;
@@ -157,32 +157,35 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
     }, []);
 
     // Disconnect provider
-    const disconnect = useCallback(async (provider: string): Promise<boolean> => {
-        try {
-            setError(null);
-            
-            const response = await fetch(`/api/settings/integrations/${provider}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to disconnect');
+    const disconnect = useCallback(
+        async (provider: string): Promise<boolean> => {
+            try {
+                setError(null);
+
+                const response = await fetch(`/api/settings/integrations/${provider}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to disconnect');
+                }
+
+                // Refresh the list
+                await fetchIntegrations();
+
+                return true;
+            } catch (err) {
+                console.error('[useUserIntegrations] Disconnect error:', err);
+                setError(err instanceof Error ? err.message : 'Failed to disconnect');
+                return false;
             }
-            
-            // Refresh the list
-            await fetchIntegrations();
-            
-            return true;
-        } catch (err) {
-            console.error('[useUserIntegrations] Disconnect error:', err);
-            setError(err instanceof Error ? err.message : 'Failed to disconnect');
-            return false;
-        }
-    }, [fetchIntegrations]);
+        },
+        [fetchIntegrations],
+    );
 
     // Test connection
     const testConnection = useCallback(async (provider: string): Promise<{ success: boolean; error?: string }> => {
@@ -192,69 +195,75 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to test connection');
             }
-            
+
             return await response.json();
         } catch (err) {
             console.error('[useUserIntegrations] Test error:', err);
-            return { 
-                success: false, 
-                error: err instanceof Error ? err.message : 'Test failed' 
+            return {
+                success: false,
+                error: err instanceof Error ? err.message : 'Test failed',
             };
         }
     }, []);
 
     // Refresh token
-    const refreshToken = useCallback(async (provider: string): Promise<boolean> => {
-        try {
-            const response = await fetch(`/api/settings/integrations/${provider}/refresh`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to refresh token');
+    const refreshToken = useCallback(
+        async (provider: string): Promise<boolean> => {
+            try {
+                const response = await fetch(`/api/settings/integrations/${provider}/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to refresh token');
+                }
+
+                await fetchIntegrations();
+                return true;
+            } catch (err) {
+                console.error('[useUserIntegrations] Refresh error:', err);
+                return false;
             }
-            
-            await fetchIntegrations();
-            return true;
-        } catch (err) {
-            console.error('[useUserIntegrations] Refresh error:', err);
-            return false;
-        }
-    }, [fetchIntegrations]);
+        },
+        [fetchIntegrations],
+    );
 
     // Update integration config
-    const updateConfig = useCallback(async (provider: string, config: Record<string, any>): Promise<boolean> => {
-        try {
-            const response = await fetch(`/api/settings/integrations/${provider}/config`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ config })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update config');
+    const updateConfig = useCallback(
+        async (provider: string, config: Record<string, any>): Promise<boolean> => {
+            try {
+                const response = await fetch(`/api/settings/integrations/${provider}/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ config }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update config');
+                }
+
+                await fetchIntegrations();
+                return true;
+            } catch (err) {
+                console.error('[useUserIntegrations] Config update error:', err);
+                return false;
             }
-            
-            await fetchIntegrations();
-            return true;
-        } catch (err) {
-            console.error('[useUserIntegrations] Config update error:', err);
-            return false;
-        }
-    }, [fetchIntegrations]);
+        },
+        [fetchIntegrations],
+    );
 
     // Get connection status
     const getConnectionStatus = useCallback(async (provider: string): Promise<ConnectionStatus | null> => {
@@ -263,13 +272,13 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (!response.ok) {
                 return null;
             }
-            
+
             const data = await response.json();
             return data.status;
         } catch (err) {
@@ -285,13 +294,13 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include',
             });
-            
+
             if (!response.ok) {
                 return [];
             }
-            
+
             const data = await response.json();
             return data.logs || [];
         } catch (err) {
@@ -301,15 +310,21 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
     }, []);
 
     // Check if provider is connected
-    const isConnected = useCallback((provider: string): boolean => {
-        const integration = integrations.find(i => i.provider === provider);
-        return integration?.status === 'active';
-    }, [integrations]);
+    const isConnected = useCallback(
+        (provider: string): boolean => {
+            const integration = integrations.find((i) => i.provider === provider);
+            return integration?.status === 'active';
+        },
+        [integrations],
+    );
 
     // Get specific integration
-    const getIntegration = useCallback((provider: string): UserIntegration | undefined => {
-        return integrations.find(i => i.provider === provider);
-    }, [integrations]);
+    const getIntegration = useCallback(
+        (provider: string): UserIntegration | undefined => {
+            return integrations.find((i) => i.provider === provider);
+        },
+        [integrations],
+    );
 
     return {
         // Data
@@ -318,24 +333,23 @@ export const useUserIntegrations = (): UseUserIntegrationsReturn => {
         connectedCount,
         loading,
         error,
-        
+
         // Actions
         connect,
         disconnect,
         testConnection,
         refreshToken,
         updateConfig,
-        
+
         // Status
         getConnectionStatus,
         getSyncLogs,
-        
+
         // Utilities
         refresh: fetchIntegrations,
         isConnected,
-        getIntegration
+        getIntegration,
     };
 };
 
 export default useUserIntegrations;
-

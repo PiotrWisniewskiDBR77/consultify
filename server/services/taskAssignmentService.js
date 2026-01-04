@@ -35,7 +35,7 @@ const deps = {
  */
 async function initDeps() {
   if (!deps._db) {
-    const { default: dbInstance } = await import('../database.js');
+    const { default: dbInstance } = await import('../src/database/index.js');
     deps._db = dbInstance;
   }
   if (!deps._pmoDomainRegistry) {
@@ -55,7 +55,7 @@ async function initDeps() {
     deps._notificationService = notificationService;
   }
   if (!deps._activityService) {
-    const { default: activityService } = await import('./activityService.js');
+    const { default: activityService } = await import('../src/services/ActivityService.js');
     deps._activityService = activityService;
   }
 }

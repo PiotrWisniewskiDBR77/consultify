@@ -1,11 +1,12 @@
 /**
  * ConversationItem
- * 
+ *
  * Single conversation row with hover actions.
  */
 
+import { Archive, Edit2, MessageSquare, MoreHorizontal, Star, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { MessageSquare, MoreHorizontal, Star, Trash2, Archive, Edit2 } from 'lucide-react';
+
 import { Conversation } from '../../store/useConversationStore';
 import { ConversationActions } from './ConversationActions';
 
@@ -15,11 +16,7 @@ interface ConversationItemProps {
     onSelect: () => void;
 }
 
-export const ConversationItem: React.FC<ConversationItemProps> = ({
-    conversation,
-    isActive,
-    onSelect
-}) => {
+export const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isActive, onSelect }) => {
     const [showActions, setShowActions] = useState(false);
     const [actionsOpen, setActionsOpen] = useState(false);
 
@@ -60,9 +57,10 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         <div
             className={`
                 group relative flex items-start gap-2 px-2 py-2 rounded-lg cursor-pointer transition-all
-                ${isActive
-                    ? 'bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
-                    : 'hover:bg-slate-100 dark:hover:bg-navy-800 border border-transparent'
+                ${
+                    isActive
+                        ? 'bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
+                        : 'hover:bg-slate-100 dark:hover:bg-navy-800 border border-transparent'
                 }
             `}
             onMouseEnter={() => setShowActions(true)}
@@ -70,31 +68,27 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             onClick={onSelect}
         >
             {/* Icon */}
-            <div className="mt-0.5 shrink-0">
-                {getConversationIcon()}
-            </div>
+            <div className="mt-0.5 shrink-0">{getConversationIcon()}</div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                    {conversation.starred && (
-                        <Star size={12} className="text-amber-500 fill-amber-500 shrink-0" />
-                    )}
-                    <span className={`text-sm font-medium truncate ${
-                        isActive
-                            ? 'text-primary-700 dark:text-primary-300'
-                            : 'text-navy-900 dark:text-white'
-                    }`}>
+                    {conversation.starred && <Star size={12} className="text-amber-500 fill-amber-500 shrink-0" />}
+                    <span
+                        className={`text-sm font-medium truncate ${
+                            isActive ? 'text-primary-700 dark:text-primary-300' : 'text-navy-900 dark:text-white'
+                        }`}
+                    >
                         {conversation.title}
                     </span>
                 </div>
-                
+
                 {conversation.lastMessagePreview && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                         {conversation.lastMessagePreview}
                     </p>
                 )}
-                
+
                 <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] text-slate-400 dark:text-slate-500">
                         {getRelativeTime(conversation.lastMessageAt || conversation.updatedAt)}
@@ -109,14 +103,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
             {/* Actions Button */}
             {(showActions || actionsOpen) && (
-                <div 
-                    className="absolute right-1 top-1"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <ConversationActions
-                        conversation={conversation}
-                        onOpenChange={setActionsOpen}
-                    />
+                <div className="absolute right-1 top-1" onClick={(e) => e.stopPropagation()}>
+                    <ConversationActions conversation={conversation} onOpenChange={setActionsOpen} />
                 </div>
             )}
         </div>
@@ -124,12 +112,4 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 };
 
 export default ConversationItem;
-
-
-
-
-
-
-
-
 

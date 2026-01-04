@@ -1,22 +1,13 @@
 /**
  * StudioChat - AI Chat Panel for Studio
- * 
+ *
  * Chat interface for AI-powered diagram generation and modification.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Node, Edge } from 'reactflow';
-import { 
-    Send, 
-    Sparkles, 
-    Loader2, 
-    Trash2, 
-    Bot, 
-    User,
-    Lightbulb,
-    ChevronDown,
-    ChevronUp
-} from 'lucide-react';
+import { Bot, ChevronDown, ChevronUp, Lightbulb, Loader2, Send, Sparkles, Trash2, User } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Edge, Node } from 'reactflow';
+
 import { AIMessage } from './hooks/useStudioAI';
 
 interface StudioChatProps {
@@ -35,7 +26,7 @@ const QUICK_ACTIONS = [
     { label: 'Create org chart', prompt: 'Create an organization chart for ' },
     { label: 'Add swimlane', prompt: 'Add a swimlane for ' },
     { label: 'Create mind map', prompt: 'Create a mind map about ' },
-    { label: 'Create RACI matrix', prompt: 'Create a RACI matrix for ' }
+    { label: 'Create RACI matrix', prompt: 'Create a RACI matrix for ' },
 ];
 
 export const StudioChat: React.FC<StudioChatProps> = ({
@@ -44,7 +35,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
     onSendMessage,
     onClear,
     suggestions = [],
-    className = ''
+    className = '',
 }) => {
     const [input, setInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(true);
@@ -79,9 +70,9 @@ export const StudioChat: React.FC<StudioChatProps> = ({
 
     // Format timestamp
     const formatTime = (date: Date) => {
-        return new Date(date).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        return new Date(date).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
         });
     };
 
@@ -124,37 +115,32 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                 )}
 
                 {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                    >
+                    <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                         {/* Avatar */}
-                        <div className={`
+                        <div
+                            className={`
                             shrink-0 w-7 h-7 rounded-full flex items-center justify-center
-                            ${msg.role === 'user' 
-                                ? 'bg-blue-500/20 text-blue-400' 
-                                : 'bg-purple-500/20 text-purple-400'
-                            }
-                        `}>
+                            ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}
+                        `}
+                        >
                             {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                         </div>
 
                         {/* Message Content */}
-                        <div className={`
+                        <div
+                            className={`
                             flex-1 min-w-0
                             ${msg.role === 'user' ? 'text-right' : ''}
-                        `}>
-                            <div className={`
+                        `}
+                        >
+                            <div
+                                className={`
                                 inline-block px-3 py-2 rounded-lg max-w-[85%] text-left
-                                ${msg.role === 'user'
-                                    ? 'bg-blue-500/20 text-blue-100'
-                                    : 'bg-white/5 text-slate-300'
-                                }
-                            `}>
-                                <p className="text-sm whitespace-pre-wrap break-words">
-                                    {msg.content}
-                                </p>
-                                
+                                ${msg.role === 'user' ? 'bg-blue-500/20 text-blue-100' : 'bg-white/5 text-slate-300'}
+                            `}
+                            >
+                                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+
                                 {/* Diagram update indicator */}
                                 {msg.diagramUpdate && (
                                     <div className="mt-2 pt-2 border-t border-white/10 text-[10px] text-slate-500">
@@ -165,9 +151,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                                     </div>
                                 )}
                             </div>
-                            <div className="text-[10px] text-slate-600 mt-1 px-1">
-                                {formatTime(msg.timestamp)}
-                            </div>
+                            <div className="text-[10px] text-slate-600 mt-1 px-1">{formatTime(msg.timestamp)}</div>
                         </div>
                     </div>
                 ))}
@@ -182,9 +166,18 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                             <div className="flex items-center gap-2 text-sm text-slate-400">
                                 <span>Generating diagram</span>
                                 <span className="flex gap-0.5">
-                                    <span className="w-1 h-1 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <span className="w-1 h-1 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <span className="w-1 h-1 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    <span
+                                        className="w-1 h-1 bg-slate-500 rounded-full animate-bounce"
+                                        style={{ animationDelay: '0ms' }}
+                                    />
+                                    <span
+                                        className="w-1 h-1 bg-slate-500 rounded-full animate-bounce"
+                                        style={{ animationDelay: '150ms' }}
+                                    />
+                                    <span
+                                        className="w-1 h-1 bg-slate-500 rounded-full animate-bounce"
+                                        style={{ animationDelay: '300ms' }}
+                                    />
                                 </span>
                             </div>
                         </div>
@@ -205,7 +198,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                         Quick actions
                         {showSuggestions ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                     </button>
-                    
+
                     {showSuggestions && (
                         <div className="flex flex-wrap gap-1.5">
                             {QUICK_ACTIONS.map((action) => (
@@ -261,17 +254,14 @@ export const StudioChat: React.FC<StudioChatProps> = ({
                         disabled={!input.trim() || isProcessing}
                         className={`
                             shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all
-                            ${input.trim() && !isProcessing
-                                ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                : 'bg-white/5 text-slate-600 cursor-not-allowed'
+                            ${
+                                input.trim() && !isProcessing
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    : 'bg-white/5 text-slate-600 cursor-not-allowed'
                             }
                         `}
                     >
-                        {isProcessing ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                            <Send size={18} />
-                        )}
+                        {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                 </div>
             </div>
@@ -280,12 +270,4 @@ export const StudioChat: React.FC<StudioChatProps> = ({
 };
 
 export default StudioChat;
-
-
-
-
-
-
-
-
 

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import ActivityService from '../../../../services/activityService.js';
 
 describe('ActivityService', () => {
@@ -8,14 +9,16 @@ describe('ActivityService', () => {
         mockDb = {
             get: vi.fn(),
             all: vi.fn(),
-            run: vi.fn((sql, params, cb) => { if (cb) cb(null); }),
+            run: vi.fn((sql, params, cb) => {
+                if (cb) cb(null);
+            }),
             exec: vi.fn(),
             serialize: vi.fn(),
             close: vi.fn(),
             query: vi.fn(),
             queryOne: vi.fn(),
             queryAll: vi.fn(),
-            queryRun: vi.fn()
+            queryRun: vi.fn(),
         };
 
         ActivityService.setDependencies({ db: mockDb });
@@ -33,6 +36,4 @@ describe('ActivityService', () => {
         expect(typeof ActivityService.getRecent).toBe('function');
     });
 });
-
-
 

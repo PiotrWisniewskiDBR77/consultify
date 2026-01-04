@@ -1,11 +1,11 @@
 /**
  * useTouchGestures Hook
- * 
+ *
  * Provides touch gesture detection for mobile/tablet interactions.
  * Supports swipe, long-press, and pinch gestures.
  */
 
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type SwipeDirection = 'left' | 'right' | 'up' | 'down' | null;
 
@@ -16,16 +16,16 @@ interface TouchPosition {
 }
 
 interface SwipeConfig {
-    minDistance?: number;      // Minimum distance in pixels for swipe
-    maxTime?: number;          // Maximum time in ms for swipe
-    threshold?: number;        // Angle threshold for direction detection
+    minDistance?: number; // Minimum distance in pixels for swipe
+    maxTime?: number; // Maximum time in ms for swipe
+    threshold?: number; // Angle threshold for direction detection
 }
 
 interface LongPressConfig {
-    delay?: number;            // Time in ms to trigger long press
-    onStart?: () => void;      // Called when long press starts
-    onEnd?: () => void;        // Called when long press ends
-    onCancel?: () => void;     // Called when long press is cancelled
+    delay?: number; // Time in ms to trigger long press
+    onStart?: () => void; // Called when long press starts
+    onEnd?: () => void; // Called when long press ends
+    onCancel?: () => void; // Called when long press is cancelled
 }
 
 interface UseTouchGesturesOptions {
@@ -51,9 +51,7 @@ const DEFAULT_LONG_PRESS_CONFIG: LongPressConfig = {
     delay: 500,
 };
 
-export const useTouchGestures = <T extends HTMLElement = HTMLElement>(
-    options: UseTouchGesturesOptions = {}
-) => {
+export const useTouchGestures = <T extends HTMLElement = HTMLElement>(options: UseTouchGesturesOptions = {}) => {
     const {
         onSwipe,
         onSwipeLeft,
@@ -93,140 +91,147 @@ export const useTouchGestures = <T extends HTMLElement = HTMLElement>(
     }, []);
 
     // Calculate swipe direction
-    const getSwipeDirection = useCallback((
-        startX: number,
-        startY: number,
-        endX: number,
-        endY: number
-    ): SwipeDirection => {
-        const deltaX = endX - startX;
-        const deltaY = endY - startY;
-        const absX = Math.abs(deltaX);
-        const absY = Math.abs(deltaY);
+    const getSwipeDirection = useCallback(
+        (startX: number, startY: number, endX: number, endY: number): SwipeDirection => {
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            const absX = Math.abs(deltaX);
+            const absY = Math.abs(deltaY);
 
-        // Check if swipe distance is significant
-        if (absX < config.minDistance! && absY < config.minDistance!) {
-            return null;
-        }
+            // Check if swipe distance is significant
+            if (absX < config.minDistance! && absY < config.minDistance!) {
+                return null;
+            }
 
-        // Determine primary direction
-        if (absX > absY) {
-            return deltaX > 0 ? 'right' : 'left';
-        } else {
-            return deltaY > 0 ? 'down' : 'up';
-        }
-    }, [config.minDistance]);
+            // Determine primary direction
+            if (absX > absY) {
+                return deltaX > 0 ? 'right' : 'left';
+            } else {
+                return deltaY > 0 ? 'down' : 'up';
+            }
+        },
+        [config.minDistance],
+    );
 
     // Touch start handler
-    const handleTouchStart = useCallback((e: TouchEvent) => {
-        if (!enabled) return;
+    const handleTouchStart = useCallback(
+        (e: TouchEvent) => {
+            if (!enabled) return;
 
-        const touch = e.touches[0];
-        touchStartRef.current = {
-            x: touch.clientX,
-            y: touch.clientY,
-            time: Date.now(),
-        };
+            const touch = e.touches[0];
+            touchStartRef.current = {
+                x: touch.clientX,
+                y: touch.clientY,
+                time: Date.now(),
+            };
 
-        // Double tap detection
-        const currentTime = Date.now();
-        if (currentTime - lastTapTimeRef.current < 300 && onDoubleTap) {
-            onDoubleTap();
-            lastTapTimeRef.current = 0;
-        } else {
-            lastTapTimeRef.current = currentTime;
-        }
+            // Double tap detection
+            const currentTime = Date.now();
+            if (currentTime - lastTapTimeRef.current < 300 && onDoubleTap) {
+                onDoubleTap();
+                lastTapTimeRef.current = 0;
+            } else {
+                lastTapTimeRef.current = currentTime;
+            }
 
-        // Long press detection
-        if (onLongPress) {
-            clearLongPressTimer();
-            longPressTimerRef.current = setTimeout(() => {
-                setIsLongPressing(true);
-                lpConfig.onStart?.();
-                onLongPress();
-            }, lpConfig.delay);
-        }
-    }, [enabled, onDoubleTap, onLongPress, clearLongPressTimer, lpConfig]);
+            // Long press detection
+            if (onLongPress) {
+                clearLongPressTimer();
+                longPressTimerRef.current = setTimeout(() => {
+                    setIsLongPressing(true);
+                    lpConfig.onStart?.();
+                    onLongPress();
+                }, lpConfig.delay);
+            }
+        },
+        [enabled, onDoubleTap, onLongPress, clearLongPressTimer, lpConfig],
+    );
 
     // Touch move handler
-    const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (!enabled || !touchStartRef.current) return;
+    const handleTouchMove = useCallback(
+        (e: TouchEvent) => {
+            if (!enabled || !touchStartRef.current) return;
 
-        const touch = e.touches[0];
-        const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
-        const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+            const touch = e.touches[0];
+            const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+            const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
 
-        // Cancel long press if moved too much
-        if (deltaX > 10 || deltaY > 10) {
-            if (isLongPressing) {
-                setIsLongPressing(false);
-                lpConfig.onCancel?.();
+            // Cancel long press if moved too much
+            if (deltaX > 10 || deltaY > 10) {
+                if (isLongPressing) {
+                    setIsLongPressing(false);
+                    lpConfig.onCancel?.();
+                }
+                clearLongPressTimer();
             }
-            clearLongPressTimer();
-        }
-    }, [enabled, isLongPressing, clearLongPressTimer, lpConfig]);
+        },
+        [enabled, isLongPressing, clearLongPressTimer, lpConfig],
+    );
 
     // Touch end handler
-    const handleTouchEnd = useCallback((e: TouchEvent) => {
-        if (!enabled) return;
+    const handleTouchEnd = useCallback(
+        (e: TouchEvent) => {
+            if (!enabled) return;
 
-        clearLongPressTimer();
+            clearLongPressTimer();
 
-        if (isLongPressing) {
-            setIsLongPressing(false);
-            lpConfig.onEnd?.();
-            touchStartRef.current = null;
-            return;
-        }
+            if (isLongPressing) {
+                setIsLongPressing(false);
+                lpConfig.onEnd?.();
+                touchStartRef.current = null;
+                return;
+            }
 
-        if (!touchStartRef.current) return;
+            if (!touchStartRef.current) return;
 
-        const touch = e.changedTouches[0];
-        const elapsed = Date.now() - touchStartRef.current.time;
+            const touch = e.changedTouches[0];
+            const elapsed = Date.now() - touchStartRef.current.time;
 
-        // Check if within swipe time threshold
-        if (elapsed <= config.maxTime!) {
-            const direction = getSwipeDirection(
-                touchStartRef.current.x,
-                touchStartRef.current.y,
-                touch.clientX,
-                touch.clientY
-            );
+            // Check if within swipe time threshold
+            if (elapsed <= config.maxTime!) {
+                const direction = getSwipeDirection(
+                    touchStartRef.current.x,
+                    touchStartRef.current.y,
+                    touch.clientX,
+                    touch.clientY,
+                );
 
-            if (direction) {
-                onSwipe?.(direction);
-                
-                switch (direction) {
-                    case 'left':
-                        onSwipeLeft?.();
-                        break;
-                    case 'right':
-                        onSwipeRight?.();
-                        break;
-                    case 'up':
-                        onSwipeUp?.();
-                        break;
-                    case 'down':
-                        onSwipeDown?.();
-                        break;
+                if (direction) {
+                    onSwipe?.(direction);
+
+                    switch (direction) {
+                        case 'left':
+                            onSwipeLeft?.();
+                            break;
+                        case 'right':
+                            onSwipeRight?.();
+                            break;
+                        case 'up':
+                            onSwipeUp?.();
+                            break;
+                        case 'down':
+                            onSwipeDown?.();
+                            break;
+                    }
                 }
             }
-        }
 
-        touchStartRef.current = null;
-    }, [
-        enabled,
-        isLongPressing,
-        clearLongPressTimer,
-        lpConfig,
-        config.maxTime,
-        getSwipeDirection,
-        onSwipe,
-        onSwipeLeft,
-        onSwipeRight,
-        onSwipeUp,
-        onSwipeDown,
-    ]);
+            touchStartRef.current = null;
+        },
+        [
+            enabled,
+            isLongPressing,
+            clearLongPressTimer,
+            lpConfig,
+            config.maxTime,
+            getSwipeDirection,
+            onSwipe,
+            onSwipeLeft,
+            onSwipeRight,
+            onSwipeUp,
+            onSwipeDown,
+        ],
+    );
 
     // Touch cancel handler
     const handleTouchCancel = useCallback(() => {
@@ -255,14 +260,7 @@ export const useTouchGestures = <T extends HTMLElement = HTMLElement>(
             element.removeEventListener('touchcancel', handleTouchCancel);
             clearLongPressTimer();
         };
-    }, [
-        enabled,
-        handleTouchStart,
-        handleTouchMove,
-        handleTouchEnd,
-        handleTouchCancel,
-        clearLongPressTimer,
-    ]);
+    }, [enabled, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, clearLongPressTimer]);
 
     return {
         ref: elementRef,
@@ -273,11 +271,7 @@ export const useTouchGestures = <T extends HTMLElement = HTMLElement>(
 /**
  * Simple hook for swipe-to-navigate between items
  */
-export const useSwipeNavigation = (
-    onPrevious: () => void,
-    onNext: () => void,
-    enabled: boolean = true
-) => {
+export const useSwipeNavigation = (onPrevious: () => void, onNext: () => void, enabled: boolean = true) => {
     return useTouchGestures({
         onSwipeLeft: onNext,
         onSwipeRight: onPrevious,
@@ -292,10 +286,7 @@ export const useSwipeNavigation = (
 /**
  * Hook for swipeable modals/panels (swipe down to close)
  */
-export const useSwipeToClose = (
-    onClose: () => void,
-    enabled: boolean = true
-) => {
+export const useSwipeToClose = (onClose: () => void, enabled: boolean = true) => {
     return useTouchGestures({
         onSwipeDown: onClose,
         enabled,
@@ -307,16 +298,4 @@ export const useSwipeToClose = (
 };
 
 export default useTouchGestures;
-
-
-
-
-
-
-
-
-
-
-
-
 

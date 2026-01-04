@@ -1,62 +1,60 @@
 /**
  * UnifiedChatPanel
- * 
+ *
  * A unified chat interface component that works in both:
  * - Full-screen mode (main AI Chat view)
  * - Split-screen mode (alongside workspace)
- * 
+ *
  * Uses useConversationStore as the primary source of truth for all
  * chat state, messages, and conversation management.
- * 
+ *
  * Features:
  * - EnhancedChatInput with all rich features (files, tools, voice)
  * - FocusModeSelector (compact in split mode)
  * - ChatSlidingPanel integration for history
  * - Message rendering with streaming, thinking, artifacts
  * - Responsive design
- * 
+ *
  * @version 1.0.0
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Bot, 
-    User, 
-    MessageSquare, 
-    History, 
-    Maximize2, 
-    Minimize2,
-    ChevronLeft,
-    Sparkles,
-    RefreshCw,
-    Copy,
+import {
+    Bot,
     Check,
-    ThumbsUp,
+    ChevronLeft,
+    Copy,
+    FileCode,
+    History,
+    Maximize2,
+    MessageSquare,
+    Minimize2,
+    RefreshCw,
+    Sparkles,
     ThumbsDown,
+    ThumbsUp,
+    User,
     Volume2,
-    FileCode
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { useAppStore } from '../../store/useAppStore';
-import { useConversationStore, ConversationMessage } from '../../store/useConversationStore';
-import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
-
-import { EnhancedChatInput } from './EnhancedChatInput';
-import { FocusModeSelector } from './Input/FocusModeSelector';
-import { ChatSlidingPanel } from './ChatSlidingPanel';
-import { ThinkingBlock } from './Messages/ThinkingBlock';
-import { CitationList } from './CitationList';
-import { InlineResponseFeedback } from './InlineResponseFeedback';
-import { PendingActionsIndicator } from './PendingActionsIndicator';
-
-import { FocusMode, ChatMessage, ThinkingStep, Artifact, AppView, ResponseFeedback } from '../../types';
-import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { submitAIFeedback } from '../../services/api-extensions';
+import { useAppStore } from '../../store/useAppStore';
+import { useArtifactsStore } from '../../store/useArtifactsStore';
+import { ConversationMessage, useConversationStore } from '../../store/useConversationStore';
+import { AppView, Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
+import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
+import { ChatSlidingPanel } from './ChatSlidingPanel';
+import { CitationList } from './CitationList';
+import { EnhancedChatInput } from './EnhancedChatInput';
+import { InlineResponseFeedback } from './InlineResponseFeedback';
+import { FocusModeSelector } from './Input/FocusModeSelector';
+import { ThinkingBlock } from './Messages/ThinkingBlock';
+import { PendingActionsIndicator } from './PendingActionsIndicator';
 
 // ============================================================================
 // Types
@@ -65,40 +63,40 @@ import { submitAIFeedback } from '../../services/api-extensions';
 interface UnifiedChatPanelProps {
     /** Display mode: full-screen or split-screen */
     mode?: ChatDisplayMode;
-    
+
     /** Custom class name */
     className?: string;
-    
+
     /** Whether to show expand/collapse button */
     showModeToggle?: boolean;
-    
+
     /** Callback when mode toggle is clicked */
     onModeToggle?: () => void;
-    
+
     /** Callback for "back" button in split mode */
     onBack?: () => void;
-    
+
     /** Whether to show the sliding history panel trigger */
     showHistoryTrigger?: boolean;
-    
+
     /** Optional title override */
     title?: string;
-    
+
     /** Whether to show focus mode selector */
     showFocusMode?: boolean;
-    
+
     /** Current workspace context (for AI awareness) */
     workspaceContext?: WorkspaceContext | null;
-    
+
     /** Whether the panel is disabled */
     disabled?: boolean;
-    
+
     /** Max height for the panel (useful in split mode) */
     maxHeight?: string;
-    
+
     /** Callback when user sends a message */
     onMessageSent?: (content: string) => void;
-    
+
     /** Callback when user clicks "View All Actions" */
     onNavigateToActions?: () => void;
 }
@@ -120,14 +118,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     disabled = false,
     maxHeight,
     onMessageSent,
-    onNavigateToActions
+    onNavigateToActions,
 }) => {
     const { t } = useTranslation();
-    
+
     // ========================================================================
     // Store hooks
     // ========================================================================
-    
+
     const {
         isChatSlidingPanelOpen,
         setChatSlidingPanelOpen,
@@ -135,9 +133,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         isBotTyping,
         addChatMessage,
         setIsBotTyping,
-        aiFreezeStatus
+        aiFreezeStatus,
     } = useAppStore();
-    
+
     const {
         activeConversationId,
         activeMessages,
@@ -149,27 +147,27 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         clearActiveChat,
         setDisplayMode,
         expandToFullScreen,
-        collapseToSplit
+        collapseToSplit,
     } = useConversationStore();
-    
+
     const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
     const { speak, stopSpeaking, isSpeaking, voiceEnabled, ttsSupported } = useVoiceChat();
-    
+
     // ========================================================================
     // Local state
     // ========================================================================
-    
+
     const [focusMode, setFocusMode] = useState<FocusMode>('all');
     const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
     const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
     const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
     const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-    
+
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    
+
     // Computed values
     const isSplitMode = mode === 'split' || displayMode === 'split';
     const isCompact = isSplitMode;
@@ -178,7 +176,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // ========================================================================
     // AI Stream hook
     // ========================================================================
-    
+
     const { startStream, isStreaming, streamedContent } = useAIStream({
         onStreamDone: async (fullText, thinking, artifacts) => {
             // Save AI response to conversation store
@@ -191,14 +189,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         messageType: 'text',
                         metadata: {
                             thinkingSteps: thinking as any,
-                            artifacts
-                        }
+                            artifacts,
+                        },
                     });
                 } catch (err) {
                     console.error('[UnifiedChatPanel] Failed to save AI message:', err);
                 }
             }
-            
+
             // Also update useAppStore for backward compatibility
             addChatMessage({
                 id: `ai-${Date.now()}`,
@@ -206,9 +204,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 content: fullText,
                 timestamp: new Date(),
                 thinkingSteps: thinking,
-                artifacts
+                artifacts,
             });
-            
+
             setThinkingSteps([]);
         },
         onThinkingUpdate: (steps) => {
@@ -216,15 +214,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         },
         onArtifactDetected: (artifact) => {
             addArtifact(artifact);
-        }
+        },
     });
-    
+
     // ========================================================================
     // Convert conversation messages to ChatMessage format
     // ========================================================================
-    
+
     const messages: ChatMessage[] = useMemo(() => {
-        return activeMessages.map(msg => ({
+        return activeMessages.map((msg) => ({
             id: msg.id,
             role: msg.role === 'ai' ? 'ai' : 'user',
             content: msg.content,
@@ -232,10 +230,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             thinkingSteps: msg.metadata?.thinkingSteps as any,
             artifacts: msg.metadata?.artifacts,
             citations: msg.metadata?.citations,
-            isStreaming: false
+            isStreaming: false,
         })) as ChatMessage[];
     }, [activeMessages]);
-    
+
     // Add streaming message if actively streaming
     const displayMessages = useMemo(() => {
         if (isStreaming && streamedContent) {
@@ -247,103 +245,106 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     content: streamedContent,
                     timestamp: new Date(),
                     isStreaming: true,
-                    thinkingSteps: thinkingSteps.length > 0 ? thinkingSteps : undefined
-                }
+                    thinkingSteps: thinkingSteps.length > 0 ? thinkingSteps : undefined,
+                },
             ];
         }
         return messages;
     }, [messages, isStreaming, streamedContent, thinkingSteps]);
-    
+
     // ========================================================================
     // Scroll to bottom on new messages
     // ========================================================================
-    
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [displayMessages, isStreaming]);
-    
+
     // ========================================================================
     // Handlers
     // ========================================================================
-    
-    const handleSendMessage = useCallback(async (content: string, attachments?: any[]) => {
-        if (!content.trim() || isDisabled) return;
-        
-        // Create conversation if none exists
-        let conversationId = activeConversationId;
-        if (!conversationId) {
-            try {
-                const conv = await createConversation();
-                conversationId = conv.id;
-            } catch (err) {
-                console.error('[UnifiedChatPanel] Failed to create conversation:', err);
+
+    const handleSendMessage = useCallback(
+        async (content: string, attachments?: any[]) => {
+            if (!content.trim() || isDisabled) return;
+
+            // Create conversation if none exists
+            let conversationId = activeConversationId;
+            if (!conversationId) {
+                try {
+                    const conv = await createConversation();
+                    conversationId = conv.id;
+                } catch (err) {
+                    console.error('[UnifiedChatPanel] Failed to create conversation:', err);
+                }
             }
-        }
-        
-        // Save user message to conversation store
-        if (conversationId) {
-            try {
-                await addMessageToConversation({
-                    conversationId,
-                    role: 'user',
-                    content,
-                    messageType: 'text'
-                });
-            } catch (err) {
-                console.error('[UnifiedChatPanel] Failed to save user message:', err);
+
+            // Save user message to conversation store
+            if (conversationId) {
+                try {
+                    await addMessageToConversation({
+                        conversationId,
+                        role: 'user',
+                        content,
+                        messageType: 'text',
+                    });
+                } catch (err) {
+                    console.error('[UnifiedChatPanel] Failed to save user message:', err);
+                }
             }
-        }
-        
-        // Also add to useAppStore for backward compatibility
-        const userMessage: ChatMessage = {
-            id: `user-${Date.now()}`,
-            role: 'user',
-            content,
-            timestamp: new Date()
-        };
-        addChatMessage(userMessage);
-        
-        // Build context for AI
-        const context = {
+
+            // Also add to useAppStore for backward compatibility
+            const userMessage: ChatMessage = {
+                id: `user-${Date.now()}`,
+                role: 'user',
+                content,
+                timestamp: new Date(),
+            };
+            addChatMessage(userMessage);
+
+            // Build context for AI
+            const context = {
+                focusMode,
+                attachments,
+                workspaceContext,
+                conversationId,
+            };
+
+            // Add placeholder for AI response in useAppStore
+            const aiPlaceholder: ChatMessage = {
+                id: `ai-${Date.now()}`,
+                role: 'ai',
+                content: '',
+                timestamp: new Date(),
+                isStreaming: true,
+            };
+            addChatMessage(aiPlaceholder);
+
+            // Start streaming
+            const history = displayMessages.map((m) => ({
+                role: m.role,
+                content: m.content,
+            }));
+
+            await startStream(content, history, undefined, context, focusMode);
+
+            // Callback
+            onMessageSent?.(content);
+        },
+        [
+            activeConversationId,
+            createConversation,
+            addMessageToConversation,
+            addChatMessage,
+            displayMessages,
             focusMode,
-            attachments,
             workspaceContext,
-            conversationId
-        };
-        
-        // Add placeholder for AI response in useAppStore
-        const aiPlaceholder: ChatMessage = {
-            id: `ai-${Date.now()}`,
-            role: 'ai',
-            content: '',
-            timestamp: new Date(),
-            isStreaming: true
-        };
-        addChatMessage(aiPlaceholder);
-        
-        // Start streaming
-        const history = displayMessages.map(m => ({
-            role: m.role,
-            content: m.content
-        }));
-        
-        await startStream(content, history, undefined, context, focusMode);
-        
-        // Callback
-        onMessageSent?.(content);
-    }, [
-        activeConversationId,
-        createConversation,
-        addMessageToConversation,
-        addChatMessage,
-        displayMessages,
-        focusMode,
-        workspaceContext,
-        startStream,
-        isDisabled,
-        onMessageSent
-    ]);
-    
+            startStream,
+            isDisabled,
+            onMessageSent,
+        ],
+    );
+
     const handleNewChat = useCallback(async () => {
         clearActiveChat();
         try {
@@ -353,11 +354,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             console.error('[UnifiedChatPanel] Failed to create new chat:', err);
         }
     }, [clearActiveChat, createConversation, setActiveConversation]);
-    
-    const handleSelectConversation = useCallback((id: string) => {
-        setActiveConversation(id);
-    }, [setActiveConversation]);
-    
+
+    const handleSelectConversation = useCallback(
+        (id: string) => {
+            setActiveConversation(id);
+        },
+        [setActiveConversation],
+    );
+
     const handleCopyMessage = useCallback(async (content: string, messageId: string) => {
         try {
             await navigator.clipboard.writeText(content);
@@ -367,7 +371,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             console.error('Failed to copy message:', err);
         }
     }, []);
-    
+
     const handleModeToggle = useCallback(() => {
         if (isSplitMode) {
             expandToFullScreen();
@@ -376,55 +380,62 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
         onModeToggle?.();
     }, [isSplitMode, expandToFullScreen, collapseToSplit, onModeToggle]);
-    
-    const handleViewArtifacts = useCallback((artifacts: Artifact[]) => {
-        artifacts.forEach(artifact => addArtifact(artifact));
-        toggleArtifactsPanel(true);
-    }, [addArtifact, toggleArtifactsPanel]);
-    
+
+    const handleViewArtifacts = useCallback(
+        (artifacts: Artifact[]) => {
+            artifacts.forEach((artifact) => addArtifact(artifact));
+            toggleArtifactsPanel(true);
+        },
+        [addArtifact, toggleArtifactsPanel],
+    );
+
     /**
      * Handle feedback submission for AI responses
      * Integrated with FeedbackService for learning system
      */
-    const handleFeedback = useCallback(async (messageId: string, messageContent: string, feedback: ResponseFeedback) => {
-        try {
-            // Find the user message that triggered this AI response
-            const messageIndex = displayMessages.findIndex(m => m.id === messageId);
-            const userMessage = messageIndex > 0 
-                ? displayMessages[messageIndex - 1]?.content 
-                : '';
-            
-            // Convert ResponseFeedback to API format
-            const apiPayload = {
-                context: workspaceContext?.type || 'general',
-                prompt: userMessage,
-                response: messageContent,
-                helpful: feedback.rating === 'positive',
-                comment: [
-                    feedback.lengthFeedback ? `Length: ${feedback.lengthFeedback}` : '',
-                    feedback.detailFeedback ? `Detail: ${feedback.detailFeedback}` : '',
-                    feedback.wantedMode ? `Wanted: ${feedback.wantedMode}` : '',
-                    feedback.customFeedback || ''
-                ].filter(Boolean).join('; ') || undefined
-            };
-            
-            await submitAIFeedback(apiPayload);
-            
-            console.log('[UnifiedChatPanel] Feedback submitted:', {
-                messageId,
-                conversationId: activeConversationId,
-                rating: feedback.rating,
-                hasDetailedFeedback: !!(feedback.lengthFeedback || feedback.detailFeedback || feedback.wantedMode)
-            });
-        } catch (err) {
-            console.error('[UnifiedChatPanel] Failed to submit feedback:', err);
-        }
-    }, [displayMessages, workspaceContext, activeConversationId]);
-    
+    const handleFeedback = useCallback(
+        async (messageId: string, messageContent: string, feedback: ResponseFeedback) => {
+            try {
+                // Find the user message that triggered this AI response
+                const messageIndex = displayMessages.findIndex((m) => m.id === messageId);
+                const userMessage = messageIndex > 0 ? displayMessages[messageIndex - 1]?.content : '';
+
+                // Convert ResponseFeedback to API format
+                const apiPayload = {
+                    context: workspaceContext?.type || 'general',
+                    prompt: userMessage,
+                    response: messageContent,
+                    helpful: feedback.rating === 'positive',
+                    comment:
+                        [
+                            feedback.lengthFeedback ? `Length: ${feedback.lengthFeedback}` : '',
+                            feedback.detailFeedback ? `Detail: ${feedback.detailFeedback}` : '',
+                            feedback.wantedMode ? `Wanted: ${feedback.wantedMode}` : '',
+                            feedback.customFeedback || '',
+                        ]
+                            .filter(Boolean)
+                            .join('; ') || undefined,
+                };
+
+                await submitAIFeedback(apiPayload);
+
+                console.log('[UnifiedChatPanel] Feedback submitted:', {
+                    messageId,
+                    conversationId: activeConversationId,
+                    rating: feedback.rating,
+                    hasDetailedFeedback: !!(feedback.lengthFeedback || feedback.detailFeedback || feedback.wantedMode),
+                });
+            } catch (err) {
+                console.error('[UnifiedChatPanel] Failed to submit feedback:', err);
+            }
+        },
+        [displayMessages, workspaceContext, activeConversationId],
+    );
+
     // ========================================================================
     // Render helpers
     // ========================================================================
-    
+
     const renderMessage = (msg: ChatMessage, index: number) => {
         const isLastMessage = index === displayMessages.length - 1;
         const isHovered = hoveredMessageId === msg.id;
@@ -432,7 +443,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
         const hasCitations = msg.citations && msg.citations.length > 0;
         const isCopied = copiedMessageId === msg.id;
-        
+
         return (
             <div
                 key={msg.id}
@@ -443,35 +454,41 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 {/* Thinking Steps (for AI messages) */}
                 {msg.role === 'ai' && hasThinkingSteps && (
                     <div className={`w-full ${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-                        <ThinkingBlock
-                            steps={msg.thinkingSteps!}
-                            isStreaming={msg.isStreaming}
-                        />
+                        <ThinkingBlock steps={msg.thinkingSteps!} isStreaming={msg.isStreaming} />
                     </div>
                 )}
-                
-                <div className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+
+                <div
+                    className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                >
                     {/* Avatar */}
-                    <div className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
-                        msg.role === 'ai'
-                            ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
-                            : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
-                    }`}>
-                        {msg.role === 'ai' 
-                            ? <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" /> 
-                            : <User size={isCompact ? 12 : 14} className="text-slate-400 dark:text-slate-300" />
-                        }
+                    <div
+                        className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
+                            msg.role === 'ai'
+                                ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
+                                : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                        }`}
+                    >
+                        {msg.role === 'ai' ? (
+                            <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+                        ) : (
+                            <User size={isCompact ? 12 : 14} className="text-slate-400 dark:text-slate-300" />
+                        )}
                     </div>
-                    
+
                     {/* Message Bubble */}
-                    <div className={`relative max-w-[85%] rounded-2xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
-                        msg.role === 'user'
-                            ? 'bg-primary-600 text-white rounded-tr-none'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
-                    }`}>
+                    <div
+                        className={`relative max-w-[85%] rounded-2xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
+                            msg.role === 'user'
+                                ? 'bg-primary-600 text-white rounded-tr-none'
+                                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+                        }`}
+                    >
                         {/* AI Message Content */}
                         {msg.role === 'ai' ? (
-                            <div className={`prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert max-w-none`}>
+                            <div
+                                className={`prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert max-w-none`}
+                            >
                                 <ReactMarkdown
                                     remarkPlugins={[remarkGfm]}
                                     components={{
@@ -490,7 +507,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                             );
                                         },
                                         a: ({ href, children }: any) => (
-                                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">
+                                            <a
+                                                href={href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary-600 hover:text-primary-700 underline"
+                                            >
                                                 {children}
                                             </a>
                                         ),
@@ -502,19 +524,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         ) : (
                             <span>{msg.content}</span>
                         )}
-                        
+
                         {/* Streaming indicator */}
                         {msg.isStreaming && (
                             <span className="inline-flex items-center gap-1 ml-2">
-                                <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                <span
+                                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                                    style={{ animationDelay: '0ms' }}
+                                />
+                                <span
+                                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                                    style={{ animationDelay: '150ms' }}
+                                />
+                                <span
+                                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                                    style={{ animationDelay: '300ms' }}
+                                />
                             </span>
                         )}
-                        
+
                         {/* Hover Actions */}
                         {isHovered && !msg.isStreaming && (
-                            <div className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}>
+                            <div
+                                className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
+                            >
                                 {/* Copy */}
                                 <button
                                     onClick={() => handleCopyMessage(msg.content, msg.id)}
@@ -523,7 +556,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                 >
                                     {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                                 </button>
-                                
+
                                 {/* Quick Feedback (AI only) */}
                                 {msg.role === 'ai' && (
                                     <>
@@ -541,7 +574,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                         </button>
                                     </>
                                 )}
-                                
+
                                 {/* View Artifacts */}
                                 {msg.role === 'ai' && hasArtifacts && (
                                     <button
@@ -552,13 +585,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                         <FileCode size={12} />
                                     </button>
                                 )}
-                                
+
                                 {/* Speak */}
                                 {ttsSupported && msg.role === 'ai' && (
                                     <button
-                                        onClick={() => isSpeaking ? stopSpeaking() : speak(msg.content)}
+                                        onClick={() => (isSpeaking ? stopSpeaking() : speak(msg.content))}
                                         className={`p-1 rounded-md ${isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
-                                        title={isSpeaking ? t('chat.actions.stop', 'Stop') : t('chat.actions.speak', 'Speak')}
+                                        title={
+                                            isSpeaking
+                                                ? t('chat.actions.stop', 'Stop')
+                                                : t('chat.actions.speak', 'Speak')
+                                        }
                                     >
                                         <Volume2 size={12} />
                                     </button>
@@ -567,7 +604,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         )}
                     </div>
                 </div>
-                
+
                 {/* Artifacts Badge */}
                 {msg.role === 'ai' && hasArtifacts && (
                     <button
@@ -575,17 +612,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         className={`${isCompact ? 'ml-7' : 'ml-9'} flex items-center gap-1 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors`}
                     >
                         <FileCode size={12} />
-                        {msg.artifacts!.length} {msg.artifacts!.length === 1 ? t('chat.artifact', 'artifact') : t('chat.artifacts', 'artifacts')}
+                        {msg.artifacts!.length}{' '}
+                        {msg.artifacts!.length === 1
+                            ? t('chat.artifact', 'artifact')
+                            : t('chat.artifacts', 'artifacts')}
                     </button>
                 )}
-                
+
                 {/* Citations */}
                 {msg.role === 'ai' && hasCitations && (
                     <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
                         <CitationList citations={msg.citations!} />
                     </div>
                 )}
-                
+
                 {/* Inline Feedback (AI messages only, not streaming) */}
                 {msg.role === 'ai' && !msg.isStreaming && (
                     <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
@@ -601,27 +641,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </div>
         );
     };
-    
+
     // ========================================================================
     // Render
     // ========================================================================
-    
+
     return (
-        <div 
+        <div
             className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className}`}
             style={{ maxHeight: maxHeight || '100%' }}
         >
-            
             {/* Skip links for keyboard users */}
-            <a 
+            <a
                 href="#chat-input"
                 className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
             >
                 {t('wcag.skipToInput', 'Skip to chat input')}
             </a>
-            
+
             {/* Header */}
-            <div className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm`}>
+            <div
+                className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm`}
+            >
                 <div className="flex items-center gap-2">
                     {/* Back button (split mode) */}
                     {isSplitMode && onBack && (
@@ -633,7 +674,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                             <ChevronLeft size={18} />
                         </button>
                     )}
-                    
+
                     {/* History toggle */}
                     {showHistoryTrigger && (
                         <button
@@ -645,10 +686,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                             <History size={18} />
                         </button>
                     )}
-                    
+
                     {/* Title */}
                     <div>
-                        <h2 className={`${isCompact ? 'text-xs' : 'text-sm'} font-semibold text-navy-900 dark:text-white flex items-center gap-1.5`}>
+                        <h2
+                            className={`${isCompact ? 'text-xs' : 'text-sm'} font-semibold text-navy-900 dark:text-white flex items-center gap-1.5`}
+                        >
                             <Sparkles size={isCompact ? 12 : 14} className="text-primary-500" />
                             {title || t('aiChat.title', 'AI Assistant')}
                         </h2>
@@ -659,7 +702,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         )}
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                     {/* Focus Mode (compact in split mode) */}
                     {showFocusMode && (
@@ -671,7 +714,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                             className={isCompact ? '' : 'mr-2'}
                         />
                     )}
-                    
+
                     {/* Mode toggle */}
                     {showModeToggle && (
                         <button
@@ -684,7 +727,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     )}
                 </div>
             </div>
-            
+
             {/* Pending Actions Indicator - Inline visibility for AI actions */}
             <div className={`${isCompact ? 'px-2 pt-2' : 'px-3 pt-3'}`}>
                 <PendingActionsIndicator
@@ -697,9 +740,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     maxPreview={isCompact ? 2 : 3}
                 />
             </div>
-            
+
             {/* Messages Area */}
-            <div 
+            <div
                 ref={messagesContainerRef}
                 className={`flex-1 overflow-y-auto ${isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}
             >
@@ -708,21 +751,27 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
                             <MessageSquare size={24} className="text-primary-500" />
                         </div>
-                        <h3 className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}>
+                        <h3
+                            className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
+                        >
                             {t('aiChat.welcome', 'Start a conversation')}
                         </h3>
-                        <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}>
+                        <p
+                            className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
+                        >
                             {t('aiChat.welcomeSubtitle', 'Ask questions, get insights, and collaborate with AI')}
                         </p>
                     </div>
                 ) : (
                     displayMessages.map((msg, index) => renderMessage(msg, index))
                 )}
-                
+
                 {/* Typing indicator */}
                 {isBotTyping && !streamedContent && (
                     <div className="flex gap-2 justify-start">
-                        <div className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}>
+                        <div
+                            className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
+                        >
                             <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
                         </div>
                         <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-2xl rounded-tl-none px-3 py-2 flex items-center gap-1">
@@ -732,27 +781,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         </div>
                     </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
             </div>
-            
+
             {/* Input Area */}
-            <div 
+            <div
                 id="chat-input"
                 className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
             >
                 <EnhancedChatInput
                     onSend={handleSendMessage}
                     disabled={isDisabled}
-                    placeholder={workspaceContext 
-                        ? t('aiChat.contextPlaceholder', 'Ask about {{context}}...', { context: workspaceContext.type })
-                        : undefined
+                    placeholder={
+                        workspaceContext
+                            ? t('aiChat.contextPlaceholder', 'Ask about {{context}}...', {
+                                  context: workspaceContext.type,
+                              })
+                            : undefined
                     }
                     voiceModeEnabled={voiceModeEnabled}
                     onVoiceModeChange={setVoiceModeEnabled}
                 />
             </div>
-            
+
             {/* Sliding History Panel */}
             <ChatSlidingPanel
                 onNewChat={handleNewChat}
@@ -764,4 +816,3 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 };
 
 export default UnifiedChatPanel;
-

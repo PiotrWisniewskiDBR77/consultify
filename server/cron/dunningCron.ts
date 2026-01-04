@@ -1,11 +1,11 @@
 /**
  * Dunning Cron Job
- * 
+ *
  * Processes scheduled dunning actions:
  * - Payment retries
  * - Stage advancement
  * - Suspension enforcement
- * 
+ *
  * Runs every hour.
  */
 
@@ -24,27 +24,31 @@ function startDunningJob() {
     }
 
     // Every hour at minute 30
-    dunningJob = cron.schedule('30 * * * *', async () => {
-        console.log('[DunningCron] Starting scheduled dunning processing...');
+    dunningJob = cron.schedule(
+        '30 * * * *',
+        async () => {
+            console.log('[DunningCron] Starting scheduled dunning processing...');
 
-        try {
-            await DunningService.processScheduledRetries();
-        } catch (error) {
-            console.error('[DunningCron] Processing failed:', error);
-
-            // Report to Sentry if available
             try {
-                const { captureException } = require('../config/sentry');
-                captureException(error, {
-                    tags: { component: 'dunning', job: 'scheduled' }
-                });
-            } catch (e) {
-                // Sentry not available
+                await DunningService.processScheduledRetries();
+            } catch (error) {
+                console.error('[DunningCron] Processing failed:', error);
+
+                // Report to Sentry if available
+                try {
+                    const { captureException } = require('../config/sentry');
+                    captureException(error, {
+                        tags: { component: 'dunning', job: 'scheduled' },
+                    });
+                } catch (e) {
+                    // Sentry not available
+                }
             }
-        }
-    }, {
-        timezone: 'UTC'
-    });
+        },
+        {
+            timezone: 'UTC',
+        },
+    );
 
     console.log('[DunningCron] Scheduled hourly dunning processing at :30');
 }

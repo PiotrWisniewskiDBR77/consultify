@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { GripVertical, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { ReportBlock, TableBlockContent } from '../../../types';
-import { Plus, Trash2, GripVertical, MoreHorizontal } from 'lucide-react';
 
 interface TableBlockProps {
     block: ReportBlock;
@@ -26,7 +27,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
     const save = (newHeaders: string[], newRows: string[][]) => {
         const updatedContent: TableBlockContent = {
             headers: newHeaders,
-            rows: newRows
+            rows: newRows,
         };
         onUpdate({ content: updatedContent });
     };
@@ -55,7 +56,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
 
     const addColumn = () => {
         const newHeaders = [...headers, `Col ${headers.length + 1}`];
-        const newRows = rows.map(r => [...r, '']);
+        const newRows = rows.map((r) => [...r, '']);
         setHeaders(newHeaders);
         setRows(newRows);
         save(newHeaders, newRows);
@@ -69,7 +70,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
 
     const deleteColumn = (index: number) => {
         const newHeaders = headers.filter((_, i) => i !== index);
-        const newRows = rows.map(r => r.filter((_, i) => i !== index));
+        const newRows = rows.map((r) => r.filter((_, i) => i !== index));
         setHeaders(newHeaders);
         setRows(newRows);
         save(newHeaders, newRows);
@@ -82,7 +83,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
                             {headers.map((h, i) => (
-                                <th key={i} className="py-2 px-3 font-bold text-slate-700 dark:text-slate-200">{h}</th>
+                                <th key={i} className="py-2 px-3 font-bold text-slate-700 dark:text-slate-200">
+                                    {h}
+                                </th>
                             ))}
                         </tr>
                     </thead>
@@ -90,7 +93,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
                         {rows.map((row, rI) => (
                             <tr key={rI} className="border-b border-slate-100 dark:border-white/5 last:border-0">
                                 {row.map((cell, cI) => (
-                                    <td key={cI} className="py-2 px-3 text-slate-600 dark:text-slate-300">{cell}</td>
+                                    <td key={cI} className="py-2 px-3 text-slate-600 dark:text-slate-300">
+                                        {cell}
+                                    </td>
                                 ))}
                             </tr>
                         ))}
@@ -122,7 +127,10 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
                             </th>
                         ))}
                         <th className="w-8">
-                            <button onClick={addColumn} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
+                            <button
+                                onClick={addColumn}
+                                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
+                            >
                                 <Plus size={14} />
                             </button>
                         </th>
@@ -152,7 +160,10 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
                     ))}
                     <tr>
                         <td colSpan={headers.length + 1} className="pt-2">
-                            <button onClick={addRow} className="text-xs flex items-center gap-1 text-blue-500 hover:text-blue-600 font-medium">
+                            <button
+                                onClick={addRow}
+                                className="text-xs flex items-center gap-1 text-blue-500 hover:text-blue-600 font-medium"
+                            >
                                 <Plus size={12} /> Add Row
                             </button>
                         </td>

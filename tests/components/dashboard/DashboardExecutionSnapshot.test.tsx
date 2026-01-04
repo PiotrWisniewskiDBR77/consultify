@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { DashboardExecutionSnapshot } from '../../../components/dashboard/DashboardExecutionSnapshot';
+import { DashboardExecutionSnapshot } from '../../components/dashboard/DashboardExecutionSnapshot';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -41,6 +41,7 @@ describe('DashboardExecutionSnapshot Component', () => {
         });
     });
 });
+
 
 
 

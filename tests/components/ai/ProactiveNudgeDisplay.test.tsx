@@ -5,9 +5,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ProactiveNudgeDisplay } from '../../../components/ai/ProactiveNudgeDisplay';
+import { ProactiveNudgeDisplay } from '../../components/ai/ProactiveNudgeDisplay';
 import { useProactiveNudges } from '../../../hooks/useProactiveNudges';
-import { useAIContext } from '../../../contexts/AIContext';
+import { useAIContext } from '../../contexts/AIContext';
 
 // Mock hooks
 jest.mock('../../../hooks/useProactiveNudges');
@@ -242,6 +242,7 @@ describe('ProactiveNudgeDisplay - Different Capabilities', () => {
         expect(screen.getByText(/Witaj w Consultify/)).toBeInTheDocument();
     });
 });
+
 
 
 

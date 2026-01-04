@@ -1,6 +1,7 @@
 // store/megatrendStore.ts
 // Zustand store slice for megatrend data
 import { create } from 'zustand';
+
 import { MegatrendDetail } from '../components/Megatrend/TrendDetailCard'; // reuse type definition
 
 interface MegatrendState {
@@ -24,11 +25,11 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
             const token = localStorage.getItem('token');
             const headers = {
                 'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
+                Authorization: token ? `Bearer ${token}` : '',
             };
 
             const res = await fetch(`/api/megatrends/baseline?industry=${encodeURIComponent(industry)}`, {
-                headers
+                headers,
             });
 
             if (!res.ok) throw new Error('Failed to load megatrends');
@@ -43,7 +44,7 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
                 throw new Error('Invalid API response format (Server restart may be required)');
             }
             // Map backend shape (from MegatrendService) to frontend shape (MegatrendDetail)
-            const mappedData: MegatrendDetail[] = data.map(item => ({
+            const mappedData: MegatrendDetail[] = data.map((item) => ({
                 id: item.id,
                 label: item.label,
                 shortDescription: item.description,
@@ -58,8 +59,8 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
                     ring: item.initialRing,
                     risks: [],
                     opportunities: [],
-                    actions: []
-                }
+                    actions: [],
+                },
             }));
             set({ megatrends: mappedData, loading: false });
         } catch (e: any) {

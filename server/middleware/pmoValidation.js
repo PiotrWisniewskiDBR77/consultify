@@ -1,8 +1,12 @@
 // PMO Validation Middleware
 // Step 3: Enforces PMO rules for initiatives and tasks
 
-let db = require('../database');
-let StatusMachine = import('statusMachine.js');
+import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../src/database/index.js';
+import statusMachineService from '../services/statusMachine.js';
+
+let db = getDatabase();
+let StatusMachine = statusMachineService;
 
 const PMOValidation = {
     /**
@@ -127,7 +131,6 @@ const PMOValidation = {
                         (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                         VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
 
-                    const { v4 as uuidv4  } = await import('uuid');
                     db.run(logSql, [
                         uuidv4(),
                         req.organizationId || 'unknown',

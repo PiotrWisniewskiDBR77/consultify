@@ -7,12 +7,12 @@
 import express from 'express';
 const router = express.Router();
 import requireAuth from '../middleware/authMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * GET /api/ai/memory
+ * GET /a../services/ai/memory
  * Get user's AI memory data
  */
 router.get('/', requireAuth, async (req, res) => {
@@ -41,7 +41,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 /**
- * PUT /api/ai/memory/settings
+ * PUT /a../services/ai/memory/settings
  * Update AI memory settings
  */
 router.put('/settings', requireAuth, async (req, res) => {
@@ -77,7 +77,7 @@ router.put('/settings', requireAuth, async (req, res) => {
 });
 
 /**
- * POST /api/ai/memory
+ * POST /a../services/ai/memory
  * Store a new memory item
  */
 router.post('/', requireAuth, async (req, res) => {
@@ -113,7 +113,7 @@ router.post('/', requireAuth, async (req, res) => {
 });
 
 /**
- * DELETE /api/ai/memory
+ * DELETE /a../services/ai/memory
  * Clear all AI memory for user
  */
 router.delete('/', requireAuth, async (req, res) => {
@@ -142,7 +142,7 @@ router.delete('/', requireAuth, async (req, res) => {
 });
 
 /**
- * DELETE /api/ai/memory/:id
+ * DELETE /a../services/ai/memory/:id
  * Delete specific memory item
  */
 router.delete('/:id', requireAuth, async (req, res) => {

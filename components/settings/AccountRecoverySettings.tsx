@@ -1,6 +1,6 @@
 /**
  * AccountRecoverySettings - Account recovery options
- * 
+ *
  * Features:
  * - Backup email
  * - Phone number verification
@@ -8,14 +8,24 @@
  * - Trusted devices
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Mail, Phone, Key, Smartphone, Shield, Loader2,
-    Check, AlertTriangle, Copy, RefreshCw, Trash2
+    AlertTriangle,
+    Check,
+    Copy,
+    Key,
+    Loader2,
+    Mail,
+    Phone,
+    RefreshCw,
+    Shield,
+    Smartphone,
+    Trash2,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface RecoverySettings {
@@ -64,7 +74,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
         try {
             setVerifyingEmail(true);
             // API call would go here
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
             toast.success(t('settings.recovery.emailSaved', 'Verification email sent'));
         } catch (error) {
             toast.error(t('settings.recovery.emailError', 'Failed to save backup email'));
@@ -82,7 +92,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
         try {
             setVerifyingPhone(true);
             // API call would go here
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
             toast.success(t('settings.recovery.phoneSaved', 'Verification code sent'));
         } catch (error) {
             toast.error(t('settings.recovery.phoneError', 'Failed to save phone number'));
@@ -95,7 +105,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
         try {
             setGeneratingCodes(true);
             // API call would go here
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
             const codes = [
                 'XXXX-XXXX-XXXX',
                 'YYYY-YYYY-YYYY',
@@ -104,7 +114,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                 'BBBB-BBBB-BBBB',
                 'CCCC-CCCC-CCCC',
                 'DDDD-DDDD-DDDD',
-                'EEEE-EEEE-EEEE'
+                'EEEE-EEEE-EEEE',
             ].map(() => {
                 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
                 let code = '';
@@ -132,7 +142,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
     const handleRemoveTrustedDevice = async (deviceId: string) => {
         try {
             // API call would go here
-            setTrustedDevices(prev => prev.filter(d => d.id !== deviceId));
+            setTrustedDevices((prev) => prev.filter((d) => d.id !== deviceId));
             toast.success(t('settings.recovery.deviceRemoved', 'Device removed'));
         } catch (error) {
             toast.error(t('settings.recovery.deviceRemoveError', 'Failed to remove device'));
@@ -148,7 +158,10 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                     {t('settings.recovery.title', 'Account Recovery')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t('settings.recovery.description', 'Set up backup options to recover your account if you lose access')}
+                    {t(
+                        'settings.recovery.description',
+                        'Set up backup options to recover your account if you lose access',
+                    )}
                 </p>
             </div>
 
@@ -181,11 +194,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                         disabled={verifyingEmail || !backupEmail}
                         className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
                     >
-                        {verifyingEmail ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <Check className="w-4 h-4" />
-                        )}
+                        {verifyingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         {t('common.verify', 'Verify')}
                     </button>
                 </div>
@@ -220,11 +229,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                         disabled={verifyingPhone || !phoneNumber}
                         className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
                     >
-                        {verifyingPhone ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <Check className="w-4 h-4" />
-                        )}
+                        {verifyingPhone ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         {t('common.verify', 'Verify')}
                     </button>
                 </div>
@@ -276,7 +281,10 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             {recoveryCodes.map((code, index) => (
-                                <code key={index} className="px-3 py-2 bg-white dark:bg-white/5 rounded text-sm font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                <code
+                                    key={index}
+                                    className="px-3 py-2 bg-white dark:bg-white/5 rounded text-sm font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10"
+                                >
                                     {code}
                                 </code>
                             ))}
@@ -284,7 +292,10 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                         <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/20">
                             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5" />
                             <p className="text-sm text-amber-700 dark:text-amber-300">
-                                {t('settings.recovery.codesWarning', 'Each code can only be used once. Store them securely and do not share them.')}
+                                {t(
+                                    'settings.recovery.codesWarning',
+                                    'Each code can only be used once. Store them securely and do not share them.',
+                                )}
                             </p>
                         </div>
                     </div>
@@ -302,13 +313,16 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                             {t('settings.recovery.trustedDevices', 'Trusted Devices')}
                         </h4>
                         <p className="text-sm text-slate-500">
-                            {t('settings.recovery.trustedDevicesDesc', 'Devices that can access your account without additional verification')}
+                            {t(
+                                'settings.recovery.trustedDevicesDesc',
+                                'Devices that can access your account without additional verification',
+                            )}
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    {trustedDevices.map(device => (
+                    {trustedDevices.map((device) => (
                         <div
                             key={device.id}
                             className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
@@ -324,7 +338,9 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-slate-500">{device.browser} • {device.last_used}</p>
+                                    <p className="text-sm text-slate-500">
+                                        {device.browser} • {device.last_used}
+                                    </p>
                                 </div>
                             </div>
                             {!device.is_current && (
@@ -344,11 +360,4 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
 };
 
 export default AccountRecoverySettings;
-
-
-
-
-
-
-
 

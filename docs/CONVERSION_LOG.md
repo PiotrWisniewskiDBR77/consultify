@@ -1,0 +1,333 @@
+# Conversion Log
+
+**Generated:** 2026-01-04T10:13:16.247Z
+
+## Summary
+
+- **Total processed:** 313
+- **Converted:** 0
+- **Skipped:** 93
+- **Errors:** 220
+
+## Converted Files
+
+
+
+## Skipped Files
+
+- `server/src/services/ai/abTesting.ts`: Legacy file not found: ../../services/ai/abTesting.js
+- `server/src/services/ai/actionExecutor.ts`: Legacy file not found: ../../services/ai/actionExecutor.js
+- `server/src/services/ai/adaptiveResponseService.ts`: Legacy file not found: ../../services/ai/adaptiveResponseService.js
+- `server/src/services/ai/agents/agentCoordinator.ts`: Legacy file not found: ../../services/ai/agents/agentCoordinator.js
+- `server/src/services/ai/agents/baseAgent.ts`: Legacy file not found: ../../services/ai/agents/baseAgent.js
+- `server/src/services/ai/agents/changeAgent.ts`: Legacy file not found: ../../services/ai/agents/changeAgent.js
+- `server/src/services/ai/agents/financeAgent.ts`: Legacy file not found: ../../services/ai/agents/financeAgent.js
+- `server/src/services/ai/agents/index.ts`: Legacy file not found: ../../services/ai/agents/index.js
+- `server/src/services/ai/agents/pmoAgent.ts`: Legacy file not found: ../../services/ai/agents/pmoAgent.js
+- `server/src/services/ai/agents/riskAgent.ts`: Legacy file not found: ../../services/ai/agents/riskAgent.js
+- `server/src/services/ai/agents/strategyAgent.ts`: Legacy file not found: ../../services/ai/agents/strategyAgent.js
+- `server/src/services/ai/aiGateway.ts`: Legacy file not found: ../../services/ai/aiGateway.js
+- `server/src/services/ai/aiHealthAlertService.ts`: Legacy file not found: ../../services/ai/aiHealthAlertService.js
+- `server/src/services/ai/aiHealthService.ts`: Legacy file not found: ../../services/ai/aiHealthService.js
+- `server/src/services/ai/aiMemoryMetricsService.ts`: Legacy file not found: ../../services/ai/aiMemoryMetricsService.js
+- `server/src/services/ai/bcgReportGenerator.ts`: Legacy file not found: ../../services/ai/bcgReportGenerator.js
+- `server/src/services/ai/cacheService.ts`: Legacy file not found: ../../services/ai/cacheService.js
+- `server/src/services/ai/citationExtractor.ts`: Legacy file not found: ../../services/ai/citationExtractor.js
+- `server/src/services/ai/citationVerifier.ts`: Legacy file not found: ../../services/ai/citationVerifier.js
+- `server/src/services/ai/coThinker/index.ts`: Legacy file not found: ../../services/ai/coThinker/index.js
+- `server/src/services/ai/coThinkerPrompts.ts`: Legacy file not found: ../../services/ai/coThinkerPrompts.js
+- `server/src/services/ai/comprehensiveReportGenerator.ts`: Legacy file not found: ../../services/ai/comprehensiveReportGenerator.js
+- `server/src/services/ai/consultingFlowEngine.ts`: Legacy file not found: ../../services/ai/consultingFlowEngine.js
+- `server/src/services/ai/conversationStateMachine.ts`: Legacy file not found: ../../services/ai/conversationStateMachine.js
+- `server/src/services/ai/conversationTracker.ts`: Legacy file not found: ../../services/ai/conversationTracker.js
+- `server/src/services/ai/docIndexer.ts`: Legacy file not found: ../../services/ai/docIndexer.js
+- `server/src/services/ai/draftService.ts`: Legacy file not found: ../../services/ai/draftService.js
+- `server/src/services/ai/enhancedContextBuilder.ts`: Legacy file not found: ../../services/ai/enhancedContextBuilder.js
+- `server/src/services/ai/enterpriseSecurity.ts`: Legacy file not found: ../../services/ai/enterpriseSecurity.js
+- `server/src/services/ai/frameworks/consultingFrameworks.ts`: Legacy file not found: ../../services/ai/frameworks/consultingFrameworks.js
+- `server/src/services/ai/frameworks/frameworkEngine.ts`: Legacy file not found: ../../services/ai/frameworks/frameworkEngine.js
+- `server/src/services/ai/frameworks/index.ts`: Legacy file not found: ../../services/ai/frameworks/index.js
+- `server/src/services/ai/frameworks/strategicRecommendationService.ts`: Legacy file not found: ../../services/ai/frameworks/strategicRecommendationService.js
+- `server/src/services/ai/harvardConsultantPrompts.ts`: Legacy file not found: ../../services/ai/harvardConsultantPrompts.js
+- `server/src/services/ai/healthMonitor.ts`: Legacy file not found: ../../services/ai/healthMonitor.js
+- `server/src/services/ai/intelligence/benchmarkDataService.ts`: Legacy file not found: ../../services/ai/intelligence/benchmarkDataService.js
+- `server/src/services/ai/intelligence/index.ts`: Legacy file not found: ../../services/ai/intelligence/index.js
+- `server/src/services/ai/intelligence/industryIntelligenceService.ts`: Legacy file not found: ../../services/ai/intelligence/industryIntelligenceService.js
+- `server/src/services/ai/intelligentResearch.ts`: Legacy file not found: ../../services/ai/intelligentResearch.js
+- `server/src/services/ai/intentEngine.ts`: Legacy file not found: ../../services/ai/intentEngine.js
+- `server/src/services/ai/learningSystem.ts`: Legacy file not found: ../../services/ai/learningSystem.js
+- `server/src/services/ai/llmHealthMonitor.ts`: Legacy file not found: ../../services/ai/llmHealthMonitor.js
+- `server/src/services/ai/magicWandService.ts`: Legacy file not found: ../../services/ai/magicWandService.js
+- `server/src/services/ai/mediaIngestionService.ts`: Legacy file not found: ../../services/ai/mediaIngestionService.js
+- `server/src/services/ai/memoryManager.ts`: Legacy file not found: ../../services/ai/memoryManager.js
+- `server/src/services/ai/metrics.ts`: Legacy file not found: ../../services/ai/metrics.js
+- `server/src/services/ai/observability.ts`: Legacy file not found: ../../services/ai/observability.js
+- `server/src/services/ai/performanceOptimizer.ts`: Legacy file not found: ../../services/ai/performanceOptimizer.js
+- `server/src/services/ai/persistentSessionStore.ts`: Legacy file not found: ../../services/ai/persistentSessionStore.js
+- `server/src/services/ai/personalizationEngine.ts`: Legacy file not found: ../../services/ai/personalizationEngine.js
+- `server/src/services/ai/pipeline/index.ts`: Legacy file not found: ../../services/ai/pipeline/index.js
+- `server/src/services/ai/pipeline/reportAgents.ts`: Legacy file not found: ../../services/ai/pipeline/reportAgents.js
+- `server/src/services/ai/pipeline/reportPipeline.ts`: Legacy file not found: ../../services/ai/pipeline/reportPipeline.js
+- `server/src/services/ai/proactiveNudges.ts`: Legacy file not found: ../../services/ai/proactiveNudges.js
+- `server/src/services/ai/proactiveSuggestionsService.ts`: Legacy file not found: ../../services/ai/proactiveSuggestionsService.js
+- `server/src/services/ai/processors/audioProcessor.ts`: Legacy file not found: ../../services/ai/processors/audioProcessor.js
+- `server/src/services/ai/processors/docxProcessor.ts`: Legacy file not found: ../../services/ai/processors/docxProcessor.js
+- `server/src/services/ai/processors/imageProcessor.ts`: Legacy file not found: ../../services/ai/processors/imageProcessor.js
+- `server/src/services/ai/processors/index.ts`: Legacy file not found: ../../services/ai/processors/index.js
+- `server/src/services/ai/processors/pptxProcessor.ts`: Legacy file not found: ../../services/ai/processors/pptxProcessor.js
+- `server/src/services/ai/processors/spreadsheetProcessor.ts`: Legacy file not found: ../../services/ai/processors/spreadsheetProcessor.js
+- `server/src/services/ai/processors/urlProcessor.ts`: Legacy file not found: ../../services/ai/processors/urlProcessor.js
+- `server/src/services/ai/processors/videoProcessor.ts`: Legacy file not found: ../../services/ai/processors/videoProcessor.js
+- `server/src/services/ai/processors/youtubeProcessor.ts`: Legacy file not found: ../../services/ai/processors/youtubeProcessor.js
+- `server/src/services/ai/projectMemoryStore.ts`: Legacy file not found: ../../services/ai/projectMemoryStore.js
+- `server/src/services/ai/promptAssembler.ts`: Legacy file not found: ../../services/ai/promptAssembler.js
+- `server/src/services/ai/promptAssistant.ts`: Legacy file not found: ../../services/ai/promptAssistant.js
+- `server/src/services/ai/promptBlockLibrary.ts`: Legacy file not found: ../../services/ai/promptBlockLibrary.js
+- `server/src/services/ai/promptTemplateService.ts`: Legacy file not found: ../../services/ai/promptTemplateService.js
+- `server/src/services/ai/qualityChecker.ts`: Legacy file not found: ../../services/ai/qualityChecker.js
+- `server/src/services/ai/quotaService.ts`: Legacy file not found: ../../services/ai/quotaService.js
+- `server/src/services/ai/ragMetricsService.ts`: Legacy file not found: ../../services/ai/ragMetricsService.js
+- `server/src/services/ai/rateLimiter.ts`: Legacy file not found: ../../services/ai/rateLimiter.js
+- `server/src/services/ai/redisClient.ts`: Legacy file not found: ../../services/ai/redisClient.js
+- `server/src/services/ai/reportContentGenerator.ts`: Legacy file not found: ../../services/ai/reportContentGenerator.js
+- `server/src/services/ai/reportGeneratorService.ts`: Legacy file not found: ../../services/ai/reportGeneratorService.js
+- `server/src/services/ai/reportParserService.ts`: Legacy file not found: ../../services/ai/reportParserService.js
+- `server/src/services/ai/reportTemplates.ts`: Legacy file not found: ../../services/ai/reportTemplates.js
+- `server/src/services/ai/responseQualityService.ts`: Legacy file not found: ../../services/ai/responseQualityService.js
+- `server/src/services/ai/smartSuggestions.ts`: Legacy file not found: ../../services/ai/smartSuggestions.js
+- `server/src/services/ai/socraticEngine.ts`: Legacy file not found: ../../services/ai/socraticEngine.js
+- `server/src/services/ai/speechToTextService.ts`: Legacy file not found: ../../services/ai/speechToTextService.js
+- `server/src/services/ai/startupValidator.ts`: Legacy file not found: ../../services/ai/startupValidator.js
+- `server/src/services/ai/summarizationService.ts`: Legacy file not found: ../../services/ai/summarizationService.js
+- `server/src/services/ai/taskAdvisorService.ts`: Legacy file not found: ../../services/ai/taskAdvisorService.js
+- `server/src/services/ai/textToSpeechService.ts`: Legacy file not found: ../../services/ai/textToSpeechService.js
+- `server/src/services/ai/titleGenerator.ts`: Legacy file not found: ../../services/ai/titleGenerator.js
+- `server/src/services/ai/variableResolver.ts`: Legacy file not found: ../../services/ai/variableResolver.js
+- `server/src/services/ai/voiceHealthMonitor.ts`: Legacy file not found: ../../services/ai/voiceHealthMonitor.js
+- `server/src/services/ai/webResearchService.ts`: Legacy file not found: ../../services/ai/webResearchService.js
+- `server/src/services/integrations/clickupUserIntegration.ts`: Legacy file not found: ../../services/integrations/clickupUserIntegration.js
+- `server/src/services/integrations/slackUserIntegration.ts`: Legacy file not found: ../../services/integrations/slackUserIntegration.js
+- `server/src/services/integrations/teamsUserIntegration.ts`: Legacy file not found: ../../services/integrations/teamsUserIntegration.js
+
+## Errors
+
+- `server/src/services/EmailVerificationService.ts`: Could not match lazy loader pattern
+- `server/src/services/EscalationService.ts`: Could not match lazy loader pattern
+- `server/src/services/MFAService.ts`: Could not match lazy loader pattern
+- `server/src/services/WhatsAppService.ts`: Could not match lazy loader pattern
+- `server/src/services/adminAuditService.ts`: Could not match lazy loader pattern
+- `server/src/services/adminSessionService.ts`: Could not match lazy loader pattern
+- `server/src/services/ai/aiContext.ts`: Could not match lazy loader pattern
+- `server/src/services/aiAnalyticsService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiAssessmentFormHelper.ts`: Could not match lazy loader pattern
+- `server/src/services/aiAssessmentPartnerService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiAssessmentReportGenerator.ts`: Could not match lazy loader pattern
+- `server/src/services/aiBudgetService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiCharterGeneratorService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiContextValidator.ts`: Could not match lazy loader pattern
+- `server/src/services/aiDecisionGovernance.ts`: Could not match lazy loader pattern
+- `server/src/services/aiExecutiveReporting.ts`: Could not match lazy loader pattern
+- `server/src/services/aiExplainabilityService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiExternalDataControl.ts`: Could not match lazy loader pattern
+- `server/src/services/aiFailureHandler.ts`: Could not match lazy loader pattern
+- `server/src/services/aiIntegrationService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiKnowledgeManager.ts`: Could not match lazy loader pattern
+- `server/src/services/aiMaturityMonitor.ts`: Could not match lazy loader pattern
+- `server/src/services/aiModeEnforcer.ts`: Could not match lazy loader pattern
+- `server/src/services/aiModeResolver.ts`: Could not match lazy loader pattern
+- `server/src/services/aiProactivityEngine.ts`: Could not match lazy loader pattern
+- `server/src/services/aiPromptHierarchy.ts`: Could not match lazy loader pattern
+- `server/src/services/aiRecommendationService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiReplayService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiRoleGuard.ts`: Could not match lazy loader pattern
+- `server/src/services/aiService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiSettingsService.ts`: Could not match lazy loader pattern
+- `server/src/services/aiWorkloadIntelligence.ts`: Could not match lazy loader pattern
+- `server/src/services/apiKeyService.ts`: Could not match lazy loader pattern
+- `server/src/services/approvalPatternService.ts`: Could not match lazy loader pattern
+- `server/src/services/areaContentTemplates.ts`: Could not match lazy loader pattern
+- `server/src/services/assessmentOverviewService.ts`: Could not match lazy loader pattern
+- `server/src/services/assessmentReportService.ts`: Could not match lazy loader pattern
+- `server/src/services/assessmentService.ts`: Could not match lazy loader pattern
+- `server/src/services/assessmentWorkflowService.ts`: Could not match lazy loader pattern
+- `server/src/services/auditIntegrityService.ts`: Could not match lazy loader pattern
+- `server/src/services/automationEngineService.ts`: Could not match lazy loader pattern
+- `server/src/services/backupService.ts`: Could not match lazy loader pattern
+- `server/src/services/baselineService.ts`: Could not match lazy loader pattern
+- `server/src/services/benchmarkingService.ts`: Could not match lazy loader pattern
+- `server/src/services/brandingService.ts`: Could not match lazy loader pattern
+- `server/src/services/breakGlassService.ts`: Could not match lazy loader pattern
+- `server/src/services/budgetService.ts`: Could not match lazy loader pattern
+- `server/src/services/capacityService.ts`: Could not match lazy loader pattern
+- `server/src/services/cohortService.ts`: Could not match lazy loader pattern
+- `server/src/services/collaborationAIService.ts`: Could not match lazy loader pattern
+- `server/src/services/complianceService.ts`: Could not match lazy loader pattern
+- `server/src/services/connectorHealthService.ts`: Could not match lazy loader pattern
+- `server/src/services/connectorRegistry.ts`: Could not match lazy loader pattern
+- `server/src/services/connectorService.ts`: Could not match lazy loader pattern
+- `server/src/services/consentManagementService.ts`: Could not match lazy loader pattern
+- `server/src/services/contextService.ts`: Could not match lazy loader pattern
+- `server/src/services/creditNoteService.ts`: Could not match lazy loader pattern
+- `server/src/services/criticalPathService.ts`: Could not match lazy loader pattern
+- `server/src/services/customerSuccessService.ts`: Could not match lazy loader pattern
+- `server/src/services/dashboardBuilderService.ts`: Could not match lazy loader pattern
+- `server/src/services/dataRetentionService.ts`: Could not match lazy loader pattern
+- `server/src/services/decisionTriggerService.ts`: Could not match lazy loader pattern
+- `server/src/services/demoService.ts`: Could not match lazy loader pattern
+- `server/src/services/demoSessionService.ts`: Could not match lazy loader pattern
+- `server/src/services/dependencyService.ts`: Could not match lazy loader pattern
+- `server/src/services/deviceManagementService.ts`: Could not match lazy loader pattern
+- `server/src/services/dlpService.ts`: Could not match lazy loader pattern
+- `server/src/services/documentService.ts`: Could not match lazy loader pattern
+- `server/src/services/economicsService.ts`: Could not match lazy loader pattern
+- `server/src/services/emailCampaignService.ts`: Could not match lazy loader pattern
+- `server/src/services/emailTemplateService.ts`: Could not match lazy loader pattern
+- `server/src/services/enterpriseReportTemplates.ts`: Could not match lazy loader pattern
+- `server/src/services/evidenceLedgerService.ts`: Could not match lazy loader pattern
+- `server/src/services/evidenceService.ts`: Could not match lazy loader pattern
+- `server/src/services/evmMetricsService.ts`: Could not match lazy loader pattern
+- `server/src/services/excelExportService.ts`: Could not match lazy loader pattern
+- `server/src/services/excelImportService.ts`: Could not match lazy loader pattern
+- `server/src/services/executionMonitorService.ts`: Could not match lazy loader pattern
+- `server/src/services/executionService.ts`: Could not match lazy loader pattern
+- `server/src/services/experimentService.ts`: Could not match lazy loader pattern
+- `server/src/services/externalAssessmentService.ts`: Could not match lazy loader pattern
+- `server/src/services/facilityUserService.ts`: Could not match lazy loader pattern
+- `server/src/services/featureFlagService.ts`: Could not match lazy loader pattern
+- `server/src/services/financialCalculatorService.ts`: Could not match lazy loader pattern
+- `server/src/services/financialService.ts`: Could not match lazy loader pattern
+- `server/src/services/focusService.ts`: Could not match lazy loader pattern
+- `server/src/services/frameworkAssessmentService.ts`: Could not match lazy loader pattern
+- `server/src/services/frameworkBenchmarkService.ts`: Could not match lazy loader pattern
+- `server/src/services/frameworkRBACService.ts`: Could not match lazy loader pattern
+- `server/src/services/frameworkScoreCalculators.ts`: Could not match lazy loader pattern
+- `server/src/services/gamificationService.ts`: Could not match lazy loader pattern
+- `server/src/services/gdprService.ts`: Could not match lazy loader pattern
+- `server/src/services/genericReportService.ts`: Could not match lazy loader pattern
+- `server/src/services/governanceService.ts`: Could not match lazy loader pattern
+- `server/src/services/helpAnalyticsService.ts`: Could not match lazy loader pattern
+- `server/src/services/helpChatService.ts`: Could not match lazy loader pattern
+- `server/src/services/helpService.ts`: Could not match lazy loader pattern
+- `server/src/services/inboxService.ts`: Could not match lazy loader pattern
+- `server/src/services/industryAIModelsService.ts`: Could not match lazy loader pattern
+- `server/src/services/ingestionService.ts`: Could not match lazy loader pattern
+- `server/src/services/initiativeGeneratorService.ts`: Could not match lazy loader pattern
+- `server/src/services/initiativeStatusService.ts`: Could not match lazy loader pattern
+- `server/src/services/initiativeTemplateService.ts`: Could not match lazy loader pattern
+- `server/src/services/integrationAnalyticsService.ts`: Could not match lazy loader pattern
+- `server/src/services/integrations/jiraUserIntegration.ts`: Could not match lazy loader pattern
+- `server/src/services/invoiceTemplateService.ts`: Could not match lazy loader pattern
+- `server/src/services/ipWhitelistService.ts`: Could not match lazy loader pattern
+- `server/src/services/journeyAnalytics.ts`: Could not match lazy loader pattern
+- `server/src/services/knowledgeGraphService.ts`: Could not match lazy loader pattern
+- `server/src/services/knowledgeService.ts`: Could not match lazy loader pattern
+- `server/src/services/legalEventLogger.ts`: Could not match lazy loader pattern
+- `server/src/services/legalExportService.ts`: Could not match lazy loader pattern
+- `server/src/services/legalService.ts`: Could not match lazy loader pattern
+- `server/src/services/llmFallbackService.ts`: Could not match lazy loader pattern
+- `server/src/services/managementReportsService.ts`: Could not match lazy loader pattern
+- `server/src/services/metricsAggregator.ts`: Could not match lazy loader pattern
+- `server/src/services/metricsPersistenceService.ts`: Could not match lazy loader pattern
+- `server/src/services/metricsService.ts`: Could not match lazy loader pattern
+- `server/src/services/multiFrameworkAssessmentService.ts`: Could not match lazy loader pattern
+- `server/src/services/multiFrameworkAuditService.ts`: Could not match lazy loader pattern
+- `server/src/services/multiFrameworkReportService.ts`: Could not match lazy loader pattern
+- `server/src/services/myWorkService.ts`: Could not match lazy loader pattern
+- `server/src/services/narrativeService.ts`: Could not match lazy loader pattern
+- `server/src/services/notificationBatchingService.ts`: Could not match lazy loader pattern
+- `server/src/services/notificationOutboxService.ts`: Could not match lazy loader pattern
+- `server/src/services/oauthService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationAnalyticsService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationEventService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationHealthService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationMetadataService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationRelationshipService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationSegmentService.ts`: Could not match lazy loader pattern
+- `server/src/services/organizationTagService.ts`: Could not match lazy loader pattern
+- `server/src/services/outcomeService.ts`: Could not match lazy loader pattern
+- `server/src/services/passwordPolicyService.ts`: Could not match lazy loader pattern
+- `server/src/services/patternRecognitionService.ts`: Could not match lazy loader pattern
+- `server/src/services/pdfExportService.ts`: Could not match lazy loader pattern
+- `server/src/services/pdfGeneratorService.ts`: Could not match lazy loader pattern
+- `server/src/services/pdfParserService.ts`: Could not match lazy loader pattern
+- `server/src/services/periodComparisonService.ts`: Could not match lazy loader pattern
+- `server/src/services/permissionsMatrixService.ts`: Could not match lazy loader pattern
+- `server/src/services/platformEcosystemService.ts`: Could not match lazy loader pattern
+- `server/src/services/playbookResolver.ts`: Could not match lazy loader pattern
+- `server/src/services/pmoAnalysisService.ts`: Could not match lazy loader pattern
+- `server/src/services/pmoRoleService.ts`: Could not match lazy loader pattern
+- `server/src/services/portfolioService.ts`: Could not match lazy loader pattern
+- `server/src/services/pptxExportService.ts`: Could not match lazy loader pattern
+- `server/src/services/pptxGeneratorService.ts`: Could not match lazy loader pattern
+- `server/src/services/predictiveService.ts`: Could not match lazy loader pattern
+- `server/src/services/premiumPdfService.ts`: Could not match lazy loader pattern
+- `server/src/services/premiumReportAIService.ts`: Could not match lazy loader pattern
+- `server/src/services/pricingService.ts`: Could not match lazy loader pattern
+- `server/src/services/progressService.ts`: Could not match lazy loader pattern
+- `server/src/services/promptService.ts`: Could not match lazy loader pattern
+- `server/src/services/promptVersionService.ts`: Could not match lazy loader pattern
+- `server/src/services/qualityAssessmentService.ts`: Could not match lazy loader pattern
+- `server/src/services/ragEnhancedService.ts`: Could not match lazy loader pattern
+- `server/src/services/rapidLeanObservationMapper.ts`: Could not match lazy loader pattern
+- `server/src/services/rapidLeanReportService.ts`: Could not match lazy loader pattern
+- `server/src/services/rapidLeanService.ts`: Could not match lazy loader pattern
+- `server/src/services/rbacService.ts`: Could not match lazy loader pattern
+- `server/src/services/realtimeService.ts`: Could not match lazy loader pattern
+- `server/src/services/recommendationsService.ts`: Could not match lazy loader pattern
+- `server/src/services/referralService.ts`: Could not match lazy loader pattern
+- `server/src/services/regulatoryModeGuard.ts`: Could not match lazy loader pattern
+- `server/src/services/reportApprovalService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportAuditService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportCacheService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportCommentsService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportContentService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportEmailService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportTemplateService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportVersionService.ts`: Could not match lazy loader pattern
+- `server/src/services/reportingService.ts`: Could not match lazy loader pattern
+- `server/src/services/retentionPolicyService.ts`: Could not match lazy loader pattern
+- `server/src/services/roadmapService.ts`: Could not match lazy loader pattern
+- `server/src/services/roiService.ts`: Could not match lazy loader pattern
+- `server/src/services/scenarioService.ts`: Could not match lazy loader pattern
+- `server/src/services/scheduledReportsService.ts`: Could not match lazy loader pattern
+- `server/src/services/scimService.ts`: Could not match lazy loader pattern
+- `server/src/services/secretManager.ts`: Could not match lazy loader pattern
+- `server/src/services/secretsVault.ts`: Could not match lazy loader pattern
+- `server/src/services/securityEventService.ts`: Could not match lazy loader pattern
+- `server/src/services/securityIncidentService.ts`: Could not match lazy loader pattern
+- `server/src/services/securityPolicyService.ts`: Could not match lazy loader pattern
+- `server/src/services/securityService.ts`: Could not match lazy loader pattern
+- `server/src/services/settlementService.ts`: Could not match lazy loader pattern
+- `server/src/services/shareLinkService.ts`: Could not match lazy loader pattern
+- `server/src/services/siemService.ts`: Could not match lazy loader pattern
+- `server/src/services/ssoService.ts`: Could not match lazy loader pattern
+- `server/src/services/stakeholderPerspectiveService.ts`: Could not match lazy loader pattern
+- `server/src/services/statusReportService.ts`: Could not match lazy loader pattern
+- `server/src/services/statusService.ts`: Could not match lazy loader pattern
+- `server/src/services/steeringCommitteeAggregator.ts`: Could not match lazy loader pattern
+- `server/src/services/storageReconciliationService.ts`: Could not match lazy loader pattern
+- `server/src/services/storageService.ts`: Could not match lazy loader pattern
+- `server/src/services/studioAIService.ts`: Could not match lazy loader pattern
+- `server/src/services/supportTicketService.ts`: Could not match lazy loader pattern
+- `server/src/services/systemConfigService.ts`: Could not match lazy loader pattern
+- `server/src/services/systemIntegrity.ts`: Could not match lazy loader pattern
+- `server/src/services/teamMeetingAggregator.ts`: Could not match lazy loader pattern
+- `server/src/services/threatIntelligenceService.ts`: Could not match lazy loader pattern
+- `server/src/services/trialService.ts`: Could not match lazy loader pattern
+- `server/src/services/userGoals.ts`: Could not match lazy loader pattern
+- `server/src/services/userGroupService.ts`: Could not match lazy loader pattern
+- `server/src/services/userIntegrationService.ts`: Could not match lazy loader pattern
+- `server/src/services/userLicenseService.ts`: Could not match lazy loader pattern
+- `server/src/services/userNotificationPreferencesService.ts`: Could not match lazy loader pattern
+- `server/src/services/userPreferencesService.ts`: Could not match lazy loader pattern
+- `server/src/services/userProfileExtendedService.ts`: Could not match lazy loader pattern
+- `server/src/services/userSessionService.ts`: Could not match lazy loader pattern
+- `server/src/services/userStateMachine.ts`: Could not match lazy loader pattern
+- `server/src/services/versioningService.ts`: Could not match lazy loader pattern
+- `server/src/services/voiceCommandParser.ts`: Could not match lazy loader pattern
+- `server/src/services/webSearchService.ts`: Could not match lazy loader pattern
+- `server/src/services/webauthnService.ts`: Could not match lazy loader pattern
+- `server/src/services/webhookDeliveryService.ts`: Could not match lazy loader pattern
+- `server/src/services/workModeService.ts`: Could not match lazy loader pattern
+- `server/src/services/workqueueService.ts`: Could not match lazy loader pattern
+- `server/src/services/workstreamService.ts`: Could not match lazy loader pattern

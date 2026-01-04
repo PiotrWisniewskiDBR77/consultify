@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DecisionBoard } from '../../../components/Implementation/DecisionBoard';
+import { DecisionBoard } from '../../components/Implementation/DecisionBoard';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -104,6 +104,7 @@ describe('DecisionBoard Component', () => {
         expect(screen.getByRole('status')).toBeInTheDocument();
     });
 });
+
 
 
 

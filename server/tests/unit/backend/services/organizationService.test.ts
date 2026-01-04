@@ -1,13 +1,14 @@
 /**
  * OrganizationService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for OrganizationService - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import organizationService from '../../../../src/services/organizationService.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import organizationService from '../../../../src/services/organizationService.js';
 
 describe('OrganizationService', () => {
     let mockDb: IDatabase;
@@ -56,4 +57,3 @@ describe('OrganizationService', () => {
         });
     });
 });
-

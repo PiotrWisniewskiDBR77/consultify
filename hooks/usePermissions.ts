@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 import { UserRole } from '../types';
 
@@ -68,14 +69,11 @@ export const usePermissions = (): Permissions => {
     return useMemo(() => {
         const userId = currentUser?.id || null;
         const userRole = currentUser?.role || null;
-        const organizationId = (currentUser as any)?.organizationId ||
-            (currentUser as any)?.organization_id || null;
+        const organizationId = (currentUser as any)?.organizationId || (currentUser as any)?.organization_id || null;
 
         // Role checks
         const isUser = !!currentUser;
-        const isManager = userRole === UserRole.MANAGER ||
-            userRole === UserRole.ADMIN ||
-            userRole === 'SUPERADMIN';
+        const isManager = userRole === UserRole.MANAGER || userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
         const isAdmin = userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
         const isSuperAdmin = userRole === 'SUPERADMIN';
 
@@ -155,12 +153,4 @@ export const useUserCan = () => {
 };
 
 export default usePermissions;
-
-
-
-
-
-
-
-
 

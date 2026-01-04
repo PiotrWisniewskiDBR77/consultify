@@ -1,17 +1,26 @@
 /**
  * Excel Import Wizard
- * 
+ *
  * 4-step wizard for importing digitization assessments from Excel files
  * Based on PDFImportWizard pattern
  */
 
-import React, { useState, useCallback, useRef } from 'react';
 import {
-    Upload, FileSpreadsheet, CheckCircle, AlertTriangle, X,
-    ChevronLeft, ChevronRight, Loader2, Trash2, FileText
+    AlertTriangle,
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    FileSpreadsheet,
+    FileText,
+    Loader2,
+    Trash2,
+    Upload,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 import { DigitizationAnalysis } from './types';
 
 interface ExcelImportWizardProps {
@@ -41,48 +50,56 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
     const handleFileSelect = useCallback((selectedFile: File) => {
         const validTypes = [
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-excel'
+            'application/vnd.ms-excel',
         ];
-        
-        if (!validTypes.includes(selectedFile.type) && 
-            !selectedFile.name.endsWith('.xlsx') && 
-            !selectedFile.name.endsWith('.xls')) {
+
+        if (
+            !validTypes.includes(selectedFile.type) &&
+            !selectedFile.name.endsWith('.xlsx') &&
+            !selectedFile.name.endsWith('.xls')
+        ) {
             toast.error('Obsługiwane są tylko pliki Excel (.xlsx, .xls)');
             return;
         }
-        
+
         if (selectedFile.size > 10 * 1024 * 1024) {
             toast.error('Plik jest za duży. Maksymalny rozmiar to 10MB.');
             return;
         }
-        
+
         setFile(selectedFile);
         setError(null);
         setAnalysisName(selectedFile.name.replace(/\.(xlsx|xls)$/i, ''));
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile) handleFileSelect(droppedFile);
-    }, [handleFileSelect]);
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragging(false);
+            const droppedFile = e.dataTransfer.files[0];
+            if (droppedFile) handleFileSelect(droppedFile);
+        },
+        [handleFileSelect],
+    );
 
-    const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        if (selectedFile) handleFileSelect(selectedFile);
-    }, [handleFileSelect]);
+    const handleFileInput = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const selectedFile = e.target.files?.[0];
+            if (selectedFile) handleFileSelect(selectedFile);
+        },
+        [handleFileSelect],
+    );
 
     const handleImport = useCallback(async () => {
         if (!file) return;
-        
+
         setIsImporting(true);
         setError(null);
-        
+
         try {
             const result = await Api.importDigitizationExcel(file, analysisName || undefined);
             setImportResult(result);
-            
+
             if (result.success && result.analysisId) {
                 // Fetch the created analysis
                 const analysis = await Api.getDigitizationAnalysis(result.analysisId);
@@ -99,14 +116,14 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
     }, [file, analysisName, onImportComplete]);
 
     const goToNext = useCallback(() => {
-        const stepIndex = steps.findIndex(s => s.id === currentStep);
+        const stepIndex = steps.findIndex((s) => s.id === currentStep);
         if (stepIndex < steps.length - 1) {
             setCurrentStep(steps[stepIndex + 1].id);
         }
     }, [currentStep, steps]);
 
     const goToPrev = useCallback(() => {
-        const stepIndex = steps.findIndex(s => s.id === currentStep);
+        const stepIndex = steps.findIndex((s) => s.id === currentStep);
         if (stepIndex > 0) {
             setCurrentStep(steps[stepIndex - 1].id);
         }
@@ -114,15 +131,20 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
 
     const canGoNext = useCallback(() => {
         switch (currentStep) {
-            case 'upload': return !!file;
-            case 'preview': return true;
-            case 'name': return analysisName.trim().length > 0;
-            case 'confirm': return true;
-            default: return false;
+            case 'upload':
+                return !!file;
+            case 'preview':
+                return true;
+            case 'name':
+                return analysisName.trim().length > 0;
+            case 'confirm':
+                return true;
+            default:
+                return false;
         }
     }, [currentStep, file, analysisName]);
 
-    const currentStepIndex = steps.findIndex(s => s.id === currentStep);
+    const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -161,8 +183,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                                                 isCompleted
                                                     ? 'bg-emerald-500 text-white'
                                                     : isCurrent
-                                                    ? 'bg-emerald-500 text-white'
-                                                    : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                                                      ? 'bg-emerald-500 text-white'
+                                                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
                                             }`}
                                         >
                                             {isCompleted ? <CheckCircle size={16} /> : index + 1}
@@ -201,9 +223,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                     {currentStep === 'upload' && (
                         <div className="space-y-4">
                             <div className="text-center mb-4">
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Wgraj plik Excel
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wgraj plik Excel</h3>
                                 <p className="text-sm text-slate-500 mt-1">
                                     Obsługiwane formaty: .xlsx, .xls (max. 10MB)
                                 </p>
@@ -211,7 +231,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
 
                             {!file ? (
                                 <div
-                                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        setIsDragging(true);
+                                    }}
                                     onDragLeave={() => setIsDragging(false)}
                                     onDrop={handleDrop}
                                     onClick={() => inputRef.current?.click()}
@@ -221,12 +244,16 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                                             : 'border-slate-300 dark:border-white/20 hover:border-emerald-400 hover:bg-slate-50 dark:hover:bg-white/5'
                                     }`}
                                 >
-                                    <FileSpreadsheet className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                    <FileSpreadsheet
+                                        className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-emerald-500' : 'text-slate-400'}`}
+                                    />
                                     <p className="text-slate-600 dark:text-slate-400">
                                         Przeciągnij plik Excel tutaj lub{' '}
                                         <span className="text-emerald-500 font-medium">kliknij aby wybrać</span>
                                     </p>
-                                    <p className="text-xs text-slate-400 mt-2">Format: Basic Digitization Project Evaluation Form</p>
+                                    <p className="text-xs text-slate-400 mt-2">
+                                        Format: Basic Digitization Project Evaluation Form
+                                    </p>
                                     <input
                                         ref={inputRef}
                                         type="file"
@@ -249,7 +276,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                                         </div>
                                     </div>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFile(null);
+                                        }}
                                         className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                                     >
                                         <Trash2 size={18} />
@@ -263,9 +293,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                     {currentStep === 'preview' && file && (
                         <div className="space-y-4">
                             <div className="text-center mb-4">
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Podgląd pliku
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Podgląd pliku</h3>
                                 <p className="text-sm text-slate-500 mt-1">
                                     Sprawdź czy plik został poprawnie rozpoznany
                                 </p>
@@ -287,7 +315,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                                     </div>
                                     <div className="flex justify-between py-2 border-b border-slate-200 dark:border-white/5">
                                         <span className="text-slate-500">Format</span>
-                                        <span className="text-navy-900 dark:text-white font-medium">Digitization Evaluation Form</span>
+                                        <span className="text-navy-900 dark:text-white font-medium">
+                                            Digitization Evaluation Form
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
                                         <span className="text-slate-500">Status</span>
@@ -304,12 +334,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                     {currentStep === 'name' && (
                         <div className="space-y-4">
                             <div className="text-center mb-4">
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Nazwa analizy
-                                </h3>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    Nadaj nazwę importowanej analizie
-                                </p>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nazwa analizy</h3>
+                                <p className="text-sm text-slate-500 mt-1">Nadaj nazwę importowanej analizie</p>
                             </div>
 
                             <div>
@@ -319,7 +345,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                                 <input
                                     type="text"
                                     value={analysisName}
-                                    onChange={e => setAnalysisName(e.target.value)}
+                                    onChange={(e) => setAnalysisName(e.target.value)}
                                     placeholder="np. Analiza Q1 2025"
                                     className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 
                                         dark:border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -352,11 +378,15 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
                                     <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-5 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-slate-500">Plik źródłowy:</span>
-                                            <span className="font-medium text-navy-900 dark:text-white">{file?.name}</span>
+                                            <span className="font-medium text-navy-900 dark:text-white">
+                                                {file?.name}
+                                            </span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-slate-500">Nazwa analizy:</span>
-                                            <span className="font-medium text-navy-900 dark:text-white">{analysisName}</span>
+                                            <span className="font-medium text-navy-900 dark:text-white">
+                                                {analysisName}
+                                            </span>
                                         </div>
                                     </div>
                                 </>
@@ -417,12 +447,4 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
 };
 
 export default ExcelImportWizard;
-
-
-
-
-
-
-
-
 

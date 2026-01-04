@@ -3,10 +3,11 @@
  * Manages support tickets
  */
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, MessageSquare } from 'lucide-react';
-import { Api } from '../../../services/api';
+import { Filter, MessageSquare, Plus, Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const SupportTicketsView: React.FC = () => {
     const [tickets, setTickets] = useState<any[]>([]);
@@ -14,7 +15,7 @@ export const SupportTicketsView: React.FC = () => {
     const [filters, setFilters] = useState({
         status: '',
         priority: '',
-        organizationId: ''
+        organizationId: '',
     });
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newTicket, setNewTicket] = useState({
@@ -23,7 +24,7 @@ export const SupportTicketsView: React.FC = () => {
         subject: '',
         description: '',
         priority: 'medium',
-        category: ''
+        category: '',
     });
 
     useEffect(() => {
@@ -51,7 +52,14 @@ export const SupportTicketsView: React.FC = () => {
             await Api.createSupportTicket(newTicket);
             toast.success('Ticket created');
             setShowCreateModal(false);
-            setNewTicket({ organizationId: '', userId: '', subject: '', description: '', priority: 'medium', category: '' });
+            setNewTicket({
+                organizationId: '',
+                userId: '',
+                subject: '',
+                description: '',
+                priority: 'medium',
+                category: '',
+            });
             fetchTickets();
         } catch (err: any) {
             toast.error(err.message || 'Failed to create ticket');
@@ -60,20 +68,29 @@ export const SupportTicketsView: React.FC = () => {
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case 'high': return 'bg-red-500/20 text-red-400';
-            case 'medium': return 'bg-yellow-500/20 text-yellow-400';
-            case 'low': return 'bg-blue-500/20 text-blue-400';
-            default: return 'bg-slate-500/20 text-slate-400';
+            case 'high':
+                return 'bg-red-500/20 text-red-400';
+            case 'medium':
+                return 'bg-yellow-500/20 text-yellow-400';
+            case 'low':
+                return 'bg-blue-500/20 text-blue-400';
+            default:
+                return 'bg-slate-500/20 text-slate-400';
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'open': return 'bg-blue-500/20 text-blue-400';
-            case 'in_progress': return 'bg-yellow-500/20 text-yellow-400';
-            case 'resolved': return 'bg-green-500/20 text-green-400';
-            case 'closed': return 'bg-slate-500/20 text-slate-400';
-            default: return 'bg-slate-500/20 text-slate-400';
+            case 'open':
+                return 'bg-blue-500/20 text-blue-400';
+            case 'in_progress':
+                return 'bg-yellow-500/20 text-yellow-400';
+            case 'resolved':
+                return 'bg-green-500/20 text-green-400';
+            case 'closed':
+                return 'bg-slate-500/20 text-slate-400';
+            default:
+                return 'bg-slate-500/20 text-slate-400';
         }
     };
 
@@ -124,12 +141,24 @@ export const SupportTicketsView: React.FC = () => {
                     <table className="w-full">
                         <thead className="bg-navy-900 border-b border-slate-700">
                             <tr>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Ticket #</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Subject</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Priority</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Status</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Created</th>
-                                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Actions</th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Ticket #
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Subject
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Priority
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Status
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Created
+                                </th>
+                                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
@@ -142,15 +171,21 @@ export const SupportTicketsView: React.FC = () => {
                             ) : (
                                 tickets.map((ticket) => (
                                     <tr key={ticket.id} className="hover:bg-navy-700/50">
-                                        <td className="px-6 py-4 text-white font-mono text-sm">{ticket.ticket_number}</td>
+                                        <td className="px-6 py-4 text-white font-mono text-sm">
+                                            {ticket.ticket_number}
+                                        </td>
                                         <td className="px-6 py-4 text-white">{ticket.subject}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(ticket.priority)}`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs ${getPriorityColor(ticket.priority)}`}
+                                            >
                                                 {ticket.priority}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs ${getStatusColor(ticket.status)}`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs ${getStatusColor(ticket.status)}`}
+                                            >
                                                 {ticket.status}
                                             </span>
                                         </td>
@@ -240,10 +275,4 @@ export const SupportTicketsView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

@@ -11,7 +11,8 @@
  * @version 1.0.0
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 // Token limits per response mode and length setting
@@ -474,6 +475,7 @@ export default {
     RESPONSE_LENGTH_TOKENS,
     INTENT_SIGNALS
 };
+
 
 
 

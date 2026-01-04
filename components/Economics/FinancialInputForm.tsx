@@ -1,16 +1,23 @@
 /**
  * Financial Input Form Component
- * 
+ *
  * Form for entering costs, benefits, and time parameters for financial analysis.
  * Designed for minimalist, enterprise-grade UX.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    DollarSign, TrendingUp, Clock, Settings, 
-    Save, RefreshCw, AlertCircle, Info,
-    ChevronDown, ChevronUp
+import {
+    AlertCircle,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    DollarSign,
+    Info,
+    RefreshCw,
+    Save,
+    Settings,
+    TrendingUp,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Types
 interface FinancialData {
@@ -20,19 +27,19 @@ interface FinancialData {
     annualOperatingCost: number;
     trainingCost: number;
     contingencyPercent: number;
-    
+
     // Benefits
     annualCostSavings: number;
     annualRevenueIncrease: number;
     productivityGainsPercent: number;
     riskReductionValue: number;
-    
+
     // Time Parameters
     implementationMonths: number;
     benefitRealizationMonths: number;
     analysisHorizonYears: number;
     discountRate: number;
-    
+
     // Metadata
     currency: string;
     assumptions: string[];
@@ -62,7 +69,7 @@ const defaultData: FinancialData = {
     analysisHorizonYears: 5,
     discountRate: 10,
     currency: 'PLN',
-    assumptions: []
+    assumptions: [],
 };
 
 export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
@@ -71,14 +78,14 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
     onCalculate,
     isLoading = false,
     readOnly = false,
-    currency = 'PLN'
+    currency = 'PLN',
 }) => {
     const [formData, setFormData] = useState<FinancialData>({ ...defaultData, ...initialData, currency });
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         costs: true,
         benefits: true,
         time: true,
-        assumptions: false
+        assumptions: false,
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
@@ -86,28 +93,31 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
 
     useEffect(() => {
         if (initialData) {
-            setFormData(prev => ({ ...prev, ...initialData }));
+            setFormData((prev) => ({ ...prev, ...initialData }));
         }
     }, [initialData]);
 
     const toggleSection = (section: string) => {
-        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+        setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
     };
 
-    const handleInputChange = useCallback((field: keyof FinancialData, value: number | string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        setErrors(prev => ({ ...prev, [field]: '' }));
-        
-        // Trigger live calculation if available
-        if (onCalculate) {
-            const newData = { ...formData, [field]: value };
-            onCalculate(newData);
-        }
-    }, [formData, onCalculate]);
+    const handleInputChange = useCallback(
+        (field: keyof FinancialData, value: number | string) => {
+            setFormData((prev) => ({ ...prev, [field]: value }));
+            setErrors((prev) => ({ ...prev, [field]: '' }));
+
+            // Trigger live calculation if available
+            if (onCalculate) {
+                const newData = { ...formData, [field]: value };
+                onCalculate(newData);
+            }
+        },
+        [formData, onCalculate],
+    );
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
-        
+
         if (formData.initialInvestment < 0) {
             newErrors.initialInvestment = 'Cannot be negative';
         }
@@ -120,14 +130,14 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
         if (formData.contingencyPercent < 0 || formData.contingencyPercent > 50) {
             newErrors.contingencyPercent = 'Must be between 0% and 50%';
         }
-        
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSave = async () => {
         if (!validateForm()) return;
-        
+
         setIsSaving(true);
         try {
             await onSave(formData);
@@ -138,17 +148,17 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
 
     const addAssumption = () => {
         if (!newAssumption.trim()) return;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            assumptions: [...prev.assumptions, newAssumption.trim()]
+            assumptions: [...prev.assumptions, newAssumption.trim()],
         }));
         setNewAssumption('');
     };
 
     const removeAssumption = (index: number) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            assumptions: prev.assumptions.filter((_, i) => i !== index)
+            assumptions: prev.assumptions.filter((_, i) => i !== index),
         }));
     };
 
@@ -157,7 +167,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
             style: 'currency',
             currency: formData.currency,
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(value);
     };
 
@@ -170,14 +180,10 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
         max?: number;
     }> = ({ label, field, type = 'currency', hint, min, max }) => (
         <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                {label}
-            </label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
             <div className="relative">
                 {type === 'currency' && (
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                        {currency}
-                    </span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
                 )}
                 <input
                     type="number"
@@ -188,17 +194,17 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                     max={max}
                     className={`w-full px-3 py-2 ${type === 'currency' ? 'pl-12' : ''} ${type === 'percent' ? 'pr-8' : ''} 
                         bg-white dark:bg-navy-800 border rounded-lg text-right
-                        ${errors[field] 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-slate-200 dark:border-white/10 focus:ring-blue-500'}
+                        ${
+                            errors[field]
+                                ? 'border-red-500 focus:ring-red-500'
+                                : 'border-slate-200 dark:border-white/10 focus:ring-blue-500'
+                        }
                         focus:outline-none focus:ring-2 focus:border-transparent
                         disabled:opacity-50 disabled:cursor-not-allowed
                         text-navy-900 dark:text-white`}
                 />
                 {type === 'percent' && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                        %
-                    </span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
                 )}
             </div>
             {errors[field] && (
@@ -244,44 +250,41 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
     );
 
     const totalInvestment = formData.initialInvestment + formData.implementationCost + formData.trainingCost;
-    const totalAnnualBenefits = formData.annualCostSavings + formData.annualRevenueIncrease + formData.riskReductionValue;
+    const totalAnnualBenefits =
+        formData.annualCostSavings + formData.annualRevenueIncrease + formData.riskReductionValue;
 
     return (
         <div className="space-y-4">
             {/* Cost Section */}
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                <SectionHeader 
-                    title="Koszty" 
-                    icon={<DollarSign size={18} />} 
+                <SectionHeader
+                    title="Koszty"
+                    icon={<DollarSign size={18} />}
                     section="costs"
                     summary={`Łączna inwestycja: ${formatCurrency(totalInvestment)}`}
                 />
                 {expandedSections.costs && (
                     <div className="p-4 border-t border-slate-100 dark:border-white/5 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Inwestycja początkowa" 
+                            <InputField
+                                label="Inwestycja początkowa"
                                 field="initialInvestment"
                                 hint="Koszt zakupu sprzętu, licencji"
                             />
-                            <InputField 
-                                label="Koszty wdrożenia" 
+                            <InputField
+                                label="Koszty wdrożenia"
                                 field="implementationCost"
                                 hint="Usługi konsultingowe, integracja"
                             />
-                            <InputField 
-                                label="Roczne koszty operacyjne" 
+                            <InputField
+                                label="Roczne koszty operacyjne"
                                 field="annualOperatingCost"
                                 hint="Utrzymanie, wsparcie, licencje"
                             />
-                            <InputField 
-                                label="Koszty szkoleń" 
-                                field="trainingCost"
-                                hint="Szkolenia użytkowników"
-                            />
+                            <InputField label="Koszty szkoleń" field="trainingCost" hint="Szkolenia użytkowników" />
                         </div>
-                        <InputField 
-                            label="Rezerwa na nieprzewidziane wydatki" 
+                        <InputField
+                            label="Rezerwa na nieprzewidziane wydatki"
                             field="contingencyPercent"
                             type="percent"
                             hint="Typowo 10-20% całkowitego budżetu"
@@ -290,7 +293,9 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                         />
                         <div className="pt-2 border-t border-slate-100 dark:border-white/5">
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-600 dark:text-slate-400">Łączna inwestycja początkowa:</span>
+                                <span className="text-slate-600 dark:text-slate-400">
+                                    Łączna inwestycja początkowa:
+                                </span>
                                 <span className="font-semibold text-navy-900 dark:text-white">
                                     {formatCurrency(totalInvestment)}
                                 </span>
@@ -302,33 +307,33 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
 
             {/* Benefits Section */}
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                <SectionHeader 
-                    title="Korzyści" 
-                    icon={<TrendingUp size={18} />} 
+                <SectionHeader
+                    title="Korzyści"
+                    icon={<TrendingUp size={18} />}
                     section="benefits"
                     summary={`Roczne korzyści: ${formatCurrency(totalAnnualBenefits)}`}
                 />
                 {expandedSections.benefits && (
                     <div className="p-4 border-t border-slate-100 dark:border-white/5 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Roczne oszczędności kosztów" 
+                            <InputField
+                                label="Roczne oszczędności kosztów"
                                 field="annualCostSavings"
                                 hint="Redukcja kosztów operacyjnych"
                             />
-                            <InputField 
-                                label="Roczny wzrost przychodów" 
+                            <InputField
+                                label="Roczny wzrost przychodów"
                                 field="annualRevenueIncrease"
                                 hint="Dodatkowe przychody"
                             />
-                            <InputField 
-                                label="Wzrost produktywności" 
+                            <InputField
+                                label="Wzrost produktywności"
                                 field="productivityGainsPercent"
                                 type="percent"
                                 hint="Poprawa efektywności pracy"
                             />
-                            <InputField 
-                                label="Wartość redukcji ryzyka" 
+                            <InputField
+                                label="Wartość redukcji ryzyka"
                                 field="riskReductionValue"
                                 hint="Unikniete straty, kary"
                             />
@@ -347,41 +352,41 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
 
             {/* Time Parameters Section */}
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                <SectionHeader 
-                    title="Parametry czasowe" 
-                    icon={<Clock size={18} />} 
+                <SectionHeader
+                    title="Parametry czasowe"
+                    icon={<Clock size={18} />}
                     section="time"
                     summary={`Horyzont: ${formData.analysisHorizonYears} lat, Stopa dyskontowa: ${formData.discountRate}%`}
                 />
                 {expandedSections.time && (
                     <div className="p-4 border-t border-slate-100 dark:border-white/5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Czas wdrożenia (miesiące)" 
+                            <InputField
+                                label="Czas wdrożenia (miesiące)"
                                 field="implementationMonths"
                                 type="number"
                                 hint="Od startu do pełnego uruchomienia"
                                 min={1}
                                 max={60}
                             />
-                            <InputField 
-                                label="Okres realizacji korzyści (miesiące)" 
+                            <InputField
+                                label="Okres realizacji korzyści (miesiące)"
                                 field="benefitRealizationMonths"
                                 type="number"
                                 hint="Od uruchomienia do pełnych korzyści"
                                 min={0}
                                 max={24}
                             />
-                            <InputField 
-                                label="Horyzont analizy (lata)" 
+                            <InputField
+                                label="Horyzont analizy (lata)"
                                 field="analysisHorizonYears"
                                 type="number"
                                 hint="Typowo 3-7 lat"
                                 min={1}
                                 max={20}
                             />
-                            <InputField 
-                                label="Stopa dyskontowa" 
+                            <InputField
+                                label="Stopa dyskontowa"
                                 field="discountRate"
                                 type="percent"
                                 hint="Koszt kapitału organizacji"
@@ -395,9 +400,9 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
 
             {/* Assumptions Section */}
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                <SectionHeader 
-                    title="Założenia" 
-                    icon={<Settings size={18} />} 
+                <SectionHeader
+                    title="Założenia"
+                    icon={<Settings size={18} />}
                     section="assumptions"
                     summary={`${formData.assumptions.length} założeń zdefiniowanych`}
                 />
@@ -424,11 +429,11 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                                 Dodaj
                             </button>
                         </div>
-                        
+
                         {formData.assumptions.length > 0 ? (
                             <ul className="space-y-2">
                                 {formData.assumptions.map((assumption, index) => (
-                                    <li 
+                                    <li
                                         key={index}
                                         className="flex items-start justify-between gap-2 p-3 bg-slate-50 dark:bg-navy-900 rounded-lg"
                                     >
@@ -486,12 +491,4 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
 };
 
 export default FinancialInputForm;
-
-
-
-
-
-
-
-
 

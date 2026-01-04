@@ -1,10 +1,10 @@
 /**
  * Currency Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Multi-currency support with exchange rate management.
  * Fully migrated from server/services/currencyService.js
- * 
+ *
  * Features:
  * - Supported currencies management
  * - Exchange rate fetching (Open Exchange Rates API)
@@ -13,10 +13,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -55,14 +56,14 @@ const DEFAULT_CURRENCIES: Record<string, CurrencyInfo> = {
     CHF: { name: 'Swiss Franc', symbol: 'CHF', decimals: 2 },
 };
 
-const BASE_CURRENCY = 'USD';
+const _BASE_CURRENCY = 'USD';
 
 // ==========================================
 // CURRENCY SERVICE CLASS
 // ==========================================
 
 class CurrencyServiceClass {
-    private db: IDatabase;
+    private _db: IDatabase;
 
     constructor(deps?: CurrencyServiceDependencies) {
         this.db = deps?.db || getDatabase();
@@ -103,14 +104,12 @@ class CurrencyServiceClass {
                 name: string;
                 symbol: string;
                 decimals: number;
-            }>(
-                `SELECT code, name, symbol, decimal_places as decimals FROM supported_currencies WHERE is_active = 1`
-            );
+            }>(`SELECT code, name, symbol, decimal_places as decimals FROM supported_currencies WHERE is_active = 1`);
 
             if (currencies.length === 0) {
                 return Object.entries(DEFAULT_CURRENCIES).map(([code, data]) => ({
                     code,
-                    ...data
+                    ...data,
                 }));
             }
 
@@ -119,7 +118,7 @@ class CurrencyServiceClass {
             logger.error('[Currency] Error fetching currencies:', error);
             return Object.entries(DEFAULT_CURRENCIES).map(([code, data]) => ({
                 code,
-                ...data
+                ...data,
             }));
         }
     }
@@ -135,7 +134,7 @@ class CurrencyServiceClass {
             `SELECT rate, expires_at FROM exchange_rates 
              WHERE from_currency = ? AND to_currency = ? 
              AND (expires_at IS NULL OR expires_at > datetime('now'))`,
-            [from, to]
+            [from, to],
         );
 
         if (cached) {
@@ -202,9 +201,7 @@ class CurrencyServiceClass {
     parseAmount(value: string | number, currency: string): number {
         const currencyInfo = DEFAULT_CURRENCIES[currency] || { decimals: 2 };
 
-        const numericValue = typeof value === 'string'
-            ? parseFloat(value.replace(/[^0-9.-]/g, ''))
-            : value;
+        const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
 
         return Math.round(numericValue * Math.pow(10, currencyInfo.decimals));
     }
@@ -223,15 +220,13 @@ class CurrencyServiceClass {
         }
 
         try {
-            const response = await fetch(
-                `https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD`
-            );
+            const response = await fetch(`https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD`);
 
             if (!response.ok) {
                 throw new Error(`API error: ${response.status}`);
             }
 
-            const data = await response.json() as { rates: Record<string, number> };
+            const data = (await response.json()) as { rates: Record<string, number> };
             const rates = data.rates;
 
             // Update all supported currencies
@@ -264,10 +259,7 @@ class CurrencyServiceClass {
             name: string;
             symbol: string;
             decimals: number;
-        }>(
-            `SELECT code, name, symbol, decimal_places as decimals FROM supported_currencies WHERE code = ?`,
-            [code]
-        );
+        }>(`SELECT code, name, symbol, decimal_places as decimals FROM supported_currencies WHERE code = ?`, [code]);
 
         return currency || DEFAULT_CURRENCIES[code] || null;
     }
@@ -283,17 +275,15 @@ class CurrencyServiceClass {
         if (apiKey) {
             try {
                 // Get USD-based rates
-                const response = await fetch(
-                    `https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD`
-                );
+                const response = await fetch(`https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD`);
 
                 if (response.ok) {
-                    const data = await response.json() as { rates: Record<string, number> };
+                    const data = (await response.json()) as { rates: Record<string, number> };
                     const rates = data.rates;
 
                     // Convert via USD
-                    const fromRate = from === 'USD' ? 1 : (1 / (rates[from] || 1));
-                    const toRate = to === 'USD' ? 1 : (rates[to] || 1);
+                    const fromRate = from === 'USD' ? 1 : 1 / (rates[from] || 1);
+                    const toRate = to === 'USD' ? 1 : rates[to] || 1;
 
                     return fromRate * toRate;
                 }
@@ -348,7 +338,7 @@ class CurrencyServiceClass {
         await this.dbRun(
             `INSERT OR REPLACE INTO exchange_rates (id, from_currency, to_currency, rate, expires_at)
              VALUES (?, ?, ?, ?, ?)`,
-            [uuidv4(), from, to, rate, expiresAt]
+            [uuidv4(), from, to, rate, expiresAt],
         );
     }
 }
@@ -369,8 +359,10 @@ export default currencyService;
 // Export individual methods for backward compatibility
 export const getSupportedCurrencies = () => currencyService.getSupportedCurrencies();
 export const getExchangeRate = (from: string, to: string) => currencyService.getExchangeRate(from, to);
-export const convertAmount = (amount: number, from: string, to: string) => currencyService.convertAmount(amount, from, to);
-export const formatAmount = (amount: number, currency: string, locale?: string) => currencyService.formatAmount(amount, currency, locale);
+export const convertAmount = (amount: number, from: string, to: string) =>
+    currencyService.convertAmount(amount, from, to);
+export const formatAmount = (amount: number, currency: string, locale?: string) =>
+    currencyService.formatAmount(amount, currency, locale);
 export const parseAmount = (value: string | number, currency: string) => currencyService.parseAmount(value, currency);
 export const updateExchangeRates = () => currencyService.updateExchangeRates();
 export const getCurrencyInfo = (code: string) => currencyService.getCurrencyInfo(code);

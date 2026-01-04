@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { User, Invoice } from '../../types';
+import { Cpu, CreditCard, DollarSign, Globe, Package, TrendingUp, UserCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
-import { CreditCard, Globe, Cpu, UserCircle, TrendingUp, Package, DollarSign } from 'lucide-react';
+import { Invoice, User } from '../../types';
 
 export interface BillingCoreProps {
     mode: 'user' | 'org-admin' | 'platform';
@@ -59,9 +60,7 @@ export const UsageMeter: React.FC<{
     return (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-lg ${colorClass} flex items-center justify-center`}>
-                    {icon}
-                </div>
+                <div className={`w-10 h-10 rounded-lg ${colorClass} flex items-center justify-center`}>{icon}</div>
                 <div>
                     <h4 className="text-slate-800 dark:text-white font-medium">{title}</h4>
                     <p className="text-xs text-slate-500">{subtitle}</p>
@@ -72,16 +71,17 @@ export const UsageMeter: React.FC<{
                     <span className="text-slate-500 dark:text-slate-400">
                         {usedStr} / {limitStr}
                     </span>
-                    <span className={`font-medium ${percentage >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                    <span
+                        className={`font-medium ${percentage >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}
+                    >
                         {percentage}%
                     </span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
                     <div
-                        className={`h-full rounded-full transition-all duration-500 ${percentage >= 95 ? 'bg-red-500' :
-                            percentage >= 80 ? 'bg-orange-500' :
-                                'bg-purple-600'
-                            }`}
+                        className={`h-full rounded-full transition-all duration-500 ${
+                            percentage >= 95 ? 'bg-red-500' : percentage >= 80 ? 'bg-orange-500' : 'bg-purple-600'
+                        }`}
                         style={{ width: `${Math.min(100, percentage)}%` }}
                     />
                 </div>
@@ -100,14 +100,16 @@ export const PlanCard: React.FC<{
 }> = ({ plan, isCurrentPlan, onSelect, isSelecting, canSelect = true }) => {
     return (
         <div
-            className={`rounded-xl p-5 border transition-all ${isCurrentPlan
-                ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-500/50'
-                : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
-                }`}
+            className={`rounded-xl p-5 border transition-all ${
+                isCurrentPlan
+                    ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-500/50'
+                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
+            }`}
         >
             <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-1">{plan.name}</h4>
             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-3">
-                ${plan.price_monthly}<span className="text-sm text-slate-500">/mo</span>
+                ${plan.price_monthly}
+                <span className="text-sm text-slate-500">/mo</span>
             </p>
             <ul className="text-sm text-slate-400 space-y-1 mb-4">
                 <li>• {(plan.token_limit / 1000).toFixed(0)}K tokens/month</li>
@@ -118,27 +120,34 @@ export const PlanCard: React.FC<{
             </ul>
 
             {/* Plan Features */}
-            {plan.features && (() => {
-                try {
-                    const feats = JSON.parse(plan.features);
-                    const entries = Object.entries(feats);
-                    if (entries.length === 0) return null;
-                    return (
-                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 mb-4">
-                            <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5">
-                                {entries.map(([key, val]) => (
-                                    <li key={key} className="flex justify-between items-start">
-                                        <span className="capitalize">{key.replace(/_/g, ' ')}</span>
-                                        <span className="text-slate-700 dark:text-slate-200 font-medium text-right max-w-[50%] break-words">
-                                            {String(val) === 'true' ? 'Yes' : String(val) === 'false' ? 'No' : String(val)}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    );
-                } catch (e) { return null; }
-            })()}
+            {plan.features &&
+                (() => {
+                    try {
+                        const feats = JSON.parse(plan.features);
+                        const entries = Object.entries(feats);
+                        if (entries.length === 0) return null;
+                        return (
+                            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 mb-4">
+                                <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5">
+                                    {entries.map(([key, val]) => (
+                                        <li key={key} className="flex justify-between items-start">
+                                            <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                                            <span className="text-slate-700 dark:text-slate-200 font-medium text-right max-w-[50%] break-words">
+                                                {String(val) === 'true'
+                                                    ? 'Yes'
+                                                    : String(val) === 'false'
+                                                      ? 'No'
+                                                      : String(val)}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    } catch (e) {
+                        return null;
+                    }
+                })()}
 
             {isCurrentPlan ? (
                 <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
@@ -175,19 +184,20 @@ export const InvoiceTable: React.FC<{
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {invoices.slice(0, limit).map(inv => (
+                    {invoices.slice(0, limit).map((inv) => (
                         <tr key={inv.id} className="text-slate-700 dark:text-slate-300">
+                            <td className="px-4 py-3">{new Date(inv.created_at).toLocaleDateString()}</td>
+                            <td className="px-4 py-3 font-mono">${(inv.amount_paid / 100).toFixed(2)}</td>
                             <td className="px-4 py-3">
-                                {new Date(inv.created_at).toLocaleDateString()}
-                            </td>
-                            <td className="px-4 py-3 font-mono">
-                                ${(inv.amount_paid / 100).toFixed(2)}
-                            </td>
-                            <td className="px-4 py-3">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${inv.status === 'paid' ? 'bg-emerald-500/20 text-emerald-400' :
-                                    inv.status === 'open' ? 'bg-yellow-500/20 text-yellow-400' :
-                                        'bg-red-500/20 text-red-400'
-                                    }`}>
+                                <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        inv.status === 'paid'
+                                            ? 'bg-emerald-500/20 text-emerald-400'
+                                            : inv.status === 'open'
+                                              ? 'bg-yellow-500/20 text-yellow-400'
+                                              : 'bg-red-500/20 text-red-400'
+                                    }`}
+                                >
                                     {inv.status}
                                 </span>
                             </td>
@@ -209,7 +219,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
     showAvailablePlans = true,
     showInvoices = true,
     showUserLicense = false,
-    className = ''
+    className = '',
 }) => {
     const [billingData, setBillingData] = useState<BillingData | null>(null);
     const [plans, setPlans] = useState<Plan[]>([]);
@@ -226,7 +236,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
                 const [current, plansData, invoicesData] = await Promise.all([
                     Api.getCurrentBilling().catch(() => null),
                     Api.getSubscriptionPlans().catch(() => []),
-                    Api.getInvoices().catch(() => [])
+                    Api.getInvoices().catch(() => []),
                 ]);
                 setBillingData(current);
                 setPlans(plansData);
@@ -241,7 +251,9 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 
         // Fetch user plans for license display
         if (showUserLicense) {
-            Api.getUserPlans().then(setUserPlans).catch(err => console.error('Failed to fetch user plans', err));
+            Api.getUserPlans()
+                .then(setUserPlans)
+                .catch((err) => console.error('Failed to fetch user plans', err));
         }
     }, [showUserLicense]);
 
@@ -268,7 +280,12 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
     };
 
     const handleCancelSubscription = async () => {
-        if (!confirm('Are you sure you want to cancel your subscription? You will lose access at the end of the billing period.')) return;
+        if (
+            !confirm(
+                'Are you sure you want to cancel your subscription? You will lose access at the end of the billing period.',
+            )
+        )
+            return;
         try {
             await Api.cancelSubscription();
             const current = await Api.getCurrentBilling();
@@ -288,11 +305,12 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
     }
 
     const usage = billingData?.usage || {};
-    const tokenPercentage = (usage.tokenLimit || 0) > 0 ? Math.round(((usage.tokensUsed || 0) / (usage.tokenLimit || 1)) * 100) : 0;
+    const tokenPercentage =
+        (usage.tokenLimit || 0) > 0 ? Math.round(((usage.tokensUsed || 0) / (usage.tokenLimit || 1)) * 100) : 0;
     const currentPlanId = billingData?.billing?.subscription_plan_id;
-    const currentPlan = plans.find(p => p.id === currentPlanId);
+    const currentPlan = plans.find((p) => p.id === currentPlanId);
     const userLicenseId = currentUser?.licensePlanId;
-    const userLicense = userPlans.find(p => p.id === userLicenseId);
+    const userLicense = userPlans.find((p) => p.id === userLicenseId);
 
     return (
         <div className={`space-y-8 ${className}`}>
@@ -305,17 +323,24 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
                                 <UserCircle size={24} />
                             </div>
                             <div>
-                                <h3 className="text-slate-800 dark:text-white font-semibold text-lg">Your User License</h3>
+                                <h3 className="text-slate-800 dark:text-white font-semibold text-lg">
+                                    Your User License
+                                </h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                                     {userLicense ? userLicense.name : 'Standard License'}
-                                    {userLicense && <span className="text-slate-500 ml-2">(${userLicense.price_monthly}/mo)</span>}
+                                    {userLicense && (
+                                        <span className="text-slate-500 ml-2">(${userLicense.price_monthly}/mo)</span>
+                                    )}
                                 </p>
                             </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${userLicense
-                            ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
-                            : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'
-                            }`}>
+                        <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                                userLicense
+                                    ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
+                                    : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'
+                            }`}
+                        >
                             {userLicense ? 'Active' : 'Default'}
                         </span>
                     </div>
@@ -335,7 +360,8 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">{currentPlan.name}</h3>
                             <p className="text-slate-400 text-sm">
-                                ${currentPlan.price_monthly}/month • {(currentPlan.token_limit / 1000).toFixed(0)}K tokens • {currentPlan.storage_limit_gb}GB storage
+                                ${currentPlan.price_monthly}/month • {(currentPlan.token_limit / 1000).toFixed(0)}K
+                                tokens • {currentPlan.storage_limit_gb}GB storage
                             </p>
                             {billingData?.billing?.current_period_end && (
                                 <p className="text-xs text-slate-500 mt-2">
@@ -387,16 +413,18 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
                 <div>
                     <h3 className="text-md font-semibold text-slate-800 dark:text-white mb-4">Available Plans</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {plans.filter(p => p.is_active).map(plan => (
-                            <PlanCard
-                                key={plan.id}
-                                plan={plan}
-                                isCurrentPlan={plan.id === currentPlanId}
-                                onSelect={handleSelectPlan}
-                                isSelecting={subscribing}
-                                canSelect={canManagePlans}
-                            />
-                        ))}
+                        {plans
+                            .filter((p) => p.is_active)
+                            .map((plan) => (
+                                <PlanCard
+                                    key={plan.id}
+                                    plan={plan}
+                                    isCurrentPlan={plan.id === currentPlanId}
+                                    onSelect={handleSelectPlan}
+                                    isSelecting={subscribing}
+                                    canSelect={canManagePlans}
+                                />
+                            ))}
                     </div>
                 </div>
             )}
@@ -413,12 +441,4 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 };
 
 export default BillingCore;
-
-
-
-
-
-
-
-
 

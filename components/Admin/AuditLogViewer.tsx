@@ -1,6 +1,6 @@
 /**
  * AI Audit Log Viewer Component
- * 
+ *
  * Super Admin dashboard for viewing AI audit logs, security events, and compliance.
  * Features:
  * - Searchable audit log table
@@ -10,29 +10,30 @@
  * - PII redaction display
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
 import {
-    Shield,
-    Search,
-    Download,
-    RefreshCw,
-    AlertTriangle,
     AlertCircle,
-    CheckCircle,
-    Filter,
+    AlertTriangle,
     Calendar,
-    User,
-    Clock,
-    FileText,
+    CheckCircle,
     ChevronLeft,
     ChevronRight,
-    X,
+    Clock,
+    Download,
     Eye,
-    Loader2
+    FileText,
+    Filter,
+    Loader2,
+    RefreshCw,
+    Search,
+    Shield,
+    User,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 interface AuditLogEntry {
     id: string;
@@ -81,7 +82,7 @@ const defaultFilters: AuditLogFilters = {
     startDate: '',
     endDate: '',
     userId: '',
-    action: ''
+    action: '',
 };
 
 export function AuditLogViewer() {
@@ -109,12 +110,12 @@ export function AuditLogViewer() {
                 endDate: filters.endDate,
                 userId: filters.userId,
                 actionType: filters.action,
-                search: filters.search
+                search: filters.search,
             };
 
             const pagination = {
                 page,
-                pageSize
+                pageSize,
             };
 
             const response = await Api.getAuditLogs(apiFilters, pagination);
@@ -142,7 +143,7 @@ export function AuditLogViewer() {
                 high_risk: statsData.high_risk || 0,
                 medium_risk: statsData.medium_risk || 0,
                 low_risk: statsData.low_risk || 0,
-                period: 'Last 30 days'
+                period: 'Last 30 days',
             });
         } catch (err) {
             console.error('Failed to fetch stats:', err);
@@ -162,7 +163,7 @@ export function AuditLogViewer() {
                 startDate: filters.startDate,
                 endDate: filters.endDate,
                 userId: filters.userId,
-                actionType: filters.action
+                actionType: filters.action,
             };
 
             const blob = await Api.exportAuditLogs(exportFilters);
@@ -187,7 +188,9 @@ export function AuditLogViewer() {
         const base = 'px-2 py-1 rounded-full text-xs font-medium';
         if (flagged) {
             return (
-                <span className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1`}>
+                <span
+                    className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1`}
+                >
                     <AlertTriangle size={12} />
                     FLAGGED
                 </span>
@@ -195,11 +198,23 @@ export function AuditLogViewer() {
         }
         switch (riskLevel) {
             case 'HIGH':
-                return <span className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>HIGH</span>;
+                return (
+                    <span className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>HIGH</span>
+                );
             case 'MEDIUM':
-                return <span className={`${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`}>MEDIUM</span>;
+                return (
+                    <span
+                        className={`${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`}
+                    >
+                        MEDIUM
+                    </span>
+                );
             default:
-                return <span className={`${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}>LOW</span>;
+                return (
+                    <span className={`${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}>
+                        LOW
+                    </span>
+                );
         }
     };
 
@@ -210,7 +225,7 @@ export function AuditLogViewer() {
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -229,9 +244,7 @@ export function AuditLogViewer() {
                             <Shield size={24} className="text-purple-500" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                AI Audit Log
-                            </h1>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Audit Log</h1>
                             <p className="text-slate-500 dark:text-slate-400">
                                 Security monitoring and compliance tracking
                             </p>
@@ -379,7 +392,11 @@ export function AuditLogViewer() {
                         </button>
 
                         {/* Clear Filters */}
-                        {(filters.search || filters.riskLevel !== 'ALL' || filters.flaggedOnly || filters.startDate || filters.endDate) && (
+                        {(filters.search ||
+                            filters.riskLevel !== 'ALL' ||
+                            filters.flaggedOnly ||
+                            filters.startDate ||
+                            filters.endDate) && (
                             <button
                                 onClick={() => setFilters(defaultFilters)}
                                 className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm"
@@ -394,7 +411,9 @@ export function AuditLogViewer() {
                     {showFilters && (
                         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">Start Date</label>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                                    Start Date
+                                </label>
                                 <input
                                     type="date"
                                     value={filters.startDate}
@@ -403,7 +422,9 @@ export function AuditLogViewer() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">End Date</label>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                                    End Date
+                                </label>
                                 <input
                                     type="date"
                                     value={filters.endDate}
@@ -422,7 +443,9 @@ export function AuditLogViewer() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">Action Type</label>
+                                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                                    Action Type
+                                </label>
                                 <input
                                     type="text"
                                     placeholder="e.g., ai_request"
@@ -493,8 +516,9 @@ export function AuditLogViewer() {
                                     {logs.map((log) => (
                                         <tr
                                             key={log.id}
-                                            className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${log.flagged ? 'bg-red-50/50 dark:bg-red-900/10' : ''
-                                                }`}
+                                            className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
+                                                log.flagged ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                                            }`}
                                         >
                                             <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
@@ -522,9 +546,7 @@ export function AuditLogViewer() {
                                             <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                                                 {log.tokens_used?.toLocaleString() || '-'}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                {getRiskBadge(log.risk_level, log.flagged)}
-                                            </td>
+                                            <td className="px-4 py-3">{getRiskBadge(log.risk_level, log.flagged)}</td>
                                             <td className="px-4 py-3">
                                                 <button
                                                     onClick={() => setSelectedLog(log)}
@@ -573,9 +595,7 @@ export function AuditLogViewer() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                Audit Log Details
-                            </h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Audit Log Details</h3>
                             <button
                                 onClick={() => setSelectedLog(null)}
                                 className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
@@ -619,11 +639,15 @@ export function AuditLogViewer() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Tokens Used</p>
-                                    <p className="text-slate-900 dark:text-white">{selectedLog.tokens_used?.toLocaleString() || '-'}</p>
+                                    <p className="text-slate-900 dark:text-white">
+                                        {selectedLog.tokens_used?.toLocaleString() || '-'}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Cost (USD)</p>
-                                    <p className="text-slate-900 dark:text-white">${selectedLog.cost_usd?.toFixed(4) || '0'}</p>
+                                    <p className="text-slate-900 dark:text-white">
+                                        ${selectedLog.cost_usd?.toFixed(4) || '0'}
+                                    </p>
                                 </div>
                             </div>
 

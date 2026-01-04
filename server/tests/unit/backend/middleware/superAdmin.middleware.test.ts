@@ -4,11 +4,12 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { verifySuperAdmin, setDependencies } from '../../../../src/middleware/superAdmin.middleware.js';
-import type { AuthRequest } from '../../../../src/middleware/auth.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { AuthRequest } from '../../../../src/middleware/auth.middleware.js';
+import { setDependencies, verifySuperAdmin } from '../../../../src/middleware/superAdmin.middleware.js';
 
 describe('Super Admin Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -135,7 +136,4 @@ describe('Super Admin Middleware', () => {
         });
     });
 });
-
-
-
 

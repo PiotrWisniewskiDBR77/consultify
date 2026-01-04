@@ -4,7 +4,7 @@
  * ISO 21500, PMBOK 7, PRINCE2 Compliant
  */
 
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export interface PMOContext {
     projectId: string;
@@ -39,7 +39,7 @@ export const PMOApi = {
     // ==========================================
     // PMO CONTEXT
     // ==========================================
-    
+
     getPMOContext: async (projectId: string): Promise<PMOContext> => {
         const res = await fetch(`${API_URL}/pmo-context/${projectId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch PMO context');
@@ -55,7 +55,7 @@ export const PMOApi = {
     // ==========================================
     // PMO HEALTH
     // ==========================================
-    
+
     getPMOHealth: async (projectId: string): Promise<unknown> => {
         const res = await fetch(`${API_URL}/pmo/${projectId}/health`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch PMO health');
@@ -71,7 +71,7 @@ export const PMOApi = {
     // ==========================================
     // PMO DOMAINS (ISO/PMBOK/PRINCE2 Mapping)
     // ==========================================
-    
+
     getPMODomains: async (): Promise<PMODomain[]> => {
         const res = await fetch(`${API_URL}/pmo-domains`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch PMO domains');
@@ -81,7 +81,7 @@ export const PMOApi = {
     // ==========================================
     // DECISIONS
     // ==========================================
-    
+
     getDecisions: async (projectId: string): Promise<unknown[]> => {
         const res = await fetch(`${API_URL}/decisions?projectId=${projectId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch decisions');
@@ -92,7 +92,7 @@ export const PMOApi = {
         const res = await fetch(`${API_URL}/decisions`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(decision)
+            body: JSON.stringify(decision),
         });
         return handleResponse(res, 'Failed to create decision');
     },
@@ -101,7 +101,7 @@ export const PMOApi = {
         const res = await fetch(`${API_URL}/decisions/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update decision');
     },
@@ -109,7 +109,7 @@ export const PMOApi = {
     // ==========================================
     // STAGE GATES
     // ==========================================
-    
+
     getStageGates: async (projectId: string): Promise<unknown[]> => {
         const res = await fetch(`${API_URL}/stage-gates?projectId=${projectId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch stage gates');
@@ -120,7 +120,7 @@ export const PMOApi = {
         const res = await fetch(`${API_URL}/stage-gates/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update stage gate');
     },
@@ -128,7 +128,7 @@ export const PMOApi = {
     // ==========================================
     // GOVERNANCE
     // ==========================================
-    
+
     getGovernanceSettings: async (projectId: string): Promise<unknown> => {
         const res = await fetch(`${API_URL}/governance/${projectId}/settings`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch governance settings');
@@ -139,7 +139,7 @@ export const PMOApi = {
         const res = await fetch(`${API_URL}/governance/${projectId}/settings`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(settings)
+            body: JSON.stringify(settings),
         });
         if (!res.ok) throw new Error('Failed to update governance settings');
     },
@@ -147,7 +147,7 @@ export const PMOApi = {
     // ==========================================
     // RAID LOG (Risks, Assumptions, Issues, Dependencies)
     // ==========================================
-    
+
     getRAIDLog: async (projectId: string): Promise<unknown[]> => {
         const res = await fetch(`${API_URL}/raid?projectId=${projectId}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch RAID log');
@@ -158,7 +158,7 @@ export const PMOApi = {
         const res = await fetch(`${API_URL}/raid`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(item)
+            body: JSON.stringify(item),
         });
         return handleResponse(res, 'Failed to create RAID item');
     },
@@ -167,10 +167,8 @@ export const PMOApi = {
         const res = await fetch(`${API_URL}/raid/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update RAID item');
-    }
+    },
 };
-
-

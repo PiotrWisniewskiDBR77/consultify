@@ -1,6 +1,6 @@
 /**
  * PasswordSecuritySettings - Combined Password & Security Tab
- * 
+ *
  * Consolidates:
  * - Password Change
  * - Two-Factor Authentication (MFA)
@@ -9,18 +9,38 @@
  * - Security Events
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Key, Shield, Lock, Eye, EyeOff, CheckCircle, AlertCircle,
-    Loader2, Smartphone, Monitor, MapPin, Clock, LogOut,
-    Mail, Phone, RefreshCw, Download, ShieldCheck, AlertTriangle,
-    ChevronDown, ChevronRight, Activity, Globe
+    Activity,
+    AlertCircle,
+    AlertTriangle,
+    CheckCircle,
+    ChevronDown,
+    ChevronRight,
+    Clock,
+    Download,
+    Eye,
+    EyeOff,
+    Globe,
+    Key,
+    Loader2,
+    Lock,
+    LogOut,
+    Mail,
+    MapPin,
+    Monitor,
+    Phone,
+    RefreshCw,
+    Shield,
+    ShieldCheck,
+    Smartphone,
 } from 'lucide-react';
-import { Api } from '../../services/api';
-import { MFASetup } from '../Profile/MFASetup';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
+import { MFASetup } from '../Profile/MFASetup';
 
 interface PasswordSecuritySettingsProps {
     currentUser: User;
@@ -60,7 +80,7 @@ interface RecoveryOptions {
 
 export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> = ({ currentUser }) => {
     const { t } = useTranslation();
-    
+
     // Password change state
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -107,12 +127,16 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         hasLowercase: /[a-z]/.test(newPassword),
         hasNumber: /[0-9]/.test(newPassword),
         hasSpecial: /[^A-Za-z0-9]/.test(newPassword),
-        passwordsMatch: newPassword === confirmPassword && confirmPassword.length > 0
+        passwordsMatch: newPassword === confirmPassword && confirmPassword.length > 0,
     };
 
     const passwordStrength = Object.values(passwordRequirements).filter(Boolean).length;
-    const isPasswordValid = passwordRequirements.minLength && passwordRequirements.hasUppercase && 
-        passwordRequirements.hasLowercase && passwordRequirements.hasNumber && passwordRequirements.passwordsMatch;
+    const isPasswordValid =
+        passwordRequirements.minLength &&
+        passwordRequirements.hasUppercase &&
+        passwordRequirements.hasLowercase &&
+        passwordRequirements.hasNumber &&
+        passwordRequirements.passwordsMatch;
 
     useEffect(() => {
         fetchSessions();
@@ -129,8 +153,26 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             console.error('Failed to fetch sessions:', error);
             // Mock data for demo
             setSessions([
-                { id: '1', deviceInfo: 'Desktop', device: 'Desktop', browser: 'Chrome 120', location: 'Warsaw, Poland', ipAddress: '192.168.1.1', lastActive: 'Now', current: true },
-                { id: '2', deviceInfo: 'Mobile', device: 'Mobile', browser: 'Safari iOS', location: 'Krakow, Poland', ipAddress: '192.168.1.2', lastActive: '2 hours ago', current: false },
+                {
+                    id: '1',
+                    deviceInfo: 'Desktop',
+                    device: 'Desktop',
+                    browser: 'Chrome 120',
+                    location: 'Warsaw, Poland',
+                    ipAddress: '192.168.1.1',
+                    lastActive: 'Now',
+                    current: true,
+                },
+                {
+                    id: '2',
+                    deviceInfo: 'Mobile',
+                    device: 'Mobile',
+                    browser: 'Safari iOS',
+                    location: 'Krakow, Poland',
+                    ipAddress: '192.168.1.2',
+                    lastActive: '2 hours ago',
+                    current: false,
+                },
             ]);
         } finally {
             setIsLoadingSessions(false);
@@ -146,9 +188,33 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             console.error('Failed to fetch security events:', error);
             // Mock data
             setSecurityEvents([
-                { id: '1', type: 'login', description: 'Successful login', ipAddress: '192.168.1.1', location: 'Warsaw, PL', timestamp: new Date().toISOString(), status: 'success' },
-                { id: '2', type: 'password_change', description: 'Password changed', ipAddress: '192.168.1.1', location: 'Warsaw, PL', timestamp: new Date(Date.now() - 86400000).toISOString(), status: 'success' },
-                { id: '3', type: 'login_failed', description: 'Failed login attempt', ipAddress: '10.0.0.1', location: 'Unknown', timestamp: new Date(Date.now() - 172800000).toISOString(), status: 'warning' },
+                {
+                    id: '1',
+                    type: 'login',
+                    description: 'Successful login',
+                    ipAddress: '192.168.1.1',
+                    location: 'Warsaw, PL',
+                    timestamp: new Date().toISOString(),
+                    status: 'success',
+                },
+                {
+                    id: '2',
+                    type: 'password_change',
+                    description: 'Password changed',
+                    ipAddress: '192.168.1.1',
+                    location: 'Warsaw, PL',
+                    timestamp: new Date(Date.now() - 86400000).toISOString(),
+                    status: 'success',
+                },
+                {
+                    id: '3',
+                    type: 'login_failed',
+                    description: 'Failed login attempt',
+                    ipAddress: '10.0.0.1',
+                    location: 'Unknown',
+                    timestamp: new Date(Date.now() - 172800000).toISOString(),
+                    status: 'warning',
+                },
             ]);
         } finally {
             setLoadingEvents(false);
@@ -196,7 +262,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         setIsRevokingSession(sessionId);
         try {
             await Api.revokeSession(sessionId);
-            setSessions(sessions.filter(s => s.id !== sessionId));
+            setSessions(sessions.filter((s) => s.id !== sessionId));
             toast.success(t('settings.security.sessionRevoked', 'Session revoked successfully'));
         } catch (error) {
             toast.error(t('settings.security.sessionRevokeFailed', 'Failed to revoke session'));
@@ -206,7 +272,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
     };
 
     const handleRevokeAllSessions = async () => {
-        if (!confirm(t('settings.security.revokeAllConfirm', 'Are you sure you want to log out of all other devices?'))) {
+        if (
+            !confirm(t('settings.security.revokeAllConfirm', 'Are you sure you want to log out of all other devices?'))
+        ) {
             return;
         }
         try {
@@ -225,7 +293,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 recoveryEmail,
                 recoveryPhone,
             });
-            setRecoveryOptions(prev => ({ ...prev, recoveryEmail, recoveryPhone }));
+            setRecoveryOptions((prev) => ({ ...prev, recoveryEmail, recoveryPhone }));
             setEditingRecovery(false);
             toast.success('Recovery options updated');
         } catch (error) {
@@ -247,18 +315,21 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
     const toggleSection = (section: keyof typeof expandedSections) => {
-        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+        setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
     };
 
     // Styles
-    const sectionClass = "bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden";
-    const sectionHeaderClass = "p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors";
-    const inputClass = "w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all";
+    const sectionClass =
+        'bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden';
+    const sectionHeaderClass =
+        'p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors';
+    const inputClass =
+        'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all';
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -293,9 +364,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                             </p>
                         </div>
                     </div>
-                    {expandedSections.password ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                    {expandedSections.password ? (
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
+                    ) : (
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
                 </button>
-                
+
                 {expandedSections.password && (
                     <div className="p-6 border-t border-slate-100 dark:border-white/5 space-y-4">
                         {/* Current Password */}
@@ -309,7 +384,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                     type={showCurrentPassword ? 'text' : 'password'}
                                     value={currentPassword}
                                     onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className={inputClass + " pl-11 pr-11"}
+                                    className={inputClass + ' pl-11 pr-11'}
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -333,7 +408,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                     type={showNewPassword ? 'text' : 'password'}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className={inputClass + " pl-11 pr-11"}
+                                    className={inputClass + ' pl-11 pr-11'}
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -354,9 +429,11 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                                 key={i}
                                                 className={`h-1.5 flex-1 rounded-full ${
                                                     i <= passwordStrength
-                                                        ? passwordStrength <= 2 ? 'bg-red-500'
-                                                        : passwordStrength <= 4 ? 'bg-yellow-500'
-                                                        : 'bg-emerald-500'
+                                                        ? passwordStrength <= 2
+                                                            ? 'bg-red-500'
+                                                            : passwordStrength <= 4
+                                                              ? 'bg-yellow-500'
+                                                              : 'bg-emerald-500'
                                                         : 'bg-slate-200 dark:bg-white/10'
                                                 }`}
                                             />
@@ -376,7 +453,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                                 ) : (
                                                     <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
                                                 )}
-                                                <span className={passwordRequirements[key as keyof typeof passwordRequirements] ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}>
+                                                <span
+                                                    className={
+                                                        passwordRequirements[key as keyof typeof passwordRequirements]
+                                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                                            : 'text-slate-500'
+                                                    }
+                                                >
                                                     {label}
                                                 </span>
                                             </div>
@@ -397,7 +480,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className={inputClass + " pl-11 pr-11"}
+                                    className={inputClass + ' pl-11 pr-11'}
                                     placeholder="••••••••"
                                 />
                                 {confirmPassword && (
@@ -453,8 +536,12 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             <div className={sectionClass}>
                 <button onClick={() => toggleSection('mfa')} className={sectionHeaderClass}>
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${currentUser.mfaEnabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-slate-100 dark:bg-white/10'}`}>
-                            <Shield className={`w-5 h-5 ${currentUser.mfaEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`} />
+                        <div
+                            className={`p-2 rounded-lg ${currentUser.mfaEnabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+                        >
+                            <Shield
+                                className={`w-5 h-5 ${currentUser.mfaEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
+                            />
                         </div>
                         <div className="text-left">
                             <div className="flex items-center gap-2">
@@ -471,20 +558,19 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                     </span>
                                 )}
                             </div>
-                            <p className="text-sm text-slate-500">
-                                Add an extra layer of security to your account
-                            </p>
+                            <p className="text-sm text-slate-500">Add an extra layer of security to your account</p>
                         </div>
                     </div>
-                    {expandedSections.mfa ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                    {expandedSections.mfa ? (
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
+                    ) : (
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
                 </button>
 
                 {expandedSections.mfa && (
                     <div className="p-6 border-t border-slate-100 dark:border-white/5">
-                        <MFASetup
-                            isEnabled={!!currentUser.mfaEnabled}
-                            onUpdate={() => window.location.reload()}
-                        />
+                        <MFASetup isEnabled={!!currentUser.mfaEnabled} onUpdate={() => window.location.reload()} />
                     </div>
                 )}
             </div>
@@ -505,7 +591,11 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                             </p>
                         </div>
                     </div>
-                    {expandedSections.sessions ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                    {expandedSections.sessions ? (
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
+                    ) : (
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
                 </button>
 
                 {expandedSections.sessions && (
@@ -527,9 +617,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                     <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
                                 </div>
                             ) : sessions.length === 0 ? (
-                                <div className="p-8 text-center text-slate-500">
-                                    No active sessions found
-                                </div>
+                                <div className="p-8 text-center text-slate-500">No active sessions found</div>
                             ) : (
                                 sessions.map((session) => {
                                     const DeviceIcon = getDeviceIcon(session.deviceInfo || session.device || '');
@@ -554,11 +642,18 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                                     <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                                                         <span className="flex items-center gap-1">
                                                             <MapPin className="w-3 h-3" />
-                                                            {session.location || session.ipAddress || session.ip || 'Unknown'}
+                                                            {session.location ||
+                                                                session.ipAddress ||
+                                                                session.ip ||
+                                                                'Unknown'}
                                                         </span>
                                                         <span className="flex items-center gap-1">
                                                             <Clock className="w-3 h-3" />
-                                                            {session.lastActive || session.lastUsedAt || (session.createdAt ? formatDate(session.createdAt) : 'Recently')}
+                                                            {session.lastActive ||
+                                                                session.lastUsedAt ||
+                                                                (session.createdAt
+                                                                    ? formatDate(session.createdAt)
+                                                                    : 'Recently')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -596,12 +691,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                             <h3 className="font-semibold text-slate-900 dark:text-white">
                                 {t('settings.security.recoveryOptions', 'Recovery Options')}
                             </h3>
-                            <p className="text-sm text-slate-500">
-                                Backup methods to recover your account
-                            </p>
+                            <p className="text-sm text-slate-500">Backup methods to recover your account</p>
                         </div>
                     </div>
-                    {expandedSections.recovery ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                    {expandedSections.recovery ? (
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
+                    ) : (
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
                 </button>
 
                 {expandedSections.recovery && (
@@ -613,7 +710,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                         <div className="flex items-center gap-3">
                                             <Mail className="w-5 h-5 text-slate-500" />
                                             <div>
-                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Recovery Email</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                    Recovery Email
+                                                </p>
                                                 <p className="text-sm text-slate-500">
                                                     {recoveryOptions.recoveryEmail || 'Not set'}
                                                 </p>
@@ -630,7 +729,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                         <div className="flex items-center gap-3">
                                             <Phone className="w-5 h-5 text-slate-500" />
                                             <div>
-                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Recovery Phone</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                    Recovery Phone
+                                                </p>
                                                 <p className="text-sm text-slate-500">
                                                     {recoveryOptions.recoveryPhone || 'Not set'}
                                                 </p>
@@ -647,7 +748,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                         <div className="flex items-center gap-3">
                                             <Download className="w-5 h-5 text-slate-500" />
                                             <div>
-                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Backup Codes</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                    Backup Codes
+                                                </p>
                                                 <p className="text-sm text-slate-500">
                                                     {recoveryOptions.backupCodesCount > 0
                                                         ? `${recoveryOptions.backupCodesCount} codes remaining`
@@ -702,7 +805,11 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                         disabled={savingRecovery}
                                         className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
-                                        {savingRecovery ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                        {savingRecovery ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <CheckCircle className="w-4 h-4" />
+                                        )}
                                         Save
                                     </button>
                                     <button
@@ -729,12 +836,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                             <h3 className="font-semibold text-slate-900 dark:text-white">
                                 {t('settings.security.recentActivity', 'Security Events')}
                             </h3>
-                            <p className="text-sm text-slate-500">
-                                Recent security-related activity on your account
-                            </p>
+                            <p className="text-sm text-slate-500">Recent security-related activity on your account</p>
                         </div>
                     </div>
-                    {expandedSections.events ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                    {expandedSections.events ? (
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
+                    ) : (
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
                 </button>
 
                 {expandedSections.events && (
@@ -744,18 +853,20 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                                 <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
                             </div>
                         ) : securityEvents.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500">
-                                No recent security events
-                            </div>
+                            <div className="p-8 text-center text-slate-500">No recent security events</div>
                         ) : (
                             <div className="divide-y divide-slate-100 dark:divide-white/5">
                                 {securityEvents.map((event) => (
                                     <div key={event.id} className="p-4 flex items-start gap-4">
-                                        <div className={`p-2 rounded-lg ${
-                                            event.status === 'success' ? 'bg-emerald-100 dark:bg-emerald-500/20' :
-                                            event.status === 'warning' ? 'bg-amber-100 dark:bg-amber-500/20' :
-                                            'bg-red-100 dark:bg-red-500/20'
-                                        }`}>
+                                        <div
+                                            className={`p-2 rounded-lg ${
+                                                event.status === 'success'
+                                                    ? 'bg-emerald-100 dark:bg-emerald-500/20'
+                                                    : event.status === 'warning'
+                                                      ? 'bg-amber-100 dark:bg-amber-500/20'
+                                                      : 'bg-red-100 dark:bg-red-500/20'
+                                            }`}
+                                        >
                                             {event.status === 'success' ? (
                                                 <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                             ) : event.status === 'warning' ? (
@@ -791,10 +902,4 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 };
 
 export default PasswordSecuritySettings;
-
-
-
-
-
-
 

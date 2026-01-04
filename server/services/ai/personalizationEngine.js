@@ -7,7 +7,8 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { aiLogger } from './logger.js';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -1,12 +1,12 @@
 /**
  * SettingsSlider Component
- * 
+ *
  * Slider with value display for AI settings (temperature, tokens, etc.)
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
-import { LucideIcon, Lock, RotateCcw } from 'lucide-react';
+import { Lock, LucideIcon, RotateCcw } from 'lucide-react';
+import React from 'react';
 
 interface SettingsSliderProps {
     label: string;
@@ -45,7 +45,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
     disabled = false,
     locked = false,
     lockedMessage = 'Controlled by organization',
-    className = ''
+    className = '',
 }) => {
     const isDisabled = disabled || locked;
     const percentage = ((value - min) / (max - min)) * 100;
@@ -60,7 +60,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                         <Icon className={`w-5 h-5 ${iconColor}`} />
                     </div>
                 )}
-                
+
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -70,29 +70,32 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                             {locked && (
                                 <div className="relative group">
                                     <Lock className="w-3.5 h-3.5 text-slate-500" />
-                                    <div className="
+                                    <div
+                                        className="
                                         absolute left-1/2 -translate-x-1/2 bottom-full mb-2
                                         px-2 py-1 rounded bg-slate-800 border border-slate-700
                                         text-xs text-slate-400 whitespace-nowrap
                                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
                                         transition-all duration-200 z-50
-                                    ">
+                                    "
+                                    >
                                         {lockedMessage}
                                     </div>
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
-                            <motion.span 
+                            <motion.span
                                 key={value}
                                 initial={{ scale: 1.2, color: '#a78bfa' }}
                                 animate={{ scale: 1, color: '#e2e8f0' }}
                                 className="text-sm font-mono text-slate-200 bg-slate-800 px-2 py-0.5 rounded"
                             >
-                                {displayValue}{unit}
+                                {displayValue}
+                                {unit}
                             </motion.span>
-                            
+
                             {canReset && !isDisabled && (
                                 <button
                                     onClick={() => onChange(defaultValue!)}
@@ -104,7 +107,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                             )}
                         </div>
                     </div>
-                    
+
                     {description && (
                         <p className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600' : 'text-slate-400'}`}>
                             {description}
@@ -118,14 +121,14 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                 {/* Track background */}
                 <div className="h-2 rounded-full bg-slate-700/50 overflow-hidden">
                     {/* Filled portion */}
-                    <motion.div 
+                    <motion.div
                         className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"
                         initial={false}
                         animate={{ width: `${percentage}%` }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     />
                 </div>
-                
+
                 {/* Range input (invisible but functional) */}
                 <input
                     type="range"
@@ -140,7 +143,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                         ${isDisabled ? 'cursor-not-allowed' : ''}
                     `}
                 />
-                
+
                 {/* Custom thumb */}
                 <motion.div
                     className={`
@@ -153,11 +156,17 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                     animate={{ scale: isDisabled ? 1 : 1 }}
                     whileHover={!isDisabled ? { scale: 1.2 } : {}}
                 />
-                
+
                 {/* Min/Max labels */}
                 <div className="flex justify-between mt-1 text-xs text-slate-500">
-                    <span>{min}{unit}</span>
-                    <span>{max}{unit}</span>
+                    <span>
+                        {min}
+                        {unit}
+                    </span>
+                    <span>
+                        {max}
+                        {unit}
+                    </span>
                 </div>
             </div>
         </div>
@@ -165,4 +174,3 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
 };
 
 export default SettingsSlider;
-

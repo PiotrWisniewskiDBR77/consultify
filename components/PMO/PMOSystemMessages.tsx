@@ -1,14 +1,7 @@
+import { AlertTriangle, Calendar, FileQuestion, Info, Target, User, XCircle } from 'lucide-react';
 import React from 'react';
+
 import { usePMOContext } from '../../hooks/usePMOContext';
-import {
-    AlertTriangle,
-    XCircle,
-    Info,
-    User,
-    Calendar,
-    FileQuestion,
-    Target
-} from 'lucide-react';
 
 interface PMOSystemMessagesProps {
     variant?: 'banner' | 'inline' | 'toast';
@@ -19,16 +12,8 @@ interface PMOSystemMessagesProps {
  * PMO System Messages - Displays system-level warnings (not AI)
  * Shows critical issues: missing owners, decisions, deadlines, overdue tasks
  */
-export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({
-    variant = 'banner',
-    maxMessages = 3
-}) => {
-    const {
-        systemMessages,
-        blockingIssues,
-        getCriticalMessages,
-        getWarningMessages
-    } = usePMOContext();
+export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({ variant = 'banner', maxMessages = 3 }) => {
+    const { systemMessages, blockingIssues, getCriticalMessages, getWarningMessages } = usePMOContext();
 
     const criticalMessages = getCriticalMessages();
     const warningMessages = getWarningMessages();
@@ -41,7 +26,8 @@ export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({
     // Get icon for message code
     const getMessageIcon = (code: string) => {
         if (code.includes('OWNER') || code.includes('USER')) return <User size={14} />;
-        if (code.includes('DEADLINE') || code.includes('DATE') || code.includes('OVERDUE')) return <Calendar size={14} />;
+        if (code.includes('DEADLINE') || code.includes('DATE') || code.includes('OVERDUE'))
+            return <Calendar size={14} />;
         if (code.includes('DECISION')) return <FileQuestion size={14} />;
         if (code.includes('TASK')) return <Target size={14} />;
         return <AlertTriangle size={14} />;
@@ -60,18 +46,19 @@ export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({
                         <div
                             key={idx}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shrink-0
-                                ${msg.severity === 'critical'
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                ${
+                                    msg.severity === 'critical'
+                                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                 }`}
                         >
                             {msg.severity === 'critical' ? <XCircle size={12} /> : <AlertTriangle size={12} />}
                             <span>{msg.message}</span>
                         </div>
                     ))}
-                    {(criticalMessages.length + warningMessages.length) > maxMessages && (
+                    {criticalMessages.length + warningMessages.length > maxMessages && (
                         <span className="text-xs text-slate-400 shrink-0">
-                            +{(criticalMessages.length + warningMessages.length) - maxMessages} more
+                            +{criticalMessages.length + warningMessages.length - maxMessages} more
                         </span>
                     )}
                 </div>

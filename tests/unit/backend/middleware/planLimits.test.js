@@ -7,21 +7,28 @@ describe('PlanLimits Middleware', () => {
 
     beforeEach(async () => {
         vi.resetModules(); // Clear module cache
-
-        // Temporarily disable mock DB to use real sqlite :memory:
+        process.env.NODE_ENV = 'test';
         process.env.MOCK_DB = 'false';
-        process.env.NODE_ENV = 'test'; // Ensure test env
 
-        // Load Database (Real SQLite :memory:)
-        const dbModule = await import('../../../../server/database.js');
-        db = dbModule.default || dbModule;
+        // 1. Initialize the Test Database (Real SQLite :memory:)
+        const { default: dbInstance } = await import('../../../../server/database.js');
+        db = dbInstance;
 
-        // Wait for initialization
+        // Ensure DB is initialized
         if (db.initPromise) {
             await db.initPromise;
         }
 
-        // Import middleware (Using the REAL DB instance)
+        // 2. Mock the Modern Database Access to return our Test DB
+        // This ensures the middleware sees the same DB as the test
+        vi.doMock('../../../../server/src/database/index.js', () => {
+            return {
+                getDatabase: () => db,
+                databaseConfig: {}
+            };
+        });
+
+        // 3. Import Middleware (It will use the mocked getDatabase)
         const mod = await import('../../../../server/middleware/planLimits.js');
         checkPlanLimit = mod.checkPlanLimit;
 
@@ -93,10 +100,7 @@ describe('PlanLimits Middleware', () => {
 
     it('should block request if limit reached (Free plan)', async () => {
         await setupOrg('free');
-        await setProjectCount(1); // Limit is 1. If we have 1, we can't create another?
-        // Code checks: if (currentCount >= limitValue)
-        // If limit is 1, and we have 1 project. creating another makes 2.
-        // Usually checked BEFORE creation. "You have 1, limit 1. Block."
+        await setProjectCount(1); // Limit is 1. We have 1. Next creation would be 2.
 
         const middleware = checkPlanLimit('max_projects');
         await middleware(req, res, next);
@@ -138,21 +142,8 @@ describe('PlanLimits Middleware', () => {
 
         // Add users
         const orgId = 'org-test-plan';
-        try {
-            await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u1', orgId, 'u1@test.com', 'pass', 'USER'], function (err) {
-                if (err) reject(err); else resolve();
-            }));
-            await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u2', orgId, 'u2@test.com', 'pass', 'USER'], function (err) {
-                if (err) reject(err); else resolve();
-            }));
-
-            // Verify count in test
-            await new Promise((resolve, reject) => db.get('SELECT COUNT(*) as c FROM users', (err, row) => err ? reject(err) : resolve(row)));
-        } catch (e) {
-            throw e;
-        }
-
-        // Current users = 2. Limit = 1.
+        await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u1', orgId, 'u1@test.com', 'pass', 'USER'], (err) => err ? reject(err) : resolve()));
+        await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u2', orgId, 'u2@test.com', 'pass', 'USER'], (err) => err ? reject(err) : resolve()));
 
         const middleware = checkPlanLimit('max_members');
         await middleware(req, res, next);

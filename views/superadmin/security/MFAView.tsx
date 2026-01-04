@@ -3,10 +3,11 @@
  * Manages Multi-Factor Authentication for users
  */
 
-import React, { useState, useEffect } from 'react';
-import { Key, Shield, CheckCircle } from 'lucide-react';
-import { Api } from '../../../services/api';
+import { CheckCircle, Key, Shield } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const MFAView: React.FC = () => {
     const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -62,8 +63,10 @@ export const MFAView: React.FC = () => {
                     className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
                 >
                     <option value="">Select User</option>
-                    {users.map(user => (
-                        <option key={user.id} value={user.id}>{user.email}</option>
+                    {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                            {user.email}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -73,19 +76,27 @@ export const MFAView: React.FC = () => {
             ) : (
                 <div className="bg-navy-800 rounded-xl border border-slate-700 p-6">
                     {mfaMethods.length === 0 ? (
-                        <div className="text-center py-12 text-slate-400">
-                            No MFA methods configured
-                        </div>
+                        <div className="text-center py-12 text-slate-400">No MFA methods configured</div>
                     ) : (
                         <div className="space-y-4">
                             {mfaMethods.map((method) => (
-                                <div key={method.id} className="flex items-center justify-between p-4 bg-navy-900 rounded-lg border border-slate-700">
+                                <div
+                                    key={method.id}
+                                    className="flex items-center justify-between p-4 bg-navy-900 rounded-lg border border-slate-700"
+                                >
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${method.is_enabled ? 'bg-green-500/20' : 'bg-slate-500/20'}`}>
-                                            <Key size={20} className={method.is_enabled ? 'text-green-400' : 'text-slate-400'} />
+                                        <div
+                                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${method.is_enabled ? 'bg-green-500/20' : 'bg-slate-500/20'}`}
+                                        >
+                                            <Key
+                                                size={20}
+                                                className={method.is_enabled ? 'text-green-400' : 'text-slate-400'}
+                                            />
                                         </div>
                                         <div>
-                                            <div className="text-white font-medium">{method.method_type.toUpperCase()}</div>
+                                            <div className="text-white font-medium">
+                                                {method.method_type.toUpperCase()}
+                                            </div>
                                             <div className="text-sm text-slate-400">
                                                 {method.is_enabled ? 'Enabled' : 'Disabled'}
                                                 {method.is_primary && ' • Primary'}
@@ -106,10 +117,4 @@ export const MFAView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

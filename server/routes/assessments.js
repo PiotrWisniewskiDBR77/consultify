@@ -21,7 +21,7 @@ const GenericReportService = GenericReportServiceModule.default || GenericReport
 import * as AssessmentOverviewServiceModule from '../services/assessmentOverviewService.js';
 const AssessmentOverviewService = AssessmentOverviewServiceModule.default || AssessmentOverviewServiceModule;
 import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
-import AssessmentAuditLogger from '../utils/assessmentAuditLogger.js';
+import AssessmentAuditLogger from '../dist/utils/assessmentAuditLogger.js';
 
 // File upload configuration
 const storage = multer.diskStorage({

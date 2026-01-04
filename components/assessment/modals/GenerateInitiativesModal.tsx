@@ -1,9 +1,9 @@
 /**
  * GenerateInitiativesModal
- * 
+ *
  * Modal for generating transformation initiatives from an approved report.
  * Uses AI to analyze gaps and generate actionable initiatives.
- * 
+ *
  * Flow:
  * 1. Select a finalized report
  * 2. Configure AI generation parameters
@@ -11,29 +11,29 @@
  * 4. Approve and save to database
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    X,
-    Loader2,
-    CheckCircle2,
     AlertCircle,
-    Sparkles,
-    Search,
+    AlertTriangle,
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
+    DollarSign,
+    Edit,
+    Eye,
     FileText,
     Lightbulb,
-    Target,
-    TrendingUp,
-    DollarSign,
-    AlertTriangle,
-    ChevronRight,
-    ChevronLeft,
-    Save,
-    Eye,
-    Edit,
-    Trash2,
+    Loader2,
     Plus,
-    RefreshCw
+    RefreshCw,
+    Save,
+    Search,
+    Sparkles,
+    Target,
+    Trash2,
+    TrendingUp,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Report {
@@ -73,26 +73,26 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
     projectId,
     preselectedReportId,
     onClose,
-    onGenerated
+    onGenerated,
 }) => {
     // Wizard state
     const [step, setStep] = useState<WizardStep>('select-report');
-    
+
     // Report selection
     const [reports, setReports] = useState<Report[]>([]);
     const [selectedReportId, setSelectedReportId] = useState<string | null>(preselectedReportId || null);
     const [searchQuery, setSearchQuery] = useState('');
     const [loadingReports, setLoadingReports] = useState(true);
-    
+
     // AI Configuration
     const [focusAreas, setFocusAreas] = useState<string[]>([]);
     const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium'>('all');
     const [maxInitiatives, setMaxInitiatives] = useState(10);
-    
+
     // Generated initiatives
     const [generatedInitiatives, setGeneratedInitiatives] = useState<GeneratedInitiative[]>([]);
     const [selectedInitiatives, setSelectedInitiatives] = useState<Set<string>>(new Set());
-    
+
     // Status
     const [generating, setGenerating] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -109,20 +109,18 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 const url = projectId
                     ? `/api/assessment-reports?status=FINAL&projectId=${projectId}`
                     : '/api/assessment-reports?status=FINAL';
-                    
+
                 const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     setReports(data.reports || []);
-                    
+
                     // Auto-select if preselected
                     if (preselectedReportId) {
-                        const found = (data.reports || []).find(
-                            (r: Report) => r.id === preselectedReportId
-                        );
+                        const found = (data.reports || []).find((r: Report) => r.id === preselectedReportId);
                         if (found) {
                             setSelectedReportId(found.id);
                             // Skip directly to configure step
@@ -144,16 +142,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
     }, [projectId, preselectedReportId]);
 
     // Get selected report
-    const selectedReport = reports.find(r => r.id === selectedReportId);
+    const selectedReport = reports.find((r) => r.id === selectedReportId);
 
     // Filter reports by search
-    const filteredReports = reports.filter(r => {
+    const filteredReports = reports.filter((r) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
-        return (
-            r.name.toLowerCase().includes(query) ||
-            r.assessmentName?.toLowerCase().includes(query)
-        );
+        return r.name.toLowerCase().includes(query) || r.assessmentName?.toLowerCase().includes(query);
     });
 
     // Generate initiatives using AI
@@ -168,10 +163,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
         try {
             const token = localStorage.getItem('token');
-            
+
             // First, get gaps from the assessment
             const gapsResponse = await fetch(`/api/initiatives/gaps/${selectedReport.assessmentId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             let gaps: any[] = [];
@@ -184,23 +179,23 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             const response = await fetch('/api/initiatives/generate/ai', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     gaps: gaps.length > 0 ? gaps : [{ assessmentId: selectedReport.assessmentId }],
                     constraints: {
                         maxInitiatives,
                         priorityFilter,
-                        focusAreas: focusAreas.length > 0 ? focusAreas : undefined
+                        focusAreas: focusAreas.length > 0 ? focusAreas : undefined,
                     },
                     context: {
                         reportId: selectedReport.id,
                         reportName: selectedReport.name,
                         assessmentId: selectedReport.assessmentId,
-                        projectId
-                    }
-                })
+                        projectId,
+                    },
+                }),
             });
 
             if (response.ok) {
@@ -208,7 +203,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 const initiatives = (data.initiatives || []).map((init: any) => ({
                     ...init,
                     id: init.id || uuidv4(),
-                    assessmentId: selectedReport.assessmentId
+                    assessmentId: selectedReport.assessmentId,
                 }));
                 setGeneratedInitiatives(initiatives);
                 // Select all by default
@@ -228,8 +223,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
     // Save selected initiatives
     const handleSave = async () => {
-        const toSave = generatedInitiatives.filter(i => selectedInitiatives.has(i.id));
-        
+        const toSave = generatedInitiatives.filter((i) => selectedInitiatives.has(i.id));
+
         if (toSave.length === 0) {
             setError('Wybierz co najmniej jedną inicjatywę');
             return;
@@ -241,17 +236,17 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
         try {
             const token = localStorage.getItem('token');
-            
+
             const response = await fetch('/api/initiatives/approve', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     initiatives: toSave,
-                    projectId
-                })
+                    projectId,
+                }),
             });
 
             if (response.ok) {
@@ -291,13 +286,13 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
         if (selectedInitiatives.size === generatedInitiatives.length) {
             setSelectedInitiatives(new Set());
         } else {
-            setSelectedInitiatives(new Set(generatedInitiatives.map(i => i.id)));
+            setSelectedInitiatives(new Set(generatedInitiatives.map((i) => i.id)));
         }
     };
 
     // Remove initiative from list
     const removeInitiative = (id: string) => {
-        setGeneratedInitiatives(prev => prev.filter(i => i.id !== id));
+        setGeneratedInitiatives((prev) => prev.filter((i) => i.id !== id));
         const newSelected = new Set(selectedInitiatives);
         newSelected.delete(id);
         setSelectedInitiatives(newSelected);
@@ -309,7 +304,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
         return date.toLocaleDateString('pl-PL', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
@@ -323,9 +318,12 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
     // Risk level colors
     const getRiskColor = (risk: string) => {
         switch (risk) {
-            case 'HIGH': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-            case 'MEDIUM': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-            default: return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+            case 'HIGH':
+                return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            case 'MEDIUM':
+                return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+            default:
+                return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
         }
     };
 
@@ -337,7 +335,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
         dataManagement: 'Zarządzanie Danymi',
         culture: 'Kultura',
         cybersecurity: 'Cyberbezpieczeństwo',
-        aiMaturity: 'Dojrzałość AI'
+        aiMaturity: 'Dojrzałość AI',
     };
 
     return (
@@ -351,13 +349,12 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                 <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Generuj Inicjatywy
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Generuj Inicjatywy</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {step === 'select-report' && 'Wybierz raport źródłowy'}
                                     {step === 'configure' && 'Skonfiguruj parametry AI'}
-                                    {step === 'preview' && `Przejrzyj ${generatedInitiatives.length} wygenerowanych inicjatyw`}
+                                    {step === 'preview' &&
+                                        `Przejrzyj ${generatedInitiatives.length} wygenerowanych inicjatyw`}
                                     {step === 'saving' && 'Zapisywanie...'}
                                 </p>
                             </div>
@@ -377,15 +374,17 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                             const stepIdx = ['select-report', 'configure', 'preview'].indexOf(step);
                             const isActive = s === step;
                             const isPast = stepIdx > idx;
-                            
+
                             return (
                                 <React.Fragment key={s}>
-                                    <div className={`
+                                    <div
+                                        className={`
                                         flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
                                         ${isActive ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : ''}
                                         ${isPast ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : ''}
                                         ${!isActive && !isPast ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400' : ''}
-                                    `}>
+                                    `}
+                                    >
                                         {isPast ? <CheckCircle2 size={14} /> : <span>{idx + 1}</span>}
                                         {stepLabels[idx]}
                                     </div>
@@ -406,9 +405,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
                                 <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                             </div>
-                            <p className="text-lg font-medium text-navy-900 dark:text-white">
-                                Inicjatywy zapisane!
-                            </p>
+                            <p className="text-lg font-medium text-navy-900 dark:text-white">Inicjatywy zapisane!</p>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 {selectedInitiatives.size} inicjatyw dodano do rejestru
                             </p>
@@ -437,7 +434,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                     {/* Search */}
                                     {reports.length > 3 && (
                                         <div className="relative mb-4">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <Search
+                                                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                                size={16}
+                                            />
                                             <input
                                                 type="text"
                                                 value={searchQuery}
@@ -450,7 +450,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
                                     {/* Report List */}
                                     <div className="space-y-2">
-                                        {filteredReports.map(report => {
+                                        {filteredReports.map((report) => {
                                             const isSelected = selectedReportId === report.id;
                                             return (
                                                 <button
@@ -458,22 +458,28 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                     onClick={() => setSelectedReportId(report.id)}
                                                     className={`
                                                         w-full text-left p-4 rounded-lg border-2 transition-all
-                                                        ${isSelected
-                                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                                        ${
+                                                            isSelected
+                                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                                         }
                                                     `}
                                                 >
                                                     <div className="flex items-start justify-between">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`
+                                                            <div
+                                                                className={`
                                                                 w-5 h-5 rounded-full flex items-center justify-center border-2
-                                                                ${isSelected
-                                                                    ? 'bg-purple-600 border-purple-600'
-                                                                    : 'border-slate-300 dark:border-slate-600'
+                                                                ${
+                                                                    isSelected
+                                                                        ? 'bg-purple-600 border-purple-600'
+                                                                        : 'border-slate-300 dark:border-slate-600'
                                                                 }
-                                                            `}>
-                                                                {isSelected && <CheckCircle2 size={12} className="text-white" />}
+                                                            `}
+                                                            >
+                                                                {isSelected && (
+                                                                    <CheckCircle2 size={12} className="text-white" />
+                                                                )}
                                                             </div>
                                                             <div>
                                                                 <p className="font-medium text-navy-900 dark:text-white">
@@ -512,7 +518,9 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                     <div className="flex items-center gap-3">
                                         <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                         <div>
-                                            <p className="font-medium text-navy-900 dark:text-white">{selectedReport.name}</p>
+                                            <p className="font-medium text-navy-900 dark:text-white">
+                                                {selectedReport.name}
+                                            </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                                 {selectedReport.assessmentName}
                                             </p>
@@ -550,16 +558,17 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                     {[
                                         { value: 'all', label: 'Wszystkie' },
                                         { value: 'high', label: 'Tylko wysokie' },
-                                        { value: 'medium', label: 'Średnie i wyższe' }
-                                    ].map(opt => (
+                                        { value: 'medium', label: 'Średnie i wyższe' },
+                                    ].map((opt) => (
                                         <button
                                             key={opt.value}
                                             onClick={() => setPriorityFilter(opt.value as any)}
                                             className={`
                                                 px-4 py-2 rounded-lg text-sm font-medium transition-all border-2
-                                                ${priorityFilter === opt.value
-                                                    ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-500'
-                                                    : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                                                ${
+                                                    priorityFilter === opt.value
+                                                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-500'
+                                                        : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300'
                                                 }
                                             `}
                                         >
@@ -577,8 +586,9 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         Generowanie AI
                                     </p>
                                     <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                                        AI przeanalizuje luki w assessment i wygeneruje rekomendacje inicjatyw transformacyjnych.
-                                        Każda inicjatywa będzie zawierać szacowany ROI, budżet i poziom ryzyka.
+                                        AI przeanalizuje luki w assessment i wygeneruje rekomendacje inicjatyw
+                                        transformacyjnych. Każda inicjatywa będzie zawierać szacowany ROI, budżet i
+                                        poziom ryzyka.
                                     </p>
                                 </div>
                             </div>
@@ -605,16 +615,17 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
                             {/* Initiatives List */}
                             <div className="space-y-3">
-                                {generatedInitiatives.map(initiative => {
+                                {generatedInitiatives.map((initiative) => {
                                     const isSelected = selectedInitiatives.has(initiative.id);
                                     return (
                                         <div
                                             key={initiative.id}
                                             className={`
                                                 p-4 rounded-lg border-2 transition-all
-                                                ${isSelected
-                                                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10'
-                                                    : 'border-slate-200 dark:border-white/10'
+                                                ${
+                                                    isSelected
+                                                        ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10'
+                                                        : 'border-slate-200 dark:border-white/10'
                                                 }
                                             `}
                                         >
@@ -624,9 +635,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                     onClick={() => toggleInitiative(initiative.id)}
                                                     className={`
                                                         w-5 h-5 rounded shrink-0 mt-0.5 flex items-center justify-center border-2 transition-colors
-                                                        ${isSelected
-                                                            ? 'bg-purple-600 border-purple-600'
-                                                            : 'border-slate-300 dark:border-slate-600 hover:border-purple-400'
+                                                        ${
+                                                            isSelected
+                                                                ? 'bg-purple-600 border-purple-600'
+                                                                : 'border-slate-300 dark:border-slate-600 hover:border-purple-400'
                                                         }
                                                     `}
                                                 >
@@ -641,7 +653,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                                 {initiative.name}
                                                             </p>
                                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                                {AXIS_LABELS[initiative.sourceAxisId] || initiative.sourceAxisId}
+                                                                {AXIS_LABELS[initiative.sourceAxisId] ||
+                                                                    initiative.sourceAxisId}
                                                                 {initiative.area && ` • ${initiative.area}`}
                                                             </p>
                                                         </div>
@@ -671,12 +684,17 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                                 {formatCurrency(initiative.estimatedBudget)}
                                                             </span>
                                                         </div>
-                                                        <span className={`
+                                                        <span
+                                                            className={`
                                                             px-2 py-0.5 rounded text-xs font-medium
                                                             ${getRiskColor(initiative.riskLevel)}
-                                                        `}>
-                                                            {initiative.riskLevel === 'HIGH' ? 'Wysokie ryzyko' :
-                                                             initiative.riskLevel === 'MEDIUM' ? 'Średnie ryzyko' : 'Niskie ryzyko'}
+                                                        `}
+                                                        >
+                                                            {initiative.riskLevel === 'HIGH'
+                                                                ? 'Wysokie ryzyko'
+                                                                : initiative.riskLevel === 'MEDIUM'
+                                                                  ? 'Średnie ryzyko'
+                                                                  : 'Niskie ryzyko'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -707,9 +725,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     {step === 'saving' && !success && (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
-                            <p className="text-lg font-medium text-navy-900 dark:text-white">
-                                Zapisuję inicjatywy...
-                            </p>
+                            <p className="text-lg font-medium text-navy-900 dark:text-white">Zapisuję inicjatywy...</p>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 {selectedInitiatives.size} inicjatyw zostanie dodanych do rejestru
                             </p>
@@ -760,9 +776,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                     disabled={!selectedReportId}
                                     className={`
                                         flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                        ${selectedReportId
-                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                        ${
+                                            selectedReportId
+                                                ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                         }
                                     `}
                                 >
@@ -797,9 +814,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                     disabled={selectedInitiatives.size === 0 || saving}
                                     className={`
                                         flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                        ${selectedInitiatives.size > 0 && !saving
-                                            ? 'bg-green-600 hover:bg-green-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                        ${
+                                            selectedInitiatives.size > 0 && !saving
+                                                ? 'bg-green-600 hover:bg-green-500 text-white'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                         }
                                     `}
                                 >
@@ -814,4 +832,3 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
         </div>
     );
 };
-

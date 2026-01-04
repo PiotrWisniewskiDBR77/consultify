@@ -3,8 +3,9 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { runDailyTrialTasks, cleanupOldUsageCounters, getTrialCron } from '../../../../src/cron/TrialCron.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cleanupOldUsageCounters, getTrialCron, runDailyTrialTasks } from '../../../../src/cron/TrialCron.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('TrialCron', () => {
@@ -17,7 +18,7 @@ describe('TrialCron', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        
+
         // Mock database
         const mockDbWithChanges = {
             get: vi.fn(),
@@ -77,7 +78,7 @@ describe('TrialCron', () => {
                     db: mockDb,
                     demoService: mockDemoService,
                     trialService: mockTrialService,
-                })
+                }),
             ).rejects.toThrow('Demo cleanup failed');
         });
 
@@ -89,7 +90,7 @@ describe('TrialCron', () => {
                     db: mockDb,
                     demoService: mockDemoService,
                     trialService: mockTrialService,
-                })
+                }),
             ).rejects.toThrow('Warning send failed');
         });
 
@@ -101,7 +102,7 @@ describe('TrialCron', () => {
                     db: mockDb,
                     demoService: mockDemoService,
                     trialService: mockTrialService,
-                })
+                }),
             ).rejects.toThrow('Trial processing failed');
         });
     });
@@ -116,7 +117,7 @@ describe('TrialCron', () => {
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('DELETE FROM usage_counters'),
                 expect.any(Array),
-                expect.any(Function)
+                expect.any(Function),
             );
         });
 
@@ -138,7 +139,7 @@ describe('TrialCron', () => {
             await expect(
                 cleanupOldUsageCounters({
                     db: errorMockDb,
-                })
+                }),
             ).rejects.toThrow('Database error');
         });
 
@@ -165,4 +166,3 @@ describe('TrialCron', () => {
         });
     });
 });
-

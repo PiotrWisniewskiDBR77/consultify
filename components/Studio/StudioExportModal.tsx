@@ -2,17 +2,9 @@
  * StudioExportModal - Export diagram modal
  */
 
-import React, { useState, useCallback } from 'react';
-import {
-    X,
-    Download,
-    Image,
-    FileText,
-    FileCode,
-    Loader2,
-    Check
-} from 'lucide-react';
 import { toPng, toSvg } from 'html-to-image';
+import { Check, Download, FileCode, FileText, Image, Loader2, X } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 interface StudioExportModalProps {
@@ -23,11 +15,7 @@ interface StudioExportModalProps {
 
 type ExportFormat = 'png' | 'svg' | 'json';
 
-export const StudioExportModal: React.FC<StudioExportModalProps> = ({
-    documentId,
-    documentName,
-    onClose
-}) => {
+export const StudioExportModal: React.FC<StudioExportModalProps> = ({ documentId, documentName, onClose }) => {
     const [format, setFormat] = useState<ExportFormat>('png');
     const [exporting, setExporting] = useState(false);
     const [includeBackground, setIncludeBackground] = useState(true);
@@ -48,7 +36,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
             if (format === 'png') {
                 const dataUrl = await toPng(viewportElement as HTMLElement, {
                     backgroundColor: includeBackground ? '#020617' : 'transparent',
-                    pixelRatio: quality
+                    pixelRatio: quality,
                 });
 
                 // Download
@@ -60,7 +48,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                 toast.success('PNG exported');
             } else if (format === 'svg') {
                 const dataUrl = await toSvg(viewportElement as HTMLElement, {
-                    backgroundColor: includeBackground ? '#020617' : 'transparent'
+                    backgroundColor: includeBackground ? '#020617' : 'transparent',
                 });
 
                 // Download
@@ -88,7 +76,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
     const formats: { id: ExportFormat; label: string; icon: React.ReactNode; description: string }[] = [
         { id: 'png', label: 'PNG Image', icon: <Image size={20} />, description: 'High-quality raster image' },
         { id: 'svg', label: 'SVG Vector', icon: <FileCode size={20} />, description: 'Scalable vector graphic' },
-        { id: 'json', label: 'JSON Data', icon: <FileText size={20} />, description: 'Raw diagram data' }
+        { id: 'json', label: 'JSON Data', icon: <FileText size={20} />, description: 'Raw diagram data' },
     ];
 
     return (
@@ -119,22 +107,27 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-2">Format</label>
                         <div className="grid grid-cols-3 gap-2">
-                            {formats.map(f => (
+                            {formats.map((f) => (
                                 <button
                                     key={f.id}
                                     onClick={() => setFormat(f.id)}
                                     className={`
                                         p-3 rounded-lg border-2 transition-all text-center
-                                        ${format === f.id
-                                            ? 'border-blue-500 bg-blue-500/10'
-                                            : 'border-white/10 hover:border-white/20 bg-white/5'
+                                        ${
+                                            format === f.id
+                                                ? 'border-blue-500 bg-blue-500/10'
+                                                : 'border-white/10 hover:border-white/20 bg-white/5'
                                         }
                                     `}
                                 >
-                                    <div className={`mx-auto mb-2 ${format === f.id ? 'text-blue-400' : 'text-slate-400'}`}>
+                                    <div
+                                        className={`mx-auto mb-2 ${format === f.id ? 'text-blue-400' : 'text-slate-400'}`}
+                                    >
                                         {f.icon}
                                     </div>
-                                    <div className={`text-xs font-medium ${format === f.id ? 'text-white' : 'text-slate-400'}`}>
+                                    <div
+                                        className={`text-xs font-medium ${format === f.id ? 'text-white' : 'text-slate-400'}`}
+                                    >
                                         {f.label}
                                     </div>
                                 </button>
@@ -155,10 +148,12 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                         ${includeBackground ? 'bg-blue-500' : 'bg-slate-600'}
                                     `}
                                 >
-                                    <span className={`
+                                    <span
+                                        className={`
                                         absolute top-1 w-4 h-4 bg-white rounded-full transition-transform
                                         ${includeBackground ? 'left-5' : 'left-1'}
-                                    `} />
+                                    `}
+                                    />
                                 </button>
                             </div>
 
@@ -167,15 +162,16 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                 <div>
                                     <label className="block text-sm text-slate-400 mb-2">Quality</label>
                                     <div className="flex gap-2">
-                                        {[1, 2, 3].map(q => (
+                                        {[1, 2, 3].map((q) => (
                                             <button
                                                 key={q}
                                                 onClick={() => setQuality(q)}
                                                 className={`
                                                     flex-1 py-2 rounded-lg text-sm font-medium transition-colors
-                                                    ${quality === q
-                                                        ? 'bg-blue-500 text-white'
-                                                        : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                                                    ${
+                                                        quality === q
+                                                            ? 'bg-blue-500 text-white'
+                                                            : 'bg-white/5 text-slate-400 hover:bg-white/10'
                                                     }
                                                 `}
                                             >
@@ -221,12 +217,4 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
 };
 
 export default StudioExportModal;
-
-
-
-
-
-
-
-
 

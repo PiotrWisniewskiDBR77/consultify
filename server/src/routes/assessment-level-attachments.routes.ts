@@ -1,7 +1,7 @@
 /**
  * AssessmentLevelAttachments Routes
  * API endpoints for assessment-level-attachments
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof assessment_level_attachmentsRoutesJS === 'function' || (assessment_level_attachmentsRoutesJS && typeof assessment_level_attachmentsRoutesJS.handle === 'function')) {
+if (
+    typeof assessment_level_attachmentsRoutesJS === 'function' ||
+    (assessment_level_attachmentsRoutesJS && typeof assessment_level_attachmentsRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(assessment_level_attachmentsRoutesJS);
 } else {

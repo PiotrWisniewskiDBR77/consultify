@@ -1,15 +1,26 @@
 /**
  * Approval Workflows View
- * 
+ *
  * Manages approval workflows and pending requests.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
-import { 
-    GitBranch, Plus, Edit2, Trash2, RefreshCw, Loader2, 
-    Check, X, Clock, AlertTriangle, Play, Users
+import {
+    AlertTriangle,
+    Check,
+    Clock,
+    Edit2,
+    GitBranch,
+    Loader2,
+    Play,
+    Plus,
+    RefreshCw,
+    Trash2,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
 
 interface ApprovalWorkflow {
@@ -51,7 +62,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         name: '',
         description: '',
         resourceType: 'organization',
-        approvers: ''
+        approvers: '',
     });
 
     useEffect(() => {
@@ -64,7 +75,7 @@ const ApprovalWorkflowsView: React.FC = () => {
             setError(null);
             const [workflowsData, requestsData] = await Promise.all([
                 Api.getApprovalWorkflows(),
-                Api.getApprovalRequests()
+                Api.getApprovalRequests(),
             ]);
             setWorkflows(workflowsData);
             setRequests(requestsData);
@@ -82,8 +93,11 @@ const ApprovalWorkflowsView: React.FC = () => {
                 name: formData.name,
                 description: formData.description,
                 resourceType: formData.resourceType,
-                approvers: formData.approvers.split(',').map(a => a.trim()).filter(Boolean),
-                triggerConditions: {}
+                approvers: formData.approvers
+                    .split(',')
+                    .map((a) => a.trim())
+                    .filter(Boolean),
+                triggerConditions: {},
             });
             await loadData();
             setShowCreateModal(false);
@@ -99,7 +113,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         if (!confirm('Are you sure you want to delete this workflow?')) return;
         try {
             await Api.deleteApprovalWorkflow(id);
-            setWorkflows(prev => prev.filter(w => w.id !== id));
+            setWorkflows((prev) => prev.filter((w) => w.id !== id));
         } catch (err: any) {
             setError(err.message || 'Failed to delete workflow');
         }
@@ -109,9 +123,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         try {
             setActionLoading(requestId);
             await Api.approveRequest(requestId);
-            setRequests(prev => prev.map(r => 
-                r.id === requestId ? { ...r, status: 'approved' } : r
-            ));
+            setRequests((prev) => prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r)));
         } catch (err: any) {
             setError(err.message || 'Failed to approve request');
         } finally {
@@ -123,9 +135,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         try {
             setActionLoading(requestId);
             await Api.rejectRequest(requestId);
-            setRequests(prev => prev.map(r => 
-                r.id === requestId ? { ...r, status: 'rejected' } : r
-            ));
+            setRequests((prev) => prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r)));
         } catch (err: any) {
             setError(err.message || 'Failed to reject request');
         } finally {
@@ -167,7 +177,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -176,12 +186,12 @@ const ApprovalWorkflowsView: React.FC = () => {
                         <div>
                             <p className="text-sm text-slate-400">Pending Requests</p>
                             <p className="text-xl font-semibold">
-                                {requests.filter(r => r.status === 'pending').length}
+                                {requests.filter((r) => r.status === 'pending').length}
                             </p>
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -190,12 +200,12 @@ const ApprovalWorkflowsView: React.FC = () => {
                         <div>
                             <p className="text-sm text-slate-400">Approved</p>
                             <p className="text-xl font-semibold">
-                                {requests.filter(r => r.status === 'approved').length}
+                                {requests.filter((r) => r.status === 'approved').length}
                             </p>
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-red-500/10 rounded-lg">
@@ -204,7 +214,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         <div>
                             <p className="text-sm text-slate-400">Rejected</p>
                             <p className="text-xl font-semibold">
-                                {requests.filter(r => r.status === 'rejected').length}
+                                {requests.filter((r) => r.status === 'rejected').length}
                             </p>
                         </div>
                     </div>
@@ -282,8 +292,12 @@ const ApprovalWorkflowsView: React.FC = () => {
                             <thead>
                                 <tr className="border-b border-slate-700">
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Name</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Resource Type</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Approvers</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                                        Resource Type
+                                    </th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                                        Approvers
+                                    </th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Created</th>
                                     <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Actions</th>
@@ -298,7 +312,10 @@ const ApprovalWorkflowsView: React.FC = () => {
                                     </tr>
                                 ) : (
                                     workflows.map((workflow) => (
-                                        <tr key={workflow.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
+                                        <tr
+                                            key={workflow.id}
+                                            className="border-b border-slate-700/50 hover:bg-slate-800/50"
+                                        >
                                             <td className="py-3 px-4">
                                                 <div>
                                                     <p className="font-medium">{workflow.name}</p>
@@ -313,14 +330,20 @@ const ApprovalWorkflowsView: React.FC = () => {
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-1">
                                                     <Users className="w-4 h-4 text-slate-400" />
-                                                    <span className="text-sm">{workflow.approvers?.length || 0} approvers</span>
+                                                    <span className="text-sm">
+                                                        {workflow.approvers?.length || 0} approvers
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
                                                 {workflow.isActive ? (
-                                                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">Active</span>
+                                                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
+                                                        Active
+                                                    </span>
                                                 ) : (
-                                                    <span className="px-2 py-1 bg-slate-600 text-slate-300 rounded text-xs">Inactive</span>
+                                                    <span className="px-2 py-1 bg-slate-600 text-slate-300 rounded text-xs">
+                                                        Inactive
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4 text-sm text-slate-300">
@@ -354,7 +377,9 @@ const ApprovalWorkflowsView: React.FC = () => {
                             <thead>
                                 <tr className="border-b border-slate-700">
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Workflow</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Requester</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                                        Requester
+                                    </th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Resource</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Created</th>
@@ -370,7 +395,10 @@ const ApprovalWorkflowsView: React.FC = () => {
                                     </tr>
                                 ) : (
                                     requests.map((request) => (
-                                        <tr key={request.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
+                                        <tr
+                                            key={request.id}
+                                            className="border-b border-slate-700/50 hover:bg-slate-800/50"
+                                        >
                                             <td className="py-3 px-4">
                                                 <p className="font-medium">{request.workflow_name}</p>
                                             </td>
@@ -463,7 +491,9 @@ const ApprovalWorkflowsView: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm text-slate-400 mb-1">Approvers (comma-separated emails)</label>
+                                <label className="block text-sm text-slate-400 mb-1">
+                                    Approvers (comma-separated emails)
+                                </label>
                                 <input
                                     type="text"
                                     value={formData.approvers}
@@ -477,7 +507,12 @@ const ApprovalWorkflowsView: React.FC = () => {
                             <button
                                 onClick={() => {
                                     setShowCreateModal(false);
-                                    setFormData({ name: '', description: '', resourceType: 'organization', approvers: '' });
+                                    setFormData({
+                                        name: '',
+                                        description: '',
+                                        resourceType: 'organization',
+                                        approvers: '',
+                                    });
                                 }}
                                 className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
                             >
@@ -500,10 +535,4 @@ const ApprovalWorkflowsView: React.FC = () => {
 };
 
 export default ApprovalWorkflowsView;
-
-
-
-
-
-
 

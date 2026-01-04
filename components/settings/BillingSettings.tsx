@@ -1,10 +1,11 @@
+import { Clock, CreditCard, ExternalLink, FileText } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+import { usePermissions } from '../../hooks/usePermissions';
 import { User } from '../../types';
 import { BillingCore } from '../shared/BillingCore';
-import { usePermissions } from '../../hooks/usePermissions';
 import { InfoButton } from '../shared/InfoButton';
-import { FileText, Clock, CreditCard, ExternalLink } from 'lucide-react';
 
 interface BillingSettingsProps {
     currentUser: User;
@@ -17,7 +18,7 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
         <div className="max-w-4xl relative">
             <InfoButton cardId="settings-billing" position="top-right" />
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6">Subscription & Billing</h2>
-            <BillingCore 
+            <BillingCore
                 mode={isAdmin ? 'org-admin' : 'user'}
                 currentUser={currentUser}
                 showUserLicense={true}
@@ -26,7 +27,7 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
                 showAvailablePlans={canManageOrgBilling}
                 showInvoices={true}
             />
-            
+
             {/* Legal Documents Section */}
             <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">

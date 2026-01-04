@@ -1,16 +1,17 @@
 /**
  * PMO Validation Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enforces PMO rules for initiatives and tasks
  */
 
-import { Response, NextFunction } from 'express';
+import { NextFunction, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import type { AuthRequest } from './auth.middleware.js';
+
 import { getDatabase } from '../database/Database.js';
-import * as DbPromise from '../utils/DbPromise.js';
 import StatusMachine from '../services/statusMachine.js';
+import * as DbPromise from '../utils/DbPromise.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -25,12 +26,12 @@ interface StatusMachine {
     validateInitiativeTransition: (
         currentStatus: string,
         newStatus: string,
-        options?: { blockedReason?: string }
+        options?: { blockedReason?: string },
     ) => { valid: boolean; reason?: string };
     validateTaskTransition: (
         currentStatus: string,
         newStatus: string,
-        options?: { blockedReason?: string; blockerType?: string }
+        options?: { blockedReason?: string; blockerType?: string },
     ) => { valid: boolean; reason?: string };
 }
 
@@ -85,18 +86,14 @@ let deps: Dependencies = {
 /**
  * Validate initiative creation (owner required)
  */
-export const validateInitiative = (
-    req: PMORequest,
-    res: Response,
-    next: NextFunction
-): void => {
+export const validateInitiative = (req: PMORequest, res: Response, next: NextFunction): void => {
     const { ownerId, owner_business_id, ownerBusinessId } = req.body;
     const owner = ownerId || owner_business_id || ownerBusinessId;
 
     if (!owner) {
         res.status(400).json({
             error: 'Initiative must have an owner',
-            rule: 'INITIATIVE_OWNER_REQUIRED'
+            rule: 'INITIATIVE_OWNER_REQUIRED',
         });
         return;
     }
@@ -107,18 +104,14 @@ export const validateInitiative = (
 /**
  * Validate task creation (initiative required)
  */
-export const validateTask = async (
-    req: PMORequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+export const validateTask = async (req: PMORequest, res: Response, next: NextFunction): Promise<void> => {
     const { initiativeId, initiative_id } = req.body;
     const initId = initiativeId || initiative_id;
 
     if (!initId) {
         res.status(400).json({
             error: 'Task must belong to an initiative',
-            rule: 'TASK_INITIATIVE_REQUIRED'
+            rule: 'TASK_INITIATIVE_REQUIRED',
         });
         return;
     }
@@ -129,7 +122,7 @@ export const validateTask = async (
         if (!row) {
             res.status(400).json({
                 error: 'Initiative not found',
-                rule: 'TASK_INITIATIVE_REQUIRED'
+                rule: 'TASK_INITIATIVE_REQUIRED',
             });
             return;
         }
@@ -143,11 +136,7 @@ export const validateTask = async (
 /**
  * Validate initiative status transition
  */
-export const validateInitiativeStatus = async (
-    req: PMORequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+export const validateInitiativeStatus = async (req: PMORequest, res: Response, next: NextFunction): Promise<void> => {
     const { StatusMachine } = deps;
 
     const { status, blockedReason, blocked_reason } = req.body;
@@ -158,14 +147,16 @@ export const validateInitiativeStatus = async (
     }
 
     try {
-        const row = await DbPromise.get<InitiativeRow>(`SELECT status, project_id FROM initiatives WHERE id = ?`, [req.params.id]);
+        const row = await DbPromise.get<InitiativeRow>(`SELECT status, project_id FROM initiatives WHERE id = ?`, [
+            req.params.id,
+        ]);
         if (!row) {
             res.status(404).json({ error: 'Initiative not found' });
             return;
         }
 
         const validation = StatusMachine.validateInitiativeTransition(row.status, status, {
-            blockedReason: blockedReason || blocked_reason
+            blockedReason: blockedReason || blocked_reason,
         });
 
         if (!validation.valid) {
@@ -173,7 +164,7 @@ export const validateInitiativeStatus = async (
                 error: validation.reason,
                 rule: 'INVALID_STATUS_TRANSITION',
                 currentStatus: row.status,
-                requestedStatus: status
+                requestedStatus: status,
             });
             return;
         }
@@ -191,11 +182,7 @@ export const validateInitiativeStatus = async (
 /**
  * Validate task status transition
  */
-export const validateTaskStatus = async (
-    req: PMORequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+export const validateTaskStatus = async (req: PMORequest, res: Response, next: NextFunction): Promise<void> => {
     const { StatusMachine } = deps;
 
     const { status, blockedReason, blocked_reason, blockerType, blocker_type } = req.body;
@@ -206,7 +193,9 @@ export const validateTaskStatus = async (
     }
 
     try {
-        const row = await DbPromise.get<TaskRow>(`SELECT status, initiative_id FROM tasks WHERE id = ?`, [req.params.id]);
+        const row = await DbPromise.get<TaskRow>(`SELECT status, initiative_id FROM tasks WHERE id = ?`, [
+            req.params.id,
+        ]);
         if (!row) {
             res.status(404).json({ error: 'Task not found' });
             return;
@@ -214,7 +203,7 @@ export const validateTaskStatus = async (
 
         const validation = StatusMachine.validateTaskTransition(row.status, status, {
             blockedReason: blockedReason || blocked_reason,
-            blockerType: blockerType || blocker_type
+            blockerType: blockerType || blocker_type,
         });
 
         if (!validation.valid) {
@@ -222,7 +211,7 @@ export const validateTaskStatus = async (
                 error: validation.reason,
                 rule: 'INVALID_STATUS_TRANSITION',
                 currentStatus: row.status,
-                requestedStatus: status
+                requestedStatus: status,
             });
             return;
         }
@@ -243,7 +232,7 @@ export const logStatusChange = (entityType: string) => {
     return (req: PMORequest, res: Response, next: NextFunction): void => {
         const originalSend = res.json.bind(res);
 
-        (res.json as any) = (async (data: unknown) => {
+        (res.json as any) = async (data: unknown) => {
             // Only log if successful and status changed
             if (res.statusCode < 400 && req.previousStatus && req.body.status) {
                 const logSql = `INSERT INTO activity_logs 
@@ -258,7 +247,7 @@ export const logStatusChange = (entityType: string) => {
                         entityType,
                         req.params.id,
                         JSON.stringify({ status: req.previousStatus }),
-                        JSON.stringify({ status: req.body.status })
+                        JSON.stringify({ status: req.body.status }),
                     ]);
                 } catch (err: unknown) {
                     // Log error but don't fail the request
@@ -267,7 +256,7 @@ export const logStatusChange = (entityType: string) => {
             }
 
             return originalSend(data);
-        });
+        };
 
         next();
     };

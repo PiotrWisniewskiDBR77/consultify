@@ -1,7 +1,7 @@
 /**
  * AiAnalytics Routes
  * API endpoints for aiAnalytics
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

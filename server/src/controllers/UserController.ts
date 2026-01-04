@@ -1,11 +1,12 @@
 /**
  * User Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles all user-related business logic
  */
 
 import type { Response } from 'express';
+
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -27,7 +28,8 @@ export class UserController {
             return;
         }
 
-        let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE organization_id = ?';
+        let sql =
+            'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE organization_id = ?';
         type SQLParam = string | number | boolean | null | undefined;
         const params: SQLParam[] = [orgId];
 
@@ -53,7 +55,7 @@ export class UserController {
             licensePlanId: u.license_plan_id,
             isOwner: u.is_owner === 1 || u.is_owner === true,
             phone: u.phone,
-            linkedinId: u.linkedin_id
+            linkedinId: u.linkedin_id,
         }));
 
         res.json({ users, total: users.length });
@@ -84,42 +86,45 @@ export class UserController {
     /**
      * Update user
      */
-    static updateUser = asyncHandler(async (req: AuthenticatedRequest<UpdateUserRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateUser = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateUserRequest>, res: Response): Promise<void> => {
+            const { id } = req.params;
+            const orgId = req.user?.organizationId;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        // TODO: Implement full update logic
-        res.json({ id, message: 'User updated' });
-    });
+            // TODO: Implement full update logic
+            res.json({ id, message: 'User updated' });
+        },
+    );
 
     /**
      * Update user role
      */
-    static updateUserRole = asyncHandler(async (req: AuthenticatedRequest<UpdateUserRoleRequest>, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const { role, reason } = req.body;
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static updateUserRole = asyncHandler(
+        async (req: AuthenticatedRequest<UpdateUserRoleRequest>, res: Response): Promise<void> => {
+            const { id } = req.params;
+            const { role, _reason } = req.body;
+            const orgId = req.user?.organizationId;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        // Check permission - only admins can change roles
-        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
-            res.status(403).json({ error: 'Only admins can change user roles' });
-            return;
-        }
+            // Check permission - only admins can change roles
+            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+                res.status(403).json({ error: 'Only admins can change user roles' });
+                return;
+            }
 
-        const sql = `UPDATE users SET role = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
-        await queryHelpers.queryRun(sql, [role, new Date().toISOString(), id, orgId]);
+            const sql = `UPDATE users SET role = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
+            await queryHelpers.queryRun(sql, [role, new Date().toISOString(), id, orgId]);
 
-        res.json({ id, role, message: 'Role updated' });
-    });
+            res.json({ id, role, message: 'Role updated' });
+        },
+    );
 }
 
 export default UserController;
-

@@ -1,11 +1,11 @@
 /**
  * Lazy Route Loader Utility
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Utility for lazy-loading ES module routes to replace createRequire() wrappers
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 
 interface RouteModule {
     default?: unknown;
@@ -31,11 +31,15 @@ export function createLazyRoute(routePath: string): Router {
         try {
             const routes = await loadRoute();
             const routesHandler = routes.default || routes;
-            
+
             if (typeof routesHandler === 'function') {
                 return (routesHandler as (req: Request, res: Response, next: NextFunction) => void)(req, res, next);
             } else if (routesHandler && typeof (routesHandler as { use: unknown }).use === 'function') {
-                return (routesHandler as { use: (req: Request, res: Response, next: NextFunction) => void }).use(req, res, next);
+                return (routesHandler as { use: (req: Request, res: Response, next: NextFunction) => void }).use(
+                    req,
+                    res,
+                    next,
+                );
             }
             next();
         } catch (error: unknown) {
@@ -46,7 +50,4 @@ export function createLazyRoute(routePath: string): Router {
 
     return router;
 }
-
-
-
 

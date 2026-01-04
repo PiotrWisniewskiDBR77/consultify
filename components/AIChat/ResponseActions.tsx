@@ -1,30 +1,31 @@
 /**
  * ResponseActions
- * 
+ *
  * Renders action buttons at the bottom of AI responses.
  * Supports navigation, API calls, expand/collapse, and copy actions.
  */
 
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    ExternalLink, 
-    Play, 
-    Copy, 
+import {
+    BarChart3,
+    Calculator,
     Check,
     ChevronDown,
     ChevronUp,
-    Target,
+    Copy,
+    ExternalLink,
+    FileText,
     Lightbulb,
     Map,
-    FileText,
-    Calculator,
-    BarChart3,
-    Plus
+    Play,
+    Plus,
+    Target,
 } from 'lucide-react';
-import { ChatResponseAction, AppView } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView, ChatResponseAction } from '../../types';
 
 interface ResponseActionsProps {
     actions: ChatResponseAction[];
@@ -33,31 +34,28 @@ interface ResponseActionsProps {
 
 // Icon mapping for common action icons
 const ACTION_ICONS: Record<string, React.ElementType> = {
-    'target': Target,
-    'assessment': Target,
-    'lightbulb': Lightbulb,
-    'initiative': Lightbulb,
-    'map': Map,
-    'roadmap': Map,
-    'file': FileText,
-    'report': FileText,
-    'calculator': Calculator,
-    'roi': Calculator,
-    'chart': BarChart3,
-    'analytics': BarChart3,
-    'plus': Plus,
-    'add': Plus,
-    'external': ExternalLink,
-    'navigate': ExternalLink,
-    'play': Play,
-    'execute': Play,
-    'copy': Copy
+    target: Target,
+    assessment: Target,
+    lightbulb: Lightbulb,
+    initiative: Lightbulb,
+    map: Map,
+    roadmap: Map,
+    file: FileText,
+    report: FileText,
+    calculator: Calculator,
+    roi: Calculator,
+    chart: BarChart3,
+    analytics: BarChart3,
+    plus: Plus,
+    add: Plus,
+    external: ExternalLink,
+    navigate: ExternalLink,
+    play: Play,
+    execute: Play,
+    copy: Copy,
 };
 
-export const ResponseActions: React.FC<ResponseActionsProps> = ({
-    actions,
-    onActionComplete
-}) => {
+export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onActionComplete }) => {
     const { t } = useTranslation();
     const { setCurrentView } = useAppStore();
     const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -83,9 +81,9 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                Authorization: `Bearer ${localStorage.getItem('token')}`,
                             },
-                            body: JSON.stringify(action.payload.data || {})
+                            body: JSON.stringify(action.payload.data || {}),
                         });
                         const result = await response.json();
                         onActionComplete?.(action, result);
@@ -125,7 +123,7 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({
     return (
         <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
             <div className="flex flex-wrap gap-2">
-                {actions.map(action => {
+                {actions.map((action) => {
                     const Icon = getIcon(action);
                     const isLoading = loadingAction === action.id;
                     const isCopied = copiedAction === action.id;
@@ -139,11 +137,12 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({
                                 flex items-center gap-1.5 px-3 py-1.5 
                                 text-xs font-medium rounded-lg
                                 border transition-all duration-200
-                                ${action.type === 'navigate'
-                                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50'
-                                    : action.type === 'execute'
-                                        ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50'
-                                        : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-navy-700'
+                                ${
+                                    action.type === 'navigate'
+                                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50'
+                                        : action.type === 'execute'
+                                          ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50'
+                                          : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-navy-700'
                                 }
                                 ${isLoading ? 'opacity-60 cursor-wait' : ''}
                             `}
@@ -172,10 +171,7 @@ interface PrimaryActionButtonProps {
     onAction: () => void;
 }
 
-export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
-    action,
-    onAction
-}) => {
+export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({ action, onAction }) => {
     const Icon = ACTION_ICONS[action.icon || action.type] || ExternalLink;
 
     return (
@@ -196,5 +192,3 @@ export const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
 };
 
 export default ResponseActions;
-
-

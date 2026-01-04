@@ -1,9 +1,16 @@
-import React, { useMemo } from 'react';
 import {
-    LayoutDashboard, CheckCircle2, AlertTriangle,
-    TrendingUp, TrendingDown, Activity, Play, Clock
+    Activity,
+    AlertTriangle,
+    CheckCircle2,
+    Clock,
+    LayoutDashboard,
+    Play,
+    TrendingDown,
+    TrendingUp,
 } from 'lucide-react';
-import { FullSession, AppView, FullInitiative, InitiativeStatus } from '../../types';
+import React, { useMemo } from 'react';
+
+import { AppView, FullInitiative, FullSession, InitiativeStatus } from '../../types';
 
 interface DashboardExecutionSnapshotProps {
     session: FullSession;
@@ -11,15 +18,18 @@ interface DashboardExecutionSnapshotProps {
 }
 
 export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotProps>(({ session, onNavigate }) => {
-
     // --- 1. Project Logic & Stats ---
     const initiativeStats = useMemo(() => {
         const inits = session.initiatives || [];
         const total = inits.length;
-        const inProgress = inits.filter(i => ['In Progress', 'To Do', 'Ready'].includes(i.status)).length;
-        const completed = inits.filter(i => ['Done', 'completed'].includes(i.status)).length;
+        const inProgress = inits.filter((i) => ['In Progress', 'To Do', 'Ready'].includes(i.status)).length;
+        const completed = inits.filter((i) => ['Done', 'completed'].includes(i.status)).length;
         // Simplified "Delayed" logic: if status is Blocked or priority is Critical and not done
-        const delayed = inits.filter(i => i.status === InitiativeStatus.BLOCKED || (i.priority === 'Critical' && i.status !== InitiativeStatus.DONE)).length;
+        const delayed = inits.filter(
+            (i) =>
+                i.status === InitiativeStatus.BLOCKED ||
+                (i.priority === 'Critical' && i.status !== InitiativeStatus.DONE),
+        ).length;
 
         return { total, inProgress, completed, delayed };
     }, [session]);
@@ -53,11 +63,11 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
     // --- 4. Priority Alerts Logic (Card C) ---
     const priorityAlerts = useMemo(() => {
         const alerts = [];
-        if (!session.step2Completed) alerts.push("Assessment incomplete: Missing key data.");
+        if (!session.step2Completed) alerts.push('Assessment incomplete: Missing key data.');
         if (initiativeStats.delayed > 0) alerts.push(`${initiativeStats.delayed} initiatives delayed.`);
         // Mock 3rd alert if needed or based on other logic
-        if (initiativeStats.delayed > 2) alerts.push("Critical dependency blocked in Data Workstream.");
-        else alerts.push("Review Q3 budget allocation.");
+        if (initiativeStats.delayed > 2) alerts.push('Critical dependency blocked in Data Workstream.');
+        else alerts.push('Review Q3 budget allocation.');
 
         return alerts.slice(0, 3);
     }, [session, initiativeStats]);
@@ -71,13 +81,11 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-fade-in pb-12">
-
             {/* SECTION 1: PROJECT STATUS OVERVIEW (3 Cards) */}
             <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
                 <Activity className="text-purple-500" /> Project Status Overview
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
                 {/* CARD A: Overall Progress */}
                 <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
                     <h3 className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4">Overall Progress</h3>
@@ -101,9 +109,7 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                     <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
                         {currentPhase.name}
                     </div>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                        {currentPhase.status}
-                    </p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{currentPhase.status}</p>
                 </div>
 
                 {/* CARD C: Priority Alerts */}
@@ -113,7 +119,10 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                     </h3>
                     <ul className="space-y-3">
                         {priorityAlerts.map((alert, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-red-800 dark:text-red-200 font-medium">
+                            <li
+                                key={idx}
+                                className="flex items-start gap-2 text-sm text-red-800 dark:text-red-200 font-medium"
+                            >
                                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                                 <span className="leading-snug">{alert}</span>
                             </li>
@@ -124,42 +133,55 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
 
             {/* SECTION 2: Execution Details */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
                 {/* LEFT COLUMN: Counters & Live Tasks */}
                 <div className="lg:col-span-2 space-y-6">
-
                     {/* Initiative Counters */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {/* Total */}
                         <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
                             <div className="text-slate-500 text-xs font-bold uppercase mb-2">Total Initiatives</div>
-                            <div className="text-3xl font-bold text-navy-900 dark:text-white">{initiativeStats.total}</div>
+                            <div className="text-3xl font-bold text-navy-900 dark:text-white">
+                                {initiativeStats.total}
+                            </div>
                         </div>
                         {/* In Progress */}
                         <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
                             <div className="text-blue-500 text-xs font-bold uppercase mb-2 flex items-center gap-1">
                                 <Play size={12} className="fill-current" /> In Progress
                             </div>
-                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{initiativeStats.inProgress}</div>
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                                {initiativeStats.inProgress}
+                            </div>
                         </div>
                         {/* Completed */}
                         <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
                             <div className="text-green-500 text-xs font-bold uppercase mb-2 flex items-center gap-1">
                                 <CheckCircle2 size={12} /> Completed
                             </div>
-                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">{initiativeStats.completed}</div>
+                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                                {initiativeStats.completed}
+                            </div>
                         </div>
                         {/* Delayed */}
-                        <div className={`rounded-xl p-5 border shadow-sm ${initiativeStats.delayed > 0
-                            ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
-                            : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-white/10'
-                            }`}>
-                            <div className={`text-xs font-bold uppercase mb-2 flex items-center gap-1 ${initiativeStats.delayed > 0 ? 'text-red-500' : 'text-slate-400'
-                                }`}>
+                        <div
+                            className={`rounded-xl p-5 border shadow-sm ${
+                                initiativeStats.delayed > 0
+                                    ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
+                                    : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-white/10'
+                            }`}
+                        >
+                            <div
+                                className={`text-xs font-bold uppercase mb-2 flex items-center gap-1 ${
+                                    initiativeStats.delayed > 0 ? 'text-red-500' : 'text-slate-400'
+                                }`}
+                            >
                                 <AlertTriangle size={12} /> Delayed
                             </div>
-                            <div className={`text-3xl font-bold ${initiativeStats.delayed > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-300'
-                                }`}>
+                            <div
+                                className={`text-3xl font-bold ${
+                                    initiativeStats.delayed > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-300'
+                                }`}
+                            >
                                 {initiativeStats.delayed}
                             </div>
                         </div>
@@ -172,8 +194,11 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                             Live Active Initiatives
                         </h3>
 
-                        {session.initiatives?.filter(i => ['In Progress', 'To Do'].includes(i.status)).length === 0 ? (
-                            <div className="text-sm text-slate-400 italic py-4">No active initiatives currently tracked.</div>
+                        {session.initiatives?.filter((i) => ['In Progress', 'To Do'].includes(i.status)).length ===
+                        0 ? (
+                            <div className="text-sm text-slate-400 italic py-4">
+                                No active initiatives currently tracked.
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
@@ -187,10 +212,13 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                                     </thead>
                                     <tbody className="text-sm divide-y divide-slate-100 dark:divide-white/5">
                                         {session.initiatives
-                                            ?.filter(i => ['In Progress', 'To Do'].includes(i.status))
+                                            ?.filter((i) => ['In Progress', 'To Do'].includes(i.status))
                                             .slice(0, 5)
                                             .map((initiative) => (
-                                                <tr key={initiative.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                <tr
+                                                    key={initiative.id}
+                                                    className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                >
                                                     <td className="py-3 pr-4">
                                                         <div className="font-bold text-navy-900 dark:text-white group-hover:text-blue-600 transition-colors">
                                                             {initiative.name}
@@ -202,18 +230,27 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                                                     <td className="py-3">
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                                                                {initiative.ownerExecution?.lastName?.charAt(0) || initiative.ownerBusiness?.lastName?.charAt(0) || 'U'}
+                                                                {initiative.ownerExecution?.lastName?.charAt(0) ||
+                                                                    initiative.ownerBusiness?.lastName?.charAt(0) ||
+                                                                    'U'}
                                                             </div>
                                                             <span className="text-xs text-slate-600 dark:text-slate-400">
-                                                                {initiative.ownerExecution?.lastName || initiative.ownerBusiness?.lastName || 'Unassigned'}
+                                                                {initiative.ownerExecution?.lastName ||
+                                                                    initiative.ownerBusiness?.lastName ||
+                                                                    'Unassigned'}
                                                             </span>
                                                         </div>
                                                     </td>
                                                     <td className="py-3">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${initiative.priority === 'Critical' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
-                                                            initiative.priority === 'High' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' :
-                                                                'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
-                                                            }`}>
+                                                        <span
+                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                                                initiative.priority === 'Critical'
+                                                                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30'
+                                                                    : initiative.priority === 'High'
+                                                                      ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30'
+                                                                      : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30'
+                                                            }`}
+                                                        >
                                                             {initiative.priority}
                                                         </span>
                                                     </td>
@@ -231,13 +268,15 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                         )}
                         {/* View All Actions Button */}
                         <div className="mt-4 text-center">
-                            <button onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)} className="btn-ghost text-sm font-bold text-brand hover:text-brand-hover flex items-center justify-center gap-2 dark:text-brand-400">
+                            <button
+                                onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)}
+                                className="btn-ghost text-sm font-bold text-brand hover:text-brand-hover flex items-center justify-center gap-2 dark:text-brand-400"
+                            >
                                 <LayoutDashboard size={14} />
                                 Manage All Initiatives
                             </button>
                         </div>
                     </div>
-
                 </div>
 
                 {/* RIGHT COLUMN: KPIs & Shortcuts */}
@@ -250,13 +289,21 @@ export const DashboardExecutionSnapshot = React.memo<DashboardExecutionSnapshotP
                         </h3>
                         <div className="space-y-4">
                             {kpis.map((kpi, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
+                                <div
+                                    key={idx}
+                                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                                >
                                     <div>
                                         <div className="text-xs text-slate-500 font-medium">{kpi.label}</div>
-                                        <div className="text-lg font-bold text-navy-900 dark:text-white">{kpi.value}</div>
+                                        <div className="text-lg font-bold text-navy-900 dark:text-white">
+                                            {kpi.value}
+                                        </div>
                                     </div>
-                                    <div className={`flex items-center gap-1 text-xs font-bold ${kpi.isPositive ? 'text-green-500' : 'text-red-500'
-                                        }`}>
+                                    <div
+                                        className={`flex items-center gap-1 text-xs font-bold ${
+                                            kpi.isPositive ? 'text-green-500' : 'text-red-500'
+                                        }`}
+                                    >
                                         {kpi.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                                         {kpi.trend}
                                     </div>

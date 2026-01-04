@@ -1,29 +1,30 @@
 /**
  * CapacityView Component
- * 
+ *
  * PMO Resource Capacity Planning
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Resource Management (Clause 4.4.5)
  * - PMI PMBOK 7th Edition - Resource Optimization / Leveling
  * - PRINCE2 - Resource Forecasting
- * 
+ *
  * PMO Domain: RESOURCE_RESPONSIBILITY
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Users,
     AlertTriangle,
-    TrendingUp,
-    TrendingDown,
-    Calendar,
     BarChart3,
+    Calendar,
     ChevronDown,
     ChevronUp,
+    Loader2,
     RefreshCw,
-    Loader2
+    TrendingDown,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 interface WeeklyCapacity {
@@ -73,10 +74,7 @@ interface CapacityViewProps {
     initiativeId?: string;
 }
 
-export const CapacityView: React.FC<CapacityViewProps> = ({
-    projectId,
-    initiativeId
-}) => {
+export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativeId }) => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
     const [expandedMember, setExpandedMember] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -96,24 +94,26 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
 
                 // Transform overloaded users to members format
                 if (overloadsResponse.overloadedUsers) {
-                    const transformedMembers: TeamMember[] = overloadsResponse.overloadedUsers.map((u: OverloadedUser) => ({
-                        id: u.userId,
-                        name: u.userName,
-                        role: 'Team Member',
-                        capacity: 40,
-                        allocated: u.overloadedWeeks[0]?.allocatedHours || 40,
-                        skills: [],
-                        weeklyData: u.overloadedWeeks.map(w => ({
-                            userId: u.userId,
-                            weekStart: w.weekStart,
-                            allocatedHours: w.allocatedHours,
-                            availableHours: 40,
-                            utilizationPercent: w.utilizationPercent,
-                            initiativeAllocations: [],
-                            isOverloaded: w.utilizationPercent > 100,
-                            taskCount: 0
-                        }))
-                    }));
+                    const transformedMembers: TeamMember[] = overloadsResponse.overloadedUsers.map(
+                        (u: OverloadedUser) => ({
+                            id: u.userId,
+                            name: u.userName,
+                            role: 'Team Member',
+                            capacity: 40,
+                            allocated: u.overloadedWeeks[0]?.allocatedHours || 40,
+                            skills: [],
+                            weeklyData: u.overloadedWeeks.map((w) => ({
+                                userId: u.userId,
+                                weekStart: w.weekStart,
+                                allocatedHours: w.allocatedHours,
+                                availableHours: 40,
+                                utilizationPercent: w.utilizationPercent,
+                                initiativeAllocations: [],
+                                isOverloaded: w.utilizationPercent > 100,
+                                taskCount: 0,
+                            })),
+                        }),
+                    );
                     setMembers(transformedMembers);
                 }
             } else {
@@ -125,7 +125,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                         role: 'Project Manager',
                         capacity: 40,
                         allocated: 45,
-                        skills: ['Project Management', 'Agile', 'Risk Analysis']
+                        skills: ['Project Management', 'Agile', 'Risk Analysis'],
                     },
                     {
                         id: '2',
@@ -133,7 +133,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                         role: 'Technical Lead',
                         capacity: 40,
                         allocated: 38,
-                        skills: ['Architecture', 'Cloud', 'Security']
+                        skills: ['Architecture', 'Cloud', 'Security'],
                     },
                     {
                         id: '3',
@@ -141,7 +141,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                         role: 'Business Analyst',
                         capacity: 40,
                         allocated: 32,
-                        skills: ['Requirements', 'UX', 'Process Mapping']
+                        skills: ['Requirements', 'UX', 'Process Mapping'],
                     },
                     {
                         id: '4',
@@ -149,7 +149,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                         role: 'Developer',
                         capacity: 40,
                         allocated: 40,
-                        skills: ['React', 'Node.js', 'TypeScript']
+                        skills: ['React', 'Node.js', 'TypeScript'],
                     },
                     {
                         id: '5',
@@ -157,14 +157,14 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                         role: 'QA Engineer',
                         capacity: 40,
                         allocated: 25,
-                        skills: ['Test Automation', 'Selenium', 'Performance Testing']
-                    }
+                        skills: ['Test Automation', 'Selenium', 'Performance Testing'],
+                    },
                 ]);
             }
         } catch (err: any) {
             console.error('[CapacityView] Error:', err);
             setError(err.message || 'Failed to load capacity data');
-            
+
             // Set fallback data
             setMembers([
                 {
@@ -173,7 +173,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                     role: 'Project Manager',
                     capacity: 40,
                     allocated: 45,
-                    skills: ['Project Management', 'Agile', 'Risk Analysis']
+                    skills: ['Project Management', 'Agile', 'Risk Analysis'],
                 },
                 {
                     id: '2',
@@ -181,7 +181,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                     role: 'Technical Lead',
                     capacity: 40,
                     allocated: 38,
-                    skills: ['Architecture', 'Cloud', 'Security']
+                    skills: ['Architecture', 'Cloud', 'Security'],
                 },
                 {
                     id: '3',
@@ -189,7 +189,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                     role: 'Business Analyst',
                     capacity: 40,
                     allocated: 32,
-                    skills: ['Requirements', 'UX', 'Process Mapping']
+                    skills: ['Requirements', 'UX', 'Process Mapping'],
                 },
                 {
                     id: '4',
@@ -197,7 +197,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                     role: 'Developer',
                     capacity: 40,
                     allocated: 40,
-                    skills: ['React', 'Node.js', 'TypeScript']
+                    skills: ['React', 'Node.js', 'TypeScript'],
                 },
                 {
                     id: '5',
@@ -205,8 +205,8 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                     role: 'QA Engineer',
                     capacity: 40,
                     allocated: 25,
-                    skills: ['Test Automation', 'Selenium', 'Performance Testing']
-                }
+                    skills: ['Test Automation', 'Selenium', 'Performance Testing'],
+                },
             ]);
         } finally {
             setIsLoading(false);
@@ -221,7 +221,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
     const totalCapacity = members.reduce((sum, m) => sum + m.capacity, 0);
     const totalAllocated = members.reduce((sum, m) => sum + m.allocated, 0);
     const utilizationRate = totalCapacity > 0 ? Math.round((totalAllocated / totalCapacity) * 100) : 0;
-    const overallocatedCount = members.filter(m => m.allocated > m.capacity).length;
+    const overallocatedCount = members.filter((m) => m.allocated > m.capacity).length;
 
     const getUtilizationColor = (allocated: number, capacity: number) => {
         const rate = (allocated / capacity) * 100;
@@ -291,9 +291,15 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                 </div>
                 <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
                     <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Utilization</div>
-                    <div className={`text-2xl font-bold ${
-                        utilizationRate > 100 ? 'text-red-600' : utilizationRate >= 80 ? 'text-amber-600' : 'text-green-600'
-                    }`}>
+                    <div
+                        className={`text-2xl font-bold ${
+                            utilizationRate > 100
+                                ? 'text-red-600'
+                                : utilizationRate >= 80
+                                  ? 'text-amber-600'
+                                  : 'text-green-600'
+                        }`}
+                    >
                         {utilizationRate}%
                     </div>
                     <div className="text-xs text-slate-400 mt-1">overall rate</div>
@@ -325,22 +331,20 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
             {/* AI Suggestions */}
             {capacitySummary?.suggestions && capacitySummary.suggestions.length > 0 && (
                 <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">
-                    <h4 className="font-semibold text-purple-700 dark:text-purple-300 mb-3">
-                        AI Recommendations
-                    </h4>
+                    <h4 className="font-semibold text-purple-700 dark:text-purple-300 mb-3">AI Recommendations</h4>
                     <div className="space-y-2">
                         {capacitySummary.suggestions.map((suggestion, idx) => (
                             <div key={idx} className="flex items-start gap-2 text-sm">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                    suggestion.type === 'REASSIGN' 
-                                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                }`}>
+                                <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        suggestion.type === 'REASSIGN'
+                                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                    }`}
+                                >
                                     {suggestion.type}
                                 </span>
-                                <span className="text-slate-600 dark:text-slate-400">
-                                    {suggestion.message}
-                                </span>
+                                <span className="text-slate-600 dark:text-slate-400">{suggestion.message}</span>
                             </div>
                         ))}
                     </div>
@@ -357,7 +361,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                     <span className="w-8"></span>
                 </div>
 
-                {members.map(member => {
+                {members.map((member) => {
                     const utilizationPercent = Math.round((member.allocated / member.capacity) * 100);
                     const isOverallocated = member.allocated > member.capacity;
                     const isExpanded = expandedMember === member.id;
@@ -377,7 +381,10 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                                     {/* Avatar & Name */}
                                     <div className="w-48 flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold">
-                                            {member.name.split(' ').map(n => n[0]).join('')}
+                                            {member.name
+                                                .split(' ')
+                                                .map((n) => n[0])
+                                                .join('')}
                                         </div>
                                         <div>
                                             <div className="font-medium text-navy-900 dark:text-white">
@@ -390,9 +397,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                                     </div>
 
                                     {/* Role */}
-                                    <div className="w-32 text-sm text-slate-500 dark:text-slate-400">
-                                        {member.role}
-                                    </div>
+                                    <div className="w-32 text-sm text-slate-500 dark:text-slate-400">{member.role}</div>
 
                                     {/* Progress Bar */}
                                     <div className="w-40">
@@ -403,7 +408,9 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                                                     style={{ width: `${Math.min(utilizationPercent, 100)}%` }}
                                                 />
                                             </div>
-                                            <span className={`text-sm font-medium ${getUtilizationColor(member.allocated, member.capacity)}`}>
+                                            <span
+                                                className={`text-sm font-medium ${getUtilizationColor(member.allocated, member.capacity)}`}
+                                            >
                                                 {utilizationPercent}%
                                             </span>
                                         </div>
@@ -411,10 +418,15 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
 
                                     {/* Hours */}
                                     <div className="w-24 text-right">
-                                        <span className={`font-medium ${getUtilizationColor(member.allocated, member.capacity)}`}>
+                                        <span
+                                            className={`font-medium ${getUtilizationColor(member.allocated, member.capacity)}`}
+                                        >
                                             {member.allocated}h
                                         </span>
-                                        <span className="text-slate-400 dark:text-slate-500"> / {member.capacity}h</span>
+                                        <span className="text-slate-400 dark:text-slate-500">
+                                            {' '}
+                                            / {member.capacity}h
+                                        </span>
                                     </div>
 
                                     {/* Expand */}
@@ -429,9 +441,11 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                                 <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-navy-950/50">
                                     {member.skills && member.skills.length > 0 && (
                                         <div className="mb-3">
-                                            <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">Skills</h5>
+                                            <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">
+                                                Skills
+                                            </h5>
                                             <div className="flex flex-wrap gap-2">
-                                                {member.skills.map(skill => (
+                                                {member.skills.map((skill) => (
                                                     <span
                                                         key={skill}
                                                         className="px-2 py-1 bg-slate-200 dark:bg-navy-800 text-xs rounded-full text-slate-600 dark:text-slate-400"
@@ -445,14 +459,22 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
 
                                     {member.weeklyData && member.weeklyData.length > 0 && (
                                         <div>
-                                            <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">Weekly Breakdown</h5>
+                                            <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">
+                                                Weekly Breakdown
+                                            </h5>
                                             <div className="space-y-2">
                                                 {member.weeklyData.map((week, idx) => (
-                                                    <div key={idx} className="flex items-center justify-between text-sm p-2 bg-white dark:bg-navy-900 rounded-lg">
+                                                    <div
+                                                        key={idx}
+                                                        className="flex items-center justify-between text-sm p-2 bg-white dark:bg-navy-900 rounded-lg"
+                                                    >
                                                         <span className="text-slate-700 dark:text-slate-300">
-                                                            Week of {new Date(week.weekStart).toLocaleDateString('pl-PL')}
+                                                            Week of{' '}
+                                                            {new Date(week.weekStart).toLocaleDateString('pl-PL')}
                                                         </span>
-                                                        <span className={`font-medium ${week.isOverloaded ? 'text-red-600' : 'text-purple-600'}`}>
+                                                        <span
+                                                            className={`font-medium ${week.isOverloaded ? 'text-red-600' : 'text-purple-600'}`}
+                                                        >
                                                             {week.allocatedHours}h ({week.utilizationPercent}%)
                                                         </span>
                                                     </div>
@@ -463,7 +485,9 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
 
                                     {(!member.weeklyData || member.weeklyData.length === 0) && (
                                         <div>
-                                            <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">Allocations</h5>
+                                            <h5 className="text-xs font-medium text-slate-500 uppercase mb-2">
+                                                Allocations
+                                            </h5>
                                             <div className="text-sm text-slate-500 dark:text-slate-400 p-2">
                                                 No detailed allocation data available
                                             </div>
@@ -485,19 +509,19 @@ export const CapacityView: React.FC<CapacityViewProps> = ({
                 <div className="grid grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                            {members.filter(m => m.allocated <= m.capacity * 0.8).length}
+                            {members.filter((m) => m.allocated <= m.capacity * 0.8).length}
                         </div>
                         <div className="text-sm text-slate-500 mt-1">Available (&lt;80%)</div>
                     </div>
                     <div className="text-center p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
-                            {members.filter(m => m.allocated > m.capacity * 0.8 && m.allocated <= m.capacity).length}
+                            {members.filter((m) => m.allocated > m.capacity * 0.8 && m.allocated <= m.capacity).length}
                         </div>
                         <div className="text-sm text-slate-500 mt-1">At Capacity (80-100%)</div>
                     </div>
                     <div className="text-center p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                         <div className="text-3xl font-bold text-red-600 dark:text-red-400">
-                            {members.filter(m => m.allocated > m.capacity).length}
+                            {members.filter((m) => m.allocated > m.capacity).length}
                         </div>
                         <div className="text-sm text-slate-500 mt-1">Overloaded (&gt;100%)</div>
                     </div>

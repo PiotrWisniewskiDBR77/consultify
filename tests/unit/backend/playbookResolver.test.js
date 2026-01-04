@@ -5,17 +5,19 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import PlaybookResolver from '../../../server/services/playbookResolver.js';
 
-// Mock HelpService
-const mockHelpService = {
+// Hoisted mock - MUST be before imports
+const mockHelpService = vi.hoisted(() => ({
     getAvailablePlaybooks: vi.fn(),
     getUserProgress: vi.fn()
-};
+}));
 
 vi.mock('../../../server/services/helpService', () => ({
     default: mockHelpService
 }));
+
+// Import after mock setup
+import PlaybookResolver from '../../../server/services/playbookResolver.js';
 
 describe('PlaybookResolver', () => {
     const mockContext = {

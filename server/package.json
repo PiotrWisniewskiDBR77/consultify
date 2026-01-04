@@ -17,6 +17,14 @@
     "test:backend": "vitest run tests --environment node",
     "test:backend:watch": "vitest watch tests --environment node",
     "test:backend:coverage": "vitest run tests --coverage --environment node",
+    "test:migration": "node ../scripts/test-migration-all.mjs",
+    "test:migration:structural": "vitest run ../tests/migration/structural.test.ts",
+    "test:migration:functional": "vitest run ../tests/migration/functional.test.ts",
+    "test:migration:regression": "playwright test ../tests/e2e/",
+    "test:migration:types": "tsc --noEmit && vitest run ../tests/migration/types.test.ts",
+    "test:migration:imports": "node ../scripts/test-migration-imports.mjs",
+    "test:migration:duplicates": "node ../scripts/test-migration-duplicates.mjs",
+    "test:migration:performance": "vitest run ../tests/migration/performance.test.ts",
     "start": "node dist/index.js",
     "clean": "rm -rf dist .tsbuildinfo"
   },
@@ -24,9 +32,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "cheerio": "^1.1.2",
+    "cookie-parser": "^1.4.7",
+    "ioredis": "^5.8.2",
     "mammoth": "^1.11.0",
     "tesseract.js": "^7.0.0",
+    "winston-daily-rotate-file": "^5.0.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
     "youtube-transcript": "^1.2.1"
   },

@@ -1,16 +1,29 @@
 // @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const db = require('../../server/database.js');
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
+// We don't import db directly because we need to inject the mock first
 
 /**
  * Level 2: Integration Tests - Database Health & Performance
  * Tests database connectivity, integrity, and performance
  */
 describe('Integration Test: Database Health', () => {
+    let db;
+
     beforeAll(async () => {
+        // 1. Create a fresh in-memory DB with schema
+        const testDb = await TestDatabaseFactory.create();
+
+        // 2. Inject into global mock slot
+        global.__TEST_DB_MOCK__ = testDb;
+
+        // 3. Reset modules so server/database.js picks it up
+        vi.resetModules();
+
+        // 4. Import the database wrapper
+        const dbModule = await import('../../server/database.js');
+        db = dbModule.default;
+
         await db.initPromise;
     });
 

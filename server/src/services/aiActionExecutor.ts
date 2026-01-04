@@ -3,8 +3,9 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
-import { get as dbGet, run as dbRun, all as dbAll } from '../utils/DbPromise.js';
 import { v4 as uuidv4 } from 'uuid';
+
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
 
 // Enums and Constants
@@ -15,14 +16,14 @@ export const ACTION_TYPES = {
     GENERATE_REPORT: 'GENERATE_REPORT',
     PREPARE_DECISION_SUMMARY: 'PREPARE_DECISION_SUMMARY',
     EXPLAIN_CONTEXT: 'EXPLAIN_CONTEXT',
-    ANALYZE_RISKS: 'ANALYZE_RISKS'
+    ANALYZE_RISKS: 'ANALYZE_RISKS',
 };
 
 export const ACTION_STATUS = {
     PENDING: 'PENDING',
     APPROVED: 'APPROVED',
     REJECTED: 'REJECTED',
-    EXECUTED: 'EXECUTED'
+    EXECUTED: 'EXECUTED',
 };
 
 // Lazy-load dependencies to avoid circular dependencies
@@ -85,7 +86,13 @@ const AIActionExecutor = {
     /**
      * Request an AI action
      */
-    requestAction: async (actionType: string, payload: any, userId: string, organizationId: string, projectId: string | null = null) => {
+    requestAction: async (
+        actionType: string,
+        payload: any,
+        userId: string,
+        organizationId: string,
+        projectId: string | null = null,
+    ) => {
         const RegulatoryModeGuard = await getRegulatoryModeGuard();
         const AIRoleGuard = await getAIRoleGuard();
         const ApprovalPatternService = await getApprovalPatternService();
@@ -94,7 +101,7 @@ const AIActionExecutor = {
         if (projectId && RegulatoryModeGuard) {
             const regulatoryCheck = await RegulatoryModeGuard.enforceRegulatoryMode(
                 { userId, organizationId, projectId },
-                actionType
+                actionType,
             );
 
             if (regulatoryCheck.blocked) {
@@ -104,7 +111,7 @@ const AIActionExecutor = {
                     error: regulatoryCheck.message || 'Action blocked by Regulatory Mode',
                     reason: regulatoryCheck.reason,
                     regulatoryModeEnabled: true,
-                    suggestion: 'Regulatory Mode is enabled. AI can only explain and advise.'
+                    suggestion: 'Regulatory Mode is enabled. AI can only explain and advise.',
                 };
             }
         }
@@ -119,7 +126,7 @@ const AIActionExecutor = {
                     error: roleCheck.reason,
                     currentRole: roleCheck.currentRole,
                     requiredRole: roleCheck.roleRequired,
-                    suggestion: roleCheck.suggestion
+                    suggestion: roleCheck.suggestion,
                 };
             }
 
@@ -135,7 +142,7 @@ const AIActionExecutor = {
             return {
                 success: false,
                 error: permission.reason,
-                requiresUpgrade: true
+                requiresUpgrade: true,
             };
         }
 
@@ -148,9 +155,7 @@ const AIActionExecutor = {
 
         if (requiresApproval && ApprovalPatternService) {
             const riskLevel = payload.riskLevel || 'LOW';
-            const autoDecideCheck = await ApprovalPatternService.canAutoDecide(
-                userId, actionType, payload, riskLevel
-            );
+            const autoDecideCheck = await ApprovalPatternService.canAutoDecide(userId, actionType, payload, riskLevel);
 
             if (autoDecideCheck.canAutoDecide) {
                 autoDecided = true;
@@ -159,7 +164,7 @@ const AIActionExecutor = {
                     patternId: autoDecideCheck.pattern?.id,
                     confidence: autoDecideCheck.confidence,
                     decisionCount: autoDecideCheck.pattern?.decision_count,
-                    reason: autoDecideCheck.reason
+                    reason: autoDecideCheck.reason,
                 };
 
                 if (autoDecision === 'REJECTED') {
@@ -168,7 +173,7 @@ const AIActionExecutor = {
                         autoRejected: true,
                         blocked: true,
                         reason: `Auto-rejected based on learned pattern`,
-                        patternInfo
+                        patternInfo,
                     };
                 }
 
@@ -179,23 +184,30 @@ const AIActionExecutor = {
         const id = uuidv4();
         const finalStatus = requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED;
 
-        await dbRun(`INSERT INTO ai_actions 
+        await dbRun(
+            `INSERT INTO ai_actions 
             (id, user_id, organization_id, project_id, action_type, payload, 
              required_policy_level, current_policy_level, requires_approval, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                id, userId, organizationId, projectId, actionType,
+                id,
+                userId,
+                organizationId,
+                projectId,
+                actionType,
                 JSON.stringify(payload),
-                permission.requiredLevel, permission.currentLevel,
+                permission.requiredLevel,
+                permission.currentLevel,
                 requiresApproval ? 1 : 0,
-                finalStatus
-            ]);
+                finalStatus,
+            ],
+        );
 
         const result: any = {
             success: true,
             actionId: id,
             requiresApproval: requiresApproval,
-            status: finalStatus
+            status: finalStatus,
         };
 
         if (autoDecided) {
@@ -205,8 +217,13 @@ const AIActionExecutor = {
 
         if (requiresApproval && finalStatus === ACTION_STATUS.PENDING) {
             AIActionExecutor._sendPendingActionNotification(
-                id, userId, organizationId, projectId, actionType, payload
-            ).catch(err => {
+                id,
+                userId,
+                organizationId,
+                projectId,
+                actionType,
+                payload,
+            ).catch((err: Error | null) => {
                 console.warn('[AIActionExecutor] Failed to send notification:', err.message);
             });
         }
@@ -217,20 +234,28 @@ const AIActionExecutor = {
     /**
      * Create a draft
      */
-    createDraft: async (draftType: 'task' | 'initiative', draftContent: any, userId: string, organizationId: string, projectId: string) => {
-        const actionType = draftType === 'task'
-            ? ACTION_TYPES.CREATE_DRAFT_TASK
-            : ACTION_TYPES.CREATE_DRAFT_INITIATIVE;
+    createDraft: async (
+        draftType: 'task' | 'initiative',
+        draftContent: any,
+        userId: string,
+        organizationId: string,
+        projectId: string,
+    ) => {
+        const actionType = draftType === 'task' ? ACTION_TYPES.CREATE_DRAFT_TASK : ACTION_TYPES.CREATE_DRAFT_INITIATIVE;
 
         const result = await AIActionExecutor.requestAction(
             actionType,
             { draftType, content: draftContent },
-            userId, organizationId, projectId
+            userId,
+            organizationId,
+            projectId,
         );
 
         if (result.success) {
-            await dbRun(`UPDATE ai_actions SET draft_content = ? WHERE id = ?`,
-                [JSON.stringify(draftContent), result.actionId]);
+            await dbRun(`UPDATE ai_actions SET draft_content = ? WHERE id = ?`, [
+                JSON.stringify(draftContent),
+                result.actionId,
+            ]);
         }
 
         return result;
@@ -245,10 +270,12 @@ const AIActionExecutor = {
         if (!action) return { success: false, error: 'Action not found' };
         if (action.status !== ACTION_STATUS.PENDING) return { success: false, error: 'Action already processed' };
 
-        const res = await dbRun(`UPDATE ai_actions 
+        const res = await dbRun(
+            `UPDATE ai_actions 
                 SET status = 'APPROVED', approved_at = CURRENT_TIMESTAMP, approved_by = ?
                 WHERE id = ? AND status = 'PENDING'`,
-            [userId, actionId]);
+            [userId, actionId],
+        );
 
         if (res.changes === 0) {
             return { success: false, error: 'Action not found or already processed' };
@@ -263,7 +290,7 @@ const AIActionExecutor = {
                     action.payload,
                     'APPROVED',
                     action.payload?.riskLevel || 'LOW',
-                    options.alwaysApprove || false
+                    options.alwaysApprove || false,
                 );
 
                 return {
@@ -271,7 +298,7 @@ const AIActionExecutor = {
                     actionId,
                     status: ACTION_STATUS.APPROVED,
                     patternLearned: true,
-                    patternInfo: patternResult
+                    patternInfo: patternResult,
                 };
             } catch (err: unknown) {
                 console.error('[AIActionExecutor] Pattern learning error:', err);
@@ -290,10 +317,12 @@ const AIActionExecutor = {
         if (!action) return { success: false, error: 'Action not found' };
         if (action.status !== ACTION_STATUS.PENDING) return { success: false, error: 'Action already processed' };
 
-        const res = await dbRun(`UPDATE ai_actions 
+        const res = await dbRun(
+            `UPDATE ai_actions 
                 SET status = 'REJECTED', approved_at = CURRENT_TIMESTAMP, approved_by = ?
                 WHERE id = ? AND status = 'PENDING'`,
-            [userId, actionId]);
+            [userId, actionId],
+        );
 
         if (res.changes === 0) {
             return { success: false, error: 'Action not found or already processed' };
@@ -310,7 +339,7 @@ const AIActionExecutor = {
                     action.payload,
                     'REJECTED',
                     action.payload?.riskLevel || 'LOW',
-                    options.alwaysReject || false
+                    options.alwaysReject || false,
                 );
 
                 return {
@@ -318,7 +347,7 @@ const AIActionExecutor = {
                     actionId,
                     status: ACTION_STATUS.REJECTED,
                     patternLearned: true,
-                    patternInfo: patternResult
+                    patternInfo: patternResult,
                 };
             } catch (err: unknown) {
                 console.error('[AIActionExecutor] Pattern learning error:', err);
@@ -335,7 +364,8 @@ const AIActionExecutor = {
         const action: any = await dbGet(`SELECT * FROM ai_actions WHERE id = ?`, [actionId]);
 
         if (!action) return { success: false, error: 'Action not found' };
-        if (action.status !== ACTION_STATUS.APPROVED) return { success: false, error: `Action is ${action.status}, not APPROVED` };
+        if (action.status !== ACTION_STATUS.APPROVED)
+            return { success: false, error: `Action is ${action.status}, not APPROVED` };
 
         try {
             const draftContent = (action as any).draft_content ? JSON.parse((action as any).draft_content) : null;
@@ -355,8 +385,9 @@ const AIActionExecutor = {
                     result = { executed: true, actionType: action.action_type };
             }
 
-            await dbRun(`UPDATE ai_actions SET status = 'EXECUTED', executed_at = CURRENT_TIMESTAMP WHERE id = ?`,
-                [actionId]);
+            await dbRun(`UPDATE ai_actions SET status = 'EXECUTED', executed_at = CURRENT_TIMESTAMP WHERE id = ?`, [
+                actionId,
+            ]);
 
             return { success: true, actionId, result };
         } catch (err: unknown) {
@@ -367,13 +398,26 @@ const AIActionExecutor = {
     /**
      * Get pending actions
      */
-    getPendingActions: async (userId: string | null = null, projectId: string | null = null, organizationId: string | null = null) => {
+    getPendingActions: async (
+        userId: string | null = null,
+        projectId: string | null = null,
+        organizationId: string | null = null,
+    ) => {
         let sql = `SELECT * FROM ai_actions WHERE status = 'PENDING'`;
         const params = [];
 
-        if (userId) { sql += ` AND user_id = ?`; params.push(userId); }
-        if (projectId) { sql += ` AND project_id = ?`; params.push(projectId); }
-        if (organizationId) { sql += ` AND organization_id = ?`; params.push(organizationId); }
+        if (userId) {
+            sql += ` AND user_id = ?`;
+            params.push(userId);
+        }
+        if (projectId) {
+            sql += ` AND project_id = ?`;
+            params.push(projectId);
+        }
+        if (organizationId) {
+            sql += ` AND organization_id = ?`;
+            params.push(organizationId);
+        }
 
         sql += ` ORDER BY created_at DESC`;
 
@@ -382,7 +426,7 @@ const AIActionExecutor = {
             try {
                 row.payload = JSON.parse(row.payload || '{}');
                 row.draftContent = row.draft_content ? JSON.parse(row.draft_content) : null;
-            } catch { }
+            } catch {}
             return row;
         });
     },
@@ -396,7 +440,7 @@ const AIActionExecutor = {
         try {
             row.payload = JSON.parse(row.payload || '{}');
             row.draftContent = row.draft_content ? JSON.parse(row.draft_content) : null;
-        } catch { }
+        } catch {}
         return row;
     },
 
@@ -407,8 +451,14 @@ const AIActionExecutor = {
         let sql = `SELECT * FROM ai_actions WHERE project_id = ?`;
         const params = [projectId];
 
-        if (filters.status) { sql += ` AND status = ?`; params.push(filters.status); }
-        if (filters.actionType) { sql += ` AND action_type = ?`; params.push(filters.actionType); }
+        if (filters.status) {
+            sql += ` AND status = ?`;
+            params.push(filters.status);
+        }
+        if (filters.actionType) {
+            sql += ` AND action_type = ?`;
+            params.push(filters.actionType);
+        }
 
         sql += ` ORDER BY created_at DESC`;
 
@@ -417,7 +467,7 @@ const AIActionExecutor = {
             try {
                 row.payload = JSON.parse(row.payload || '{}');
                 row.draftContent = row.draft_content ? JSON.parse(row.draft_content) : null;
-            } catch { }
+            } catch {}
             return row;
         });
     },
@@ -441,7 +491,7 @@ const AIActionExecutor = {
                 autoApply: pattern.auto_apply === 1,
                 confidence: Math.round(confidence * 100),
                 lastDecisionAt: pattern.last_decision_at,
-                message: `Similar to ${pattern.decision_count} previous ${pattern.decision.toLowerCase()} decisions`
+                message: `Similar to ${pattern.decision_count} previous ${pattern.decision.toLowerCase()} decisions`,
             };
         } catch (error: unknown) {
             console.error('[AIActionExecutor] getPatternInfo error:', error);
@@ -454,7 +504,9 @@ const AIActionExecutor = {
      */
     getUserPatternStats: async (userId: string) => {
         const ApprovalPatternService = await getApprovalPatternService();
-        return ApprovalPatternService ? ApprovalPatternService.getPatternStats(userId) : { approved: 0, rejected: 0, autoApplied: 0 };
+        return ApprovalPatternService
+            ? ApprovalPatternService.getPatternStats(userId)
+            : { approved: 0, rejected: 0, autoApplied: 0 };
     },
 
     /**
@@ -470,7 +522,9 @@ const AIActionExecutor = {
      */
     setPatternAutoApply: async (patternId: string, enabled: boolean, userId: string) => {
         const ApprovalPatternService = await getApprovalPatternService();
-        return ApprovalPatternService ? ApprovalPatternService.setAutoApply(patternId, enabled, userId) : { success: false };
+        return ApprovalPatternService
+            ? ApprovalPatternService.setAutoApply(patternId, enabled, userId)
+            : { success: false };
     },
 
     /**
@@ -487,9 +541,11 @@ const AIActionExecutor = {
         const taskId = uuidv4();
         const { title, description, assigneeId, dueDate } = draftContent;
 
-        await dbRun(`INSERT INTO tasks (id, project_id, title, description, assignee_id, due_date, status, created_by)
+        await dbRun(
+            `INSERT INTO tasks (id, project_id, title, description, assignee_id, due_date, status, created_by)
                 VALUES (?, ?, ?, ?, ?, ?, 'TODO', ?)`,
-            [taskId, action.project_id, title, description, assigneeId, dueDate, action.user_id]);
+            [taskId, action.project_id, title, description, assigneeId, dueDate, action.user_id],
+        );
 
         return { taskId, title, created: true };
     },
@@ -498,9 +554,11 @@ const AIActionExecutor = {
         const initiativeId = uuidv4();
         const { name, description, ownerId, priority } = draftContent;
 
-        await dbRun(`INSERT INTO initiatives (id, project_id, name, description, owner_business_id, priority, status)
+        await dbRun(
+            `INSERT INTO initiatives (id, project_id, name, description, owner_business_id, priority, status)
                 VALUES (?, ?, ?, ?, ?, ?, 'DRAFT')`,
-            [initiativeId, action.project_id, name, description, ownerId, priority || 'MEDIUM']);
+            [initiativeId, action.project_id, name, description, ownerId, priority || 'MEDIUM'],
+        );
 
         return { initiativeId, name, created: true };
     },
@@ -509,7 +567,14 @@ const AIActionExecutor = {
      * Send notification for pending AI action
      * @private
      */
-    _sendPendingActionNotification: async (actionId: string, userId: string, organizationId: string, projectId: string | null, actionType: string, payload: any) => {
+    _sendPendingActionNotification: async (
+        actionId: string,
+        userId: string,
+        organizationId: string,
+        projectId: string | null,
+        actionType: string,
+        payload: any,
+    ) => {
         const NotificationSvc = await getNotificationService();
         if (!NotificationSvc) return;
 
@@ -519,7 +584,7 @@ const AIActionExecutor = {
             [ACTION_TYPES.SUGGEST_ROADMAP_CHANGE]: 'suggest a roadmap change',
             [ACTION_TYPES.GENERATE_REPORT]: 'generate a report',
             [ACTION_TYPES.PREPARE_DECISION_SUMMARY]: 'prepare a decision summary',
-            [ACTION_TYPES.ANALYZE_RISKS]: 'analyze risks'
+            [ACTION_TYPES.ANALYZE_RISKS]: 'analyze risks',
         };
 
         const actionDesc = actionDescriptions[actionType] || actionType.toLowerCase().replace(/_/g, ' ');
@@ -537,7 +602,7 @@ const AIActionExecutor = {
                 relatedObjectType: 'ai_action',
                 relatedObjectId: actionId,
                 isActionable: true,
-                actionUrl: `/ai/actions/${actionId}`
+                actionUrl: `/ai/actions/${actionId}`,
             });
         } catch (err: unknown) {
             console.warn('[AIActionExecutor] Failed to create notification:', (err as Error).message);
@@ -548,17 +613,25 @@ const AIActionExecutor = {
         const action: any = (await dbGet(`SELECT * FROM ai_actions WHERE id = ?`, [actionId])) || {};
         const auditId = uuidv4();
 
-        return dbRun(`INSERT INTO ai_audit_logs 
+        return dbRun(
+            `INSERT INTO ai_audit_logs 
             (id, user_id, organization_id, project_id, action_type, action_description, 
              ai_role, policy_level, user_decision, user_feedback)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                auditId, userId, (action as any).organization_id, (action as any).project_id,
-                (action as any).action_type, `AI action: ${(action as any).action_type}`,
-                'EXECUTOR', (action as any).current_policy_level,
-                decision, feedback
-            ]);
-    }
+                auditId,
+                userId,
+                (action as any).organization_id,
+                (action as any).project_id,
+                (action as any).action_type,
+                `AI action: ${(action as any).action_type}`,
+                'EXECUTOR',
+                (action as any).current_policy_level,
+                decision,
+                feedback,
+            ],
+        );
+    },
 };
 
 export default AIActionExecutor;

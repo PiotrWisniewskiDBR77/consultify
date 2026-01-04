@@ -16,11 +16,11 @@ async function initDeps() {
     if (deps.db && deps.uuidv4) return;
 
     const [dbModule, uuidModule] = await Promise.all([
-        import('../database.js'),
+        import('../src/database/index.js'),
         import('uuid')
     ]);
-
-    deps.db = dbModule.default || dbModule;
+    const { getDatabase } = dbModule;
+    deps.db = getDatabase();
     deps.uuidv4 = uuidModule.v4;
 }
 
@@ -739,6 +739,7 @@ export default {
     generatePreview,
     buildInvoiceHTML
 };
+
 
 
 

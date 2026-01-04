@@ -1,7 +1,7 @@
 /**
  * Test Fixtures
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Reusable test data fixtures
  */
 
@@ -61,7 +61,4 @@ export const serviceFixtures = {
         checkAndTriggerAlerts: { triggeredCount: 5 },
     },
 };
-
-
-
 

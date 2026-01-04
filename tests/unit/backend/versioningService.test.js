@@ -1,33 +1,28 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { mockDb } = vi.hoisted(() => {
-    return {
-        mockDb: {
-            run: vi.fn(),
-            get: vi.fn(),
-            all: vi.fn(),
-            exec: vi.fn(),
-            query: vi.fn(),
-            serialize: vi.fn((cb) => cb()),
-            on: vi.fn(),
-        }
-    };
-});
+const mockDb = vi.hoisted(() => ({
+    run: vi.fn(),
+    get: vi.fn(),
+    all: vi.fn(),
+    exec: vi.fn(),
+    query: vi.fn(),
+    serialize: vi.fn((cb) => cb()),
+    on: vi.fn(),
+    initPromise: Promise.resolve()
+}));
 
-// Inject the mock into the global object so server/database.js can pick it up
-global.__TEST_DB_MOCK__ = mockDb;
+vi.mock('../../../server/database', () => ({ default: mockDb }));
 
 describe('VersioningService', () => {
     let VersioningService;
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        vi.resetModules();
 
         // Default mock implementations - MUST USE CALLBACKS
-        mockDb.run.mockImplementation((sql, params, callback) => {
+        mockDb.run.mockImplementation(function(sql, params, callback) {
             const cb = typeof params === 'function' ? params : callback;
-            if (typeof cb === 'function') cb(null, { lastID: 1, changes: 1 });
+            if (typeof cb === 'function') cb.call({ lastID: 1, changes: 1 }, null);
         });
 
         mockDb.get.mockImplementation((sql, params, callback) => {
@@ -59,7 +54,8 @@ describe('VersioningService', () => {
             if (typeof cb === 'function') cb(null, []);
         });
 
-        const mod = require('../../../server/services/versioningService');
+        // Dynamic import for ESM compatibility
+        const mod = await import('../../../server/services/versioningService');
         VersioningService = mod.default || mod;
     });
 

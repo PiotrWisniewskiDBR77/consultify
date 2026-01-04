@@ -9,7 +9,8 @@
  * - Prompt templates
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { aiLogger } from './logger.js';
 
 // Section structure definitions
@@ -442,6 +443,7 @@ export default {
     SECTION_STRUCTURES,
     PROMPT_TEMPLATES
 };
+
 
 
 

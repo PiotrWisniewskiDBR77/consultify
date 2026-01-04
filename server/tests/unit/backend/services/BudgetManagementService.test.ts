@@ -1,11 +1,12 @@
 /**
  * BudgetManagementService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for BudgetManagementService - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import BudgetManagementService from '../../../../src/services/budgetManagementService.js';
 
@@ -52,7 +53,7 @@ describe('BudgetManagementService', () => {
             });
 
             const result = await BudgetManagementService.setUserBudget('org-1', 'user-1', {
-                monthlyTokenBudget: 1000
+                monthlyTokenBudget: 1000,
             });
 
             expect(result.success).toBe(true);
@@ -63,7 +64,7 @@ describe('BudgetManagementService', () => {
                 organization_id: 'org-1',
                 user_id: 'user-1',
                 monthly_token_budget: 1000,
-                tokens_used_this_month: 100
+                tokens_used_this_month: 100,
             };
             (mockDb.get as any).mockImplementation((sql: any, params: any, callback: any) => {
                 callback(null, mockBudget);
@@ -77,9 +78,11 @@ describe('BudgetManagementService', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

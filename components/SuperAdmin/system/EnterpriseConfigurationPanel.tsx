@@ -1,6 +1,6 @@
 /**
  * EnterpriseConfigurationPanel - System Configuration Management
- * 
+ *
  * Features:
  * - Configuration categories
  * - Key-value management with types
@@ -9,35 +9,36 @@
  * - Configuration validation
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Settings,
-    Save,
-    Edit,
-    History,
-    Search,
-    RefreshCw,
+    AlertTriangle,
+    Check,
     CheckCircle,
-    XCircle,
-    Loader2,
-    Plus,
-    Trash2,
-    Lock,
+    ChevronDown,
+    ChevronRight,
+    Copy,
+    Download,
+    Edit,
     Eye,
     EyeOff,
-    Copy,
-    AlertTriangle,
-    ChevronRight,
-    ChevronDown,
-    Download,
-    Upload,
     GitCompare,
+    History,
+    Loader2,
+    Lock,
+    Plus,
+    RefreshCw,
     RotateCcw,
+    Save,
+    Search,
+    Settings,
+    Trash2,
+    Upload,
     X,
-    Check
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface ConfigItem {
     id: string;
@@ -106,19 +107,136 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         } catch (error) {
             // Mock data
             setConfigs([
-                { id: '1', key: 'app_name', value: 'Consultify', type: 'string', category: 'general', description: 'Application name displayed in the UI', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '2', key: 'max_upload_size_mb', value: '50', type: 'number', category: 'limits', description: 'Maximum file upload size in MB', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '3', key: 'enable_registration', value: 'true', type: 'boolean', category: 'security', description: 'Allow new user registrations', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '4', key: 'openai_api_key', value: '••••••••••••••••', type: 'secret', category: 'ai', description: 'OpenAI API key for AI features', is_sensitive: true, updated_at: new Date().toISOString() },
-                { id: '5', key: 'ai_model', value: 'gpt-4-turbo', type: 'string', category: 'ai', description: 'Default AI model for analysis', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '6', key: 'ai_max_tokens', value: '4096', type: 'number', category: 'ai', description: 'Maximum tokens per AI request', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '7', key: 'session_timeout_minutes', value: '30', type: 'number', category: 'security', description: 'Session timeout in minutes', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '8', key: 'password_policy', value: '{"minLength": 8, "requireNumbers": true, "requireSpecial": true}', type: 'json', category: 'security', description: 'Password requirements', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '9', key: 'smtp_host', value: 'smtp.sendgrid.net', type: 'string', category: 'notifications', description: 'SMTP server host', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '10', key: 'smtp_password', value: '••••••••••••••••', type: 'secret', category: 'notifications', description: 'SMTP password', is_sensitive: true, updated_at: new Date().toISOString() },
-                { id: '11', key: 'primary_color', value: '#8B5CF6', type: 'string', category: 'branding', description: 'Primary brand color', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '12', key: 'max_projects_per_user', value: '50', type: 'number', category: 'limits', description: 'Maximum projects per user', is_sensitive: false, updated_at: new Date().toISOString() },
-                { id: '13', key: 'slack_webhook_url', value: '••••••••••••••••', type: 'secret', category: 'integrations', description: 'Slack webhook URL', is_sensitive: true, updated_at: new Date().toISOString() },
+                {
+                    id: '1',
+                    key: 'app_name',
+                    value: 'Consultify',
+                    type: 'string',
+                    category: 'general',
+                    description: 'Application name displayed in the UI',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '2',
+                    key: 'max_upload_size_mb',
+                    value: '50',
+                    type: 'number',
+                    category: 'limits',
+                    description: 'Maximum file upload size in MB',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '3',
+                    key: 'enable_registration',
+                    value: 'true',
+                    type: 'boolean',
+                    category: 'security',
+                    description: 'Allow new user registrations',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '4',
+                    key: 'openai_api_key',
+                    value: '••••••••••••••••',
+                    type: 'secret',
+                    category: 'ai',
+                    description: 'OpenAI API key for AI features',
+                    is_sensitive: true,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '5',
+                    key: 'ai_model',
+                    value: 'gpt-4-turbo',
+                    type: 'string',
+                    category: 'ai',
+                    description: 'Default AI model for analysis',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '6',
+                    key: 'ai_max_tokens',
+                    value: '4096',
+                    type: 'number',
+                    category: 'ai',
+                    description: 'Maximum tokens per AI request',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '7',
+                    key: 'session_timeout_minutes',
+                    value: '30',
+                    type: 'number',
+                    category: 'security',
+                    description: 'Session timeout in minutes',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '8',
+                    key: 'password_policy',
+                    value: '{"minLength": 8, "requireNumbers": true, "requireSpecial": true}',
+                    type: 'json',
+                    category: 'security',
+                    description: 'Password requirements',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '9',
+                    key: 'smtp_host',
+                    value: 'smtp.sendgrid.net',
+                    type: 'string',
+                    category: 'notifications',
+                    description: 'SMTP server host',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '10',
+                    key: 'smtp_password',
+                    value: '••••••••••••••••',
+                    type: 'secret',
+                    category: 'notifications',
+                    description: 'SMTP password',
+                    is_sensitive: true,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '11',
+                    key: 'primary_color',
+                    value: '#8B5CF6',
+                    type: 'string',
+                    category: 'branding',
+                    description: 'Primary brand color',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '12',
+                    key: 'max_projects_per_user',
+                    value: '50',
+                    type: 'number',
+                    category: 'limits',
+                    description: 'Maximum projects per user',
+                    is_sensitive: false,
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    id: '13',
+                    key: 'slack_webhook_url',
+                    value: '••••••••••••••••',
+                    type: 'secret',
+                    category: 'integrations',
+                    description: 'Slack webhook URL',
+                    is_sensitive: true,
+                    updated_at: new Date().toISOString(),
+                },
             ]);
         }
         setLoading(false);
@@ -160,16 +278,36 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         setShowHistoryModal(true);
         // Mock versions
         setVersions([
-            { id: '1', config_key: config.key, old_value: 'old_value', new_value: config.value, changed_at: new Date(Date.now() - 86400000).toISOString(), changed_by: 'admin@example.com', reason: 'Updated for security' },
-            { id: '2', config_key: config.key, old_value: 'older_value', new_value: 'old_value', changed_at: new Date(Date.now() - 86400000 * 7).toISOString(), changed_by: 'admin@example.com' },
+            {
+                id: '1',
+                config_key: config.key,
+                old_value: 'old_value',
+                new_value: config.value,
+                changed_at: new Date(Date.now() - 86400000).toISOString(),
+                changed_by: 'admin@example.com',
+                reason: 'Updated for security',
+            },
+            {
+                id: '2',
+                config_key: config.key,
+                old_value: 'older_value',
+                new_value: 'old_value',
+                changed_at: new Date(Date.now() - 86400000 * 7).toISOString(),
+                changed_by: 'admin@example.com',
+            },
         ]);
     };
 
     const handleExportConfig = () => {
-        const exportData = configs.filter(c => !c.is_sensitive).reduce((acc, c) => {
-            acc[c.key] = c.value;
-            return acc;
-        }, {} as Record<string, string>);
+        const exportData = configs
+            .filter((c) => !c.is_sensitive)
+            .reduce(
+                (acc, c) => {
+                    acc[c.key] = c.value;
+                    return acc;
+                },
+                {} as Record<string, string>,
+            );
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -192,27 +330,29 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         });
     };
 
-    const filteredConfigs = configs.filter(c => {
-        const matchesSearch = !searchTerm ||
+    const filteredConfigs = configs.filter((c) => {
+        const matchesSearch =
+            !searchTerm ||
             c.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.description?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = selectedCategory === 'all' || c.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    const groupedConfigs = filteredConfigs.reduce((acc, config) => {
-        if (!acc[config.category]) {
-            acc[config.category] = [];
-        }
-        acc[config.category].push(config);
-        return acc;
-    }, {} as Record<string, ConfigItem[]>);
+    const groupedConfigs = filteredConfigs.reduce(
+        (acc, config) => {
+            if (!acc[config.category]) {
+                acc[config.category] = [];
+            }
+            acc[config.category].push(config);
+            return acc;
+        },
+        {} as Record<string, ConfigItem[]>,
+    );
 
     const toggleCategory = (category: string) => {
         setExpandedCategories((prev) =>
-            prev.includes(category)
-                ? prev.filter(c => c !== category)
-                : [...prev, category]
+            prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
         );
     };
 
@@ -222,9 +362,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white">Configuration Management</h2>
-                    <p className="text-slate-400 text-sm">
-                        Manage system settings and environment configurations
-                    </p>
+                    <p className="text-slate-400 text-sm">Manage system settings and environment configurations</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -252,9 +390,11 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                         onClick={() => setSelectedEnvironment(env)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             selectedEnvironment === env
-                                ? env === 'production' ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                : env === 'staging' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                ? env === 'production'
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                    : env === 'staging'
+                                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                         }`}
                     >
@@ -301,20 +441,18 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
                     <div className="text-sm text-slate-400">Sensitive</div>
                     <div className="text-2xl font-bold text-amber-400">
-                        {configs.filter(c => c.is_sensitive).length}
+                        {configs.filter((c) => c.is_sensitive).length}
                     </div>
                 </div>
                 <div className="p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/30">
                     <div className="text-sm text-slate-400">Categories</div>
                     <div className="text-2xl font-bold text-cyan-400">
-                        {new Set(configs.map(c => c.category)).size}
+                        {new Set(configs.map((c) => c.category)).size}
                     </div>
                 </div>
                 <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
                     <div className="text-sm text-slate-400">Unsaved Changes</div>
-                    <div className="text-2xl font-bold text-purple-400">
-                        {Object.keys(unsavedChanges).length}
-                    </div>
+                    <div className="text-2xl font-bold text-purple-400">{Object.keys(unsavedChanges).length}</div>
                 </div>
             </div>
 
@@ -325,11 +463,14 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             ) : (
                 <div className="space-y-4">
                     {Object.entries(groupedConfigs).map(([category, items]) => {
-                        const catInfo = CATEGORIES.find(c => c.id === category) || { icon: '📋', label: category };
+                        const catInfo = CATEGORIES.find((c) => c.id === category) || { icon: '📋', label: category };
                         const isExpanded = expandedCategories.includes(category);
 
                         return (
-                            <div key={category} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+                            <div
+                                key={category}
+                                className="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
+                            >
                                 <button
                                     onClick={() => toggleCategory(category)}
                                     className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
@@ -386,7 +527,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                         fetchConfigs();
                         setShowAddModal(false);
                     }}
-                    categories={CATEGORIES.filter(c => c.id !== 'all')}
+                    categories={CATEGORIES.filter((c) => c.id !== 'all')}
                 />
             )}
 
@@ -414,9 +555,7 @@ const ConfigRow: React.FC<{
     onDelete: () => void;
     onHistory: () => void;
 }> = ({ config, isRevealed, onToggleReveal, onEdit, onDelete, onHistory }) => {
-    const displayValue = config.is_sensitive && !isRevealed
-        ? '••••••••••••••••'
-        : config.value;
+    const displayValue = config.is_sensitive && !isRevealed ? '••••••••••••••••' : config.value;
 
     return (
         <div className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0">
@@ -427,15 +566,17 @@ const ConfigRow: React.FC<{
                     {config.is_sensitive && <Lock className="w-3 h-3 text-amber-400" />}
                     {config.is_locked && <Lock className="w-3 h-3 text-slate-500" />}
                 </div>
-                {config.description && (
-                    <p className="text-xs text-slate-500 mt-1">{config.description}</p>
-                )}
+                {config.description && <p className="text-xs text-slate-500 mt-1">{config.description}</p>}
                 <div className="mt-1 flex items-center gap-2">
-                    <code className={`text-sm ${
-                        config.type === 'boolean'
-                            ? config.value === 'true' ? 'text-emerald-400' : 'text-red-400'
-                            : 'text-slate-300'
-                    } font-mono truncate max-w-md`}>
+                    <code
+                        className={`text-sm ${
+                            config.type === 'boolean'
+                                ? config.value === 'true'
+                                    ? 'text-emerald-400'
+                                    : 'text-red-400'
+                                : 'text-slate-300'
+                        } font-mono truncate max-w-md`}
+                    >
                         {displayValue}
                     </code>
                 </div>
@@ -517,9 +658,7 @@ const ConfigEditModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Value ({config.type})
-                        </label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Value ({config.type})</label>
                         {config.type === 'boolean' ? (
                             <select
                                 value={value}
@@ -538,7 +677,9 @@ const ConfigEditModal: React.FC<{
                             />
                         ) : (
                             <input
-                                type={config.type === 'secret' ? 'password' : config.type === 'number' ? 'number' : 'text'}
+                                type={
+                                    config.type === 'secret' ? 'password' : config.type === 'number' ? 'number' : 'text'
+                                }
                                 value={value}
                                 onChange={(e) => setValue(e.target.value)}
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
@@ -629,7 +770,9 @@ const ConfigAddModal: React.FC<{
                             <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
                             <select
                                 value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value as ConfigItem['type'] })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, type: e.target.value as ConfigItem['type'] })
+                                }
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             >
                                 <option value="string">String</option>
@@ -646,8 +789,10 @@ const ConfigAddModal: React.FC<{
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             >
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -745,9 +890,11 @@ const ConfigHistoryModal: React.FC<{
                         <div key={version.id} className="p-4 bg-white/5 rounded-lg border border-white/10">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                    <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium ${
-                                        index === 0 ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-700 text-slate-400'
-                                    }`}>
+                                    <span
+                                        className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium ${
+                                            index === 0 ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-700 text-slate-400'
+                                        }`}
+                                    >
                                         {versions.length - index}
                                     </span>
                                     <span className="text-sm text-slate-400">{version.changed_by}</span>
@@ -770,9 +917,7 @@ const ConfigHistoryModal: React.FC<{
                                     </code>
                                 </div>
                             </div>
-                            {version.reason && (
-                                <p className="text-xs text-slate-500 mt-2">Reason: {version.reason}</p>
-                            )}
+                            {version.reason && <p className="text-xs text-slate-500 mt-2">Reason: {version.reason}</p>}
                             {index > 0 && (
                                 <button className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
                                     <RotateCcw className="w-3 h-3" />
@@ -788,10 +933,4 @@ const ConfigHistoryModal: React.FC<{
 );
 
 export default EnterpriseConfigurationPanel;
-
-
-
-
-
-
 

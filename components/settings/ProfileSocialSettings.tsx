@@ -1,28 +1,18 @@
 /**
  * ProfileSocialSettings - Social media links and profile visibility
- * 
+ *
  * Features:
  * - Social media links (Twitter, GitHub, Website)
  * - Profile visibility settings
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Twitter,
-    Github,
-    Globe,
-    Eye,
-    EyeOff,
-    Users,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Eye, EyeOff, Github, Globe, Loader2, Save, Twitter, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface ProfileSocialSettingsProps {
     currentUser: User;
@@ -35,16 +25,13 @@ const VISIBILITY_OPTIONS = [
     { value: 'private', label: 'Private', icon: EyeOff, description: 'Only visible to you' },
 ] as const;
 
-export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [twitter, setTwitter] = useState(currentUser.socialLinks?.twitter || '');
     const [github, setGithub] = useState(currentUser.socialLinks?.github || '');
     const [website, setWebsite] = useState(currentUser.socialLinks?.website || '');
     const [profileVisibility, setProfileVisibility] = useState<'public' | 'team' | 'private'>(
-        currentUser.profileVisibility || 'team'
+        currentUser.profileVisibility || 'team',
     );
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -69,7 +56,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             const socialLinks: any = {};
             if (twitter.trim()) socialLinks.twitter = normalizeUrl(twitter, 'https://twitter.com/');
@@ -78,17 +65,17 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
 
             await Api.updateUser(currentUser.id, {
                 socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
-                profileVisibility
+                profileVisibility,
             });
-            
+
             onUpdateUser({
                 socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
-                profileVisibility
+                profileVisibility,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.profile.social.saved', 'Social links updated successfully'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -98,7 +85,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
         }
     };
 
-    const selectedVisibility = VISIBILITY_OPTIONS.find(opt => opt.value === profileVisibility);
+    const selectedVisibility = VISIBILITY_OPTIONS.find((opt) => opt.value === profileVisibility);
 
     return (
         <div className="space-y-6">
@@ -107,7 +94,10 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                     {t('settings.profile.social.title', 'Social Links & Visibility')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.profile.social.subtitle', 'Add your social media profiles and control who can see your profile')}
+                    {t(
+                        'settings.profile.social.subtitle',
+                        'Add your social media profiles and control who can see your profile',
+                    )}
                 </p>
             </div>
 
@@ -178,29 +168,32 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                     {VISIBILITY_OPTIONS.map((option) => {
                         const Icon = option.icon;
                         const isSelected = profileVisibility === option.value;
-                        
+
                         return (
                             <button
                                 key={option.value}
                                 onClick={() => setProfileVisibility(option.value)}
                                 className={`
                                     flex flex-col items-start gap-2 p-4 rounded-lg border-2 transition-all text-left
-                                    ${isSelected 
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20' 
-                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
+                                    ${
+                                        isSelected
+                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                                            : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
                                     }
                                 `}
                             >
-                                <Icon 
-                                    size={20} 
-                                    className={isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'} 
+                                <Icon
+                                    size={20}
+                                    className={isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'}
                                 />
                                 <div>
-                                    <div className={`text-sm font-medium ${
-                                        isSelected 
-                                            ? 'text-purple-700 dark:text-purple-300' 
-                                            : 'text-slate-600 dark:text-slate-400'
-                                    }`}>
+                                    <div
+                                        className={`text-sm font-medium ${
+                                            isSelected
+                                                ? 'text-purple-700 dark:text-purple-300'
+                                                : 'text-slate-600 dark:text-slate-400'
+                                        }`}
+                                    >
                                         {option.label}
                                     </div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -252,10 +245,4 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
 };
 
 export default ProfileSocialSettings;
-
-
-
-
-
-
 

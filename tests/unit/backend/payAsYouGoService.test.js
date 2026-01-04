@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations } from '../../fixtures/testData.js';
-import PayAsYouGoService from '../../../server/services/payAsYouGoService.js';
+import PayAsYouGoService from '../../../server/src/services/payAsYouGoService.ts';
 
 describe('PayAsYouGoService', () => {
     let mockDb;
@@ -46,12 +46,22 @@ describe('PayAsYouGoService', () => {
                 callback.call({ changes: 1 }, null);
             });
 
-            const result = await PayAsYouGoService.recordUsage(orgId, usageType, quantity, unitPrice);
+            const result = await PayAsYouGoService.recordUsage({
+                orgId,
+                usageType,
+                quantity,
+                unitPrice
+            });
             expect(result).toBeDefined();
         });
 
         it('should reject invalid usage types', async () => {
-            await expect(PayAsYouGoService.recordUsage('org1', 'invalid', 100, 1.0))
+            await expect(PayAsYouGoService.recordUsage({
+                orgId: 'org1',
+                usageType: 'invalid',
+                quantity: 100,
+                unitPrice: 1.0
+            }))
                 .rejects.toThrow('Invalid usage type: invalid');
         });
     });

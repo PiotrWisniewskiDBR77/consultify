@@ -1,13 +1,14 @@
 /**
  * AssessmentAuditLogger Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for AssessmentAuditLogger - 100% coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import AssessmentAuditLogger from '../../../../src/utils/AssessmentAuditLogger.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import AssessmentAuditLogger from '../../../../src/utils/AssessmentAuditLogger.js';
 
 describe('AssessmentAuditLogger', () => {
     let mockDb: IDatabase;
@@ -74,9 +75,11 @@ describe('AssessmentAuditLogger', () => {
         });
 
         it('should handle database errors', async () => {
-            (mockDb.run as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.run as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             const params = {
                 userId: 'user-123',
@@ -106,11 +109,10 @@ describe('AssessmentAuditLogger', () => {
                 'assessment.created',
                 'assessment',
                 'assessment-123',
-                { test: 'data' }
+                { test: 'data' },
             );
 
             expect(auditId).toBeDefined();
         });
     });
 });
-

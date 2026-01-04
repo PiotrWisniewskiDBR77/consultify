@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { BillingSettings } from '../../../components/settings/BillingSettings';
+import { BillingSettings } from '../../components/settings/BillingSettings';
 import { User } from '../../../types';
 
 // Mock hooks

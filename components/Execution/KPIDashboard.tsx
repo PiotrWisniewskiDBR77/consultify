@@ -1,30 +1,30 @@
 /**
  * KPIDashboard Component
- * 
+ *
  * PMO KPI Monitoring & Performance Tracking
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Performance Measurement (Clause 4.5.2)
  * - PMI PMBOK 7th Edition - Earned Value Management / KPIs
  * - PRINCE2 - Benefits Realization
- * 
+ *
  * PMO Domain: PERFORMANCE_MONITORING, BENEFITS_REALIZATION
  */
 
-import React, { useState } from 'react';
 import {
-    TrendingUp,
-    TrendingDown,
-    Target,
     AlertTriangle,
-    CheckCircle2,
-    Calendar,
-    Plus,
-    Edit2,
     BarChart3,
+    Calendar,
+    CheckCircle2,
+    ChevronRight,
+    Edit2,
     LineChart,
-    ChevronRight
+    Plus,
+    Target,
+    TrendingDown,
+    TrendingUp,
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 export type KPIStatus = 'ON_TARGET' | 'AT_RISK' | 'OFF_TARGET' | 'ACHIEVED';
 export type KPICategory = 'DELIVERY' | 'QUALITY' | 'FINANCIAL' | 'ADOPTION' | 'SATISFACTION';
@@ -54,30 +54,30 @@ interface KPIDashboardProps {
 }
 
 const STATUS_CONFIG: Record<KPIStatus, { color: string; bgColor: string; icon: React.ReactNode; label: string }> = {
-    ON_TARGET: { 
-        color: 'text-green-600', 
-        bgColor: 'bg-green-100 dark:bg-green-900/20', 
+    ON_TARGET: {
+        color: 'text-green-600',
+        bgColor: 'bg-green-100 dark:bg-green-900/20',
         icon: <CheckCircle2 size={14} />,
-        label: 'On Target'
+        label: 'On Target',
     },
-    AT_RISK: { 
-        color: 'text-amber-600', 
-        bgColor: 'bg-amber-100 dark:bg-amber-900/20', 
+    AT_RISK: {
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-100 dark:bg-amber-900/20',
         icon: <AlertTriangle size={14} />,
-        label: 'At Risk'
+        label: 'At Risk',
     },
-    OFF_TARGET: { 
-        color: 'text-red-600', 
-        bgColor: 'bg-red-100 dark:bg-red-900/20', 
+    OFF_TARGET: {
+        color: 'text-red-600',
+        bgColor: 'bg-red-100 dark:bg-red-900/20',
         icon: <TrendingDown size={14} />,
-        label: 'Off Target'
+        label: 'Off Target',
     },
-    ACHIEVED: { 
-        color: 'text-purple-600', 
-        bgColor: 'bg-purple-100 dark:bg-purple-900/20', 
+    ACHIEVED: {
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100 dark:bg-purple-900/20',
         icon: <Target size={14} />,
-        label: 'Achieved'
-    }
+        label: 'Achieved',
+    },
 };
 
 const CATEGORY_COLORS: Record<KPICategory, string> = {
@@ -85,7 +85,7 @@ const CATEGORY_COLORS: Record<KPICategory, string> = {
     QUALITY: 'bg-purple-500',
     FINANCIAL: 'bg-green-500',
     ADOPTION: 'bg-amber-500',
-    SATISFACTION: 'bg-cyan-500'
+    SATISFACTION: 'bg-cyan-500',
 };
 
 export const KPIDashboard: React.FC<KPIDashboardProps> = ({
@@ -93,7 +93,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
     kpis = [],
     onAddKPI,
     onUpdateKPI,
-    onCreateCorrectiveAction
+    onCreateCorrectiveAction,
 }) => {
     const [selectedCategory, setSelectedCategory] = useState<'all' | KPICategory>('all');
     const [selectedPeriod, setSelectedPeriod] = useState<string>(new Date().toISOString().slice(0, 7));
@@ -114,8 +114,8 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             history: [
                 { date: '2024-10', value: 75 },
                 { date: '2024-11', value: 82 },
-                { date: '2024-12', value: 88 }
-            ]
+                { date: '2024-12', value: 88 },
+            ],
         },
         {
             id: 'kpi-2',
@@ -128,7 +128,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             unit: '%',
             trend: 'UP',
             lastUpdated: '2024-12-28',
-            linkedInitiativeName: 'Digital Process Automation'
+            linkedInitiativeName: 'Digital Process Automation',
         },
         {
             id: 'kpi-3',
@@ -140,7 +140,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             actual: 52,
             unit: '%',
             trend: 'STABLE',
-            lastUpdated: '2024-12-28'
+            lastUpdated: '2024-12-28',
         },
         {
             id: 'kpi-4',
@@ -152,7 +152,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             actual: 3,
             unit: 'defects',
             trend: 'DOWN',
-            lastUpdated: '2024-12-28'
+            lastUpdated: '2024-12-28',
         },
         {
             id: 'kpi-5',
@@ -164,7 +164,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             actual: 4.2,
             unit: '/5',
             trend: 'UP',
-            lastUpdated: '2024-12-28'
+            lastUpdated: '2024-12-28',
         },
         {
             id: 'kpi-6',
@@ -177,21 +177,20 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             unit: '%',
             trend: 'UP',
             lastUpdated: '2024-12-28',
-            linkedInitiativeName: 'Workflow Automation'
-        }
+            linkedInitiativeName: 'Workflow Automation',
+        },
     ]);
 
-    const filteredKPIs = selectedCategory === 'all' 
-        ? localKPIs 
-        : localKPIs.filter(kpi => kpi.category === selectedCategory);
+    const filteredKPIs =
+        selectedCategory === 'all' ? localKPIs : localKPIs.filter((kpi) => kpi.category === selectedCategory);
 
     // Summary Stats
     const stats = {
         total: localKPIs.length,
-        onTarget: localKPIs.filter(k => k.status === 'ON_TARGET').length,
-        atRisk: localKPIs.filter(k => k.status === 'AT_RISK').length,
-        offTarget: localKPIs.filter(k => k.status === 'OFF_TARGET').length,
-        achieved: localKPIs.filter(k => k.status === 'ACHIEVED').length
+        onTarget: localKPIs.filter((k) => k.status === 'ON_TARGET').length,
+        atRisk: localKPIs.filter((k) => k.status === 'AT_RISK').length,
+        offTarget: localKPIs.filter((k) => k.status === 'OFF_TARGET').length,
+        achieved: localKPIs.filter((k) => k.status === 'ACHIEVED').length,
     };
 
     const getProgressPercent = (actual: number, target: number, isLowerBetter: boolean = false) => {
@@ -283,7 +282,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
 
             {/* Category Filter */}
             <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                {(['all', 'DELIVERY', 'QUALITY', 'FINANCIAL', 'ADOPTION', 'SATISFACTION'] as const).map(cat => (
+                {(['all', 'DELIVERY', 'QUALITY', 'FINANCIAL', 'ADOPTION', 'SATISFACTION'] as const).map((cat) => (
                     <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
@@ -293,9 +292,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                         }`}
                     >
-                        {cat !== 'all' && (
-                            <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[cat]}`} />
-                        )}
+                        {cat !== 'all' && <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[cat]}`} />}
                         {cat === 'all' ? 'All Categories' : cat.charAt(0) + cat.slice(1).toLowerCase()}
                     </button>
                 ))}
@@ -303,9 +300,9 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
 
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-2 gap-4">
-                {filteredKPIs.map(kpi => {
+                {filteredKPIs.map((kpi) => {
                     const statusConfig = STATUS_CONFIG[kpi.status];
-                    const isLowerBetter = ['Budget Variance', 'Defect Rate'].some(n => kpi.name.includes(n));
+                    const isLowerBetter = ['Budget Variance', 'Defect Rate'].some((n) => kpi.name.includes(n));
                     const progressPercent = getProgressPercent(kpi.actual, kpi.target, isLowerBetter);
                     const needsAction = kpi.status === 'OFF_TARGET' || kpi.status === 'AT_RISK';
 
@@ -313,8 +310,8 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                         <div
                             key={kpi.id}
                             className={`bg-white dark:bg-navy-900 rounded-xl border-2 p-4 transition-all ${
-                                kpi.status === 'OFF_TARGET' 
-                                    ? 'border-red-200 dark:border-red-500/30' 
+                                kpi.status === 'OFF_TARGET'
+                                    ? 'border-red-200 dark:border-red-500/30'
                                     : 'border-slate-200 dark:border-white/10'
                             }`}
                         >
@@ -325,7 +322,9 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                                         {kpi.category}
                                     </span>
                                 </div>
-                                <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+                                <span
+                                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+                                >
                                     {statusConfig.icon}
                                     {statusConfig.label}
                                 </span>
@@ -344,14 +343,21 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                                         <span className="text-sm font-normal text-slate-400">{kpi.unit}</span>
                                     </div>
                                     <div className="text-xs text-slate-500 flex items-center gap-2">
-                                        Target: {kpi.target}{kpi.unit}
+                                        Target: {kpi.target}
+                                        {kpi.unit}
                                         {renderTrendIndicator(kpi.trend)}
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className={`text-2xl font-bold ${
-                                        progressPercent >= 100 ? 'text-green-600' : progressPercent >= 80 ? 'text-amber-600' : 'text-red-600'
-                                    }`}>
+                                    <div
+                                        className={`text-2xl font-bold ${
+                                            progressPercent >= 100
+                                                ? 'text-green-600'
+                                                : progressPercent >= 80
+                                                  ? 'text-amber-600'
+                                                  : 'text-red-600'
+                                        }`}
+                                    >
                                         {Math.round(progressPercent)}%
                                     </div>
                                     <div className="text-xs text-slate-400">of target</div>
@@ -362,7 +368,11 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                             <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden mb-4">
                                 <div
                                     className={`h-full rounded-full transition-all ${
-                                        progressPercent >= 100 ? 'bg-green-500' : progressPercent >= 80 ? 'bg-amber-500' : 'bg-red-500'
+                                        progressPercent >= 100
+                                            ? 'bg-green-500'
+                                            : progressPercent >= 80
+                                              ? 'bg-amber-500'
+                                              : 'bg-red-500'
                                     }`}
                                     style={{ width: `${Math.min(progressPercent, 100)}%` }}
                                 />
@@ -400,12 +410,4 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         </div>
     );
 };
-
-
-
-
-
-
-
-
 

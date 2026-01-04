@@ -1,6 +1,6 @@
 /**
  * Help Content Configuration
- * 
+ *
  * Context-aware help content per view/route.
  */
 
@@ -250,7 +250,7 @@ export const getHelpForView = (path: string): HelpItem[] => {
     }
 
     // Fallback to default
-    const defaultConfig = HELP_CONTENT.find(c => c.viewId === 'default');
+    const defaultConfig = HELP_CONTENT.find((c) => c.viewId === 'default');
     return defaultConfig?.items || [];
 };
 

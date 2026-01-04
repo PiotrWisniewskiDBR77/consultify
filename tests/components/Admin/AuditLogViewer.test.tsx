@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { AuditLogViewer } from '../../../components/Admin/AuditLogViewer';
+import { AuditLogViewer } from '../../components/Admin/AuditLogViewer';
 import api from '../../../services/api';
 
 // Mock API
@@ -195,6 +195,7 @@ describe('AuditLogViewer', () => {
         expect(screen.getByText('Ładowanie...')).toBeInTheDocument();
     });
 });
+
 
 
 

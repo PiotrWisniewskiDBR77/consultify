@@ -1,21 +1,33 @@
 /**
  * RapidLean Assessment Wizard
  * Guided 18-question assessment for Lean maturity
- * 
+ *
  * Sprint 4 Enhancements:
  * - Mode selection: Quick Assessment vs Full Observation
  * - Progress saving with localStorage
  * - Help tooltips with benchmarking context
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    ArrowRight, ArrowLeft, Check, HelpCircle, Award,
-    Zap, ClipboardList, Save, RefreshCw, Pause,
-    BarChart3, AlertCircle, Clock, Target
+    AlertCircle,
+    ArrowLeft,
+    ArrowRight,
+    Award,
+    BarChart3,
+    Check,
+    ClipboardList,
+    Clock,
+    HelpCircle,
+    Pause,
+    RefreshCw,
+    Save,
+    Target,
+    Zap,
 } from 'lucide-react';
-import { RAPID_LEAN_QUESTIONNAIRE, LEAN_SCALE, LeanDimension } from '../../data/rapidLeanQuestionnaire';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { LEAN_SCALE, LeanDimension, RAPID_LEAN_QUESTIONNAIRE } from '../../data/rapidLeanQuestionnaire';
 
 // Storage key for drafts
 const DRAFT_STORAGE_KEY = 'rapidlean_wizard_draft';
@@ -39,7 +51,7 @@ const INDUSTRY_BENCHMARKS: Record<string, number> = {
     flowPullSystems: 2.3,
     qualityAtSource: 3.1,
     continuousImprovement: 2.6,
-    visualManagement: 2.4
+    visualManagement: 2.4,
 };
 
 interface RapidLeanWizardProps {
@@ -49,12 +61,7 @@ interface RapidLeanWizardProps {
     initialMode?: AssessmentMode;
 }
 
-export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
-    projectId,
-    onComplete,
-    onCancel,
-    initialMode
-}) => {
+export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({ projectId, onComplete, onCancel, initialMode }) => {
     const { t } = useTranslation();
 
     // Mode selection state
@@ -114,7 +121,7 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
             currentDimensionIndex,
             currentQuestionIndex,
             responses,
-            lastSaved: Date.now()
+            lastSaved: Date.now(),
         };
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
         setLastSaved(new Date());
@@ -160,7 +167,7 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
     };
 
     const handleAnswer = (score: number) => {
-        setResponses(prev => ({ ...prev, [currentQuestion.id]: score }));
+        setResponses((prev) => ({ ...prev, [currentQuestion.id]: score }));
 
         // Auto-advance
         setTimeout(() => {
@@ -206,7 +213,8 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
         onCancel();
     };
 
-    const isLastQuestion = currentDimensionIndex === RAPID_LEAN_QUESTIONNAIRE.length - 1 &&
+    const isLastQuestion =
+        currentDimensionIndex === RAPID_LEAN_QUESTIONNAIRE.length - 1 &&
         currentQuestionIndex === currentDimension.questions.length - 1;
 
     // MODE SELECTION SCREEN
@@ -276,13 +284,12 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
                                     </div>
                                 </div>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                    18 structured questions for rapid Lean maturity evaluation.
-                                    Ideal for initial assessments or progress checks.
+                                    18 structured questions for rapid Lean maturity evaluation. Ideal for initial
+                                    assessments or progress checks.
                                 </p>
                                 <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                                     <li className="flex items-center gap-1">
-                                        <Check className="w-3 h-3 text-green-500" />
-                                        6 Lean dimensions covered
+                                        <Check className="w-3 h-3 text-green-500" />6 Lean dimensions covered
                                     </li>
                                     <li className="flex items-center gap-1">
                                         <Check className="w-3 h-3 text-green-500" />
@@ -314,8 +321,8 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
                                     </div>
                                 </div>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                    Complete Gemba Walk with photo evidence and detailed observations.
-                                    Best for comprehensive assessments.
+                                    Complete Gemba Walk with photo evidence and detailed observations. Best for
+                                    comprehensive assessments.
                                 </p>
                                 <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                                     <li className="flex items-center gap-1">
@@ -375,9 +382,7 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-240px)]">
                     {/* Dimension Description */}
                     <div className="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
-                        <p className="text-gray-700 dark:text-gray-300">
-                            {currentDimension.description}
-                        </p>
+                        <p className="text-gray-700 dark:text-gray-300">{currentDimension.description}</p>
                     </div>
 
                     {/* Question */}
@@ -394,9 +399,7 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
                             </button>
                         </div>
 
-                        <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
-                            {currentQuestion.text}
-                        </p>
+                        <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">{currentQuestion.text}</p>
 
                         {showHelp && (
                             <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 mb-4">
@@ -419,24 +422,21 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
 
                     {/* Rating Buttons */}
                     <div className="space-y-3">
-                        {LEAN_SCALE.map(scale => (
+                        {LEAN_SCALE.map((scale) => (
                             <button
                                 key={scale.value}
                                 onClick={() => handleAnswer(scale.value)}
-                                className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${responses[currentQuestion.id] === scale.value
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                                    }`}
+                                className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                                    responses[currentQuestion.id] === scale.value
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-2xl font-bold text-blue-500">
-                                            {scale.value}
-                                        </span>
+                                        <span className="text-2xl font-bold text-blue-500">{scale.value}</span>
                                         <div>
-                                            <p className="font-semibold text-gray-800 dark:text-white">
-                                                {scale.label}
-                                            </p>
+                                            <p className="font-semibold text-gray-800 dark:text-white">{scale.label}</p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                                 {scale.description}
                                             </p>

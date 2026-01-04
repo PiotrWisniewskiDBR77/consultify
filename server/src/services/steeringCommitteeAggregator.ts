@@ -1,14 +1,12 @@
 /**
  * Steeringcommitteeaggregator Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadSteeringcommitteeaggregator = createCachedLazyService('../../services/steeringCommitteeAggregator.js');
+import service from '../../services/steeringCommitteeAggregator.js';
 
 // Export default instance (for backward compatibility)
-export default loadSteeringcommitteeaggregator();
+export default service;

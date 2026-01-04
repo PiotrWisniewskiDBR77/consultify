@@ -1,11 +1,11 @@
 /**
  * EmailTemplatesPanel - Placeholder Component
- * 
+ *
  * Future functionality: Manage email templates for system notifications.
  */
 
+import { FileText, Mail, Palette, Send } from 'lucide-react';
 import React from 'react';
-import { Mail, FileText, Palette, Send } from 'lucide-react';
 
 export const EmailTemplatesPanel: React.FC = () => {
     return (
@@ -14,14 +14,12 @@ export const EmailTemplatesPanel: React.FC = () => {
                 <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-600/10 flex items-center justify-center">
                     <Mail size={32} className="text-pink-400" />
                 </div>
-                
-                <h2 className="text-2xl font-bold text-white mb-3">
-                    Email Templates
-                </h2>
-                
+
+                <h2 className="text-2xl font-bold text-white mb-3">Email Templates</h2>
+
                 <p className="text-slate-400 mb-8">
-                    Customize email notifications sent to users. Edit templates for 
-                    welcome emails, reports, alerts, and more.
+                    Customize email notifications sent to users. Edit templates for welcome emails, reports, alerts, and
+                    more.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -52,12 +50,4 @@ export const EmailTemplatesPanel: React.FC = () => {
 };
 
 export default EmailTemplatesPanel;
-
-
-
-
-
-
-
-
 

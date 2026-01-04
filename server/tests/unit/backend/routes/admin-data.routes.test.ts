@@ -3,8 +3,9 @@
  * Unit tests for admin-data routes
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { AuthRequest } from '../../../../src/middleware/auth.middleware.js';
 
 // Mock database
@@ -79,7 +80,7 @@ describe('Admin Data Routes', () => {
             });
 
             const { default: router } = await import('../../../../src/routes/admin-data.routes.js');
-            
+
             // Note: This is a simplified test - full route testing requires Express app setup
             expect(mockDb.all).toBeDefined();
         });
@@ -166,7 +167,4 @@ describe('Admin Data Routes', () => {
         });
     });
 });
-
-
-
 

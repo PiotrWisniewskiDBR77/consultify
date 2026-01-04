@@ -2,7 +2,8 @@
 // AI Core Layer — Enterprise PMO Brain
 // Enhanced with HITL pending approvals context
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import crypto from 'crypto';
 
 // Lazy loading dependencies to avoid circular dependencies in ESM

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MapPin, ChevronDown } from 'lucide-react';
+import { ChevronDown, MapPin } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 /**
  * CRIT-04: Location Filter Component
@@ -18,11 +18,7 @@ interface LocationFilterProps {
     organizationId?: string;
 }
 
-export const LocationFilter: React.FC<LocationFilterProps> = ({
-    selectedIds,
-    onChange,
-    organizationId
-}) => {
+export const LocationFilter: React.FC<LocationFilterProps> = ({ selectedIds, onChange, organizationId }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [locations, setLocations] = useState<Location[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +31,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
         setIsLoading(true);
         try {
             const res = await fetch('/api/locations', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -45,14 +41,12 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
                 setLocations([
                     { id: 'all', name: 'All Locations' },
                     { id: 'hq', name: 'Headquarters' },
-                    { id: 'remote', name: 'Remote' }
+                    { id: 'remote', name: 'Remote' },
                 ]);
             }
         } catch (err) {
             // Fallback data
-            setLocations([
-                { id: 'all', name: 'All Locations' }
-            ]);
+            setLocations([{ id: 'all', name: 'All Locations' }]);
         } finally {
             setIsLoading(false);
         }
@@ -65,17 +59,18 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
         }
 
         if (selectedIds.includes(id)) {
-            onChange(selectedIds.filter(i => i !== id));
+            onChange(selectedIds.filter((i) => i !== id));
         } else {
             onChange([...selectedIds, id]);
         }
     };
 
-    const displayText = selectedIds.length === 0
-        ? 'All Locations'
-        : selectedIds.length === 1
-            ? locations.find(l => l.id === selectedIds[0])?.name || 'Selected'
-            : `${selectedIds.length} locations`;
+    const displayText =
+        selectedIds.length === 0
+            ? 'All Locations'
+            : selectedIds.length === 1
+              ? locations.find((l) => l.id === selectedIds[0])?.name || 'Selected'
+              : `${selectedIds.length} locations`;
 
     return (
         <div className="relative">
@@ -98,28 +93,52 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
                             <>
                                 <button
                                     onClick={() => toggleLocation('all')}
-                                    className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${selectedIds.length === 0 ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-slate-600 dark:text-slate-300'
-                                        }`}
+                                    className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                                        selectedIds.length === 0
+                                            ? 'text-blue-600 dark:text-blue-400 font-medium'
+                                            : 'text-slate-600 dark:text-slate-300'
+                                    }`}
                                 >
-                                    <div className={`w-4 h-4 rounded border ${selectedIds.length === 0 ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}>
-                                        {selectedIds.length === 0 && <span className="text-white text-xs flex items-center justify-center h-full">✓</span>}
+                                    <div
+                                        className={`w-4 h-4 rounded border ${selectedIds.length === 0 ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}
+                                    >
+                                        {selectedIds.length === 0 && (
+                                            <span className="text-white text-xs flex items-center justify-center h-full">
+                                                ✓
+                                            </span>
+                                        )}
                                     </div>
                                     All Locations
                                 </button>
-                                {locations.filter(l => l.id !== 'all').map(loc => (
-                                    <button
-                                        key={loc.id}
-                                        onClick={() => toggleLocation(loc.id)}
-                                        className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${selectedIds.includes(loc.id) ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-slate-600 dark:text-slate-300'
+                                {locations
+                                    .filter((l) => l.id !== 'all')
+                                    .map((loc) => (
+                                        <button
+                                            key={loc.id}
+                                            onClick={() => toggleLocation(loc.id)}
+                                            className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                                                selectedIds.includes(loc.id)
+                                                    ? 'text-blue-600 dark:text-blue-400 font-medium'
+                                                    : 'text-slate-600 dark:text-slate-300'
                                             }`}
-                                    >
-                                        <div className={`w-4 h-4 rounded border ${selectedIds.includes(loc.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}>
-                                            {selectedIds.includes(loc.id) && <span className="text-white text-xs flex items-center justify-center h-full">✓</span>}
-                                        </div>
-                                        {loc.name}
-                                        {loc.country && <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">({loc.country})</span>}
-                                    </button>
-                                ))}
+                                        >
+                                            <div
+                                                className={`w-4 h-4 rounded border ${selectedIds.includes(loc.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}
+                                            >
+                                                {selectedIds.includes(loc.id) && (
+                                                    <span className="text-white text-xs flex items-center justify-center h-full">
+                                                        ✓
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {loc.name}
+                                            {loc.country && (
+                                                <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+                                                    ({loc.country})
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
                             </>
                         )}
                     </div>

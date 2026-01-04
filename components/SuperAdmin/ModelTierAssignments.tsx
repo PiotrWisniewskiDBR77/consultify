@@ -1,6 +1,6 @@
 /**
  * ModelTierAssignments - SuperAdmin UI for Model-to-Tier Configuration
- * 
+ *
  * Features:
  * - Assign models to multiple tiers (many-to-many)
  * - Drag & drop priority ordering within tiers
@@ -8,27 +8,27 @@
  * - Real-time health status display
  */
 
-import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
 import {
-    Layers,
-    Server,
-    Plus,
-    Trash2,
-    GripVertical,
-    RefreshCw,
-    CheckCircle,
     AlertTriangle,
-    XCircle,
-    Save,
+    Brain,
+    CheckCircle,
     ChevronDown,
     ChevronUp,
-    Zap,
     Crown,
+    GripVertical,
+    Layers,
+    Plus,
+    RefreshCw,
+    Save,
+    Server,
     Sparkles,
-    Brain
+    Trash2,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
 interface LLMProvider {
     id: string;
@@ -62,7 +62,7 @@ const TIER_CONFIG = {
         description: 'Fast, cost-effective models for simple tasks',
         bgClass: 'bg-emerald-500/10 border-emerald-500/30',
         textClass: 'text-emerald-400',
-        badgeClass: 'bg-emerald-500/20 text-emerald-300'
+        badgeClass: 'bg-emerald-500/20 text-emerald-300',
     },
     STANDARD: {
         icon: Server,
@@ -70,7 +70,7 @@ const TIER_CONFIG = {
         description: 'Balanced performance for most use cases',
         bgClass: 'bg-blue-500/10 border-blue-500/30',
         textClass: 'text-blue-400',
-        badgeClass: 'bg-blue-500/20 text-blue-300'
+        badgeClass: 'bg-blue-500/20 text-blue-300',
     },
     PREMIUM: {
         icon: Crown,
@@ -78,7 +78,7 @@ const TIER_CONFIG = {
         description: 'High-quality output for complex tasks',
         bgClass: 'bg-violet-500/10 border-violet-500/30',
         textClass: 'text-violet-400',
-        badgeClass: 'bg-violet-500/20 text-violet-300'
+        badgeClass: 'bg-violet-500/20 text-violet-300',
     },
     REASONING: {
         icon: Brain,
@@ -86,8 +86,8 @@ const TIER_CONFIG = {
         description: 'Advanced reasoning for deep analysis',
         bgClass: 'bg-amber-500/10 border-amber-500/30',
         textClass: 'text-amber-400',
-        badgeClass: 'bg-amber-500/20 text-amber-300'
-    }
+        badgeClass: 'bg-amber-500/20 text-amber-300',
+    },
 };
 
 export const ModelTierAssignments: React.FC = () => {
@@ -95,7 +95,9 @@ export const ModelTierAssignments: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [providers, setProviders] = useState<LLMProvider[]>([]);
     const [assignments, setAssignments] = useState<TierData>({});
-    const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']));
+    const [expandedTiers, setExpandedTiers] = useState<Set<string>>(
+        new Set(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']),
+    );
     const [hasChanges, setHasChanges] = useState(false);
     const [pendingChanges, setPendingChanges] = useState<{
         additions: { providerId: string; tier: string; priority: number }[];
@@ -112,11 +114,11 @@ export const ModelTierAssignments: React.FC = () => {
         try {
             const [assignmentsRes, providersRes] = await Promise.all([
                 fetch('/api/llm/tiers/assignments', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 }),
                 fetch('/api/llm/providers', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                })
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }),
             ]);
 
             if (assignmentsRes.ok) {
@@ -137,12 +139,12 @@ export const ModelTierAssignments: React.FC = () => {
     };
 
     const getUnassignedProviders = (tier: string) => {
-        const assignedIds = new Set((assignments[tier] || []).map(a => a.provider_id));
-        return providers.filter(p => !assignedIds.has(p.id));
+        const assignedIds = new Set((assignments[tier] || []).map((a) => a.provider_id));
+        return providers.filter((p) => !assignedIds.has(p.id));
     };
 
     const handleAddToTier = async (providerId: string, tier: string) => {
-        const provider = providers.find(p => p.id === providerId);
+        const provider = providers.find((p) => p.id === providerId);
         if (!provider) return;
 
         const currentAssignments = assignments[tier] || [];
@@ -158,12 +160,12 @@ export const ModelTierAssignments: React.FC = () => {
             name: provider.name,
             provider: provider.provider,
             model_id: provider.model_id,
-            health_status: provider.health_status || 'unknown'
+            health_status: provider.health_status || 'unknown',
         };
 
-        setAssignments(prev => ({
+        setAssignments((prev) => ({
             ...prev,
-            [tier]: [...(prev[tier] || []), newAssignment]
+            [tier]: [...(prev[tier] || []), newAssignment],
         }));
 
         // Save immediately
@@ -172,31 +174,31 @@ export const ModelTierAssignments: React.FC = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ providerId, tier, priority: newPriority })
+                body: JSON.stringify({ providerId, tier, priority: newPriority }),
             });
 
             if (!res.ok) throw new Error('Failed to assign');
             toast.success(`Added ${provider.name} to ${tier}`);
         } catch (err) {
             // Revert optimistic update
-            setAssignments(prev => ({
+            setAssignments((prev) => ({
                 ...prev,
-                [tier]: (prev[tier] || []).filter(a => a.provider_id !== providerId)
+                [tier]: (prev[tier] || []).filter((a) => a.provider_id !== providerId),
             }));
             toast.error('Failed to add model to tier');
         }
     };
 
     const handleRemoveFromTier = async (providerId: string, tier: string) => {
-        const assignment = (assignments[tier] || []).find(a => a.provider_id === providerId);
+        const assignment = (assignments[tier] || []).find((a) => a.provider_id === providerId);
         if (!assignment) return;
 
         // Optimistic update
-        setAssignments(prev => ({
+        setAssignments((prev) => ({
             ...prev,
-            [tier]: (prev[tier] || []).filter(a => a.provider_id !== providerId)
+            [tier]: (prev[tier] || []).filter((a) => a.provider_id !== providerId),
         }));
 
         try {
@@ -204,18 +206,18 @@ export const ModelTierAssignments: React.FC = () => {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ providerId, tier })
+                body: JSON.stringify({ providerId, tier }),
             });
 
             if (!res.ok) throw new Error('Failed to remove');
             toast.success(`Removed ${assignment.name} from ${tier}`);
         } catch (err) {
             // Revert
-            setAssignments(prev => ({
+            setAssignments((prev) => ({
                 ...prev,
-                [tier]: [...(prev[tier] || []), assignment]
+                [tier]: [...(prev[tier] || []), assignment],
             }));
             toast.error('Failed to remove model from tier');
         }
@@ -223,9 +225,9 @@ export const ModelTierAssignments: React.FC = () => {
 
     const handleReorder = async (tier: string, newOrder: TierAssignment[]) => {
         // Update local state immediately
-        setAssignments(prev => ({
+        setAssignments((prev) => ({
             ...prev,
-            [tier]: newOrder.map((item, idx) => ({ ...item, priority: idx }))
+            [tier]: newOrder.map((item, idx) => ({ ...item, priority: idx })),
         }));
 
         // Save priority changes
@@ -235,13 +237,13 @@ export const ModelTierAssignments: React.FC = () => {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                     body: JSON.stringify({
                         providerId: newOrder[i].provider_id,
                         tier,
-                        priority: i
-                    })
+                        priority: i,
+                    }),
                 });
             }
         } catch (err) {
@@ -250,7 +252,7 @@ export const ModelTierAssignments: React.FC = () => {
     };
 
     const toggleTier = (tier: string) => {
-        setExpandedTiers(prev => {
+        setExpandedTiers((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(tier)) {
                 newSet.delete(tier);
@@ -263,10 +265,14 @@ export const ModelTierAssignments: React.FC = () => {
 
     const getHealthIcon = (status: string) => {
         switch (status) {
-            case 'healthy': return <CheckCircle size={14} className="text-emerald-400" />;
-            case 'degraded': return <AlertTriangle size={14} className="text-amber-400" />;
-            case 'unhealthy': return <XCircle size={14} className="text-red-400" />;
-            default: return <Server size={14} className="text-slate-400" />;
+            case 'healthy':
+                return <CheckCircle size={14} className="text-emerald-400" />;
+            case 'degraded':
+                return <AlertTriangle size={14} className="text-amber-400" />;
+            case 'unhealthy':
+                return <XCircle size={14} className="text-red-400" />;
+            default:
+                return <Server size={14} className="text-slate-400" />;
         }
     };
 
@@ -290,8 +296,8 @@ export const ModelTierAssignments: React.FC = () => {
                         Model Tier Assignments
                     </h2>
                     <p className="text-slate-400 mt-1">
-                        Assign models to performance tiers. Models can belong to multiple tiers.
-                        Drag to reorder priority within each tier.
+                        Assign models to performance tiers. Models can belong to multiple tiers. Drag to reorder
+                        priority within each tier.
                     </p>
                 </div>
                 <button
@@ -310,9 +316,9 @@ export const ModelTierAssignments: React.FC = () => {
                     <div>
                         <h4 className="text-blue-300 font-medium">How It Works</h4>
                         <p className="text-sm text-slate-400 mt-1">
-                            When a user selects a tier, the system automatically picks the best available model 
-                            using round-robin selection. If all models in a tier fail, the system falls back 
-                            to lower tiers automatically.
+                            When a user selects a tier, the system automatically picks the best available model using
+                            round-robin selection. If all models in a tier fail, the system falls back to lower tiers
+                            automatically.
                         </p>
                     </div>
                 </div>
@@ -327,10 +333,7 @@ export const ModelTierAssignments: React.FC = () => {
                     const unassignedProviders = getUnassignedProviders(tier);
 
                     return (
-                        <div 
-                            key={tier}
-                            className={`rounded-2xl border ${config.bgClass} overflow-hidden`}
-                        >
+                        <div key={tier} className={`rounded-2xl border ${config.bgClass} overflow-hidden`}>
                             {/* Tier Header */}
                             <button
                                 onClick={() => toggleTier(tier)}
@@ -428,7 +431,7 @@ export const ModelTierAssignments: React.FC = () => {
                                                         className="w-full px-4 py-3 bg-navy-900/30 border border-dashed border-white/20 rounded-xl text-slate-400 text-sm cursor-pointer hover:border-white/30 transition-colors"
                                                     >
                                                         <option value="">+ Add model to {tier}</option>
-                                                        {unassignedProviders.map(p => (
+                                                        {unassignedProviders.map((p) => (
                                                             <option key={p.id} value={p.id}>
                                                                 {p.name} ({p.provider} - {p.model_id})
                                                             </option>
@@ -452,13 +455,13 @@ export const ModelTierAssignments: React.FC = () => {
                     Available Providers ({providers.length})
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {providers.map(p => {
+                    {providers.map((p) => {
                         const assignedTiers = Object.entries(assignments)
-                            .filter(([, items]) => items.some(a => a.provider_id === p.id))
+                            .filter(([, items]) => items.some((a) => a.provider_id === p.id))
                             .map(([tier]) => tier);
 
                         return (
-                            <div 
+                            <div
                                 key={p.id}
                                 className="flex items-center justify-between p-3 bg-navy-900/30 rounded-lg border border-white/5"
                             >
@@ -470,8 +473,8 @@ export const ModelTierAssignments: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex gap-1">
-                                    {assignedTiers.map(tier => (
-                                        <span 
+                                    {assignedTiers.map((tier) => (
+                                        <span
                                             key={tier}
                                             className={`px-2 py-0.5 rounded text-xs ${TIER_CONFIG[tier as keyof typeof TIER_CONFIG]?.badgeClass || 'bg-slate-500/20 text-slate-300'}`}
                                         >
@@ -492,10 +495,4 @@ export const ModelTierAssignments: React.FC = () => {
 };
 
 export default ModelTierAssignments;
-
-
-
-
-
-
 

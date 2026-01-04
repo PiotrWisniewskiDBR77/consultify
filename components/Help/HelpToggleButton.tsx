@@ -1,13 +1,14 @@
 /**
  * Help Toggle Button
- * 
+ *
  * A floating button that toggles the HelpSidePanel.
  * Features a subtle color animation to draw attention.
  */
 
-import React from 'react';
 import { MessageCircleQuestion } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../../store/useAppStore';
 
 // CSS for the color pulse animation
@@ -58,12 +59,13 @@ export const HelpToggleButton: React.FC = () => {
                     size={18}
                     className="transition-transform duration-300"
                     style={{
-                        animation: 'helpIconGlow 4s ease-in-out infinite'
+                        animation: 'helpIconGlow 4s ease-in-out infinite',
                     }}
                 />
 
                 {/* Tooltip */}
-                <div className={`
+                <div
+                    className={`
                     absolute right-full mr-3 
                     px-3 py-1.5 
                     bg-slate-900 dark:bg-slate-800 
@@ -74,7 +76,8 @@ export const HelpToggleButton: React.FC = () => {
                     transition-opacity duration-200
                     pointer-events-none
                     shadow-lg
-                `}>
+                `}
+                >
                     {t('widgets.help.tooltip', 'Help Center')}
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
                 </div>
@@ -84,12 +87,4 @@ export const HelpToggleButton: React.FC = () => {
 };
 
 export default HelpToggleButton;
-
-
-
-
-
-
-
-
 

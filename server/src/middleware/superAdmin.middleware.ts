@@ -1,16 +1,17 @@
 /**
  * Super Admin Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Verifies user has SUPERADMIN privileges.
  * Checks both token and database for role verification.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { _Request, NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
+
 import config from '../../config.js';
-import type { AuthRequest } from './auth.middleware.js';
 import { get as dbGet } from '../utils/DbPromise.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -42,7 +43,7 @@ interface Dependencies {
 let deps: Dependencies = {
     jwt,
     config,
-    dbGet
+    dbGet,
 };
 
 // ==========================================
@@ -52,11 +53,7 @@ let deps: Dependencies = {
 /**
  * Verify Super Admin - Checks token and database for SUPERADMIN role
  */
-export const verifySuperAdmin = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+export const verifySuperAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { jwt: jwtLib, config: depsConfig, dbGet: db } = deps;
 
     const headers = req.headers || {};
@@ -67,9 +64,12 @@ export const verifySuperAdmin = async (
         return;
     }
 
-    const cleanToken = typeof token === 'string' && token.startsWith('Bearer ')
-        ? token.split(' ')[1]
-        : typeof token === 'string' ? token : '';
+    const cleanToken =
+        typeof token === 'string' && token.startsWith('Bearer ')
+            ? token.split(' ')[1]
+            : typeof token === 'string'
+              ? token
+              : '';
 
     try {
         const decoded = await new Promise<JWTPayload>((resolve, reject) => {
@@ -116,16 +116,16 @@ export const verifySuperAdmin = async (
         // Attach super admin status to request
         if (req.user) {
             req.user.isSuperAdmin = true;
-            req.user.role = (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') ? 'owner' : userRole as any;
+            req.user.role = userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'owner' : (userRole as any);
             req.user.organizationId = decoded.organizationId || decoded.organization_id || '';
         } else {
             req.user = {
                 id: decoded.id,
                 email: '',
                 name: '',
-                role: (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') ? 'owner' : userRole as any,
+                role: userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'owner' : (userRole as any),
                 organizationId: decoded.organizationId || decoded.organization_id || '',
-                isSuperAdmin: true
+                isSuperAdmin: true,
             };
         }
         req.userId = decoded.id;
@@ -145,4 +145,3 @@ export const verifySuperAdmin = async (
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-

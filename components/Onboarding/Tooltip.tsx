@@ -1,10 +1,10 @@
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 
 /**
  * Tooltip Component — Interactive Walkthroughs
- * 
+ *
  * Features:
  * - Spotlight effect (highlights target element)
  * - Backdrop overlay
@@ -38,7 +38,7 @@ const ARROW_SIZE = 8;
 const calculatePosition = (
     target: DOMRect,
     tooltip: DOMRect,
-    preferredPosition: 'top' | 'bottom' | 'left' | 'right'
+    preferredPosition: 'top' | 'bottom' | 'left' | 'right',
 ): Position => {
     const viewport = {
         width: window.innerWidth,
@@ -186,16 +186,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
             >
                 {/* Arrow */}
                 {tooltipPosition && (
-                    <div
-                        className={`absolute w-0 h-0 border-8 ${arrowClasses[tooltipPosition.arrowPosition]}`}
-                    />
+                    <div className={`absolute w-0 h-0 border-8 ${arrowClasses[tooltipPosition.arrowPosition]}`} />
                 )}
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800/30">
-                    <h3 className="font-semibold text-navy-900 dark:text-white text-sm">
-                        {title}
-                    </h3>
+                    <h3 className="font-semibold text-navy-900 dark:text-white text-sm">{title}</h3>
                     {onDismiss && (
                         <button
                             onClick={onDismiss}
@@ -208,9 +204,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
                 {/* Content */}
                 <div className="px-4 py-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {content}
-                    </p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{content}</p>
                 </div>
 
                 {/* Footer */}
@@ -246,7 +240,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
                 </div>
             </div>
         </>,
-        document.body
+        document.body,
     );
 };
 

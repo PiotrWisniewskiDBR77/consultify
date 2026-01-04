@@ -1,13 +1,13 @@
 /**
  * User Activity Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Tracks and aggregates user activity metrics
  * Migrated from server/services/userActivityService.js
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -70,13 +70,11 @@ export class UserActivityServiceClass {
         if (this.#initPromise) return this.#initPromise;
 
         this.#initPromise = (async () => {
-            const [uuidModule] = await Promise.all([
-                import('uuid')
-            ]);
+            const [uuidModule] = await Promise.all([import('uuid')]);
 
             this.#deps = {
                 db: getDatabase(),
-                uuidv4: uuidModule.v4
+                uuidv4: uuidModule.v4,
             };
             this.#initialized = true;
         })();
@@ -99,7 +97,7 @@ export class UserActivityServiceClass {
         const result = await DbPromise.run(this.#deps!.db, sql, params);
         return {
             lastID: result.lastID,
-            changes: result.changes || 0
+            changes: result.changes || 0,
         };
     }
 
@@ -112,15 +110,24 @@ export class UserActivityServiceClass {
     // SERVICE METHODS
     // ==========================================
 
-    async getActivitySummary(userId: string, organizationId: string, periodStart: string): Promise<ActivitySummary | null> {
+    async getActivitySummary(
+        userId: string,
+        organizationId: string,
+        periodStart: string,
+    ): Promise<ActivitySummary | null> {
         return this.dbGet<ActivitySummary>(
             `SELECT * FROM user_activity_summary 
              WHERE user_id = ? AND organization_id = ? AND period_start = ?`,
-            [userId, organizationId, periodStart]
+            [userId, organizationId, periodStart],
         );
     }
 
-    async calculateActivitySummary(userId: string, organizationId: string, periodStart: string, periodEnd: string): Promise<CalculatedSummary> {
+    async calculateActivitySummary(
+        userId: string,
+        organizationId: string,
+        periodStart: string,
+        periodEnd: string,
+    ): Promise<CalculatedSummary> {
         await this.#initDeps();
         const { uuidv4 } = this.#deps!;
 
@@ -129,36 +136,34 @@ export class UserActivityServiceClass {
             this.dbGet<{ login_count: number; last_login_at: string | null }>(
                 `SELECT COUNT(*) as login_count, MAX(last_login) as last_login_at
                  FROM users WHERE id = ? AND last_login BETWEEN ? AND ?`,
-                [userId, periodStart, periodEnd]
-            ).then(row => row || { login_count: 0, last_login_at: null }),
+                [userId, periodStart, periodEnd],
+            ).then((row) => row || { login_count: 0, last_login_at: null }),
 
             this.dbGet<{ interactions: number }>(
                 `SELECT COUNT(*) as interactions
                  FROM ai_logs WHERE user_id = ? AND created_at BETWEEN ? AND ?`,
-                [userId, periodStart, periodEnd]
-            ).then(row => row || { interactions: 0 }),
+                [userId, periodStart, periodEnd],
+            ).then((row) => row || { interactions: 0 }),
 
             this.dbGet<{ created: number; completed: number }>(
                 `SELECT 
                  COUNT(CASE WHEN created_at BETWEEN ? AND ? THEN 1 END) as created,
                  COUNT(CASE WHEN completed_at BETWEEN ? AND ? THEN 1 END) as completed
                  FROM tasks WHERE assignee_id = ?`,
-                [periodStart, periodEnd, periodStart, periodEnd, userId]
-            ).then(row => row || { created: 0, completed: 0 }),
+                [periodStart, periodEnd, periodStart, periodEnd, userId],
+            ).then((row) => row || { created: 0, completed: 0 }),
 
             this.dbGet<{ accessed: number }>(
                 `SELECT COUNT(DISTINCT project_id) as accessed
                  FROM project_users WHERE user_id = ?`,
-                [userId]
-            ).then(row => row || { accessed: 0 })
+                [userId],
+            ).then((row) => row || { accessed: 0 }),
         ]);
 
         // Calculate engagement score (0-100)
-        const engagementScore = Math.min(100,
-            (loginData.login_count * 10) +
-            (aiData.interactions * 2) +
-            (taskData.created * 5) +
-            (taskData.completed * 10)
+        const engagementScore = Math.min(
+            100,
+            loginData.login_count * 10 + aiData.interactions * 2 + taskData.created * 5 + taskData.completed * 10,
         );
 
         const id = uuidv4();
@@ -175,10 +180,20 @@ export class UserActivityServiceClass {
              tasks_completed = excluded.tasks_completed,
              projects_accessed = excluded.projects_accessed,
              engagement_score = excluded.engagement_score`,
-            [id, userId, organizationId, periodStart, periodEnd,
-                loginData.login_count, loginData.last_login_at,
-                aiData.interactions, taskData.created, taskData.completed,
-                projectData.accessed, engagementScore]
+            [
+                id,
+                userId,
+                organizationId,
+                periodStart,
+                periodEnd,
+                loginData.login_count,
+                loginData.last_login_at,
+                aiData.interactions,
+                taskData.created,
+                taskData.completed,
+                projectData.accessed,
+                engagementScore,
+            ],
         );
 
         return {
@@ -193,7 +208,7 @@ export class UserActivityServiceClass {
             tasksCreated: taskData.created,
             tasksCompleted: taskData.completed,
             projectsAccessed: projectData.accessed,
-            engagementScore
+            engagementScore,
         };
     }
 
@@ -202,7 +217,7 @@ export class UserActivityServiceClass {
             `SELECT * FROM user_activity_summary 
              WHERE user_id = ? AND organization_id = ?
              ORDER BY period_start DESC LIMIT ?`,
-            [userId, organizationId, limit]
+            [userId, organizationId, limit],
         );
     }
 }

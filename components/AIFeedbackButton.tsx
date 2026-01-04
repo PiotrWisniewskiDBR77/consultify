@@ -1,12 +1,13 @@
+import { MessageSquare, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Button } from './Button';
-import { Api } from '../services/api';
-import { ThumbsUp, ThumbsDown, MessageSquare, X, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../services/api';
+import { Button } from './Button';
 
 interface AIFeedbackButtonProps {
     context: string; // e.g., "diagnosis", "recommendation"
-    data?: unknown;      // The content being rated (optional)
+    data?: unknown; // The content being rated (optional)
     onFeedbackSubmit?: () => void;
 }
 
@@ -25,7 +26,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({ context, dat
                 action: context,
                 rating: rating === 'positive' ? 1 : -1,
                 user_comment: comment,
-                original_prompt: JSON.stringify(data)
+                original_prompt: JSON.stringify(data),
             });
             toast.success('Thank you for your feedback!');
             setShowModal(false);
@@ -43,14 +44,20 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({ context, dat
         <>
             <div className="flex gap-2">
                 <button
-                    onClick={() => { setRating('positive'); setShowModal(true); }}
+                    onClick={() => {
+                        setRating('positive');
+                        setShowModal(true);
+                    }}
                     className="p-1 hover:bg-green-500/10 rounded text-slate-400 hover:text-green-500 transition-colors"
                     title="Helpful"
                 >
                     <ThumbsUp size={14} />
                 </button>
                 <button
-                    onClick={() => { setRating('negative'); setShowModal(true); }}
+                    onClick={() => {
+                        setRating('negative');
+                        setShowModal(true);
+                    }}
                     className="p-1 hover:bg-red-500/10 rounded text-slate-400 hover:text-red-500 transition-colors"
                     title="Not Helpful"
                 >
@@ -66,23 +73,29 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({ context, dat
                                 <MessageSquare size={16} className="text-purple-400" />
                                 Provide Feedback
                             </h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
+                                <X size={18} />
+                            </button>
                         </div>
 
                         <div className="flex gap-4 justify-center mb-6">
                             <button
                                 onClick={() => setRating('positive')}
-                                className={`p-3 rounded-xl border transition-all ${rating === 'positive'
-                                    ? 'bg-green-500/20 border-green-500 text-green-400'
-                                    : 'bg-navy-950 border-white/5 text-slate-400 hover:border-green-500/50'}`}
+                                className={`p-3 rounded-xl border transition-all ${
+                                    rating === 'positive'
+                                        ? 'bg-green-500/20 border-green-500 text-green-400'
+                                        : 'bg-navy-950 border-white/5 text-slate-400 hover:border-green-500/50'
+                                }`}
                             >
                                 <ThumbsUp size={24} />
                             </button>
                             <button
                                 onClick={() => setRating('negative')}
-                                className={`p-3 rounded-xl border transition-all ${rating === 'negative'
-                                    ? 'bg-red-500/20 border-red-500 text-red-400'
-                                    : 'bg-navy-950 border-white/5 text-slate-400 hover:border-red-500/50'}`}
+                                className={`p-3 rounded-xl border transition-all ${
+                                    rating === 'negative'
+                                        ? 'bg-red-500/20 border-red-500 text-red-400'
+                                        : 'bg-navy-950 border-white/5 text-slate-400 hover:border-red-500/50'
+                                }`}
                             >
                                 <ThumbsDown size={24} />
                             </button>

@@ -1,11 +1,11 @@
 /**
  * Concurrent Users Stress Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Stress tests for concurrent users - 95%+ coverage target
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Concurrent Users Stress Tests', () => {
     describe('1000+ Concurrent Users', () => {
@@ -31,4 +31,3 @@ describe('Concurrent Users Stress Tests', () => {
         });
     });
 });
-

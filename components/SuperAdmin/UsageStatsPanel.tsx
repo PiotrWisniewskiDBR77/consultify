@@ -1,11 +1,12 @@
 /**
  * UsageStatsPanel - Usage Statistics Component
- * 
+ *
  * Shows platform usage statistics per organization.
  */
 
-import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Zap, TrendingUp, Building2, RefreshCw, Loader2 } from 'lucide-react';
+import { BarChart3, Building2, Loader2, RefreshCw, TrendingUp, Users, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 interface OrgUsage {
@@ -25,7 +26,7 @@ export const UsageStatsPanel: React.FC = () => {
         totalOrgs: 0,
         totalUsers: 0,
         totalAiCalls: 0,
-        totalTokens: 0
+        totalTokens: 0,
     });
 
     useEffect(() => {
@@ -38,9 +39,9 @@ export const UsageStatsPanel: React.FC = () => {
             // Fetch real usage data from the new endpoint
             const [usageData, dashboard] = await Promise.all([
                 Api.getUsageByOrganization().catch(() => []),
-                Api.getSuperAdminDashboard()
+                Api.getSuperAdminDashboard(),
             ]);
-            
+
             const usage: OrgUsage[] = usageData.map((org: any) => ({
                 id: org.id,
                 name: org.name,
@@ -48,7 +49,7 @@ export const UsageStatsPanel: React.FC = () => {
                 userCount: org.user_count || 0,
                 aiCalls: org.ai_calls || 0,
                 tokensUsed: org.tokens_used || 0,
-                lastActive: org.last_ai_activity || ''
+                lastActive: org.last_ai_activity || '',
             }));
 
             setOrgUsage(usage);
@@ -56,7 +57,7 @@ export const UsageStatsPanel: React.FC = () => {
                 totalOrgs: usageData.length,
                 totalUsers: dashboard?.counts?.total_users || 0,
                 totalAiCalls: dashboard?.ai?.total_ai_calls || 0,
-                totalTokens: dashboard?.ai?.total_tokens || 0
+                totalTokens: dashboard?.ai?.total_tokens || 0,
             });
         } catch (error) {
             console.error('Failed to fetch usage data:', error);
@@ -114,7 +115,7 @@ export const UsageStatsPanel: React.FC = () => {
                         <BarChart3 size={18} className="text-slate-400" />
                         <h3 className="font-medium text-white">Usage by Organization</h3>
                     </div>
-                    <button 
+                    <button
                         onClick={fetchUsageData}
                         className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                     >
@@ -139,17 +140,23 @@ export const UsageStatsPanel: React.FC = () => {
                                         <div className="font-medium text-white">{org.name}</div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 text-xs rounded-full ${
-                                            org.plan === 'enterprise' ? 'bg-purple-500/20 text-purple-400' :
-                                            org.plan === 'pro' ? 'bg-blue-500/20 text-blue-400' :
-                                            'bg-slate-500/20 text-slate-400'
-                                        }`}>
+                                        <span
+                                            className={`px-2 py-1 text-xs rounded-full ${
+                                                org.plan === 'enterprise'
+                                                    ? 'bg-purple-500/20 text-purple-400'
+                                                    : org.plan === 'pro'
+                                                      ? 'bg-blue-500/20 text-blue-400'
+                                                      : 'bg-slate-500/20 text-slate-400'
+                                            }`}
+                                        >
                                             {org.plan}
                                         </span>
                                     </td>
                                     <td className="p-4 text-right text-slate-300">{org.userCount}</td>
                                     <td className="p-4 text-right text-slate-300">{org.aiCalls.toLocaleString()}</td>
-                                    <td className="p-4 text-right text-slate-300">{(org.tokensUsed / 1000).toFixed(1)}k</td>
+                                    <td className="p-4 text-right text-slate-300">
+                                        {(org.tokensUsed / 1000).toFixed(1)}k
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -161,5 +168,3 @@ export const UsageStatsPanel: React.FC = () => {
 };
 
 export default UsageStatsPanel;
-
-

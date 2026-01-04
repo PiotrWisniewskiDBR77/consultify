@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - Analytics & Metrics
  */
 
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export interface MetricsOverview {
     totalUsers: number;
@@ -30,7 +30,7 @@ export const MetricsApi = {
     // ==========================================
     // OVERVIEW METRICS
     // ==========================================
-    
+
     getMetricsOverview: async (): Promise<MetricsOverview> => {
         const res = await fetch(`${API_URL}/metrics/overview`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch metrics overview');
@@ -47,7 +47,7 @@ export const MetricsApi = {
     // ==========================================
     // FUNNEL & COHORT ANALYSIS
     // ==========================================
-    
+
     getMetricsFunnels: async (days = 30): Promise<FunnelMetrics[]> => {
         const res = await fetch(`${API_URL}/metrics/funnels?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch funnels');
@@ -63,7 +63,7 @@ export const MetricsApi = {
     // ==========================================
     // HELP & SUPPORT METRICS
     // ==========================================
-    
+
     getMetricsHelp: async (days = 30): Promise<unknown> => {
         const res = await fetch(`${API_URL}/metrics/help?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch help metrics');
@@ -79,7 +79,7 @@ export const MetricsApi = {
     // ==========================================
     // ATTRIBUTION & PARTNERS
     // ==========================================
-    
+
     getMetricsAttribution: async (days = 30): Promise<unknown> => {
         const res = await fetch(`${API_URL}/metrics/attribution?days=${days}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch attribution');
@@ -95,7 +95,7 @@ export const MetricsApi = {
     // ==========================================
     // AI ANALYTICS
     // ==========================================
-    
+
     getOrgMetricsAIAnalytics: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/metrics/org/ai-analytics`, { headers: getHeaders() });
         const json = await res.json();
@@ -103,17 +103,23 @@ export const MetricsApi = {
         return json;
     },
 
-    getTokenUsageAnalytics: async (organizationId: string, timeRange: '7d' | '30d' | '90d' = '30d'): Promise<unknown> => {
-        const res = await fetchWithRetry(`${API_URL}/analytics/token-usage?orgId=${organizationId}&range=${timeRange}`, {
-            headers: getHeaders()
-        });
+    getTokenUsageAnalytics: async (
+        organizationId: string,
+        timeRange: '7d' | '30d' | '90d' = '30d',
+    ): Promise<unknown> => {
+        const res = await fetchWithRetry(
+            `${API_URL}/analytics/token-usage?orgId=${organizationId}&range=${timeRange}`,
+            {
+                headers: getHeaders(),
+            },
+        );
         return handleResponse(res, 'Failed to fetch token usage analytics');
     },
 
     // ==========================================
     // TEAM METRICS
     // ==========================================
-    
+
     getOrgMetricsTeam: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/metrics/org/team`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization team metrics');
@@ -123,7 +129,7 @@ export const MetricsApi = {
     // ==========================================
     // WARNINGS & ALERTS
     // ==========================================
-    
+
     getMetricsWarnings: async (): Promise<unknown[]> => {
         const res = await fetch(`${API_URL}/metrics/warnings`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch warnings');
@@ -133,7 +139,7 @@ export const MetricsApi = {
     // ==========================================
     // ANALYTICS (Leadership Dashboard)
     // ==========================================
-    
+
     getAnalyticsHealth: async (): Promise<unknown> => {
         const res = await fetchWithRetry(`${API_URL}/analytics/health`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch analytics health');
@@ -152,11 +158,9 @@ export const MetricsApi = {
     // ==========================================
     // ECOSYSTEM STATS
     // ==========================================
-    
+
     getEcosystemStats: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/analytics/ecosystem`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch ecosystem stats');
-    }
+    },
 };
-
-

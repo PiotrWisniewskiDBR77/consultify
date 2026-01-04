@@ -3,12 +3,16 @@
  * Unified wrapper for model providers using the 'ai' package.
  */
 
-import { generateText, streamText, generateObject, tool, jsonSchema } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
 import { z } from 'zod';
+
+import { createHash } from 'crypto';
 import circuitBreaker from './circuitBreaker.js';
 import { aiLogger } from './logger.js';
+import { appCache } from '../redis/CacheService.js';
+import { embeddingService } from './embeddingService.js';
 
 type ModelConfig = {
     id?: string;
@@ -44,6 +48,9 @@ type CallParams = {
     maxTokens?: number;
     temperature?: number;
     maxIterations?: number;
+    cache?: boolean; // Cache control
+    cacheTtl?: number; // TTL in seconds
+    semantic?: boolean; // Use semantic search for caching
 };
 
 type McpServer = {
@@ -66,75 +73,20 @@ async function getLLMConfigService(): Promise<{
         try {
             const mod = await import('./llmConfigService.js');
             _llmConfigService = mod.llmConfigService;
-        } catch (error: unknown) {
+        } catch (error) {
             const err = error as Error;
             aiLogger.warn('LLMService', `LLMConfigService not available: ${err.message}`);
         }
     }
     return _llmConfigService as {
-        getProviderConfig: (providerName: string) => Promise<{ api_key?: string | null; endpoint?: string | null } | null>;
+        getProviderConfig: (
+            providerName: string,
+        ) => Promise<{ api_key?: string | null; endpoint?: string | null } | null>;
         getNextFallback: (excludeProviders: string[], tier: string) => Promise<ModelConfig | null>;
     } | null;
 }
 
-async function getApiKey(providerName: string, passedKey?: string | null): Promise<string | null> {
-    if (passedKey) return passedKey;
 
-    const configService = await getLLMConfigService();
-    if (configService) {
-        const config = await configService.getProviderConfig(providerName);
-        if (config && config.api_key) {
-            return config.api_key;
-        }
-    }
-
-    const envKeys: Record<string, string | undefined> = {
-        openai: process.env.OPENAI_API_KEY,
-        google: process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
-        gemini: process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
-        deepseek: process.env.DEEPSEEK_API_KEY,
-        anthropic: process.env.ANTHROPIC_API_KEY,
-        nvidia: process.env.NVIDIA_API_KEY,
-        cohere: process.env.COHERE_API_KEY,
-        qwen: process.env.ALIBABA_API_KEY || process.env.QWEN_API_KEY,
-        zai: process.env.ZAI_API_KEY
-    };
-
-    return envKeys[providerName.toLowerCase()] || null;
-}
-
-async function getEndpoint(providerName: string, passedEndpoint?: string | null): Promise<string | null> {
-    if (passedEndpoint) return passedEndpoint;
-
-    const configService = await getLLMConfigService();
-    if (configService) {
-        const config = await configService.getProviderConfig(providerName);
-        if (config && config.endpoint) {
-            return config.endpoint;
-        }
-    }
-
-    const defaultEndpoints: Record<string, string> = {
-        deepseek: 'https://api.deepseek.com',
-        qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-        nvidia: 'https://integrate.api.nvidia.com/v1',
-        zai: 'https://api.z.ai/api/paas/v4',
-        ollama: 'http://localhost:11434/v1'
-    };
-
-    return defaultEndpoints[providerName.toLowerCase()] || null;
-}
-
-function getDefaultEndpoint(providerName: string): string | undefined {
-    const endpoints: Record<string, string> = {
-        deepseek: 'https://api.deepseek.com',
-        qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-        nvidia: 'https://integrate.api.nvidia.com/v1',
-        zai: 'https://api.z.ai/api/paas/v4',
-        z_ai: 'https://api.z.ai/api/paas/v4'
-    };
-    return endpoints[providerName.toLowerCase()];
-}
 
 function getProviderSync(modelConfig: ModelConfig) {
     const providerName = String(modelConfig.provider || '');
@@ -144,12 +96,12 @@ function getProviderSync(modelConfig: ModelConfig) {
     switch (providerName.toLowerCase()) {
         case 'openai':
             return createOpenAI({
-                apiKey: apiKey || process.env.OPENAI_API_KEY
+                apiKey: apiKey || process.env.OPENAI_API_KEY,
             });
         case 'google':
         case 'gemini':
             return createGoogleGenerativeAI({
-                apiKey: apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
+                apiKey: apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
             });
         case 'deepseek':
         case 'z_ai':
@@ -159,54 +111,48 @@ function getProviderSync(modelConfig: ModelConfig) {
         case 'nvidia':
             return createOpenAI({
                 apiKey,
-                baseURL: endpoint || getDefaultEndpoint(providerName)
+                baseURL: endpoint || 'https://api.deepseek.com',
             });
         case 'ollama':
             return createOpenAI({
                 apiKey: 'ollama',
-                baseURL: endpoint || 'http://localhost:11434/v1'
+                baseURL: endpoint || 'http://localhost:11434/v1',
             });
         default:
             return createOpenAI({
-                apiKey: apiKey || process.env.OPENAI_API_KEY
+                apiKey: apiKey || process.env.OPENAI_API_KEY,
             });
     }
 }
 
-async function getProviderAsync(modelConfig: ModelConfig) {
-    const providerName = String(modelConfig.provider || '');
-    const apiKey = await getApiKey(providerName, (modelConfig.apiKey as string | null) || (modelConfig.api_key as string | null));
-    const endpoint = await getEndpoint(providerName, modelConfig.endpoint as string | null);
 
-    return getProviderSync({
-        ...modelConfig,
-        apiKey,
-        endpoint
-    });
-}
 
 function getProvider(modelConfig: ModelConfig) {
     return getProviderSync(modelConfig);
 }
 
 export const MagicWandSchema = z.object({
-    suggestions: z.array(z.object({
-        field: z.string(),
-        value: z.string(),
-        reasoning: z.string().optional()
-    })),
-    confidence: z.number().min(0).max(1)
+    suggestions: z.array(
+        z.object({
+            field: z.string(),
+            value: z.string(),
+            reasoning: z.string().optional(),
+        }),
+    ),
+    confidence: z.number().min(0).max(1),
 });
 
 export const AnalysisResultSchema = z.object({
     summary: z.string(),
     keyFindings: z.array(z.string()),
-    recommendations: z.array(z.object({
-        title: z.string(),
-        description: z.string(),
-        priority: z.enum(['HIGH', 'MEDIUM', 'LOW'])
-    })),
-    overallScore: z.number().optional()
+    recommendations: z.array(
+        z.object({
+            title: z.string(),
+            description: z.string(),
+            priority: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+        }),
+    ),
+    overallScore: z.number().optional(),
 });
 
 export const RoadmapSchema = z.object({
@@ -214,21 +160,25 @@ export const RoadmapSchema = z.object({
         q1: z.array(z.string()).describe('Initiative names for Q1 Year 1'),
         q2: z.array(z.string()).describe('Initiative names for Q2 Year 1'),
         q3: z.array(z.string()).describe('Initiative names for Q3 Year 1'),
-        q4: z.array(z.string()).describe('Initiative names for Q4 Year 1')
+        q4: z.array(z.string()).describe('Initiative names for Q4 Year 1'),
     }),
-    year2: z.object({
-        q1: z.array(z.string()).describe('Initiative names for Q1 Year 2'),
-        q2: z.array(z.string()).describe('Initiative names for Q2 Year 2'),
-        q3: z.array(z.string()).describe('Initiative names for Q3 Year 2'),
-        q4: z.array(z.string()).describe('Initiative names for Q4 Year 2')
-    }).optional(),
-    year3: z.object({
-        q1: z.array(z.string()).describe('Initiative names for Q1 Year 3'),
-        q2: z.array(z.string()).describe('Initiative names for Q2 Year 3'),
-        q3: z.array(z.string()).describe('Initiative names for Q3 Year 3'),
-        q4: z.array(z.string()).describe('Initiative names for Q4 Year 3')
-    }).optional(),
-    reasoning: z.string().describe('Brief explanation of the sequencing logic')
+    year2: z
+        .object({
+            q1: z.array(z.string()).describe('Initiative names for Q1 Year 2'),
+            q2: z.array(z.string()).describe('Initiative names for Q2 Year 2'),
+            q3: z.array(z.string()).describe('Initiative names for Q3 Year 2'),
+            q4: z.array(z.string()).describe('Initiative names for Q4 Year 2'),
+        })
+        .optional(),
+    year3: z
+        .object({
+            q1: z.array(z.string()).describe('Initiative names for Q1 Year 3'),
+            q2: z.array(z.string()).describe('Initiative names for Q2 Year 3'),
+            q3: z.array(z.string()).describe('Initiative names for Q3 Year 3'),
+            q4: z.array(z.string()).describe('Initiative names for Q4 Year 3'),
+        })
+        .optional(),
+    reasoning: z.string().describe('Brief explanation of the sequencing logic'),
 });
 
 const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini', 'o1-2024-12-17'];
@@ -244,7 +194,7 @@ export class LLMService {
 
     isReasoningModel(modelId?: string): boolean {
         const modelLower = (modelId || '').toLowerCase();
-        return REASONING_MODELS.some(rm => modelLower.includes(rm));
+        return REASONING_MODELS.some((rm) => modelLower.includes(rm));
     }
 
     async resolveModelConfig(modelConfig: ModelConfig): Promise<ModelConfig> {
@@ -255,7 +205,7 @@ export class LLMService {
             fast: 'STANDARD',
             standard: 'STANDARD',
             premium: 'PREMIUM',
-            reasoning: 'REASONING'
+            reasoning: 'REASONING',
         };
 
         const tier = tierMap[String(modelConfig.id || '').toLowerCase()] || modelConfig.tier;
@@ -265,7 +215,10 @@ export class LLMService {
             if (configService) {
                 const bestProvider = await configService.getNextFallback([], tier);
                 if (bestProvider) {
-                    aiLogger.info('LLMService', `Resolved Tier ${tier} to ${bestProvider.provider}/${bestProvider.model_id}`);
+                    aiLogger.info(
+                        'LLMService',
+                        `Resolved Tier ${tier} to ${bestProvider.provider}/${bestProvider.model_id}`,
+                    );
                     return bestProvider;
                 }
                 aiLogger.warn('LLMService', `No providers found for Tier ${tier}, falling back to default`);
@@ -276,29 +229,85 @@ export class LLMService {
     }
 
     async call(params: CallParams): Promise<Record<string, unknown>> {
-        let { type, modelConfig, systemPrompt, messages, stream, schema, tools } = params;
+        let { type, modelConfig, stream, schema, tools, cache, cacheTtl } = params;
+
+        // Intelligent Caching (Skip for streams/tools/reasoning for now)
+        // We can cache simple text/structured generation
+        const canCache = cache !== false && !stream && (!tools || tools.length === 0);
+        let cacheKey = '';
+
+        if (canCache) {
+            try {
+                cacheKey = this.generateCacheKey(params);
+                const cached = await appCache.get<Record<string, unknown>>(cacheKey);
+                if (cached) {
+                    aiLogger.info('LLMService', `Cache hit for ${modelConfig.id} (${cacheKey.substring(0, 8)})`);
+                    return { ...cached, _cached: true };
+                }
+            } catch (error) {
+                // Ignore cache errors
+            }
+        }
 
         modelConfig = await this.resolveModelConfig(modelConfig);
-        const isReasoning = this.isReasoningModel(modelConfig?.id as string | undefined) || modelConfig?.tier === 'REASONING';
+        const isReasoning =
+            this.isReasoningModel(modelConfig?.id as string | undefined) || modelConfig?.tier === 'REASONING';
 
         if (isReasoning) {
             aiLogger.info('LLMService', `Using reasoning model: ${modelConfig.id}`);
             return this.callReasoningModel({ ...params, modelConfig });
         }
 
+        let result: Record<string, unknown>;
+
         if (tools && tools.length > 0) {
             if (stream) {
-                return this.callWithToolsStream({ ...params, modelConfig });
+                result = await this.callWithToolsStream({ ...params, modelConfig });
+            } else {
+                result = await this.callWithTools({ ...params, modelConfig });
             }
-            return this.callWithTools({ ...params, modelConfig });
+        } else if (type === 'structured' && schema) {
+            result = await this.callStructured({ ...params, modelConfig });
+        } else if (stream) {
+            result = await this.callStream({ ...params, modelConfig });
+        } else {
+            result = await this.callText({ ...params, modelConfig });
         }
-        if (type === 'structured' && schema) {
-            return this.callStructured({ ...params, modelConfig });
+
+        if (canCache && result && !result.stream) {
+            // Cache success results only
+            if (params.semantic) {
+                const promptText = params.systemPrompt + '\n' + params.messages.map(m => m.content).join('\n');
+                try {
+                    const embedding = await embeddingService.generateEmbedding(promptText);
+                    await embeddingService.storeChunk({
+                        documentId: 'cache',
+                        content: promptText,
+                        sourceType: 'llm_cache',
+                        metadata: { response: result }
+                    }, embedding);
+                } catch (err) {
+                    aiLogger.warn('LLMService', 'Failed to store semantic cache', err);
+                }
+            } else {
+                await appCache.set(cacheKey, result, cacheTtl || 3600);
+            }
         }
-        if (stream) {
-            return this.callStream({ ...params, modelConfig });
-        }
-        return this.callText({ ...params, modelConfig });
+
+        return result;
+    }
+
+    private generateCacheKey(params: CallParams): string {
+        const payload = JSON.stringify({
+            model: params.modelConfig.id,
+            provider: params.modelConfig.provider,
+            messages: params.messages.map(m => ({ role: m.role, content: m.content })),
+            system: params.systemPrompt,
+            schema: params.schema ? String(params.schema) : undefined,
+            temp: params.temperature,
+            maxTokens: params.maxTokens
+        });
+        return 'llm:' + createHash('sha256').update(payload).digest('hex');
     }
 
     async generateResponse(params: {
@@ -316,7 +325,7 @@ export class LLMService {
             systemPrompt: systemPrompt || 'You are a helpful assistant.',
             messages: [{ role: 'user', content: prompt }],
             maxTokens: maxTokens || this.maxTokens,
-            temperature: temperature || this.temperature
+            temperature: temperature || this.temperature,
         });
     }
 
@@ -336,7 +345,7 @@ export class LLMService {
             if (msg.role === 'user' && !systemInjected && systemPrompt) {
                 formattedMessages.push({
                     role: 'user',
-                    content: `[INSTRUCTIONS]\n${systemPrompt}\n\n[USER REQUEST]\n${msg.content}`
+                    content: `[INSTRUCTIONS]\n${systemPrompt}\n\n[USER REQUEST]\n${msg.content}`,
                 });
                 systemInjected = true;
             } else {
@@ -347,7 +356,7 @@ export class LLMService {
         if (!systemInjected && systemPrompt) {
             formattedMessages.unshift({
                 role: 'user',
-                content: `[INSTRUCTIONS]\n${systemPrompt}\n\n[Please provide your analysis following the instructions above.]`
+                content: `[INSTRUCTIONS]\n${systemPrompt}\n\n[Please provide your analysis following the instructions above.]`,
             });
         }
 
@@ -358,27 +367,27 @@ export class LLMService {
             async () => {
                 return generateText({
                     model,
-                    messages: formattedMessages,
-                    maxTokens: 16384
-                });
+                    messages: formattedMessages as any,
+                    maxTokens: 16384,
+                } as any);
             },
             {
                 onRetry: (attempt: number, delay: number, error: Error) => {
                     aiLogger.info('LLMService', `Retrying ${providerId} reasoning (attempt ${attempt})`, {
                         delay,
-                        error: error.message
+                        error: error.message,
                     });
                 },
                 maxRetries: 2,
-                timeout: 180000
-            }
+                timeout: 180000,
+            },
         );
 
         return {
             content: result.text,
             usage: result.usage,
             isReasoningModel: true,
-            model: modelConfig.id
+            model: modelConfig.id,
         };
     }
 
@@ -390,11 +399,11 @@ export class LLMService {
         const providerId = String(modelConfig.provider || 'openai');
         const mcpModule = await import('./mcpServer.js');
         const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
-        await import('./tools/index.js').catch(() => {});
+        await import('./tools/index.js').catch(() => { });
 
         const formattedMessages: LLMMessage[] = [
             { role: 'system', content: systemPrompt || '' },
-            ...messages.filter(m => m.role !== 'system')
+            ...messages.filter((m) => m.role !== 'system'),
         ];
 
         const toolDefinitions: Record<string, ReturnType<typeof tool>> = {};
@@ -404,9 +413,9 @@ export class LLMService {
             aiLogger.debug('LLMService', `Registering tool: ${def.name}`);
             toolDefinitions[def.name] = tool({
                 description: def.description,
-                parameters: jsonSchema(def.parameters),
-                execute: async (args: unknown) => mcpServer.execute(def.name, args, context)
-            });
+                parameters: jsonSchema(def.parameters as any),
+                execute: async (args: unknown) => mcpServer.execute(def.name, args, context),
+            } as any) as any;
         }
 
         const result = await circuitBreaker.execute(
@@ -414,26 +423,26 @@ export class LLMService {
             async () => {
                 return generateText({
                     model,
-                    messages: formattedMessages,
+                    messages: formattedMessages as any,
                     tools: toolDefinitions,
-                    maxSteps: maxIterations
-                });
+                    maxSteps: maxIterations,
+                } as any);
             },
             {
                 onRetry: (attempt: number, delay: number, error: Error) => {
                     aiLogger.info('LLMService', `Retrying ${providerId} with tools (attempt ${attempt})`, {
                         delay,
-                        error: error.message
+                        error: error.message,
                     });
-                }
-            }
+                },
+            },
         );
 
         const toolCalls: ToolCall[] = [];
         if (result.steps) {
             for (const step of result.steps) {
                 if (step.toolCalls) {
-                    toolCalls.push(...step.toolCalls);
+                    toolCalls.push(...(step.toolCalls as any));
                 }
             }
         }
@@ -441,11 +450,11 @@ export class LLMService {
         return {
             content: result.text,
             usage: result.usage,
-            toolCalls: toolCalls.map(tc => ({
+            toolCalls: toolCalls.map((tc) => ({
                 name: tc.toolName,
                 args: tc.args,
-                result: tc.result
-            }))
+                result: tc.result,
+            })),
         };
     }
 
@@ -457,7 +466,7 @@ export class LLMService {
         const providerId = String(modelConfig.provider || 'openai');
         const mcpModule = await import('./mcpServer.js');
         const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
-        await import('./tools/index.js').catch(() => {});
+        await import('./tools/index.js').catch(() => { });
 
         const circuitCheck = await circuitBreaker.canExecute(providerId);
         if (!circuitCheck.allowed) {
@@ -466,7 +475,7 @@ export class LLMService {
 
         const formattedMessages: LLMMessage[] = [
             { role: 'system', content: systemPrompt || '' },
-            ...messages.filter(m => m.role !== 'system')
+            ...messages.filter((m) => m.role !== 'system'),
         ];
 
         const toolDefinitions: Record<string, ReturnType<typeof tool>> = {};
@@ -475,9 +484,9 @@ export class LLMService {
         for (const def of toolDefs) {
             toolDefinitions[def.name] = tool({
                 description: def.description,
-                parameters: jsonSchema(def.parameters),
-                execute: async (args: unknown) => mcpServer.execute(def.name, args, context)
-            });
+                parameters: jsonSchema(def.parameters as any),
+                execute: async (args: unknown) => mcpServer.execute(def.name, args, context),
+            } as any);
         }
 
         try {
@@ -486,23 +495,26 @@ export class LLMService {
                 try {
                     const result = await streamText({
                         model,
-                        messages: formattedMessages,
+                        messages: formattedMessages as any,
                         tools: toolDefinitions,
                         maxSteps: maxIterations,
-                        abortSignal: AbortSignal.timeout(60000)
-                    });
+                        abortSignal: AbortSignal.timeout(60000),
+                    } as any);
 
                     await circuitBreaker.recordSuccess(providerId);
                     return { stream: result.textStream };
                 } catch (error: unknown) {
                     lastError = error as Error;
-                    aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`);
-                    if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 1000));
+                    aiLogger.warn(
+                        'LLMService',
+                        `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`,
+                    );
+                    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
                 }
             }
             throw lastError;
-        } catch (error: unknown) {
-            await circuitBreaker.recordFailure(providerId, error);
+        } catch (error) {
+            await circuitBreaker.recordFailure(providerId, error as Error);
             throw error;
         }
     }
@@ -516,7 +528,7 @@ export class LLMService {
 
         const formattedMessages: LLMMessage[] = [
             { role: 'system', content: systemPrompt || '' },
-            ...messages.filter(m => m.role !== 'system')
+            ...messages.filter((m) => m.role !== 'system'),
         ];
 
         const result = await circuitBreaker.execute(
@@ -524,8 +536,8 @@ export class LLMService {
             async () => {
                 return generateText({
                     model,
-                    messages: formattedMessages,
-                    abortSignal: AbortSignal.timeout(60000)
+                    messages: formattedMessages as any,
+                    abortSignal: AbortSignal.timeout(60000),
                 });
             },
             {
@@ -533,15 +545,15 @@ export class LLMService {
                 onRetry: (attempt: number, delay: number, error: Error) => {
                     aiLogger.info('LLMService', `Retrying ${providerId} (attempt ${attempt})`, {
                         delay,
-                        error: error.message
+                        error: error.message,
                     });
-                }
-            }
+                },
+            },
         );
 
         return {
             content: result.text,
-            usage: result.usage
+            usage: result.usage,
         };
     }
 
@@ -554,7 +566,7 @@ export class LLMService {
 
         const formattedMessages: LLMMessage[] = [
             { role: 'system', content: systemPrompt || '' },
-            ...messages.filter(m => m.role !== 'system')
+            ...messages.filter((m) => m.role !== 'system'),
         ];
 
         const circuitCheck = await circuitBreaker.canExecute(providerId);
@@ -568,21 +580,24 @@ export class LLMService {
                 try {
                     const result = await streamText({
                         model,
-                        messages: formattedMessages,
-                        abortSignal: AbortSignal.timeout(60000)
+                        messages: formattedMessages as any,
+                        abortSignal: AbortSignal.timeout(60000),
                     });
 
                     await circuitBreaker.recordSuccess(providerId);
                     return { stream: result.textStream };
                 } catch (error: unknown) {
                     lastError = error as Error;
-                    aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`);
-                    if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 1000));
+                    aiLogger.warn(
+                        'LLMService',
+                        `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`,
+                    );
+                    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
                 }
             }
             throw lastError;
-        } catch (error: unknown) {
-            await circuitBreaker.recordFailure(providerId, error);
+        } catch (error) {
+            await circuitBreaker.recordFailure(providerId, error as Error);
             throw error;
         }
     }
@@ -617,7 +632,7 @@ export class LLMService {
 
         const formattedMessages: LLMMessage[] = [
             { role: 'system', content: systemPrompt || '' },
-            ...messages.filter(m => m.role !== 'system')
+            ...messages.filter((m) => m.role !== 'system'),
         ];
 
         const result = await circuitBreaker.execute(
@@ -626,21 +641,21 @@ export class LLMService {
                 return generateObject({
                     model,
                     schema: zodSchema,
-                    messages: formattedMessages,
-                    abortSignal: AbortSignal.timeout(60000)
+                    messages: formattedMessages as any,
+                    abortSignal: AbortSignal.timeout(60000),
                 });
             },
             {
                 timeout: 60000,
                 onRetry: (attempt: number) => {
                     aiLogger.info('LLMService', `Retrying structured call to ${providerId} (attempt ${attempt})`);
-                }
-            }
+                },
+            },
         );
 
         return {
             object: result.object,
-            usage: result.usage
+            usage: result.usage,
         };
     }
 
@@ -653,9 +668,9 @@ export class LLMService {
 
             const result = await generateText({
                 model,
-                messages: [{ role: 'user', content: 'Say "pong"' }],
-                maxTokens: 5
-            });
+                messages: [{ role: 'user', content: 'Say "pong"' }] as any,
+                maxTokens: 5,
+            } as any);
 
             await circuitBreaker.recordSuccess(providerId);
 
@@ -663,15 +678,15 @@ export class LLMService {
                 success: true,
                 response: result.text,
                 usage: result.usage,
-                circuitState: (await circuitBreaker.canExecute(providerId)).state
+                circuitState: (await circuitBreaker.canExecute(providerId)).state,
             };
-        } catch (error: unknown) {
-            await circuitBreaker.recordFailure(providerId, error);
+        } catch (error) {
+            await circuitBreaker.recordFailure(providerId, error as Error);
 
             return {
                 success: false,
                 error: (error as Error).message,
-                circuitState: (await circuitBreaker.canExecute(providerId)).state
+                circuitState: (await circuitBreaker.canExecute(providerId)).state,
             };
         }
     }

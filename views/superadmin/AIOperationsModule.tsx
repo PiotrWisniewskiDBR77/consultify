@@ -1,9 +1,9 @@
 /**
  * AIOperationsModule - AI Operations & Analytics
- * 
+ *
  * Module 3 of 3: Operations and analytics
  * Tabs: Mission Control | Performance | Costs | SLA | Analytics
- * 
+ *
  * Responsibilities:
  * - Real-time AI operations monitoring
  * - Performance dashboards
@@ -12,14 +12,15 @@
  * - Usage analytics and insights
  */
 
+import { Activity, BarChart2, DollarSign, Radar, Shield } from 'lucide-react';
 import React, { useState } from 'react';
-import { Radar, Activity, DollarSign, Shield, BarChart2 } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
+
+import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
+import { AICostDashboard } from '../../components/Admin/AICostDashboard';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDashboard';
-import { AICostDashboard } from '../../components/Admin/AICostDashboard';
 import { SLADashboard } from '../../components/Admin/SLADashboard';
-import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 
 interface AIOperationsModuleProps {
     initialTab?: string;
@@ -29,35 +30,35 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
     const [activeTab, setActiveTab] = useState(initialTab || 'mission-control');
 
     const tabs: Tab[] = [
-        { 
-            id: 'mission-control', 
-            label: 'Mission Control', 
+        {
+            id: 'mission-control',
+            label: 'Mission Control',
             icon: <Radar size={16} />,
-            description: 'Real-time AI operations dashboard'
+            description: 'Real-time AI operations dashboard',
         },
-        { 
-            id: 'performance', 
-            label: 'Performance', 
+        {
+            id: 'performance',
+            label: 'Performance',
             icon: <Activity size={16} />,
-            description: 'AI performance metrics and trends'
+            description: 'AI performance metrics and trends',
         },
-        { 
-            id: 'costs', 
-            label: 'Costs', 
+        {
+            id: 'costs',
+            label: 'Costs',
             icon: <DollarSign size={16} />,
-            description: 'Token usage and cost management'
+            description: 'Token usage and cost management',
         },
-        { 
-            id: 'sla', 
-            label: 'SLA', 
+        {
+            id: 'sla',
+            label: 'SLA',
             icon: <Shield size={16} />,
-            description: 'Service level agreements monitoring'
+            description: 'Service level agreements monitoring',
         },
-        { 
-            id: 'analytics', 
-            label: 'Analytics', 
+        {
+            id: 'analytics',
+            label: 'Analytics',
             icon: <BarChart2 size={16} />,
-            description: 'Usage analytics and insights'
+            description: 'Usage analytics and insights',
         },
     ];
 

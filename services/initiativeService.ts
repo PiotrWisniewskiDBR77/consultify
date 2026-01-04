@@ -1,5 +1,5 @@
-import { Api } from './api';
 import { FullInitiative } from '../types';
+import { Api } from './api';
 
 export const InitiativeService = {
     getAll: async (): Promise<FullInitiative[]> => {
@@ -20,5 +20,5 @@ export const InitiativeService = {
             console.error(`Failed to fetch initiative ${id}`, error);
             throw error;
         }
-    }
+    },
 };

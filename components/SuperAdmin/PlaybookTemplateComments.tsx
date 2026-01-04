@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    MessageSquare,
-    Send,
-    MoreVertical,
-    Edit,
-    Trash2,
-    Check,
-    X,
-    Reply,
-    CheckCircle2,
-    RefreshCw,
     AtSign,
-    User
+    Check,
+    CheckCircle2,
+    Edit,
+    MessageSquare,
+    MoreVertical,
+    RefreshCw,
+    Reply,
+    Send,
+    Trash2,
+    User,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import type { ContentComment } from '../../types';
 
 interface PlaybookTemplateCommentsProps {
@@ -22,7 +23,7 @@ interface PlaybookTemplateCommentsProps {
 
 export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> = ({
     templateId,
-    onCommentCountChange
+    onCommentCountChange,
 }) => {
     const token = localStorage.getItem('token');
 
@@ -41,13 +42,13 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
         try {
             const res = await fetch(
                 `/api/content/playbooks/templates/${templateId}/comments?includeResolved=${showResolved}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${token}` } },
             );
 
             if (res.ok) {
                 const data = await res.json();
                 setComments(data.comments || []);
-                
+
                 // Count total comments including replies
                 const countComments = (items: ContentComment[]): number => {
                     return items.reduce((sum, item) => {
@@ -76,9 +77,9 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ commentText: newComment.trim() })
+                body: JSON.stringify({ commentText: newComment.trim() }),
             });
 
             if (res.ok) {
@@ -101,12 +102,12 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     commentText: replyText.trim(),
-                    parentCommentId: parentId
-                })
+                    parentCommentId: parentId,
+                }),
             });
 
             if (res.ok) {
@@ -130,9 +131,9 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                 method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ commentText: editText.trim() })
+                body: JSON.stringify({ commentText: editText.trim() }),
             });
 
             if (res.ok) {
@@ -151,7 +152,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
         try {
             await fetch(`/api/content/comments/${commentId}/resolve`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             loadComments();
         } catch (err) {
@@ -166,7 +167,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
         try {
             await fetch(`/api/content/comments/${commentId}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             loadComments();
         } catch (err) {
@@ -177,14 +178,17 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
 
     const renderComment = (comment: ContentComment, depth = 0) => (
         <div key={comment.id} className={`${depth > 0 ? 'ml-8 border-l-2 border-slate-700/50 pl-4' : ''}`}>
-            <div className={`p-4 rounded-lg ${comment.isResolved ? 'bg-slate-800/30' : 'bg-slate-800/50'} border border-slate-700/50`}>
+            <div
+                className={`p-4 rounded-lg ${comment.isResolved ? 'bg-slate-800/30' : 'bg-slate-800/50'} border border-slate-700/50`}
+            >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                             {comment.user ? (
                                 <span className="text-xs font-medium text-white">
-                                    {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
+                                    {comment.user.firstName?.[0]}
+                                    {comment.user.lastName?.[0]}
                                 </span>
                             ) : (
                                 <User size={14} className="text-white" />
@@ -193,7 +197,9 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="font-medium text-white text-sm">
-                                    {comment.user ? `${comment.user.firstName} ${comment.user.lastName}` : 'Unknown User'}
+                                    {comment.user
+                                        ? `${comment.user.firstName} ${comment.user.lastName}`
+                                        : 'Unknown User'}
                                 </span>
                                 {comment.isResolved && (
                                     <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">
@@ -201,9 +207,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                                         Resolved
                                     </span>
                                 )}
-                                {comment.isEdited && (
-                                    <span className="text-xs text-slate-500">(edited)</span>
-                                )}
+                                {comment.isEdited && <span className="text-xs text-slate-500">(edited)</span>}
                             </div>
                             <span className="text-xs text-slate-500">
                                 {new Date(comment.createdAt).toLocaleString()}
@@ -322,9 +326,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
 
             {/* Replies */}
             {comment.replies && comment.replies.length > 0 && (
-                <div className="mt-3 space-y-3">
-                    {comment.replies.map((reply) => renderComment(reply, depth + 1))}
-                </div>
+                <div className="mt-3 space-y-3">{comment.replies.map((reply) => renderComment(reply, depth + 1))}</div>
             )}
         </div>
     );
@@ -370,11 +372,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                             disabled={submitting || !newComment.trim()}
                             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50"
                         >
-                            {submitting ? (
-                                <RefreshCw size={16} className="animate-spin" />
-                            ) : (
-                                <Send size={16} />
-                            )}
+                            {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
                             Comment
                         </button>
                     </div>
@@ -393,24 +391,14 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                     <p className="text-sm text-slate-500">Be the first to leave a comment</p>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {comments.map((comment) => renderComment(comment))}
-                </div>
+                <div className="space-y-4">{comments.map((comment) => renderComment(comment))}</div>
             )}
 
             {/* Click away handler */}
-            {menuOpen && (
-                <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />
-            )}
+            {menuOpen && <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />}
         </div>
     );
 };
 
 export default PlaybookTemplateComments;
-
-
-
-
-
-
 

@@ -1,6 +1,6 @@
 /**
  * ComplianceCenterView - Super Admin Compliance Management
- * 
+ *
  * Enterprise compliance dashboard:
  * - SOC 2 Type II compliance
  * - GDPR Article 30 records
@@ -10,35 +10,36 @@
  * - DSAR handling
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FileCheck,
-    Shield,
+    AlertCircle,
     AlertTriangle,
-    CheckCircle2,
-    XCircle,
-    Clock,
+    BarChart3,
     Building2,
-    Users,
-    FileText,
-    RefreshCw,
-    Loader2,
-    ChevronRight,
-    Download,
-    Plus,
-    Search,
-    Filter,
     Calendar,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    Download,
+    Edit,
+    Eye,
+    FileCheck,
+    FileText,
+    Filter,
+    Loader2,
+    PieChart,
+    Plus,
+    RefreshCw,
+    Search,
+    Shield,
     Target,
     TrendingUp,
-    AlertCircle,
-    Eye,
-    Edit,
-    BarChart3,
-    PieChart
+    Users,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 interface ComplianceFramework {
     id: string;
@@ -129,7 +130,9 @@ export const ComplianceCenterView: React.FC = () => {
             // Fetch compliance status for each framework
             const statusPromises = (frameworksResult.frameworks || []).map(async (fw: ComplianceFramework) => {
                 try {
-                    const result = await Api.get(`/api/superadmin/compliance/status/${fw.id}${selectedOrg !== 'all' ? `?orgId=${selectedOrg}` : ''}`);
+                    const result = await Api.get(
+                        `/api/superadmin/compliance/status/${fw.id}${selectedOrg !== 'all' ? `?orgId=${selectedOrg}` : ''}`,
+                    );
                     return result.status;
                 } catch {
                     return {
@@ -165,13 +168,16 @@ export const ComplianceCenterView: React.FC = () => {
         fetchData();
     }, [fetchData]);
 
-    const overallScore = complianceStatus.length > 0
-        ? Math.round(complianceStatus.reduce((sum, s) => sum + s.score, 0) / complianceStatus.length)
-        : 0;
+    const overallScore =
+        complianceStatus.length > 0
+            ? Math.round(complianceStatus.reduce((sum, s) => sum + s.score, 0) / complianceStatus.length)
+            : 0;
 
-    const pendingDsars = dsarRequests.filter(d => d.status === 'pending' || d.status === 'in_progress').length;
-    const overdueDoars = dsarRequests.filter(d => new Date(d.dueDate) < new Date() && d.status !== 'completed').length;
-    const activeAudits = audits.filter(a => a.status === 'in_progress').length;
+    const pendingDsars = dsarRequests.filter((d) => d.status === 'pending' || d.status === 'in_progress').length;
+    const overdueDoars = dsarRequests.filter(
+        (d) => new Date(d.dueDate) < new Date() && d.status !== 'completed',
+    ).length;
+    const activeAudits = audits.filter((a) => a.status === 'in_progress').length;
 
     const renderOverviewTab = () => (
         <div className="space-y-6">
@@ -180,22 +186,36 @@ export const ComplianceCenterView: React.FC = () => {
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-5 border border-slate-200 dark:border-white/10">
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-sm text-slate-500">Overall Compliance</span>
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            overallScore >= 80 ? 'bg-emerald-500/10' :
-                            overallScore >= 50 ? 'bg-amber-500/10' : 'bg-red-500/10'
-                        }`}>
-                            <Target className={
-                                overallScore >= 80 ? 'text-emerald-500' :
-                                overallScore >= 50 ? 'text-amber-500' : 'text-red-500'
-                            } size={20} />
+                        <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                overallScore >= 80
+                                    ? 'bg-emerald-500/10'
+                                    : overallScore >= 50
+                                      ? 'bg-amber-500/10'
+                                      : 'bg-red-500/10'
+                            }`}
+                        >
+                            <Target
+                                className={
+                                    overallScore >= 80
+                                        ? 'text-emerald-500'
+                                        : overallScore >= 50
+                                          ? 'text-amber-500'
+                                          : 'text-red-500'
+                                }
+                                size={20}
+                            />
                         </div>
                     </div>
                     <div className="text-3xl font-bold text-slate-900 dark:text-white">{overallScore}%</div>
                     <div className="mt-2 h-2 bg-slate-100 dark:bg-navy-700 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className={`h-full transition-all ${
-                                overallScore >= 80 ? 'bg-emerald-500' :
-                                overallScore >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                overallScore >= 80
+                                    ? 'bg-emerald-500'
+                                    : overallScore >= 50
+                                      ? 'bg-amber-500'
+                                      : 'bg-red-500'
                             }`}
                             style={{ width: `${overallScore}%` }}
                         />
@@ -253,19 +273,29 @@ export const ComplianceCenterView: React.FC = () => {
                                         {status.frameworkName.charAt(0)}
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-slate-900 dark:text-white">{status.frameworkName}</h4>
+                                        <h4 className="font-medium text-slate-900 dark:text-white">
+                                            {status.frameworkName}
+                                        </h4>
                                         <p className="text-sm text-slate-500">{status.total} controls</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className={`text-2xl font-bold ${
-                                        status.score >= 80 ? 'text-emerald-600' :
-                                        status.score >= 50 ? 'text-amber-600' : 'text-red-600'
-                                    }`}>
+                                    <div
+                                        className={`text-2xl font-bold ${
+                                            status.score >= 80
+                                                ? 'text-emerald-600'
+                                                : status.score >= 50
+                                                  ? 'text-amber-600'
+                                                  : 'text-red-600'
+                                        }`}
+                                    >
                                         {status.score}%
                                     </div>
                                     <button
-                                        onClick={() => { setSelectedFramework(status.frameworkId); setActiveTab('frameworks'); }}
+                                        onClick={() => {
+                                            setSelectedFramework(status.frameworkId);
+                                            setActiveTab('frameworks');
+                                        }}
                                         className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
                                     >
                                         View Details <ChevronRight size={14} />
@@ -273,16 +303,39 @@ export const ComplianceCenterView: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex gap-1 h-2">
-                                <div className="bg-emerald-500 rounded-l" style={{ width: `${(status.compliant / status.total) * 100}%` }} />
-                                <div className="bg-blue-500" style={{ width: `${(status.inProgress / status.total) * 100}%` }} />
-                                <div className="bg-slate-300" style={{ width: `${(status.pending / status.total) * 100}%` }} />
-                                <div className="bg-red-500 rounded-r" style={{ width: `${(status.nonCompliant / status.total) * 100}%` }} />
+                                <div
+                                    className="bg-emerald-500 rounded-l"
+                                    style={{ width: `${(status.compliant / status.total) * 100}%` }}
+                                />
+                                <div
+                                    className="bg-blue-500"
+                                    style={{ width: `${(status.inProgress / status.total) * 100}%` }}
+                                />
+                                <div
+                                    className="bg-slate-300"
+                                    style={{ width: `${(status.pending / status.total) * 100}%` }}
+                                />
+                                <div
+                                    className="bg-red-500 rounded-r"
+                                    style={{ width: `${(status.nonCompliant / status.total) * 100}%` }}
+                                />
                             </div>
                             <div className="flex justify-between mt-2 text-xs text-slate-500">
-                                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {status.compliant} Compliant</span>
-                                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> {status.inProgress} In Progress</span>
-                                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-300" /> {status.pending} Pending</span>
-                                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> {status.nonCompliant} Non-Compliant</span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> {status.compliant}{' '}
+                                    Compliant
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-blue-500" /> {status.inProgress} In
+                                    Progress
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-slate-300" /> {status.pending} Pending
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-red-500" /> {status.nonCompliant}{' '}
+                                    Non-Compliant
+                                </span>
                             </div>
                         </div>
                     ))}
@@ -292,7 +345,9 @@ export const ComplianceCenterView: React.FC = () => {
             {/* Recent DSARs */}
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Data Subject Requests</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                        Recent Data Subject Requests
+                    </h3>
                     <button
                         onClick={() => setActiveTab('dsar')}
                         className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
@@ -302,25 +357,36 @@ export const ComplianceCenterView: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                     {dsarRequests.slice(0, 5).map((dsar) => (
-                        <div key={dsar.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5 last:border-0">
+                        <div
+                            key={dsar.id}
+                            className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5 last:border-0"
+                        >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
                                     <Users size={16} className="text-blue-500" />
                                 </div>
                                 <div>
-                                    <div className="font-medium text-slate-900 dark:text-white">{dsar.requesterEmail}</div>
+                                    <div className="font-medium text-slate-900 dark:text-white">
+                                        {dsar.requesterEmail}
+                                    </div>
                                     <div className="text-sm text-slate-500">
-                                        {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] || dsar.requestType}
+                                        {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
+                                            dsar.requestType}
                                     </div>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    dsar.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' :
-                                    dsar.status === 'in_progress' ? 'bg-blue-500/10 text-blue-600' :
-                                    dsar.status === 'pending' ? 'bg-amber-500/10 text-amber-600' :
-                                    'bg-red-500/10 text-red-600'
-                                }`}>
+                                <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        dsar.status === 'completed'
+                                            ? 'bg-emerald-500/10 text-emerald-600'
+                                            : dsar.status === 'in_progress'
+                                              ? 'bg-blue-500/10 text-blue-600'
+                                              : dsar.status === 'pending'
+                                                ? 'bg-amber-500/10 text-amber-600'
+                                                : 'bg-red-500/10 text-red-600'
+                                    }`}
+                                >
                                     {dsar.status.replace('_', ' ')}
                                 </span>
                                 <div className="text-xs text-slate-500 mt-1">
@@ -341,9 +407,7 @@ export const ComplianceCenterView: React.FC = () => {
     );
 
     const renderFrameworksTab = () => {
-        const framework = selectedFramework 
-            ? frameworks.find(f => f.id === selectedFramework)
-            : null;
+        const framework = selectedFramework ? frameworks.find((f) => f.id === selectedFramework) : null;
 
         if (framework) {
             return (
@@ -356,8 +420,12 @@ export const ComplianceCenterView: React.FC = () => {
                             <ChevronRight size={20} className="rotate-180 text-slate-400" />
                         </button>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{framework.displayName}</h2>
-                            <p className="text-slate-500">{framework.description} - Version {framework.version}</p>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                                {framework.displayName}
+                            </h2>
+                            <p className="text-slate-500">
+                                {framework.description} - Version {framework.version}
+                            </p>
                         </div>
                     </div>
 
@@ -365,21 +433,35 @@ export const ComplianceCenterView: React.FC = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-200 dark:border-white/10">
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">ID</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Control</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Category</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                                    <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                        ID
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                        Control
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                        Category
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                        Status
+                                    </th>
+                                    <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                                 {framework.requirements.map((req) => (
                                     <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="px-6 py-4">
-                                            <span className="font-mono text-sm text-slate-700 dark:text-slate-300">{req.id}</span>
+                                            <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
+                                                {req.id}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900 dark:text-white">{req.title}</div>
+                                            <div className="font-medium text-slate-900 dark:text-white">
+                                                {req.title}
+                                            </div>
                                             <div className="text-sm text-slate-500">{req.description}</div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -410,7 +492,7 @@ export const ComplianceCenterView: React.FC = () => {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {frameworks.map((fw) => {
-                    const status = complianceStatus.find(s => s.frameworkId === fw.id);
+                    const status = complianceStatus.find((s) => s.frameworkId === fw.id);
                     return (
                         <button
                             key={fw.id}
@@ -423,7 +505,9 @@ export const ComplianceCenterView: React.FC = () => {
                                         {fw.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">{fw.displayName}</h3>
+                                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                                            {fw.displayName}
+                                        </h3>
                                         <p className="text-sm text-slate-500">Version {fw.version}</p>
                                     </div>
                                 </div>
@@ -433,10 +517,15 @@ export const ComplianceCenterView: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-slate-500">{fw.requirements.length} controls</span>
                                 {status && (
-                                    <span className={`text-lg font-bold ${
-                                        status.score >= 80 ? 'text-emerald-600' :
-                                        status.score >= 50 ? 'text-amber-600' : 'text-red-600'
-                                    }`}>
+                                    <span
+                                        className={`text-lg font-bold ${
+                                            status.score >= 80
+                                                ? 'text-emerald-600'
+                                                : status.score >= 50
+                                                  ? 'text-amber-600'
+                                                  : 'text-red-600'
+                                        }`}
+                                    >
                                         {status.score}%
                                     </span>
                                 )}
@@ -469,32 +558,50 @@ export const ComplianceCenterView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Requester</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Requester
+                            </th>
                             <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Type</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Received</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Due Date</th>
-                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Status
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Received
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Due Date
+                            </th>
+                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                         {dsarRequests.map((dsar) => (
                             <tr key={dsar.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                 <td className="px-6 py-4">
-                                    <span className="font-medium text-slate-900 dark:text-white">{dsar.requesterEmail}</span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
-                                        {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] || dsar.requestType}
+                                    <span className="font-medium text-slate-900 dark:text-white">
+                                        {dsar.requesterEmail}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        dsar.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' :
-                                        dsar.status === 'in_progress' ? 'bg-blue-500/10 text-blue-600' :
-                                        dsar.status === 'pending' ? 'bg-amber-500/10 text-amber-600' :
-                                        'bg-red-500/10 text-red-600'
-                                    }`}>
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
+                                        {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
+                                            dsar.requestType}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span
+                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            dsar.status === 'completed'
+                                                ? 'bg-emerald-500/10 text-emerald-600'
+                                                : dsar.status === 'in_progress'
+                                                  ? 'bg-blue-500/10 text-blue-600'
+                                                  : dsar.status === 'pending'
+                                                    ? 'bg-amber-500/10 text-amber-600'
+                                                    : 'bg-red-500/10 text-red-600'
+                                        }`}
+                                    >
                                         {dsar.status.replace('_', ' ')}
                                     </span>
                                 </td>
@@ -502,11 +609,13 @@ export const ComplianceCenterView: React.FC = () => {
                                     {new Date(dsar.receivedAt).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`text-sm ${
-                                        new Date(dsar.dueDate) < new Date() && dsar.status !== 'completed'
-                                            ? 'text-red-600 font-medium'
-                                            : 'text-slate-500'
-                                    }`}>
+                                    <span
+                                        className={`text-sm ${
+                                            new Date(dsar.dueDate) < new Date() && dsar.status !== 'completed'
+                                                ? 'text-red-600 font-medium'
+                                                : 'text-slate-500'
+                                        }`}
+                                    >
                                         {new Date(dsar.dueDate).toLocaleDateString()}
                                     </span>
                                 </td>
@@ -542,24 +651,32 @@ export const ComplianceCenterView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {audits.map((audit) => (
-                    <div key={audit.id} className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+                    <div
+                        key={audit.id}
+                        className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10"
+                    >
                         <div className="flex items-start justify-between mb-4">
                             <div>
                                 <h4 className="font-semibold text-slate-900 dark:text-white">{audit.name}</h4>
                                 <p className="text-sm text-slate-500">{audit.auditType} audit</p>
                             </div>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                audit.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' :
-                                audit.status === 'in_progress' ? 'bg-blue-500/10 text-blue-600' :
-                                'bg-slate-500/10 text-slate-600'
-                            }`}>
+                            <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    audit.status === 'completed'
+                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                        : audit.status === 'in_progress'
+                                          ? 'bg-blue-500/10 text-blue-600'
+                                          : 'bg-slate-500/10 text-slate-600'
+                                }`}
+                            >
                                 {audit.status.replace('_', ' ')}
                             </span>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
                             <span className="flex items-center gap-1">
                                 <Calendar size={14} />
-                                {new Date(audit.plannedStart).toLocaleDateString()} - {new Date(audit.plannedEnd).toLocaleDateString()}
+                                {new Date(audit.plannedStart).toLocaleDateString()} -{' '}
+                                {new Date(audit.plannedEnd).toLocaleDateString()}
                             </span>
                         </div>
                         {audit.findingsCount > 0 && (
@@ -589,7 +706,9 @@ export const ComplianceCenterView: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <FileText size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div>
-                        <h4 className="font-medium text-blue-900 dark:text-blue-300">GDPR Article 30 - Records of Processing Activities</h4>
+                        <h4 className="font-medium text-blue-900 dark:text-blue-300">
+                            GDPR Article 30 - Records of Processing Activities
+                        </h4>
                         <p className="text-sm text-blue-800 dark:text-blue-400 mt-1">
                             Document all data processing activities as required by GDPR Article 30.
                         </p>
@@ -624,7 +743,13 @@ export const ComplianceCenterView: React.FC = () => {
                     <p className="text-slate-500 mt-1">Manage regulatory compliance and audits</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <InfoButton cardId="superadmin-compliance" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-compliance"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                     <select
                         value={selectedOrg}
                         onChange={(e) => setSelectedOrg(e.target.value)}
@@ -632,13 +757,12 @@ export const ComplianceCenterView: React.FC = () => {
                     >
                         <option value="all">All Organizations</option>
                         {organizations.map((org) => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
-                    <button
-                        onClick={fetchData}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-                    >
+                    <button onClick={fetchData} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                         <RefreshCw size={18} className={`text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                     </button>
                     <button className="px-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2">
@@ -691,4 +815,3 @@ export const ComplianceCenterView: React.FC = () => {
 };
 
 export default ComplianceCenterView;
-

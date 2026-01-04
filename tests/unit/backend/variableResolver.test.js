@@ -16,19 +16,27 @@ vi.mock('../../../server/database', () => ({
 describe('Variable Resolver Service', () => {
     let VariableResolver;
     let resolver;
+    let RUNTIME_FUNCTIONS;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
         vi.resetModules();
-        
+
         // Mock console
         global.console = {
             ...console,
             warn: vi.fn()
         };
 
-        const module = require('../../../server/services/ai/variableResolver');
-        VariableResolver = module.VariableResolver;
+        const module = await import('../../../server/services/ai/variableResolver.js');
+        VariableResolver = module.VariableResolver || module.default?.VariableResolver;
+        RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS || module.default?.RUNTIME_FUNCTIONS;
+
+        // Handle case where it might be a default export class
+        if (!VariableResolver && typeof module.default === 'function') {
+            VariableResolver = module.default;
+        }
+
         resolver = new VariableResolver();
     });
 
@@ -47,7 +55,7 @@ describe('Variable Resolver Service', () => {
             const template = 'Hello {{user.name}}';
             const context = {
                 user: {
-                    firstName: 'John', // Resolver uses user.firstName, not user.name
+                    firstName: 'John',
                     language: 'en'
                 }
             };
@@ -60,7 +68,7 @@ describe('Variable Resolver Service', () => {
             const template = 'Hello {{user.name}}, your role is {{user.role}}';
             const context = {
                 user: {
-                    firstName: 'John', // Resolver uses user.firstName, not user.name
+                    firstName: 'John',
                     role: 'admin'
                 }
             };
@@ -128,33 +136,21 @@ describe('Variable Resolver Service', () => {
 
     describe('Runtime functions', () => {
         it('should detect language from text', () => {
-            const module = require('../../../server/services/ai/variableResolver');
-            const RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS;
-
             expect(RUNTIME_FUNCTIONS.detectLanguage('Test', { user: { language: 'en' } })).toBe('en');
             expect(RUNTIME_FUNCTIONS.detectLanguage('', { user: { language: 'pl' } })).toBe('pl');
         });
 
         it('should get current date', () => {
-            const module = require('../../../server/services/ai/variableResolver');
-            const RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS;
-
             const date = RUNTIME_FUNCTIONS.getCurrentDate();
             expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         });
 
         it('should get time of day context', () => {
-            const module = require('../../../server/services/ai/variableResolver');
-            const RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS;
-
             const timeOfDay = RUNTIME_FUNCTIONS.getTimeOfDayContext();
             expect(['morning', 'afternoon', 'evening']).toContain(timeOfDay);
         });
 
         it('should format assessment summary', () => {
-            const module = require('../../../server/services/ai/variableResolver');
-            const RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS;
-
             const context = {
                 project: {
                     assessment: {
@@ -171,9 +167,6 @@ describe('Variable Resolver Service', () => {
         });
 
         it('should format initiative list', () => {
-            const module = require('../../../server/services/ai/variableResolver');
-            const RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS;
-
             const context = {
                 project: {
                     initiatives: [
@@ -189,9 +182,6 @@ describe('Variable Resolver Service', () => {
         });
 
         it('should summarize conversation', () => {
-            const module = require('../../../server/services/ai/variableResolver');
-            const RUNTIME_FUNCTIONS = module.RUNTIME_FUNCTIONS;
-
             const context = {
                 conversation: {
                     recentMessages: [

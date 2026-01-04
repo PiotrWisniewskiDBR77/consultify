@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { ComparisonRadarChart } from '../../../components/Charts/ComparisonRadarChart';
+import { ComparisonRadarChart } from '../../components/Charts/ComparisonRadarChart';
 
 const mockData = {
     current: [
@@ -30,6 +30,7 @@ describe('ComparisonRadarChart Component', () => {
         expect(polygons.length).toBeGreaterThanOrEqual(2); // At least current and target
     });
 });
+
 
 
 

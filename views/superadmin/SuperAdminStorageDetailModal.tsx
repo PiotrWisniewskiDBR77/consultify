@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { File, Trash2, Folder, X, Search } from 'lucide-react';
+import { File, Folder, Search, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface StorageModalProps {
     orgId: string;
@@ -52,7 +53,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({ orgI
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const filteredFiles = files.filter(f => (f.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredFiles = files.filter((f) => (f.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -109,7 +110,9 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({ orgI
                                             {file.name}
                                         </td>
                                         <td className="p-4 text-slate-400 font-mono text-xs">{file.path}</td>
-                                        <td className="p-4 text-slate-300 whitespace-nowrap">{formatBytes(file.size)}</td>
+                                        <td className="p-4 text-slate-300 whitespace-nowrap">
+                                            {formatBytes(file.size)}
+                                        </td>
                                         <td className="p-4 text-slate-500 whitespace-nowrap">
                                             {new Date(file.created_at).toLocaleDateString()}
                                         </td>

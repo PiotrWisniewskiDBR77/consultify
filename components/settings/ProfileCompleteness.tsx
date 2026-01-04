@@ -1,6 +1,6 @@
 /**
  * ProfileCompleteness - Visual indicator of profile completion
- * 
+ *
  * Features:
  * - Progress bar showing completion percentage
  * - Breakdown of completed/incomplete items
@@ -8,27 +8,28 @@
  * - Animated progress updates
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    CheckCircle2,
-    Circle,
-    User as UserIcon,
-    Briefcase,
-    Phone,
-    Clock,
-    Shield,
-    Image,
-    Link2,
-    ChevronRight,
-    Sparkles,
-    Award,
-    Loader2,
     AlertCircle,
-    Lightbulb
+    Award,
+    Briefcase,
+    CheckCircle2,
+    ChevronRight,
+    Circle,
+    Clock,
+    Image,
+    Lightbulb,
+    Link2,
+    Loader2,
+    Phone,
+    Shield,
+    Sparkles,
+    User as UserIcon,
 } from 'lucide-react';
-import { User } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface ProfileCompletenessProps {
     currentUser: User;
@@ -55,7 +56,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         weight: 15,
         isComplete: (user) => !!user.avatarUrl,
         action: 'avatar',
-        actionLabel: 'Upload photo'
+        actionLabel: 'Upload photo',
     },
     {
         id: 'name',
@@ -64,7 +65,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         weight: 20,
         isComplete: (user) => !!(user.firstName && user.lastName),
         action: 'personal',
-        actionLabel: 'Add name'
+        actionLabel: 'Add name',
     },
     {
         id: 'jobTitle',
@@ -73,7 +74,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         weight: 15,
         isComplete: (user) => !!(user as any).jobTitle,
         action: 'personal',
-        actionLabel: 'Add job title'
+        actionLabel: 'Add job title',
     },
     {
         id: 'phone',
@@ -82,7 +83,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         weight: 10,
         isComplete: (user) => !!user.phone,
         action: 'personal',
-        actionLabel: 'Add phone'
+        actionLabel: 'Add phone',
     },
     {
         id: 'timezone',
@@ -91,7 +92,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         weight: 10,
         isComplete: (user) => !!user.timezone && user.timezone !== 'UTC',
         action: 'personal',
-        actionLabel: 'Set timezone'
+        actionLabel: 'Set timezone',
     },
     {
         id: 'connectedAccounts',
@@ -103,7 +104,7 @@ const COMPLETION_ITEMS: CompletionItem[] = [
             return !!(accounts.google || accounts.linkedin);
         },
         action: 'connected',
-        actionLabel: 'Connect account'
+        actionLabel: 'Connect account',
     },
     {
         id: 'mfa',
@@ -112,16 +113,20 @@ const COMPLETION_ITEMS: CompletionItem[] = [
         weight: 15,
         isComplete: (user) => !!user.mfaEnabled,
         action: 'personal',
-        actionLabel: 'Enable 2FA'
-    }
+        actionLabel: 'Enable 2FA',
+    },
 ];
 
 // Get completion level label and color
 const getCompletionLevel = (percentage: number): { label: string; color: string; bgColor: string } => {
-    if (percentage >= 100) return { label: 'Complete', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-500' };
-    if (percentage >= 75) return { label: 'Almost There', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-500' };
-    if (percentage >= 50) return { label: 'Halfway', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-500' };
-    if (percentage >= 25) return { label: 'Getting Started', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500' };
+    if (percentage >= 100)
+        return { label: 'Complete', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-500' };
+    if (percentage >= 75)
+        return { label: 'Almost There', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-500' };
+    if (percentage >= 50)
+        return { label: 'Halfway', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-500' };
+    if (percentage >= 25)
+        return { label: 'Getting Started', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500' };
     return { label: 'Just Beginning', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-500' };
 };
 
@@ -142,7 +147,7 @@ interface Suggestion {
 export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
     currentUser,
     onNavigate,
-    compact = false
+    compact = false,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
@@ -178,7 +183,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
             return {
                 percentage: apiData.percentage || 0,
                 completedItems: items.filter((i: any) => i.isComplete),
-                incompleteItems: items.filter((i: any) => !i.isComplete)
+                incompleteItems: items.filter((i: any) => !i.isComplete),
             };
         }
 
@@ -188,7 +193,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
         const completed: CompletionItem[] = [];
         const incomplete: CompletionItem[] = [];
 
-        COMPLETION_ITEMS.forEach(item => {
+        COMPLETION_ITEMS.forEach((item) => {
             totalWeight += item.weight;
             if (item.isComplete(currentUser)) {
                 completedWeight += item.weight;
@@ -201,7 +206,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
         return {
             percentage: Math.round((completedWeight / totalWeight) * 100),
             completedItems: completed,
-            incompleteItems: incomplete
+            incompleteItems: incomplete,
         };
     }, [currentUser, apiData]);
 
@@ -222,9 +227,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
         return (
             <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-500/10 dark:to-indigo-500/10 rounded-lg border border-purple-100 dark:border-purple-500/20">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        Profile Completion
-                    </span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Profile Completion</span>
                     <div className="flex items-center gap-2">
                         {milestoneBadges.length > 0 && (
                             <div className="flex gap-1">
@@ -234,9 +237,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                                 })}
                             </div>
                         )}
-                        <span className={`text-sm font-bold ${level.color}`}>
-                            {percentage}%
-                        </span>
+                        <span className={`text-sm font-bold ${level.color}`}>{percentage}%</span>
                     </div>
                 </div>
                 <div className="h-2 bg-white dark:bg-white/10 rounded-full overflow-hidden">
@@ -265,14 +266,10 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                             {percentage === 100 && <Sparkles size={20} className="text-yellow-500" />}
                             Profile Completeness
                         </h3>
-                        <p className={`text-sm font-medium mt-1 ${level.color}`}>
-                            {level.label}
-                        </p>
+                        <p className={`text-sm font-medium mt-1 ${level.color}`}>{level.label}</p>
                     </div>
                     <div className="text-right">
-                        <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                            {percentage}%
-                        </div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-white">{percentage}%</div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             {completedItems.length}/{COMPLETION_ITEMS.length} items
                         </p>
@@ -303,12 +300,8 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                                     <Icon size={18} />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-700 dark:text-slate-200">
-                                        {item.label}
-                                    </p>
-                                    <p className="text-xs text-slate-400">
-                                        +{item.weight}% completion
-                                    </p>
+                                    <p className="font-medium text-slate-700 dark:text-slate-200">{item.label}</p>
+                                    <p className="text-xs text-slate-400">+{item.weight}% completion</p>
                                 </div>
                             </div>
                             {item.action && onNavigate && (
@@ -328,21 +321,14 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                 {completedItems.map((item: any) => {
                     const Icon = item.icon || CheckCircle2;
                     return (
-                        <div
-                            key={item.id}
-                            className="px-6 py-4 flex items-center justify-between opacity-60"
-                        >
+                        <div key={item.id} className="px-6 py-4 flex items-center justify-between opacity-60">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400">
                                     <Icon size={18} />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-700 dark:text-slate-200">
-                                        {item.label}
-                                    </p>
-                                    <p className="text-xs text-green-600 dark:text-green-400">
-                                        Completed
-                                    </p>
+                                    <p className="font-medium text-slate-700 dark:text-slate-200">{item.label}</p>
+                                    <p className="text-xs text-green-600 dark:text-green-400">Completed</p>
                                 </div>
                             </div>
                             <CheckCircle2 size={20} className="text-green-500" />
@@ -381,20 +367,19 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                     </h4>
                     <div className="space-y-2">
                         {suggestions.map((suggestion, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-start gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg"
-                            >
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white dark:bg-navy-800 rounded-lg">
                                 <AlertCircle
                                     size={16}
-                                    className={`mt-0.5 ${suggestion.priority === 'high' ? 'text-red-500' :
-                                        suggestion.priority === 'medium' ? 'text-yellow-500' : 'text-blue-500'
-                                        }`}
+                                    className={`mt-0.5 ${
+                                        suggestion.priority === 'high'
+                                            ? 'text-red-500'
+                                            : suggestion.priority === 'medium'
+                                              ? 'text-yellow-500'
+                                              : 'text-blue-500'
+                                    }`}
                                 />
                                 <div className="flex-1">
-                                    <p className="text-sm text-slate-700 dark:text-slate-300">
-                                        {suggestion.message}
-                                    </p>
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">{suggestion.message}</p>
                                     {suggestion.action && onNavigate && (
                                         <button
                                             onClick={() => onNavigate(suggestion.action!)}
@@ -417,8 +402,8 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                     <div className="flex items-center gap-3">
                         <Sparkles className="text-green-500" size={20} />
                         <p className="text-sm text-green-700 dark:text-green-300">
-                            <span className="font-medium">Congratulations!</span> Your profile is complete.
-                            You're getting the most out of Consultify.
+                            <span className="font-medium">Congratulations!</span> Your profile is complete. You're
+                            getting the most out of Consultify.
                         </p>
                     </div>
                 </div>
@@ -434,5 +419,3 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
 };
 
 export default ProfileCompleteness;
-
-

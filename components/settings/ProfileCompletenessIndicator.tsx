@@ -1,20 +1,17 @@
 /**
  * ProfileCompletenessIndicator - Simple progress bar showing profile completion
- * 
+ *
  * Features:
  * - Progress bar (0-100%)
  * - Completion percentage display
  * - Quick action to complete profile
  */
 
+import { CheckCircle2, Circle, TrendingUp } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { 
-    CheckCircle2, 
-    Circle,
-    TrendingUp
-} from 'lucide-react';
+
+import { User } from '../../types';
 
 interface ProfileCompletenessIndicatorProps {
     currentUser: User;
@@ -34,26 +31,26 @@ const COMPLETION_ITEMS = [
     { id: 'mfa', weight: 10, isComplete: (user: User) => !!user.mfaEnabled },
 ];
 
-export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicatorProps> = ({ 
-    currentUser, 
+export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicatorProps> = ({
+    currentUser,
     onNavigate,
-    showDetails = false
+    showDetails = false,
 }) => {
     const { t } = useTranslation();
 
     const completionData = useMemo(() => {
-        const completed = COMPLETION_ITEMS.filter(item => item.isComplete(currentUser));
+        const completed = COMPLETION_ITEMS.filter((item) => item.isComplete(currentUser));
         const totalWeight = COMPLETION_ITEMS.reduce((sum, item) => sum + item.weight, 0);
         const completedWeight = completed.reduce((sum, item) => sum + item.weight, 0);
         const percentage = Math.round((completedWeight / totalWeight) * 100);
-        
-        const incomplete = COMPLETION_ITEMS.filter(item => !item.isComplete(currentUser));
+
+        const incomplete = COMPLETION_ITEMS.filter((item) => !item.isComplete(currentUser));
 
         return {
             percentage,
             completed: completed.length,
             total: COMPLETION_ITEMS.length,
-            incomplete
+            incomplete,
         };
     }, [currentUser]);
 
@@ -74,18 +71,20 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
                         {t('settings.profile.completeness.title', 'Profile Completion')}
                     </span>
                 </div>
-                <span className={`text-sm font-bold ${
-                    completionData.percentage >= 100 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : 'text-slate-600 dark:text-slate-400'
-                }`}>
+                <span
+                    className={`text-sm font-bold ${
+                        completionData.percentage >= 100
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                >
                     {completionData.percentage}%
                 </span>
             </div>
 
             {/* Progress Bar */}
             <div className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div 
+                <div
                     className={`h-full transition-all duration-500 ${getColorClass(completionData.percentage)}`}
                     style={{ width: `${completionData.percentage}%` }}
                 />
@@ -96,10 +95,11 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
                 <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                         <span>
-                            {completionData.completed} / {completionData.total} {t('settings.profile.completeness.items', 'items completed')}
+                            {completionData.completed} / {completionData.total}{' '}
+                            {t('settings.profile.completeness.items', 'items completed')}
                         </span>
                     </div>
-                    
+
                     {completionData.incomplete.length > 0 && (
                         <div className="pt-2 border-t border-slate-200 dark:border-white/10">
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
@@ -125,10 +125,4 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
 };
 
 export default ProfileCompletenessIndicator;
-
-
-
-
-
-
 

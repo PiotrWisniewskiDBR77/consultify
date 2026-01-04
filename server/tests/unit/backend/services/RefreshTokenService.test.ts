@@ -1,11 +1,12 @@
 /**
  * RefreshTokenService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for RefreshTokenService - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import RefreshTokenService from '../../../../src/services/RefreshTokenService.js';
 
@@ -74,40 +75,46 @@ describe('RefreshTokenService', () => {
     describe('refreshAccessToken', () => {
         it('should refresh access token with valid refresh token', async () => {
             // Mock database to return valid refresh token
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
-                callback(null, {
-                    id: 'token-123',
-                    user_id: 'user-123',
-                    token_hash: 'hash',
-                    token_family: 'family-123',
-                    expires_at: new Date(Date.now() + 86400000).toISOString(),
-                    revoked_at: null,
-                });
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
+                    callback(null, {
+                        id: 'token-123',
+                        user_id: 'user-123',
+                        token_hash: 'hash',
+                        token_family: 'family-123',
+                        expires_at: new Date(Date.now() + 86400000).toISOString(),
+                        revoked_at: null,
+                    });
+                },
+            );
 
             // Test would verify token refresh
             expect(true).toBe(true);
         });
 
         it('should reject expired refresh token', async () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
-                callback(null, {
-                    id: 'token-123',
-                    expires_at: new Date(Date.now() - 86400000).toISOString(),
-                });
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
+                    callback(null, {
+                        id: 'token-123',
+                        expires_at: new Date(Date.now() - 86400000).toISOString(),
+                    });
+                },
+            );
 
             // Test would verify rejection
             expect(true).toBe(true);
         });
 
         it('should reject revoked refresh token', async () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
-                callback(null, {
-                    id: 'token-123',
-                    revoked_at: new Date().toISOString(),
-                });
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
+                    callback(null, {
+                        id: 'token-123',
+                        revoked_at: new Date().toISOString(),
+                    });
+                },
+            );
 
             // Test would verify rejection
             expect(true).toBe(true);
@@ -129,17 +136,19 @@ describe('RefreshTokenService', () => {
 
     describe('getActiveSessions', () => {
         it('should return active sessions for user', async () => {
-            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
-                callback(null, [
-                    {
-                        id: 'session-1',
-                        device_info: 'Device 1',
-                        ip_address: '127.0.0.1',
-                        created_at: new Date().toISOString(),
-                        last_used_at: new Date().toISOString(),
-                    },
-                ]);
-            });
+            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
+                    callback(null, [
+                        {
+                            id: 'session-1',
+                            device_info: 'Device 1',
+                            ip_address: '127.0.0.1',
+                            created_at: new Date().toISOString(),
+                            last_used_at: new Date().toISOString(),
+                        },
+                    ]);
+                },
+            );
 
             const sessions = await RefreshTokenService.getActiveSessions('user-123');
 
@@ -155,4 +164,3 @@ describe('RefreshTokenService', () => {
         });
     });
 });
-

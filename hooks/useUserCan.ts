@@ -1,14 +1,14 @@
 import { useAppStore } from '../store/useAppStore';
 import { UserRole } from '../types';
-import { usePermissions, Permissions } from './usePermissions';
+import { Permissions, usePermissions } from './usePermissions';
 
 /**
  * MED-05: useUserCan Hook
  * Provides consistent permission checking across UI components.
- * 
+ *
  * This hook wraps usePermissions for backward compatibility and adds
  * capability-based permission checking.
- * 
+ *
  * Usage:
  *   const { canEdit, canDelete, canApprove, isAdmin } = useUserCan();
  *   {canEdit && <EditButton />}
@@ -30,24 +30,45 @@ type Capability =
 
 const ROLE_CAPABILITIES: Record<string, Capability[]> = {
     SUPERADMIN: [
-        'manage_users', 'edit_organization_settings', 'edit_project_settings',
-        'manage_roadmap', 'approve_changes', 'manage_stage_gates',
-        'manage_ai_policy', 'view_audit_logs', 'delete_items',
-        'generate_team_reports', 'generate_steering_reports', 'view_reports'
+        'manage_users',
+        'edit_organization_settings',
+        'edit_project_settings',
+        'manage_roadmap',
+        'approve_changes',
+        'manage_stage_gates',
+        'manage_ai_policy',
+        'view_audit_logs',
+        'delete_items',
+        'generate_team_reports',
+        'generate_steering_reports',
+        'view_reports',
     ],
     ADMIN: [
-        'manage_users', 'edit_organization_settings', 'edit_project_settings',
-        'manage_roadmap', 'approve_changes', 'manage_stage_gates',
-        'manage_ai_policy', 'view_audit_logs', 'delete_items',
-        'generate_team_reports', 'generate_steering_reports', 'view_reports'
+        'manage_users',
+        'edit_organization_settings',
+        'edit_project_settings',
+        'manage_roadmap',
+        'approve_changes',
+        'manage_stage_gates',
+        'manage_ai_policy',
+        'view_audit_logs',
+        'delete_items',
+        'generate_team_reports',
+        'generate_steering_reports',
+        'view_reports',
     ],
     MANAGER: [
-        'edit_project_settings', 'manage_roadmap', 'approve_changes',
-        'manage_stage_gates', 'view_audit_logs',
-        'generate_team_reports', 'generate_steering_reports', 'view_reports'
+        'edit_project_settings',
+        'manage_roadmap',
+        'approve_changes',
+        'manage_stage_gates',
+        'view_audit_logs',
+        'generate_team_reports',
+        'generate_steering_reports',
+        'view_reports',
     ],
     USER: ['generate_team_reports', 'view_reports'],
-    OTHER: ['view_reports']
+    OTHER: ['view_reports'],
 };
 
 interface UseUserCanResult {
@@ -67,10 +88,10 @@ interface UseUserCanResult {
 }
 
 export const useUserCan = (): UseUserCanResult => {
-    const currentUser = useAppStore(state => state.currentUser);
+    const currentUser = useAppStore((state) => state.currentUser);
     const permissions = usePermissions();
 
-    const role = currentUser?.role as string || 'USER';
+    const role = (currentUser?.role as string) || 'USER';
     const capabilities = ROLE_CAPABILITIES[role] || ROLE_CAPABILITIES.USER;
 
     const can = (capability: Capability): boolean => {
@@ -90,7 +111,7 @@ export const useUserCan = (): UseUserCanResult => {
         isSuperAdmin: permissions.isSuperAdmin,
         isManager: permissions.isManager,
         // Expose full permissions object for advanced use cases
-        permissions
+        permissions,
     };
 };
 

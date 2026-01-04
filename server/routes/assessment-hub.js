@@ -14,7 +14,7 @@ import verifyToken from '../middleware/authMiddleware.js';
 import * as AssessmentOverviewServiceModule from '../services/assessmentOverviewService.js';
 const AssessmentOverviewService = AssessmentOverviewServiceModule.default || AssessmentOverviewServiceModule;
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
 // ============================================================================

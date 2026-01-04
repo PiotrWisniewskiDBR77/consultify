@@ -1,6 +1,6 @@
 /**
  * AIParametersSettings - AI model parameters (temperature, tokens, etc.)
- * 
+ *
  * Features:
  * - Temperature slider
  * - Max tokens
@@ -8,19 +8,13 @@
  * - Response speed
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Sliders,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle,
-    Info
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Info, Loader2, Save, Sliders } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface AIParametersSettingsProps {
     currentUser: User;
@@ -33,10 +27,7 @@ const RESPONSE_SPEED_OPTIONS = [
     { value: 'detailed', label: 'Detailed', description: 'Slower but more thorough' },
 ] as const;
 
-export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [temperature, setTemperature] = useState(0.7);
     const [maxTokens, setMaxTokens] = useState(2000);
@@ -65,18 +56,18 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/ai/parameters', {
                 temperature,
                 maxTokens,
                 contextWindowSize,
-                responseSpeed
+                responseSpeed,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.ai.parameters.saved', 'AI parameters saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -104,9 +95,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {t('settings.ai.parameters.temperature', 'Temperature')}
                     </label>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {temperature.toFixed(1)}
-                    </span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{temperature.toFixed(1)}</span>
                 </div>
                 <div className="space-y-2">
                     <input
@@ -124,7 +113,10 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
                     </div>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {t('settings.ai.parameters.temperatureDesc', 'Lower values make responses more focused, higher values more creative')}
+                    {t(
+                        'settings.ai.parameters.temperatureDesc',
+                        'Lower values make responses more focused, higher values more creative',
+                    )}
                 </p>
             </div>
 
@@ -134,9 +126,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {t('settings.ai.parameters.maxTokens', 'Max Tokens per Response')}
                     </label>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {maxTokens.toLocaleString()}
-                    </span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{maxTokens.toLocaleString()}</span>
                 </div>
                 <input
                     type="number"
@@ -188,16 +178,16 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
                                     : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
                             }`}
                         >
-                            <div className={`text-sm font-medium ${
-                                responseSpeed === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-600 dark:text-slate-400'
-                            }`}>
+                            <div
+                                className={`text-sm font-medium ${
+                                    responseSpeed === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-slate-600 dark:text-slate-400'
+                                }`}
+                            >
                                 {option.label}
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {option.description}
-                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{option.description}</div>
                         </button>
                     ))}
                 </div>
@@ -242,10 +232,4 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
 };
 
 export default AIParametersSettings;
-
-
-
-
-
-
 

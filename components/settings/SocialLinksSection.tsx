@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Link2, Twitter, Github, Globe, Briefcase, Plus, Trash2,
-    Save, Loader2, CheckCircle, ExternalLink
+import {
+    Briefcase,
+    CheckCircle,
+    ExternalLink,
+    Github,
+    Globe,
+    Link2,
+    Loader2,
+    Plus,
+    Save,
+    Trash2,
+    Twitter,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
-import { User, ExtendedSocialLinks, CustomSocialLink } from '../../types';
+import { CustomSocialLink, ExtendedSocialLinks, User } from '../../types';
 
 interface SocialLinksSectionProps {
     currentUser: User;
@@ -21,23 +31,20 @@ const SOCIAL_PLATFORMS = [
     { id: 'portfolio', label: 'Portfolio', placeholder: 'https://portfolio.com', prefix: '' },
 ];
 
-export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    
+
     const [socialLinks, setSocialLinks] = useState<ExtendedSocialLinks>({
         twitter: '',
         github: '',
         linkedin: '',
         website: '',
         portfolio: '',
-        custom: []
+        custom: [],
     });
-    
+
     const [customLinks, setCustomLinks] = useState<CustomSocialLink[]>([]);
     const [newCustomLink, setNewCustomLink] = useState({ name: '', url: '' });
 
@@ -56,7 +63,7 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                     linkedin: currentUser.linkedinId || '', // Also check main user object
                     website: response.socialLinks.website || '',
                     portfolio: response.socialLinks.portfolio || '',
-                    custom: []
+                    custom: [],
                 });
                 setCustomLinks(response.socialLinks.custom || []);
             }
@@ -74,7 +81,7 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                 linkedin: socialLinks.linkedin,
                 website: socialLinks.website,
                 portfolio: socialLinks.portfolio,
-                custom: customLinks
+                custom: customLinks,
             });
             setSaveStatus('success');
             onUpdate?.();
@@ -89,39 +96,52 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
 
     const addCustomLink = () => {
         if (newCustomLink.name && newCustomLink.url) {
-            setCustomLinks(prev => [...prev, { ...newCustomLink }]);
+            setCustomLinks((prev) => [...prev, { ...newCustomLink }]);
             setNewCustomLink({ name: '', url: '' });
         }
     };
 
     const removeCustomLink = (index: number) => {
-        setCustomLinks(prev => prev.filter((_, i) => i !== index));
+        setCustomLinks((prev) => prev.filter((_, i) => i !== index));
     };
 
     const updateSocialLink = (platform: string, value: string) => {
-        setSocialLinks(prev => ({
+        setSocialLinks((prev) => ({
             ...prev,
-            [platform]: value
+            [platform]: value,
         }));
     };
 
     const getIcon = (platform: string) => {
         switch (platform) {
-            case 'twitter': return <Twitter size={16} />;
-            case 'github': return <Github size={16} />;
-            case 'linkedin': return <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>;
-            case 'website': return <Globe size={16} />;
-            case 'portfolio': return <Briefcase size={16} />;
-            default: return <Link2 size={16} />;
+            case 'twitter':
+                return <Twitter size={16} />;
+            case 'github':
+                return <Github size={16} />;
+            case 'linkedin':
+                return (
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                    </svg>
+                );
+            case 'website':
+                return <Globe size={16} />;
+            case 'portfolio':
+                return <Briefcase size={16} />;
+            default:
+                return <Link2 size={16} />;
         }
     };
 
     // Styling classes
-    const inputClass = "w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const inputWithIconClass = "w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const labelClass = "text-xs font-medium text-slate-500 dark:text-slate-400";
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
+    const inputClass =
+        'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const inputWithIconClass =
+        'w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -132,7 +152,10 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                         {t('settings.profile.social.title', 'Social & Links')}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        {t('settings.profile.social.description', 'Connect your social profiles and share your online presence')}
+                        {t(
+                            'settings.profile.social.description',
+                            'Connect your social profiles and share your online presence',
+                        )}
                     </p>
                 </div>
                 <button
@@ -151,9 +174,9 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                     <Link2 size={16} className="text-purple-500" />
                     {t('settings.profile.social.socialProfiles', 'Social Profiles')}
                 </h4>
-                
+
                 <div className="space-y-4">
-                    {SOCIAL_PLATFORMS.map(platform => (
+                    {SOCIAL_PLATFORMS.map((platform) => (
                         <div key={platform.id} className="space-y-1.5">
                             <label className={labelClass}>{platform.label}</label>
                             <div className="relative">
@@ -161,8 +184,8 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                                     {getIcon(platform.id)}
                                 </span>
                                 <input
-                                    value={socialLinks[platform.id as keyof ExtendedSocialLinks] as string || ''}
-                                    onChange={e => updateSocialLink(platform.id, e.target.value)}
+                                    value={(socialLinks[platform.id as keyof ExtendedSocialLinks] as string) || ''}
+                                    onChange={(e) => updateSocialLink(platform.id, e.target.value)}
                                     placeholder={platform.placeholder}
                                     className={inputWithIconClass}
                                 />
@@ -188,12 +211,12 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                     <Plus size={16} className="text-purple-500" />
                     {t('settings.profile.social.customLinks', 'Custom Links')}
                 </h4>
-                
+
                 {/* Existing custom links */}
                 {customLinks.length > 0 && (
                     <div className="space-y-3 mb-4">
                         {customLinks.map((link, index) => (
-                            <div 
+                            <div
                                 key={index}
                                 className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg"
                             >
@@ -202,9 +225,7 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                                     <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
                                         {link.name}
                                     </p>
-                                    <p className="text-xs text-slate-500 truncate">
-                                        {link.url}
-                                    </p>
+                                    <p className="text-xs text-slate-500 truncate">{link.url}</p>
                                 </div>
                                 <a
                                     href={link.url}
@@ -228,18 +249,21 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
                 {/* Add new custom link */}
                 <div className="border border-dashed border-slate-200 dark:border-white/10 rounded-lg p-4">
                     <p className="text-xs text-slate-500 mb-3">
-                        {t('settings.profile.social.addCustomLink', 'Add a custom link to your portfolio, blog, or any other website')}
+                        {t(
+                            'settings.profile.social.addCustomLink',
+                            'Add a custom link to your portfolio, blog, or any other website',
+                        )}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input
                             value={newCustomLink.name}
-                            onChange={e => setNewCustomLink(prev => ({ ...prev, name: e.target.value }))}
+                            onChange={(e) => setNewCustomLink((prev) => ({ ...prev, name: e.target.value }))}
                             placeholder={t('settings.profile.social.linkName', 'Link name (e.g. My Blog)')}
                             className={inputClass}
                         />
                         <input
                             value={newCustomLink.url}
-                            onChange={e => setNewCustomLink(prev => ({ ...prev, url: e.target.value }))}
+                            onChange={(e) => setNewCustomLink((prev) => ({ ...prev, url: e.target.value }))}
                             placeholder="https://..."
                             className={inputClass}
                         />
@@ -267,10 +291,4 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
 };
 
 export default SocialLinksSection;
-
-
-
-
-
-
 

@@ -1,22 +1,12 @@
 /**
  * StageGateModal
- * 
+ *
  * Modal wrapper for AssessmentStageGate component.
  * Shows gate criteria checklist and allows proceeding to next phase.
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-    X,
-    Loader2,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Shield,
-    ArrowRight,
-    Lock,
-    Unlock
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, Lock, Shield, Unlock, X, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface GateCriterion {
     id: string;
@@ -36,26 +26,26 @@ interface StageGateModalProps {
 }
 
 const GATE_CONFIG: Record<string, { title: string; description: string }> = {
-    'READINESS_GATE': {
+    READINESS_GATE: {
         title: 'Bramka Gotowości',
-        description: 'Sprawdź gotowość przed rozpoczęciem Assessment'
+        description: 'Sprawdź gotowość przed rozpoczęciem Assessment',
     },
-    'DESIGN_GATE': {
+    DESIGN_GATE: {
         title: 'Bramka Design',
-        description: 'Zatwierdź Assessment przed tworzeniem Raportu'
+        description: 'Zatwierdź Assessment przed tworzeniem Raportu',
     },
-    'PLANNING_GATE': {
+    PLANNING_GATE: {
         title: 'Bramka Planowania',
-        description: 'Sprawdź gotowość inicjatyw przed Roadmapą'
+        description: 'Sprawdź gotowość inicjatyw przed Roadmapą',
     },
-    'EXECUTION_GATE': {
+    EXECUTION_GATE: {
         title: 'Bramka Wykonania',
-        description: 'Zatwierdź roadmapę przed rozpoczęciem realizacji'
+        description: 'Zatwierdź roadmapę przed rozpoczęciem realizacji',
     },
-    'CLOSURE_GATE': {
+    CLOSURE_GATE: {
         title: 'Bramka Zamknięcia',
-        description: 'Sprawdź gotowość do stabilizacji'
-    }
+        description: 'Sprawdź gotowość do stabilizacji',
+    },
 };
 
 export const StageGateModal: React.FC<StageGateModalProps> = ({
@@ -65,7 +55,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
     fromPhase,
     toPhase,
     onClose,
-    onProceed
+    onProceed,
 }) => {
     const [loading, setLoading] = useState(true);
     const [criteria, setCriteria] = useState<GateCriterion[]>([]);
@@ -83,10 +73,9 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(
-                    `/api/stage-gates/${projectId}/check?from=${fromPhase}&to=${toPhase}`,
-                    { headers: { 'Authorization': `Bearer ${token}` } }
-                );
+                const response = await fetch(`/api/stage-gates/${projectId}/check?from=${fromPhase}&to=${toPhase}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
 
                 if (response.ok) {
                     const data = await response.json();
@@ -96,14 +85,14 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                     // Generate default criteria based on gate type
                     const defaultCriteria = getDefaultCriteria(gateType);
                     setCriteria(defaultCriteria);
-                    setIsGatePassed(defaultCriteria.every(c => c.isMet));
+                    setIsGatePassed(defaultCriteria.every((c) => c.isMet));
                 }
             } catch (err) {
                 console.error('[StageGateModal] Error:', err);
                 // Use default criteria on error
                 const defaultCriteria = getDefaultCriteria(gateType);
                 setCriteria(defaultCriteria);
-                setIsGatePassed(defaultCriteria.every(c => c.isMet));
+                setIsGatePassed(defaultCriteria.every((c) => c.isMet));
             } finally {
                 setLoading(false);
             }
@@ -117,21 +106,29 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
         switch (type) {
             case 'DESIGN_GATE':
                 return [
-                    { id: '1', criterion: 'Assessment w statusie APPROVED', isMet: true, evidence: 'Status sprawdzony' },
+                    {
+                        id: '1',
+                        criterion: 'Assessment w statusie APPROVED',
+                        isMet: true,
+                        evidence: 'Status sprawdzony',
+                    },
                     { id: '2', criterion: 'Wszystkie osie ocenione (7/7)', isMet: true, evidence: 'Postęp 100%' },
-                    { id: '3', criterion: 'Recenzje zakończone', isMet: true, evidence: 'Wszystkie recenzje zatwierdzone' },
-                    { id: '4', criterion: 'Gap Analysis dostępna', isMet: true, evidence: 'Dane wyliczone' }
+                    {
+                        id: '3',
+                        criterion: 'Recenzje zakończone',
+                        isMet: true,
+                        evidence: 'Wszystkie recenzje zatwierdzone',
+                    },
+                    { id: '4', criterion: 'Gap Analysis dostępna', isMet: true, evidence: 'Dane wyliczone' },
                 ];
             case 'PLANNING_GATE':
                 return [
                     { id: '1', criterion: 'Raport w statusie FINAL', isMet: false, evidence: '' },
                     { id: '2', criterion: 'Inicjatywy wygenerowane', isMet: false, evidence: '' },
-                    { id: '3', criterion: 'Priorytety przypisane', isMet: false, evidence: '' }
+                    { id: '3', criterion: 'Priorytety przypisane', isMet: false, evidence: '' },
                 ];
             default:
-                return [
-                    { id: '1', criterion: 'Wymagania spełnione', isMet: true, evidence: 'OK' }
-                ];
+                return [{ id: '1', criterion: 'Wymagania spełnione', isMet: true, evidence: 'OK' }];
         }
     };
 
@@ -145,10 +142,10 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
             await fetch(`/api/stage-gates/${projectId}/pass`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ from: fromPhase, to: toPhase })
+                body: JSON.stringify({ from: fromPhase, to: toPhase }),
             });
 
             onProceed();
@@ -160,7 +157,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
         }
     };
 
-    const metCount = criteria.filter(c => c.isMet).length;
+    const metCount = criteria.filter((c) => c.isMet).length;
     const progressPercent = criteria.length > 0 ? Math.round((metCount / criteria.length) * 100) : 0;
 
     return (
@@ -170,21 +167,23 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-gradient-to-r from-slate-50 to-white dark:from-navy-950 dark:to-navy-900">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${
-                                isGatePassed 
-                                    ? 'bg-green-100 dark:bg-green-900/30' 
-                                    : 'bg-amber-100 dark:bg-amber-900/30'
-                            }`}>
-                                <Shield className={`w-5 h-5 ${
-                                    isGatePassed 
-                                        ? 'text-green-600 dark:text-green-400' 
-                                        : 'text-amber-600 dark:text-amber-400'
-                                }`} />
+                            <div
+                                className={`p-2 rounded-lg ${
+                                    isGatePassed
+                                        ? 'bg-green-100 dark:bg-green-900/30'
+                                        : 'bg-amber-100 dark:bg-amber-900/30'
+                                }`}
+                            >
+                                <Shield
+                                    className={`w-5 h-5 ${
+                                        isGatePassed
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : 'text-amber-600 dark:text-amber-400'
+                                    }`}
+                                />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    {gateConfig.title}
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">{gateConfig.title}</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {fromPhase} → {toPhase}
                                 </p>
@@ -208,9 +207,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                     ) : (
                         <>
                             {/* Description */}
-                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                                {gateConfig.description}
-                            </p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{gateConfig.description}</p>
 
                             {/* Progress */}
                             <div className="flex items-center gap-3 mb-4">
@@ -222,11 +219,13 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                                         style={{ width: `${progressPercent}%` }}
                                     />
                                 </div>
-                                <span className={`text-sm font-medium ${
-                                    progressPercent === 100 
-                                        ? 'text-green-600 dark:text-green-400' 
-                                        : 'text-amber-600 dark:text-amber-400'
-                                }`}>
+                                <span
+                                    className={`text-sm font-medium ${
+                                        progressPercent === 100
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : 'text-amber-600 dark:text-amber-400'
+                                    }`}
+                                >
                                     {metCount}/{criteria.length}
                                 </span>
                             </div>
@@ -250,11 +249,13 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <p className={`text-sm font-medium ${
-                                                c.isMet 
-                                                    ? 'text-green-700 dark:text-green-300' 
-                                                    : 'text-slate-600 dark:text-slate-400'
-                                            }`}>
+                                            <p
+                                                className={`text-sm font-medium ${
+                                                    c.isMet
+                                                        ? 'text-green-700 dark:text-green-300'
+                                                        : 'text-slate-600 dark:text-slate-400'
+                                                }`}
+                                            >
                                                 {c.criterion}
                                             </p>
                                             {c.evidence && (
@@ -268,11 +269,13 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                             </div>
 
                             {/* Gate Status */}
-                            <div className={`mt-4 p-3 rounded-lg flex items-center gap-3 ${
-                                isGatePassed
-                                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30'
-                                    : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30'
-                            }`}>
+                            <div
+                                className={`mt-4 p-3 rounded-lg flex items-center gap-3 ${
+                                    isGatePassed
+                                        ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30'
+                                        : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30'
+                                }`}
+                            >
                                 {isGatePassed ? (
                                     <>
                                         <Unlock className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -307,9 +310,10 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                             disabled={!isGatePassed || passing}
                             className={`
                                 flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                ${isGatePassed && !passing
-                                    ? 'bg-green-600 hover:bg-green-500 text-white'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                ${
+                                    isGatePassed && !passing
+                                        ? 'bg-green-600 hover:bg-green-500 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                 }
                             `}
                         >
@@ -331,4 +335,3 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
         </div>
     );
 };
-

@@ -1,5 +1,5 @@
+import { Gavel, MoreHorizontal, Plus, Search } from 'lucide-react';
 import React from 'react';
-import { Gavel, Plus, Search, MoreHorizontal } from 'lucide-react';
 
 export const GovernanceRules: React.FC = () => {
     return (
@@ -44,13 +44,15 @@ export const GovernanceRules: React.FC = () => {
                             {[
                                 { name: 'Auto-Reject High Risk', scope: 'Portfolio', active: true },
                                 { name: 'Audit Force Log level', scope: 'System', active: true },
-                                { name: 'Consultant Access Bypass', scope: 'Organization', active: false }
+                                { name: 'Consultant Access Bypass', scope: 'Organization', active: false },
                             ].map((rule, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
                                     <td className="px-6 py-4 text-sm font-medium dark:text-gray-200">{rule.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{rule.scope}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${rule.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-medium ${rule.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                                        >
                                             {rule.active ? 'Enabled' : 'Disabled'}
                                         </span>
                                     </td>

@@ -1,6 +1,7 @@
+import { AlertCircle, CheckCircle, Circle, GitBranch, Play, Plus, Save, Square, Trash2 } from 'lucide-react';
 import React from 'react';
+
 import { PlaybookNodeType } from '../../types';
-import { Plus, Play, Square, GitBranch, CheckCircle, Circle, Save, AlertCircle, Trash2 } from 'lucide-react';
 
 interface PlaybookToolbarProps {
     onAddNode: (type: PlaybookNodeType) => void;
@@ -16,7 +17,7 @@ interface PlaybookToolbarProps {
 /**
  * PlaybookToolbar Component
  * Step 13: Visual Playbook Editor
- * 
+ *
  * Top toolbar with add node, save, and validate actions.
  */
 export const PlaybookToolbar: React.FC<PlaybookToolbarProps> = ({
@@ -27,7 +28,7 @@ export const PlaybookToolbar: React.FC<PlaybookToolbarProps> = ({
     hasSelectedNode,
     isSaving,
     isValidating,
-    isDirty
+    isDirty,
 }) => {
     const nodeTypes = [
         { type: PlaybookNodeType.ACTION, icon: Circle, label: 'Action', color: 'text-gray-600' },

@@ -1,6 +1,6 @@
 /**
  * Economics Module Types
- * 
+ *
  * Type definitions for digitization maturity assessments
  * Based on 6-axis evaluation framework with 7 levels per area
  */
@@ -16,29 +16,29 @@ export interface DigitizationAnalysis {
     name: string;
     description?: string;
     status: AnalysisStatus;
-    
+
     // Relationships
     projectId?: string;
     projectName?: string;
     organizationId: number;
-    
+
     // Ownership
     createdBy: string;
     createdByName?: string;
-    
+
     // Calculated Scores
     overallScore?: number;
     completionPercent: number;
     axisScores: Record<string, AxisScore>;
-    
+
     // Import metadata
     importedFrom?: string;
     importDate?: string;
-    
+
     // Timestamps
     createdAt: string;
     updatedAt: string;
-    
+
     // Tags for filtering
     tags?: string[];
 }
@@ -237,12 +237,4 @@ export const AXIS_ICONS: Record<string, string> = {
     transformation_culture: 'Users',
     cybersecurity: 'Shield',
 };
-
-
-
-
-
-
-
-
 

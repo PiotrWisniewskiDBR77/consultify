@@ -1,16 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Shield, Key, Lock, CheckCircle, AlertTriangle, Eye, EyeOff,
-    Smartphone, Mail, Copy, Download, RefreshCw, Loader2, ChevronRight,
-    ShieldCheck, ShieldOff, QrCode, Fingerprint, Clock
+import {
+    AlertTriangle,
+    CheckCircle,
+    ChevronRight,
+    Clock,
+    Copy,
+    Download,
+    Eye,
+    EyeOff,
+    Fingerprint,
+    Key,
+    Loader2,
+    Lock,
+    Mail,
+    QrCode,
+    RefreshCw,
+    Shield,
+    ShieldCheck,
+    ShieldOff,
+    Smartphone,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 /**
  * MFASetup Component - Enhanced
- * 
+ *
  * Enterprise-grade MFA setup with:
  * - TOTP (Authenticator app)
  * - Recovery email verification
@@ -74,7 +91,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             description: t('security.mfa.methodAppDesc', 'Use Google Authenticator, Authy, or similar apps'),
             icon: <Smartphone className="w-6 h-6" />,
             recommended: true,
-            available: true
+            available: true,
         },
         {
             id: 'sms',
@@ -82,8 +99,8 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             description: t('security.mfa.methodSmsDesc', 'Receive codes via text message'),
             icon: <Mail className="w-6 h-6" />,
             recommended: false,
-            available: smsAvailable // Dynamic based on backend support
-        }
+            available: smsAvailable, // Dynamic based on backend support
+        },
     ];
 
     useEffect(() => {
@@ -95,7 +112,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
 
     const fetchMFAMethods = async () => {
         try {
-            const response = await Api.get('/api/mfa/methods') as MFAMethodsResponse;
+            const response = (await Api.get('/api/mfa/methods')) as MFAMethodsResponse;
             if (response) {
                 setSmsAvailable(response.smsAvailable);
                 setConfiguredMethods(response.methods || []);
@@ -117,7 +134,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                     enabled: response.isEnabled,
                     enabledAt: response.enabledAt,
                     method: response.method || 'totp',
-                    backupCodesRemaining: response.backupCodesRemaining
+                    backupCodesRemaining: response.backupCodesRemaining,
                 });
             }
         } catch (error) {
@@ -145,7 +162,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             setSecret(res.manualEntry || res.data?.manualEntry);
             setStep('setup-app');
         } catch (err: any) {
-            setError(err.response?.data?.error || err.message || t('security.mfa.setupError', 'Failed to start MFA setup'));
+            setError(
+                err.response?.data?.error || err.message || t('security.mfa.setupError', 'Failed to start MFA setup'),
+            );
         } finally {
             setLoading(false);
         }
@@ -160,7 +179,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
         // Validate E.164 format
         const e164Regex = /^\+[1-9]\d{6,14}$/;
         if (!e164Regex.test(phoneNumber)) {
-            setError(t('security.mfa.invalidPhone', 'Invalid phone number. Use international format (e.g., +1234567890)'));
+            setError(
+                t('security.mfa.invalidPhone', 'Invalid phone number. Use international format (e.g., +1234567890)'),
+            );
             return;
         }
 
@@ -173,7 +194,11 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 toast.success(t('security.mfa.smsSent', 'Verification code sent to your phone'));
             }
         } catch (err: any) {
-            setError(err.response?.data?.error || err.message || t('security.mfa.smsSetupError', 'Failed to send verification code'));
+            setError(
+                err.response?.data?.error ||
+                    err.message ||
+                    t('security.mfa.smsSetupError', 'Failed to send verification code'),
+            );
         } finally {
             setLoading(false);
         }
@@ -182,7 +207,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
     const handleMethodSelect = (method: 'app' | 'sms') => {
         setSelectedMethod(method);
         setError(null);
-        
+
         if (method === 'app') {
             startTOTPSetup();
         } else {
@@ -206,7 +231,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 toast.success(t('security.mfa.smsEnabled', 'SMS MFA enabled successfully!'));
             }
         } catch (err: any) {
-            setError(err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'));
+            setError(
+                err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'),
+            );
         } finally {
             setLoading(false);
         }
@@ -228,7 +255,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 toast.success(t('security.mfa.enabled', '2FA enabled successfully!'));
             }
         } catch (err: any) {
-            setError(err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'));
+            setError(
+                err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'),
+            );
         } finally {
             setLoading(false);
         }
@@ -335,7 +364,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                             </p>
                         </div>
                         <div className="bg-white/10 rounded-lg p-3">
-                            <p className="text-emerald-100 text-xs mb-1">{t('security.mfa.backupCodes', 'Backup Codes')}</p>
+                            <p className="text-emerald-100 text-xs mb-1">
+                                {t('security.mfa.backupCodes', 'Backup Codes')}
+                            </p>
                             <p className="font-medium">
                                 {mfaStatus.backupCodesRemaining ?? '10'} {t('security.mfa.remaining', 'remaining')}
                             </p>
@@ -365,7 +396,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                                         {t('security.mfa.regenerateCodes', 'Regenerate Backup Codes')}
                                     </p>
                                     <p className="text-sm text-slate-500">
-                                        {t('security.mfa.regenerateDesc', 'Get new backup codes (invalidates old ones)')}
+                                        {t(
+                                            'security.mfa.regenerateDesc',
+                                            'Get new backup codes (invalidates old ones)',
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -403,7 +437,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                             {t('security.mfa.regenerateCodes', 'Regenerate Backup Codes')}
                         </h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            {t('security.mfa.regenerateInfo', 'Enter your current 2FA code to generate new backup codes. Your old codes will be invalidated.')}
+                            {t(
+                                'security.mfa.regenerateInfo',
+                                'Enter your current 2FA code to generate new backup codes. Your old codes will be invalidated.',
+                            )}
                         </p>
                         <div className="flex gap-3 mb-4">
                             <input
@@ -419,17 +456,19 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                                 disabled={loading || verificationCode.length !== 6}
                                 className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                {loading ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <RefreshCw className="w-4 h-4" />
+                                )}
                                 {t('security.mfa.regenerate', 'Regenerate')}
                             </button>
                         </div>
-                        {error && (
-                            <p className="text-red-500 text-sm mb-4">{error}</p>
-                        )}
+                        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                         {backupCodes.length > 0 && (
                             <div className="mt-6">
-                                <BackupCodesDisplay 
-                                    codes={backupCodes} 
+                                <BackupCodesDisplay
+                                    codes={backupCodes}
                                     onCopy={copyCode}
                                     onCopyAll={copyAllCodes}
                                     onDownload={downloadCodes}
@@ -438,7 +477,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                             </div>
                         )}
                         <button
-                            onClick={() => { setStep('initial'); setVerificationCode(''); setError(null); setBackupCodes([]); }}
+                            onClick={() => {
+                                setStep('initial');
+                                setVerificationCode('');
+                                setError(null);
+                                setBackupCodes([]);
+                            }}
                             className="mt-4 text-sm text-slate-500 hover:text-slate-700"
                         >
                             {t('common.back', 'Back')}
@@ -462,7 +506,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                     </h3>
                 </div>
                 <p className="text-sm text-red-600/80 dark:text-red-300 mb-6">
-                    {t('security.mfa.disableConfirmText', 'This will remove the extra security layer from your account. You will only need your password to sign in.')}
+                    {t(
+                        'security.mfa.disableConfirmText',
+                        'This will remove the extra security layer from your account. You will only need your password to sign in.',
+                    )}
                 </p>
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-red-700 dark:text-red-400 mb-2">
@@ -474,7 +521,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                         maxLength={6}
                         className="w-full px-4 py-3 text-center text-lg font-mono tracking-widest border border-red-200 dark:border-red-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
                         value={verificationCode}
-                        onChange={e => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                     />
                 </div>
                 {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
@@ -488,7 +535,11 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                         {t('security.mfa.confirmDisable', 'Disable 2FA')}
                     </button>
                     <button
-                        onClick={() => { setDisableConfirm(false); setVerificationCode(''); setError(null); }}
+                        onClick={() => {
+                            setDisableConfirm(false);
+                            setVerificationCode('');
+                            setError(null);
+                        }}
                         className="px-6 py-3 bg-slate-200 dark:bg-navy-800 hover:bg-slate-300 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
                     >
                         {t('common.cancel', 'Cancel')}
@@ -534,7 +585,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                             <BenefitCard
                                 icon={<Key className="w-5 h-5" />}
                                 title={t('security.mfa.benefit3Title', 'Backup Codes')}
-                                description={t('security.mfa.benefit3Desc', 'Access your account if you lose your phone')}
+                                description={t(
+                                    'security.mfa.benefit3Desc',
+                                    'Access your account if you lose your phone',
+                                )}
                             />
                         </div>
                         <button
@@ -564,42 +618,46 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                         {t('security.mfa.chooseMethodDesc', 'Select how you want to receive verification codes')}
                     </p>
                     <div className="space-y-4">
-                        {mfaMethods.filter(m => m.available).map((method) => (
-                            <button
-                                key={method.id}
-                                onClick={() => handleMethodSelect(method.id)}
-                                disabled={loading}
-                                className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
-                                    selectedMethod === method.id
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
-                                }`}
-                            >
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                    method.recommended 
-                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
-                                }`}>
-                                    {method.icon}
-                                </div>
-                                <div className="flex-1 text-left">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-slate-900 dark:text-white">
-                                            {method.name}
-                                        </span>
-                                        {method.recommended && (
-                                            <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-full">
-                                                {t('security.mfa.recommended', 'Recommended')}
-                                            </span>
-                                        )}
+                        {mfaMethods
+                            .filter((m) => m.available)
+                            .map((method) => (
+                                <button
+                                    key={method.id}
+                                    onClick={() => handleMethodSelect(method.id)}
+                                    disabled={loading}
+                                    className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
+                                        selectedMethod === method.id
+                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                            : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+                                    }`}
+                                >
+                                    <div
+                                        className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                            method.recommended
+                                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                                                : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        {method.icon}
                                     </div>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        {method.description}
-                                    </p>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-slate-400" />
-                            </button>
-                        ))}
+                                    <div className="flex-1 text-left">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-slate-900 dark:text-white">
+                                                {method.name}
+                                            </span>
+                                            {method.recommended && (
+                                                <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-full">
+                                                    {t('security.mfa.recommended', 'Recommended')}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                            {method.description}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                                </button>
+                            ))}
                     </div>
                     {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
                     <button
@@ -632,7 +690,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                                 {t('security.mfa.smsSetupTitle', 'Enter Your Phone Number')}
                             </h3>
                             <p className="text-slate-500 dark:text-slate-400">
-                                {t('security.mfa.smsSetupDesc', 'We\'ll send a verification code to this number')}
+                                {t('security.mfa.smsSetupDesc', "We'll send a verification code to this number")}
                             </p>
                         </div>
                     </div>
@@ -658,7 +716,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                             <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                                    {t('security.mfa.smsWarning', 'SMS is less secure than an authenticator app due to SIM swapping risks. We recommend using an authenticator app when possible.')}
+                                    {t(
+                                        'security.mfa.smsWarning',
+                                        'SMS is less secure than an authenticator app due to SIM swapping risks. We recommend using an authenticator app when possible.',
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -669,18 +730,14 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                         disabled={loading || !phoneNumber}
                         className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                        {loading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <Mail className="w-5 h-5" />
-                        )}
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
                         {t('security.mfa.sendCode', 'Send Verification Code')}
                     </button>
 
                     {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
 
                     <button
-                        onClick={() => smsAvailable ? setStep('method-select') : setStep('initial')}
+                        onClick={() => (smsAvailable ? setStep('method-select') : setStep('initial'))}
                         className="w-full mt-4 text-sm text-slate-500 hover:text-slate-700"
                     >
                         {t('common.back', 'Back')}
@@ -729,7 +786,11 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                             disabled={loading || verificationCode.length !== 6}
                             className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            {loading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <CheckCircle className="w-4 h-4" />
+                            )}
                             {t('security.mfa.verify', 'Verify')}
                         </button>
                     </div>
@@ -806,7 +867,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                                         {showSecret ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
                                     <button
-                                        onClick={() => { navigator.clipboard.writeText(secret); toast.success(t('common.copied', 'Copied!')); }}
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(secret);
+                                            toast.success(t('common.copied', 'Copied!'));
+                                        }}
                                         className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                                     >
                                         <Copy className="w-5 h-5" />
@@ -837,7 +901,11 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                                         disabled={loading || verificationCode.length !== 6}
                                         className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                                     >
-                                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <CheckCircle className="w-4 h-4" />
+                                        )}
                                         {t('security.mfa.verify', 'Verify')}
                                     </button>
                                 </div>
@@ -889,14 +957,17 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                                     {t('security.mfa.backupWarningTitle', 'Save your backup codes')}
                                 </h4>
                                 <p className="text-xs text-amber-700/80 dark:text-amber-300 mt-1">
-                                    {t('security.mfa.backupWarningDesc', 'If you lose access to your authenticator app, these codes are the ONLY way to access your account. Each code can be used only once.')}
+                                    {t(
+                                        'security.mfa.backupWarningDesc',
+                                        'If you lose access to your authenticator app, these codes are the ONLY way to access your account. Each code can be used only once.',
+                                    )}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <BackupCodesDisplay 
-                        codes={backupCodes} 
+                    <BackupCodesDisplay
+                        codes={backupCodes}
                         onCopy={copyCode}
                         onCopyAll={copyAllCodes}
                         onDownload={downloadCodes}
@@ -942,14 +1013,20 @@ interface StepIndicatorProps {
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ number, label, active, completed }) => (
     <div className="flex flex-col items-center">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-            completed ? 'bg-emerald-500 text-white' :
-            active ? 'bg-purple-600 text-white' :
-            'bg-slate-200 dark:bg-white/10 text-slate-500'
-        }`}>
+        <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                completed
+                    ? 'bg-emerald-500 text-white'
+                    : active
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-slate-200 dark:bg-white/10 text-slate-500'
+            }`}
+        >
             {completed ? <CheckCircle className="w-4 h-4" /> : number}
         </div>
-        <span className={`text-xs mt-1 ${active || completed ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400'}`}>
+        <span
+            className={`text-xs mt-1 ${active || completed ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400'}`}
+        >
             {label}
         </span>
     </div>
@@ -964,9 +1041,15 @@ interface BackupCodesDisplayProps {
     copiedIndex: number | null;
 }
 
-const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({ codes, onCopy, onCopyAll, onDownload, copiedIndex }) => {
+const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
+    codes,
+    onCopy,
+    onCopyAll,
+    onDownload,
+    copiedIndex,
+}) => {
     const { t } = useTranslation();
-    
+
     return (
         <div>
             <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/10 mb-4">
@@ -976,9 +1059,7 @@ const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({ codes, onCopy, 
                         onClick={() => onCopy(code, i)}
                         className="flex items-center justify-between px-3 py-2 bg-white dark:bg-navy-900 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group"
                     >
-                        <code className="font-mono text-slate-700 dark:text-slate-300 select-all">
-                            {code}
-                        </code>
+                        <code className="font-mono text-slate-700 dark:text-slate-300 select-all">{code}</code>
                         {copiedIndex === i ? (
                             <CheckCircle className="w-4 h-4 text-emerald-500" />
                         ) : (

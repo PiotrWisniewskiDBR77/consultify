@@ -4,16 +4,17 @@
  * ETAP 10.7: Rozszerzenie testów dla Cron Jobs - 80%+ coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { 
-    initScheduler, 
-    getBillingCron, 
-    getSnapshotMetricsCron,
-    getDunningCron,
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
     getBackupCron,
-    getTrialCron,
-    getHealthCheckJob,
+    getBillingCron,
     getCleanupRevokedTokensCron,
+    getDunningCron,
+    getHealthCheckJob,
+    getSnapshotMetricsCron,
+    getTrialCron,
+    initScheduler,
 } from '../../../../src/cron/index.js';
 
 describe('Cron Jobs Integration', () => {
@@ -93,7 +94,4 @@ describe('Cron Jobs Integration', () => {
         });
     });
 });
-
-
-
 

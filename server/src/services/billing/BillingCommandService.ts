@@ -1,24 +1,25 @@
 import type Stripe from 'stripe';
+
+import { BillingEventService } from './BillingEventService.js';
+import { BillingQueryService } from './BillingQueryService.js';
 import type {
+    _SeatPricing,
     BillingPlan,
+    BillingServiceDependencies,
     CreatePlanData,
-    UpdatePlanData,
     CreateUserPlanData,
-    UpdateUserPlanData,
+    DiscountValidationResult,
     Invoice,
     OrganizationBilling,
-    UpsertBillingData,
     PaymentMethod,
-    SetupIntent,
-    DiscountValidationResult,
-    UpdateBillingAlertsData,
-    UpdateTaxSettingsData,
     SeatCost,
-    SeatPricing,
-    BillingServiceDependencies
+    SetupIntent,
+    UpdateBillingAlertsData,
+    UpdatePlanData,
+    UpdateTaxSettingsData,
+    UpdateUserPlanData,
+    UpsertBillingData,
 } from './types.js';
-import { BillingQueryService } from './BillingQueryService.js';
-import { BillingEventService } from './BillingEventService.js';
 
 type DepsAccessor = () => BillingServiceDependencies;
 
@@ -26,7 +27,7 @@ export class BillingCommandService {
     constructor(
         private readonly getDeps: DepsAccessor,
         private readonly queryService: BillingQueryService,
-        private readonly eventService: BillingEventService
+        private readonly eventService: BillingEventService,
     ) {}
 
     private deps() {
@@ -50,8 +51,8 @@ export class BillingCommandService {
                 planData.token_overage_rate || null,
                 planData.storage_overage_rate || null,
                 planData.stripe_price_id || null,
-                featuresJson
-            ]
+                featuresJson,
+            ],
         ) as Promise<any>);
 
         return { id, ...planData, features: planData.features || {}, is_active: 1 };
@@ -60,8 +61,15 @@ export class BillingCommandService {
     async updatePlan(planId: string, updates: UpdatePlanData): Promise<{ id: string; changes: number } | null> {
         const deps = this.deps();
         const allowedFields: Array<keyof UpdatePlanData> = [
-            'name', 'price_monthly', 'token_limit', 'storage_limit_gb',
-            'token_overage_rate', 'storage_overage_rate', 'stripe_price_id', 'features', 'is_active'
+            'name',
+            'price_monthly',
+            'token_limit',
+            'storage_limit_gb',
+            'token_overage_rate',
+            'storage_overage_rate',
+            'stripe_price_id',
+            'features',
+            'is_active',
         ];
         const fields: string[] = [];
         const values: any[] = [];
@@ -84,7 +92,7 @@ export class BillingCommandService {
         values.push(planId);
         const result: any = await (deps.db.run(
             `UPDATE subscription_plans SET ${fields.join(', ')} WHERE id = ?`,
-            values
+            values,
         ) as Promise<any>);
 
         return { id: planId, changes: result.changes || 0 };
@@ -102,7 +110,7 @@ export class BillingCommandService {
         await (deps.db.run(
             `INSERT INTO user_license_plans (id, name, price_monthly, features, is_active)
              VALUES (?, ?, ?, ?, 1)`,
-            [id, planData.name, planData.price_monthly, featuresJson]
+            [id, planData.name, planData.price_monthly, featuresJson],
         ) as Promise<any>);
     }
 
@@ -130,7 +138,7 @@ export class BillingCommandService {
         values.push(planId);
         const result: any = await (deps.db.run(
             `UPDATE user_license_plans SET ${fields.join(', ')} WHERE id = ?`,
-            values
+            values,
         ) as Promise<any>);
 
         return { id: planId, changes: result.changes || 0 };
@@ -161,22 +169,26 @@ export class BillingCommandService {
                 billingData.stripe_customer_id ?? null,
                 billingData.stripe_subscription_id ?? null,
                 billingData.billing_email ?? null,
-                billingData.status || 'active'
-            ]
+                billingData.status || 'active',
+            ],
         ) as Promise<any>);
 
         const result = {
             id,
             organization_id: orgId,
             status: billingData.status || 'active',
-            ...billingData
+            ...billingData,
         };
 
         this.eventService.emitEvent('billing.org.updated', result);
         return result as OrganizationBilling;
     }
 
-    async getOrCreateStripeCustomer(orgId: string, email: string, orgName: string): Promise<Stripe.Customer | { id: string; email: string }> {
+    async getOrCreateStripeCustomer(
+        orgId: string,
+        email: string,
+        orgName: string,
+    ): Promise<Stripe.Customer | { id: string; email: string }> {
         const deps = this.deps();
         const billing = await this.queryService.getOrganizationBilling(orgId);
 
@@ -185,20 +197,26 @@ export class BillingCommandService {
         }
 
         if (billing?.stripe_customer_id) {
-            return await deps.stripe.customers.retrieve(billing.stripe_customer_id) as Stripe.Customer;
+            return (await deps.stripe.customers.retrieve(billing.stripe_customer_id)) as Stripe.Customer;
         }
 
         const customer = await deps.stripe.customers.create({
             email,
             name: orgName,
-            metadata: { organization_id: orgId }
+            metadata: { organization_id: orgId },
         });
 
         await this.upsertOrgBilling(orgId, { stripe_customer_id: customer.id });
         return customer;
     }
 
-    async createSubscription(orgId: string, planId: string, paymentMethodId: string, email: string, orgName: string): Promise<Stripe.Subscription | { id: string; status: string; plan: BillingPlan }> {
+    async createSubscription(
+        orgId: string,
+        planId: string,
+        paymentMethodId: string,
+        email: string,
+        orgName: string,
+    ): Promise<Stripe.Subscription | { id: string; status: string; plan: BillingPlan }> {
         const deps = this.deps();
         const plan = await this.queryService.getPlanById(planId);
         if (!plan) {
@@ -210,24 +228,28 @@ export class BillingCommandService {
             return { id: `mock_sub_${orgId}`, status: 'active', plan };
         }
 
-        const customer = await this.getOrCreateStripeCustomer(orgId, email, orgName) as Stripe.Customer;
+        const customer = (await this.getOrCreateStripeCustomer(orgId, email, orgName)) as Stripe.Customer;
         await deps.stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
         await deps.stripe.customers.update(customer.id, {
-            invoice_settings: { default_payment_method: paymentMethodId }
+            invoice_settings: { default_payment_method: paymentMethodId },
         });
 
         const subscription = await deps.stripe.subscriptions.create({
             customer: customer.id,
             items: [{ price: plan.stripe_price_id || '' }],
-            expand: ['latest_invoice.payment_intent']
+            expand: ['latest_invoice.payment_intent'],
         });
 
         await this.upsertOrgBilling(orgId, {
             subscription_plan_id: planId,
             stripe_subscription_id: subscription.id,
             status: subscription.status,
-            current_period_start: (subscription as any).current_period_start ? new Date((subscription as any).current_period_start * 1000) : null,
-            current_period_end: (subscription as any).current_period_end ? new Date((subscription as any).current_period_end * 1000) : null
+            current_period_start: (subscription as any).current_period_start
+                ? new Date((subscription as any).current_period_start * 1000)
+                : null,
+            current_period_end: (subscription as any).current_period_end
+                ? new Date((subscription as any).current_period_end * 1000)
+                : null,
         });
 
         this.eventService.emitEvent('billing.subscription.created', { orgId, subscriptionId: subscription.id });
@@ -247,7 +269,7 @@ export class BillingCommandService {
         }
 
         const subscription = await deps.stripe.subscriptions.update(billing.stripe_subscription_id, {
-            cancel_at_period_end: true
+            cancel_at_period_end: true,
         });
 
         await this.upsertOrgBilling(orgId, { status: 'canceling' });
@@ -272,11 +294,13 @@ export class BillingCommandService {
         const subscription = await deps.stripe.subscriptions.retrieve(billing.stripe_subscription_id);
 
         await deps.stripe.subscriptions.update(billing.stripe_subscription_id, {
-            items: [{
-                id: subscription.items.data[0].id,
-                price: newPlan.stripe_price_id || ''
-            }],
-            proration_behavior: 'create_prorations'
+            items: [
+                {
+                    id: subscription.items.data[0].id,
+                    price: newPlan.stripe_price_id || '',
+                },
+            ],
+            proration_behavior: 'create_prorations',
         });
 
         await this.upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
@@ -301,8 +325,8 @@ export class BillingCommandService {
                 stripeInvoice.status,
                 stripeInvoice.period_start ? new Date(stripeInvoice.period_start * 1000) : null,
                 stripeInvoice.period_end ? new Date(stripeInvoice.period_end * 1000) : null,
-                stripeInvoice.invoice_pdf || null
-            ]
+                stripeInvoice.invoice_pdf || null,
+            ],
         ) as Promise<any>);
 
         this.eventService.emitEvent('billing.invoice.recorded', { invoiceId: id, orgId });
@@ -319,7 +343,7 @@ export class BillingCommandService {
             last4: '****',
             exp_month: null,
             exp_year: null,
-            holder_name: null
+            holder_name: null,
         };
 
         if (deps.stripe) {
@@ -331,13 +355,13 @@ export class BillingCommandService {
                     last4: pm.card?.last4 || '****',
                     exp_month: pm.card?.exp_month || null,
                     exp_year: pm.card?.exp_year || null,
-                    holder_name: pm.billing_details?.name || null
+                    holder_name: pm.billing_details?.name || null,
                 };
 
                 const billing = await this.queryService.getOrganizationBilling(orgId);
                 if (billing?.stripe_customer_id) {
                     await (deps.stripe.paymentMethods.attach(stripePaymentMethodId, {
-                        customer: billing.stripe_customer_id
+                        customer: billing.stripe_customer_id,
                     }) as Promise<any>);
                 }
             } catch (error: unknown) {
@@ -361,8 +385,8 @@ export class BillingCommandService {
                 pmDetails.exp_month,
                 pmDetails.exp_year,
                 pmDetails.holder_name,
-                isDefault
-            ]
+                isDefault,
+            ],
         ) as Promise<any>);
 
         const paymentMethod: PaymentMethod = {
@@ -370,7 +394,7 @@ export class BillingCommandService {
             organization_id: orgId,
             stripe_payment_method_id: stripePaymentMethodId,
             ...pmDetails,
-            is_default: isDefault
+            is_default: isDefault,
         };
 
         this.eventService.emitEvent('billing.payment_method.added', { orgId, paymentMethodId: id });
@@ -392,15 +416,18 @@ export class BillingCommandService {
             }
         }
 
-        const result: any = await (deps.db.run(
-            'DELETE FROM payment_methods WHERE id = ? AND organization_id = ?',
-            [paymentMethodId, orgId]
-        ) as Promise<any>);
+        const result: any = await (deps.db.run('DELETE FROM payment_methods WHERE id = ? AND organization_id = ?', [
+            paymentMethodId,
+            orgId,
+        ]) as Promise<any>);
 
         return { deleted: result.changes > 0 };
     }
 
-    async setDefaultPaymentMethod(paymentMethodId: string, orgId: string): Promise<{ id: string; is_default: boolean }> {
+    async setDefaultPaymentMethod(
+        paymentMethodId: string,
+        orgId: string,
+    ): Promise<{ id: string; is_default: boolean }> {
         const deps = this.deps();
         const pm = await this.queryService.getPaymentMethod(paymentMethodId);
         if (!pm || pm.organization_id !== orgId) {
@@ -412,7 +439,7 @@ export class BillingCommandService {
                 const billing = await this.queryService.getOrganizationBilling(orgId);
                 if (billing?.stripe_customer_id) {
                     await deps.stripe.customers.update(billing.stripe_customer_id, {
-                        invoice_settings: { default_payment_method: pm.stripe_payment_method_id }
+                        invoice_settings: { default_payment_method: pm.stripe_payment_method_id },
                     });
                 }
             } catch (error: unknown) {
@@ -420,15 +447,11 @@ export class BillingCommandService {
             }
         }
 
-        await deps.db.run(
-            'UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?',
-            [orgId]
-        );
+        await deps.db.run('UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?', [orgId]);
 
-        await deps.db.run(
-            'UPDATE payment_methods SET is_default = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [paymentMethodId]
-        );
+        await deps.db.run('UPDATE payment_methods SET is_default = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [
+            paymentMethodId,
+        ]);
 
         this.eventService.emitEvent('billing.payment_method.defaulted', { orgId, paymentMethodId });
         return { id: paymentMethodId, is_default: true };
@@ -439,20 +462,20 @@ export class BillingCommandService {
         if (!deps.stripe) {
             return {
                 clientSecret: `mock_secret_${deps.uuidv4()}`,
-                id: `mock_seti_${deps.uuidv4()}`
+                id: `mock_seti_${deps.uuidv4()}`,
             };
         }
 
-        const customer = await this.getOrCreateStripeCustomer(orgId, email, orgName) as Stripe.Customer;
+        const customer = (await this.getOrCreateStripeCustomer(orgId, email, orgName)) as Stripe.Customer;
         const setupIntent = await deps.stripe.setupIntents.create({
             customer: customer.id,
             payment_method_types: ['card'],
-            metadata: { organization_id: orgId }
+            metadata: { organization_id: orgId },
         });
 
         return {
             clientSecret: setupIntent.client_secret || '',
-            id: setupIntent.id
+            id: setupIntent.id,
         };
     }
 
@@ -489,8 +512,8 @@ export class BillingCommandService {
                 alertSettings.auto_upgrade_enabled ?? 0,
                 alertSettings.auto_upgrade_plan_id ?? null,
                 alertSettings.cost_cap_monthly ?? null,
-                alertSettings.email_notifications ?? 1
-            ]
+                alertSettings.email_notifications ?? 1,
+            ],
         ) as Promise<any>);
 
         this.eventService.emitEvent('billing.alerts.updated', { orgId, alertSettings });
@@ -537,8 +560,8 @@ export class BillingCommandService {
                 taxSettings.billing_postal_code ?? null,
                 taxSettings.billing_country ?? null,
                 taxSettings.invoice_prefix ?? null,
-                taxSettings.po_number ?? null
-            ]
+                taxSettings.po_number ?? null,
+            ],
         ) as Promise<any>);
 
         this.eventService.emitEvent('billing.tax.updated', { orgId, taxSettings });
@@ -565,7 +588,7 @@ export class BillingCommandService {
              AND (valid_from IS NULL OR valid_from <= datetime('now'))
              AND (valid_until IS NULL OR valid_until >= datetime('now'))
              AND (max_uses IS NULL OR current_uses < max_uses)`,
-            [code.toUpperCase()]
+            [code.toUpperCase()],
         ) as Promise<any>);
 
         if (!row) {
@@ -586,8 +609,8 @@ export class BillingCommandService {
                 code: row.code,
                 type: row.discount_type,
                 value: row.discount_value,
-                currency: row.currency
-            }
+                currency: row.currency,
+            },
         };
     }
 
@@ -595,21 +618,25 @@ export class BillingCommandService {
         const deps = this.deps();
         const result: any = await (deps.db.run(
             'UPDATE discount_codes SET current_uses = current_uses + 1 WHERE id = ?',
-            [codeId]
+            [codeId],
         ) as Promise<any>);
 
         return { updated: result.changes > 0 };
     }
 
     async calculateSeatCost(orgId: string, quantity: number): Promise<SeatCost> {
-        return this.queryService.getSeatPricing(orgId).then(row => {
+        return this.queryService.getSeatPricing(orgId).then((row) => {
             const seatPrice = row.seat_price_monthly || 0;
             const totalCost = seatPrice * quantity;
             return { unitPrice: seatPrice, totalCost, quantity };
         });
     }
 
-    async processSeatPurchase(orgId: string, quantity: number, paymentMethodId: string): Promise<{
+    async processSeatPurchase(
+        orgId: string,
+        quantity: number,
+        paymentMethodId: string,
+    ): Promise<{
         success: boolean;
         quantity: number;
         unitPrice: number;
@@ -622,7 +649,7 @@ export class BillingCommandService {
             quantity,
             unitPrice: cost.unitPrice,
             totalCost: cost.totalCost,
-            paymentMethodId
+            paymentMethodId,
         };
     }
 }

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AdvancedAnalytics } from '../../../components/AdvancedAnalytics';
+import { AdvancedAnalytics } from '../../components/AdvancedAnalytics';
 
 const mockData = {
     burnDown: [
@@ -35,6 +35,7 @@ describe('AdvancedAnalytics Component', () => {
         expect(screen.getByText(/Team Velocity/i)).toBeInTheDocument();
     });
 });
+
 
 
 

@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Api } from '../services/api';
-import UsageMeters from './billing/UsageMeters';
 import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
+import UsageMeters from './billing/UsageMeters';
 
 interface SidebarUsageProps {
     showFull: boolean;
 }
 
 export const SidebarUsage: React.FC<SidebarUsageProps> = ({ showFull }) => {
-     
     const { freeSessionData } = useAppStore();
-     
+
     const [usage, setUsage] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 

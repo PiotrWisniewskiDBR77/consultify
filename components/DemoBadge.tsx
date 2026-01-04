@@ -1,7 +1,8 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, ExternalLink } from 'lucide-react';
+import { ExternalLink, Sparkles } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { Api } from '../services/api';
 
 interface DemoBadgeProps {
@@ -33,12 +34,8 @@ export const DemoBadge: React.FC<DemoBadgeProps> = ({ className = '' }) => {
                         <Sparkles size={18} />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-white/80">
-                            {t('demo.badge.mode', 'Demo Mode')}
-                        </p>
-                        <p className="text-sm font-bold">
-                            demo@legolex.com
-                        </p>
+                        <p className="text-xs font-medium text-white/80">{t('demo.badge.mode', 'Demo Mode')}</p>
+                        <p className="text-sm font-bold">demo@legolex.com</p>
                     </div>
                 </div>
 
@@ -80,12 +77,4 @@ export const DemoIndicator: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
-
-
 

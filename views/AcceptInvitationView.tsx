@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Loader2, Building2, Users, Shield } from 'lucide-react';
-import { InvitationValidation, InvitationType } from '../types';
+import { AlertCircle, Building2, CheckCircle, Loader2, Shield, Users, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
+import { InvitationType, InvitationValidation } from '../types';
 
 interface AcceptInvitationViewProps {
     token: string;
@@ -79,15 +80,15 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({ token, onAc
             const res = await fetch(`${API_URL}/invitations/accept`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     token,
                     email: invitation?.email,
                     firstName,
                     lastName,
-                    password
-                })
+                    password,
+                }),
             });
 
             const data = await res.json();
@@ -165,7 +166,10 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({ token, onAc
                         You've been invited to join as a{' '}
                         <span className="font-semibold">{invitation?.roleToAssign}</span>
                         {invitation?.invitationType === InvitationType.PROJECT && invitation?.projectName && (
-                            <> on the <span className="font-semibold">{invitation.projectName}</span> project</>
+                            <>
+                                {' '}
+                                on the <span className="font-semibold">{invitation.projectName}</span> project
+                            </>
                         )}
                     </p>
                 </div>
@@ -278,9 +282,13 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({ token, onAc
                         />
                         <label htmlFor="terms" className="text-sm text-gray-600">
                             I agree to the{' '}
-                            <a href="/legal/terms" className="text-indigo-600 hover:underline">Terms of Service</a>
-                            {' '}and{' '}
-                            <a href="/legal/privacy" className="text-indigo-600 hover:underline">Privacy Policy</a>
+                            <a href="/legal/terms" className="text-indigo-600 hover:underline">
+                                Terms of Service
+                            </a>{' '}
+                            and{' '}
+                            <a href="/legal/privacy" className="text-indigo-600 hover:underline">
+                                Privacy Policy
+                            </a>
                         </label>
                     </div>
 

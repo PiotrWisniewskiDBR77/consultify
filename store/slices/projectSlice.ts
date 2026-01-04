@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
-import { AppState } from '../useAppStore';
+
 import { FreeSession, FullSession, Notification } from '../../types';
+import { AppState } from '../useAppStore';
 
 export interface ProjectSlice {
     currentProjectId: string | null;
@@ -51,7 +52,7 @@ const initialFullSession: FullSession = {
     step2Completed: false,
     step3Completed: false,
     step4Completed: false,
-    step5Completed: false
+    step5Completed: false,
 };
 
 export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = (set) => ({
@@ -65,36 +66,42 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
 
     setCurrentReport: (id, mode) => set({ currentReportId: id, currentReportMode: mode }),
 
-    setCurrentProjectId: (pid) => set((state) => {
-        // MED-01: Save current chat before switching projects
-        const MAX_MESSAGES = 100;
-        const currentKey = state.currentProjectId || 'global';
-        const trimmedMessages = state.activeChatMessages.slice(-MAX_MESSAGES);
+    setCurrentProjectId: (pid) =>
+        set((state) => {
+            // MED-01: Save current chat before switching projects
+            const MAX_MESSAGES = 100;
+            const currentKey = state.currentProjectId || 'global';
+            const trimmedMessages = state.activeChatMessages.slice(-MAX_MESSAGES);
 
-        // Load chat for new project
-        const newMessages = pid ? (state.projectChatMessages[pid] || []) : [];
+            // Load chat for new project
+            const newMessages = pid ? state.projectChatMessages[pid] || [] : [];
 
-        return {
-            currentProjectId: pid,
-            activeChatMessages: newMessages,
-            projectChatMessages: {
-                ...state.projectChatMessages,
-                [currentKey]: trimmedMessages
-            }
-        };
-    }),
+            return {
+                currentProjectId: pid,
+                activeChatMessages: newMessages,
+                projectChatMessages: {
+                    ...state.projectChatMessages,
+                    [currentKey]: trimmedMessages,
+                },
+            };
+        }),
 
-    setFreeSessionData: (data) => set((state) => ({
-        freeSessionData: typeof data === 'function' ? data(state.freeSessionData) : { ...state.freeSessionData, ...data }
-    })),
+    setFreeSessionData: (data) =>
+        set((state) => ({
+            freeSessionData:
+                typeof data === 'function' ? data(state.freeSessionData) : { ...state.freeSessionData, ...data },
+        })),
 
-    setFullSessionData: (data) => set((state) => ({
-        fullSessionData: typeof data === 'function' ? data(state.fullSessionData) : { ...state.fullSessionData, ...data }
-    })),
+    setFullSessionData: (data) =>
+        set((state) => ({
+            fullSessionData:
+                typeof data === 'function' ? data(state.fullSessionData) : { ...state.fullSessionData, ...data },
+        })),
 
     addNotification: (notification) => set((state) => ({ notifications: [notification, ...state.notifications] })),
-    markNotificationAsRead: (id) => set((state) => ({
-        notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
-    })),
+    markNotificationAsRead: (id) =>
+        set((state) => ({
+            notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        })),
     clearNotifications: () => set({ notifications: [] }),
 });

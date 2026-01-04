@@ -1,16 +1,28 @@
 /**
  * Admin Sessions View
- * 
+ *
  * Manages SuperAdmin sessions with MFA tracking, IP logging,
  * and session revocation capabilities.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader, Section } from '../../../components/Admin/shared/Card';
 import {
-    Monitor, Smartphone, Globe, Shield, ShieldCheck, ShieldX,
-    Clock, Trash2, LogOut, RefreshCw, Loader2, AlertTriangle, Users
+    AlertTriangle,
+    Clock,
+    Globe,
+    Loader2,
+    LogOut,
+    Monitor,
+    RefreshCw,
+    Shield,
+    ShieldCheck,
+    ShieldX,
+    Smartphone,
+    Trash2,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card, CardWithHeader, Section } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
 
 interface AdminSession {
@@ -51,10 +63,7 @@ const AdminSessionsView: React.FC = () => {
         try {
             setLoading(true);
             setError(null);
-            const [sessionsData, statsData] = await Promise.all([
-                Api.getAdminSessions(),
-                Api.getAdminSessionStats()
-            ]);
+            const [sessionsData, statsData] = await Promise.all([Api.getAdminSessions(), Api.getAdminSessionStats()]);
             setSessions(sessionsData);
             setStats(statsData);
         } catch (err: any) {
@@ -68,7 +77,7 @@ const AdminSessionsView: React.FC = () => {
         try {
             setActionLoading(sessionId);
             await Api.revokeAdminSession(sessionId);
-            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            setSessions((prev) => prev.filter((s) => s.id !== sessionId));
             if (stats) {
                 setStats({ ...stats, activeSessions: stats.activeSessions - 1 });
             }
@@ -178,10 +187,7 @@ const AdminSessionsView: React.FC = () => {
                     <div className="flex items-center gap-2 text-red-400">
                         <AlertTriangle className="w-5 h-5" />
                         <span>{error}</span>
-                        <button
-                            onClick={() => setError(null)}
-                            className="ml-auto text-sm hover:text-red-300"
-                        >
+                        <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
                             Dismiss
                         </button>
                     </div>
@@ -215,10 +221,7 @@ const AdminSessionsView: React.FC = () => {
             </div>
 
             {/* Sessions Table */}
-            <CardWithHeader
-                title="Admin Sessions"
-                subtitle={`${sessions.length} active sessions`}
-            >
+            <CardWithHeader title="Admin Sessions" subtitle={`${sessions.length} active sessions`}>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
@@ -287,7 +290,9 @@ const AdminSessionsView: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="py-3 px-4">
-                                            <span className={`text-sm ${isExpired(session.expiresAt) ? 'text-red-400' : 'text-slate-300'}`}>
+                                            <span
+                                                className={`text-sm ${isExpired(session.expiresAt) ? 'text-red-400' : 'text-slate-300'}`}
+                                            >
                                                 {formatDate(session.expiresAt)}
                                             </span>
                                         </td>
@@ -317,10 +322,4 @@ const AdminSessionsView: React.FC = () => {
 };
 
 export default AdminSessionsView;
-
-
-
-
-
-
 

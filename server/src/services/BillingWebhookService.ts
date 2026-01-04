@@ -1,13 +1,13 @@
 /**
  * Billing Webhook Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles triggering and recording of billing-related webhook events.
  * Fully migrated from server/services/billingWebhookService.js
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -61,10 +61,10 @@ export const BILLING_EVENT_TYPES = {
     DUNNING_RETRY_SCHEDULED: 'dunning.retry_scheduled',
     DUNNING_FINAL_ATTEMPT: 'dunning.final_attempt',
     DUNNING_COMPLETED: 'dunning.completed',
-    DUNNING_FAILED: 'dunning.failed'
+    DUNNING_FAILED: 'dunning.failed',
 } as const;
 
-export type BillingEventType = typeof BILLING_EVENT_TYPES[keyof typeof BILLING_EVENT_TYPES];
+export type BillingEventType = (typeof BILLING_EVENT_TYPES)[keyof typeof BILLING_EVENT_TYPES];
 
 export interface BillingWebhookEvent {
     id: string;
@@ -107,15 +107,12 @@ export class BillingWebhookServiceClass {
         if (this.#initPromise) return this.#initPromise;
 
         this.#initPromise = (async () => {
-            const [uuidModule, webhookModule] = await Promise.all([
-                import('uuid'),
-                import('./WebhookService.js')
-            ]);
+            const [uuidModule, webhookModule] = await Promise.all([import('uuid'), import('./WebhookService.js')]);
 
             this.#deps = {
                 db: getDatabase(),
                 uuidv4: uuidModule.v4,
-                webhookService: webhookModule.default || webhookModule
+                webhookService: webhookModule.default || webhookModule,
             };
             this.#initialized = true;
         })();
@@ -130,27 +127,32 @@ export class BillingWebhookServiceClass {
 
     private async dbGet<T>(sql: string, params: any[] = []): Promise<T | null> {
         await this.#initDeps();
-        return DbPromise.get<T>(this.#deps!.db, sql, params);
+        return DbPromise.get<T>(this.#deps!.db, sql, params, { fallback: false });
     }
 
     private async dbRun(sql: string, params: any[] = []): Promise<{ lastID?: number; changes: number }> {
         await this.#initDeps();
-        const result = await DbPromise.run(this.#deps!.db, sql, params);
+        const result = await DbPromise.run(this.#deps!.db, sql, params, { fallback: false });
         return {
             lastID: result.lastID,
-            changes: result.changes || 0
+            changes: result.changes || 0,
         };
     }
 
     private async dbAll<T>(sql: string, params: any[] = []): Promise<T[]> {
         await this.#initDeps();
-        return DbPromise.all<T>(this.#deps!.db, sql, params);
+        return DbPromise.all<T>(this.#deps!.db, sql, params, { fallback: false });
     }
 
     /**
      * Record a billing webhook event in the database
      */
-    async recordBillingWebhookEvent(organizationId: string, eventType: string, payload: any, targetUrl: string | null = null): Promise<{ id: string; organizationId: string; eventType: string; status: string }> {
+    async recordBillingWebhookEvent(
+        organizationId: string,
+        eventType: string,
+        payload: any,
+        targetUrl: string | null = null,
+    ): Promise<{ id: string; organizationId: string; eventType: string; status: string }> {
         await this.#initDeps();
         const { uuidv4 } = this.#deps!;
 
@@ -161,7 +163,7 @@ export class BillingWebhookServiceClass {
             `INSERT INTO billing_webhook_events (
                 id, organization_id, event_type, payload, status, target_url, attempt_count, created_at, updated_at
             ) VALUES (?, ?, ?, ?, 'pending', ?, 0, ?, ?)`,
-            [id, organizationId, eventType, JSON.stringify(payload), targetUrl, now, now]
+            [id, organizationId, eventType, JSON.stringify(payload), targetUrl, now, now],
         );
 
         return { id, organizationId, eventType, status: 'pending' };
@@ -173,7 +175,12 @@ export class BillingWebhookServiceClass {
     async updateEventStatus(eventId: string, status: string): Promise<{ updated: boolean }> {
         await this.#initDeps();
 
-        const updates = ['status = ?', 'attempt_count = attempt_count + 1', "last_attempt_at = datetime('now')", "updated_at = datetime('now')"];
+        const updates = [
+            'status = ?',
+            'attempt_count = attempt_count + 1',
+            "last_attempt_at = datetime('now')",
+            "updated_at = datetime('now')",
+        ];
         const params: any[] = [status];
 
         if (status === 'failed' || status === 'retrying') {
@@ -185,10 +192,7 @@ export class BillingWebhookServiceClass {
 
         params.push(eventId);
 
-        const result = await this.dbRun(
-            `UPDATE billing_webhook_events SET ${updates.join(', ')} WHERE id = ?`,
-            params
-        );
+        const result = await this.dbRun(`UPDATE billing_webhook_events SET ${updates.join(', ')} WHERE id = ?`, params);
 
         return { updated: result.changes > 0 };
     }
@@ -197,10 +201,7 @@ export class BillingWebhookServiceClass {
      * Get a billing webhook event by ID
      */
     async getEventById(eventId: string): Promise<BillingWebhookEvent | null> {
-        const row = await this.dbGet<any>(
-            'SELECT * FROM billing_webhook_events WHERE id = ?',
-            [eventId]
-        );
+        const row = await this.dbGet<any>('SELECT * FROM billing_webhook_events WHERE id = ?', [eventId]);
 
         if (row && row.payload) {
             try {
@@ -223,10 +224,10 @@ export class BillingWebhookServiceClass {
              AND attempt_count < 5
              ORDER BY created_at ASC
              LIMIT ?`,
-            [limit]
+            [limit],
         );
 
-        return rows.map(row => {
+        return rows.map((row) => {
             if (row.payload) {
                 try {
                     row.payload = JSON.parse(row.payload);
@@ -241,7 +242,12 @@ export class BillingWebhookServiceClass {
     /**
      * Trigger a billing webhook event
      */
-    async triggerEvent(organizationId: string, eventType: string, data: any, options: { recordOnly?: boolean } = {}): Promise<any> {
+    async triggerEvent(
+        organizationId: string,
+        eventType: string,
+        data: any,
+        options: { recordOnly?: boolean } = {},
+    ): Promise<any> {
         await this.#initDeps();
         const { uuidv4, webhookService } = this.#deps!;
 
@@ -253,15 +259,11 @@ export class BillingWebhookServiceClass {
             created: new Date().toISOString(),
             livemode: process.env.NODE_ENV === 'production',
             data: {
-                object: data
-            }
+                object: data,
+            },
         };
 
-        const recordedEvent = await this.recordBillingWebhookEvent(
-            organizationId,
-            eventType,
-            eventPayload
-        );
+        const recordedEvent = await this.recordBillingWebhookEvent(organizationId, eventType, eventPayload);
 
         if (recordOnly) {
             return { recorded: true, triggered: false, eventId: recordedEvent.id };
@@ -278,7 +280,7 @@ export class BillingWebhookServiceClass {
                 recorded: true,
                 triggered: result.triggered,
                 eventId: recordedEvent.id,
-                results: result.results
+                results: result.results,
             };
         } catch (error: any) {
             logger.error('[BillingWebhook] Trigger error:', error);
@@ -287,7 +289,7 @@ export class BillingWebhookServiceClass {
                 recorded: true,
                 triggered: false,
                 eventId: recordedEvent.id,
-                error: error.message
+                error: error.message,
             };
         }
     }
@@ -301,7 +303,10 @@ export class BillingWebhookServiceClass {
     }
 
     async subscriptionUpdated(orgId: string, sub: any, prev: any = {}) {
-        return this.triggerEvent(orgId, BILLING_EVENT_TYPES.SUBSCRIPTION_UPDATED, { ...sub, previous_attributes: prev });
+        return this.triggerEvent(orgId, BILLING_EVENT_TYPES.SUBSCRIPTION_UPDATED, {
+            ...sub,
+            previous_attributes: prev,
+        });
     }
 
     async subscriptionCanceled(orgId: string, sub: any) {
@@ -371,7 +376,7 @@ export class BillingWebhookServiceClass {
              AND created_at >= datetime('now', '-${period}')
              GROUP BY event_type, status
              ORDER BY count DESC`,
-            [organizationId]
+            [organizationId],
         );
     }
 
@@ -381,10 +386,10 @@ export class BillingWebhookServiceClass {
              WHERE organization_id = ?
              ORDER BY created_at DESC
              LIMIT ?`,
-            [organizationId, limit]
+            [organizationId, limit],
         );
 
-        return rows.map(row => {
+        return rows.map((row) => {
             if (row.payload) {
                 try {
                     row.payload = JSON.parse(row.payload);
@@ -403,10 +408,10 @@ export class BillingWebhookServiceClass {
              AND attempt_count < 5
              ORDER BY created_at DESC
              LIMIT ?`,
-            [limit]
+            [limit],
         );
 
-        return rows.map(row => {
+        return rows.map((row) => {
             if (row.payload) {
                 try {
                     row.payload = JSON.parse(row.payload);
@@ -425,9 +430,11 @@ export class BillingWebhookServiceClass {
 
 const BillingWebhookService = new BillingWebhookServiceClass();
 
-export const recordBillingWebhookEvent = (orgId: string, type: string, payload: any, url?: string | null) => BillingWebhookService.recordBillingWebhookEvent(orgId, type, payload, url);
+export const recordBillingWebhookEvent = (orgId: string, type: string, payload: any, url?: string | null) =>
+    BillingWebhookService.recordBillingWebhookEvent(orgId, type, payload, url);
 export const updateEventStatus = (id: string, status: string) => BillingWebhookService.updateEventStatus(id, status);
 export const getEventById = (id: string) => BillingWebhookService.getEventById(id);
-export const triggerEvent = (orgId: string, type: string, data: any, options?: any) => BillingWebhookService.triggerEvent(orgId, type, data, options);
+export const triggerEvent = (orgId: string, type: string, data: any, options?: any) =>
+    BillingWebhookService.triggerEvent(orgId, type, data, options);
 
 export default BillingWebhookService;

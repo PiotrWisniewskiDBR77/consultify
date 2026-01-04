@@ -1,23 +1,12 @@
 /**
  * ImportReportModal
- * 
+ *
  * Modal for importing external assessment reports (PDF/Excel).
  * Extracts scores and maps them to DRD structure.
  */
 
-import React, { useState, useCallback, useRef } from 'react';
-import {
-    Upload,
-    X,
-    FileText,
-    File,
-    Loader2,
-    CheckCircle2,
-    AlertCircle,
-    ChevronRight,
-    Edit2,
-    Save
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronRight, Edit2, File, FileText, Loader2, Save, Upload, X } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
 
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
@@ -52,17 +41,13 @@ const DRD_AXES = [
     { id: 'dataManagement', name: 'Data Management', maxLevel: 7 },
     { id: 'culture', name: 'Culture', maxLevel: 5 },
     { id: 'cybersecurity', name: 'Cybersecurity', maxLevel: 5 },
-    { id: 'aiMaturity', name: 'AI Maturity', maxLevel: 5 }
+    { id: 'aiMaturity', name: 'AI Maturity', maxLevel: 5 },
 ];
 
-export const ImportReportModal: React.FC<ImportReportModalProps> = ({
-    projectId,
-    onClose,
-    onImported
-}) => {
+export const ImportReportModal: React.FC<ImportReportModalProps> = ({ projectId, onClose, onImported }) => {
     const token = getAuthToken();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+
     // State
     const [step, setStep] = useState<'upload' | 'mapping' | 'success'>('upload');
     const [file, setFile] = useState<File | null>(null);
@@ -117,9 +102,9 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
             const response = await fetch('/api/assessment-reports/import', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: formData
+                body: formData,
             });
 
             if (!response.ok) {
@@ -129,14 +114,14 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
 
             const result = await response.json();
             setImportResult(result);
-            
+
             // Initialize editing scores from result
             const initialScores: Record<string, number> = {};
             Object.entries(result.drdMapping).forEach(([axis, data]: [string, any]) => {
                 initialScores[axis] = data.actual;
             });
             setEditingScores(initialScores);
-            
+
             setStep('mapping');
         } catch (err: any) {
             console.error('[ImportReportModal] Import error:', err);
@@ -153,7 +138,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
         // In a real implementation, we would update the report with adjusted scores
         // For now, just proceed to success
         setStep('success');
-        
+
         setTimeout(() => {
             onImported(importResult.id);
             onClose();
@@ -199,9 +184,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                     {/* DRD Mapping */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium text-navy-900 dark:text-white">
-                                DRD Axis Mapping
-                            </h4>
+                            <h4 className="font-medium text-navy-900 dark:text-white">DRD Axis Mapping</h4>
                             <button
                                 onClick={() => setEditMode(!editMode)}
                                 className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 px-2 py-1 rounded"
@@ -210,9 +193,9 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                                 {editMode ? 'Done' : 'Adjust Scores'}
                             </button>
                         </div>
-                        
+
                         <div className="space-y-2">
-                            {DRD_AXES.map(axis => {
+                            {DRD_AXES.map((axis) => {
                                 const mapped = importResult.drdMapping[axis.id];
                                 const score = editingScores[axis.id] ?? mapped?.actual ?? 0;
                                 const confidence = mapped?.confidence ?? 0;
@@ -240,22 +223,26 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                                                     max={axis.maxLevel}
                                                     step="0.5"
                                                     value={score || ''}
-                                                    onChange={(e) => setEditingScores(prev => ({
-                                                        ...prev,
-                                                        [axis.id]: parseFloat(e.target.value) || 0
-                                                    }))}
+                                                    onChange={(e) =>
+                                                        setEditingScores((prev) => ({
+                                                            ...prev,
+                                                            [axis.id]: parseFloat(e.target.value) || 0,
+                                                        }))
+                                                    }
                                                     className="w-16 px-2 py-1 text-sm text-center rounded border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900"
                                                 />
                                             ) : (
-                                                <span className={`text-sm font-medium ${
-                                                    score > 0 ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'
-                                                }`}>
+                                                <span
+                                                    className={`text-sm font-medium ${
+                                                        score > 0
+                                                            ? 'text-purple-600 dark:text-purple-400'
+                                                            : 'text-slate-400'
+                                                    }`}
+                                                >
                                                     {score > 0 ? score.toFixed(1) : '-'}
                                                 </span>
                                             )}
-                                            <span className="text-xs text-slate-400">
-                                                / {axis.maxLevel}
-                                            </span>
+                                            <span className="text-xs text-slate-400">/ {axis.maxLevel}</span>
                                         </div>
                                     </div>
                                 );
@@ -280,9 +267,10 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                         border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
-                        ${file 
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
-                            : 'border-slate-200 dark:border-white/10 hover:border-purple-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                        ${
+                            file
+                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                : 'border-slate-200 dark:border-white/10 hover:border-purple-400 hover:bg-slate-50 dark:hover:bg-white/5'
                         }
                     `}
                 >
@@ -297,22 +285,14 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                     {file ? (
                         <div className="flex flex-col items-center">
                             <FileText className="w-12 h-12 text-purple-500 mb-3" />
-                            <p className="font-medium text-navy-900 dark:text-white mb-1">
-                                {file.name}
-                            </p>
-                            <p className="text-sm text-slate-500">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
+                            <p className="font-medium text-navy-900 dark:text-white mb-1">{file.name}</p>
+                            <p className="text-sm text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center">
                             <Upload className="w-12 h-12 text-slate-400 mb-3" />
-                            <p className="font-medium text-navy-900 dark:text-white mb-1">
-                                Drop your report here
-                            </p>
-                            <p className="text-sm text-slate-500">
-                                or click to browse (PDF, Excel, TXT)
-                            </p>
+                            <p className="font-medium text-navy-900 dark:text-white mb-1">Drop your report here</p>
+                            <p className="text-sm text-slate-500">or click to browse (PDF, Excel, TXT)</p>
                         </div>
                     )}
                 </div>
@@ -335,8 +315,8 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                 {/* Info */}
                 <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
                     <p className="text-sm text-blue-700 dark:text-blue-400">
-                        <strong>How it works:</strong> We'll analyze your report with AI to extract maturity scores 
-                        and map them to the DRD framework. You can review and adjust the mapping before saving.
+                        <strong>How it works:</strong> We'll analyze your report with AI to extract maturity scores and
+                        map them to the DRD framework. You can review and adjust the mapping before saving.
                     </p>
                 </div>
             </div>
@@ -354,9 +334,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                                 <Upload className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Import Report
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Import Report</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {step === 'upload' && 'Upload an external assessment report'}
                                     {step === 'mapping' && 'Review extracted data'}
@@ -401,9 +379,10 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                                 disabled={step === 'upload' ? !file || uploading : false}
                                 className={`
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                    ${(step === 'upload' && file && !uploading) || step === 'mapping'
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                    ${
+                                        (step === 'upload' && file && !uploading) || step === 'mapping'
+                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                     }
                                 `}
                             >
@@ -433,4 +412,3 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
 };
 
 export default ImportReportModal;
-

@@ -1,13 +1,15 @@
 /**
  * Production Logger
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Outputs structured JSON logs for easy parsing by log aggregators
  * Powered by Winston
  */
 
+import type { NextFunction, Request, Response } from 'express';
 import winston from 'winston';
-import type { Request, Response, NextFunction } from 'express';
+import 'winston-daily-rotate-file';
+
 import { getCorrelationId } from './RequestStore.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -38,24 +40,59 @@ const addCorrelationId = winston.format((info) => {
     return info;
 });
 
+// Configure transports
+const transports: winston.transport[] = [
+    new winston.transports.Console(),
+];
+
+// Add file logging in production or if explicitly enabled
+if (isProduction || process.env.ENABLE_FILE_LOGGING === 'true') {
+    // Import 'winston-daily-rotate-file' dynamically or assume it's available if added to project
+    // Note: In ESM/TS, we might need a require or import. 
+    // Since we are in TS, we rely on the import above. 
+    // However, winston-daily-rotate-file usually needs to be required to attach itself to winston.transports
+    // @ts-ignore
+    await import('winston-daily-rotate-file');
+
+    transports.push(
+        new winston.transports.DailyRotateFile({
+            filename: 'logs/error-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d',
+            level: 'error',
+            format: winston.format.json(),
+        }),
+        new winston.transports.DailyRotateFile({
+            filename: 'logs/combined-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '30d',
+            format: winston.format.json(),
+        }),
+    );
+}
+
 // Configure Winston Logger
 const winstonLogger = winston.createLogger({
     level: isProduction ? 'info' : 'debug',
     format: winston.format.combine(
         addCorrelationId(),
         winston.format.timestamp(),
-        isProduction ? winston.format.json() : winston.format.combine(
-            winston.format.colorize(),
-            winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
-                const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
-                const cid = correlationId ? `[${correlationId}] ` : '';
-                return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
-            })
-        )
+        isProduction
+            ? winston.format.json()
+            : winston.format.combine(
+                winston.format.colorize(),
+                winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
+                    const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+                    const cid = correlationId ? `[${correlationId}] ` : '';
+                    return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
+                }),
+            ),
     ),
-    transports: [
-        new winston.transports.Console()
-    ]
+    transports,
 });
 
 // ==========================================
@@ -102,7 +139,7 @@ const logger: Logger = {
                 status: res.statusCode,
                 duration: `${duration}ms`,
                 ip: req.ip || (req.socket.remoteAddress ?? 'unknown'),
-                userAgent: req.get('User-Agent') ?? 'unknown'
+                userAgent: req.get('User-Agent') ?? 'unknown',
             };
 
             const msg = `HTTP ${req.method} ${req.originalUrl} - ${res.statusCode}`;
@@ -117,11 +154,7 @@ const logger: Logger = {
         });
 
         next();
-    }
+    },
 };
 
 export default logger;
-
-
-
-

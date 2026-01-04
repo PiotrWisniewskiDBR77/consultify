@@ -1,14 +1,15 @@
 /**
  * Webhook Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Trigger webhooks for various events with full CRUD and delivery management
  */
 
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -103,11 +104,11 @@ export interface FetchFunction {
 // ==========================================
 
 export class WebhookService {
-    private db: IDatabase;
+    private _db: IDatabase;
     private fetch: FetchFunction;
 
     constructor(dbInstance?: IDatabase, options?: { fetch?: FetchFunction }) {
-        this.db = dbInstance || getDatabase();
+        this._db = dbInstance || getDatabase();
         this.fetch = options?.fetch || globalThis.fetch.bind(globalThis);
     }
 
@@ -128,7 +129,7 @@ export class WebhookService {
         query += ' ORDER BY created_at DESC';
 
         const rows = await DbPromise.all<Record<string, unknown>>(query, params);
-        
+
         const webhooks = (rows || []).map((row: Record<string, unknown>) => ({
             ...row,
             events: row.events ? JSON.parse(row.events as string) : [],
@@ -146,7 +147,7 @@ export class WebhookService {
      */
     async getWebhookById(id: string): Promise<Webhook | null> {
         const row = await DbPromise.get<Record<string, unknown>>('SELECT * FROM webhooks WHERE id = ?', [id]);
-        
+
         if (!row) {
             return null;
         }
@@ -176,7 +177,7 @@ export class WebhookService {
             retry_policy = { max_attempts: 3, backoff: 'exponential' },
             headers = {},
             payload_template = null,
-            created_by
+            created_by,
         } = webhookData;
 
         const id = uuidv4();
@@ -189,25 +190,32 @@ export class WebhookService {
                 created_at, updated_at, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                id, organization_id, name, description, url,
-                JSON.stringify(events), secret,
+                id,
+                organization_id,
+                name,
+                description,
+                url,
+                JSON.stringify(events),
+                secret,
                 is_active ? 1 : 0,
                 JSON.stringify(retry_policy),
                 JSON.stringify(headers),
                 payload_template ? JSON.stringify(payload_template) : null,
-                now, now, created_by
-            ]
+                now,
+                now,
+                created_by,
+            ],
         );
-        
+
         if (!runResult.success) {
             throw new Error(runResult.error || 'Failed to create webhook');
         }
-        
+
         const webhook = await this.getWebhookById(id);
         if (!webhook) {
             throw new Error('Failed to retrieve created webhook');
         }
-        
+
         return webhook;
     }
 
@@ -215,17 +223,7 @@ export class WebhookService {
      * Update a webhook
      */
     async updateWebhook(id: string, updates: WebhookUpdate): Promise<Webhook> {
-        const {
-            name,
-            description,
-            url,
-            events,
-            secret,
-            is_active,
-            retry_policy,
-            headers,
-            payload_template
-        } = updates;
+        const { name, description, url, events, secret, is_active, retry_policy, headers, payload_template } = updates;
 
         const updatesList: string[] = [];
         const params: unknown[] = [];
@@ -279,20 +277,17 @@ export class WebhookService {
         params.push(new Date().toISOString());
         params.push(id);
 
-        const runResult = await DbPromise.run(
-            `UPDATE webhooks SET ${updatesList.join(', ')} WHERE id = ?`,
-            params
-        );
-        
+        const runResult = await DbPromise.run(`UPDATE webhooks SET ${updatesList.join(', ')} WHERE id = ?`, params);
+
         if (!runResult.success) {
             throw new Error(runResult.error || 'Failed to update webhook');
         }
-        
+
         const webhook = await this.getWebhookById(id);
         if (!webhook) {
             throw new Error('Failed to retrieve updated webhook');
         }
-        
+
         return webhook;
     }
 
@@ -310,20 +305,29 @@ export class WebhookService {
     /**
      * Test a webhook
      */
-    async testWebhook(id: string, testPayload: Record<string, unknown> = {}): Promise<{ success: boolean; result?: { status: number; statusText: string }; error?: string }> {
+    async testWebhook(
+        id: string,
+        testPayload: Record<string, unknown> = {},
+    ): Promise<{ success: boolean; result?: { status: number; statusText: string }; error?: string }> {
         const webhook = await this.getWebhookById(id);
         if (!webhook) {
             throw new Error('Webhook not found');
         }
 
-        const payload = testPayload.event ? testPayload : {
-            event: 'webhook.test',
-            timestamp: new Date().toISOString(),
-            data: testPayload
-        };
+        const payload = testPayload.event
+            ? testPayload
+            : {
+                  event: 'webhook.test',
+                  timestamp: new Date().toISOString(),
+                  data: testPayload,
+              };
 
         try {
-            const result = await this.sendWebhook(webhook, payload.event as string, payload.data as Record<string, unknown>);
+            const result = await this.sendWebhook(
+                webhook,
+                payload.event as string,
+                payload.data as Record<string, unknown>,
+            );
             return { success: true, result };
         } catch (error: unknown) {
             const err = error as Error;
@@ -334,7 +338,11 @@ export class WebhookService {
     /**
      * Get webhook deliveries
      */
-    async getDeliveries(webhookId: string, filters: WebhookDeliveryFilters = {}, pagination: PaginationOptions = { page: 1, pageSize: 50 }): Promise<WebhookDelivery[]> {
+    async getDeliveries(
+        webhookId: string,
+        filters: WebhookDeliveryFilters = {},
+        pagination: PaginationOptions = { page: 1, pageSize: 50 },
+    ): Promise<WebhookDelivery[]> {
         const { status, eventType } = filters;
         const { page = 1, pageSize = 50 } = pagination;
         const offset = (page - 1) * pageSize;
@@ -355,10 +363,10 @@ export class WebhookService {
         params.push(pageSize, offset);
 
         const rows = await DbPromise.all<Record<string, unknown>>(query, params);
-        
+
         const deliveries = (rows || []).map((row: Record<string, unknown>) => ({
             ...row,
-            payload: row.payload ? JSON.parse(row.payload as string) : null
+            payload: row.payload ? JSON.parse(row.payload as string) : null,
         })) as WebhookDelivery[];
 
         return deliveries;
@@ -367,7 +375,12 @@ export class WebhookService {
     /**
      * Record a webhook delivery
      */
-    async recordDelivery(webhookId: string, eventType: string, payload: Record<string, unknown>, status: 'pending' | 'success' | 'failed' = 'pending'): Promise<{ id: string; webhook_id: string; status: string }> {
+    async recordDelivery(
+        webhookId: string,
+        eventType: string,
+        payload: Record<string, unknown>,
+        status: 'pending' | 'success' | 'failed' = 'pending',
+    ): Promise<{ id: string; webhook_id: string; status: string }> {
         const id = uuidv4();
         const now = new Date().toISOString();
 
@@ -375,20 +388,25 @@ export class WebhookService {
             `INSERT INTO webhook_deliveries (
                 id, webhook_id, event_type, payload, status, attempts, created_at
             ) VALUES (?, ?, ?, ?, ?, 0, ?)`,
-            [id, webhookId, eventType, JSON.stringify(payload), status, now]
+            [id, webhookId, eventType, JSON.stringify(payload), status, now],
         );
-        
+
         if (!runResult.success) {
             throw new Error(runResult.error || 'Failed to record delivery');
         }
-        
+
         return { id, webhook_id: webhookId, status };
     }
 
     /**
      * Update delivery status
      */
-    async updateDeliveryStatus(deliveryId: string, status: 'pending' | 'success' | 'failed', responseCode: number | null = null, responseBody: string | null = null): Promise<{ updated: boolean }> {
+    async updateDeliveryStatus(
+        deliveryId: string,
+        status: 'pending' | 'success' | 'failed',
+        responseCode: number | null = null,
+        responseBody: string | null = null,
+    ): Promise<{ updated: boolean }> {
         const updates: string[] = ['status = ?', 'attempts = attempts + 1'];
         const params: unknown[] = [status];
 
@@ -409,21 +427,26 @@ export class WebhookService {
 
         const runResult = await DbPromise.run(
             `UPDATE webhook_deliveries SET ${updates.join(', ')} WHERE id = ?`,
-            params
+            params,
         );
-        
+
         if (!runResult.success) {
             throw new Error(runResult.error || 'Failed to update delivery status');
         }
-        
+
         return { updated: (runResult.changes || 0) > 0 };
     }
 
     /**
      * Retry a failed delivery
      */
-    async retryDelivery(deliveryId: string): Promise<{ success: boolean; result?: { status: number; statusText: string } }> {
-        const delivery = await DbPromise.get<Record<string, unknown>>('SELECT * FROM webhook_deliveries WHERE id = ?', [deliveryId]) || {};
+    async retryDelivery(
+        deliveryId: string,
+    ): Promise<{ success: boolean; result?: { status: number; statusText: string } }> {
+        const delivery =
+            (await DbPromise.get<Record<string, unknown>>('SELECT * FROM webhook_deliveries WHERE id = ?', [
+                deliveryId,
+            ])) || {};
 
         if (!delivery || !delivery.webhook_id) {
             throw new Error('Delivery not found');
@@ -450,20 +473,37 @@ export class WebhookService {
     /**
      * Trigger webhooks for a specific event
      */
-    async trigger(organizationId: string, eventType: string, data: Record<string, unknown>): Promise<{ triggered: number; results: Array<{ webhookId: string; success: boolean; result?: { status: number; statusText: string }; error?: string }> }> {
+    async trigger(
+        organizationId: string,
+        eventType: string,
+        data: Record<string, unknown>,
+    ): Promise<{
+        triggered: number;
+        results: Array<{
+            webhookId: string;
+            success: boolean;
+            result?: { status: number; statusText: string };
+            error?: string;
+        }>;
+    }> {
         const webhooks = await DbPromise.all<Record<string, unknown>>(
             `SELECT * FROM webhooks 
              WHERE organization_id = ? 
              AND is_active = 1 
              AND events LIKE ?`,
-            [organizationId, `%${eventType}%`]
+            [organizationId, `%${eventType}%`],
         );
 
         if (!webhooks || webhooks.length === 0) {
             return { triggered: 0, results: [] };
         }
 
-        const results: Array<{ webhookId: string; success: boolean; result?: { status: number; statusText: string }; error?: string }> = [];
+        const results: Array<{
+            webhookId: string;
+            success: boolean;
+            result?: { status: number; statusText: string };
+            error?: string;
+        }> = [];
 
         for (const webhookRow of webhooks) {
             const webhook = {
@@ -471,10 +511,12 @@ export class WebhookService {
                 events: webhookRow.events ? JSON.parse(webhookRow.events as string) : [],
                 retry_policy: webhookRow.retry_policy ? JSON.parse(webhookRow.retry_policy as string) : null,
                 headers: webhookRow.headers ? JSON.parse(webhookRow.headers as string) : null,
-                payload_template: webhookRow.payload_template ? JSON.parse(webhookRow.payload_template as string) : null,
+                payload_template: webhookRow.payload_template
+                    ? JSON.parse(webhookRow.payload_template as string)
+                    : null,
                 is_active: webhookRow.is_active === 1,
             } as Webhook;
-            
+
             try {
                 const result = await this.sendWebhook(webhook, eventType, data);
                 results.push({ webhookId: webhook.id, success: true, result });
@@ -491,11 +533,15 @@ export class WebhookService {
     /**
      * Send individual webhook
      */
-    async sendWebhook(webhook: Webhook, eventType: string, data: Record<string, unknown>): Promise<{ status: number; statusText: string }> {
+    async sendWebhook(
+        webhook: Webhook,
+        eventType: string,
+        data: Record<string, unknown>,
+    ): Promise<{ status: number; statusText: string }> {
         const payload = {
             event: eventType,
             timestamp: new Date().toISOString(),
-            data
+            data,
         };
 
         // Create HMAC signature
@@ -511,11 +557,11 @@ export class WebhookService {
                 'X-Consultify-Signature': signature,
                 'X-Consultify-Event': eventType,
                 'User-Agent': 'Consultify-Webhook/1.0',
-                ...webhook.headers || {}
+                ...(webhook.headers || {}),
             },
             body: JSON.stringify(payload),
             // @ts-expect-error - timeout is not standard but may be supported
-            timeout: 5000
+            timeout: 5000,
         });
 
         if (!response.ok) {
@@ -524,19 +570,22 @@ export class WebhookService {
 
         return {
             status: response.status,
-            statusText: response.statusText
+            statusText: response.statusText,
         };
     }
 
     /**
      * Send Slack notification
      */
-    async sendSlackNotification(webhookUrl: string, message: Record<string, unknown>): Promise<{ success: boolean; status?: number; error?: string }> {
+    async sendSlackNotification(
+        webhookUrl: string,
+        message: Record<string, unknown>,
+    ): Promise<{ success: boolean; status?: number; error?: string }> {
         try {
             const response = await this.fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
+                body: JSON.stringify(message),
             });
 
             return { success: response.ok, status: response.status };
@@ -557,19 +606,19 @@ export class WebhookService {
                     type: 'section',
                     text: {
                         type: 'mrkdwn',
-                        text: `*${action}:* ${initiative.name}\n*Axis:* ${initiative.axis}\n*Priority:* ${initiative.priority}`
-                    }
+                        text: `*${action}:* ${initiative.name}\n*Axis:* ${initiative.axis}\n*Priority:* ${initiative.priority}`,
+                    },
                 },
                 {
                     type: 'context',
                     elements: [
                         {
                             type: 'mrkdwn',
-                            text: `ROI: ${initiative.roi}% | Cost: $${initiative.capex || 0}`
-                        }
-                    ]
-                }
-            ]
+                            text: `ROI: ${initiative.roi}% | Cost: $${initiative.capex || 0}`,
+                        },
+                    ],
+                },
+            ],
         };
     }
 
@@ -578,10 +627,10 @@ export class WebhookService {
      */
     formatTaskMessage(task: Record<string, unknown>, action: string): Record<string, unknown> {
         const statusEmoji: Record<string, string> = {
-            'not_started': '⚪',
-            'in_progress': '🟡',
-            'completed': '✅',
-            'blocked': '🔴'
+            not_started: '⚪',
+            in_progress: '🟡',
+            completed: '✅',
+            blocked: '🔴',
         };
 
         return {
@@ -590,15 +639,21 @@ export class WebhookService {
                     type: 'section',
                     text: {
                         type: 'mrkdwn',
-                        text: `${statusEmoji[task.status as string] || '⚪'} *${action}*\n*Task:* ${task.title}\n*Status:* ${task.status}`
-                    }
-                }
-            ]
+                        text: `${statusEmoji[task.status as string] || '⚪'} *${action}*\n*Task:* ${task.title}\n*Status:* ${task.status}`,
+                    },
+                },
+            ],
         };
+    }
+
+    /**
+     * Generate HMAC signature for webhook payload
+     */
+    generateHMACSignature(payload: string, secret: string): string {
+        return crypto.createHmac('sha256', secret).update(payload).digest('hex');
     }
 }
 
 // Export singleton instance
 const webhookService = new WebhookService();
 export default webhookService;
-

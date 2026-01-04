@@ -1,15 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { DemoLoadingOverlay } from '../components/demo/DemoLoadingOverlay';
+import { DemoModeModal } from '../components/Landing/DemoModeModal';
+import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { HeroSection } from '../components/Landing/HeroSection';
-import { TrustStrip } from '../components/Landing/TrustStrip';
 import { InfoSections } from '../components/Landing/InfoSections';
-import { EntryFooter } from '../components/Landing/EntryFooter';
-import { DemoModeModal } from '../components/Landing/DemoModeModal';
-import { DemoLoadingOverlay } from '../components/demo/DemoLoadingOverlay';
-import { useAppStore } from '../store/useAppStore';
-import { SessionMode, AppView, AuthStep } from '../types';
+import { TrustStrip } from '../components/Landing/TrustStrip';
 import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+import { AppView, AuthStep, SessionMode } from '../types';
 
 interface ProductEntryPageProps {
     onStartSession: (mode: SessionMode) => void;
@@ -20,7 +21,7 @@ interface ProductEntryPageProps {
 export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     onStartSession,
     onLoginClick,
-    onRegisterClick
+    onRegisterClick,
 }) => {
     const { i18n } = useTranslation();
     const { currentUser, setAuthInitialStep, setCurrentView, setSessionMode, setCurrentUser } = useAppStore();
@@ -52,7 +53,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
             // Set user in store with demo flag
             setCurrentUser({
                 ...demoUser,
-                hasWorkspace: true
+                hasWorkspace: true,
             } as any);
 
             // Mark demo as ready - loading overlay will transition
@@ -85,7 +86,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
             // Set user in store with demo flag
             setCurrentUser({
                 ...demoUser,
-                hasWorkspace: true
+                hasWorkspace: true,
             } as any);
 
             // Close modal and navigate to dashboard
@@ -161,10 +162,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
             />
 
             {/* Instant Demo Loading Overlay */}
-            <DemoLoadingOverlay
-                isVisible={isLoadingDemo}
-                onComplete={handleLoadingComplete}
-            />
+            <DemoLoadingOverlay isVisible={isLoadingDemo} onComplete={handleLoadingComplete} />
         </div>
     );
 };

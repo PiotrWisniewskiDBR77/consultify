@@ -1,12 +1,21 @@
+import {
+    AlertTriangle,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    Eye,
+    Flag,
+    Lock,
+    Shield,
+    Target,
+    TrendingUp,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAppStore } from '../store/useAppStore';
-import { useUserCan } from '../hooks/useUserCan';
+
 import { SplitLayout } from '../components/SplitLayout';
-import {
-    Eye, AlertTriangle, CheckCircle2, Clock, Target, Flag,
-    ChevronRight, Lock, Shield, TrendingUp
-} from 'lucide-react';
+import { useUserCan } from '../hooks/useUserCan';
+import { useAppStore } from '../store/useAppStore';
 
 /**
  * Step D: Executive View - Read-only reporting view for executives
@@ -79,7 +88,7 @@ export const ExecutiveView: React.FC = () => {
         const fetchData = async () => {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token}` };
 
             try {
                 // Fetch PMO Health Snapshot
@@ -90,14 +99,19 @@ export const ExecutiveView: React.FC = () => {
                 }
 
                 // Fetch overdue tasks (top 5)
-                const tasksRes = await fetch(`/api/tasks?projectId=${currentProjectId}&status=overdue&limit=5`, { headers });
+                const tasksRes = await fetch(`/api/tasks?projectId=${currentProjectId}&status=overdue&limit=5`, {
+                    headers,
+                });
                 if (tasksRes.ok) {
                     const tasksData = await tasksRes.json();
                     setOverdueTasks(tasksData.slice ? tasksData.slice(0, 5) : []);
                 }
 
                 // Fetch pending decisions
-                const decisionsRes = await fetch(`/api/decisions?projectId=${currentProjectId}&status=PENDING&limit=10`, { headers });
+                const decisionsRes = await fetch(
+                    `/api/decisions?projectId=${currentProjectId}&status=PENDING&limit=10`,
+                    { headers },
+                );
                 if (decisionsRes.ok) {
                     const decisionsData = await decisionsRes.json();
                     setPendingDecisions(decisionsData.slice ? decisionsData.slice(0, 10) : []);
@@ -109,8 +123,11 @@ export const ExecutiveView: React.FC = () => {
                     const initiativesData = await initiativesRes.json();
                     setAtRiskInitiatives(
                         (initiativesData || [])
-                            .filter((i: Initiative) => i.risk_level === 'HIGH' || i.status === 'AT_RISK' || i.status === 'BLOCKED')
-                            .slice(0, 5)
+                            .filter(
+                                (i: Initiative) =>
+                                    i.risk_level === 'HIGH' || i.status === 'AT_RISK' || i.status === 'BLOCKED',
+                            )
+                            .slice(0, 5),
                     );
                 }
             } catch (err) {
@@ -124,11 +141,11 @@ export const ExecutiveView: React.FC = () => {
     }, [currentProjectId, accessDenied]);
 
     const handleAiChat = async (text: string) => {
-        addChatMessage({ 
-            id: Date.now().toString(), 
-            role: 'user', 
-            content: text, 
-            timestamp: new Date()
+        addChatMessage({
+            id: Date.now().toString(),
+            role: 'user',
+            content: text,
+            timestamp: new Date(),
         });
     };
 
@@ -138,9 +155,7 @@ export const ExecutiveView: React.FC = () => {
             <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
                 <div className="text-center">
                     <Lock size={48} className="mx-auto mb-4 text-slate-400" />
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                        Access Restricted
-                    </h2>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Access Restricted</h2>
                     <p className="text-slate-500 dark:text-slate-400">
                         Executive View is available for Admin and Manager roles only.
                     </p>
@@ -177,11 +192,7 @@ export const ExecutiveView: React.FC = () => {
     }
 
     return (
-        <SplitLayout
-            title="Executive View"
-            subtitle="Read-only strategic overview"
-            onSendMessage={handleAiChat}
-        >
+        <SplitLayout title="Executive View" subtitle="Read-only strategic overview" onSendMessage={handleAiChat}>
             <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950 overflow-auto p-4">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
@@ -227,7 +238,9 @@ export const ExecutiveView: React.FC = () => {
                                 <>
                                     <CheckCircle2 size={32} className="text-green-500" />
                                     <div>
-                                        <div className="text-sm font-medium text-green-600 dark:text-green-400">Ready to Proceed</div>
+                                        <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                                            Ready to Proceed
+                                        </div>
                                         <div className="text-xs text-slate-500">All criteria met</div>
                                     </div>
                                 </>
@@ -235,7 +248,9 @@ export const ExecutiveView: React.FC = () => {
                                 <>
                                     <AlertTriangle size={32} className="text-amber-500" />
                                     <div>
-                                        <div className="text-sm font-medium text-amber-600 dark:text-amber-400">Not Ready</div>
+                                        <div className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                                            Not Ready
+                                        </div>
                                         <div className="text-xs text-slate-500">
                                             {snapshot?.stageGate.missingCriteria.length || 0} criteria pending
                                         </div>
@@ -259,11 +274,19 @@ export const ExecutiveView: React.FC = () => {
                     ) : (
                         <div className="space-y-2">
                             {snapshot?.blockers.slice(0, 5).map((blocker, idx) => (
-                                <div key={idx} className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${blocker.type === 'TASK' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                        blocker.type === 'DECISION' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                                        }`}>
+                                <div
+                                    key={idx}
+                                    className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0"
+                                >
+                                    <span
+                                        className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                            blocker.type === 'TASK'
+                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                                : blocker.type === 'DECISION'
+                                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                        }`}
+                                    >
                                         {blocker.type}
                                     </span>
                                     <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
@@ -288,7 +311,10 @@ export const ExecutiveView: React.FC = () => {
                     ) : (
                         <div className="space-y-2">
                             {pendingDecisions.map((decision) => (
-                                <div key={decision.id} className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
+                                <div
+                                    key={decision.id}
+                                    className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0"
+                                >
                                     <Clock size={14} className="text-amber-500 flex-shrink-0" />
                                     <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                                         {decision.title}
@@ -315,7 +341,10 @@ export const ExecutiveView: React.FC = () => {
                     ) : (
                         <div className="space-y-2">
                             {overdueTasks.map((task) => (
-                                <div key={task.id} className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
+                                <div
+                                    key={task.id}
+                                    className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0"
+                                >
                                     <AlertTriangle size={14} className="text-red-500 flex-shrink-0" />
                                     <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                                         {task.title}
@@ -342,15 +371,21 @@ export const ExecutiveView: React.FC = () => {
                     ) : (
                         <div className="space-y-2">
                             {atRiskInitiatives.map((initiative) => (
-                                <div key={initiative.id} className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
+                                <div
+                                    key={initiative.id}
+                                    className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-white/5 last:border-0"
+                                >
                                     <Flag size={14} className="text-orange-500 flex-shrink-0" />
                                     <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                                         {initiative.name}
                                     </span>
-                                    <span className={`px-2 py-0.5 rounded text-xs ${initiative.status === 'BLOCKED'
-                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                                        : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-                                        }`}>
+                                    <span
+                                        className={`px-2 py-0.5 rounded text-xs ${
+                                            initiative.status === 'BLOCKED'
+                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                                : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                                        }`}
+                                    >
                                         {initiative.status || initiative.risk_level}
                                     </span>
                                 </div>

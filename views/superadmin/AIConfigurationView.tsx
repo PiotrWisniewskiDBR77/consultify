@@ -1,45 +1,46 @@
-import React, { useState, useEffect } from 'react';
 import {
-    Brain,
-    Settings,
-    MessageSquare,
-    Wand2,
-    FileText,
-    Target,
-    BarChart3,
-    Zap,
-    Save,
-    RefreshCw,
-    AlertTriangle,
-    CheckCircle,
-    DollarSign,
     Activity,
-    Cpu,
-    Eye,
-    Hand,
-    Sparkles,
-    TrendingUp,
-    Server,
-    Plus,
-    Trash2,
-    Edit,
-    X,
+    AlertTriangle,
+    BarChart3,
+    Brain,
     Check,
+    CheckCircle,
+    Cpu,
+    Database,
+    DollarSign,
+    Edit,
+    Eye,
     EyeOff,
+    FileText,
+    Globe,
+    Hand,
+    History,
+    Lock,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Save,
+    Server,
+    Settings,
+    Shield,
+    Sparkles,
+    Target,
+    Trash2,
+    TrendingUp,
+    Wand2,
     Wifi,
     WifiOff,
-    Database,
-    Shield,
-    Lock,
-    Globe,
-    History
+    X,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { AuditLogViewer, SettingsCard, SettingsSlider, SettingsToggle } from '../../components/AISettings';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 import { SuperAdminAISettings } from '../../types';
-import { LLMProviderConfig, LLMProvider } from '../../types/domain/ai';
-import { SettingsCard, SettingsToggle, SettingsSlider, AuditLogViewer } from '../../components/AISettings';
+import { LLMProvider, LLMProviderConfig } from '../../types/domain/ai';
 
 // AI Capability definitions with their prompt keys
 const AI_CAPABILITIES = [
@@ -49,7 +50,7 @@ const AI_CAPABILITIES = [
         icon: MessageSquare,
         description: 'Main AI assistant for conversations',
         promptKey: 'system_chat',
-        color: 'from-blue-500 to-blue-600'
+        color: 'from-blue-500 to-blue-600',
     },
     {
         id: 'magic_wand',
@@ -57,7 +58,7 @@ const AI_CAPABILITIES = [
         icon: Wand2,
         description: 'Field auto-suggestions',
         promptKey: 'system_magic_wand',
-        color: 'from-purple-500 to-purple-600'
+        color: 'from-purple-500 to-purple-600',
     },
     {
         id: 'reports',
@@ -65,7 +66,7 @@ const AI_CAPABILITIES = [
         icon: FileText,
         description: 'Report and analysis generation',
         promptKey: 'system_reports',
-        color: 'from-emerald-500 to-emerald-600'
+        color: 'from-emerald-500 to-emerald-600',
     },
     {
         id: 'initiative_analysis',
@@ -73,7 +74,7 @@ const AI_CAPABILITIES = [
         icon: Target,
         description: 'Initiative scoring and analysis',
         promptKey: 'system_initiative',
-        color: 'from-amber-500 to-amber-600'
+        color: 'from-amber-500 to-amber-600',
     },
     {
         id: 'max_mode',
@@ -81,7 +82,7 @@ const AI_CAPABILITIES = [
         icon: Sparkles,
         description: 'Deep analysis with chain-of-thought',
         promptKey: 'system_max_reasoner',
-        color: 'from-rose-500 to-rose-600'
+        color: 'from-rose-500 to-rose-600',
     },
     {
         id: 'coach',
@@ -89,8 +90,8 @@ const AI_CAPABILITIES = [
         icon: Brain,
         description: 'PMO coaching and mentoring',
         promptKey: 'system_coach',
-        color: 'from-cyan-500 to-cyan-600'
-    }
+        color: 'from-cyan-500 to-cyan-600',
+    },
 ];
 
 // Tabs for AI Configuration
@@ -139,7 +140,7 @@ export const AIConfigurationView: React.FC = () => {
         visibility: 'admin',
         cost_per_1k: 0,
         costPerInputToken: 0,
-        costPerOutputToken: 0
+        costPerOutputToken: 0,
     });
 
     // Ollama
@@ -167,33 +168,40 @@ export const AIConfigurationView: React.FC = () => {
             // Load usage stats
             try {
                 const usage = await fetch('/api/llm/control/usage', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setUsageStats(usage);
-            } catch (e) { console.error('Usage load failed:', e); }
+            } catch (e) {
+                console.error('Usage load failed:', e);
+            }
 
             // Load costs
             try {
                 const costs = await fetch('/api/llm/costs', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setCostStats(costs);
-            } catch (e) { console.error('Costs load failed:', e); }
+            } catch (e) {
+                console.error('Costs load failed:', e);
+            }
 
             // Load health
             try {
-                const health = await fetch('/api/llm/diagnose').then(r => r.json());
+                const health = await fetch('/api/llm/diagnose').then((r) => r.json());
                 setHealthStatus(health);
-            } catch (e) { console.error('Health load failed:', e); }
+            } catch (e) {
+                console.error('Health load failed:', e);
+            }
 
             // Load global AI settings
             try {
                 const settings = await fetch('/api/ai-settings/superadmin', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setGlobalSettings(settings);
-            } catch (e) { console.error('Global settings load failed:', e); }
-
+            } catch (e) {
+                console.error('Global settings load failed:', e);
+            }
         } catch (err) {
             console.error('Failed to load AI config data:', err);
             toast.error('Failed to load AI configuration');
@@ -214,10 +222,10 @@ export const AIConfigurationView: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(globalSettings)
-            }).then(r => r.json());
+                body: JSON.stringify(globalSettings),
+            }).then((r) => r.json());
             setGlobalSettings(updated);
             toast.success('Global settings saved');
         } catch (e) {
@@ -226,15 +234,12 @@ export const AIConfigurationView: React.FC = () => {
         setSavingSettings(false);
     };
 
-    const updateGlobalSetting = <K extends keyof SuperAdminAISettings>(
-        key: K,
-        value: SuperAdminAISettings[K]
-    ) => {
-        setGlobalSettings(prev => prev ? { ...prev, [key]: value } : null);
+    const updateGlobalSetting = <K extends keyof SuperAdminAISettings>(key: K, value: SuperAdminAISettings[K]) => {
+        setGlobalSettings((prev) => (prev ? { ...prev, [key]: value } : null));
     };
 
     const selectCapability = (capabilityId: string) => {
-        const cap = AI_CAPABILITIES.find(c => c.id === capabilityId);
+        const cap = AI_CAPABILITIES.find((c) => c.id === capabilityId);
         if (cap) {
             setSelectedCapability(capabilityId);
             setEditingPrompt(prompts[cap.promptKey]?.content || getDefaultPrompt(capabilityId));
@@ -285,7 +290,7 @@ THINKING PROTOCOL:
 5. </thinking> - summary for user`,
 
             coach: `You are a PMO coach and digital transformation mentor.
-Help leaders develop change management competencies.`
+Help leaders develop change management competencies.`,
         };
         return defaults[capabilityId] || '';
     };
@@ -293,15 +298,15 @@ Help leaders develop change management competencies.`
     const savePrompt = async () => {
         if (!selectedCapability) return;
 
-        const cap = AI_CAPABILITIES.find(c => c.id === selectedCapability);
+        const cap = AI_CAPABILITIES.find((c) => c.id === selectedCapability);
         if (!cap) return;
 
         setSaving(true);
         try {
             await Api.aiUpdateSystemPrompt(cap.promptKey, { content: editingPrompt });
-            setPrompts(prev => ({
+            setPrompts((prev) => ({
                 ...prev,
-                [cap.promptKey]: { content: editingPrompt, updated_at: new Date().toISOString() }
+                [cap.promptKey]: { content: editingPrompt, updated_at: new Date().toISOString() },
             }));
             toast.success(`Saved instructions for ${cap.name}`);
         } catch (err) {
@@ -339,7 +344,7 @@ Help leaders develop change management competencies.`
             model_id: '',
             is_active: true,
             visibility: 'admin',
-            cost_per_1k: 0
+            cost_per_1k: 0,
         });
     };
 
@@ -402,7 +407,7 @@ Help leaders develop change management competencies.`
                 visibility: 'public',
                 cost_per_1k: 0,
                 costPerInputToken: 0,
-                costPerOutputToken: 0
+                costPerOutputToken: 0,
             } as any);
             toast.success(`Added ${modelName}`);
             loadInitialData();
@@ -450,20 +455,27 @@ Help leaders develop change management competencies.`
                             <p className="text-sm text-slate-400">Manage AI behavior, providers, and system health</p>
                         </div>
                     </div>
-                    <InfoButton cardId="superadmin-ai-config" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-ai-config"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                 </div>
             </div>
 
             {/* Tabs */}
             <div className="shrink-0 px-8 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                            activeTab === tab.id
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -482,17 +494,18 @@ Help leaders develop change management competencies.`
                                 AI Functions
                             </h3>
                             <div className="space-y-2">
-                                {AI_CAPABILITIES.map(cap => {
+                                {AI_CAPABILITIES.map((cap) => {
                                     const Icon = cap.icon;
                                     const hasCustomPrompt = !!prompts[cap.promptKey]?.content;
                                     return (
                                         <button
                                             key={cap.id}
                                             onClick={() => selectCapability(cap.id)}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${selectedCapability === cap.id
-                                                ? 'bg-white/10 border border-blue-500/50'
-                                                : 'hover:bg-white/5 border border-transparent'
-                                                }`}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+                                                selectedCapability === cap.id
+                                                    ? 'bg-white/10 border border-blue-500/50'
+                                                    : 'hover:bg-white/5 border border-transparent'
+                                            }`}
                                         >
                                             <div className={`p-2 rounded-lg bg-gradient-to-br ${cap.color}`}>
                                                 <Icon size={18} className="text-white" />
@@ -501,9 +514,7 @@ Help leaders develop change management competencies.`
                                                 <div className="font-medium text-white text-sm truncate">
                                                     {cap.name}
                                                 </div>
-                                                <div className="text-xs text-slate-500 truncate">
-                                                    {cap.description}
-                                                </div>
+                                                <div className="text-xs text-slate-500 truncate">{cap.description}</div>
                                             </div>
                                             <div className="shrink-0">
                                                 {hasCustomPrompt ? (
@@ -525,10 +536,17 @@ Help leaders develop change management competencies.`
                                     <div className="shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
                                         <div>
                                             <h3 className="font-semibold text-white">
-                                                Instructions for: {AI_CAPABILITIES.find(c => c.id === selectedCapability)?.name}
+                                                Instructions for:{' '}
+                                                {AI_CAPABILITIES.find((c) => c.id === selectedCapability)?.name}
                                             </h3>
                                             <p className="text-xs text-slate-500 mt-1">
-                                                Prompt key: <code className="text-blue-400">{AI_CAPABILITIES.find(c => c.id === selectedCapability)?.promptKey}</code>
+                                                Prompt key:{' '}
+                                                <code className="text-blue-400">
+                                                    {
+                                                        AI_CAPABILITIES.find((c) => c.id === selectedCapability)
+                                                            ?.promptKey
+                                                    }
+                                                </code>
                                             </p>
                                         </div>
                                         <button
@@ -536,20 +554,27 @@ Help leaders develop change management competencies.`
                                             disabled={saving}
                                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                                         >
-                                            {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                            {saving ? (
+                                                <RefreshCw size={14} className="animate-spin" />
+                                            ) : (
+                                                <Save size={14} />
+                                            )}
                                             Save
                                         </button>
                                     </div>
                                     <div className="flex-1 p-4 overflow-hidden">
                                         <textarea
                                             value={editingPrompt}
-                                            onChange={e => setEditingPrompt(e.target.value)}
+                                            onChange={(e) => setEditingPrompt(e.target.value)}
                                             placeholder="Enter AI instructions..."
                                             className="w-full h-full bg-navy-900 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-blue-500/50"
                                         />
                                     </div>
                                     <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500">
-                                        💡 Tip: Use placeholders like <code className="text-blue-400">{"{{project_name}}"}</code>, <code className="text-blue-400">{"{{user_role}}"}</code>, <code className="text-blue-400">{"{{screen_context}}"}</code>
+                                        💡 Tip: Use placeholders like{' '}
+                                        <code className="text-blue-400">{'{{project_name}}'}</code>,{' '}
+                                        <code className="text-blue-400">{'{{user_role}}'}</code>,{' '}
+                                        <code className="text-blue-400">{'{{screen_context}}'}</code>
                                     </div>
                                 </>
                             ) : (
@@ -575,7 +600,9 @@ Help leaders develop change management competencies.`
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-semibold text-white">Ollama Local Models</h3>
-                                    <p className="text-sm text-slate-400">Connect to local Ollama for privacy-focused AI</p>
+                                    <p className="text-sm text-slate-400">
+                                        Connect to local Ollama for privacy-focused AI
+                                    </p>
                                 </div>
                             </div>
 
@@ -605,19 +632,24 @@ Help leaders develop change management competencies.`
 
                             {ollamaConnected === true && ollamaModels.length > 0 && (
                                 <div className="bg-navy-950/50 rounded-lg p-4">
-                                    <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Available Models (click to add)</p>
+                                    <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">
+                                        Available Models (click to add)
+                                    </p>
                                     <div className="flex flex-wrap gap-2">
                                         {ollamaModels.map((model) => {
-                                            const alreadyAdded = providers.some(p => p.provider === 'ollama' && p.model_id === model.name);
+                                            const alreadyAdded = providers.some(
+                                                (p) => p.provider === 'ollama' && p.model_id === model.name,
+                                            );
                                             return (
                                                 <button
                                                     key={model.name}
                                                     onClick={() => !alreadyAdded && addOllamaModel(model.name)}
                                                     disabled={alreadyAdded}
-                                                    className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${alreadyAdded
-                                                        ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
-                                                        : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                                                        }`}
+                                                    className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                                                        alreadyAdded
+                                                            ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
+                                                            : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                                                    }`}
                                                 >
                                                     {alreadyAdded && <Check size={12} />}
                                                     {model.name}
@@ -674,47 +706,71 @@ Help leaders develop change management competencies.`
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {loading ? (
-                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading...</td></tr>
-                                    ) : providers.filter(p => showInactive || p.is_active).length === 0 ? (
-                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">No providers configured</td></tr>
+                                        <tr>
+                                            <td colSpan={6} className="p-8 text-center text-slate-500">
+                                                Loading...
+                                            </td>
+                                        </tr>
+                                    ) : providers.filter((p) => showInactive || p.is_active).length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="p-8 text-center text-slate-500">
+                                                No providers configured
+                                            </td>
+                                        </tr>
                                     ) : (
-                                        providers.filter(p => showInactive || p.is_active).map(p => (
-                                            <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                                                <td className="px-6 py-4 font-medium text-white">{p.name}</td>
-                                                <td className="px-6 py-4 text-slate-300 capitalize">{p.provider}</td>
-                                                <td className="px-6 py-4 font-mono text-xs text-slate-400">{p.model_id}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}>
-                                                        {p.visibility}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {p.is_active ? (
-                                                        <span className="text-emerald-400 flex items-center gap-1"><Check size={14} /> Active</span>
-                                                    ) : (
-                                                        <span className="text-slate-500">Inactive</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => handleTestConnection(p)}
-                                                            title="Test Connection"
-                                                            disabled={testingConnection}
-                                                            className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                                        providers
+                                            .filter((p) => showInactive || p.is_active)
+                                            .map((p) => (
+                                                <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                                                    <td className="px-6 py-4 font-medium text-white">{p.name}</td>
+                                                    <td className="px-6 py-4 text-slate-300 capitalize">
+                                                        {p.provider}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-mono text-xs text-slate-400">
+                                                        {p.model_id}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span
+                                                            className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}
                                                         >
-                                                            <Wifi size={16} />
-                                                        </button>
-                                                        <button onClick={() => handleEditProvider(p)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white">
-                                                            <Edit size={16} />
-                                                        </button>
-                                                        <button onClick={() => handleDeleteProvider(p.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400">
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                            {p.visibility}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {p.is_active ? (
+                                                            <span className="text-emerald-400 flex items-center gap-1">
+                                                                <Check size={14} /> Active
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-500">Inactive</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => handleTestConnection(p)}
+                                                                title="Test Connection"
+                                                                disabled={testingConnection}
+                                                                className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                                                            >
+                                                                <Wifi size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEditProvider(p)}
+                                                                className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"
+                                                            >
+                                                                <Edit size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteProvider(p.id)}
+                                                                className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
                                     )}
                                 </tbody>
                             </table>
@@ -734,21 +790,48 @@ Help leaders develop change management competencies.`
 
                                 <div className="space-y-4">
                                     {[
-                                        { tier: 'BUDGET', label: 'Budget Tier', desc: 'Simple questions, fast responses', default: 'gpt-4o-mini' },
-                                        { tier: 'STANDARD', label: 'Standard Tier', desc: 'Most tasks (chat, magic wand)', default: 'gpt-4o' },
-                                        { tier: 'PREMIUM', label: 'Premium Tier', desc: 'Complex analysis, reports', default: 'gpt-4o' },
-                                        { tier: 'REASONING', label: 'Reasoning Tier', desc: 'MAX Mode, deep thinking', default: 'gpt-4o' },
-                                    ].map(item => (
-                                        <div key={item.tier} className="flex items-center gap-4 p-4 bg-navy-950/50 rounded-lg border border-white/5">
+                                        {
+                                            tier: 'BUDGET',
+                                            label: 'Budget Tier',
+                                            desc: 'Simple questions, fast responses',
+                                            default: 'gpt-4o-mini',
+                                        },
+                                        {
+                                            tier: 'STANDARD',
+                                            label: 'Standard Tier',
+                                            desc: 'Most tasks (chat, magic wand)',
+                                            default: 'gpt-4o',
+                                        },
+                                        {
+                                            tier: 'PREMIUM',
+                                            label: 'Premium Tier',
+                                            desc: 'Complex analysis, reports',
+                                            default: 'gpt-4o',
+                                        },
+                                        {
+                                            tier: 'REASONING',
+                                            label: 'Reasoning Tier',
+                                            desc: 'MAX Mode, deep thinking',
+                                            default: 'gpt-4o',
+                                        },
+                                    ].map((item) => (
+                                        <div
+                                            key={item.tier}
+                                            className="flex items-center gap-4 p-4 bg-navy-950/50 rounded-lg border border-white/5"
+                                        >
                                             <div className="flex-1">
                                                 <div className="font-medium text-white">{item.label}</div>
                                                 <div className="text-xs text-slate-500">{item.desc}</div>
                                             </div>
                                             <select className="bg-navy-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
                                                 <option>{item.default}</option>
-                                                {providers.filter(p => p.is_active).map(p => (
-                                                    <option key={p.id} value={p.model_id}>{p.model_id}</option>
-                                                ))}
+                                                {providers
+                                                    .filter((p) => p.is_active)
+                                                    .map((p) => (
+                                                        <option key={p.id} value={p.model_id}>
+                                                            {p.model_id}
+                                                        </option>
+                                                    ))}
                                             </select>
                                         </div>
                                     ))}
@@ -793,14 +876,21 @@ Help leaders develop change management competencies.`
                                 <h3 className="text-lg font-semibold text-white mb-4">Costs per Model</h3>
                                 <div className="space-y-3">
                                     {costStats.byModel.map((m: any) => (
-                                        <div key={m.model} className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg">
+                                        <div
+                                            key={m.model}
+                                            className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg"
+                                        >
                                             <div className="flex-1">
                                                 <div className="text-sm text-white">{m.model}</div>
                                                 <div className="text-xs text-slate-500">{m.requests} requests</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-sm text-emerald-400">${(m.cost || 0).toFixed(4)}</div>
-                                                <div className="text-xs text-slate-500">{(m.tokens || 0).toLocaleString()} tokens</div>
+                                                <div className="text-sm text-emerald-400">
+                                                    ${(m.cost || 0).toFixed(4)}
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {(m.tokens || 0).toLocaleString()} tokens
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -818,21 +908,33 @@ Help leaders develop change management competencies.`
                             <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-white">AI System Status</h3>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${healthStatus?.status === 'OK'
-                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                        : 'bg-amber-500/20 text-amber-400'
-                                        }`}>
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                            healthStatus?.status === 'OK'
+                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                : 'bg-amber-500/20 text-amber-400'
+                                        }`}
+                                    >
                                         {healthStatus?.status || 'Unknown'}
                                     </span>
                                 </div>
 
                                 <div className="space-y-3">
                                     {healthStatus?.checks?.map((check: any, idx: number) => (
-                                        <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                                        <div
+                                            key={idx}
+                                            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                                        >
                                             <span className="text-sm text-slate-300">{check.name}</span>
-                                            <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
-                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
-                                                }`}>
+                                            <span
+                                                className={`text-sm ${
+                                                    check.status === 'OK'
+                                                        ? 'text-emerald-400'
+                                                        : check.status === 'MISSING'
+                                                          ? 'text-amber-400'
+                                                          : 'text-slate-400'
+                                                }`}
+                                            >
                                                 {check.status || check.value}
                                             </span>
                                         </div>
@@ -849,7 +951,7 @@ Help leaders develop change management competencies.`
                                         { id: 'eyes', icon: Eye, label: 'AI Eyes (Visual)' },
                                         { id: 'memory', icon: Database, label: 'AI Memory (RAG)' },
                                         { id: 'hands', icon: Hand, label: 'AI Hands (Tools)' },
-                                    ].map(cap => (
+                                    ].map((cap) => (
                                         <button
                                             key={cap.id}
                                             className="flex items-center gap-3 p-4 bg-navy-950/50 border border-white/5 rounded-lg hover:bg-navy-950 hover:border-white/10 transition-colors"
@@ -881,7 +983,11 @@ Help leaders develop change management competencies.`
                                     disabled={savingSettings || !globalSettings}
                                     className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg transition-colors"
                                 >
-                                    {savingSettings ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    {savingSettings ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4" />
+                                    )}
                                     Save Changes
                                 </button>
                             </div>
@@ -897,42 +1003,60 @@ Help leaders develop change management competencies.`
                                     >
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm text-slate-400 mb-2">Default Provider</label>
+                                                <label className="block text-sm text-slate-400 mb-2">
+                                                    Default Provider
+                                                </label>
                                                 <select
                                                     value={globalSettings.defaultProvider || ''}
-                                                    onChange={(e) => updateGlobalSetting('defaultProvider', e.target.value || null)}
+                                                    onChange={(e) =>
+                                                        updateGlobalSetting('defaultProvider', e.target.value || null)
+                                                    }
                                                     className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                 >
                                                     <option value="">Auto (First Available)</option>
-                                                    {providers.filter(p => p.is_active).map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                                    ))}
+                                                    {providers
+                                                        .filter((p) => p.is_active)
+                                                        .map((p) => (
+                                                            <option key={p.id} value={p.id}>
+                                                                {p.name}
+                                                            </option>
+                                                        ))}
                                                 </select>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm text-slate-400 mb-2">Failure Threshold</label>
+                                                    <label className="block text-sm text-slate-400 mb-2">
+                                                        Failure Threshold
+                                                    </label>
                                                     <input
                                                         type="number"
                                                         value={globalSettings.circuitBreakerConfig.failureThreshold}
-                                                        onChange={(e) => updateGlobalSetting('circuitBreakerConfig', {
-                                                            ...globalSettings.circuitBreakerConfig,
-                                                            failureThreshold: parseInt(e.target.value) || 5
-                                                        })}
+                                                        onChange={(e) =>
+                                                            updateGlobalSetting('circuitBreakerConfig', {
+                                                                ...globalSettings.circuitBreakerConfig,
+                                                                failureThreshold: parseInt(e.target.value) || 5,
+                                                            })
+                                                        }
                                                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                     />
-                                                    <p className="text-xs text-slate-500 mt-1">Failures before circuit opens</p>
+                                                    <p className="text-xs text-slate-500 mt-1">
+                                                        Failures before circuit opens
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm text-slate-400 mb-2">Cooldown (seconds)</label>
+                                                    <label className="block text-sm text-slate-400 mb-2">
+                                                        Cooldown (seconds)
+                                                    </label>
                                                     <input
                                                         type="number"
                                                         value={globalSettings.circuitBreakerConfig.cooldownSeconds}
-                                                        onChange={(e) => updateGlobalSetting('circuitBreakerConfig', {
-                                                            ...globalSettings.circuitBreakerConfig,
-                                                            cooldownSeconds: parseInt(e.target.value) || 60
-                                                        })}
+                                                        onChange={(e) =>
+                                                            updateGlobalSetting('circuitBreakerConfig', {
+                                                                ...globalSettings.circuitBreakerConfig,
+                                                                cooldownSeconds: parseInt(e.target.value) || 60,
+                                                            })
+                                                        }
                                                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                     />
                                                     <p className="text-xs text-slate-500 mt-1">Wait before retry</p>
@@ -986,26 +1110,34 @@ Help leaders develop change management competencies.`
 
                                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
                                                 <div>
-                                                    <label className="block text-sm text-slate-400 mb-2">Requests per Minute</label>
+                                                    <label className="block text-sm text-slate-400 mb-2">
+                                                        Requests per Minute
+                                                    </label>
                                                     <input
                                                         type="number"
                                                         value={globalSettings.globalRateLimit.requestsPerMinute}
-                                                        onChange={(e) => updateGlobalSetting('globalRateLimit', {
-                                                            ...globalSettings.globalRateLimit,
-                                                            requestsPerMinute: parseInt(e.target.value) || 60
-                                                        })}
+                                                        onChange={(e) =>
+                                                            updateGlobalSetting('globalRateLimit', {
+                                                                ...globalSettings.globalRateLimit,
+                                                                requestsPerMinute: parseInt(e.target.value) || 60,
+                                                            })
+                                                        }
                                                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm text-slate-400 mb-2">Requests per Hour</label>
+                                                    <label className="block text-sm text-slate-400 mb-2">
+                                                        Requests per Hour
+                                                    </label>
                                                     <input
                                                         type="number"
                                                         value={globalSettings.globalRateLimit.requestsPerHour}
-                                                        onChange={(e) => updateGlobalSetting('globalRateLimit', {
-                                                            ...globalSettings.globalRateLimit,
-                                                            requestsPerHour: parseInt(e.target.value) || 1000
-                                                        })}
+                                                        onChange={(e) =>
+                                                            updateGlobalSetting('globalRateLimit', {
+                                                                ...globalSettings.globalRateLimit,
+                                                                requestsPerHour: parseInt(e.target.value) || 1000,
+                                                            })
+                                                        }
                                                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                     />
                                                 </div>
@@ -1022,17 +1154,22 @@ Help leaders develop change management competencies.`
                                     >
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm text-slate-400 mb-2">PII Detection Sensitivity</label>
+                                                <label className="block text-sm text-slate-400 mb-2">
+                                                    PII Detection Sensitivity
+                                                </label>
                                                 <div className="flex gap-2">
                                                     {(['low', 'medium', 'high'] as const).map((level) => (
                                                         <button
                                                             key={level}
-                                                            onClick={() => updateGlobalSetting('piiDetectionSensitivity', level)}
+                                                            onClick={() =>
+                                                                updateGlobalSetting('piiDetectionSensitivity', level)
+                                                            }
                                                             className={`
                                                                 flex-1 py-2 px-4 rounded-lg border transition-all capitalize
-                                                                ${globalSettings.piiDetectionSensitivity === level
-                                                                    ? 'bg-violet-500/20 border-violet-500 text-violet-300'
-                                                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                                ${
+                                                                    globalSettings.piiDetectionSensitivity === level
+                                                                        ? 'bg-violet-500/20 border-violet-500 text-violet-300'
+                                                                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
                                                                 }
                                                             `}
                                                         >
@@ -1041,7 +1178,8 @@ Help leaders develop change management competencies.`
                                                     ))}
                                                 </div>
                                                 <p className="text-xs text-slate-500 mt-2">
-                                                    Higher sensitivity may increase false positives but better protects user data
+                                                    Higher sensitivity may increase false positives but better protects
+                                                    user data
                                                 </p>
                                             </div>
 
@@ -1055,10 +1193,14 @@ Help leaders develop change management competencies.`
                                             />
 
                                             <div>
-                                                <label className="block text-sm text-slate-400 mb-2">Data Residency</label>
+                                                <label className="block text-sm text-slate-400 mb-2">
+                                                    Data Residency
+                                                </label>
                                                 <select
                                                     value={globalSettings.dataResidency || ''}
-                                                    onChange={(e) => updateGlobalSetting('dataResidency', e.target.value || null)}
+                                                    onChange={(e) =>
+                                                        updateGlobalSetting('dataResidency', e.target.value || null)
+                                                    }
                                                     className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-white focus:border-violet-500 outline-none"
                                                 >
                                                     <option value="">No Restriction</option>
@@ -1107,18 +1249,36 @@ Help leaders develop change management competencies.`
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">{editingProviderId ? 'Edit Provider' : 'Add Provider'}</h2>
-                            <button onClick={() => setShowProviderModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                            <h2 className="text-xl font-bold text-white">
+                                {editingProviderId ? 'Edit Provider' : 'Add Provider'}
+                            </h2>
+                            <button
+                                onClick={() => setShowProviderModal(false)}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <form onSubmit={handleProviderSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Display Name</label>
-                                    <input required value={providerForm.name} onChange={e => setProviderForm({ ...providerForm, name: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                    <input
+                                        required
+                                        value={providerForm.name}
+                                        onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Provider Type</label>
-                                    <select value={providerForm.provider} onChange={e => setProviderForm({ ...providerForm, provider: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
+                                    <select
+                                        value={providerForm.provider}
+                                        onChange={(e) =>
+                                            setProviderForm({ ...providerForm, provider: e.target.value as any })
+                                        }
+                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                    >
                                         <optgroup label="Major Providers">
                                             <option value="openai">OpenAI (GPT-4)</option>
                                             <option value="anthropic">Anthropic (Claude)</option>
@@ -1141,24 +1301,46 @@ Help leaders develop change management competencies.`
 
                             <div>
                                 <label className="block text-xs text-slate-400 mb-1">API Key</label>
-                                <input type="password" value={providerForm.api_key} onChange={e => setProviderForm({ ...providerForm, api_key: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="sk-..." />
+                                <input
+                                    type="password"
+                                    value={providerForm.api_key}
+                                    onChange={(e) => setProviderForm({ ...providerForm, api_key: e.target.value })}
+                                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                    placeholder="sk-..."
+                                />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Model ID</label>
-                                    <input required value={providerForm.model_id} onChange={e => setProviderForm({ ...providerForm, model_id: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
+                                    <input
+                                        required
+                                        value={providerForm.model_id}
+                                        onChange={(e) => setProviderForm({ ...providerForm, model_id: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Endpoint (Optional)</label>
-                                    <input value={providerForm.endpoint} onChange={e => setProviderForm({ ...providerForm, endpoint: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" placeholder="https://api..." />
+                                    <input
+                                        value={providerForm.endpoint}
+                                        onChange={(e) => setProviderForm({ ...providerForm, endpoint: e.target.value })}
+                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                        placeholder="https://api..."
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Visibility</label>
-                                    <select value={providerForm.visibility} onChange={e => setProviderForm({ ...providerForm, visibility: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
+                                    <select
+                                        value={providerForm.visibility}
+                                        onChange={(e) =>
+                                            setProviderForm({ ...providerForm, visibility: e.target.value as any })
+                                        }
+                                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                                    >
                                         <option value="admin">Admin Only</option>
                                         <option value="beta">Beta Users</option>
                                         <option value="public">Public</option>
@@ -1166,14 +1348,27 @@ Help leaders develop change management competencies.`
                                 </div>
                                 <div className="flex items-center pt-6">
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={providerForm.is_active} onChange={e => setProviderForm({ ...providerForm, is_active: e.target.checked })} className="w-4 h-4 rounded bg-navy-950 border-white/10" />
+                                        <input
+                                            type="checkbox"
+                                            checked={providerForm.is_active}
+                                            onChange={(e) =>
+                                                setProviderForm({ ...providerForm, is_active: e.target.checked })
+                                            }
+                                            className="w-4 h-4 rounded bg-navy-950 border-white/10"
+                                        />
                                         <span className="text-sm text-slate-300">Active</span>
                                     </label>
                                 </div>
                             </div>
 
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => setShowProviderModal(false)} className="px-4 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded">Cancel</button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowProviderModal(false)}
+                                    className="px-4 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded"
+                                >
+                                    Cancel
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => handleTestConnection(providerForm)}
@@ -1182,7 +1377,12 @@ Help leaders develop change management competencies.`
                                 >
                                     <Wifi size={16} /> Test
                                 </button>
-                                <button type="submit" className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded">Save Provider</button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded"
+                                >
+                                    Save Provider
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -1193,7 +1393,12 @@ Help leaders develop change management competencies.`
 };
 
 // Helper component
-const StatCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({ icon: Icon, label, value, color }) => (
+const StatCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({
+    icon: Icon,
+    label,
+    value,
+    color,
+}) => (
     <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
         <div className="flex items-center gap-3 mb-2">
             <Icon size={18} className={color} />
@@ -1204,4 +1409,3 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
 );
 
 export default AIConfigurationView;
-

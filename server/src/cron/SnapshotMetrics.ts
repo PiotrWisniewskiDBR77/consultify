@@ -1,15 +1,13 @@
 /**
  * Metrics Snapshot Cron Job
  * Runs every hour at minute 0 to save metrics snapshots
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
 import * as cron from 'node-cron';
+
 import logger from '../utils/Logger.js';
-
-
-
 
 // ==========================================
 // TYPES
@@ -39,7 +37,9 @@ class SnapshotMetricsCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.metricsPersistenceService) {
-            this.deps.metricsPersistenceService = await import('../../services/metricsPersistenceService.js').then(m => m.default || m);
+            this.deps.metricsPersistenceService = await import('../../services/metricsPersistenceService.js').then(
+                (m) => m.default || m,
+            );
         }
         return this.deps as Dependencies;
     }
@@ -97,7 +97,4 @@ export const initMetricsSnapshotJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default SnapshotMetricsCron;
-
-
-
 

@@ -1,14 +1,14 @@
 /**
  * Email Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/emailService.js (ES Modules) to TypeScript (ES Modules)
  * Handles sending system notifications and alerts.
  * Currently configured for console output, ready for SMTP integration.
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -60,9 +60,9 @@ async function initDeps(): Promise<void> {
     if (db && nodemailer) return;
 
     const [dbModule, nodemailerModule, configModule] = await Promise.all([
-        import('../../database.js'),
+        import('../../src/database/index.js'),
         import('nodemailer'),
-        import('../../config.js')
+        import('../../config.js'),
     ]);
 
     db = dbModule.default || dbModule;
@@ -97,11 +97,11 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     const settingsRows = await DbPromise.all<SettingRow>(
         db,
         "SELECT key, value FROM settings WHERE key LIKE 'smtp_%'",
-        []
+        [],
     );
 
     const settings: Record<string, string> = {};
-    settingsRows.forEach(r => {
+    settingsRows.forEach((r) => {
         settings[r.key] = r.value;
     });
 
@@ -111,9 +111,9 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
         secure: false, // true for 465, false for other ports
         auth: {
             user: settings['smtp_user'] || process.env.SMTP_USER,
-            pass: settings['smtp_pass'] || process.env.SMTP_PASS
+            pass: settings['smtp_pass'] || process.env.SMTP_PASS,
         },
-        from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>'
+        from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>',
     };
 
     // For logging and debugging
@@ -132,8 +132,10 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
                 from: smtpConfig.from,
                 to,
                 subject,
-                html: html || `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
-                attachments
+                html:
+                    html ||
+                    `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
+                attachments,
             });
             console.log('[EMAIL SERVICE] Sent successfully via SMTP');
         } catch (e: unknown) {
@@ -156,7 +158,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 const EmailService = {
     setDependencies,
     send,
-    sendEmail
+    sendEmail,
 };
 
 export default EmailService;

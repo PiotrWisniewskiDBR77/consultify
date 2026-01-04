@@ -1,29 +1,30 @@
 /**
  * ToolsMenu
- * 
+ *
  * Dropdown menu for AI tools and integrations:
  * - AI Modes (Deep Research, Web Search, Show Reasoning)
  * - PMO Tools (Start Assessment, Generate Initiatives, etc.)
  * - Connections (Connectors, Knowledge Bases)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Brain, 
-    Search, 
-    Globe, 
+import {
+    BookOpen,
+    Brain,
+    Calculator,
+    ExternalLink,
+    FileText,
+    Globe,
+    Lightbulb,
+    Plug,
+    Search,
     Sparkles,
     Target,
-    Lightbulb,
-    Calculator,
-    FileText,
-    Plug,
-    BookOpen,
     ToggleLeft,
     ToggleRight,
-    ExternalLink
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
@@ -53,7 +54,7 @@ interface PmoTool {
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     onToolSelect,
     disabled = false,
-    icon: IconComponent = Brain
+    icon: IconComponent = Brain,
 }) => {
     const { t } = useTranslation();
     const { setCurrentView, aiConfig, setAIConfig } = useAppStore();
@@ -61,68 +62,68 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     const [modes, setModes] = useState({
         deepResearch: false,
         webSearch: false,
-        showReasoning: aiConfig.maxMode
+        showReasoning: aiConfig.maxMode,
     });
     const menuRef = useRef<HTMLDivElement>(null);
 
     // AI Modes
     const AI_MODES: ToolMode[] = [
-        { 
-            id: 'deepResearch', 
-            icon: Search, 
-            labelKey: 'aiChat.menu.deepResearch', 
+        {
+            id: 'deepResearch',
+            icon: Search,
+            labelKey: 'aiChat.menu.deepResearch',
             label: 'Deep Research',
             toggle: true,
-            enabled: modes.deepResearch
+            enabled: modes.deepResearch,
         },
-        { 
-            id: 'webSearch', 
-            icon: Globe, 
-            labelKey: 'aiChat.menu.webSearch', 
+        {
+            id: 'webSearch',
+            icon: Globe,
+            labelKey: 'aiChat.menu.webSearch',
             label: 'Web Search',
             toggle: true,
-            enabled: modes.webSearch
+            enabled: modes.webSearch,
         },
-        { 
-            id: 'showReasoning', 
-            icon: Sparkles, 
-            labelKey: 'aiChat.menu.showReasoning', 
+        {
+            id: 'showReasoning',
+            icon: Sparkles,
+            labelKey: 'aiChat.menu.showReasoning',
             label: 'Show Reasoning',
             toggle: true,
-            enabled: modes.showReasoning
-        }
+            enabled: modes.showReasoning,
+        },
     ];
 
     // PMO Tools
     const PMO_TOOLS: PmoTool[] = [
-        { 
-            id: 'start-assessment', 
-            icon: Target, 
-            labelKey: 'aiChat.menu.startAssessment', 
+        {
+            id: 'start-assessment',
+            icon: Target,
+            labelKey: 'aiChat.menu.startAssessment',
             label: 'Start Assessment',
-            view: AppView.ASSESSMENT_OVERVIEW
+            view: AppView.ASSESSMENT_OVERVIEW,
         },
-        { 
-            id: 'generate-initiatives', 
-            icon: Lightbulb, 
-            labelKey: 'aiChat.menu.generateInitiatives', 
+        {
+            id: 'generate-initiatives',
+            icon: Lightbulb,
+            labelKey: 'aiChat.menu.generateInitiatives',
             label: 'Generate Initiatives',
-            view: AppView.INITIATIVE_GENERATOR
+            view: AppView.INITIATIVE_GENERATOR,
         },
-        { 
-            id: 'calculate-roi', 
-            icon: Calculator, 
-            labelKey: 'aiChat.menu.calculateRoi', 
+        {
+            id: 'calculate-roi',
+            icon: Calculator,
+            labelKey: 'aiChat.menu.calculateRoi',
             label: 'Calculate ROI',
-            view: AppView.ECONOMICS
+            view: AppView.ECONOMICS,
         },
-        { 
-            id: 'build-report', 
-            icon: FileText, 
-            labelKey: 'aiChat.menu.buildReport', 
+        {
+            id: 'build-report',
+            icon: FileText,
+            labelKey: 'aiChat.menu.buildReport',
             label: 'Build Report',
-            view: AppView.FULL_STEP6_REPORTS
-        }
+            view: AppView.FULL_STEP6_REPORTS,
+        },
     ];
 
     // Handle click outside
@@ -143,14 +144,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     }, [isOpen]);
 
     const toggleMode = (modeId: string) => {
-        setModes(prev => {
+        setModes((prev) => {
             const newModes = { ...prev, [modeId]: !prev[modeId as keyof typeof prev] };
-            
+
             // Sync showReasoning with MAX Mode
             if (modeId === 'showReasoning') {
                 setAIConfig({ maxMode: newModes.showReasoning });
             }
-            
+
             return newModes;
         });
         onToolSelect(`toggle:${modeId}`);
@@ -170,9 +171,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 disabled={disabled}
                 className={`
                     p-2 rounded-lg transition-colors
-                    ${Object.values(modes).some(v => v)
-                        ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                    ${
+                        Object.values(modes).some((v) => v)
+                            ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                     }
                     ${disabled ? 'cursor-not-allowed opacity-50' : ''}
                 `}
@@ -183,23 +185,25 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="
+                <div
+                    className="
                     absolute left-0 bottom-full mb-2 z-50
                     w-64 py-1
                     bg-white dark:bg-navy-800
                     border border-slate-200 dark:border-navy-700
                     rounded-xl shadow-xl
                     animate-in fade-in-0 slide-in-from-bottom-2 duration-150
-                ">
+                "
+                >
                     {/* AI Modes Section */}
                     <div className="px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {t('aiChat.menu.aiModes', 'AI Modes')}
                     </div>
 
-                    {AI_MODES.map(mode => {
+                    {AI_MODES.map((mode) => {
                         const Icon = mode.icon;
                         const isEnabled = modes[mode.id as keyof typeof modes];
-                        
+
                         return (
                             <button
                                 key={mode.id}
@@ -232,9 +236,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         {t('aiChat.menu.pmoTools', 'PMO Tools')}
                     </div>
 
-                    {PMO_TOOLS.map(tool => {
+                    {PMO_TOOLS.map((tool) => {
                         const Icon = tool.icon;
-                        
+
                         return (
                             <button
                                 key={tool.id}
@@ -301,4 +305,3 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 };
 
 export default ToolsMenu;
-

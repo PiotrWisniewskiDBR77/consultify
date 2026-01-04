@@ -1,10 +1,10 @@
 /**
  * ADKAR Scoring Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Change Readiness Assessment scoring and analysis.
  * Fully migrated from server/services/adkarService.js
- * 
+ *
  * Features:
  * - ADKAR score calculation (Awareness, Desire, Knowledge, Ability, Reinforcement)
  * - Gap identification
@@ -13,9 +13,10 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -104,11 +105,11 @@ class ADKARServiceClass {
             desire: [],
             knowledge: [],
             ability: [],
-            reinforcement: []
+            reinforcement: [],
         };
 
         // Group responses by dimension
-        Object.keys(responses).forEach(questionId => {
+        Object.keys(responses).forEach((questionId) => {
             const dimension = questionId.split('_')[0]; // e.g., "awareness_1" -> "awareness"
             if (dimensionScores[dimension as keyof typeof dimensionScores]) {
                 dimensionScores[dimension as keyof typeof dimensionScores].push(responses[questionId]);
@@ -117,12 +118,12 @@ class ADKARServiceClass {
 
         // Calculate averages
         const scores: ADKARScores = {
-            overall_score: 0
+            overall_score: 0,
         };
         let totalSum = 0;
         let dimensionCount = 0;
 
-        Object.keys(dimensionScores).forEach(dimension => {
+        Object.keys(dimensionScores).forEach((dimension) => {
             const dimScores = dimensionScores[dimension];
             if (dimScores.length > 0) {
                 const avg = dimScores.reduce((sum, score) => sum + score, 0) / dimScores.length;
@@ -144,14 +145,14 @@ class ADKARServiceClass {
         const gaps: ADKARGap[] = [];
 
         const dimensions = ['awareness', 'desire', 'knowledge', 'ability', 'reinforcement'] as const;
-        dimensions.forEach(dim => {
+        dimensions.forEach((dim) => {
             const scoreKey = `${dim}_score` as keyof ADKARScores;
             const score = scores[scoreKey] as number | undefined;
             if (score !== undefined && score < threshold) {
                 gaps.push({
                     dimension: dim,
                     score,
-                    gap: threshold - score
+                    gap: threshold - score,
                 });
             }
         });
@@ -166,17 +167,19 @@ class ADKARServiceClass {
         const gaps = this.identifyGaps(scores);
         const recommendations: ADKARRecommendation[] = [];
 
-        gaps.forEach(gap => {
+        gaps.forEach((gap) => {
             let recommendation = '';
             let priority: 'high' | 'medium' | 'low' = 'medium';
 
             switch (gap.dimension) {
                 case 'awareness':
-                    recommendation = 'Increase communication about WHY change is needed. Share business case and urgency.';
+                    recommendation =
+                        'Increase communication about WHY change is needed. Share business case and urgency.';
                     priority = gap.gap > 1.5 ? 'high' : 'medium';
                     break;
                 case 'desire':
-                    recommendation = 'Build personal motivation through leadership buy-in and WIIFM (What\'s In It For Me) messaging.';
+                    recommendation =
+                        "Build personal motivation through leadership buy-in and WIIFM (What's In It For Me) messaging.";
                     priority = gap.gap > 1.5 ? 'high' : 'medium';
                     break;
                 case 'knowledge':
@@ -196,7 +199,7 @@ class ADKARServiceClass {
             recommendations.push({
                 dimension: gap.dimension,
                 recommendation,
-                priority
+                priority,
             });
         });
 
@@ -232,7 +235,7 @@ class ADKARServiceClass {
         const weaknesses: string[] = [];
 
         const dimensions = ['awareness', 'desire', 'knowledge', 'ability', 'reinforcement'] as const;
-        dimensions.forEach(dim => {
+        dimensions.forEach((dim) => {
             const scoreKey = `${dim}_score` as keyof ADKARScores;
             const score = scores[scoreKey] as number | undefined;
             if (score !== undefined) {
@@ -250,7 +253,7 @@ class ADKARServiceClass {
             gaps,
             recommendations,
             strengths,
-            weaknesses
+            weaknesses,
         };
     }
 
@@ -300,13 +303,13 @@ class ADKARServiceClass {
             scores.overall_score,
             JSON.stringify(responses),
             JSON.stringify(recommendations),
-            userId
+            userId,
         ]);
 
         return {
             id: assessmentId,
             ...scores,
-            recommendations
+            recommendations,
         };
     }
 
@@ -314,10 +317,9 @@ class ADKARServiceClass {
      * Get ADKAR assessment by ID
      */
     async getAssessment(assessmentId: string): Promise<ADKARAssessmentParsed | null> {
-        const row = await this.dbGet<ADKARAssessmentRow>(
-            'SELECT * FROM adkar_assessments WHERE id = ?',
-            [assessmentId]
-        );
+        const row = await this.dbGet<ADKARAssessmentRow>('SELECT * FROM adkar_assessments WHERE id = ?', [
+            assessmentId,
+        ]);
 
         if (!row) return null;
 
@@ -325,7 +327,7 @@ class ADKARServiceClass {
         return {
             ...row,
             questionnaire_responses: JSON.parse(row.questionnaire_responses || '{}') as ADKARResponses,
-            ai_recommendations: JSON.parse(row.ai_recommendations || '[]') as ADKARRecommendation[]
+            ai_recommendations: JSON.parse(row.ai_recommendations || '[]') as ADKARRecommendation[],
         };
     }
 }
@@ -364,13 +366,13 @@ export { ADKARServiceClass };
 
 // Export types
 export type {
-    ADKARResponses,
-    ADKARScores,
+    ADKARAssessment,
+    ADKARAssessmentParsed,
+    ADKARAssessmentRow,
     ADKARGap,
     ADKARRecommendation,
-    ADKARAssessment,
-    ADKARAssessmentRow,
-    ADKARAssessmentParsed
+    ADKARResponses,
+    ADKARScores,
 };
 
 // Create singleton instance
@@ -381,9 +383,11 @@ export default adkarServiceInstance;
 
 // Export individual methods for backward compatibility (using singleton)
 export const calculateScores = (responses: ADKARResponses) => adkarServiceInstance.calculateScores(responses);
-export const identifyGaps = (scores: ADKARScores, threshold?: number) => adkarServiceInstance.identifyGaps(scores, threshold);
+export const identifyGaps = (scores: ADKARScores, threshold?: number) =>
+    adkarServiceInstance.identifyGaps(scores, threshold);
 export const generateRecommendations = (scores: ADKARScores) => adkarServiceInstance.generateRecommendations(scores);
 export const getReadinessLevel = (scores: ADKARScores) => adkarServiceInstance.getReadinessLevel(scores);
 export const generateReport = (scores: ADKARScores) => adkarServiceInstance.generateReport(scores);
-export const createAssessment = (data: Parameters<ADKARServiceClass['createAssessment']>[0]) => adkarServiceInstance.createAssessment(data);
+export const createAssessment = (data: Parameters<ADKARServiceClass['createAssessment']>[0]) =>
+    adkarServiceInstance.createAssessment(data);
 export const getAssessment = (assessmentId: string) => adkarServiceInstance.getAssessment(assessmentId);

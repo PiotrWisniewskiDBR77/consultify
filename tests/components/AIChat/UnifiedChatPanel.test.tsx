@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../../i18n';
-import { UnifiedChatPanel } from '../../../components/AIChat/UnifiedChatPanel';
+import { UnifiedChatPanel } from '../../components/AIChat/UnifiedChatPanel';
 import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView } from '../../../types';

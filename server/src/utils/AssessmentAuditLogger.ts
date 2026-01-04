@@ -1,13 +1,14 @@
 /**
  * Assessment Audit Logger
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Logs all assessment-related actions for compliance
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
-import type { AuthRequest } from '../middleware/auth.middleware';
+import { v4 as uuidv4 } from 'uuid';
+
+import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { run as dbRun } from '../utils/DbPromise.js';
 
 // ==========================================
@@ -64,7 +65,7 @@ class AssessmentAuditLogger {
      */
     async log(params: LogParams): Promise<string | undefined> {
         const { uuidv4: uuid } = getDeps();
-        
+
         try {
             const auditId = uuid();
 
@@ -86,7 +87,7 @@ class AssessmentAuditLogger {
                 params.resourceId,
                 JSON.stringify(params.details || {}),
                 params.ipAddress || null,
-                params.userAgent || null
+                params.userAgent || null,
             ]);
 
             if (!runResult.success) {
@@ -113,14 +114,19 @@ class AssessmentAuditLogger {
             resourceId: assessmentId,
             details: { assessmentType },
             ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined
+            userAgent: req.get('user-agent') || undefined,
         });
     }
 
     /**
      * Log file upload
      */
-    async logFileUpload(req: Request & { user?: { id?: string; organizationId?: string } }, fileId: string, fileName: string, fileSize: number): Promise<string | undefined> {
+    async logFileUpload(
+        req: Request & { user?: { id?: string; organizationId?: string } },
+        fileId: string,
+        fileName: string,
+        fileSize: number,
+    ): Promise<string | undefined> {
         return this.log({
             userId: req.user?.id || '',
             organizationId: req.user?.organizationId || '',
@@ -129,7 +135,7 @@ class AssessmentAuditLogger {
             resourceId: fileId,
             details: { fileName, fileSize },
             ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined
+            userAgent: req.get('user-agent') || undefined,
         });
     }
 
@@ -145,7 +151,7 @@ class AssessmentAuditLogger {
             resourceId: assessmentId,
             details: { assessmentType },
             ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined
+            userAgent: req.get('user-agent') || undefined,
         });
     }
 }
@@ -153,4 +159,3 @@ class AssessmentAuditLogger {
 // Export singleton instance
 export const assessmentAuditLogger = new AssessmentAuditLogger();
 export default assessmentAuditLogger;
-

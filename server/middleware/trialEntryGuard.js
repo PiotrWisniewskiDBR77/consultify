@@ -12,7 +12,8 @@
  * @module trialEntryGuard
  */
 
-let db = require('../database');
+import database from '../src/database/index.js';
+let db = database;
 
 /**
  * List of blocked routes for Trial Entry users

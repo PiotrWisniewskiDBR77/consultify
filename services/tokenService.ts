@@ -1,6 +1,6 @@
 /**
  * Token Service
- * 
+ *
  * Handles automatic token management:
  * - Auto-refresh before expiration
  * - Auto-recovery on 401 errors
@@ -39,7 +39,7 @@ class TokenService {
 
         // Listen for 401 errors globally
         window.addEventListener('auth-error', this.handleAuthError.bind(this));
-        
+
         // Check token on visibility change (user comes back to tab)
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
@@ -97,8 +97,8 @@ class TokenService {
             const jsonPayload = decodeURIComponent(
                 atob(base64)
                     .split('')
-                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                    .join('')
+                    .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join(''),
             );
             return JSON.parse(jsonPayload);
         } catch (e) {
@@ -113,7 +113,7 @@ class TokenService {
     isTokenExpired(token: string, bufferSeconds = 60): boolean {
         const payload = this.decodeToken(token);
         if (!payload) return true;
-        
+
         const now = Math.floor(Date.now() / 1000);
         return payload.exp <= now + bufferSeconds;
     }
@@ -124,7 +124,7 @@ class TokenService {
     getTimeUntilExpiry(token: string): number {
         const payload = this.decodeToken(token);
         if (!payload) return 0;
-        
+
         const now = Math.floor(Date.now() / 1000);
         return Math.max(0, (payload.exp - now) * 1000);
     }
@@ -159,8 +159,9 @@ class TokenService {
         const token = this.getToken();
         if (!token) return false;
 
-        if (this.isTokenExpired(token, 300)) { // 5 min buffer
-            return await this.refreshToken() !== null;
+        if (this.isTokenExpired(token, 300)) {
+            // 5 min buffer
+            return (await this.refreshToken()) !== null;
         }
         return true;
     }
@@ -176,7 +177,7 @@ class TokenService {
 
         this.isRefreshing = true;
         this.refreshPromise = this._doRefresh();
-        
+
         try {
             return await this.refreshPromise;
         } finally {
@@ -187,7 +188,7 @@ class TokenService {
 
     private async _doRefresh(): Promise<string | null> {
         const refreshToken = this.getRefreshToken();
-        
+
         if (!refreshToken) {
             console.log('[TokenService] No refresh token available');
             return null;
@@ -198,7 +199,7 @@ class TokenService {
             const res = await fetch(`${API_URL}/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken })
+                body: JSON.stringify({ refreshToken }),
             });
 
             if (!res.ok) {
@@ -242,12 +243,12 @@ class TokenService {
      */
     async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
         const token = this.getToken();
-        
+
         const headers = new Headers(options.headers);
         if (token) {
             headers.set('Authorization', `Bearer ${token}`);
         }
-        
+
         let res = await fetch(url, { ...options, headers });
 
         // If 401, try to refresh and retry once
@@ -273,4 +274,3 @@ if (typeof window !== 'undefined') {
 }
 
 export default tokenService;
-

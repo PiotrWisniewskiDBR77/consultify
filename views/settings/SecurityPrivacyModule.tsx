@@ -1,8 +1,8 @@
 /**
  * SecurityPrivacyModule - Enterprise Security & Privacy Settings
- * 
+ *
  * Complete security management following HubSpot/ClickUp standards:
- * 
+ *
  * Tabs:
  * 1. Dashboard - Security overview and score
  * 2. MFA - Two-factor authentication
@@ -13,31 +13,31 @@
  * 7. Privacy - Visibility settings
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Shield,
-    Monitor,
-    History,
+    Activity,
     Database,
     EyeOff,
+    Fingerprint,
+    History,
     Key,
     LayoutDashboard,
+    Monitor,
+    Shield,
     Smartphone,
-    Activity,
-    Fingerprint
 } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { User } from '../../types';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-// Import all settings components
-import { SecurityDashboard } from '../../components/settings/SecurityDashboard';
 import { MFASetup } from '../../components/Profile/MFASetup';
-import { TrustedDevicesSettings } from '../../components/settings/TrustedDevicesSettings';
 import { ActiveSessionsSettings } from '../../components/settings/ActiveSessionsSettings';
-import { SecurityEventsSettings } from '../../components/settings/SecurityEventsSettings';
 import { DataControlsSettings } from '../../components/settings/DataControlsSettings';
 import { PrivacySettings } from '../../components/settings/PrivacySettings';
+// Import all settings components
+import { SecurityDashboard } from '../../components/settings/SecurityDashboard';
+import { SecurityEventsSettings } from '../../components/settings/SecurityEventsSettings';
+import { TrustedDevicesSettings } from '../../components/settings/TrustedDevicesSettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { User } from '../../types';
 
 interface SecurityPrivacyModuleProps {
     initialTab?: string;
@@ -45,10 +45,10 @@ interface SecurityPrivacyModuleProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
-export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({ 
+export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
     initialTab,
     currentUser,
-    onUpdateUser
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'dashboard');
@@ -61,40 +61,40 @@ export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
     }, [initialTab, activeTab]);
 
     const tabs: Tab[] = [
-        { 
-            id: 'dashboard', 
-            label: t('settings.tabs.dashboard', 'Dashboard'), 
-            icon: <LayoutDashboard size={16} /> 
+        {
+            id: 'dashboard',
+            label: t('settings.tabs.dashboard', 'Dashboard'),
+            icon: <LayoutDashboard size={16} />,
         },
-        { 
-            id: 'mfa', 
-            label: t('settings.tabs.mfa', 'MFA'), 
-            icon: <Fingerprint size={16} /> 
+        {
+            id: 'mfa',
+            label: t('settings.tabs.mfa', 'MFA'),
+            icon: <Fingerprint size={16} />,
         },
-        { 
-            id: 'devices', 
-            label: t('settings.tabs.devices', 'Trusted Devices'), 
-            icon: <Smartphone size={16} /> 
+        {
+            id: 'devices',
+            label: t('settings.tabs.devices', 'Trusted Devices'),
+            icon: <Smartphone size={16} />,
         },
-        { 
-            id: 'sessions', 
-            label: t('settings.tabs.sessions', 'Sessions'), 
-            icon: <Monitor size={16} /> 
+        {
+            id: 'sessions',
+            label: t('settings.tabs.sessions', 'Sessions'),
+            icon: <Monitor size={16} />,
         },
-        { 
-            id: 'events', 
-            label: t('settings.tabs.events', 'Security Events'), 
-            icon: <Activity size={16} /> 
+        {
+            id: 'events',
+            label: t('settings.tabs.events', 'Security Events'),
+            icon: <Activity size={16} />,
         },
-        { 
-            id: 'data', 
-            label: t('settings.tabs.dataControls', 'Data Controls'), 
-            icon: <Database size={16} /> 
+        {
+            id: 'data',
+            label: t('settings.tabs.dataControls', 'Data Controls'),
+            icon: <Database size={16} />,
         },
-        { 
-            id: 'privacy', 
-            label: t('settings.tabs.privacy', 'Privacy'), 
-            icon: <EyeOff size={16} /> 
+        {
+            id: 'privacy',
+            label: t('settings.tabs.privacy', 'Privacy'),
+            icon: <EyeOff size={16} />,
         },
     ];
 
@@ -110,20 +110,12 @@ export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
-                return (
-                    <SecurityDashboard 
-                        currentUser={currentUser}
-                        onNavigateToTab={handleNavigateToTab}
-                    />
-                );
+                return <SecurityDashboard currentUser={currentUser} onNavigateToTab={handleNavigateToTab} />;
 
             case 'mfa':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <MFASetup 
-                            isEnabled={currentUser?.mfaEnabled || false}
-                            onUpdate={handleMFAUpdate}
-                        />
+                        <MFASetup isEnabled={currentUser?.mfaEnabled || false} onUpdate={handleMFAUpdate} />
                     </div>
                 );
 
@@ -151,28 +143,15 @@ export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
             case 'data':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <DataControlsSettings 
-                            currentUser={currentUser}
-                            onUpdateUser={onUpdateUser}
-                        />
+                        <DataControlsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
                     </div>
                 );
 
             case 'privacy':
-                return (
-                    <PrivacySettings 
-                        currentUser={currentUser} 
-                        onUpdateUser={onUpdateUser} 
-                    />
-                );
+                return <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
             default:
-                return (
-                    <SecurityDashboard 
-                        currentUser={currentUser}
-                        onNavigateToTab={handleNavigateToTab}
-                    />
-                );
+                return <SecurityDashboard currentUser={currentUser} onNavigateToTab={handleNavigateToTab} />;
         }
     };
 

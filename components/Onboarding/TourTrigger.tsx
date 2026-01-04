@@ -1,6 +1,7 @@
-import React from 'react';
 import { HelpCircle, Play } from 'lucide-react';
-import { useTour, Tour } from './TourProvider';
+import React from 'react';
+
+import { Tour, useTour } from './TourProvider';
 
 /**
  * TourTrigger — Button to manually start a tour
@@ -57,15 +58,12 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
                 <button
                     onClick={handleClick}
                     className={`w-8 h-8 rounded-xl flex items-center justify-center text-white transition-all ${className}`}
-                    style={{ 
+                    style={{
                         animation: 'tourColorPulse 5s ease-in-out infinite',
                     }}
                     title={label}
                 >
-                    <HelpCircle 
-                        size={18}
-                        style={{ animation: 'tourIconGlow 5s ease-in-out infinite' }}
-                    />
+                    <HelpCircle size={18} style={{ animation: 'tourIconGlow 5s ease-in-out infinite' }} />
                 </button>
             </>
         );
@@ -79,9 +77,7 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
             >
                 <Play size={14} />
                 <span>{label}</span>
-                {completed && (
-                    <span className="text-xs text-slate-400">(ukończony)</span>
-                )}
+                {completed && <span className="text-xs text-slate-400">(ukończony)</span>}
             </button>
         );
     }
@@ -90,7 +86,7 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
         <button
             onClick={handleClick}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-all ${className}`}
-            style={{ 
+            style={{
                 animation: 'tourColorPulse 5s ease-in-out infinite',
             }}
         >

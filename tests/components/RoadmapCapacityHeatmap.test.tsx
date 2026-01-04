@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RoadmapCapacityHeatmap } from '../../../components/RoadmapCapacityHeatmap';
+import { RoadmapCapacityHeatmap } from '../../components/RoadmapCapacityHeatmap';
 
 const mockData = {
     quarters: ['2024-Q1', '2024-Q2'],
@@ -25,6 +25,7 @@ describe('RoadmapCapacityHeatmap Component', () => {
         expect(screen.getByText(/John/i) || screen.getByText(/80/i)).toBeInTheDocument();
     });
 });
+
 
 
 

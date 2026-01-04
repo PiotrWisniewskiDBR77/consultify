@@ -1,22 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { PlaybookTemplateVersion, TemplateStatus, AppView } from '../../types';
-import {
-    FileText,
-    Plus,
-    Edit3,
-    Check,
-    Download,
-    Archive,
-    AlertCircle,
-    Eye,
-    ChevronRight
-} from 'lucide-react';
+import { AlertCircle, Archive, Check, ChevronRight, Download, Edit3, Eye, FileText, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 
 /**
  * PlaybookTemplatesListView
  * Step 13: Visual Playbook Editor
- * 
+ *
  * SuperAdmin view for managing playbook templates.
  * Lists all templates with status badges and action buttons.
  */
@@ -39,7 +30,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                 : '/api/ai/playbooks/templates';
 
             const res = await fetch(url, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to load templates');
@@ -59,7 +50,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
             setValidating(templateId);
             const res = await fetch(`/api/ai/playbooks/templates/${templateId}/validate`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             const data = await res.json();
@@ -80,7 +71,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
         try {
             const res = await fetch(`/api/ai/playbooks/templates/${templateId}/publish`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
@@ -106,7 +97,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
         try {
             const res = await fetch(`/api/ai/playbooks/templates/${templateId}/deprecate`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to deprecate');
@@ -121,7 +112,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
     const handleExport = async (templateId: string) => {
         try {
             const res = await fetch(`/api/ai/playbooks/templates/${templateId}/export`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Export failed');
@@ -145,11 +136,13 @@ export const PlaybookTemplatesListView: React.FC = () => {
         const styles = {
             [TemplateStatus.DRAFT]: 'bg-yellow-100 text-yellow-800 border-yellow-300',
             [TemplateStatus.PUBLISHED]: 'bg-green-100 text-green-800 border-green-300',
-            [TemplateStatus.DEPRECATED]: 'bg-gray-100 text-gray-600 border-gray-300'
+            [TemplateStatus.DEPRECATED]: 'bg-gray-100 text-gray-600 border-gray-300',
         };
 
         return (
-            <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${styles[status] || styles[TemplateStatus.DRAFT]}`}>
+            <span
+                className={`px-2 py-0.5 text-xs font-medium rounded-full border ${styles[status] || styles[TemplateStatus.DRAFT]}`}
+            >
                 {status}
             </span>
         );
@@ -226,11 +219,21 @@ export const PlaybookTemplatesListView: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Template</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trigger</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Template
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Trigger
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Version
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -240,20 +243,22 @@ export const PlaybookTemplatesListView: React.FC = () => {
                                         <div className="flex items-center">
                                             <FileText className="h-5 w-5 text-gray-400 mr-3" />
                                             <div>
-                                                <div className="text-sm font-medium text-gray-900">{template.title}</div>
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {template.title}
+                                                </div>
                                                 <div className="text-xs text-gray-500 font-mono">{template.key}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-sm text-gray-600 font-mono">{template.triggerSignal || '—'}</span>
+                                        <span className="text-sm text-gray-600 font-mono">
+                                            {template.triggerSignal || '—'}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-sm text-gray-600">v{template.version}</span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        {getStatusBadge(template.status)}
-                                    </td>
+                                    <td className="px-6 py-4">{getStatusBadge(template.status)}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-1">
                                             {/* View/Edit */}

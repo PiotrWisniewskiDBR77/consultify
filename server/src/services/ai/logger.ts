@@ -9,7 +9,7 @@ export const LOG_LEVELS = {
     DEBUG: 0,
     INFO: 1,
     WARN: 2,
-    ERROR: 3
+    ERROR: 3,
 } as const;
 
 type LogLevel = keyof typeof LOG_LEVELS;
@@ -60,7 +60,7 @@ export class TraceContext {
         this.events.push({
             name,
             timestamp: Date.now(),
-            attributes
+            attributes,
         });
         return this;
     }
@@ -76,7 +76,7 @@ export class TraceContext {
             parentSpanId: this.parentSpanId,
             duration: this.getDuration(),
             attributes: this.attributes,
-            events: this.events
+            events: this.events,
         };
     }
 
@@ -111,7 +111,7 @@ const formatMessage = (
     component: string,
     message: string,
     data: unknown = null,
-    traceContext: TraceContext | null = null
+    traceContext: TraceContext | null = null,
 ): string => {
     const timestamp = new Date().toISOString();
     const traceInfo = traceContext
@@ -157,9 +157,7 @@ export const aiLogger = {
 
     error(component: string, message: string, error: unknown = null): void {
         if (this.currentLevel <= LOG_LEVELS.ERROR) {
-            const errorData = error instanceof Error
-                ? { message: error.message, stack: error.stack }
-                : error;
+            const errorData = error instanceof Error ? { message: error.message, stack: error.stack } : error;
             console.error(formatMessage('ERROR', component, message, errorData, currentTraceContext));
         }
     },
@@ -194,7 +192,7 @@ export const aiLogger = {
 
         this.debug('Tracing', `Started trace: ${operationName}`, {
             traceId: context.traceId,
-            spanId: context.spanId
+            spanId: context.spanId,
         });
 
         return context;
@@ -205,7 +203,7 @@ export const aiLogger = {
         const context = new TraceContext(
             parentContext?.traceId ?? null,
             TraceContext.generateSpanId(),
-            parentContext?.spanId ?? null
+            parentContext?.spanId ?? null,
         );
 
         context.setAttribute('operation', operationName);
@@ -217,7 +215,7 @@ export const aiLogger = {
         this.debug('Tracing', `Started span: ${operationName}`, {
             traceId: context.traceId,
             spanId: context.spanId,
-            parentSpanId: context.parentSpanId
+            parentSpanId: context.parentSpanId,
         });
 
         return context;
@@ -244,7 +242,7 @@ export const aiLogger = {
             traceId: context.traceId,
             spanId: context.spanId,
             duration: context.getDuration(),
-            status
+            status,
         });
 
         if (process.env.TRACING_PERSIST === 'true') {
@@ -270,7 +268,7 @@ export const aiLogger = {
     async withSpan<T>(
         operationName: string,
         fn: (context: TraceContext) => Promise<T>,
-        attributes: TraceAttributes = {}
+        attributes: TraceAttributes = {},
     ): Promise<T> {
         const span = this.startSpan(operationName, attributes);
         try {
@@ -301,7 +299,7 @@ export const aiLogger = {
         const spanData = {
             type: 'AI_TRACE_SPAN',
             ...context.toJSON(),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
 
         if (process.env.NODE_ENV === 'production') {
@@ -310,13 +308,13 @@ export const aiLogger = {
     },
 
     getActiveSpans(): Array<Record<string, unknown>> {
-        return Array.from(activeSpans.values()).map(span => span.toJSON());
+        return Array.from(activeSpans.values()).map((span) => span.toJSON());
     },
 
     clearSpans(): void {
         activeSpans.clear();
         currentTraceContext = null;
-    }
+    },
 };
 
 export default aiLogger;

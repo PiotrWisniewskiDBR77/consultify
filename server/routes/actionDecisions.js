@@ -1,13 +1,13 @@
 import express from 'express';
 const router = express.Router();
-import ActionDecisionService from '../ai/actionDecisionService.js';
+import ActionDecisionService from '../services/ai/actionDecisionService.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
 // Apply auth to all routes in this file
 router.use(authMiddleware);
 
 /**
- * @route POST /api/ai/actions/decide
+ * @route POST /a../services/ai/actions/decide
  * @desc Record a decision for an AI Action Proposal (Snapshot server-side)
  * @access Private (Admin / SuperAdmin)
  */
@@ -44,7 +44,7 @@ router.post('/decide', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/audit
+ * @route GET /a../services/ai/actions/audit
  * @desc Get decision audit log (Isolated by organization)
  * @access Private (Admin / SuperAdmin)
  */
@@ -76,7 +76,7 @@ router.get('/audit', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/actions/decisions/:id/execute
+ * @route POST /a../services/ai/actions/decisions/:id/execute
  * @desc Execute an approved decision (Hardened Isolation)
  * @access Private (Admin / SuperAdmin)
  */
@@ -115,7 +115,7 @@ router.post('/decisions/:id/execute', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/actions/decisions/:id/dry-run
+ * @route POST /a../services/ai/actions/decisions/:id/dry-run
  * @desc Dry-run an approved decision (no side effects) - Step 9.6
  * @access Private (Admin / SuperAdmin)
  */
@@ -153,7 +153,7 @@ router.post('/decisions/:id/dry-run', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/audit/export
+ * @route GET /a../services/ai/actions/audit/export
  * @desc Export decisions audit log (CSV or JSON) - Step 9.7
  * @access Private (Admin / SuperAdmin)
  */
@@ -192,7 +192,7 @@ router.get('/audit/export', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/executions/export
+ * @route GET /a../services/ai/actions/executions/export
  * @desc Export executions audit log (CSV or JSON) - Step 9.7
  * @access Private (Admin / SuperAdmin)
  */
@@ -234,10 +234,10 @@ router.get('/executions/export', async (req, res) => {
 // STEP 9.8: POLICY ENGINE ROUTES
 // ==========================================
 
-import PolicyEngine from '../ai/policyEngine.js';
+import PolicyEngine from '../services/ai/policyEngine.js';
 
 /**
- * @route GET /api/ai/actions/policy-rules
+ * @route GET /a../services/ai/actions/policy-rules
  * @desc List policy rules (ADMIN: own org, SUPERADMIN: all)
  * @access Private (Admin / SuperAdmin)
  */
@@ -262,7 +262,7 @@ router.get('/policy-rules', async (req, res) => {
 });
 
 /**
- * @route PATCH /api/ai/actions/policy-rules/:id/toggle
+ * @route PATCH /a../services/ai/actions/policy-rules/:id/toggle
  * @desc Enable/disable a policy rule
  * @access Private (Admin / SuperAdmin)
  */
@@ -289,7 +289,7 @@ router.patch('/policy-rules/:id/toggle', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/actions/policy-rules
+ * @route POST /a../services/ai/actions/policy-rules
  * @desc Create a new policy rule (ADMIN: own org only)
  * @access Private (Admin / SuperAdmin)
  */
@@ -329,7 +329,7 @@ router.post('/policy-rules', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/policy-engine/status
+ * @route GET /a../services/ai/actions/policy-engine/status
  * @desc Get global Policy Engine status
  * @access Private (SUPERADMIN only)
  */
@@ -348,7 +348,7 @@ router.get('/policy-engine/status', async (req, res) => {
 });
 
 /**
- * @route PATCH /api/ai/actions/policy-engine/global
+ * @route PATCH /a../services/ai/actions/policy-engine/global
  * @desc Toggle global Policy Engine status (emergency kill switch)
  * @access Private (SUPERADMIN only)
  */
@@ -372,7 +372,7 @@ router.patch('/policy-engine/global', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/actions/proposals/:id/evaluate-policy
+ * @route POST /a../services/ai/actions/proposals/:id/evaluate-policy
  * @desc Evaluate a proposal against policy rules (pre-check, no side effects)
  * @access Private (Admin / SuperAdmin)
  */
@@ -406,12 +406,12 @@ router.post('/proposals/:id/evaluate-policy', async (req, res) => {
 
 import AsyncJobService from '../ai/asyncJobService.js';
 import { v4 as uuidv4 } from 'uuid';
-import ActionExecutionAdapter from '../ai/actionExecutionAdapter.js';
+import ActionExecutionAdapter from '../services/ai/actionExecutionAdapter.js';
 import AuditExportService from '../ai/auditExport.js';
-import ActionProposalEngine from '../ai/actionProposalEngine.js';
+import ActionProposalEngine from '../services/ai/actionProposalEngine.js';
 
 /**
- * @route POST /api/ai/actions/decisions/:id/execute-async
+ * @route POST /a../services/ai/actions/decisions/:id/execute-async
  * @desc Enqueue async execution of an approved decision
  * @access Private (Admin / SuperAdmin)
  */
@@ -465,7 +465,7 @@ router.post('/decisions/:id/execute-async', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/jobs/:jobId
+ * @route GET /a../services/ai/actions/jobs/:jobId
  * @desc Get async job status
  * @access Private (Admin / SuperAdmin)
  */
@@ -492,7 +492,7 @@ router.get('/jobs/:jobId', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/actions/jobs/:jobId/retry
+ * @route POST /a../services/ai/actions/jobs/:jobId/retry
  * @desc Retry a failed or dead-letter job
  * @access Private (Admin / SuperAdmin)
  */
@@ -521,7 +521,7 @@ router.post('/jobs/:jobId/retry', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/actions/jobs/:jobId/cancel
+ * @route POST /a../services/ai/actions/jobs/:jobId/cancel
  * @desc Cancel a queued job
  * @access Private (Admin / SuperAdmin)
  */
@@ -550,7 +550,7 @@ router.post('/jobs/:jobId/cancel', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/jobs/dead-letter
+ * @route GET /a../services/ai/actions/jobs/dead-letter
  * @desc List dead-letter jobs for UI visibility
  * @access Private (Admin / SuperAdmin)
  */
@@ -577,7 +577,7 @@ router.get('/jobs/dead-letter', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/actions/jobs/stats
+ * @route GET /a../services/ai/actions/jobs/stats
  * @desc Get dead-letter and job statistics for dashboard
  * @access Private (Admin / SuperAdmin)
  */

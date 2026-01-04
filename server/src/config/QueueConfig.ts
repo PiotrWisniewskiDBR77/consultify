@@ -1,7 +1,7 @@
 /**
  * Queue Configuration (Redis/BullMQ)
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Configuration for Redis connection used by BullMQ for job queues
  */
 
@@ -52,12 +52,12 @@ function loadQueueConfig(): QueueConfig {
         result.error.issues.forEach((err: Error | null) => {
             console.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
-        
+
         // In production, fail fast on invalid config
         if (process.env.NODE_ENV === 'production') {
             throw new Error('Invalid queue configuration. Please check your environment variables.');
         }
-        
+
         // In development, use defaults
         console.warn('[Queue Config] Using defaults for invalid values.');
         return {
@@ -77,4 +77,3 @@ function loadQueueConfig(): QueueConfig {
 
 export const queueConfig = loadQueueConfig();
 export default queueConfig;
-

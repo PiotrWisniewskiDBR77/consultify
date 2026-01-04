@@ -3,18 +3,8 @@
  * Buttons for exporting reports to PDF, PowerPoint, sharing
  */
 
+import { Check, Copy, Download, ExternalLink, FileText, Loader2, Mail, Presentation, Share2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { 
-    Download, 
-    FileText, 
-    Presentation,
-    Share2,
-    Mail,
-    Copy,
-    Check,
-    Loader2,
-    ExternalLink
-} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface ExportControlsProps {
@@ -34,7 +24,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     onShare,
     onEmail,
     disabled = false,
-    className = ''
+    className = '',
 }) => {
     const [exportingPDF, setExportingPDF] = useState(false);
     const [exportingPPTX, setExportingPPTX] = useState(false);
@@ -44,7 +34,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
     const handleExportPDF = async () => {
         if (!onExportPDF || exportingPDF) return;
-        
+
         setExportingPDF(true);
         try {
             const url = await onExportPDF();
@@ -60,7 +50,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
     const handleExportPPTX = async () => {
         if (!onExportPPTX || exportingPPTX) return;
-        
+
         setExportingPPTX(true);
         try {
             const url = await onExportPPTX();
@@ -76,13 +66,13 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
     const handleShare = async () => {
         if (!onShare || sharing) return;
-        
+
         setSharing(true);
-        
+
         // Optimistic update - show placeholder immediately
         const optimisticUrl = `/reports/shared/generating...`;
         setShareUrl(optimisticUrl);
-        
+
         try {
             const result = await onShare();
             // Replace optimistic URL with real one
@@ -100,7 +90,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
     const handleCopyLink = async () => {
         if (!shareUrl) return;
-        
+
         try {
             await navigator.clipboard.writeText(window.location.origin + shareUrl);
             setCopied(true);
@@ -120,11 +110,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                     disabled={disabled || exportingPDF}
                     className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-lg font-medium transition-colors"
                 >
-                    {exportingPDF ? (
-                        <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                        <FileText size={18} />
-                    )}
+                    {exportingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
                     <span>Export PDF</span>
                 </button>
             )}
@@ -136,11 +122,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                     disabled={disabled || exportingPPTX}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white rounded-lg font-medium transition-colors"
                 >
-                    {exportingPPTX ? (
-                        <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                        <Presentation size={18} />
-                    )}
+                    {exportingPPTX ? <Loader2 size={18} className="animate-spin" /> : <Presentation size={18} />}
                     <span>Export PPTX</span>
                 </button>
             )}
@@ -193,11 +175,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                             disabled={disabled || sharing}
                             className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 disabled:bg-violet-300 text-white rounded-lg font-medium transition-colors"
                         >
-                            {sharing ? (
-                                <Loader2 size={18} className="animate-spin" />
-                            ) : (
-                                <Share2 size={18} />
-                            )}
+                            {sharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
                             <span>Share Link</span>
                         </button>
                     )}
@@ -230,4 +208,3 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 };
 
 export default ExportControls;
-

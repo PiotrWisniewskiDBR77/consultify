@@ -1,19 +1,20 @@
 /**
  * RBAC Middleware (HARDENED)
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Provides granular role-based access control for multi-tenant organizations.
- * 
+ *
  * Key Guards:
  * - requireOrgAccess: Unified guard for members AND consultants
  * - requireOrgRole: Check org-level role (OWNER, ADMIN, MEMBER)
  * - requireConsultantScope: Check consultant permission scope
  * - requireOwnerOrSuperadmin: Destructive operations
- * 
+ *
  * SECURITY: All guards require orgContextMiddleware to be applied first.
  */
 
-import { Response, NextFunction } from 'express';
+import { NextFunction, Response } from 'express';
+
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -53,7 +54,7 @@ export const ORG_ROLE_HIERARCHY: Record<string, number> = {
     OWNER: 4,
     ADMIN: 3,
     MEMBER: 2,
-    CONSULTANT: 1
+    CONSULTANT: 1,
 };
 
 // ==========================================
@@ -62,24 +63,20 @@ export const ORG_ROLE_HIERARCHY: Record<string, number> = {
 
 /**
  * requireOrgAccess - UNIFIED guard for both members and consultants
- * 
+ *
  * This is the PRIMARY guard to use. It handles:
  * - Members: checks if user has one of the allowed roles
  * - Consultants: checks if consultant has required permissions in scope
  */
 export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
-    const {
-        roles = null,
-        consultantPermissions = null,
-        allowConsultant = true
-    } = options;
+    const { roles = null, consultantPermissions = null, allowConsultant = true } = options;
 
     return (req: OrgRequest, res: Response, next: NextFunction): void => {
         // Must have org context (set by orgContextMiddleware)
         if (!req.org?.id) {
             res.status(400).json({
                 error: 'Missing organization context',
-                message: 'Organization context must be resolved before access check.'
+                message: 'Organization context must be resolved before access check.',
             });
             return;
         }
@@ -99,7 +96,7 @@ export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
             res.status(403).json({
                 error: 'Insufficient role',
                 message: `This action requires one of: ${roles.join(', ')}`,
-                yourRole: req.org.role
+                yourRole: req.org.role,
             });
             return;
         }
@@ -109,7 +106,7 @@ export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
             if (!allowConsultant) {
                 res.status(403).json({
                     error: 'Access denied',
-                    message: 'This resource is not accessible to consultants.'
+                    message: 'This resource is not accessible to consultants.',
                 });
                 return;
             }
@@ -125,9 +122,7 @@ export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
             const permissions = (scope.permissions || []) as string[];
 
             // Also check for boolean flags (e.g., { can_view_initiatives: true })
-            const hasAllPermissions = consultantPermissions.every(p =>
-                permissions.includes(p) || scope[p] === true
-            );
+            const hasAllPermissions = consultantPermissions.every((p) => permissions.includes(p) || scope[p] === true);
 
             if (hasAllPermissions) {
                 next();
@@ -137,7 +132,7 @@ export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
             res.status(403).json({
                 error: 'Insufficient consultant scope',
                 message: `Required permissions: ${consultantPermissions.join(', ')}`,
-                yourPermissions: permissions
+                yourPermissions: permissions,
             });
             return;
         }
@@ -145,7 +140,7 @@ export const requireOrgAccess = (options: RequireOrgAccessOptions = {}) => {
         // No valid access type
         res.status(403).json({
             error: 'Access denied',
-            message: 'You do not have access to this organization.'
+            message: 'You do not have access to this organization.',
         });
     };
 };
@@ -166,13 +161,13 @@ export const requireRole = (roles: string | string[]) => {
 
         // Case-insensitive role check
         const userRole = (req.user.role || '').toUpperCase();
-        const matches = allowedRoles.some(r => r.toUpperCase() === userRole);
+        const matches = allowedRoles.some((r) => r.toUpperCase() === userRole);
 
         if (!matches) {
             res.status(403).json({
                 error: 'Forbidden',
                 message: `This action requires one of the following roles: ${allowedRoles.join(', ')}`,
-                yourRole: req.user.role
+                yourRole: req.user.role,
             });
             return;
         }
@@ -194,7 +189,7 @@ export const requireOrgMember = () => {
         if (!req.org.isMember) {
             res.status(403).json({
                 error: 'Access denied',
-                message: 'This action requires organization membership (consultants excluded).'
+                message: 'This action requires organization membership (consultants excluded).',
             });
             return;
         }
@@ -217,7 +212,7 @@ export const requireOrgRole = (allowedRoles: string[]) => {
         if (!req.org.isMember) {
             res.status(403).json({
                 error: 'Access denied',
-                message: 'Organization membership required.'
+                message: 'Organization membership required.',
             });
             return;
         }
@@ -226,7 +221,7 @@ export const requireOrgRole = (allowedRoles: string[]) => {
             res.status(403).json({
                 error: 'Insufficient role',
                 message: `Required: ${allowedRoles.join(', ')}`,
-                yourRole: req.org.role
+                yourRole: req.org.role,
             });
             return;
         }
@@ -252,7 +247,7 @@ export const requireOrgRoleOrHigher = (minimumRole: string) => {
             res.status(403).json({
                 error: 'Insufficient role',
                 message: `Requires ${minimumRole} or higher.`,
-                yourRole: req.org.role
+                yourRole: req.org.role,
             });
             return;
         }
@@ -283,14 +278,12 @@ export const requireConsultantScope = (requiredPermissions: string | string[]) =
         const scope = req.org.permissionScope || {};
         const permissionArray = (scope.permissions || []) as string[];
 
-        const hasAll = permissions.every(p =>
-            permissionArray.includes(p) || scope[p] === true
-        );
+        const hasAll = permissions.every((p) => permissionArray.includes(p) || scope[p] === true);
 
         if (!hasAll) {
             res.status(403).json({
                 error: 'Insufficient consultant scope',
-                message: `Required: ${permissions.join(', ')}`
+                message: `Required: ${permissions.join(', ')}`,
             });
             return;
         }
@@ -323,11 +316,8 @@ export const requireOwnerOrSuperadmin = () => {
 
         res.status(403).json({
             error: 'Forbidden',
-            message: 'This action requires organization owner or superadmin privileges.'
+            message: 'This action requires organization owner or superadmin privileges.',
         });
     };
 };
-
-
-
 

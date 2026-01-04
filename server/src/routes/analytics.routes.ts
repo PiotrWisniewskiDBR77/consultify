@@ -1,13 +1,14 @@
 /**
  * Analytics Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Full TypeScript migration of analytics.js
  * API endpoints for analytics and leadership dashboard
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 
@@ -59,9 +60,9 @@ router.get(
 
         res.json({
             initiativesByStatus: rows,
-            overdueTasks: taskRow ? taskRow.overdue_count : 0
+            overdueTasks: taskRow ? taskRow.overdue_count : 0,
         });
-    })
+    }),
 );
 
 /**
@@ -92,7 +93,7 @@ router.get(
         const rows = await dbAll(sql, [orgId]);
 
         res.json(rows);
-    })
+    }),
 );
 
 /**
@@ -136,9 +137,9 @@ router.get(
 
         res.json({
             ...row,
-            actualSpend: spendRow ? spendRow.actual_spend : 0
+            actualSpend: spendRow ? spendRow.actual_spend : 0,
         });
-    })
+    }),
 );
 
 export default router;

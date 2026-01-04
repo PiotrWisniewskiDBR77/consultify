@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import EmailService from '../../../../services/emailService.js';
 
 describe('EmailService', () => {
@@ -21,7 +22,7 @@ describe('EmailService', () => {
             query: vi.fn(),
             queryOne: vi.fn(),
             queryAll: vi.fn(),
-            queryRun: vi.fn()
+            queryRun: vi.fn(),
         };
 
         EmailService.setDependencies({ db: mockDb });
@@ -41,4 +42,3 @@ describe('EmailService', () => {
         });
     });
 });
-

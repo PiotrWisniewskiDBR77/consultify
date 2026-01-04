@@ -1,12 +1,13 @@
 /**
  * AI A/B Testing Routes
  * API endpoints for managing A/B test experiments
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -14,15 +15,14 @@ const router = Router();
 
 // Service interfaces
 interface ABTestingServiceInterface {
-    listExperiments?: (filters: { status?: string; promptId?: string }) => Promise<Array<{
-        variants?: string;
-        traffic_split?: string;
-        [key: string]: unknown;
-    }>>;
-    createExperiment?: (data: {
-        createdBy: string;
-        [key: string]: unknown;
-    }) => Promise<unknown>;
+    listExperiments?: (filters: { status?: string; promptId?: string }) => Promise<
+        Array<{
+            variants?: string;
+            traffic_split?: string;
+            [key: string]: unknown;
+        }>
+    >;
+    createExperiment?: (data: { createdBy: string; [key: string]: unknown }) => Promise<unknown>;
     getExperimentStats?: (id: string) => Promise<unknown>;
     startExperiment?: (id: string, userId: string) => Promise<unknown>;
     stopExperiment?: (id: string, reason: string) => Promise<unknown>;
@@ -44,164 +44,193 @@ try {
  * GET /api/ai-ab-testing/experiments
  * List all experiments
  */
-router.get('/experiments', verifyToken, requireRole(['super_admin', 'admin']), asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!abTestingService?.listExperiments) {
-        return res.status(503).json({ error: 'AB Testing service not available' });
-    }
+router.get(
+    '/experiments',
+    verifyToken,
+    requireRole(['super_admin', 'admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.listExperiments) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
 
-    try {
-        const { status, promptId } = req.query;
-        const experiments = await abTestingService.listExperiments({ 
-            status: status as string | undefined, 
-            promptId: promptId as string | undefined 
-        });
+        try {
+            const { status, promptId } = req.query;
+            const experiments = await abTestingService.listExperiments({
+                status: status as string | undefined,
+                promptId: promptId as string | undefined,
+            });
 
-        res.json({
-            success: true,
-            data: experiments.map(e => ({
-                ...e,
-                variants: JSON.parse((e.variants as string) || '[]'),
-                traffic_split: JSON.parse((e.traffic_split as string) || '[]')
-            }))
-        });
-    } catch (error: unknown) {
-        console.error('[AB Testing API] Error listing experiments:', error);
-        res.status(500).json({ 
-            error: 'Failed to list experiments', 
-            details: error instanceof Error ? error.message : 'Unknown error' 
-        });
-    }
-}));
+            res.json({
+                success: true,
+                data: experiments.map((e) => ({
+                    ...e,
+                    variants: JSON.parse((e.variants as string) || '[]'),
+                    traffic_split: JSON.parse((e.traffic_split as string) || '[]'),
+                })),
+            });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error listing experiments:', error);
+            res.status(500).json({
+                error: 'Failed to list experiments',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * POST /api/ai-ab-testing/experiments
  * Create new experiment
  */
-router.post('/experiments', verifyToken, requireRole(['super_admin']), asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!abTestingService?.createExperiment) {
-        return res.status(503).json({ error: 'AB Testing service not available' });
-    }
-
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+    '/experiments',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.createExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
         }
 
-        const result = await abTestingService.createExperiment({
-            ...req.body,
-            createdBy: userId
-        });
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
 
-        res.status(201).json({ success: true, data: result });
-    } catch (error: unknown) {
-        console.error('[AB Testing API] Error creating experiment:', error);
-        res.status(500).json({ 
-            error: 'Failed to create experiment', 
-            details: error instanceof Error ? error.message : 'Unknown error' 
-        });
-    }
-}));
+            const result = await abTestingService.createExperiment({
+                ...req.body,
+                createdBy: userId,
+            });
+
+            res.status(201).json({ success: true, data: result });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error creating experiment:', error);
+            res.status(500).json({
+                error: 'Failed to create experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * GET /api/ai-ab-testing/experiments/:id
  * Get experiment details with statistics
  */
-router.get('/experiments/:id', verifyToken, requireRole(['super_admin', 'admin']), asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!abTestingService?.getExperimentStats) {
-        return res.status(503).json({ error: 'AB Testing service not available' });
-    }
+router.get(
+    '/experiments/:id',
+    verifyToken,
+    requireRole(['super_admin', 'admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.getExperimentStats) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
 
-    try {
-        const stats = await abTestingService.getExperimentStats(req.params.id);
-        res.json({ success: true, data: stats });
-    } catch (error: unknown) {
-        console.error('[AB Testing API] Error getting experiment:', error);
-        res.status(500).json({ 
-            error: 'Failed to get experiment', 
-            details: error instanceof Error ? error.message : 'Unknown error' 
-        });
-    }
-}));
+        try {
+            const stats = await abTestingService.getExperimentStats(req.params.id);
+            res.json({ success: true, data: stats });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error getting experiment:', error);
+            res.status(500).json({
+                error: 'Failed to get experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * POST /api/ai-ab-testing/experiments/:id/start
  * Start an experiment
  */
-router.post('/experiments/:id/start', verifyToken, requireRole(['super_admin']), asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!abTestingService?.startExperiment) {
-        return res.status(503).json({ error: 'AB Testing service not available' });
-    }
-
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+    '/experiments/:id/start',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.startExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
         }
 
-        const result = await abTestingService.startExperiment(req.params.id, userId);
-        res.json({ success: true, data: result });
-    } catch (error: unknown) {
-        console.error('[AB Testing API] Error starting experiment:', error);
-        res.status(500).json({ 
-            error: 'Failed to start experiment', 
-            details: error instanceof Error ? error.message : 'Unknown error' 
-        });
-    }
-}));
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const result = await abTestingService.startExperiment(req.params.id, userId);
+            res.json({ success: true, data: result });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error starting experiment:', error);
+            res.status(500).json({
+                error: 'Failed to start experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * POST /api/ai-ab-testing/experiments/:id/stop
  * Stop an experiment
  */
-router.post('/experiments/:id/stop', verifyToken, requireRole(['super_admin']), asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!abTestingService?.stopExperiment) {
-        return res.status(503).json({ error: 'AB Testing service not available' });
-    }
+router.post(
+    '/experiments/:id/stop',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.stopExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
 
-    try {
-        const { reason = 'manual' } = req.body;
-        const result = await abTestingService.stopExperiment(req.params.id, reason);
-        res.json({ success: true, data: result });
-    } catch (error: unknown) {
-        console.error('[AB Testing API] Error stopping experiment:', error);
-        res.status(500).json({ 
-            error: 'Failed to stop experiment', 
-            details: error instanceof Error ? error.message : 'Unknown error' 
-        });
-    }
-}));
+        try {
+            const { reason = 'manual' } = req.body;
+            const result = await abTestingService.stopExperiment(req.params.id, reason);
+            res.json({ success: true, data: result });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error stopping experiment:', error);
+            res.status(500).json({
+                error: 'Failed to stop experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * POST /api/ai-ab-testing/record-outcome
  * Record experiment outcome (called internally by AI pipeline)
  */
-router.post('/record-outcome', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!abTestingService?.recordOutcome) {
-        return res.status(503).json({ error: 'AB Testing service not available' });
-    }
-
-    try {
-        const { experimentId, metric, value } = req.body;
-        const userId = req.user?.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+    '/record-outcome',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.recordOutcome) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
         }
 
-        if (!experimentId || !metric || value === undefined) {
-            return res.status(400).json({ error: 'experimentId, metric, and value are required' });
-        }
+        try {
+            const { experimentId, metric, value } = req.body;
+            const userId = req.user?.id;
 
-        await abTestingService.recordOutcome(experimentId, userId, metric, value);
-        res.json({ success: true });
-    } catch (error: unknown) {
-        console.error('[AB Testing API] Error recording outcome:', error);
-        res.status(500).json({ 
-            error: 'Failed to record outcome', 
-            details: error instanceof Error ? error.message : 'Unknown error' 
-        });
-    }
-}));
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            if (!experimentId || !metric || value === undefined) {
+                return res.status(400).json({ error: 'experimentId, metric, and value are required' });
+            }
+
+            await abTestingService.recordOutcome(experimentId, userId, metric, value);
+            res.json({ success: true });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error recording outcome:', error);
+            res.status(500).json({
+                error: 'Failed to record outcome',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 export default router;

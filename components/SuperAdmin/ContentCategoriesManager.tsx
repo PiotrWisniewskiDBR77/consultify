@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FolderOpen,
-    Plus,
-    Edit,
-    Trash2,
-    ChevronRight,
     ChevronDown,
+    ChevronRight,
+    Edit,
+    FolderOpen,
     MoreVertical,
+    Palette,
+    Plus,
     RefreshCw,
     Save,
+    Trash2,
     X,
-    Palette
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import type { ContentCategory } from '../../types';
 
 interface ContentCategoriesManagerProps {
@@ -19,19 +20,24 @@ interface ContentCategoriesManagerProps {
     onCategorySelect?: (category: ContentCategory) => void;
 }
 
-const PRESET_COLORS = [
-    '#EF4444', '#F59E0B', '#10B981', '#3B82F6',
-    '#6366F1', '#8B5CF6', '#EC4899', '#06B6D4'
-];
+const PRESET_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#06B6D4'];
 
 const PRESET_ICONS = [
-    'folder', 'file-text', 'mail', 'play', 'settings',
-    'shield', 'alert-triangle', 'users', 'trending-up', 'zap'
+    'folder',
+    'file-text',
+    'mail',
+    'play',
+    'settings',
+    'shield',
+    'alert-triangle',
+    'users',
+    'trending-up',
+    'zap',
 ];
 
 export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> = ({
     contentType = 'ALL',
-    onCategorySelect
+    onCategorySelect,
 }) => {
     const token = localStorage.getItem('token');
 
@@ -48,7 +54,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
         description: '',
         color: '#6366F1',
         icon: 'folder',
-        parentId: null as string | null
+        parentId: null as string | null,
     });
 
     const loadCategories = useCallback(async () => {
@@ -60,7 +66,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
             params.append('tree', 'true');
 
             const res = await fetch(`/api/content/categories?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -87,7 +93,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     name: formData.name,
@@ -95,8 +101,8 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                     color: formData.color,
                     icon: formData.icon,
                     parentId: formData.parentId,
-                    contentType
-                })
+                    contentType,
+                }),
             });
 
             if (res.ok) {
@@ -106,7 +112,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                     description: '',
                     color: '#6366F1',
                     icon: 'folder',
-                    parentId: null
+                    parentId: null,
                 });
                 loadCategories();
             }
@@ -124,14 +130,14 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     name: formData.name,
                     description: formData.description,
                     color: formData.color,
-                    icon: formData.icon
-                })
+                    icon: formData.icon,
+                }),
             });
 
             if (res.ok) {
@@ -151,7 +157,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
         try {
             await fetch(`/api/content/categories/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             loadCategories();
         } catch (err) {
@@ -179,7 +185,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
             description: category.description || '',
             color: category.color,
             icon: category.icon,
-            parentId: category.parentId || null
+            parentId: category.parentId || null,
         });
         setMenuOpen(null);
     };
@@ -198,9 +204,11 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
 
         return (
             <div key={category.id} style={{ marginLeft: depth * 20 }}>
-                <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/30 transition-colors ${
-                    isEditing ? 'bg-slate-700/50' : ''
-                }`}>
+                <div
+                    className={`flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/30 transition-colors ${
+                        isEditing ? 'bg-slate-700/50' : ''
+                    }`}
+                >
                     {/* Expand toggle */}
                     <button
                         onClick={() => toggleExpand(category.id)}
@@ -239,10 +247,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                             >
                                 <Save size={16} />
                             </button>
-                            <button
-                                onClick={() => setEditingId(null)}
-                                className="p-1 text-slate-400 hover:text-white"
-                            >
+                            <button onClick={() => setEditingId(null)} className="p-1 text-slate-400 hover:text-white">
                                 <X size={16} />
                             </button>
                         </div>
@@ -342,7 +347,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                             description: '',
                             color: '#6366F1',
                             icon: 'folder',
-                            parentId: null
+                            parentId: null,
                         });
                     }}
                     className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded-lg text-sm hover:bg-violet-500/20"
@@ -377,7 +382,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                             />
                         </div>
                     </div>
-                    
+
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Color</label>
                         <div className="flex gap-2">
@@ -423,24 +428,14 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                     <p className="text-sm text-slate-500">Create your first category to organize content</p>
                 </div>
             ) : (
-                <div className="space-y-1">
-                    {categories.map((cat) => renderCategory(cat))}
-                </div>
+                <div className="space-y-1">{categories.map((cat) => renderCategory(cat))}</div>
             )}
 
             {/* Click away handler */}
-            {menuOpen && (
-                <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />
-            )}
+            {menuOpen && <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />}
         </div>
     );
 };
 
 export default ContentCategoriesManager;
-
-
-
-
-
-
 

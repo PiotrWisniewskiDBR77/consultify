@@ -1,16 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Api } from '../../services/api';
-import { Project, ProjectRole } from '../../types';
 import {
-    Layers, Users, Target, FileText, PieChart,
-    ArrowLeft, Settings, Plus, Edit, Trash2,
-    Check, X, Upload, RefreshCw, Briefcase,
-    Activity, Globe, Lock, ShieldCheck, ChevronRight, Info
+    Activity,
+    ArrowLeft,
+    Briefcase,
+    Check,
+    ChevronRight,
+    Edit,
+    FileText,
+    Globe,
+    Info,
+    Layers,
+    Lock,
+    PieChart,
+    Plus,
+    RefreshCw,
+    Settings,
+    ShieldCheck,
+    Target,
+    Trash2,
+    Upload,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { ProjectTeamBoard } from '../../components/Projects/ProjectTeamBoard';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { Project, ProjectRole } from '../../types';
 import { AppView } from '../../types';
 
 interface ProjectDetailsViewProps {
@@ -21,7 +39,9 @@ interface ProjectDetailsViewProps {
 export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectId, onBack }) => {
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'team' | 'initiatives' | 'assessments' | 'documents'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'team' | 'initiatives' | 'assessments' | 'documents'>(
+        'overview',
+    );
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<{
         name: string;
@@ -41,7 +61,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 name: data.name,
                 description: data.description || '',
                 goal: data.goal || '',
-                status: data.status as Project['status']
+                status: data.status as Project['status'],
             });
         } catch (e) {
             console.error(e);
@@ -101,9 +121,13 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             {/* Breadcrumbs & Navigation */}
             <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                <button onClick={onBack} className="hover:text-white transition-colors">Workspace</button>
+                <button onClick={onBack} className="hover:text-white transition-colors">
+                    Workspace
+                </button>
                 <ChevronRight size={12} />
-                <button onClick={onBack} className="hover:text-white transition-colors">Projects</button>
+                <button onClick={onBack} className="hover:text-white transition-colors">
+                    Projects
+                </button>
                 <ChevronRight size={12} />
                 <span className="text-slate-300 font-medium">{project.name}</span>
             </div>
@@ -119,10 +143,15 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <h1 className="text-3xl font-extrabold text-white tracking-tight">{project.name}</h1>
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${project.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                project.status === 'completed' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                    'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                                }`}>
+                            <span
+                                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
+                                    project.status === 'active'
+                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                        : project.status === 'completed'
+                                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                          : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                                }`}
+                            >
                                 {project.status}
                             </span>
                         </div>
@@ -141,7 +170,9 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                             </div>
                             <div className="flex items-center gap-1.5 text-slate-500">
                                 <Globe size={16} />
-                                <span>Created {new Date(project.created_at || project.createdAt).toLocaleDateString()}</span>
+                                <span>
+                                    Created {new Date(project.created_at || project.createdAt).toLocaleDateString()}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -150,8 +181,11 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 <div className="flex items-center gap-3 mt-4 sm:mt-0 z-10">
                     <button
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold text-sm ${isEditing ? 'bg-white text-navy-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold text-sm ${
+                            isEditing
+                                ? 'bg-white text-navy-900 shadow-xl'
+                                : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
+                        }`}
                     >
                         {isEditing ? <X size={18} /> : <Edit size={18} />}
                         {isEditing ? 'Cancel Edit' : 'Edit Project'}
@@ -172,13 +206,16 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     { id: 'team', label: 'Team & PMO', icon: Users },
                     { id: 'initiatives', label: 'Initiatives', icon: Target },
                     { id: 'assessments', label: 'Assessments', icon: PieChart },
-                    { id: 'documents', label: 'Knowledge Base', icon: FileText }
-                ].map(tab => (
+                    { id: 'documents', label: 'Knowledge Base', icon: FileText },
+                ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                            activeTab === tab.id
+                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                        }`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -193,38 +230,56 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in slide-in-from-bottom-2 duration-300">
                         <div className="lg:col-span-2 space-y-6">
                             {isEditing ? (
-                                <form onSubmit={handleUpdateProject} className="bg-navy-900 border border-white/10 rounded-2xl p-8 space-y-6 shadow-xl">
+                                <form
+                                    onSubmit={handleUpdateProject}
+                                    className="bg-navy-900 border border-white/10 rounded-2xl p-8 space-y-6 shadow-xl"
+                                >
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Project Name</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                                Project Name
+                                            </label>
                                             <input
                                                 value={editForm.name}
-                                                onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                                                 className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Description</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                                Description
+                                            </label>
                                             <textarea
                                                 value={editForm.description}
-                                                onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                                onChange={(e) =>
+                                                    setEditForm({ ...editForm, description: e.target.value })
+                                                }
                                                 rows={4}
                                                 className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none resize-none"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Strategic Goal (CEL)</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                                Strategic Goal (CEL)
+                                            </label>
                                             <input
                                                 value={editForm.goal}
-                                                onChange={e => setEditForm({ ...editForm, goal: e.target.value })}
+                                                onChange={(e) => setEditForm({ ...editForm, goal: e.target.value })}
                                                 className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Status</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                                Status
+                                            </label>
                                             <select
                                                 value={editForm.status}
-                                                onChange={e => setEditForm({ ...editForm, status: e.target.value as Project['status'] })}
+                                                onChange={(e) =>
+                                                    setEditForm({
+                                                        ...editForm,
+                                                        status: e.target.value as Project['status'],
+                                                    })
+                                                }
                                                 className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none appearance-none"
                                             >
                                                 <option value="active">Active</option>
@@ -234,10 +289,17 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
-                                        <button type="submit" className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/30 transition-all flex items-center justify-center gap-2">
+                                        <button
+                                            type="submit"
+                                            className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/30 transition-all flex items-center justify-center gap-2"
+                                        >
                                             <Check size={20} /> Save Changes
                                         </button>
-                                        <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-all">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditing(false)}
+                                            className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-all"
+                                        >
                                             Discard
                                         </button>
                                     </div>
@@ -247,10 +309,13 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl p-8 space-y-6 relative overflow-hidden shadow-sm dark:shadow-none">
                                         <div className="flex items-center gap-3 text-primary-600 dark:text-purple-400 mb-2">
                                             <Info size={18} />
-                                            <h3 className="text-sm font-bold uppercase tracking-widest">About Project</h3>
+                                            <h3 className="text-sm font-bold uppercase tracking-widest">
+                                                About Project
+                                            </h3>
                                         </div>
                                         <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">
-                                            {project.description || "No description provided for this project yet. Edit project details to add context for the team and AI."}
+                                            {project.description ||
+                                                'No description provided for this project yet. Edit project details to add context for the team and AI.'}
                                         </p>
 
                                         <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col gap-4">
@@ -259,8 +324,12 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                                     <Target size={24} />
                                                 </div>
                                                 <div>
-                                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Master Goal (CEL)</div>
-                                                    <div className="text-navy-900 dark:text-white font-semibold text-lg">{project.goal || "Not defined"}</div>
+                                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                        Master Goal (CEL)
+                                                    </div>
+                                                    <div className="text-navy-900 dark:text-white font-semibold text-lg">
+                                                        {project.goal || 'Not defined'}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -269,24 +338,52 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                     {/* Quick Stats Grid - DBR77 Compatible */}
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-white/5 p-4 rounded-2xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
-                                            <Briefcase size={20} className="text-primary-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
-                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">{project.workstreams?.length || 0}</div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">Workstreams</div>
+                                            <Briefcase
+                                                size={20}
+                                                className="text-primary-600 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform"
+                                            />
+                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {project.workstreams?.length || 0}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                                                Workstreams
+                                            </div>
                                         </div>
                                         <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-white/5 p-4 rounded-2xl hover:border-success-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
-                                            <Target size={20} className="text-success-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform" />
-                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">{project.initiatives?.length || 0}</div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">Initiatives</div>
+                                            <Target
+                                                size={20}
+                                                className="text-success-600 dark:text-green-400 mb-2 group-hover:scale-110 transition-transform"
+                                            />
+                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {project.initiatives?.length || 0}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                                                Initiatives
+                                            </div>
                                         </div>
                                         <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-white/5 p-4 rounded-2xl hover:border-primary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
-                                            <PieChart size={20} className="text-primary-500 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">{project.assessments?.length || 0}</div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">Assessments</div>
+                                            <PieChart
+                                                size={20}
+                                                className="text-primary-500 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform"
+                                            />
+                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {project.assessments?.length || 0}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                                                Assessments
+                                            </div>
                                         </div>
                                         <div className="bg-white dark:bg-navy-900/60 border border-slate-200 dark:border-white/5 p-4 rounded-2xl hover:border-secondary-500/30 dark:hover:border-white/10 transition-all group shadow-sm dark:shadow-none">
-                                            <FileText size={20} className="text-secondary-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform" />
-                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">{project.documents?.length || 0}</div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">Documents</div>
+                                            <FileText
+                                                size={20}
+                                                className="text-secondary-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform"
+                                            />
+                                            <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {project.documents?.length || 0}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-500 font-bold uppercase">
+                                                Documents
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -305,7 +402,9 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                         {project.owner_first_name?.[0] || 'U'}
                                     </div>
                                     <div>
-                                        <div className="text-navy-900 dark:text-white font-bold">{project.owner_first_name} {project.owner_last_name}</div>
+                                        <div className="text-navy-900 dark:text-white font-bold">
+                                            {project.owner_first_name} {project.owner_last_name}
+                                        </div>
                                         <div className="text-xs text-slate-500">Account Executive</div>
                                     </div>
                                 </div>
@@ -320,7 +419,9 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-slate-500">Visibility</span>
-                                        <span className="text-slate-600 dark:text-slate-300 px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded">Org Wide</span>
+                                        <span className="text-slate-600 dark:text-slate-300 px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded">
+                                            Org Wide
+                                        </span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-slate-500">AI Processing</span>
@@ -330,7 +431,9 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-slate-500">Data Residency</span>
-                                        <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1"><Globe size={12} /> EU (AWS)</span>
+                                        <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                            <Globe size={12} /> EU (AWS)
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -341,10 +444,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 {/* --- TEAM TAB --- */}
                 {activeTab === 'team' && (
                     <div className="animate-in fade-in duration-300">
-                        <ProjectTeamBoard
-                            projectId={projectId}
-                            projectName={project.name}
-                        />
+                        <ProjectTeamBoard projectId={projectId} projectName={project.name} />
                     </div>
                 )}
 
@@ -365,13 +465,22 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                 </div>
                             ) : (
                                 project.initiatives?.map((item: any) => (
-                                    <div key={item.id} className="bg-navy-900 border border-white/10 p-6 rounded-2xl hover:border-purple-500/30 transition-all flex justify-between items-start group">
+                                    <div
+                                        key={item.id}
+                                        className="bg-navy-900 border border-white/10 p-6 rounded-2xl hover:border-purple-500/30 transition-all flex justify-between items-start group"
+                                    >
                                         <div>
-                                            <h4 className="font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">{item.title}</h4>
+                                            <h4 className="font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">
+                                                {item.title}
+                                            </h4>
                                             <p className="text-xs text-slate-500 mb-4">{item.description}</p>
                                             <div className="flex items-center gap-3">
-                                                <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-bold rounded uppercase">{item.status}</span>
-                                                <span className="text-[10px] text-slate-600">ROI: {item.expected_roi || 'TBD'}</span>
+                                                <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-bold rounded uppercase">
+                                                    {item.status}
+                                                </span>
+                                                <span className="text-[10px] text-slate-600">
+                                                    ROI: {item.expected_roi || 'TBD'}
+                                                </span>
                                             </div>
                                         </div>
                                         <button className="p-2 text-slate-600 hover:text-white transition-colors">
@@ -401,20 +510,34 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                 </div>
                             ) : (
                                 project.assessments?.map((item: any) => (
-                                    <div key={item.id} className="bg-navy-900 border border-white/10 p-6 rounded-2xl hover:bg-navy-800 transition-all group">
+                                    <div
+                                        key={item.id}
+                                        className="bg-navy-900 border border-white/10 p-6 rounded-2xl hover:bg-navy-800 transition-all group"
+                                    >
                                         <div className="flex justify-between items-center mb-4">
                                             <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
                                                 <PieChart size={20} />
                                             </div>
-                                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${item.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-yellow-500/10 text-yellow-500'
-                                                }`}>
+                                            <span
+                                                className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                                                    item.status === 'completed'
+                                                        ? 'bg-emerald-500/10 text-emerald-400'
+                                                        : 'bg-yellow-500/10 text-yellow-500'
+                                                }`}
+                                            >
                                                 {item.status}
                                             </span>
                                         </div>
-                                        <h4 className="font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">{item.framework} Diagnostic</h4>
+                                        <h4 className="font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">
+                                            {item.framework} Diagnostic
+                                        </h4>
                                         <div className="flex justify-between items-center mt-6">
-                                            <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Maturity Score</div>
-                                            <div className="text-xl font-black text-white">{item.result_score || '--'}/5</div>
+                                            <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                                                Maturity Score
+                                            </div>
+                                            <div className="text-xl font-black text-white">
+                                                {item.result_score || '--'}/5
+                                            </div>
                                         </div>
                                     </div>
                                 ))
@@ -446,7 +569,9 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                                 <FileText size={18} /> {uploadFile.name}
                                             </span>
                                         ) : (
-                                            <span className="text-slate-500 text-sm group-hover:text-slate-300 transition-colors italic">Drag & drop files to ingest into project brain...</span>
+                                            <span className="text-slate-500 text-sm group-hover:text-slate-300 transition-colors italic">
+                                                Drag & drop files to ingest into project brain...
+                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -455,7 +580,11 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                     disabled={!uploadFile || uploading}
                                     className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-900/30 transition-all"
                                 >
-                                    {uploading ? <RefreshCw className="animate-spin" size={20} /> : <Upload size={20} />}
+                                    {uploading ? (
+                                        <RefreshCw className="animate-spin" size={20} />
+                                    ) : (
+                                        <Upload size={20} />
+                                    )}
                                     {uploading ? 'Analyzing...' : 'Ingest'}
                                 </button>
                             </form>
@@ -469,14 +598,21 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                                 </div>
                             ) : (
                                 project.documents?.map((item: any) => (
-                                    <div key={item.id} className="bg-navy-900 border border-white/10 p-5 rounded-2xl hover:border-blue-500/30 transition-all flex justify-between items-center group">
+                                    <div
+                                        key={item.id}
+                                        className="bg-navy-900 border border-white/10 p-5 rounded-2xl hover:border-blue-500/30 transition-all flex justify-between items-center group"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="p-2.5 bg-navy-950 rounded-xl">
                                                 <FileText className="text-blue-400" size={22} />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-white truncate max-w-[150px]">{item.filename}</div>
-                                                <div className="text-[10px] text-slate-500">{new Date(item.created_at || item.createdAt).toLocaleDateString()}</div>
+                                                <div className="text-sm font-bold text-white truncate max-w-[150px]">
+                                                    {item.filename}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500">
+                                                    {new Date(item.created_at || item.createdAt).toLocaleDateString()}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">

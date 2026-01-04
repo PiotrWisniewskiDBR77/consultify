@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ROIPaybackChart } from '../../../components/ROIPaybackChart';
+import { ROIPaybackChart } from '../../components/ROIPaybackChart';
 
 const mockEconomics = {
     totalCost: 100000,
@@ -32,6 +32,7 @@ describe('ROIPaybackChart Component', () => {
         expect(circles.length).toBe(6); // Year 0-5
     });
 });
+
 
 
 

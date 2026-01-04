@@ -1,15 +1,16 @@
 /**
  * Auth Services Integration Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Integration tests for auth services interactions - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import RefreshTokenService from '../../../../src/services/RefreshTokenService.js';
-import MFAService from '../../../../src/services/MFAService.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { getDatabase } from '../../../../src/database/Database.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import MFAService from '../../../../src/services/MFAService.js';
+import RefreshTokenService from '../../../../src/services/RefreshTokenService.js';
 
 describe('Auth Services Integration', () => {
     let db: IDatabase;
@@ -30,4 +31,3 @@ describe('Auth Services Integration', () => {
         });
     });
 });
-

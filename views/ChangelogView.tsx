@@ -1,28 +1,29 @@
 /**
  * Changelog View
- * 
+ *
  * Full changelog/release notes history page.
  * Route: /changelog
  */
 
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-    Sparkles,
-    Tag,
+    AlertTriangle,
+    ArrowLeft,
     Calendar,
     CheckCircle,
-    Wrench,
-    AlertTriangle,
     ChevronDown,
     ChevronUp,
     Filter,
-    ArrowLeft,
-    Rss
+    Rss,
+    Sparkles,
+    Tag,
+    Wrench,
 } from 'lucide-react';
-import { RELEASE_NOTES, ReleaseNote } from '../config/releaseNotes';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import DynamicIcon from '../components/shared/DynamicIcon';
+import { RELEASE_NOTES, ReleaseNote } from '../config/releaseNotes';
 
 interface ChangelogViewProps {
     onBack?: () => void;
@@ -35,14 +36,10 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
     const [filter, setFilter] = useState<ReleaseType>('all');
-    const [expandedVersions, setExpandedVersions] = useState<Set<string>>(
-        new Set([RELEASE_NOTES[0]?.version])
-    );
+    const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set([RELEASE_NOTES[0]?.version]));
 
     // Filter releases
-    const filteredReleases = filter === 'all'
-        ? RELEASE_NOTES
-        : RELEASE_NOTES.filter(r => r.type === filter);
+    const filteredReleases = filter === 'all' ? RELEASE_NOTES : RELEASE_NOTES.filter((r) => r.type === filter);
 
     // Toggle expansion
     const toggleVersion = (version: string) => {
@@ -59,13 +56,16 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
     const typeBadge = {
         major: { color: 'bg-purple-500', label: { en: 'Major', pl: 'Główna' } },
         minor: { color: 'bg-blue-500', label: { en: 'Minor', pl: 'Mniejsza' } },
-        patch: { color: 'bg-green-500', label: { en: 'Patch', pl: 'Poprawka' } }
+        patch: { color: 'bg-green-500', label: { en: 'Patch', pl: 'Poprawka' } },
     };
 
     // Text
     const t = {
         title: { en: 'Changelog', pl: 'Historia Zmian' },
-        subtitle: { en: 'Track all updates and improvements to TechnoLex', pl: 'Śledź wszystkie aktualizacje i ulepszenia TechnoLex' },
+        subtitle: {
+            en: 'Track all updates and improvements to TechnoLex',
+            pl: 'Śledź wszystkie aktualizacje i ulepszenia TechnoLex',
+        },
         all: { en: 'All', pl: 'Wszystkie' },
         major: { en: 'Major', pl: 'Główne' },
         minor: { en: 'Minor', pl: 'Mniejsze' },
@@ -74,7 +74,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
         improvements: { en: 'Improvements', pl: 'Ulepszenia' },
         fixes: { en: 'Bug Fixes', pl: 'Poprawki Błędów' },
         breaking: { en: 'Breaking Changes', pl: 'Zmiany Przełomowe' },
-        rss: { en: 'RSS Feed', pl: 'Kanał RSS' }
+        rss: { en: 'RSS Feed', pl: 'Kanał RSS' },
     };
 
     return (
@@ -97,9 +97,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                     <Tag size={32} className="text-purple-500" />
                                     {t.title[lang]}
                                 </h1>
-                                <p className="text-slate-600 dark:text-slate-400 mt-1">
-                                    {t.subtitle[lang]}
-                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
                             </div>
                         </div>
                         <button
@@ -117,14 +115,15 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                 {/* Filters */}
                 <div className="flex items-center gap-2 mb-8">
                     <Filter size={18} className="text-slate-400" />
-                    {(['all', 'major', 'minor', 'patch'] as ReleaseType[]).map(type => (
+                    {(['all', 'major', 'minor', 'patch'] as ReleaseType[]).map((type) => (
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === type
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                                filter === type
                                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                }`}
+                            }`}
                         >
                             {t[type][lang]}
                         </button>
@@ -151,7 +150,9 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                     className="relative pl-16"
                                 >
                                     {/* Timeline dot */}
-                                    <div className={`absolute left-4 w-5 h-5 rounded-full ${badge.color} border-4 border-slate-50 dark:border-slate-900`} />
+                                    <div
+                                        className={`absolute left-4 w-5 h-5 rounded-full ${badge.color} border-4 border-slate-50 dark:border-slate-900`}
+                                    />
 
                                     {/* Release card */}
                                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
@@ -162,16 +163,21 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                         >
                                             <div>
                                                 <div className="flex items-center gap-3 mb-1">
-                                                    <span className={`px-2 py-0.5 ${badge.color} text-white text-xs font-medium rounded`}>
+                                                    <span
+                                                        className={`px-2 py-0.5 ${badge.color} text-white text-xs font-medium rounded`}
+                                                    >
                                                         v{release.version}
                                                     </span>
                                                     <span className="text-sm text-slate-500 flex items-center gap-1">
                                                         <Calendar size={14} />
-                                                        {new Date(release.date).toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric'
-                                                        })}
+                                                        {new Date(release.date).toLocaleDateString(
+                                                            lang === 'pl' ? 'pl-PL' : 'en-US',
+                                                            {
+                                                                year: 'numeric',
+                                                                month: 'long',
+                                                                day: 'numeric',
+                                                            },
+                                                        )}
                                                     </span>
                                                 </div>
                                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -210,7 +216,11 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                                 <div key={i} className="flex items-start gap-3">
                                                                     {feature.icon && (
                                                                         <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                                                                            <DynamicIcon name={feature.icon} size={16} className="text-purple-600 dark:text-purple-400" />
+                                                                            <DynamicIcon
+                                                                                name={feature.icon}
+                                                                                size={16}
+                                                                                className="text-purple-600 dark:text-purple-400"
+                                                                            />
                                                                         </div>
                                                                     )}
                                                                     <div>
@@ -236,8 +246,14 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                         </h4>
                                                         <ul className="space-y-2">
                                                             {release.improvements.map((item, i) => (
-                                                                <li key={i} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                                                                    <CheckCircle size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                                                                <li
+                                                                    key={i}
+                                                                    className="flex items-start gap-2 text-slate-600 dark:text-slate-300"
+                                                                >
+                                                                    <CheckCircle
+                                                                        size={16}
+                                                                        className="text-blue-500 mt-0.5 flex-shrink-0"
+                                                                    />
                                                                     {item[lang]}
                                                                 </li>
                                                             ))}
@@ -254,7 +270,10 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                         </h4>
                                                         <ul className="space-y-2">
                                                             {release.fixes.map((item, i) => (
-                                                                <li key={i} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
+                                                                <li
+                                                                    key={i}
+                                                                    className="flex items-start gap-2 text-slate-600 dark:text-slate-300"
+                                                                >
                                                                     <span className="text-green-500">•</span>
                                                                     {item[lang]}
                                                                 </li>
@@ -272,7 +291,10 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                         </h4>
                                                         <ul className="space-y-2">
                                                             {release.breaking.map((item, i) => (
-                                                                <li key={i} className="flex items-start gap-2 text-red-700 dark:text-red-300">
+                                                                <li
+                                                                    key={i}
+                                                                    className="flex items-start gap-2 text-red-700 dark:text-red-300"
+                                                                >
                                                                     <span>•</span>
                                                                     {item[lang]}
                                                                 </li>
@@ -294,12 +316,4 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 };
 
 export default ChangelogView;
-
-
-
-
-
-
-
-
 

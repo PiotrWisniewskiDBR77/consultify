@@ -32,14 +32,14 @@ const AlertService = {
                 type: 'CRITICAL',
                 component: 'API_PERFORMANCE',
                 message: `Critical: Average response time is ${summary.avgResponseTime}ms`,
-                timestamp
+                timestamp,
             });
         } else if (summary.avgResponseTime > 1000) {
             alerts.push({
                 type: 'WARNING',
                 component: 'API_PERFORMANCE',
                 message: `Warning: Average response time is high (${summary.avgResponseTime}ms)`,
-                timestamp
+                timestamp,
             });
         }
 
@@ -48,14 +48,14 @@ const AlertService = {
                 type: 'CRITICAL',
                 component: 'API_STABILITY',
                 message: `Critical: API Error rate is ${summary.errorRate}%`,
-                timestamp
+                timestamp,
             });
         } else if (summary.errorRate > 5) {
             alerts.push({
                 type: 'WARNING',
                 component: 'API_STABILITY',
                 message: `Warning: API Error rate is elevated (${summary.errorRate}%)`,
-                timestamp
+                timestamp,
             });
         }
 
@@ -64,23 +64,23 @@ const AlertService = {
                 type: 'CRITICAL',
                 component: 'SYSTEM_RESOURCE',
                 message: `Critical: Heap usage is ${memory.heapUsed}MB`,
-                timestamp
+                timestamp,
             });
         } else if (memory.heapUsed > 500) {
             alerts.push({
                 type: 'WARNING',
                 component: 'SYSTEM_RESOURCE',
                 message: `Warning: High memory usage (${memory.heapUsed}MB)`,
-                timestamp
+                timestamp,
             });
         }
 
-        if (summary.slowRequests > 50 && (summary.slowRequests / summary.totalRequests > 0.2)) {
+        if (summary.slowRequests > 50 && summary.slowRequests / summary.totalRequests > 0.2) {
             alerts.push({
                 type: 'WARNING',
                 component: 'API_PERFORMANCE',
                 message: 'Warning: 20%+ of requests are slow (>1s)',
-                timestamp
+                timestamp,
             });
         }
 
@@ -97,7 +97,7 @@ const AlertService = {
             }
             console.warn(`[ALERT SERVICE] ${alert.message}`);
         });
-    }
+    },
 };
 
 export default AlertService;

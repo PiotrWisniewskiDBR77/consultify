@@ -2,7 +2,7 @@
  * Production Logger
  * Outputs structured JSON logs for easy parsing by log aggregators
  */
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 interface LogMeta {
     [key: string]: unknown;
     error?: Error;

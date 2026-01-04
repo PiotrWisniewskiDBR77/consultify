@@ -1,24 +1,19 @@
 /**
  * NotificationDigestSettings - Email digest configuration
- * 
+ *
  * Features:
  * - Digest frequency (instant, hourly, daily, weekly)
  * - Digest content (summary, full)
  * - Digest format (HTML, plain text)
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Mail,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Loader2, Mail, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface NotificationDigestSettingsProps {
     currentUser: User;
@@ -42,9 +37,9 @@ const FORMAT_OPTIONS = [
     { value: 'plain', label: 'Plain Text', description: 'Simple text format' },
 ] as const;
 
-export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
+export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProps> = ({
+    currentUser,
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [frequency, setFrequency] = useState<'instant' | 'hourly' | 'daily' | 'weekly'>('instant');
@@ -72,17 +67,17 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/notifications/digest', {
                 frequency,
                 content,
-                format
+                format,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.notifications.digest.saved', 'Digest preferences saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -120,16 +115,16 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
                                     : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
                             }`}
                         >
-                            <div className={`text-sm font-medium ${
-                                frequency === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-600 dark:text-slate-400'
-                            }`}>
+                            <div
+                                className={`text-sm font-medium ${
+                                    frequency === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-slate-600 dark:text-slate-400'
+                                }`}
+                            >
                                 {option.label}
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {option.description}
-                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{option.description}</div>
                         </button>
                     ))}
                 </div>
@@ -151,16 +146,16 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
                                     : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
                             }`}
                         >
-                            <div className={`text-sm font-medium ${
-                                content === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-600 dark:text-slate-400'
-                            }`}>
+                            <div
+                                className={`text-sm font-medium ${
+                                    content === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-slate-600 dark:text-slate-400'
+                                }`}
+                            >
                                 {option.label}
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {option.description}
-                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{option.description}</div>
                         </button>
                     ))}
                 </div>
@@ -182,16 +177,16 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
                                     : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
                             }`}
                         >
-                            <div className={`text-sm font-medium ${
-                                format === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-slate-600 dark:text-slate-400'
-                            }`}>
+                            <div
+                                className={`text-sm font-medium ${
+                                    format === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-slate-600 dark:text-slate-400'
+                                }`}
+                            >
                                 {option.label}
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {option.description}
-                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{option.description}</div>
                         </button>
                     ))}
                 </div>
@@ -236,10 +231,4 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
 };
 
 export default NotificationDigestSettings;
-
-
-
-
-
-
 

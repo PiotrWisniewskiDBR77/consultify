@@ -14,17 +14,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies before imports
-vi.mock('../../../../server/services/permissionService', () => ({
-    default: {
+vi.mock('../../../../server/services/permissionService', () => {
+    const mockService = {
         hasPermission: vi.fn()
-    }
-}));
+    };
+    return {
+        default: mockService,
+        PermissionService: mockService
+    };
+});
 
-vi.mock('../../../../server/services/governanceAuditService', () => ({
-    default: {
+vi.mock('../../../../server/services/governanceAuditService', () => {
+    const mockService = {
         logAudit: vi.fn()
-    }
-}));
+    };
+    return {
+        default: mockService,
+        GovernanceAuditService: mockService
+    };
+});
 
 // Import after mocks
 import PermissionService from '../../../../server/services/permissionService';

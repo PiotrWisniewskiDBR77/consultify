@@ -1,33 +1,34 @@
 /**
  * ModelsProvidersTab - AI Models & Providers Management
- * 
+ *
  * Tab 1 of the reorganized AI & Intelligence section
  * Unified view: Provider Status Grid + Single Table with Tier Assignments
- * 
+ *
  * v2.0 - Removed Fallback Chains, integrated tier assignments directly
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Server, 
-    CheckCircle, 
-    XCircle, 
-    AlertTriangle, 
-    RefreshCw, 
-    Wifi, 
-    Eye, 
-    EyeOff, 
-    Check,
-    Star,
-    Clock,
-    Zap,
-    Crown,
+import {
+    AlertTriangle,
     Brain,
-    Info,
+    Check,
+    CheckCircle,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Clock,
+    Crown,
+    Eye,
+    EyeOff,
+    Info,
+    RefreshCw,
+    Server,
+    Star,
+    Wifi,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { Api } from '../../../services/api';
 import { LLMProvider } from '../../../types';
 
@@ -93,7 +94,7 @@ const TIER_CONFIG: Record<string, { icon: any; color: string; label: string }> =
     BUDGET: { icon: Zap, color: 'emerald', label: 'Budget' },
     STANDARD: { icon: Server, color: 'blue', label: 'Standard' },
     PREMIUM: { icon: Crown, color: 'violet', label: 'Premium' },
-    REASONING: { icon: Brain, color: 'amber', label: 'Reasoning' }
+    REASONING: { icon: Brain, color: 'amber', label: 'Reasoning' },
 };
 
 interface LLMProviderConfig {
@@ -139,12 +140,13 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             const fetchOrgId = async () => {
                 try {
                     const res = await fetch('/api/auth/me', {
-                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                     });
                     if (res.ok) {
                         const data = await res.json();
                         // API returns { user: { organizationId: "..." } }
-                        const fetchedOrgId = data.user?.organizationId || data.user?.organization_id || data.organizationId;
+                        const fetchedOrgId =
+                            data.user?.organizationId || data.user?.organization_id || data.organizationId;
                         if (fetchedOrgId) {
                             setOrgId(fetchedOrgId);
                         }
@@ -180,7 +182,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
         setLoadingStatus(true);
         try {
             const response = await fetch('/api/llm/status', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             const data = await response.json();
             if (data.success) {
@@ -196,7 +198,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
         if (!orgId) return;
         try {
             const res = await fetch(`/api/llm/org/${orgId}/available-models`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -210,9 +212,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
     const refreshAllHealth = async () => {
         setRefreshingHealth(true);
         try {
-            const response = await fetch('/api/llm/status/refresh', { 
+            const response = await fetch('/api/llm/status/refresh', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             const data = await response.json();
             if (data.success) {
@@ -230,9 +232,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
     const testSingleProvider = async (provider: string) => {
         setTestingProvider(provider);
         try {
-            const response = await fetch(`/api/llm/status/test/${provider}`, { 
+            const response = await fetch(`/api/llm/status/test/${provider}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             const data = await response.json();
             if (data.success && data.reachable) {
@@ -249,33 +251,33 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
 
     const toggleOrgAccess = async (providerId: string, currentStatus: boolean) => {
         if (!orgId) return;
-        
+
         setSavingProvider(providerId);
-        
+
         // Optimistic update
-        setProviders(prev => prev.map(p => 
-            p.id === providerId ? { ...p, is_enabled_for_org: !currentStatus } : p
-        ));
+        setProviders((prev) =>
+            prev.map((p) => (p.id === providerId ? { ...p, is_enabled_for_org: !currentStatus } : p)),
+        );
 
         try {
             const res = await fetch(`/api/llm/org/${orgId}/providers/${providerId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ isEnabled: !currentStatus })
+                body: JSON.stringify({ isEnabled: !currentStatus }),
             });
 
             if (!res.ok) throw new Error('Failed to update');
-            
+
             toast.success(!currentStatus ? 'Provider enabled' : 'Provider disabled');
             await loadAvailableModels();
         } catch (e) {
             // Revert on error
-            setProviders(prev => prev.map(p => 
-                p.id === providerId ? { ...p, is_enabled_for_org: currentStatus } : p
-            ));
+            setProviders((prev) =>
+                prev.map((p) => (p.id === providerId ? { ...p, is_enabled_for_org: currentStatus } : p)),
+            );
             toast.error('Failed to update provider');
         }
         setSavingProvider(null);
@@ -285,11 +287,11 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
     const getProviderTiers = (provider: LLMProviderConfig): string[] => {
         const tiers: string[] = [];
         for (const [tier, models] of Object.entries(availableModels)) {
-            if (models.some(m => 
-                m.id === provider.id || 
-                m.provider === provider.provider ||
-                m.model_id === provider.model_id
-            )) {
+            if (
+                models.some(
+                    (m) => m.id === provider.id || m.provider === provider.provider || m.model_id === provider.model_id,
+                )
+            ) {
                 tiers.push(tier);
             }
         }
@@ -298,32 +300,56 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
 
     // Find provider status
     const getProviderStatusInfo = (provider: LLMProviderConfig) => {
-        return llmStatus?.providers.find(p => p.id === provider.id || p.provider === provider.provider);
+        return llmStatus?.providers.find((p) => p.id === provider.id || p.provider === provider.provider);
     };
 
     const getHealthIcon = (status: string | undefined) => {
         switch (status) {
-            case 'healthy': return <CheckCircle size={14} className="text-emerald-400" />;
-            case 'degraded': return <AlertTriangle size={14} className="text-amber-400" />;
-            case 'unhealthy': return <XCircle size={14} className="text-red-400" />;
-            default: return <Server size={14} className="text-slate-400" />;
+            case 'healthy':
+                return <CheckCircle size={14} className="text-emerald-400" />;
+            case 'degraded':
+                return <AlertTriangle size={14} className="text-amber-400" />;
+            case 'unhealthy':
+                return <XCircle size={14} className="text-red-400" />;
+            default:
+                return <Server size={14} className="text-slate-400" />;
         }
     };
 
     const getHealthBadge = (status: string | undefined) => {
         switch (status) {
-            case 'healthy': 
-                return <span className="admin-status admin-status-healthy"><span className="admin-status-dot" />healthy</span>;
-            case 'degraded': 
-                return <span className="admin-status admin-status-warning"><span className="admin-status-dot" />degraded</span>;
-            case 'unhealthy': 
-                return <span className="admin-status admin-status-error"><span className="admin-status-dot" />unhealthy</span>;
-            default: 
-                return <span className="admin-status"><span className="admin-status-dot" />unknown</span>;
+            case 'healthy':
+                return (
+                    <span className="admin-status admin-status-healthy">
+                        <span className="admin-status-dot" />
+                        healthy
+                    </span>
+                );
+            case 'degraded':
+                return (
+                    <span className="admin-status admin-status-warning">
+                        <span className="admin-status-dot" />
+                        degraded
+                    </span>
+                );
+            case 'unhealthy':
+                return (
+                    <span className="admin-status admin-status-error">
+                        <span className="admin-status-dot" />
+                        unhealthy
+                    </span>
+                );
+            default:
+                return (
+                    <span className="admin-status">
+                        <span className="admin-status-dot" />
+                        unknown
+                    </span>
+                );
         }
     };
 
-    const filteredProviders = providers.filter(p => showInactive || p.is_active);
+    const filteredProviders = providers.filter((p) => showInactive || p.is_active);
 
     return (
         <div className="space-y-8">
@@ -384,8 +410,8 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                     <button
                         onClick={() => setShowInactive(!showInactive)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${
-                            showInactive 
-                                ? 'bg-white/10 border-white/20 text-white' 
+                            showInactive
+                                ? 'bg-white/10 border-white/20 text-white'
                                 : 'border-white/10 text-slate-400 hover:text-white'
                         }`}
                     >
@@ -406,88 +432,99 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             {/* Provider Status Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {llmStatus?.providers
-                    .filter(p => showInactive || p.isActive)
+                    .filter((p) => showInactive || p.isActive)
                     .map((p) => (
-                    <div
-                        key={p.id || p.provider}
-                        className="admin-card p-4"
-                    >
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <h4 className="text-sm font-medium text-white">{p.name || p.provider}</h4>
-                                <p className="text-xs text-slate-500 font-mono mt-0.5">{p.model}</p>
-                            </div>
-                            {getHealthBadge(p.healthStatus)}
-                        </div>
-
-                        <div className="flex flex-wrap gap-1 mb-3">
-                            {p.isDefault && (
-                                <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                    ★ Default
-                                </span>
-                            )}
-                            {p.tier && (
-                                <span className={`px-2 py-0.5 rounded text-xs ${
-                                    TIER_CONFIG[p.tier]?.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-400' :
-                                    TIER_CONFIG[p.tier]?.color === 'blue' ? 'bg-blue-500/10 text-blue-400' :
-                                    TIER_CONFIG[p.tier]?.color === 'violet' ? 'bg-violet-500/10 text-violet-400' :
-                                    TIER_CONFIG[p.tier]?.color === 'amber' ? 'bg-amber-500/10 text-amber-400' :
-                                    'bg-white/5 text-slate-400'
-                                }`}>
-                                    {p.tier}
-                                </span>
-                            )}
-                            {p.supportsVision && (
-                                <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-400">Vision</span>
-                            )}
-                            {p.supportsTools && (
-                                <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-400">Tools</span>
-                            )}
-                            {!p.isConfigured && (
-                                <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400">No API Key</span>
-                            )}
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-slate-600">
-                                Priority: {p.priority} | ${p.costPer1k}/1k
-                            </span>
-                            <button
-                                onClick={() => testSingleProvider(p.provider)}
-                                disabled={testingProvider === p.provider || !p.isConfigured}
-                                className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-400"
-                            >
-                                {testingProvider === p.provider ? (
-                                    <RefreshCw size={12} className="animate-spin" />
-                                ) : (
-                                    <Wifi size={12} />
-                                )}
-                                Test
-                            </button>
-                        </div>
-
-                        {/* Circuit Breaker Status */}
-                        {llmStatus.circuitBreakers[p.provider] && (
-                            <div className="mt-2 pt-2 border-t border-white/5">
-                                <div className="flex items-center gap-2 text-xs">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${
-                                        llmStatus.circuitBreakers[p.provider].state === 'CLOSED' ? 'bg-emerald-400' :
-                                        llmStatus.circuitBreakers[p.provider].state === 'OPEN' ? 'bg-red-400' :
-                                        'bg-amber-400'
-                                    }`} />
-                                    <span className="text-slate-500">
-                                        Circuit: {llmStatus.circuitBreakers[p.provider].state}
-                                    </span>
-                                    {llmStatus.circuitBreakers[p.provider].failures > 0 && (
-                                        <span className="text-red-400">
-                                            ({llmStatus.circuitBreakers[p.provider].failures} failures)
-                                        </span>
-                                    )}
+                        <div key={p.id || p.provider} className="admin-card p-4">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 className="text-sm font-medium text-white">{p.name || p.provider}</h4>
+                                    <p className="text-xs text-slate-500 font-mono mt-0.5">{p.model}</p>
                                 </div>
+                                {getHealthBadge(p.healthStatus)}
                             </div>
-                        )}
-                    </div>
-                ))}
+
+                            <div className="flex flex-wrap gap-1 mb-3">
+                                {p.isDefault && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        ★ Default
+                                    </span>
+                                )}
+                                {p.tier && (
+                                    <span
+                                        className={`px-2 py-0.5 rounded text-xs ${
+                                            TIER_CONFIG[p.tier]?.color === 'emerald'
+                                                ? 'bg-emerald-500/10 text-emerald-400'
+                                                : TIER_CONFIG[p.tier]?.color === 'blue'
+                                                  ? 'bg-blue-500/10 text-blue-400'
+                                                  : TIER_CONFIG[p.tier]?.color === 'violet'
+                                                    ? 'bg-violet-500/10 text-violet-400'
+                                                    : TIER_CONFIG[p.tier]?.color === 'amber'
+                                                      ? 'bg-amber-500/10 text-amber-400'
+                                                      : 'bg-white/5 text-slate-400'
+                                        }`}
+                                    >
+                                        {p.tier}
+                                    </span>
+                                )}
+                                {p.supportsVision && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-400">
+                                        Vision
+                                    </span>
+                                )}
+                                {p.supportsTools && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-400">Tools</span>
+                                )}
+                                {!p.isConfigured && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400">
+                                        No API Key
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-slate-600">
+                                    Priority: {p.priority} | ${p.costPer1k}/1k
+                                </span>
+                                <button
+                                    onClick={() => testSingleProvider(p.provider)}
+                                    disabled={testingProvider === p.provider || !p.isConfigured}
+                                    className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-400"
+                                >
+                                    {testingProvider === p.provider ? (
+                                        <RefreshCw size={12} className="animate-spin" />
+                                    ) : (
+                                        <Wifi size={12} />
+                                    )}
+                                    Test
+                                </button>
+                            </div>
+
+                            {/* Circuit Breaker Status */}
+                            {llmStatus.circuitBreakers[p.provider] && (
+                                <div className="mt-2 pt-2 border-t border-white/5">
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span
+                                            className={`w-1.5 h-1.5 rounded-full ${
+                                                llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
+                                                    ? 'bg-emerald-400'
+                                                    : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
+                                                      ? 'bg-red-400'
+                                                      : 'bg-amber-400'
+                                            }`}
+                                        />
+                                        <span className="text-slate-500">
+                                            Circuit: {llmStatus.circuitBreakers[p.provider].state}
+                                        </span>
+                                        {llmStatus.circuitBreakers[p.provider].failures > 0 && (
+                                            <span className="text-red-400">
+                                                ({llmStatus.circuitBreakers[p.provider].failures} failures)
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
             </div>
 
             {/* Unified Provider Table */}
@@ -513,108 +550,140 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={7} className="p-8 text-center">
-                                    <RefreshCw size={20} className="animate-spin mx-auto text-violet-400" />
-                                </td></tr>
-                            ) : filteredProviders.map(p => {
-                                const statusInfo = getProviderStatusInfo(p);
-                                const tiers = getProviderTiers(p);
-                                
-                                return (
-                                    <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                {statusInfo?.isDefault && <Star size={14} className="text-amber-400" />}
-                                                <div>
-                                                    <div className="font-medium text-white">{p.name}</div>
-                                                    <div className="text-xs text-slate-500 capitalize">{p.provider}</div>
+                                <tr>
+                                    <td colSpan={7} className="p-8 text-center">
+                                        <RefreshCw size={20} className="animate-spin mx-auto text-violet-400" />
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredProviders.map((p) => {
+                                    const statusInfo = getProviderStatusInfo(p);
+                                    const tiers = getProviderTiers(p);
+
+                                    return (
+                                        <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {statusInfo?.isDefault && (
+                                                        <Star size={14} className="text-amber-400" />
+                                                    )}
+                                                    <div>
+                                                        <div className="font-medium text-white">{p.name}</div>
+                                                        <div className="text-xs text-slate-500 capitalize">
+                                                            {p.provider}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="font-mono text-xs text-slate-400">{p.model_id}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-wrap gap-1">
-                                                {tiers.length > 0 ? tiers.map(tier => {
-                                                    const config = TIER_CONFIG[tier];
-                                                    const Icon = config?.icon || Server;
-                                                    return (
-                                                        <span 
-                                                            key={tier}
-                                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
-                                                                config?.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                                config?.color === 'blue' ? 'bg-blue-500/10 text-blue-400' :
-                                                                config?.color === 'violet' ? 'bg-violet-500/10 text-violet-400' :
-                                                                config?.color === 'amber' ? 'bg-amber-500/10 text-amber-400' :
-                                                                'bg-white/5 text-slate-400'
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-mono text-xs text-slate-400">{p.model_id}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {tiers.length > 0 ? (
+                                                        tiers.map((tier) => {
+                                                            const config = TIER_CONFIG[tier];
+                                                            const Icon = config?.icon || Server;
+                                                            return (
+                                                                <span
+                                                                    key={tier}
+                                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+                                                                        config?.color === 'emerald'
+                                                                            ? 'bg-emerald-500/10 text-emerald-400'
+                                                                            : config?.color === 'blue'
+                                                                              ? 'bg-blue-500/10 text-blue-400'
+                                                                              : config?.color === 'violet'
+                                                                                ? 'bg-violet-500/10 text-violet-400'
+                                                                                : config?.color === 'amber'
+                                                                                  ? 'bg-amber-500/10 text-amber-400'
+                                                                                  : 'bg-white/5 text-slate-400'
+                                                                    }`}
+                                                                >
+                                                                    <Icon size={10} />
+                                                                    {tier}
+                                                                </span>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <span className="text-xs text-slate-600">—</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    {getHealthIcon(statusInfo?.healthStatus)}
+                                                    <span
+                                                        className={`text-xs capitalize ${
+                                                            statusInfo?.healthStatus === 'healthy'
+                                                                ? 'text-emerald-400'
+                                                                : statusInfo?.healthStatus === 'degraded'
+                                                                  ? 'text-amber-400'
+                                                                  : statusInfo?.healthStatus === 'unhealthy'
+                                                                    ? 'text-red-400'
+                                                                    : 'text-slate-500'
+                                                        }`}
+                                                    >
+                                                        {statusInfo?.healthStatus || 'unknown'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button
+                                                    onClick={() =>
+                                                        toggleOrgAccess(p.id, p.is_enabled_for_org !== false)
+                                                    }
+                                                    disabled={savingProvider === p.id}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                        p.is_enabled_for_org !== false
+                                                            ? 'bg-violet-600'
+                                                            : 'bg-slate-700'
+                                                    } ${savingProvider === p.id ? 'opacity-50' : ''}`}
+                                                >
+                                                    {savingProvider === p.id ? (
+                                                        <RefreshCw
+                                                            size={12}
+                                                            className="absolute left-1/2 -translate-x-1/2 animate-spin text-white"
+                                                        />
+                                                    ) : (
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                                p.is_enabled_for_org !== false
+                                                                    ? 'translate-x-6'
+                                                                    : 'translate-x-1'
                                                             }`}
-                                                        >
-                                                            <Icon size={10} />
-                                                            {tier}
-                                                        </span>
-                                                    );
-                                                }) : (
-                                                    <span className="text-xs text-slate-600">—</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                {getHealthIcon(statusInfo?.healthStatus)}
-                                                <span className={`text-xs capitalize ${
-                                                    statusInfo?.healthStatus === 'healthy' ? 'text-emerald-400' :
-                                                    statusInfo?.healthStatus === 'degraded' ? 'text-amber-400' :
-                                                    statusInfo?.healthStatus === 'unhealthy' ? 'text-red-400' :
-                                                    'text-slate-500'
-                                                }`}>
-                                                    {statusInfo?.healthStatus || 'unknown'}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => toggleOrgAccess(p.id, p.is_enabled_for_org !== false)}
-                                                disabled={savingProvider === p.id}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                                    p.is_enabled_for_org !== false ? 'bg-violet-600' : 'bg-slate-700'
-                                                } ${savingProvider === p.id ? 'opacity-50' : ''}`}
-                                            >
-                                                {savingProvider === p.id ? (
-                                                    <RefreshCw size={12} className="absolute left-1/2 -translate-x-1/2 animate-spin text-white" />
+                                                        />
+                                                    )}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {p.is_active ? (
+                                                    <span className="text-emerald-400 flex items-center gap-1 text-xs">
+                                                        <Check size={12} /> Active
+                                                    </span>
                                                 ) : (
-                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                                        p.is_enabled_for_org !== false ? 'translate-x-6' : 'translate-x-1'
-                                                    }`} />
+                                                    <span className="text-slate-500 text-xs">Inactive</span>
                                                 )}
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {p.is_active ? (
-                                                <span className="text-emerald-400 flex items-center gap-1 text-xs">
-                                                    <Check size={12} /> Active
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-500 text-xs">Inactive</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => testSingleProvider(p.provider)}
-                                                disabled={testingProvider === p.provider || !statusInfo?.isConfigured}
-                                                className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-400"
-                                            >
-                                                {testingProvider === p.provider ? (
-                                                    <RefreshCw size={12} className="animate-spin" />
-                                                ) : (
-                                                    <Wifi size={12} />
-                                                )}
-                                                Test
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => testSingleProvider(p.provider)}
+                                                    disabled={
+                                                        testingProvider === p.provider || !statusInfo?.isConfigured
+                                                    }
+                                                    className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-400"
+                                                >
+                                                    {testingProvider === p.provider ? (
+                                                        <RefreshCw size={12} className="animate-spin" />
+                                                    ) : (
+                                                        <Wifi size={12} />
+                                                    )}
+                                                    Test
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -632,12 +701,13 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                         <span>
-                            {Object.values(availableModels).reduce((sum, models) => sum + models.length, 0)} models in {Object.keys(availableModels).length} tiers
+                            {Object.values(availableModels).reduce((sum, models) => sum + models.length, 0)} models in{' '}
+                            {Object.keys(availableModels).length} tiers
                         </span>
                         {showTierPreview ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </div>
                 </button>
-                
+
                 {showTierPreview && (
                     <div className="p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -646,31 +716,48 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                 const models = availableModels[tier] || [];
 
                                 return (
-                                    <div 
+                                    <div
                                         key={tier}
                                         className={`rounded-xl p-4 border ${
-                                            config.color === 'emerald' ? 'bg-emerald-500/5 border-emerald-500/20' :
-                                            config.color === 'blue' ? 'bg-blue-500/5 border-blue-500/20' :
-                                            config.color === 'violet' ? 'bg-violet-500/5 border-violet-500/20' :
-                                            config.color === 'amber' ? 'bg-amber-500/5 border-amber-500/20' :
-                                            'bg-white/5 border-white/10'
+                                            config.color === 'emerald'
+                                                ? 'bg-emerald-500/5 border-emerald-500/20'
+                                                : config.color === 'blue'
+                                                  ? 'bg-blue-500/5 border-blue-500/20'
+                                                  : config.color === 'violet'
+                                                    ? 'bg-violet-500/5 border-violet-500/20'
+                                                    : config.color === 'amber'
+                                                      ? 'bg-amber-500/5 border-amber-500/20'
+                                                      : 'bg-white/5 border-white/10'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2 mb-3">
-                                            <Icon size={16} className={
-                                                config.color === 'emerald' ? 'text-emerald-400' :
-                                                config.color === 'blue' ? 'text-blue-400' :
-                                                config.color === 'violet' ? 'text-violet-400' :
-                                                config.color === 'amber' ? 'text-amber-400' :
-                                                'text-slate-400'
-                                            } />
-                                            <span className={`font-medium ${
-                                                config.color === 'emerald' ? 'text-emerald-400' :
-                                                config.color === 'blue' ? 'text-blue-400' :
-                                                config.color === 'violet' ? 'text-violet-400' :
-                                                config.color === 'amber' ? 'text-amber-400' :
-                                                'text-slate-400'
-                                            }`}>
+                                            <Icon
+                                                size={16}
+                                                className={
+                                                    config.color === 'emerald'
+                                                        ? 'text-emerald-400'
+                                                        : config.color === 'blue'
+                                                          ? 'text-blue-400'
+                                                          : config.color === 'violet'
+                                                            ? 'text-violet-400'
+                                                            : config.color === 'amber'
+                                                              ? 'text-amber-400'
+                                                              : 'text-slate-400'
+                                                }
+                                            />
+                                            <span
+                                                className={`font-medium ${
+                                                    config.color === 'emerald'
+                                                        ? 'text-emerald-400'
+                                                        : config.color === 'blue'
+                                                          ? 'text-blue-400'
+                                                          : config.color === 'violet'
+                                                            ? 'text-violet-400'
+                                                            : config.color === 'amber'
+                                                              ? 'text-amber-400'
+                                                              : 'text-slate-400'
+                                                }`}
+                                            >
                                                 {tier}
                                             </span>
                                             <span className="text-xs text-slate-500">({models.length})</span>
@@ -679,19 +766,14 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                         {models.length > 0 ? (
                                             <div className="space-y-1.5">
                                                 {models.map((model, idx) => (
-                                                    <div 
-                                                        key={idx}
-                                                        className="flex items-center gap-2 text-xs"
-                                                    >
+                                                    <div key={idx} className="flex items-center gap-2 text-xs">
                                                         {getHealthIcon(model.health_status)}
                                                         <span className="text-slate-300 truncate">{model.name}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-xs text-slate-600 italic">
-                                                No models available
-                                            </div>
+                                            <div className="text-xs text-slate-600 italic">No models available</div>
                                         )}
                                     </div>
                                 );

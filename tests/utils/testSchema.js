@@ -1015,6 +1015,28 @@ export const TEST_SCHEMA = [
         PRIMARY KEY(team_id, user_id),
         FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS ai_feedback(
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        organization_id TEXT,
+        context TEXT,
+        prompt TEXT,
+        response TEXT,
+        rating INTEGER,
+        correction TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS usage_counters(
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        counter_date TEXT, -- YYYY-MM-DD
+        ai_calls_count INTEGER DEFAULT 0,
+        projects_count INTEGER DEFAULT 0,
+        users_count INTEGER DEFAULT 0,
+        initiatives_count INTEGER DEFAULT 0,
+        storage_used_mb INTEGER DEFAULT 0,
+        UNIQUE(organization_id, counter_date)
     )`
 ];
 

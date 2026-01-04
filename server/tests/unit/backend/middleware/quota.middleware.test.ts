@@ -4,16 +4,25 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { enforceTokenQuota, enforceStorageQuota, setDependencies, type AuthRequest } from '../../../../src/middleware/quota.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    enforceStorageQuota,
+    enforceTokenQuota,
+    setDependencies,
+} from '../../../../src/middleware/quota.middleware.js';
 
 describe('Quota Middleware', () => {
     let mockReq: Partial<AuthRequest>;
     let mockRes: Partial<Response>;
     let mockNext: NextFunction;
     let mockUsageService: {
-        checkQuota: (orgId: string, type: 'token' | 'storage') => Promise<{
+        checkQuota: (
+            orgId: string,
+            type: 'token' | 'storage',
+        ) => Promise<{
             allowed: boolean;
             used: number;
             limit: number;
@@ -73,7 +82,7 @@ describe('Quota Middleware', () => {
                 expect.objectContaining({
                     error: 'Token quota exceeded',
                     code: 'QUOTA_EXCEEDED',
-                })
+                }),
             );
         });
 
@@ -131,12 +140,9 @@ describe('Quota Middleware', () => {
                 expect.objectContaining({
                     error: 'Storage quota exceeded',
                     code: 'STORAGE_QUOTA_EXCEEDED',
-                })
+                }),
             );
         });
     });
 });
-
-
-
 

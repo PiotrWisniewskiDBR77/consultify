@@ -1,22 +1,32 @@
 /**
  * Digitization Tool Tab
- * 
+ *
  * Main evaluation tool for assessing digital maturity
  * Features axis selection, area evaluation, and score visualization
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { 
-    ChevronRight, ChevronDown, Check, AlertCircle, Info,
-    Workflow, Package, Building, Database, Users, Shield,
-    Save, RefreshCw, Keyboard
+import {
+    AlertCircle,
+    Building,
+    Check,
+    ChevronDown,
+    ChevronRight,
+    Database,
+    Info,
+    Keyboard,
+    Package,
+    RefreshCw,
+    Save,
+    Shield,
+    Users,
+    Workflow,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { 
-    DigitizationAnalysis, AxisScore, AreaScore 
-} from './types';
+
 import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluationData';
+import { Api } from '../../services/api';
+import { AreaScore, AxisScore, DigitizationAnalysis } from './types';
 
 interface DigitizationToolTabProps {
     analysis: DigitizationAnalysis;
@@ -36,13 +46,12 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
     const [selectedAxisId, setSelectedAxisId] = useState<string>(DIGITIZATION_AXES[0]?.id || '');
     const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
-    const [pendingChanges, setPendingChanges] = useState<Map<string, { currentLevel: number; targetLevel: number }>>(new Map());
+    const [pendingChanges, setPendingChanges] = useState<Map<string, { currentLevel: number; targetLevel: number }>>(
+        new Map(),
+    );
     const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
-    const selectedAxis = useMemo(() => 
-        DIGITIZATION_AXES.find(a => a.id === selectedAxisId), 
-        [selectedAxisId]
-    );
+    const selectedAxis = useMemo(() => DIGITIZATION_AXES.find((a) => a.id === selectedAxisId), [selectedAxisId]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -54,10 +63,10 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                     saveChanges();
                 }
             }
-            
+
             // Arrow Up/Down - Navigate between axes
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                const currentIndex = DIGITIZATION_AXES.findIndex(a => a.id === selectedAxisId);
+                const currentIndex = DIGITIZATION_AXES.findIndex((a) => a.id === selectedAxisId);
                 if (currentIndex !== -1) {
                     let newIndex;
                     if (e.key === 'ArrowUp') {
@@ -68,12 +77,12 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                     setSelectedAxisId(DIGITIZATION_AXES[newIndex].id);
                 }
             }
-            
+
             // ? - Show keyboard shortcuts help
             if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-                setShowKeyboardHelp(prev => !prev);
+                setShowKeyboardHelp((prev) => !prev);
             }
-            
+
             // Escape - Close keyboard help or clear selection
             if (e.key === 'Escape') {
                 setShowKeyboardHelp(false);
@@ -84,17 +93,23 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedAxisId, pendingChanges]);
 
-    const getAxisScore = useCallback((axisId: string): AxisScore | undefined => {
-        return analysis.axisScores?.[axisId];
-    }, [analysis.axisScores]);
+    const getAxisScore = useCallback(
+        (axisId: string): AxisScore | undefined => {
+            return analysis.axisScores?.[axisId];
+        },
+        [analysis.axisScores],
+    );
 
-    const getAreaScore = useCallback((axisId: string, areaId: string): AreaScore | undefined => {
-        const axisScore = getAxisScore(axisId);
-        return axisScore?.areaScores?.[areaId];
-    }, [getAxisScore]);
+    const getAreaScore = useCallback(
+        (axisId: string, areaId: string): AreaScore | undefined => {
+            const axisScore = getAxisScore(axisId);
+            return axisScore?.areaScores?.[areaId];
+        },
+        [getAxisScore],
+    );
 
     const toggleArea = (areaId: string) => {
-        setExpandedAreas(prev => {
+        setExpandedAreas((prev) => {
             const next = new Set(prev);
             if (next.has(areaId)) {
                 next.delete(areaId);
@@ -105,20 +120,17 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
         });
     };
 
-    const handleScoreChange = useCallback(async (
-        axisId: string, 
-        areaId: string, 
-        areaCode: string,
-        currentLevel: number, 
-        targetLevel: number
-    ) => {
-        const key = `${axisId}:${areaId}`;
-        setPendingChanges(prev => {
-            const next = new Map(prev);
-            next.set(key, { currentLevel, targetLevel });
-            return next;
-        });
-    }, []);
+    const handleScoreChange = useCallback(
+        async (axisId: string, areaId: string, areaCode: string, currentLevel: number, targetLevel: number) => {
+            const key = `${axisId}:${areaId}`;
+            setPendingChanges((prev) => {
+                const next = new Map(prev);
+                next.set(key, { currentLevel, targetLevel });
+                return next;
+            });
+        },
+        [],
+    );
 
     const saveChanges = useCallback(async () => {
         if (pendingChanges.size === 0) return;
@@ -127,8 +139,8 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
         try {
             const scores = Array.from(pendingChanges.entries()).map(([key, value]) => {
                 const [axisId, areaId] = key.split(':');
-                const axis = DIGITIZATION_AXES.find(a => a.id === axisId);
-                const area = axis?.areas.find(ar => ar.id === areaId);
+                const axis = DIGITIZATION_AXES.find((a) => a.id === axisId);
+                const area = axis?.areas.find((ar) => ar.id === areaId);
                 return {
                     axisId,
                     areaId,
@@ -170,15 +182,13 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
             {/* Axis Sidebar */}
             <div className="w-72 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 shrink-0 overflow-y-auto">
                 <div className="p-4">
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                        Osie oceny
-                    </h3>
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Osie oceny</h3>
                     <div className="space-y-2">
-                        {DIGITIZATION_AXES.map(axis => {
+                        {DIGITIZATION_AXES.map((axis) => {
                             const Icon = AXIS_ICONS[axis.id] || Workflow;
                             const axisScore = getAxisScore(axis.id);
-                            const progress = axisScore 
-                                ? Math.round((axisScore.completedAreas / axisScore.totalAreas) * 100) 
+                            const progress = axisScore
+                                ? Math.round((axisScore.completedAreas / axisScore.totalAreas) * 100)
                                 : 0;
 
                             return (
@@ -192,27 +202,29 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                     }`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div 
+                                        <div
                                             className="w-10 h-10 rounded-lg flex items-center justify-center"
                                             style={{ backgroundColor: `${axis.color}20` }}
                                         >
                                             <Icon size={20} style={{ color: axis.color }} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`font-medium truncate ${
-                                                selectedAxisId === axis.id 
-                                                    ? 'text-emerald-600 dark:text-emerald-400' 
-                                                    : 'text-navy-900 dark:text-white'
-                                            }`}>
+                                            <p
+                                                className={`font-medium truncate ${
+                                                    selectedAxisId === axis.id
+                                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                                        : 'text-navy-900 dark:text-white'
+                                                }`}
+                                            >
                                                 {axis.namePl}
                                             </p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                                    <div 
+                                                    <div
                                                         className="h-full rounded-full transition-all"
-                                                        style={{ 
+                                                        style={{
                                                             width: `${progress}%`,
-                                                            backgroundColor: axis.color 
+                                                            backgroundColor: axis.color,
                                                         }}
                                                     />
                                                 </div>
@@ -237,9 +249,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                 <h2 className="text-xl font-bold text-navy-900 dark:text-white">
                                     {selectedAxis.namePl}
                                 </h2>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    {selectedAxis.descriptionPl}
-                                </p>
+                                <p className="text-sm text-slate-500 mt-1">{selectedAxis.descriptionPl}</p>
                             </div>
                             {pendingChanges.size > 0 && (
                                 <button
@@ -249,11 +259,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                         text-white rounded-xl font-medium transition-colors disabled:opacity-50
                                         shadow-lg shadow-emerald-600/20"
                                 >
-                                    {isSaving ? (
-                                        <RefreshCw size={16} className="animate-spin" />
-                                    ) : (
-                                        <Save size={16} />
-                                    )}
+                                    {isSaving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
                                     Zapisz ({pendingChanges.size})
                                 </button>
                             )}
@@ -261,23 +267,23 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
 
                         {/* Areas */}
                         <div className="space-y-3">
-                            {selectedAxis.areas.map(area => {
+                            {selectedAxis.areas.map((area) => {
                                 const isExpanded = expandedAreas.has(area.id);
                                 const currentLevel = getCurrentLevel(selectedAxis.id, area.id);
                                 const targetLevel = getTargetLevel(selectedAxis.id, area.id);
                                 const hasPending = pendingChanges.has(`${selectedAxis.id}:${area.id}`);
 
                                 return (
-                                    <div 
+                                    <div
                                         key={area.id}
                                         className={`bg-white dark:bg-navy-800 border rounded-xl overflow-hidden transition-all ${
-                                            hasPending 
-                                                ? 'border-emerald-500/50 ring-2 ring-emerald-500/10' 
+                                            hasPending
+                                                ? 'border-emerald-500/50 ring-2 ring-emerald-500/10'
                                                 : 'border-slate-200 dark:border-white/10'
                                         }`}
                                     >
                                         {/* Area Header */}
-                                        <div 
+                                        <div
                                             className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5"
                                             onClick={() => toggleArea(area.id)}
                                         >
@@ -286,14 +292,18 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                             </button>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-mono text-slate-400">{area.code}</span>
-                                                    <span className="font-medium text-navy-900 dark:text-white">{area.namePl}</span>
+                                                    <span className="text-xs font-mono text-slate-400">
+                                                        {area.code}
+                                                    </span>
+                                                    <span className="font-medium text-navy-900 dark:text-white">
+                                                        {area.namePl}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-6">
                                                 <div className="text-center">
                                                     <p className="text-xs text-slate-400 mb-1">Aktualny</p>
-                                                    <div 
+                                                    <div
                                                         className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white"
                                                         style={{ backgroundColor: getLevelColor(currentLevel) }}
                                                     >
@@ -302,11 +312,11 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                                 </div>
                                                 <div className="text-center">
                                                     <p className="text-xs text-slate-400 mb-1">Docelowy</p>
-                                                    <div 
+                                                    <div
                                                         className="w-8 h-8 rounded-lg flex items-center justify-center font-bold border-2"
-                                                        style={{ 
+                                                        style={{
                                                             borderColor: getLevelColor(targetLevel),
-                                                            color: getLevelColor(targetLevel)
+                                                            color: getLevelColor(targetLevel),
                                                         }}
                                                     >
                                                         {targetLevel || '-'}
@@ -330,24 +340,30 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                                             Poziom aktualny
                                                         </label>
                                                         <div className="flex gap-1">
-                                                            {[0, 1, 2, 3, 4, 5, 6, 7].map(level => (
+                                                            {[0, 1, 2, 3, 4, 5, 6, 7].map((level) => (
                                                                 <button
                                                                     key={level}
-                                                                    onClick={() => handleScoreChange(
-                                                                        selectedAxis.id, 
-                                                                        area.id, 
-                                                                        area.code,
-                                                                        level, 
-                                                                        targetLevel
-                                                                    )}
+                                                                    onClick={() =>
+                                                                        handleScoreChange(
+                                                                            selectedAxis.id,
+                                                                            area.id,
+                                                                            area.code,
+                                                                            level,
+                                                                            targetLevel,
+                                                                        )
+                                                                    }
                                                                     className={`w-9 h-9 rounded-lg font-medium transition-all ${
                                                                         currentLevel === level
                                                                             ? 'text-white shadow-lg'
                                                                             : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
                                                                     }`}
-                                                                    style={currentLevel === level ? { 
-                                                                        backgroundColor: getLevelColor(level) 
-                                                                    } : undefined}
+                                                                    style={
+                                                                        currentLevel === level
+                                                                            ? {
+                                                                                  backgroundColor: getLevelColor(level),
+                                                                              }
+                                                                            : undefined
+                                                                    }
                                                                 >
                                                                     {level}
                                                                 </button>
@@ -359,26 +375,32 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                                             Poziom docelowy
                                                         </label>
                                                         <div className="flex gap-1">
-                                                            {[0, 1, 2, 3, 4, 5, 6, 7].map(level => (
+                                                            {[0, 1, 2, 3, 4, 5, 6, 7].map((level) => (
                                                                 <button
                                                                     key={level}
-                                                                    onClick={() => handleScoreChange(
-                                                                        selectedAxis.id, 
-                                                                        area.id, 
-                                                                        area.code,
-                                                                        currentLevel, 
-                                                                        level
-                                                                    )}
+                                                                    onClick={() =>
+                                                                        handleScoreChange(
+                                                                            selectedAxis.id,
+                                                                            area.id,
+                                                                            area.code,
+                                                                            currentLevel,
+                                                                            level,
+                                                                        )
+                                                                    }
                                                                     className={`w-9 h-9 rounded-lg font-medium transition-all ${
                                                                         targetLevel === level
                                                                             ? 'border-2 shadow-lg'
                                                                             : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
                                                                     }`}
-                                                                    style={targetLevel === level ? { 
-                                                                        borderColor: getLevelColor(level),
-                                                                        color: getLevelColor(level),
-                                                                        backgroundColor: `${getLevelColor(level)}10`
-                                                                    } : undefined}
+                                                                    style={
+                                                                        targetLevel === level
+                                                                            ? {
+                                                                                  borderColor: getLevelColor(level),
+                                                                                  color: getLevelColor(level),
+                                                                                  backgroundColor: `${getLevelColor(level)}10`,
+                                                                              }
+                                                                            : undefined
+                                                                    }
                                                                 >
                                                                     {level}
                                                                 </button>
@@ -394,7 +416,8 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                                                             <Info size={16} className="text-emerald-500 mt-0.5" />
                                                             <div>
                                                                 <p className="font-medium text-navy-900 dark:text-white">
-                                                                    Poziom {currentLevel}: {area.levels[currentLevel - 1].namePl}
+                                                                    Poziom {currentLevel}:{' '}
+                                                                    {area.levels[currentLevel - 1].namePl}
                                                                 </p>
                                                                 <p className="text-sm text-slate-500 mt-1">
                                                                     {area.levels[currentLevel - 1].descriptionPl}
@@ -421,26 +444,32 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                                 <Keyboard size={20} className="text-emerald-500" />
                             </div>
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                Skróty klawiszowe
-                            </h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">Skróty klawiszowe</h3>
                         </div>
                         <div className="space-y-3">
                             <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                                 <span className="text-slate-600 dark:text-slate-300">Zapisz zmiany</span>
-                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">Ctrl+S</kbd>
+                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
+                                    Ctrl+S
+                                </kbd>
                             </div>
                             <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                                 <span className="text-slate-600 dark:text-slate-300">Poprzednia oś</span>
-                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">↑</kbd>
+                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
+                                    ↑
+                                </kbd>
                             </div>
                             <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
                                 <span className="text-slate-600 dark:text-slate-300">Następna oś</span>
-                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">↓</kbd>
+                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
+                                    ↓
+                                </kbd>
                             </div>
                             <div className="flex items-center justify-between py-2">
                                 <span className="text-slate-600 dark:text-slate-300">Pokaż/ukryj pomoc</span>
-                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">?</kbd>
+                                <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
+                                    ?
+                                </kbd>
                             </div>
                         </div>
                         <button
@@ -470,4 +499,3 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
 };
 
 export default DigitizationToolTab;
-

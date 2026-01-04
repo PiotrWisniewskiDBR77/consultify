@@ -3,10 +3,11 @@
  * Manages IP whitelisting for organizations
  */
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Shield, Search } from 'lucide-react';
-import { Api } from '../../../services/api';
+import { Plus, Search, Shield, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const IPWhitelistView: React.FC = () => {
     const [selectedOrgId, setSelectedOrgId] = useState<string>('');
@@ -83,7 +84,9 @@ export const IPWhitelistView: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">IP Whitelist</h2>
-                    <p className="text-slate-400 text-sm mt-1">Manage IP addresses allowed to access organization accounts</p>
+                    <p className="text-slate-400 text-sm mt-1">
+                        Manage IP addresses allowed to access organization accounts
+                    </p>
                 </div>
                 <div className="flex items-center gap-4">
                     <select
@@ -92,8 +95,10 @@ export const IPWhitelistView: React.FC = () => {
                         className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
                     >
                         <option value="">Select Organization</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                     <button
@@ -113,11 +118,21 @@ export const IPWhitelistView: React.FC = () => {
                     <table className="w-full">
                         <thead className="bg-navy-900 border-b border-slate-700">
                             <tr>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">IP Address</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">IP Range</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Description</th>
-                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Status</th>
-                                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase">Actions</th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    IP Address
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    IP Range
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Description
+                                </th>
+                                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Status
+                                </th>
+                                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
@@ -134,7 +149,9 @@ export const IPWhitelistView: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-300">{ip.ip_range || '-'}</td>
                                         <td className="px-6 py-4 text-slate-300">{ip.description || '-'}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs ${ip.is_active ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs ${ip.is_active ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}
+                                            >
                                                 {ip.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
@@ -210,10 +227,4 @@ export const IPWhitelistView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

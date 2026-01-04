@@ -1,27 +1,28 @@
 /**
  * AISecuritySettings Component
- * 
+ *
  * Organization-level AI security and configuration settings.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Shield,
-    Settings,
-    Clock,
-    Zap,
-    Eye,
-    EyeOff,
-    Save,
-    RefreshCw,
     AlertCircle,
     Check,
+    Clock,
+    Eye,
+    EyeOff,
+    Info,
     Plus,
+    RefreshCw,
+    Save,
+    Settings,
+    Shield,
     Trash2,
-    Info
+    Zap,
 } from 'lucide-react';
-import { Button } from '../Button';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import api from '../../services/api';
+import { Button } from '../Button';
 
 interface RateLimit {
     id: string;
@@ -49,7 +50,7 @@ const AVAILABLE_FEATURES = [
     { id: 'initiatives', label: 'Generowanie inicjatyw', description: 'AI-sugerowane inicjatywy' },
     { id: 'magic_wand', label: 'Magic Wand', description: 'Autouzupełnianie pól formularzy' },
     { id: 'task_advisor', label: 'Task Advisor', description: 'Rekomendacje zadań' },
-    { id: 'web_research', label: 'Web Research', description: 'Wyszukiwanie w internecie' }
+    { id: 'web_research', label: 'Web Research', description: 'Wyszukiwanie w internecie' },
 ];
 
 const AVAILABLE_MODELS = [
@@ -58,14 +59,14 @@ const AVAILABLE_MODELS = [
     { id: 'claude-3-opus', label: 'Claude 3 Opus', tier: 'premium' },
     { id: 'claude-3-sonnet', label: 'Claude 3 Sonnet', tier: 'standard' },
     { id: 'gemini-pro', label: 'Gemini Pro', tier: 'standard' },
-    { id: 'o1-preview', label: 'O1 Preview', tier: 'reasoning' }
+    { id: 'o1-preview', label: 'O1 Preview', tier: 'reasoning' },
 ];
 
 const LIMIT_TYPES = [
     { id: 'per_minute', label: 'Na minutę' },
     { id: 'per_hour', label: 'Na godzinę' },
     { id: 'per_day', label: 'Na dzień' },
-    { id: 'per_month', label: 'Na miesiąc' }
+    { id: 'per_month', label: 'Na miesiąc' },
 ];
 
 export function AISecuritySettings() {
@@ -79,7 +80,7 @@ export function AISecuritySettings() {
         ruleName: '',
         limitType: 'per_day',
         limitValue: 100,
-        appliesTo: 'all'
+        appliesTo: 'all',
     });
     const [showAddLimit, setShowAddLimit] = useState(false);
 
@@ -88,7 +89,7 @@ export function AISecuritySettings() {
         try {
             const [settingsRes, limitsRes] = await Promise.all([
                 api.get('/ai-security/organization-settings'),
-                api.get('/ai-security/rate-limits')
+                api.get('/ai-security/rate-limits'),
             ]);
 
             if (settingsRes.data.success) {
@@ -122,7 +123,7 @@ export function AISecuritySettings() {
                 allowToolCalling: settings.allow_tool_calling,
                 dataRetentionDays: settings.data_retention_days,
                 requireApprovalFor: settings.require_approval_for,
-                customSystemPrompt: settings.custom_system_prompt
+                customSystemPrompt: settings.custom_system_prompt,
             });
             setSuccess('Ustawienia zapisane');
             setTimeout(() => setSuccess(null), 3000);
@@ -136,7 +137,7 @@ export function AISecuritySettings() {
     const toggleFeature = (featureId: string) => {
         if (!settings) return;
         const features = settings.enabled_features.includes(featureId)
-            ? settings.enabled_features.filter(f => f !== featureId)
+            ? settings.enabled_features.filter((f) => f !== featureId)
             : [...settings.enabled_features, featureId];
         setSettings({ ...settings, enabled_features: features });
     };
@@ -144,7 +145,7 @@ export function AISecuritySettings() {
     const toggleModel = (modelId: string) => {
         if (!settings) return;
         const models = settings.disabled_models.includes(modelId)
-            ? settings.disabled_models.filter(m => m !== modelId)
+            ? settings.disabled_models.filter((m) => m !== modelId)
             : [...settings.disabled_models, modelId];
         setSettings({ ...settings, disabled_models: models });
     };
@@ -183,12 +184,8 @@ export function AISecuritySettings() {
             <div className="flex items-center gap-3">
                 <Shield className="w-8 h-8 text-indigo-600" />
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Ustawienia bezpieczeństwa AI
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        Konfiguracja funkcji AI dla organizacji
-                    </p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ustawienia bezpieczeństwa AI</h1>
+                    <p className="text-sm text-gray-500">Konfiguracja funkcji AI dla organizacji</p>
                 </div>
             </div>
 
@@ -215,8 +212,8 @@ export function AISecuritySettings() {
                             Włączone funkcje
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {AVAILABLE_FEATURES.map(feature => (
-                                <label 
+                            {AVAILABLE_FEATURES.map((feature) => (
+                                <label
                                     key={feature.id}
                                     className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                                         settings.enabled_features.includes(feature.id)
@@ -231,12 +228,8 @@ export function AISecuritySettings() {
                                         className="mt-1 rounded border-gray-300"
                                     />
                                     <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">
-                                            {feature.label}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {feature.description}
-                                        </p>
+                                        <p className="font-medium text-gray-900 dark:text-white">{feature.label}</p>
+                                        <p className="text-sm text-gray-500">{feature.description}</p>
                                     </div>
                                 </label>
                             ))}
@@ -253,8 +246,8 @@ export function AISecuritySettings() {
                             Odznacz modele, które chcesz wyłączyć dla użytkowników
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {AVAILABLE_MODELS.map(model => (
-                                <label 
+                            {AVAILABLE_MODELS.map((model) => (
+                                <label
                                     key={model.id}
                                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${
                                         settings.disabled_models.includes(model.id)
@@ -273,11 +266,15 @@ export function AISecuritySettings() {
                                             {model.label}
                                         </p>
                                     </div>
-                                    <span className={`text-xs px-2 py-0.5 rounded ${
-                                        model.tier === 'premium' ? 'bg-yellow-100 text-yellow-700' :
-                                        model.tier === 'reasoning' ? 'bg-purple-100 text-purple-700' :
-                                        'bg-gray-100 text-gray-600'
-                                    }`}>
+                                    <span
+                                        className={`text-xs px-2 py-0.5 rounded ${
+                                            model.tier === 'premium'
+                                                ? 'bg-yellow-100 text-yellow-700'
+                                                : model.tier === 'reasoning'
+                                                  ? 'bg-purple-100 text-purple-700'
+                                                  : 'bg-gray-100 text-gray-600'
+                                        }`}
+                                    >
                                         {model.tier}
                                     </span>
                                 </label>
@@ -292,11 +289,7 @@ export function AISecuritySettings() {
                                 <Clock className="w-5 h-5 text-blue-500" />
                                 Limity zapytań
                             </h2>
-                            <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setShowAddLimit(!showAddLimit)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => setShowAddLimit(!showAddLimit)}>
                                 <Plus className="w-4 h-4 mr-1" />
                                 Dodaj limit
                             </Button>
@@ -309,23 +302,27 @@ export function AISecuritySettings() {
                                         type="text"
                                         placeholder="Nazwa reguły"
                                         value={newLimit.ruleName}
-                                        onChange={e => setNewLimit({ ...newLimit, ruleName: e.target.value })}
+                                        onChange={(e) => setNewLimit({ ...newLimit, ruleName: e.target.value })}
                                         className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
                                     />
                                     <select
                                         value={newLimit.limitType}
-                                        onChange={e => setNewLimit({ ...newLimit, limitType: e.target.value })}
+                                        onChange={(e) => setNewLimit({ ...newLimit, limitType: e.target.value })}
                                         className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
                                     >
-                                        {LIMIT_TYPES.map(lt => (
-                                            <option key={lt.id} value={lt.id}>{lt.label}</option>
+                                        {LIMIT_TYPES.map((lt) => (
+                                            <option key={lt.id} value={lt.id}>
+                                                {lt.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <input
                                         type="number"
                                         placeholder="Limit"
                                         value={newLimit.limitValue}
-                                        onChange={e => setNewLimit({ ...newLimit, limitValue: parseInt(e.target.value) })}
+                                        onChange={(e) =>
+                                            setNewLimit({ ...newLimit, limitValue: parseInt(e.target.value) })
+                                        }
                                         className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
                                     />
                                     <Button variant="primary" onClick={addRateLimit}>
@@ -341,8 +338,8 @@ export function AISecuritySettings() {
                             </p>
                         ) : (
                             <div className="space-y-2">
-                                {rateLimits.map(limit => (
-                                    <div 
+                                {rateLimits.map((limit) => (
+                                    <div
                                         key={limit.id}
                                         className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                                     >
@@ -351,15 +348,12 @@ export function AISecuritySettings() {
                                                 {limit.rule_name}
                                             </p>
                                             <p className="text-sm text-gray-500">
-                                                {limit.limit_value} {LIMIT_TYPES.find(t => t.id === limit.limit_type)?.label} 
+                                                {limit.limit_value}{' '}
+                                                {LIMIT_TYPES.find((t) => t.id === limit.limit_type)?.label}
                                                 {limit.applies_to !== 'all' && ` (${limit.applies_to})`}
                                             </p>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => deleteRateLimit(limit.id)}
-                                        >
+                                        <Button variant="ghost" size="sm" onClick={() => deleteRateLimit(limit.id)}>
                                             <Trash2 className="w-4 h-4 text-red-500" />
                                         </Button>
                                     </div>
@@ -382,10 +376,12 @@ export function AISecuritySettings() {
                                 <input
                                     type="number"
                                     value={settings.max_tokens_per_request}
-                                    onChange={e => setSettings({ 
-                                        ...settings, 
-                                        max_tokens_per_request: parseInt(e.target.value) 
-                                    })}
+                                    onChange={(e) =>
+                                        setSettings({
+                                            ...settings,
+                                            max_tokens_per_request: parseInt(e.target.value),
+                                        })
+                                    }
                                     className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700"
                                 />
                             </div>
@@ -396,10 +392,12 @@ export function AISecuritySettings() {
                                 <input
                                     type="number"
                                     value={settings.data_retention_days}
-                                    onChange={e => setSettings({ 
-                                        ...settings, 
-                                        data_retention_days: parseInt(e.target.value) 
-                                    })}
+                                    onChange={(e) =>
+                                        setSettings({
+                                            ...settings,
+                                            data_retention_days: parseInt(e.target.value),
+                                        })
+                                    }
                                     className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700"
                                 />
                                 <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
@@ -412,10 +410,12 @@ export function AISecuritySettings() {
                                     <input
                                         type="checkbox"
                                         checked={settings.allow_web_research}
-                                        onChange={e => setSettings({ 
-                                            ...settings, 
-                                            allow_web_research: e.target.checked 
-                                        })}
+                                        onChange={(e) =>
+                                            setSettings({
+                                                ...settings,
+                                                allow_web_research: e.target.checked,
+                                            })
+                                        }
                                         className="rounded border-gray-300"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -426,10 +426,12 @@ export function AISecuritySettings() {
                                     <input
                                         type="checkbox"
                                         checked={settings.allow_tool_calling}
-                                        onChange={e => setSettings({ 
-                                            ...settings, 
-                                            allow_tool_calling: e.target.checked 
-                                        })}
+                                        onChange={(e) =>
+                                            setSettings({
+                                                ...settings,
+                                                allow_tool_calling: e.target.checked,
+                                            })
+                                        }
                                         className="rounded border-gray-300"
                                     />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -442,11 +444,7 @@ export function AISecuritySettings() {
 
                     {/* Save Button */}
                     <div className="flex justify-end">
-                        <Button
-                            variant="primary"
-                            onClick={handleSaveSettings}
-                            disabled={saving}
-                        >
+                        <Button variant="primary" onClick={handleSaveSettings} disabled={saving}>
                             {saving ? (
                                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                             ) : (
@@ -462,12 +460,4 @@ export function AISecuritySettings() {
 }
 
 export default AISecuritySettings;
-
-
-
-
-
-
-
-
 

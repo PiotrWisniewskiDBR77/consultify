@@ -1,6 +1,6 @@
 /**
  * Validation Utility
- * 
+ *
  * Common validation functions used across services and routes.
  * Provides consistent validation logic and error messages.
  */
@@ -35,7 +35,7 @@ interface ValidationFieldsResult {
 export async function validateOrganization(
     orgId: string | null | undefined,
     userId: string | null = null,
-    dbInstance: Database = getDatabase() as unknown as Database
+    dbInstance: Database = getDatabase() as unknown as Database,
 ): Promise<ValidationResult> {
     if (!orgId) {
         return { valid: false, error: 'Organization ID is required' };
@@ -53,14 +53,17 @@ export async function validateOrganization(
                     resolve({ valid: false, error: 'Organization is not active' });
                 } else if (userId) {
                     // Check user belongs to organization
-                    dbInstance.get('SELECT id FROM users WHERE id = ? AND organization_id = ?',
-                        [userId, orgId], (err2: Error | null, user: unknown) => {
+                    dbInstance.get(
+                        'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+                        [userId, orgId],
+                        (err2: Error | null, user: unknown) => {
                             if (err2 || !user) {
                                 resolve({ valid: false, error: 'User does not belong to organization' });
                             } else {
                                 resolve({ valid: true, org });
                             }
-                        });
+                        },
+                    );
                 } else {
                     resolve({ valid: true, org });
                 }
@@ -82,7 +85,10 @@ export function validateUserRole(user: User | null | undefined, allowedRoles: st
 /**
  * Validate user has access to resource (owns it or is admin)
  */
-export function validateResourceAccess(user: User | null | undefined, resourceOwnerId: string | null | undefined): boolean {
+export function validateResourceAccess(
+    user: User | null | undefined,
+    resourceOwnerId: string | null | undefined,
+): boolean {
     if (!user) return false;
 
     // Admins and superadmins have access to everything
@@ -100,15 +106,17 @@ export function validateResourceAccess(user: User | null | undefined, resourceOw
 export async function validateProject(
     projectId: string | null | undefined,
     orgId: string,
-    dbInstance: Database = getDatabase() as unknown as Database
+    dbInstance: Database = getDatabase() as unknown as Database,
 ): Promise<ValidationResult> {
     if (!projectId) {
         return { valid: false, error: 'Project ID is required' };
     }
 
     return new Promise((resolve) => {
-        dbInstance.get('SELECT * FROM projects WHERE id = ? AND organization_id = ?',
-            [projectId, orgId], (err: Error | null, project: unknown) => {
+        dbInstance.get(
+            'SELECT * FROM projects WHERE id = ? AND organization_id = ?',
+            [projectId, orgId],
+            (err: Error | null, project: unknown) => {
                 if (err) {
                     resolve({ valid: false, error: 'Database error validating project' });
                 } else if (!project) {
@@ -116,7 +124,8 @@ export async function validateProject(
                 } else {
                     resolve({ valid: true, project });
                 }
-            });
+            },
+        );
     });
 }
 
@@ -126,15 +135,17 @@ export async function validateProject(
 export async function validateInitiative(
     initiativeId: string | null | undefined,
     orgId: string,
-    dbInstance: Database = getDatabase() as unknown as Database
+    dbInstance: Database = getDatabase() as unknown as Database,
 ): Promise<ValidationResult> {
     if (!initiativeId) {
         return { valid: false, error: 'Initiative ID is required' };
     }
 
     return new Promise((resolve) => {
-        dbInstance.get('SELECT * FROM initiatives WHERE id = ? AND organization_id = ?',
-            [initiativeId, orgId], (err: Error | null, initiative: unknown) => {
+        dbInstance.get(
+            'SELECT * FROM initiatives WHERE id = ? AND organization_id = ?',
+            [initiativeId, orgId],
+            (err: Error | null, initiative: unknown) => {
                 if (err) {
                     resolve({ valid: false, error: 'Database error validating initiative' });
                 } else if (!initiative) {
@@ -142,7 +153,8 @@ export async function validateInitiative(
                 } else {
                     resolve({ valid: true, initiative });
                 }
-            });
+            },
+        );
     });
 }
 
@@ -151,16 +163,16 @@ export async function validateInitiative(
  */
 export function validateRequiredFields(
     data: Record<string, unknown>,
-    requiredFields: string[]
+    requiredFields: string[],
 ): ValidationFieldsResult {
-    const missingFields = requiredFields.filter(field => {
+    const missingFields = requiredFields.filter((field) => {
         const value = data[field];
         return value === undefined || value === null || value === '';
     });
 
     return {
         valid: missingFields.length === 0,
-        missingFields: missingFields.length > 0 ? missingFields : undefined
+        missingFields: missingFields.length > 0 ? missingFields : undefined,
     };
 }
 
@@ -194,4 +206,3 @@ export function sanitizeString(input: unknown): string {
         .replace(/'/g, '&#x27;')
         .replace(/\//g, '&#x2F;');
 }
-

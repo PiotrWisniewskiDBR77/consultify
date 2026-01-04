@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RoadmapKanban } from '../../../components/RoadmapKanban';
+import { RoadmapKanban } from '../../components/RoadmapKanban';
 
 const mockInitiatives = [
     { id: 'init-1', name: 'Initiative 1', status: 'EXECUTING' },
@@ -35,6 +35,7 @@ describe('RoadmapKanban Component', () => {
         expect(initiative).toBeInTheDocument();
     });
 });
+
 
 
 

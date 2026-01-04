@@ -14,7 +14,7 @@
  * const result = await dbPromise.run('INSERT INTO users (name) VALUES (?)', ['John']);
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
 // Default timeout for database operations (5 seconds)
@@ -275,7 +275,7 @@ async function count(table, where = '1=1', params = []) {
 }
 
 export {
-all,
+    all,
     get,
     run,
     transaction,
@@ -284,7 +284,7 @@ all,
     safeAll,
     count,
     // Export logger for external use
-    logger: dbLogger
+    dbLogger as logger
 };
 
 export default {

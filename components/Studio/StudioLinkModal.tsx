@@ -2,19 +2,11 @@
  * StudioLinkModal - Link diagram to Task/Project/Initiative
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-    X, 
-    Link2, 
-    CheckSquare,
-    FolderKanban,
-    Rocket,
-    Search,
-    Loader2,
-    Check
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { Check, CheckSquare, FolderKanban, Link2, Loader2, Rocket, Search, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface StudioLinkModalProps {
     documentId: string;
@@ -33,12 +25,7 @@ interface LinkableItem {
     type: 'task' | 'project' | 'initiative';
 }
 
-export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
-    documentId,
-    currentLinks,
-    onLink,
-    onClose
-}) => {
+export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({ documentId, currentLinks, onLink, onClose }) => {
     const [activeTab, setActiveTab] = useState<'task' | 'project' | 'initiative'>('task');
     const [searchQuery, setSearchQuery] = useState('');
     const [items, setItems] = useState<LinkableItem[]>([]);
@@ -55,25 +42,31 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
                 let response;
                 if (activeTab === 'task') {
                     response = await Api.get('/api/tasks');
-                    setItems((response.data || response || []).map((t: any) => ({
-                        id: t.id,
-                        name: t.title,
-                        type: 'task' as const
-                    })));
+                    setItems(
+                        (response.data || response || []).map((t: any) => ({
+                            id: t.id,
+                            name: t.title,
+                            type: 'task' as const,
+                        })),
+                    );
                 } else if (activeTab === 'project') {
                     response = await Api.get('/api/projects');
-                    setItems((response.data || response || []).map((p: any) => ({
-                        id: p.id,
-                        name: p.name,
-                        type: 'project' as const
-                    })));
+                    setItems(
+                        (response.data || response || []).map((p: any) => ({
+                            id: p.id,
+                            name: p.name,
+                            type: 'project' as const,
+                        })),
+                    );
                 } else {
                     response = await Api.get('/api/initiatives');
-                    setItems((response.data || response || []).map((i: any) => ({
-                        id: i.id,
-                        name: i.name,
-                        type: 'initiative' as const
-                    })));
+                    setItems(
+                        (response.data || response || []).map((i: any) => ({
+                            id: i.id,
+                            name: i.name,
+                            type: 'initiative' as const,
+                        })),
+                    );
                 }
             } catch (error) {
                 console.error('Failed to load items:', error);
@@ -87,9 +80,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
     }, [activeTab]);
 
     // Filter items
-    const filteredItems = items.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredItems = items.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // Handle item selection
     const handleSelect = (item: LinkableItem) => {
@@ -107,7 +98,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
         onLink({
             linkedTaskId: selectedTaskId,
             linkedProjectId: selectedProjectId,
-            linkedInitiativeId: selectedInitiativeId
+            linkedInitiativeId: selectedInitiativeId,
         });
     };
 
@@ -121,7 +112,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
     const tabs = [
         { id: 'task' as const, label: 'Tasks', icon: <CheckSquare size={16} /> },
         { id: 'project' as const, label: 'Projects', icon: <FolderKanban size={16} /> },
-        { id: 'initiative' as const, label: 'Initiatives', icon: <Rocket size={16} /> }
+        { id: 'initiative' as const, label: 'Initiatives', icon: <Rocket size={16} /> },
     ];
 
     return (
@@ -148,15 +139,16 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
 
                 {/* Tabs */}
                 <div className="flex border-b border-white/10">
-                    {tabs.map(tab => (
+                    {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`
                                 flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors
-                                ${activeTab === tab.id
-                                    ? 'text-white border-b-2 border-blue-500 bg-white/5'
-                                    : 'text-slate-500 hover:text-white hover:bg-white/5'
+                                ${
+                                    activeTab === tab.id
+                                        ? 'text-white border-b-2 border-blue-500 bg-white/5'
+                                        : 'text-slate-500 hover:text-white hover:bg-white/5'
                                 }
                             `}
                         >
@@ -187,34 +179,30 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
                             <Loader2 size={20} className="text-slate-500 animate-spin" />
                         </div>
                     ) : filteredItems.length === 0 ? (
-                        <div className="text-center py-8 text-sm text-slate-500">
-                            No {activeTab}s found
-                        </div>
+                        <div className="text-center py-8 text-sm text-slate-500">No {activeTab}s found</div>
                     ) : (
-                        filteredItems.map(item => (
+                        filteredItems.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => handleSelect(item)}
                                 className={`
                                     w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left
-                                    ${getSelectedId() === item.id
-                                        ? 'bg-blue-500/20 border border-blue-500/30'
-                                        : 'hover:bg-white/5 border border-transparent'
+                                    ${
+                                        getSelectedId() === item.id
+                                            ? 'bg-blue-500/20 border border-blue-500/30'
+                                            : 'hover:bg-white/5 border border-transparent'
                                     }
                                 `}
                             >
-                                <div className={`
+                                <div
+                                    className={`
                                     w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
-                                    ${getSelectedId() === item.id
-                                        ? 'border-blue-500 bg-blue-500'
-                                        : 'border-slate-600'
-                                    }
-                                `}>
+                                    ${getSelectedId() === item.id ? 'border-blue-500 bg-blue-500' : 'border-slate-600'}
+                                `}
+                                >
                                     {getSelectedId() === item.id && <Check size={12} className="text-white" />}
                                 </div>
-                                <span className="text-sm text-white truncate flex-1">
-                                    {item.name}
-                                </span>
+                                <span className="text-sm text-white truncate flex-1">{item.name}</span>
                             </button>
                         ))
                     )}
@@ -229,8 +217,10 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
                                 {[
                                     selectedTaskId && '1 task',
                                     selectedProjectId && '1 project',
-                                    selectedInitiativeId && '1 initiative'
-                                ].filter(Boolean).join(', ')}
+                                    selectedInitiativeId && '1 initiative',
+                                ]
+                                    .filter(Boolean)
+                                    .join(', ')}
                             </span>
                         ) : (
                             <span className="text-slate-500">Nothing</span>
@@ -260,12 +250,4 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
 };
 
 export default StudioLinkModal;
-
-
-
-
-
-
-
-
 

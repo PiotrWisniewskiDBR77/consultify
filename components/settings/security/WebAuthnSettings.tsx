@@ -1,26 +1,27 @@
 /**
  * WebAuthn Settings Component
- * 
+ *
  * Allows users to manage passkeys/security keys for passwordless authentication.
  * Supports registration, viewing, renaming, and revoking of credentials.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Key,
-    Plus,
-    Trash2,
-    Edit2,
-    Smartphone,
-    Laptop,
-    Shield,
-    Check,
-    X,
-    RefreshCw,
     AlertTriangle,
+    Check,
+    Edit2,
     Fingerprint,
+    Key,
+    Laptop,
+    Plus,
+    RefreshCw,
+    Shield,
+    Smartphone,
+    Trash2,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { api } from '../../../services/api';
 
 interface WebAuthnCredential {
@@ -47,7 +48,8 @@ const WebAuthnSettings: React.FC = () => {
 
     // Check WebAuthn support
     useEffect(() => {
-        const supported = typeof window !== 'undefined' && 
+        const supported =
+            typeof window !== 'undefined' &&
             window.PublicKeyCredential !== undefined &&
             typeof window.PublicKeyCredential === 'function';
         setIsSupported(supported);
@@ -103,18 +105,16 @@ const WebAuthnSettings: React.FC = () => {
             };
 
             if (options.excludeCredentials) {
-                publicKeyCredentialCreationOptions.excludeCredentials = options.excludeCredentials.map(
-                    (cred: any) => ({
-                        ...cred,
-                        id: base64URLToArrayBuffer(cred.id),
-                    })
-                );
+                publicKeyCredentialCreationOptions.excludeCredentials = options.excludeCredentials.map((cred: any) => ({
+                    ...cred,
+                    id: base64URLToArrayBuffer(cred.id),
+                }));
             }
 
             // Create credential
-            const credential = await navigator.credentials.create({
+            const credential = (await navigator.credentials.create({
                 publicKey: publicKeyCredentialCreationOptions,
-            }) as PublicKeyCredential;
+            })) as PublicKeyCredential;
 
             if (!credential) {
                 throw new Error('Failed to create credential');
@@ -164,9 +164,7 @@ const WebAuthnSettings: React.FC = () => {
             await api.patch(`/auth/webauthn/credentials/${credentialId}`, {
                 deviceName: newName,
             });
-            setCredentials(credentials.map(c =>
-                c.id === credentialId ? { ...c, deviceName: newName } : c
-            ));
+            setCredentials(credentials.map((c) => (c.id === credentialId ? { ...c, deviceName: newName } : c)));
             setEditingId(null);
             setNewName('');
         } catch (err) {
@@ -177,13 +175,17 @@ const WebAuthnSettings: React.FC = () => {
 
     // Revoke credential
     const handleRevoke = async (credentialId: string) => {
-        if (!confirm('Are you sure you want to remove this passkey? You will need to use another authentication method.')) {
+        if (
+            !confirm(
+                'Are you sure you want to remove this passkey? You will need to use another authentication method.',
+            )
+        ) {
             return;
         }
 
         try {
             await api.delete(`/auth/webauthn/credentials/${credentialId}`);
-            setCredentials(credentials.filter(c => c.id !== credentialId));
+            setCredentials(credentials.filter((c) => c.id !== credentialId));
         } catch (err) {
             console.error('[WebAuthn] Revoke error:', err);
             setError('Failed to remove passkey');
@@ -241,8 +243,8 @@ const WebAuthnSettings: React.FC = () => {
                     <div>
                         <h4 className="font-medium text-amber-300">Passkeys Not Supported</h4>
                         <p className="text-sm text-amber-200/70 mt-1">
-                            Your browser or device doesn't support passkeys (WebAuthn). 
-                            Please use a modern browser like Chrome, Safari, Firefox, or Edge.
+                            Your browser or device doesn't support passkeys (WebAuthn). Please use a modern browser like
+                            Chrome, Safari, Firefox, or Edge.
                         </p>
                     </div>
                 </div>
@@ -265,11 +267,7 @@ const WebAuthnSettings: React.FC = () => {
                     disabled={registering}
                     className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
                 >
-                    {registering ? (
-                        <RefreshCw className="animate-spin" size={18} />
-                    ) : (
-                        <Plus size={18} />
-                    )}
+                    {registering ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
                     {registering ? 'Registering...' : 'Add Passkey'}
                 </button>
             </div>
@@ -279,10 +277,7 @@ const WebAuthnSettings: React.FC = () => {
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
                     <AlertTriangle className="text-red-400 flex-shrink-0" size={20} />
                     <p className="text-red-300 text-sm">{error}</p>
-                    <button
-                        onClick={() => setError(null)}
-                        className="ml-auto text-red-400 hover:text-red-300"
-                    >
+                    <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
                         <X size={18} />
                     </button>
                 </div>
@@ -295,9 +290,8 @@ const WebAuthnSettings: React.FC = () => {
                     <div className="text-sm">
                         <p className="text-violet-300 font-medium">What are passkeys?</p>
                         <p className="text-violet-200/70 mt-1">
-                            Passkeys are a secure replacement for passwords. They use your device's 
-                            biometrics (Face ID, Touch ID, fingerprint) or a physical security key 
-                            to verify your identity.
+                            Passkeys are a secure replacement for passwords. They use your device's biometrics (Face ID,
+                            Touch ID, fingerprint) or a physical security key to verify your identity.
                         </p>
                     </div>
                 </div>
@@ -312,17 +306,12 @@ const WebAuthnSettings: React.FC = () => {
                 <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
                     <Key className="mx-auto text-gray-500 mb-4" size={48} />
                     <p className="text-gray-400">No passkeys registered</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Add a passkey to enable passwordless login
-                    </p>
+                    <p className="text-sm text-gray-500 mt-1">Add a passkey to enable passwordless login</p>
                 </div>
             ) : (
                 <div className="space-y-3">
                     {credentials.map((credential) => (
-                        <div
-                            key={credential.id}
-                            className="bg-gray-800/50 border border-gray-700 rounded-xl p-4"
-                        >
+                        <div key={credential.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-lg bg-gray-700/50 flex items-center justify-center">
@@ -361,9 +350,14 @@ const WebAuthnSettings: React.FC = () => {
                                                     {credential.deviceName || 'Unnamed Passkey'}
                                                 </h4>
                                                 <div className="flex items-center gap-3 text-sm text-gray-400">
-                                                    <span>Added {new Date(credential.createdAt).toLocaleDateString()}</span>
+                                                    <span>
+                                                        Added {new Date(credential.createdAt).toLocaleDateString()}
+                                                    </span>
                                                     {credential.lastUsedAt && (
-                                                        <span>• Last used {new Date(credential.lastUsedAt).toLocaleDateString()}</span>
+                                                        <span>
+                                                            • Last used{' '}
+                                                            {new Date(credential.lastUsedAt).toLocaleDateString()}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </>
@@ -425,10 +419,4 @@ const WebAuthnSettings: React.FC = () => {
 };
 
 export default WebAuthnSettings;
-
-
-
-
-
-
 

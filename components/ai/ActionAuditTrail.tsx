@@ -1,5 +1,16 @@
+import {
+    Calendar,
+    CheckCircle2,
+    Download,
+    FileJson,
+    FileSpreadsheet,
+    History,
+    MessageSquare,
+    RotateCcw,
+    User,
+    XCircle,
+} from 'lucide-react';
 import React from 'react';
-import { History, CheckCircle2, XCircle, RotateCcw, User, Calendar, MessageSquare, Download, FileJson, FileSpreadsheet } from 'lucide-react';
 
 export interface AuditRecord {
     id: string;
@@ -23,27 +34,38 @@ interface ActionAuditTrailProps {
 export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({ records, loading, onExport }) => {
     const getDecisionStyles = (decision: string) => {
         switch (decision) {
-            case 'APPROVED': return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-            case 'REJECTED': return 'text-red-500 bg-red-500/10 border-red-500/20';
-            case 'MODIFIED': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
-            default: return 'text-slate-500 bg-slate-500/10 border-slate-500/20';
+            case 'APPROVED':
+                return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+            case 'REJECTED':
+                return 'text-red-500 bg-red-500/10 border-red-500/20';
+            case 'MODIFIED':
+                return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
+            default:
+                return 'text-slate-500 bg-slate-500/10 border-slate-500/20';
         }
     };
 
     const getDecisionIcon = (decision: string) => {
         switch (decision) {
-            case 'APPROVED': return <CheckCircle2 size={14} />;
-            case 'REJECTED': return <XCircle size={14} />;
-            case 'MODIFIED': return <RotateCcw size={14} />;
-            default: return <History size={14} />;
+            case 'APPROVED':
+                return <CheckCircle2 size={14} />;
+            case 'REJECTED':
+                return <XCircle size={14} />;
+            case 'MODIFIED':
+                return <RotateCcw size={14} />;
+            default:
+                return <History size={14} />;
         }
     };
 
     if (loading) {
         return (
             <div className="space-y-4 animate-pulse">
-                {[1, 2, 3].map(i => (
-                    <div key={i} className="h-24 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10" />
+                {[1, 2, 3].map((i) => (
+                    <div
+                        key={i}
+                        className="h-24 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10"
+                    />
                 ))}
             </div>
         );
@@ -77,10 +99,15 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({ records, loa
                 </div>
             ) : (
                 records.map((record) => (
-                    <div key={record.id} className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                    <div
+                        key={record.id}
+                        className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+                    >
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                                <div className={`flex items-center gap-2 px-2 py-1 rounded text-[10px] font-bold border ${getDecisionStyles(record.decision)}`}>
+                                <div
+                                    className={`flex items-center gap-2 px-2 py-1 rounded text-[10px] font-bold border ${getDecisionStyles(record.decision)}`}
+                                >
                                     {getDecisionIcon(record.decision)}
                                     {record.decision}
                                 </div>
@@ -105,14 +132,16 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({ records, loa
                                     <span className="font-bold text-navy-900 dark:text-white">
                                         {record.decided_by_user_id === 'SYSTEM_POLICY_ENGINE'
                                             ? 'Policy Engine (Automated)'
-                                            : (record.first_name ? `${record.first_name} ${record.last_name}` : record.decided_by_user_id)
-                                        }
+                                            : record.first_name
+                                              ? `${record.first_name} ${record.last_name}`
+                                              : record.decided_by_user_id}
                                     </span>
                                     <span className="text-slate-500 ml-2 text-xs">
-                                        ({record.decided_by_user_id === 'SYSTEM_POLICY_ENGINE'
+                                        (
+                                        {record.decided_by_user_id === 'SYSTEM_POLICY_ENGINE'
                                             ? 'System'
-                                            : (record.user_email || 'Manual Approval')
-                                        })
+                                            : record.user_email || 'Manual Approval'}
+                                        )
                                     </span>
                                 </div>
                             </div>

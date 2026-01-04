@@ -1,9 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Download, Calendar, TrendingUp, TrendingDown, Loader2, AlertCircle, Plus, ArrowRight } from 'lucide-react';
-import { Api } from '../../services/api';
-import { useAppStore } from '../../store/useAppStore';
+import {
+    AlertCircle,
+    ArrowRight,
+    Calendar,
+    Download,
+    FileText,
+    Loader2,
+    Plus,
+    TrendingDown,
+    TrendingUp,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 interface AssessmentReport {
     id: string;
@@ -24,7 +35,7 @@ interface AssessmentReportsWorkspaceProps {
 export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProps> = ({
     onStartNewAssessment,
     onViewReport,
-    onGenerateInitiatives
+    onGenerateInitiatives,
 }) => {
     const { currentProjectId, setCurrentReport } = useAppStore();
     const { t } = useTranslation();
@@ -36,7 +47,6 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
     const [searchQuery, setSearchQuery] = useState('');
     const [showArchived, setShowArchived] = useState(false);
     const [sortBy, setSortBy] = useState<'date' | 'title' | 'gap'>('date');
-
 
     useEffect(() => {
         loadReports();
@@ -65,9 +75,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
 
         // Search filter
         if (searchQuery) {
-            filtered = filtered.filter(r =>
-                r.title.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+            filtered = filtered.filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase()));
         }
 
         // Sort
@@ -76,14 +84,14 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                 return new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime();
             } else if (sortBy === 'title') {
                 return a.title.localeCompare(b.title);
-            } else { // gap
+            } else {
+                // gap
                 return b.gap_points - a.gap_points;
             }
         });
 
         setFilteredReports(filtered);
     }, [reports, searchQuery, showArchived, sortBy]);
-
 
     const handleGenerateReport = async () => {
         if (!currentProjectId) return;
@@ -118,7 +126,15 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
     if (selectedReport) {
         // Report Detail View
         const assessment = selectedReport.assessment_snapshot || {};
-        const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+        const axes = [
+            'processes',
+            'digitalProducts',
+            'businessModels',
+            'dataManagement',
+            'culture',
+            'cybersecurity',
+            'aiMaturity',
+        ];
 
         return (
             <div className="flex flex-col h-full bg-white dark:bg-navy-900">
@@ -132,7 +148,8 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                         </button>
                         <h3 className="text-2xl font-bold text-navy-900 dark:text-white">{selectedReport.title}</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {t('assessment.reports.generatedOn', 'Generated on')} {formatDate(selectedReport.generated_at)}
+                            {t('assessment.reports.generatedOn', 'Generated on')}{' '}
+                            {formatDate(selectedReport.generated_at)}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -226,7 +243,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                         <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-3">
                             {t('assessment.reports.axisBreakdown', 'Axis Breakdown')}
                         </h4>
-                        {axes.map(axis => {
+                        {axes.map((axis) => {
                             const data = assessment[axis];
                             if (!data) return null;
 
@@ -241,7 +258,9 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                                         <div className="font-medium text-sm text-navy-900 dark:text-white capitalize">
                                             {axis.replace(/([A-Z])/g, ' $1').trim()}
                                         </div>
-                                        <div className={`flex items-center gap-1 text-xs font-medium ${gap > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                                        <div
+                                            className={`flex items-center gap-1 text-xs font-medium ${gap > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                                        >
                                             {gap > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                                             Gap: {gap.toFixed(1)}
                                         </div>
@@ -249,16 +268,22 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                                     <div className="flex items-center gap-4 text-xs">
                                         <div>
                                             <span className="text-slate-500 dark:text-slate-400">Current:</span>{' '}
-                                            <span className="text-blue-600 dark:text-blue-400 font-bold">{data.actual}</span>
+                                            <span className="text-blue-600 dark:text-blue-400 font-bold">
+                                                {data.actual}
+                                            </span>
                                         </div>
                                         <div>
                                             <span className="text-slate-500 dark:text-slate-400">Target:</span>{' '}
-                                            <span className="text-purple-600 dark:text-purple-400 font-bold">{data.target}</span>
+                                            <span className="text-purple-600 dark:text-purple-400 font-bold">
+                                                {data.target}
+                                            </span>
                                         </div>
                                     </div>
                                     {data.justification && (
                                         <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5">
-                                            <p className="text-xs text-slate-600 dark:text-slate-300">{data.justification}</p>
+                                            <p className="text-xs text-slate-600 dark:text-slate-300">
+                                                {data.justification}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -310,9 +335,13 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                         className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-500/20"
                     >
                         {generating ? (
-                            <><Loader2 className="animate-spin" size={16} /> {t('common.creating', 'Creating...')}</>
+                            <>
+                                <Loader2 className="animate-spin" size={16} /> {t('common.creating', 'Creating...')}
+                            </>
                         ) : (
-                            <><Plus size={16} /> {t('assessment.reports.newAssessment', 'New Assessment')}</>
+                            <>
+                                <Plus size={16} /> {t('assessment.reports.newAssessment', 'New Assessment')}
+                            </>
                         )}
                     </button>
                 </div>
@@ -337,12 +366,15 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                     </select>
                     <button
                         onClick={() => setShowArchived(!showArchived)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showArchived
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
-                            }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            showArchived
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
+                        }`}
                     >
-                        {showArchived ? t('common.hideArchived', 'Hide Archived') : t('common.showArchived', 'Show Archived')}
+                        {showArchived
+                            ? t('common.hideArchived', 'Hide Archived')
+                            : t('common.showArchived', 'Show Archived')}
                     </button>
                 </div>
             </div>
@@ -355,7 +387,10 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                             {t('assessment.reports.noProjectSelected', 'No project selected')}
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                            {t('assessment.reports.selectProjectHint', 'Please select a project from the sidebar to view assessment reports')}
+                            {t(
+                                'assessment.reports.selectProjectHint',
+                                'Please select a project from the sidebar to view assessment reports',
+                            )}
                         </p>
                     </div>
                 ) : loading ? (
@@ -369,12 +404,15 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                             {t('assessment.reports.noReports', 'No reports generated yet')}
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                            {t('assessment.reports.noReportsHint', 'Click "New Assessment" to create your first assessment report')}
+                            {t(
+                                'assessment.reports.noReportsHint',
+                                'Click "New Assessment" to create your first assessment report',
+                            )}
                         </p>
                     </div>
                 ) : (
                     <div className="grid gap-3">
-                        {filteredReports.map(report => (
+                        {filteredReports.map((report) => (
                             <div
                                 key={report.id}
                                 className="bg-white dark:bg-navy-950 rounded-lg p-4 border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-700 transition-all group"

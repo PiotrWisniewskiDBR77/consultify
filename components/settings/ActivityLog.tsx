@@ -1,6 +1,6 @@
 /**
  * ActivityLog - User activity history
- * 
+ *
  * Features:
  * - Display recent user actions
  * - Login history with IP/device info
@@ -10,31 +10,32 @@
  * - Filtering by action type
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
+import {
     Activity,
+    ChevronDown,
+    Clock,
+    FileText,
+    Filter,
+    Globe,
+    Key,
+    Loader2,
     LogIn,
     LogOut,
-    User as UserIcon,
-    Shield,
-    FileText,
-    Upload,
-    Settings,
-    Key,
-    Monitor,
-    Smartphone,
-    Globe,
-    Filter,
-    RefreshCw,
-    Loader2,
-    Clock,
     MapPin,
-    ChevronDown
+    Monitor,
+    RefreshCw,
+    Settings,
+    Shield,
+    Smartphone,
+    Upload,
+    User as UserIcon,
 } from 'lucide-react';
-import { User } from '../../types';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface ActivityLogProps {
     currentUser: User;
@@ -57,13 +58,25 @@ const ACTION_CONFIG: Record<string, { icon: React.ElementType; color: string; la
     LOGOUT: { icon: LogOut, color: 'text-slate-500 bg-slate-50 dark:bg-slate-500/10', label: 'Logout' },
     LOGIN_FAILED: { icon: LogIn, color: 'text-red-500 bg-red-50 dark:bg-red-500/10', label: 'Failed Login' },
     PROFILE_UPDATE: { icon: UserIcon, color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10', label: 'Profile Update' },
-    PASSWORD_CHANGE: { icon: Key, color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10', label: 'Password Change' },
+    PASSWORD_CHANGE: {
+        icon: Key,
+        color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10',
+        label: 'Password Change',
+    },
     MFA_ENABLED: { icon: Shield, color: 'text-green-500 bg-green-50 dark:bg-green-500/10', label: '2FA Enabled' },
     MFA_DISABLED: { icon: Shield, color: 'text-orange-500 bg-orange-50 dark:bg-orange-500/10', label: '2FA Disabled' },
-    DOCUMENT_UPLOAD: { icon: Upload, color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10', label: 'Document Upload' },
-    SETTINGS_CHANGE: { icon: Settings, color: 'text-slate-500 bg-slate-50 dark:bg-slate-500/10', label: 'Settings Change' },
+    DOCUMENT_UPLOAD: {
+        icon: Upload,
+        color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10',
+        label: 'Document Upload',
+    },
+    SETTINGS_CHANGE: {
+        icon: Settings,
+        color: 'text-slate-500 bg-slate-50 dark:bg-slate-500/10',
+        label: 'Settings Change',
+    },
     ROLE_CHANGE: { icon: Shield, color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10', label: 'Role Change' },
-    DEFAULT: { icon: Activity, color: 'text-slate-500 bg-slate-50 dark:bg-slate-500/10', label: 'Activity' }
+    DEFAULT: { icon: Activity, color: 'text-slate-500 bg-slate-50 dark:bg-slate-500/10', label: 'Activity' },
 };
 
 // Category filters
@@ -72,29 +85,29 @@ const CATEGORIES = [
     { value: 'auth', label: 'Authentication' },
     { value: 'profile', label: 'Profile' },
     { value: 'security', label: 'Security' },
-    { value: 'documents', label: 'Documents' }
+    { value: 'documents', label: 'Documents' },
 ];
 
 // Parse user agent to get device info
 const parseUserAgent = (ua?: string): { device: string; browser: string; os: string } => {
     if (!ua) return { device: 'Unknown', browser: 'Unknown', os: 'Unknown' };
-    
+
     const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
     const device = isMobile ? 'Mobile' : 'Desktop';
-    
+
     let browser = 'Unknown';
     if (ua.includes('Chrome')) browser = 'Chrome';
     else if (ua.includes('Firefox')) browser = 'Firefox';
     else if (ua.includes('Safari')) browser = 'Safari';
     else if (ua.includes('Edge')) browser = 'Edge';
-    
+
     let os = 'Unknown';
     if (ua.includes('Windows')) os = 'Windows';
     else if (ua.includes('Mac')) os = 'macOS';
     else if (ua.includes('Linux')) os = 'Linux';
     else if (ua.includes('Android')) os = 'Android';
     else if (ua.includes('iOS') || ua.includes('iPhone')) os = 'iOS';
-    
+
     return { device, browser, os };
 };
 
@@ -142,18 +155,21 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ currentUser }) => {
     }, [fetchActivities]);
 
     // Filter activities
-    const filteredActivities = activities.filter(activity => {
+    const filteredActivities = activities.filter((activity) => {
         if (selectedCategory === 'all') return true;
         return activity.category === selectedCategory;
     });
 
     // Group activities by date
-    const groupedActivities = filteredActivities.reduce((groups, activity) => {
-        const date = new Date(activity.createdAt).toLocaleDateString();
-        if (!groups[date]) groups[date] = [];
-        groups[date].push(activity);
-        return groups;
-    }, {} as Record<string, ActivityEntry[]>);
+    const groupedActivities = filteredActivities.reduce(
+        (groups, activity) => {
+            const date = new Date(activity.createdAt).toLocaleDateString();
+            if (!groups[date]) groups[date] = [];
+            groups[date].push(activity);
+            return groups;
+        },
+        {} as Record<string, ActivityEntry[]>,
+    );
 
     return (
         <div className="space-y-6">
@@ -178,8 +194,8 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ currentUser }) => {
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                            showFilters 
-                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300' 
+                            showFilters
+                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
                                 : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
                         }`}
                     >
@@ -238,8 +254,8 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ currentUser }) => {
                                     const deviceInfo = parseUserAgent(activity.userAgent);
 
                                     return (
-                                        <div 
-                                            key={activity.id} 
+                                        <div
+                                            key={activity.id}
                                             className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                         >
                                             <div className="flex items-start gap-4">
@@ -258,7 +274,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ currentUser }) => {
                                                             {formatRelativeTime(activity.createdAt)}
                                                         </span>
                                                     </div>
-                                                    
+
                                                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                                                         {activity.description}
                                                     </p>
@@ -281,12 +297,16 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ currentUser }) => {
                                                                     )}
                                                                     <span>{deviceInfo.device}</span>
                                                                 </div>
-                                                                <span>{deviceInfo.browser} on {deviceInfo.os}</span>
+                                                                <span>
+                                                                    {deviceInfo.browser} on {deviceInfo.os}
+                                                                </span>
                                                             </>
                                                         )}
                                                         <div className="flex items-center gap-1">
                                                             <Clock size={12} />
-                                                            <span>{new Date(activity.createdAt).toLocaleTimeString()}</span>
+                                                            <span>
+                                                                {new Date(activity.createdAt).toLocaleTimeString()}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -309,8 +329,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ currentUser }) => {
                             {t('settings.activity.securityTip', 'Security Tip')}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {t('settings.activity.securityText', 
-                                'Review your activity regularly. If you see any suspicious activity, change your password immediately and enable two-factor authentication.'
+                            {t(
+                                'settings.activity.securityText',
+                                'Review your activity regularly. If you see any suspicious activity, change your password immediately and enable two-factor authentication.',
                             )}
                         </p>
                     </div>
@@ -331,21 +352,21 @@ async function simulateActivityData(user: User): Promise<ActivityEntry[]> {
             description: 'Successful login from Chrome on macOS',
             ipAddress: '192.168.1.100',
             userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 5).toISOString() // 5 mins ago
+            createdAt: new Date(now.getTime() - 1000 * 60 * 5).toISOString(), // 5 mins ago
         },
         {
             id: '2',
             action: 'PROFILE_UPDATE',
             category: 'profile',
             description: 'Updated profile information: First name, Last name',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString() // 2 hours ago
+            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
         },
         {
             id: '3',
             action: 'SETTINGS_CHANGE',
             category: 'profile',
             description: 'Changed interface theme to Dark',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 3).toISOString() // 3 hours ago
+            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
         },
         {
             id: '4',
@@ -354,14 +375,14 @@ async function simulateActivityData(user: User): Promise<ActivityEntry[]> {
             description: 'Successful login from Safari on iOS',
             ipAddress: '10.0.0.55',
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Safari/604.1',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString() // 1 day ago
+            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
         },
         {
             id: '5',
             action: 'DOCUMENT_UPLOAD',
             category: 'documents',
             description: 'Uploaded: project_report_q4.pdf (2.3 MB)',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString() // 2 days ago
+            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
         },
         {
             id: '6',
@@ -370,29 +391,22 @@ async function simulateActivityData(user: User): Promise<ActivityEntry[]> {
             description: 'Password changed successfully',
             ipAddress: '192.168.1.100',
             userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString() // 5 days ago
+            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
         },
         {
             id: '7',
             action: 'MFA_ENABLED',
             category: 'security',
             description: 'Two-factor authentication enabled',
-            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString() // 7 days ago
-        }
+            createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days ago
+        },
     ];
-    
+
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     return activities;
 }
 
 export default ActivityLog;
-
-
-
-
-
-
-
 

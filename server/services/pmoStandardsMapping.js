@@ -118,7 +118,115 @@ class PMOStandardsMapping {
  * SCMS to Standards Mapping Table
  */
 const STANDARDS_MAPPING = {
-    // ... same as before
+    // -------------------------------------------------------------
+    // Domain 1: Governance & Decision Making
+    // -------------------------------------------------------------
+    'Decision': {
+        scmsTerm: 'Decision',
+        scmsObject: 'Decision',
+        domainId: PMO_DOMAIN_IDS.GOVERNANCE_DECISION_MAKING,
+        neutralDescription: 'A formal conclusion requiring authorized approval to resolve a choice or problem.',
+        iso21500: { term: 'Decision', clause: '3.6.4 Manage issues' },
+        pmbok7: { term: 'Decision', domain: 'Performance Domain' },
+        prince2: { term: 'Decision', theme: 'Directing a Project' }
+    },
+    'Escalation': {
+        scmsTerm: 'Escalation',
+        scmsObject: 'Escalation',
+        domainId: PMO_DOMAIN_IDS.GOVERNANCE_DECISION_MAKING,
+        neutralDescription: 'Elevation of an issue to a higher authority for resolution when outside existing tolerance.',
+        iso21500: { term: 'Escalation', clause: '3.6.4' },
+        pmbok7: { term: 'Threshold Excursion', domain: 'Delivery' },
+        prince2: { term: 'Exception Report', theme: 'Progress' }
+    },
+    'StageGate': {
+        scmsTerm: 'Project Phase',
+        scmsObject: 'ProjectPhase',
+        domainId: PMO_DOMAIN_IDS.GOVERNANCE_DECISION_MAKING,
+        neutralDescription: 'A logical division of the project lifecycle marked by a review point.',
+        iso21500: { term: 'Project Phase', clause: '3.3.3' },
+        pmbok7: { term: 'Phase Gate', domain: 'Lifecycle' },
+        prince2: { term: 'Stage Boundary', theme: 'Progress' }
+    },
+
+    // -------------------------------------------------------------
+    // Domain 2: Scope & Change Control
+    // -------------------------------------------------------------
+    'ChangeRequest': {
+        scmsTerm: 'Change Request',
+        scmsObject: 'ChangeRequest',
+        domainId: PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL,
+        neutralDescription: 'A formal proposal to modify any document, deliverable, or baseline.',
+        iso21500: { term: 'Change Request', clause: '3.3.6 Control changes' },
+        pmbok7: { term: 'Change Request', domain: 'Uncertainty' },
+        prince2: { term: 'Issue (Request for Change)', theme: 'Change' }
+    },
+    'ProjectScope': {
+        scmsTerm: 'Project Scope',
+        scmsObject: 'ProjectScope',
+        domainId: PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL,
+        neutralDescription: 'The work that needs to be accomplished to deliver a product, service, or result.',
+        iso21500: { term: 'Scope', clause: '3.5.2 Define scope' },
+        pmbok7: { term: 'Scope', domain: 'Delivery' },
+        prince2: { term: 'Project Product Description', theme: 'Plans' }
+    },
+
+    // -------------------------------------------------------------
+    // Domain 3: Resource & Capacity Management
+    // -------------------------------------------------------------
+    'ResourcePlan': {
+        scmsTerm: 'Resource Plan',
+        scmsObject: 'ResourcePlan',
+        domainId: PMO_DOMAIN_IDS.RESOURCE_CAPACITY,
+        neutralDescription: 'Identification and scheduling of resources required to execute work.',
+        iso21500: { term: 'Resource Plan', clause: '3.7.3 Estimate resources' },
+        pmbok7: { term: 'Resource Management Plan', domain: 'Team' },
+        prince2: { term: 'Resource Schedule', theme: 'Plans' }
+    },
+
+    // -------------------------------------------------------------
+    // Domain 4: Schedule & Roadmap
+    // -------------------------------------------------------------
+    'Milestone': {
+        scmsTerm: 'Milestone',
+        scmsObject: 'Milestone',
+        domainId: PMO_DOMAIN_IDS.SCHEDULE_ROADMAP,
+        neutralDescription: 'A significant point or event in a project, program, or portfolio.',
+        iso21500: { term: 'Milestone', clause: '3.4.4 Develop schedule' },
+        pmbok7: { term: 'Milestone', domain: 'Planning' },
+        prince2: { term: 'Management Stage', theme: 'Plans' }
+    },
+    'Initiative': {
+        scmsTerm: 'Initiative',
+        scmsObject: 'Initiative',
+        domainId: PMO_DOMAIN_IDS.SCHEDULE_ROADMAP,
+        neutralDescription: 'A defined body of work to achieve specific objectives.',
+        iso21500: { term: 'Work Package', clause: '3.5.4 Define activities' },
+        pmbok7: { term: 'Product Backlog Item', domain: 'Delivery' },
+        prince2: { term: 'Work Package', theme: 'Plans' }
+    },
+
+    // -------------------------------------------------------------
+    // Domain 5: Economics & Value Realization
+    // -------------------------------------------------------------
+    'BusinessCase': {
+        scmsTerm: 'Business Case',
+        scmsObject: 'Economics',
+        domainId: PMO_DOMAIN_IDS.ECONOMICS_VALUE,
+        neutralDescription: 'Justification for a project based on estimated costs and benefits.',
+        iso21500: { term: 'Business Case', clause: '3.2.2 Develop project charter' },
+        pmbok7: { term: 'Business Case', domain: 'Business Context' },
+        prince2: { term: 'Business Case', theme: 'Business Case' }
+    },
+    'BenefitsRealization': {
+        scmsTerm: 'Benefits Realization',
+        scmsObject: 'BenefitsRegister',
+        domainId: PMO_DOMAIN_IDS.ECONOMICS_VALUE,
+        neutralDescription: 'Tracking of the realized value against the initial justification.',
+        iso21500: { term: 'Benefits Management', clause: '4.2.3' },
+        pmbok7: { term: 'Benefits Realization Plan', domain: 'Value' },
+        prince2: { term: 'Benefits Review Plan', theme: 'Business Case' }
+    }
 };
 
 const pmoStandardsMappingInstance = new PMOStandardsMapping();

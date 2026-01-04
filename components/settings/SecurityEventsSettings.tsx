@@ -1,6 +1,6 @@
 /**
  * SecurityEventsSettings - Personal Security Audit Log
- * 
+ *
  * Features:
  * - Personal security event history
  * - Filter by event type
@@ -8,36 +8,37 @@
  * - Security alerts configuration
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
     Activity,
-    Shield,
+    AlertTriangle,
+    Bell,
+    CheckCircle,
+    ChevronDown,
+    Clock,
+    Download,
+    Eye,
+    FileText,
+    Filter,
     Key,
+    Loader2,
+    Lock,
     LogIn,
     LogOut,
-    Smartphone,
-    Monitor,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
-    Clock,
-    MapPin,
-    Download,
-    Filter,
-    RefreshCw,
-    ChevronDown,
-    Bell,
     Mail,
+    MapPin,
+    Monitor,
+    RefreshCw,
     Search,
-    FileText,
-    Loader2,
-    Eye,
-    Lock,
-    UserX
+    Shield,
+    Smartphone,
+    UserX,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface SecurityEventsSettingsProps {
@@ -74,7 +75,7 @@ const EVENT_TYPES: { value: EventFilter; label: string; icon: React.ReactNode }[
     { value: 'security', label: 'Security Changes', icon: <Shield className="w-4 h-4" /> },
     { value: 'mfa', label: 'MFA Events', icon: <Key className="w-4 h-4" /> },
     { value: 'data', label: 'Data Access', icon: <Eye className="w-4 h-4" /> },
-    { value: 'suspicious', label: 'Suspicious', icon: <AlertTriangle className="w-4 h-4" /> }
+    { value: 'suspicious', label: 'Suspicious', icon: <AlertTriangle className="w-4 h-4" /> },
 ];
 
 const DEFAULT_ALERTS: AlertSettings = {
@@ -82,13 +83,10 @@ const DEFAULT_ALERTS: AlertSettings = {
     emailOnNewDevice: true,
     emailOnPasswordChange: true,
     emailOnMfaChange: true,
-    pushNotifications: true
+    pushNotifications: true,
 };
 
-export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
-    currentUser,
-    className = ''
-}) => {
+export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({ currentUser, className = '' }) => {
     const { t } = useTranslation();
     const [events, setEvents] = useState<SecurityEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -125,7 +123,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     timestamp: new Date().toISOString(),
                     ip: '192.168.1.100',
                     location: 'Warsaw, Poland',
-                    device: 'Chrome 120 / MacOS'
+                    device: 'Chrome 120 / MacOS',
                 },
                 {
                     id: '2',
@@ -135,7 +133,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     description: '2FA verification successful',
                     timestamp: new Date(Date.now() - 3600000).toISOString(),
                     ip: '192.168.1.100',
-                    location: 'Warsaw, Poland'
+                    location: 'Warsaw, Poland',
                 },
                 {
                     id: '3',
@@ -144,7 +142,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     title: 'Password Changed',
                     description: 'Account password was updated',
                     timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-                    ip: '192.168.1.100'
+                    ip: '192.168.1.100',
                 },
                 {
                     id: '4',
@@ -155,7 +153,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
                     ip: '10.0.0.50',
                     location: 'Krakow, Poland',
-                    device: 'Firefox 121 / Windows'
+                    device: 'Firefox 121 / Windows',
                 },
                 {
                     id: '5',
@@ -166,7 +164,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     timestamp: new Date(Date.now() - 86400000 * 5).toISOString(),
                     ip: '203.0.113.50',
                     location: 'Unknown Location',
-                    metadata: { attempts: 5, blocked: true }
+                    metadata: { attempts: 5, blocked: true },
                 },
                 {
                     id: '6',
@@ -174,7 +172,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     severity: 'info',
                     title: 'Data Export Requested',
                     description: 'GDPR data export initiated',
-                    timestamp: new Date(Date.now() - 86400000 * 7).toISOString()
+                    timestamp: new Date(Date.now() - 86400000 * 7).toISOString(),
                 },
                 {
                     id: '7',
@@ -182,7 +180,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     severity: 'info',
                     title: 'MFA Enabled',
                     description: 'Two-factor authentication was enabled',
-                    timestamp: new Date(Date.now() - 86400000 * 14).toISOString()
+                    timestamp: new Date(Date.now() - 86400000 * 14).toISOString(),
                 },
                 {
                     id: '8',
@@ -190,8 +188,8 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     severity: 'info',
                     title: 'Session Expired',
                     description: 'Session automatically expired due to inactivity',
-                    timestamp: new Date(Date.now() - 86400000 * 10).toISOString()
-                }
+                    timestamp: new Date(Date.now() - 86400000 * 10).toISOString(),
+                },
             ]);
         } finally {
             setLoading(false);
@@ -230,19 +228,19 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                 window.open(response.downloadUrl, '_blank');
             } else {
                 // Fallback: create local export
-                const data = events.map(e => ({
+                const data = events.map((e) => ({
                     date: new Date(e.timestamp).toISOString(),
                     type: e.type,
                     severity: e.severity,
                     title: e.title,
                     description: e.description,
                     ip: e.ip || '',
-                    location: e.location || ''
+                    location: e.location || '',
                 }));
 
                 if (format === 'csv') {
                     const headers = Object.keys(data[0]).join(',');
-                    const rows = data.map(d => Object.values(d).join(',')).join('\n');
+                    const rows = data.map((d) => Object.values(d).join(',')).join('\n');
                     const csv = `${headers}\n${rows}`;
                     const blob = new Blob([csv], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
@@ -262,16 +260,24 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
     };
 
     const getEventIcon = (type: string, severity: string) => {
-        const iconClass = severity === 'critical' ? 'text-red-500' : severity === 'warning' ? 'text-amber-500' : 'text-slate-500';
-        
+        const iconClass =
+            severity === 'critical' ? 'text-red-500' : severity === 'warning' ? 'text-amber-500' : 'text-slate-500';
+
         switch (type) {
-            case 'login': return <LogIn className={`w-5 h-5 ${iconClass}`} />;
-            case 'logout': return <LogOut className={`w-5 h-5 ${iconClass}`} />;
-            case 'security': return <Shield className={`w-5 h-5 ${iconClass}`} />;
-            case 'mfa': return <Key className={`w-5 h-5 ${iconClass}`} />;
-            case 'data': return <Eye className={`w-5 h-5 ${iconClass}`} />;
-            case 'suspicious': return <AlertTriangle className={`w-5 h-5 ${iconClass}`} />;
-            default: return <Activity className={`w-5 h-5 ${iconClass}`} />;
+            case 'login':
+                return <LogIn className={`w-5 h-5 ${iconClass}`} />;
+            case 'logout':
+                return <LogOut className={`w-5 h-5 ${iconClass}`} />;
+            case 'security':
+                return <Shield className={`w-5 h-5 ${iconClass}`} />;
+            case 'mfa':
+                return <Key className={`w-5 h-5 ${iconClass}`} />;
+            case 'data':
+                return <Eye className={`w-5 h-5 ${iconClass}`} />;
+            case 'suspicious':
+                return <AlertTriangle className={`w-5 h-5 ${iconClass}`} />;
+            default:
+                return <Activity className={`w-5 h-5 ${iconClass}`} />;
         }
     };
 
@@ -300,11 +306,11 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
-    const filteredEvents = events.filter(event => {
+    const filteredEvents = events.filter((event) => {
         if (filter !== 'all' && event.type !== filter) return false;
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -379,28 +385,44 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                         <AlertToggle
                             icon={<AlertTriangle className="w-5 h-5" />}
                             title={t('security.events.alertSuspicious', 'Suspicious Login Alerts')}
-                            description={t('security.events.alertSuspiciousDesc', 'Get notified when unusual login activity is detected')}
+                            description={t(
+                                'security.events.alertSuspiciousDesc',
+                                'Get notified when unusual login activity is detected',
+                            )}
                             checked={alertSettings.emailOnSuspiciousLogin}
-                            onChange={(checked) => setAlertSettings({ ...alertSettings, emailOnSuspiciousLogin: checked })}
+                            onChange={(checked) =>
+                                setAlertSettings({ ...alertSettings, emailOnSuspiciousLogin: checked })
+                            }
                         />
                         <AlertToggle
                             icon={<Smartphone className="w-5 h-5" />}
                             title={t('security.events.alertNewDevice', 'New Device Login')}
-                            description={t('security.events.alertNewDeviceDesc', 'Get notified when you log in from a new device')}
+                            description={t(
+                                'security.events.alertNewDeviceDesc',
+                                'Get notified when you log in from a new device',
+                            )}
                             checked={alertSettings.emailOnNewDevice}
                             onChange={(checked) => setAlertSettings({ ...alertSettings, emailOnNewDevice: checked })}
                         />
                         <AlertToggle
                             icon={<Lock className="w-5 h-5" />}
                             title={t('security.events.alertPassword', 'Password Changes')}
-                            description={t('security.events.alertPasswordDesc', 'Get notified when your password is changed')}
+                            description={t(
+                                'security.events.alertPasswordDesc',
+                                'Get notified when your password is changed',
+                            )}
                             checked={alertSettings.emailOnPasswordChange}
-                            onChange={(checked) => setAlertSettings({ ...alertSettings, emailOnPasswordChange: checked })}
+                            onChange={(checked) =>
+                                setAlertSettings({ ...alertSettings, emailOnPasswordChange: checked })
+                            }
                         />
                         <AlertToggle
                             icon={<Key className="w-5 h-5" />}
                             title={t('security.events.alertMfa', 'MFA Changes')}
-                            description={t('security.events.alertMfaDesc', 'Get notified when 2FA settings are modified')}
+                            description={t(
+                                'security.events.alertMfaDesc',
+                                'Get notified when 2FA settings are modified',
+                            )}
                             checked={alertSettings.emailOnMfaChange}
                             onChange={(checked) => setAlertSettings({ ...alertSettings, emailOnMfaChange: checked })}
                         />
@@ -441,7 +463,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     >
                         <Filter className="w-4 h-4 text-slate-400" />
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {EVENT_TYPES.find(t => t.value === filter)?.label}
+                            {EVENT_TYPES.find((t) => t.value === filter)?.label}
                         </span>
                         <ChevronDown className="w-4 h-4 text-slate-400" />
                     </button>
@@ -450,10 +472,13 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                             {EVENT_TYPES.map((type) => (
                                 <button
                                     key={type.value}
-                                    onClick={() => { setFilter(type.value); setShowFilterDropdown(false); }}
+                                    onClick={() => {
+                                        setFilter(type.value);
+                                        setShowFilterDropdown(false);
+                                    }}
                                     className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                                        filter === type.value 
-                                            ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10' 
+                                        filter === type.value
+                                            ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10'
                                             : 'text-slate-700 dark:text-slate-300'
                                     }`}
                                 >
@@ -497,19 +522,26 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                     <div className="divide-y divide-slate-100 dark:divide-white/5">
                         {filteredEvents.map((event) => (
-                            <div 
+                            <div
                                 key={event.id}
                                 className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                                    event.severity === 'critical' ? 'bg-red-50/50 dark:bg-red-500/5' :
-                                    event.severity === 'warning' ? 'bg-amber-50/50 dark:bg-amber-500/5' : ''
+                                    event.severity === 'critical'
+                                        ? 'bg-red-50/50 dark:bg-red-500/5'
+                                        : event.severity === 'warning'
+                                          ? 'bg-amber-50/50 dark:bg-amber-500/5'
+                                          : ''
                                 }`}
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className={`p-2 rounded-lg ${
-                                        event.severity === 'critical' ? 'bg-red-100 dark:bg-red-500/20' :
-                                        event.severity === 'warning' ? 'bg-amber-100 dark:bg-amber-500/20' :
-                                        'bg-slate-100 dark:bg-white/10'
-                                    }`}>
+                                    <div
+                                        className={`p-2 rounded-lg ${
+                                            event.severity === 'critical'
+                                                ? 'bg-red-100 dark:bg-red-500/20'
+                                                : event.severity === 'warning'
+                                                  ? 'bg-amber-100 dark:bg-amber-500/20'
+                                                  : 'bg-slate-100 dark:bg-white/10'
+                                        }`}
+                                    >
                                         {getEventIcon(event.type, event.severity)}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -551,9 +583,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             {/* Load More */}
             {filteredEvents.length >= 50 && (
                 <div className="text-center">
-                    <button
-                        className="px-6 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
-                    >
+                    <button className="px-6 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors">
                         {t('common.loadMore', 'Load More')}
                     </button>
                 </div>
@@ -571,26 +601,14 @@ interface AlertToggleProps {
     onChange: (checked: boolean) => void;
 }
 
-const AlertToggle: React.FC<AlertToggleProps> = ({
-    icon,
-    title,
-    description,
-    checked,
-    onChange
-}) => {
+const AlertToggle: React.FC<AlertToggleProps> = ({ icon, title, description, checked, onChange }) => {
     return (
         <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
             <div className="flex items-center gap-3">
-                <div className="text-slate-500 dark:text-slate-400">
-                    {icon}
-                </div>
+                <div className="text-slate-500 dark:text-slate-400">{icon}</div>
                 <div>
-                    <p className="font-medium text-slate-900 dark:text-white text-sm">
-                        {title}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {description}
-                    </p>
+                    <p className="font-medium text-slate-900 dark:text-white text-sm">{title}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
                 </div>
             </div>
             <button
@@ -599,7 +617,7 @@ const AlertToggle: React.FC<AlertToggleProps> = ({
                     checked ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
                 }`}
             >
-                <span 
+                <span
                     className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
             </button>
@@ -608,11 +626,4 @@ const AlertToggle: React.FC<AlertToggleProps> = ({
 };
 
 export default SecurityEventsSettings;
-
-
-
-
-
-
-
 

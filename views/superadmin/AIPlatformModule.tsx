@@ -1,25 +1,40 @@
 /**
  * AIPlatformModule - AI Platform Management
- * 
+ *
  * Tabs: LLM Config | Intelligence | Prompts Admin | Experiments | Mission Control | Knowledge | Costs | Health
  */
 
+import {
+    Activity,
+    BarChart2,
+    BookOpen,
+    Cpu,
+    DollarSign,
+    FileText,
+    FlaskConical,
+    HeartPulse,
+    Layers,
+    Radar,
+    Settings,
+    Shield,
+    Sparkles,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { Cpu, Sparkles, BookOpen, DollarSign, HeartPulse, FlaskConical, FileText, Radar, Activity, Settings, Shield, BarChart2, Layers } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { LLMManagementView } from './LLMManagementView';
-import { AIIntelligenceView } from './AIIntelligenceView';
-import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
-import { AICostDashboard } from '../../components/Admin/AICostDashboard';
-import { LLMHealthPanel } from '../../components/Admin/LLMHealthPanel';
+
 import { ABTestingDashboard } from '../../components/Admin/ABTestingDashboard';
-import { PromptManagementUI } from '../../components/Admin/PromptManagementUI';
+import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
+import { AICostDashboard } from '../../components/Admin/AICostDashboard';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDashboard';
-import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
+import { LLMHealthPanel } from '../../components/Admin/LLMHealthPanel';
+import { PromptManagementUI } from '../../components/Admin/PromptManagementUI';
 import { SLADashboard } from '../../components/Admin/SLADashboard';
-import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
 import { ModelTierAssignments } from '../../components/SuperAdmin/ModelTierAssignments';
+import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
+import { AIIntelligenceView } from './AIIntelligenceView';
+import { LLMManagementView } from './LLMManagementView';
 
 interface AIPlatformModuleProps {
     initialTab?: string;
@@ -131,4 +146,3 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
 };
 
 export default AIPlatformModule;
-

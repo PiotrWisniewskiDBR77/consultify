@@ -1,6 +1,6 @@
 /**
  * EnterpriseAuditLog - Comprehensive Audit Log Management
- * 
+ *
  * Features:
  * - Advanced filtering and search
  * - Compliance tagging (GDPR, SOC2, ISO27001, HIPAA)
@@ -10,34 +10,35 @@
  * - Real-time log streaming
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Shield,
-    Search,
-    Filter,
-    Download,
-    RefreshCw,
-    ChevronDown,
-    ChevronRight,
-    AlertTriangle,
-    Info,
-    AlertCircle,
-    Clock,
-    User,
-    Globe,
-    FileText,
     Activity,
+    AlertCircle,
+    AlertTriangle,
     BarChart3,
     Calendar,
-    Tag,
-    Loader2,
-    ExternalLink,
-    Copy,
     Check,
-    X
+    ChevronDown,
+    ChevronRight,
+    Clock,
+    Copy,
+    Download,
+    ExternalLink,
+    FileText,
+    Filter,
+    Globe,
+    Info,
+    Loader2,
+    RefreshCw,
+    Search,
+    Shield,
+    Tag,
+    User,
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface AuditLog {
     id: string;
@@ -93,13 +94,34 @@ const COMPLIANCE_TAGS = [
 ];
 
 const ACTION_TYPES = [
-    'LOGIN', 'LOGOUT', 'CREATE', 'UPDATE', 'DELETE', 'VIEW', 'EXPORT',
-    'SHARE', 'INVITE', 'APPROVE', 'REJECT', 'ESCALATE', 'CONFIG_CHANGE'
+    'LOGIN',
+    'LOGOUT',
+    'CREATE',
+    'UPDATE',
+    'DELETE',
+    'VIEW',
+    'EXPORT',
+    'SHARE',
+    'INVITE',
+    'APPROVE',
+    'REJECT',
+    'ESCALATE',
+    'CONFIG_CHANGE',
 ];
 
 const RESOURCE_TYPES = [
-    'USER', 'ORGANIZATION', 'PROJECT', 'INITIATIVE', 'TASK', 'ASSESSMENT',
-    'REPORT', 'DOCUMENT', 'SETTING', 'API_KEY', 'WEBHOOK', 'INTEGRATION'
+    'USER',
+    'ORGANIZATION',
+    'PROJECT',
+    'INITIATIVE',
+    'TASK',
+    'ASSESSMENT',
+    'REPORT',
+    'DOCUMENT',
+    'SETTING',
+    'API_KEY',
+    'WEBHOOK',
+    'INTEGRATION',
 ];
 
 export const EnterpriseAuditLog: React.FC = () => {
@@ -149,7 +171,7 @@ export const EnterpriseAuditLog: React.FC = () => {
 
             setLogs(Array.isArray(data) ? data : data.logs || []);
             if (data.pagination) {
-                setPagination(prev => ({ ...prev, total: data.pagination.total }));
+                setPagination((prev) => ({ ...prev, total: data.pagination.total }));
             }
 
             // Fetch stats
@@ -235,19 +257,19 @@ export const EnterpriseAuditLog: React.FC = () => {
                     <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
                         <button
                             onClick={() => setActiveView('logs')}
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeView === 'logs'
-                                ? 'bg-white/10 text-white'
-                                : 'text-slate-400 hover:text-white'
-                                }`}
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                                activeView === 'logs' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+                            }`}
                         >
                             Logs
                         </button>
                         <button
                             onClick={() => setActiveView('analytics')}
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeView === 'analytics'
-                                ? 'bg-white/10 text-white'
-                                : 'text-slate-400 hover:text-white'
-                                }`}
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                                activeView === 'analytics'
+                                    ? 'bg-white/10 text-white'
+                                    : 'text-slate-400 hover:text-white'
+                            }`}
                         >
                             Analytics
                         </button>
@@ -313,7 +335,10 @@ export const EnterpriseAuditLog: React.FC = () => {
             <div className="space-y-4">
                 <div className="flex items-center gap-4">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={16} />
+                        <Search
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"
+                            size={16}
+                        />
                         <input
                             type="text"
                             placeholder="Search by action, resource, user, request ID..."
@@ -335,10 +360,11 @@ export const EnterpriseAuditLog: React.FC = () => {
                     </select>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${showFilters
-                            ? 'bg-purple-600 border-purple-500 text-white'
-                            : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
+                            showFilters
+                                ? 'bg-purple-600 border-purple-500 text-white'
+                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                        }`}
                     >
                         <Filter size={16} />
                         Filters
@@ -364,8 +390,10 @@ export const EnterpriseAuditLog: React.FC = () => {
                                     className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
                                 >
                                     <option value="">All Actions</option>
-                                    {ACTION_TYPES.map(type => (
-                                        <option key={type} value={type}>{type}</option>
+                                    {ACTION_TYPES.map((type) => (
+                                        <option key={type} value={type}>
+                                            {type}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -377,8 +405,10 @@ export const EnterpriseAuditLog: React.FC = () => {
                                     className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
                                 >
                                     <option value="">All Resources</option>
-                                    {RESOURCE_TYPES.map(type => (
-                                        <option key={type} value={type}>{type}</option>
+                                    {RESOURCE_TYPES.map((type) => (
+                                        <option key={type} value={type}>
+                                            {type}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -390,8 +420,10 @@ export const EnterpriseAuditLog: React.FC = () => {
                                     className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
                                 >
                                     <option value="">All Tags</option>
-                                    {COMPLIANCE_TAGS.map(tag => (
-                                        <option key={tag.id} value={tag.id}>{tag.name}</option>
+                                    {COMPLIANCE_TAGS.map((tag) => (
+                                        <option key={tag.id} value={tag.id}>
+                                            {tag.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -501,8 +533,8 @@ export const EnterpriseAuditLog: React.FC = () => {
                                             <div className="flex items-center gap-3">
                                                 {log.compliance_tags?.length > 0 && (
                                                     <div className="flex gap-1">
-                                                        {log.compliance_tags.slice(0, 2).map(tag => {
-                                                            const tagConfig = COMPLIANCE_TAGS.find(t => t.id === tag);
+                                                        {log.compliance_tags.slice(0, 2).map((tag) => {
+                                                            const tagConfig = COMPLIANCE_TAGS.find((t) => t.id === tag);
                                                             return (
                                                                 <span
                                                                     key={tag}
@@ -519,7 +551,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                                                         )}
                                                     </div>
                                                 )}
-                                                <span className={`px-2 py-1 text-xs font-medium rounded ${riskConfig.color}/20 ${riskConfig.text}`}>
+                                                <span
+                                                    className={`px-2 py-1 text-xs font-medium rounded ${riskConfig.color}/20 ${riskConfig.text}`}
+                                                >
                                                     {log.risk_level}
                                                 </span>
                                                 {isExpanded ? (
@@ -538,7 +572,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                                                 <div>
                                                     <div className="text-xs text-slate-500">Log ID</div>
                                                     <div className="flex items-center gap-1 mt-1">
-                                                        <code className="text-xs text-slate-300 font-mono">{log.id.slice(0, 8)}...</code>
+                                                        <code className="text-xs text-slate-300 font-mono">
+                                                            {log.id.slice(0, 8)}...
+                                                        </code>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -604,7 +640,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                                             {log.user_agent && (
                                                 <div className="mt-4">
                                                     <div className="text-xs text-slate-500 mb-1">User Agent</div>
-                                                    <div className="text-xs text-slate-400 truncate">{log.user_agent}</div>
+                                                    <div className="text-xs text-slate-400 truncate">
+                                                        {log.user_agent}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -622,17 +660,17 @@ export const EnterpriseAuditLog: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                                    onClick={() =>
+                                        setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
+                                    }
                                     disabled={pagination.page === 1}
                                     className="px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-sm text-slate-300 disabled:opacity-50"
                                 >
                                     Previous
                                 </button>
-                                <span className="text-sm text-slate-400">
-                                    Page {pagination.page}
-                                </span>
+                                <span className="text-sm text-slate-400">Page {pagination.page}</span>
                                 <button
-                                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                                    onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
                                     disabled={logs.length < pagination.pageSize}
                                     className="px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-sm text-slate-300 disabled:opacity-50"
                                 >
@@ -688,7 +726,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                                                     style={{ width: `${percent}%` }}
                                                 />
                                             </div>
-                                            <div className="w-12 text-right text-sm text-slate-400">{Number(count)}</div>
+                                            <div className="w-12 text-right text-sm text-slate-400">
+                                                {Number(count)}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -702,7 +742,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                                 Compliance Coverage
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
-                                {COMPLIANCE_TAGS.map(tag => (
+                                {COMPLIANCE_TAGS.map((tag) => (
                                     <div
                                         key={tag.id}
                                         className={`p-3 rounded-lg ${tag.color.replace('text-', 'border-').replace('/20', '/30')} border`}
@@ -732,7 +772,10 @@ export const EnterpriseAuditLog: React.FC = () => {
                                             style={{ height: `${Math.random() * 80 + 20}%` }}
                                         />
                                         <div className="text-xs text-slate-500 mt-2">
-                                            {new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'short' })}
+                                            {new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(
+                                                'en-US',
+                                                { weekday: 'short' },
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -746,10 +789,3 @@ export const EnterpriseAuditLog: React.FC = () => {
 };
 
 export default EnterpriseAuditLog;
-
-
-
-
-
-
-

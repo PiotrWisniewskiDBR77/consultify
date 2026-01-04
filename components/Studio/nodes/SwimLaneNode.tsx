@@ -1,12 +1,12 @@
 /**
  * SwimLaneNode - Horizontal swimlane container
- * 
+ *
  * Container node for swimlane diagrams representing departments/roles.
  */
 
+import { Building2, User, Users } from 'lucide-react';
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
-import { User, Building2, Users } from 'lucide-react';
+import { Handle, NodeProps, NodeResizer, Position } from 'reactflow';
 
 interface SwimLaneData {
     label: string;
@@ -14,11 +14,7 @@ interface SwimLaneData {
     icon?: 'user' | 'building' | 'team';
 }
 
-export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
-    data,
-    selected,
-    isConnectable
-}: any) => {
+export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({ data, selected, isConnectable }: any) => {
     const { label, color = 'blue', icon = 'building' } = data;
 
     const colorClasses = {
@@ -28,7 +24,7 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
         red: 'bg-red-500/5 border-red-500/30',
         purple: 'bg-purple-500/5 border-purple-500/30',
         cyan: 'bg-cyan-500/5 border-cyan-500/30',
-        slate: 'bg-slate-500/5 border-slate-500/30'
+        slate: 'bg-slate-500/5 border-slate-500/30',
     };
 
     const headerColors = {
@@ -38,13 +34,13 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
         red: 'bg-red-500/20 border-red-500/50 text-red-300',
         purple: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
         cyan: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300',
-        slate: 'bg-slate-500/20 border-slate-500/50 text-slate-300'
+        slate: 'bg-slate-500/20 border-slate-500/50 text-slate-300',
     };
 
     const icons = {
         user: User,
         building: Building2,
-        team: Users
+        team: Users,
     };
 
     const Icon = (icons as any)[icon];
@@ -52,12 +48,7 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
     return (
         <>
             {/* Node Resizer - allows resizing the swimlane */}
-            <NodeResizer
-                color={selected ? '#3b82f6' : '#64748b'}
-                isVisible={selected}
-                minWidth={300}
-                minHeight={100}
-            />
+            <NodeResizer color={selected ? '#3b82f6' : '#64748b'} isVisible={selected} minWidth={300} minHeight={100} />
 
             <div
                 className={`
@@ -75,16 +66,12 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
                 >
                     <div className="flex flex-col items-center gap-2 -rotate-90 whitespace-nowrap">
                         <Icon size={14} className="rotate-90" />
-                        <span className="text-xs font-medium">
-                            {label || 'Lane'}
-                        </span>
+                        <span className="text-xs font-medium">{label || 'Lane'}</span>
                     </div>
                 </div>
 
                 {/* Content Area - nodes can be placed here */}
-                <div className="ml-10 h-full p-4">
-                    {/* This area is for dropping other nodes */}
-                </div>
+                <div className="ml-10 h-full p-4">{/* This area is for dropping other nodes */}</div>
             </div>
 
             {/* Connection handles on left and right for connecting lanes */}
@@ -109,12 +96,4 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(({
 SwimLaneNode.displayName = 'SwimLaneNode';
 
 export default SwimLaneNode;
-
-
-
-
-
-
-
-
 

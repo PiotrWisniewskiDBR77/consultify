@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
 /**
  * File filter - only allow PDF, Excel, Word
  */
-const fileFilter = (req, file, cb) => {
+export const fileFilter = (req, file, cb) => {
     const allowedExts = /pdf|xlsx|xls|docx|doc/;
     const allowedMimes = /pdf|spreadsheet|document|msword|ms-excel/;
 

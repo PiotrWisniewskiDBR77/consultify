@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { OnboardingProgress } from '../../../components/Onboarding/OnboardingProgress';
+import { OnboardingProgress } from '../../components/Onboarding/OnboardingProgress';
 
 describe('OnboardingProgress Component', () => {
     it('renders progress indicator', () => {
@@ -18,6 +18,7 @@ describe('OnboardingProgress Component', () => {
         expect(container.querySelector('.progress') || container.querySelector('[role="progressbar"]')).toBeInTheDocument();
     });
 });
+
 
 
 

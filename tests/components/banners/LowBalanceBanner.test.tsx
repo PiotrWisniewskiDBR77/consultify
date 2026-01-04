@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LowBalanceBanner } from '../../../components/banners/LowBalanceBanner';
+import { LowBalanceBanner } from '../../components/banners/LowBalanceBanner';
 
 describe('LowBalanceBanner Component', () => {
     const user = userEvent.setup();
@@ -30,6 +30,7 @@ describe('LowBalanceBanner Component', () => {
         expect(onTopUp).toHaveBeenCalled();
     });
 });
+
 
 
 

@@ -1,14 +1,12 @@
 /**
  * Aibudget Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadAibudgetservice = createCachedLazyService('../../services/aiBudgetService.js');
+import service from '../../services/aiBudgetService.js';
 
 // Export default instance (for backward compatibility)
-export default loadAibudgetservice();
+export default service;

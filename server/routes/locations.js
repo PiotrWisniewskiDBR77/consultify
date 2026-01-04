@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import auth from '../middleware/authMiddleware.js';
 import { requireRole  } from '../middleware/rbac.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import * as FacilityUserServiceModule from '../services/facilityUserService.js';
 const FacilityUserService = FacilityUserServiceModule.default || FacilityUserServiceModule;

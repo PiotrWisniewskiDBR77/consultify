@@ -1,33 +1,34 @@
 /**
  * SubscriptionsPanel - Subscription Management
- * 
+ *
  * Features:
  * - Active subscriptions list
  * - Plan changes history
  * - Cancel/pause functionality
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    CreditCard,
+    AlertTriangle,
+    ArrowRight,
     Building2,
     Calendar,
-    Clock,
     CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Pause,
-    Play,
-    RefreshCw,
-    Search,
-    Plus,
+    Clock,
+    CreditCard,
     Edit2,
     Loader2,
-    ArrowRight,
-    Zap
+    Pause,
+    Play,
+    Plus,
+    RefreshCw,
+    Search,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface Subscription {
     id: string;
@@ -81,7 +82,7 @@ export const SubscriptionsPanel: React.FC = () => {
         organizationId: '',
         planId: '',
         billingCycle: 'monthly',
-        trialDays: 0
+        trialDays: 0,
     });
     const [saving, setSaving] = useState(false);
 
@@ -91,7 +92,7 @@ export const SubscriptionsPanel: React.FC = () => {
             const [subsResult, plansResult, orgsResult] = await Promise.all([
                 Api.get(`/billing/subscriptions${filterStatus !== 'all' ? `?status=${filterStatus}` : ''}`),
                 Api.get('/billing/plans'),
-                Api.getOrganizations()
+                Api.getOrganizations(),
             ]);
             setSubscriptions(subsResult.subscriptions || []);
             setPlans(plansResult.plans || []);
@@ -150,7 +151,7 @@ export const SubscriptionsPanel: React.FC = () => {
     const formatCurrency = (cents: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'USD',
         }).format(cents / 100);
     };
 
@@ -170,25 +171,24 @@ export const SubscriptionsPanel: React.FC = () => {
             past_due: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' },
             canceled: { icon: <XCircle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
             unpaid: { icon: <AlertTriangle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
-            paused: { icon: <Pause size={14} />, bg: 'bg-slate-500/20', text: 'text-slate-400' }
+            paused: { icon: <Pause size={14} />, bg: 'bg-slate-500/20', text: 'text-slate-400' },
         };
         const config = configs[status] || configs.active;
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+            <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+            >
                 {config.icon}
                 {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
             </span>
         );
     };
 
-    const filteredSubscriptions = subscriptions.filter(sub => {
+    const filteredSubscriptions = subscriptions.filter((sub) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
-        return (
-            sub.organization_name?.toLowerCase().includes(query) ||
-            sub.plan_name?.toLowerCase().includes(query)
-        );
+        return sub.organization_name?.toLowerCase().includes(query) || sub.plan_name?.toLowerCase().includes(query);
     });
 
     return (
@@ -250,7 +250,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {filteredSubscriptions.map(sub => (
+                    {filteredSubscriptions.map((sub) => (
                         <div key={sub.id} className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-5">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -324,12 +324,16 @@ export const SubscriptionsPanel: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Organization</label>
                                 <select
                                     value={createForm.organizationId}
-                                    onChange={(e) => setCreateForm(prev => ({ ...prev, organizationId: e.target.value }))}
+                                    onChange={(e) =>
+                                        setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
+                                    }
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 >
                                     <option value="">Select organization</option>
-                                    {organizations.map(org => (
-                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    {organizations.map((org) => (
+                                        <option key={org.id} value={org.id}>
+                                            {org.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -338,30 +342,33 @@ export const SubscriptionsPanel: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Plan</label>
                                 <select
                                     value={createForm.planId}
-                                    onChange={(e) => setCreateForm(prev => ({ ...prev, planId: e.target.value }))}
+                                    onChange={(e) => setCreateForm((prev) => ({ ...prev, planId: e.target.value }))}
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 >
                                     <option value="">Select plan</option>
-                                    {plans.filter(p => p.is_active).map(plan => (
-                                        <option key={plan.id} value={plan.id}>
-                                            {plan.name} - {formatCurrency(plan.price_monthly)}/mo
-                                        </option>
-                                    ))}
+                                    {plans
+                                        .filter((p) => p.is_active)
+                                        .map((plan) => (
+                                            <option key={plan.id} value={plan.id}>
+                                                {plan.name} - {formatCurrency(plan.price_monthly)}/mo
+                                            </option>
+                                        ))}
                                 </select>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Billing Cycle</label>
                                 <div className="flex gap-3">
-                                    {(['monthly', 'yearly'] as const).map(cycle => (
+                                    {(['monthly', 'yearly'] as const).map((cycle) => (
                                         <button
                                             key={cycle}
                                             type="button"
-                                            onClick={() => setCreateForm(prev => ({ ...prev, billingCycle: cycle }))}
-                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${createForm.billingCycle === cycle
+                                            onClick={() => setCreateForm((prev) => ({ ...prev, billingCycle: cycle }))}
+                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
+                                                createForm.billingCycle === cycle
                                                     ? 'bg-violet-500/20 border-violet-500/50 text-violet-400'
                                                     : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
-                                                }`}
+                                            }`}
                                         >
                                             {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
                                         </button>
@@ -370,13 +377,17 @@ export const SubscriptionsPanel: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Trial Period (days)</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Trial Period (days)
+                                </label>
                                 <input
                                     type="number"
                                     min={0}
                                     max={90}
                                     value={createForm.trialDays}
-                                    onChange={(e) => setCreateForm(prev => ({ ...prev, trialDays: parseInt(e.target.value) || 0 }))}
+                                    onChange={(e) =>
+                                        setCreateForm((prev) => ({ ...prev, trialDays: parseInt(e.target.value) || 0 }))
+                                    }
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 />
                             </div>
@@ -431,11 +442,13 @@ export const SubscriptionsPanel: React.FC = () => {
                                     }}
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                                 >
-                                    {plans.filter(p => p.is_active).map(plan => (
-                                        <option key={plan.id} value={plan.id}>
-                                            {plan.name} - {formatCurrency(plan.price_monthly)}/mo
-                                        </option>
-                                    ))}
+                                    {plans
+                                        .filter((p) => p.is_active)
+                                        .map((plan) => (
+                                            <option key={plan.id} value={plan.id}>
+                                                {plan.name} - {formatCurrency(plan.price_monthly)}/mo
+                                            </option>
+                                        ))}
                                 </select>
                             </div>
 
@@ -482,10 +495,4 @@ export const SubscriptionsPanel: React.FC = () => {
 };
 
 export default SubscriptionsPanel;
-
-
-
-
-
-
 

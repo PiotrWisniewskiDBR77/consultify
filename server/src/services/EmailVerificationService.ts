@@ -1,14 +1,12 @@
 /**
  * Emailverification Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadEmailverificationservice = createCachedLazyService('../../services/EmailVerificationService.js');
+import service from '../../services/EmailVerificationService.js';
 
 // Export default instance (for backward compatibility)
-export default loadEmailverificationservice();
+export default service;

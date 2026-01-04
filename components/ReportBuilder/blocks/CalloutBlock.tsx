@@ -1,6 +1,7 @@
+import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import React from 'react';
-import { ReportBlock, CalloutBlockContent } from '../../../types';
-import { AlertCircle, Info, CheckCircle, AlertTriangle } from 'lucide-react';
+
+import { CalloutBlockContent, ReportBlock } from '../../../types';
 
 interface CalloutBlockProps {
     block: ReportBlock;
@@ -14,26 +15,34 @@ export const CalloutBlock: React.FC<CalloutBlockProps> = ({ block, onUpdate }) =
 
     const getStyles = () => {
         switch (level) {
-            case 'warning': return 'bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200';
-            case 'success': return 'bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 text-green-800 dark:text-green-200';
-            case 'error': return 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-800 dark:text-red-200';
-            default: return 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200';
+            case 'warning':
+                return 'bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200';
+            case 'success':
+                return 'bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 text-green-800 dark:text-green-200';
+            case 'error':
+                return 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-800 dark:text-red-200';
+            default:
+                return 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200';
         }
     };
 
     const getIcon = () => {
         switch (level) {
-            case 'warning': return <AlertTriangle className="w-5 h-5" />;
-            case 'success': return <CheckCircle className="w-5 h-5" />;
-            case 'error': return <AlertCircle className="w-5 h-5" />;
-            default: return <Info className="w-5 h-5" />;
+            case 'warning':
+                return <AlertTriangle className="w-5 h-5" />;
+            case 'success':
+                return <CheckCircle className="w-5 h-5" />;
+            case 'error':
+                return <AlertCircle className="w-5 h-5" />;
+            default:
+                return <Info className="w-5 h-5" />;
         }
     };
 
     const handleChangeText = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const updatedContent: CalloutBlockContent = {
             level: level as 'info' | 'warning' | 'success' | 'error',
-            text: e.target.value
+            text: e.target.value,
         };
         onUpdate({ content: updatedContent });
     };

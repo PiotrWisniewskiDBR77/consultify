@@ -1,11 +1,11 @@
 /**
  * MindmapNode - Circular mindmap node
- * 
+ *
  * Circular node for mind mapping and brainstorming.
  */
 
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 interface MindmapNodeData {
     label: string;
@@ -13,11 +13,7 @@ interface MindmapNodeData {
     color?: 'blue' | 'green' | 'amber' | 'red' | 'purple' | 'cyan';
 }
 
-export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
-    data,
-    selected,
-    isConnectable
-}: any) => {
+export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({ data, selected, isConnectable }: any) => {
     const { label, level = 1, color = 'blue' } = data;
 
     // Size based on level
@@ -25,7 +21,7 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
         0: 'w-28 h-28 text-base font-bold', // Central topic
         1: 'w-24 h-24 text-sm font-semibold', // Main branches
         2: 'w-20 h-20 text-xs font-medium', // Sub-branches
-        3: 'w-16 h-16 text-[10px]' // Leaves
+        3: 'w-16 h-16 text-[10px]', // Leaves
     };
 
     const colorClasses = {
@@ -34,7 +30,7 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
         amber: 'border-amber-500 bg-amber-500/20 text-amber-200',
         red: 'border-red-500 bg-red-500/20 text-red-200',
         purple: 'border-purple-500 bg-purple-500/20 text-purple-200',
-        cyan: 'border-cyan-500 bg-cyan-500/20 text-cyan-200'
+        cyan: 'border-cyan-500 bg-cyan-500/20 text-cyan-200',
     };
 
     return (
@@ -54,9 +50,7 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
             />
 
             {/* Content */}
-            <span className="line-clamp-3 overflow-hidden px-1">
-                {label || 'Topic'}
-            </span>
+            <span className="line-clamp-3 overflow-hidden px-1">{label || 'Topic'}</span>
 
             {/* Output Handles for radial connections */}
             <Handle
@@ -87,12 +81,4 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(({
 MindmapNode.displayName = 'MindmapNode';
 
 export default MindmapNode;
-
-
-
-
-
-
-
-
 

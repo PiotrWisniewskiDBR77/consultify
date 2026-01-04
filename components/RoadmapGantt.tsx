@@ -1,6 +1,6 @@
 /**
  * RoadmapGantt
- * 
+ *
  * Strategic Roadmap Gantt Chart with:
  * - Drag-and-drop to move initiatives
  * - Resize handles to adjust duration
@@ -10,25 +10,26 @@
  * - Status indicators
  */
 
-import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+    AlertTriangle,
+    ArrowRight,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Filter,
     GripVertical,
+    Link,
     Maximize2,
     Minimize2,
     ZoomIn,
     ZoomOut,
-    ChevronLeft,
-    ChevronRight,
-    AlertTriangle,
-    Link,
-    ArrowRight,
-    Calendar,
-    Filter
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { Initiative, InitiativeStatus } from '../types/domain';
 import { StatusTransitionDropdown } from './PMO/StatusTransitionDropdown';
-import toast from 'react-hot-toast';
 
 type Quarter = string;
 
@@ -68,7 +69,7 @@ const generateMonths = (startYear: number, numMonths: number) => {
             month,
             year,
             label: new Date(year, month).toLocaleDateString('pl-PL', { month: 'short' }),
-            fullLabel: new Date(year, month).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' })
+            fullLabel: new Date(year, month).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' }),
         });
         month++;
         if (month > 11) {
@@ -87,25 +88,25 @@ const AXIS_COLORS: Record<string, string> = {
     culture: 'bg-amber-500',
     aiMaturity: 'bg-emerald-500',
     businessModels: 'bg-indigo-500',
-    cybersecurity: 'bg-red-500'
+    cybersecurity: 'bg-red-500',
 };
 
 // Status colors
 const STATUS_COLORS: Record<string, string> = {
-    'approved': 'border-l-4 border-l-green-500',
-    'active': 'border-l-4 border-l-purple-500',
-    'on_hold': 'border-l-4 border-l-red-500 animate-pulse',
+    approved: 'border-l-4 border-l-green-500',
+    active: 'border-l-4 border-l-purple-500',
+    on_hold: 'border-l-4 border-l-red-500 animate-pulse',
     // Legacy support
-    'APPROVED': 'border-l-4 border-l-green-500',
-    'EXECUTING': 'border-l-4 border-l-purple-500',
-    'BLOCKED': 'border-l-4 border-l-red-500 animate-pulse'
+    APPROVED: 'border-l-4 border-l-green-500',
+    EXECUTING: 'border-l-4 border-l-purple-500',
+    BLOCKED: 'border-l-4 border-l-red-500 animate-pulse',
 };
 
 export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
     initiatives,
     onUpdateInitiative,
     onInitiativeClick,
-    onCreateDependency
+    onCreateDependency,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const timelineRef = useRef<HTMLDivElement>(null);
@@ -124,112 +125,136 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
     // Calculate cell width based on zoom
     const cellWidth = useMemo(() => {
         switch (zoomLevel) {
-            case 'month': return 100;
-            case 'quarter': return 300;
-            case 'year': return 600;
-            default: return 100;
+            case 'month':
+                return 100;
+            case 'quarter':
+                return 300;
+            case 'year':
+                return 600;
+            default:
+                return 100;
         }
     }, [zoomLevel]);
 
     // Calculate positions based on dates or quarters
-    const getInitiativePosition = useCallback((init: GanttInitiative) => {
-        // Try dates first
-        if (init.plannedStartDate && init.plannedEndDate) {
-            const startDate = new Date(init.plannedStartDate);
-            const endDate = new Date(init.plannedEndDate);
-            const startMonth = (startDate.getFullYear() - currentYear) * 12 + startDate.getMonth();
-            const endMonth = (endDate.getFullYear() - currentYear) * 12 + endDate.getMonth();
+    const getInitiativePosition = useCallback(
+        (init: GanttInitiative) => {
+            // Try dates first
+            if (init.plannedStartDate && init.plannedEndDate) {
+                const startDate = new Date(init.plannedStartDate);
+                const endDate = new Date(init.plannedEndDate);
+                const startMonth = (startDate.getFullYear() - currentYear) * 12 + startDate.getMonth();
+                const endMonth = (endDate.getFullYear() - currentYear) * 12 + endDate.getMonth();
+
+                return {
+                    left: startMonth * cellWidth,
+                    width: Math.max((endMonth - startMonth + 1) * cellWidth, cellWidth),
+                };
+            }
+
+            // Fall back to quarter
+            const quarterIndex = QUARTERS.indexOf(init.quarter || 'Q1');
+            const monthIndex = quarterIndex * 3;
 
             return {
-                left: startMonth * cellWidth,
-                width: Math.max((endMonth - startMonth + 1) * cellWidth, cellWidth)
+                left: monthIndex * cellWidth,
+                width: cellWidth * 3, // Default 3 months
             };
-        }
-
-        // Fall back to quarter
-        const quarterIndex = QUARTERS.indexOf(init.quarter || 'Q1');
-        const monthIndex = quarterIndex * 3;
-
-        return {
-            left: monthIndex * cellWidth,
-            width: cellWidth * 3 // Default 3 months
-        };
-    }, [cellWidth, currentYear]);
+        },
+        [cellWidth, currentYear],
+    );
 
     // Handle drag end
-    const handleDragEnd = useCallback((init: GanttInitiative, info: any) => {
-        setActiveDrag(null);
-        if (!timelineRef.current) return;
+    const handleDragEnd = useCallback(
+        (init: GanttInitiative, info: any) => {
+            setActiveDrag(null);
+            if (!timelineRef.current) return;
 
-        const bounds = timelineRef.current.getBoundingClientRect();
-        const pixelsPerMonth = cellWidth;
-        const monthsMoved = Math.round(info.offset.x / pixelsPerMonth);
+            const bounds = timelineRef.current.getBoundingClientRect();
+            const pixelsPerMonth = cellWidth;
+            const monthsMoved = Math.round(info.offset.x / pixelsPerMonth);
 
-        if (monthsMoved === 0) return;
+            if (monthsMoved === 0) return;
 
-        // Calculate new dates
-        const currentStart = init.plannedStartDate ? new Date(init.plannedStartDate) : new Date(currentYear, QUARTERS.indexOf(init.quarter || 'Q1') * 3, 1);
-        const currentEnd = init.plannedEndDate ? new Date(init.plannedEndDate) : new Date(currentStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+            // Calculate new dates
+            const currentStart = init.plannedStartDate
+                ? new Date(init.plannedStartDate)
+                : new Date(currentYear, QUARTERS.indexOf(init.quarter || 'Q1') * 3, 1);
+            const currentEnd = init.plannedEndDate
+                ? new Date(init.plannedEndDate)
+                : new Date(currentStart.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-        currentStart.setMonth(currentStart.getMonth() + monthsMoved);
-        currentEnd.setMonth(currentEnd.getMonth() + monthsMoved);
+            currentStart.setMonth(currentStart.getMonth() + monthsMoved);
+            currentEnd.setMonth(currentEnd.getMonth() + monthsMoved);
 
-        onUpdateInitiative({
-            ...(init as any),
-            ...init,
-            plannedStartDate: currentStart.toISOString(),
-            plannedEndDate: currentEnd.toISOString()
-        });
+            onUpdateInitiative({
+                ...(init as any),
+                ...init,
+                plannedStartDate: currentStart.toISOString(),
+                plannedEndDate: currentEnd.toISOString(),
+            });
 
-        toast.success('Initiative moved');
-    }, [cellWidth, currentYear, onUpdateInitiative]);
+            toast.success('Initiative moved');
+        },
+        [cellWidth, currentYear, onUpdateInitiative],
+    );
 
     // Handle resize
-    const handleResize = useCallback((init: GanttInitiative, deltaX: number, edge: 'start' | 'end') => {
-        const monthsDelta = Math.round(deltaX / cellWidth);
-        if (monthsDelta === 0) return;
+    const handleResize = useCallback(
+        (init: GanttInitiative, deltaX: number, edge: 'start' | 'end') => {
+            const monthsDelta = Math.round(deltaX / cellWidth);
+            if (monthsDelta === 0) return;
 
-        const currentStart = init.plannedStartDate ? new Date(init.plannedStartDate) : new Date(currentYear, QUARTERS.indexOf(init.quarter || 'Q1') * 3, 1);
-        const currentEnd = init.plannedEndDate ? new Date(init.plannedEndDate) : new Date(currentStart.getTime() + 90 * 24 * 60 * 60 * 1000);
+            const currentStart = init.plannedStartDate
+                ? new Date(init.plannedStartDate)
+                : new Date(currentYear, QUARTERS.indexOf(init.quarter || 'Q1') * 3, 1);
+            const currentEnd = init.plannedEndDate
+                ? new Date(init.plannedEndDate)
+                : new Date(currentStart.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-        if (edge === 'start') {
-            currentStart.setMonth(currentStart.getMonth() + monthsDelta);
-            if (currentStart >= currentEnd) return; // Prevent invalid range
-        } else {
-            currentEnd.setMonth(currentEnd.getMonth() + monthsDelta);
-            if (currentEnd <= currentStart) return;
-        }
+            if (edge === 'start') {
+                currentStart.setMonth(currentStart.getMonth() + monthsDelta);
+                if (currentStart >= currentEnd) return; // Prevent invalid range
+            } else {
+                currentEnd.setMonth(currentEnd.getMonth() + monthsDelta);
+                if (currentEnd <= currentStart) return;
+            }
 
-        onUpdateInitiative({
-            ...(init as any),
-            ...init,
-            plannedStartDate: currentStart.toISOString(),
-            plannedEndDate: currentEnd.toISOString()
-        });
-    }, [cellWidth, currentYear, onUpdateInitiative]);
+            onUpdateInitiative({
+                ...(init as any),
+                ...init,
+                plannedStartDate: currentStart.toISOString(),
+                plannedEndDate: currentEnd.toISOString(),
+            });
+        },
+        [cellWidth, currentYear, onUpdateInitiative],
+    );
 
     // Handle dependency creation
-    const handleLinkClick = useCallback((initiativeId: string) => {
-        if (!linkingFrom) {
-            setLinkingFrom(initiativeId);
-            toast('Click another initiative to create dependency', { icon: '🔗' });
-        } else if (linkingFrom !== initiativeId) {
-            onCreateDependency?.(linkingFrom, initiativeId, 'FINISH_TO_START');
-            setLinkingFrom(null);
-            toast.success('Dependency created');
-        } else {
-            setLinkingFrom(null);
-        }
-    }, [linkingFrom, onCreateDependency]);
+    const handleLinkClick = useCallback(
+        (initiativeId: string) => {
+            if (!linkingFrom) {
+                setLinkingFrom(initiativeId);
+                toast('Click another initiative to create dependency', { icon: '🔗' });
+            } else if (linkingFrom !== initiativeId) {
+                onCreateDependency?.(linkingFrom, initiativeId, 'FINISH_TO_START');
+                setLinkingFrom(null);
+                toast.success('Dependency created');
+            } else {
+                setLinkingFrom(null);
+            }
+        },
+        [linkingFrom, onCreateDependency],
+    );
 
     // Toggle fullscreen
     const toggleFullscreen = useCallback(() => {
-        setIsFullscreen(prev => !prev);
+        setIsFullscreen((prev) => !prev);
     }, []);
 
     // Scroll handlers
-    const scrollLeft = () => setScrollOffset(prev => Math.max(0, prev - cellWidth * 3));
-    const scrollRight = () => setScrollOffset(prev => prev + cellWidth * 3);
+    const scrollLeft = () => setScrollOffset((prev) => Math.max(0, prev - cellWidth * 3));
+    const scrollRight = () => setScrollOffset((prev) => prev + cellWidth * 3);
 
     // Group by timeline columns
     const timelineGroups = useMemo(() => {
@@ -238,13 +263,13 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         } else if (zoomLevel === 'quarter') {
             const quarters = [];
             for (let i = 0; i < months.length; i += 3) {
-                const q = Math.floor(i / 3) % 4 + 1;
+                const q = (Math.floor(i / 3) % 4) + 1;
                 const year = months[i].year;
                 quarters.push({
                     index: i / 3,
                     label: `Q${q}`,
                     fullLabel: `Q${q} ${year}`,
-                    width: cellWidth
+                    width: cellWidth,
                 });
             }
             return quarters;
@@ -253,8 +278,11 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
     }, [months, zoomLevel, cellWidth]);
 
     return (
-        <div className={`flex flex-col bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm ${isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
-            }`}>
+        <div
+            className={`flex flex-col bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm ${
+                isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
+            }`}
+        >
             {/* Toolbar */}
             <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-2">
@@ -267,15 +295,21 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                     <div className="flex items-center bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-white/10 p-0.5">
                         <button
                             onClick={() => setZoomLevel('month')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${zoomLevel === 'month' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400'
-                                }`}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                zoomLevel === 'month'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'text-slate-600 dark:text-slate-400'
+                            }`}
                         >
                             Month
                         </button>
                         <button
                             onClick={() => setZoomLevel('quarter')}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${zoomLevel === 'quarter' ? 'bg-purple-600 text-white' : 'text-slate-600 dark:text-slate-400'
-                                }`}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                zoomLevel === 'quarter'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'text-slate-600 dark:text-slate-400'
+                            }`}
                         >
                             Quarter
                         </button>
@@ -311,10 +345,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                 <div className="w-72 min-w-[288px] p-3 font-bold text-xs uppercase text-slate-500 border-r border-slate-200 dark:border-white/5 shrink-0">
                     Initiative
                 </div>
-                <div
-                    className="flex-1 overflow-hidden"
-                    style={{ transform: `translateX(-${scrollOffset}px)` }}
-                >
+                <div className="flex-1 overflow-hidden" style={{ transform: `translateX(-${scrollOffset}px)` }}>
                     <div className="flex" style={{ width: timelineGroups.length * cellWidth }}>
                         {timelineGroups.map((group: any, idx) => (
                             <div
@@ -352,8 +383,9 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                         return (
                             <div
                                 key={init.id}
-                                className={`flex border-b border-slate-100 dark:border-white/5 group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors ${isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
-                                    }`}
+                                className={`flex border-b border-slate-100 dark:border-white/5 group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors ${
+                                    isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                                }`}
                             >
                                 {/* Info Column */}
                                 <div
@@ -362,7 +394,10 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                 >
                                     <div className="flex items-center gap-2">
                                         <div className={`w-2 h-2 rounded-full ${barColor}`} />
-                                        <div className="font-semibold text-navy-900 dark:text-white truncate flex-1" title={init.name}>
+                                        <div
+                                            className="font-semibold text-navy-900 dark:text-white truncate flex-1"
+                                            title={init.name}
+                                        >
                                             {init.name}
                                         </div>
                                         {onCreateDependency && (
@@ -371,10 +406,11 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                                     e.stopPropagation();
                                                     handleLinkClick(init.id);
                                                 }}
-                                                className={`p-1 rounded transition-colors ${isLinking
-                                                    ? 'bg-purple-600 text-white'
-                                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10'
-                                                    }`}
+                                                className={`p-1 rounded transition-colors ${
+                                                    isLinking
+                                                        ? 'bg-purple-600 text-white'
+                                                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10'
+                                                }`}
                                                 title="Create dependency"
                                             >
                                                 <Link size={12} />
@@ -384,10 +420,13 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
                                         <span className="capitalize">{init.axis}</span>
                                         <span>•</span>
-                                        <span className={`px-1.5 py-0.5 rounded ${init.priority === 'high' || init.priority === 'critical'
-                                            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                            }`}>
+                                        <span
+                                            className={`px-1.5 py-0.5 rounded ${
+                                                init.priority === 'high' || init.priority === 'critical'
+                                                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}
+                                        >
                                             {init.priority}
                                         </span>
                                         {(init.status === 'BLOCKED' || init.status === 'on_hold') && (
@@ -398,7 +437,9 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
 
                                 {/* Timeline Container */}
                                 <div
-                                    ref={idx => { if (init.id === initiatives[0]?.id) timelineRef.current = idx as any; }}
+                                    ref={(idx) => {
+                                        if (init.id === initiatives[0]?.id) timelineRef.current = idx as any;
+                                    }}
                                     className="flex-1 relative h-20 overflow-hidden"
                                     style={{ transform: `translateX(-${scrollOffset}px)` }}
                                 >
@@ -421,21 +462,25 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                         drag="x"
                                         dragMomentum={false}
                                         dragElastic={0}
-                                        dragConstraints={{ left: 0, right: timelineGroups.length * cellWidth - position.width }}
+                                        dragConstraints={{
+                                            left: 0,
+                                            right: timelineGroups.length * cellWidth - position.width,
+                                        }}
                                         style={{
                                             position: 'absolute',
                                             left: position.left,
                                             width: position.width,
                                             top: '20%',
                                             bottom: '20%',
-                                            zIndex: isActive ? 50 : 10
+                                            zIndex: isActive ? 50 : 10,
                                         }}
                                         onDragStart={() => setActiveDrag(init.id)}
                                         onDragEnd={(e, info) => handleDragEnd(init, info)}
                                         onHoverStart={() => setHoveredInitiative(init.id)}
                                         onHoverEnd={() => setHoveredInitiative(null)}
-                                        className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${isActive ? 'ring-2 ring-white ring-offset-2' : ''
-                                            }`}
+                                        className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${
+                                            isActive ? 'ring-2 ring-white ring-offset-2' : ''
+                                        }`}
                                         whileHover={{ scale: 1.01 }}
                                         whileTap={{ scale: 0.99 }}
                                     >
@@ -470,7 +515,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
 
                                     {/* Dependency Arrows - simplified visualization */}
                                     {init.dependencies?.map((dep: any) => {
-                                        const depInit = initiatives.find(i => i.id === dep.initiativeId);
+                                        const depInit = initiatives.find((i) => i.id === dep.initiativeId);
                                         if (!depInit) return null;
                                         const depPos = getInitiativePosition(depInit as GanttInitiative);
 
@@ -483,7 +528,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                                                     top: '50%',
                                                     width: position.left - (depPos.left + depPos.width),
                                                     height: 20,
-                                                    transform: 'translateY(-50%)'
+                                                    transform: 'translateY(-50%)',
                                                 }}
                                             >
                                                 <line
@@ -514,21 +559,18 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             {/* Footer with legend */}
             <div className="shrink-0 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-white/5 flex items-center gap-4 text-xs text-slate-500">
                 <span className="font-medium">Legend:</span>
-                {Object.entries(AXIS_COLORS).slice(0, 5).map(([axis, color]) => (
-                    <div key={axis} className="flex items-center gap-1.5">
-                        <div className={`w-3 h-3 rounded ${color}`} />
-                        <span className="capitalize">{axis.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    </div>
-                ))}
+                {Object.entries(AXIS_COLORS)
+                    .slice(0, 5)
+                    .map(([axis, color]) => (
+                        <div key={axis} className="flex items-center gap-1.5">
+                            <div className={`w-3 h-3 rounded ${color}`} />
+                            <span className="capitalize">{axis.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        </div>
+                    ))}
             </div>
 
             {/* Fullscreen overlay */}
-            {isFullscreen && (
-                <div
-                    className="fixed inset-0 bg-black/50 -z-10"
-                    onClick={toggleFullscreen}
-                />
-            )}
+            {isFullscreen && <div className="fixed inset-0 bg-black/50 -z-10" onClick={toggleFullscreen} />}
         </div>
     );
 };

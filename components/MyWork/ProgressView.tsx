@@ -1,7 +1,7 @@
 /**
  * ProgressView - Personal analytics dashboard
  * Part of My Work Module PMO Upgrade
- * 
+ *
  * Features:
  * - Tasks completed stats
  * - On-time delivery rate
@@ -10,22 +10,23 @@
  * - Period selector
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    TrendingUp,
-    TrendingDown,
-    Minus,
-    CheckCircle2,
-    Clock,
-    Target,
-    Calendar,
     BarChart3,
+    Calendar,
+    CheckCircle2,
+    ChevronDown,
+    Clock,
     Loader2,
-    ChevronDown
+    Minus,
+    Target,
+    TrendingDown,
+    TrendingUp,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 interface PersonalStats {
     completed: number;
@@ -55,17 +56,19 @@ type Period = 'week' | 'month' | 'quarter';
  */
 const Sparkline: React.FC<{ data: number[]; color?: string }> = ({ data, color = 'text-purple-500' }) => {
     if (!data || data.length === 0) return null;
-    
+
     const max = Math.max(...data);
     const min = Math.min(...data);
     const range = max - min || 1;
     const height = 40;
     const width = 120;
-    const points = data.map((val, i) => {
-        const x = (i / (data.length - 1)) * width;
-        const y = height - ((val - min) / range) * height;
-        return `${x},${y}`;
-    }).join(' ');
+    const points = data
+        .map((val, i) => {
+            const x = (i / (data.length - 1)) * width;
+            const y = height - ((val - min) / range) * height;
+            return `${x},${y}`;
+        })
+        .join(' ');
 
     return (
         <svg width={width} height={height} className="overflow-visible">
@@ -95,13 +98,13 @@ const Sparkline: React.FC<{ data: number[]; color?: string }> = ({ data, color =
 /**
  * Progress Bar Component
  */
-const ProgressBar: React.FC<{ value: number; max?: number; color?: string }> = ({ 
-    value, 
-    max = 100, 
-    color = 'bg-purple-500' 
+const ProgressBar: React.FC<{ value: number; max?: number; color?: string }> = ({
+    value,
+    max = 100,
+    color = 'bg-purple-500',
 }) => {
     const percentage = Math.min((value / max) * 100, 100);
-    
+
     return (
         <div className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
             <motion.div
@@ -142,16 +145,10 @@ const StatCard: React.FC<{
                     </div>
                 )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                {label}
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{label}</p>
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-navy-900 dark:text-white">
-                    {value}
-                </span>
-                {subValue && (
-                    <span className="text-sm text-slate-400">{subValue}</span>
-                )}
+                <span className="text-2xl font-bold text-navy-900 dark:text-white">{value}</span>
+                {subValue && <span className="text-sm text-slate-400">{subValue}</span>}
             </div>
             {progress && (
                 <div className="mt-3">
@@ -178,7 +175,7 @@ const PeriodSelector: React.FC<{
     const periods: { id: Period; label: string }[] = [
         { id: 'week', label: t('progress.period.week', 'This Week') },
         { id: 'month', label: t('progress.period.month', 'This Month') },
-        { id: 'quarter', label: t('progress.period.quarter', 'This Quarter') }
+        { id: 'quarter', label: t('progress.period.quarter', 'This Quarter') },
     ];
 
     return (
@@ -194,7 +191,10 @@ const PeriodSelector: React.FC<{
                     </option>
                 ))}
             </select>
-            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <ChevronDown
+                size={14}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
         </div>
     );
 };
@@ -215,7 +215,7 @@ export const ProgressView: React.FC = () => {
         velocityChange: 0,
         trend: 'stable',
         byPriority: { high: 0, medium: 0, low: 0 },
-        byStatus: { completed: 0, inProgress: 0, todo: 0, overdue: 0 }
+        byStatus: { completed: 0, inProgress: 0, todo: 0, overdue: 0 },
     });
 
     useEffect(() => {
@@ -236,7 +236,7 @@ export const ProgressView: React.FC = () => {
                     velocityChange: response.velocityChange || 0,
                     trend: response.trend || 'stable',
                     byPriority: response.byPriority || { high: 0, medium: 0, low: 0 },
-                    byStatus: response.byStatus || { completed: 0, inProgress: 0, todo: 0, overdue: 0 }
+                    byStatus: response.byStatus || { completed: 0, inProgress: 0, todo: 0, overdue: 0 },
                 });
             }
         } catch (error) {
@@ -251,7 +251,7 @@ export const ProgressView: React.FC = () => {
                 velocityChange: 12,
                 trend: 'up',
                 byPriority: { high: 4, medium: 6, low: 2 },
-                byStatus: { completed: 12, inProgress: 4, todo: 2, overdue: 1 }
+                byStatus: { completed: 12, inProgress: 4, todo: 2, overdue: 1 },
             });
         } finally {
             setLoading(false);
@@ -308,7 +308,9 @@ export const ProgressView: React.FC = () => {
                         label={t('progress.onTimeRate', 'On-Time Rate')}
                         value={`${stats.onTimeRate}%`}
                         trend={stats.onTimeRate >= 80 ? 'up' : stats.onTimeRate >= 60 ? 'stable' : 'down'}
-                        trendValue={stats.onTimeRate >= 80 ? 'Excellent' : stats.onTimeRate >= 60 ? 'Good' : 'Needs improvement'}
+                        trendValue={
+                            stats.onTimeRate >= 80 ? 'Excellent' : stats.onTimeRate >= 60 ? 'Good' : 'Needs improvement'
+                        }
                     />
 
                     {/* Velocity Trend */}
@@ -342,9 +344,11 @@ export const ProgressView: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <span className="text-xs text-slate-500 w-16">{t('progress.high', 'High')}</span>
                             <div className="flex-1 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-red-500 rounded-full" 
-                                    style={{ width: `${stats.total > 0 ? (stats.byPriority.high / stats.total) * 100 : 0}%` }} 
+                                <div
+                                    className="h-full bg-red-500 rounded-full"
+                                    style={{
+                                        width: `${stats.total > 0 ? (stats.byPriority.high / stats.total) * 100 : 0}%`,
+                                    }}
                                 />
                             </div>
                             <span className="text-sm font-medium text-navy-900 dark:text-white w-8 text-right">
@@ -354,9 +358,11 @@ export const ProgressView: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <span className="text-xs text-slate-500 w-16">{t('progress.medium', 'Medium')}</span>
                             <div className="flex-1 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-orange-500 rounded-full" 
-                                    style={{ width: `${stats.total > 0 ? (stats.byPriority.medium / stats.total) * 100 : 0}%` }} 
+                                <div
+                                    className="h-full bg-orange-500 rounded-full"
+                                    style={{
+                                        width: `${stats.total > 0 ? (stats.byPriority.medium / stats.total) * 100 : 0}%`,
+                                    }}
                                 />
                             </div>
                             <span className="text-sm font-medium text-navy-900 dark:text-white w-8 text-right">
@@ -366,9 +372,11 @@ export const ProgressView: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <span className="text-xs text-slate-500 w-16">{t('progress.low', 'Low')}</span>
                             <div className="flex-1 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-blue-500 rounded-full" 
-                                    style={{ width: `${stats.total > 0 ? (stats.byPriority.low / stats.total) * 100 : 0}%` }} 
+                                <div
+                                    className="h-full bg-blue-500 rounded-full"
+                                    style={{
+                                        width: `${stats.total > 0 ? (stats.byPriority.low / stats.total) * 100 : 0}%`,
+                                    }}
                                 />
                             </div>
                             <span className="text-sm font-medium text-navy-900 dark:text-white w-8 text-right">
@@ -397,17 +405,13 @@ export const ProgressView: React.FC = () => {
                         </p>
                     </div>
                     <div className="text-center p-3 bg-slate-100 dark:bg-white/5 rounded-lg">
-                        <p className="text-lg font-bold text-slate-600 dark:text-slate-400">
-                            {stats.byStatus.todo}
-                        </p>
+                        <p className="text-lg font-bold text-slate-600 dark:text-slate-400">{stats.byStatus.todo}</p>
                         <p className="text-xs text-slate-600 dark:text-slate-400">
                             {t('progress.status.todo', 'To Do')}
                         </p>
                     </div>
                     <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                        <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                            {stats.byStatus.overdue}
-                        </p>
+                        <p className="text-lg font-bold text-red-600 dark:text-red-400">{stats.byStatus.overdue}</p>
                         <p className="text-xs text-red-600 dark:text-red-400">
                             {t('progress.status.overdue', 'Overdue')}
                         </p>

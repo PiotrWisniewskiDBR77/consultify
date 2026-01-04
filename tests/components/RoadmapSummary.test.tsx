@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RoadmapSummary } from '../../../components/RoadmapSummary';
+import { RoadmapSummary } from '../../components/RoadmapSummary';
 
 const mockInitiatives = [
     { id: 'init-1', name: 'Initiative 1', quarter: '2024-Q1', status: 'EXECUTING' },
@@ -23,6 +23,7 @@ describe('RoadmapSummary Component', () => {
         expect(screen.getByText(/2/i)).toBeInTheDocument();
     });
 });
+
 
 
 

@@ -1,9 +1,9 @@
-import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import React from 'react';
 
 /**
  * EmptyStateWithActions — Reusable empty state with action buttons
- * 
+ *
  * Features:
  * - Customizable icon/illustration
  * - Primary and secondary actions
@@ -60,11 +60,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
         <div className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}>
             {/* Icon or Illustration */}
             {illustration ? (
-                <img
-                    src={illustration}
-                    alt=""
-                    className="w-48 h-48 object-contain mb-6 opacity-80"
-                />
+                <img src={illustration} alt="" className="w-48 h-48 object-contain mb-6 opacity-80" />
             ) : Icon ? (
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mb-6">
                     <Icon size={40} className="text-purple-500 dark:text-purple-400" />
@@ -76,14 +72,10 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
             )}
 
             {/* Title */}
-            <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-                {title}
-            </h3>
+            <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">{title}</h3>
 
             {/* Description */}
-            <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
-                {description}
-            </p>
+            <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">{description}</p>
 
             {/* Actions */}
             {actions.length > 0 && (
@@ -125,7 +117,10 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                                 >
                                     {TemplateIcon && (
                                         <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-900 flex items-center justify-center group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
-                                            <TemplateIcon size={20} className="text-slate-400 group-hover:text-purple-500 transition-colors" />
+                                            <TemplateIcon
+                                                size={20}
+                                                className="text-slate-400 group-hover:text-purple-500 transition-colors"
+                                            />
                                         </div>
                                     )}
                                     <div className="flex-1">
@@ -136,7 +131,10 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                                             {template.description}
                                         </p>
                                     </div>
-                                    <ArrowRight size={16} className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors" />
+                                    <ArrowRight
+                                        size={16}
+                                        className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+                                    />
                                 </button>
                             );
                         })}

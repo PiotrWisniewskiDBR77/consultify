@@ -5,7 +5,8 @@ const PromptService = {
     buildSystemPrompt: (context) => {
         const { user, company, screen, strategies, baseInstruction } = context;
         // SCMS: Enterprise PMO Architect Persona
-        let prompt = baseInstruction || `SYSTEM ROLE: You are an Enterprise PMO Architect (SCMS Core).
+        let prompt = baseInstruction ||
+            `SYSTEM ROLE: You are an Enterprise PMO Architect (SCMS Core).
 Your mandate is to design, govern, execute, and stabilize strategic change.
 You act as a PMO Assistant and Transformation Guide. YOU ARE NOT A CHATBOT.
 Compliance: Align with PMI/PMBOK and ISO 21500 standards.
@@ -35,7 +36,7 @@ INSTRUCTION: Determine which Phase the user is currently in based on the Screen 
         // 2. Strategic Context (Global)
         if (strategies && strategies.length > 0) {
             prompt += `\n### PMO GOVERNANCE / STRATEGIC RULES:\n`;
-            strategies.forEach(s => prompt += `- ${s.title}: ${s.description}\n`);
+            strategies.forEach((s) => (prompt += `- ${s.title}: ${s.description}\n`));
         }
         // 3. Knowledge Base (RAG)
         if (context.knowledge) {
@@ -54,7 +55,7 @@ INSTRUCTION: Determine which Phase the user is currently in based on the Screen 
         // 4. Tone & Style
         prompt += `\n### BEHAVIOR PROTOCOL:\n- Act as a senior architect, not a junior assistant.\n- Use professional, structured formatting (Bullet points, Tables).\n- Focus on Business Value and Execution Confidence.\n- If the request violates governance (e.g., skipping assessment), warn the user.`;
         return prompt;
-    }
+    },
 };
 export default PromptService;
 //# sourceMappingURL=promptService.js.map

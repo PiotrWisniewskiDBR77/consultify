@@ -1,28 +1,29 @@
 /**
  * TemplateLibrary
- * 
+ *
  * Component for browsing and selecting initiative templates.
  * Features category filters, search, and template preview.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
 import {
-    Search,
-    Database,
-    Workflow,
-    Package,
-    Users,
-    Shield,
     Brain,
-    Sparkles,
-    ChevronRight,
     Check,
-    X,
+    ChevronRight,
     Clock,
+    Database,
     DollarSign,
-    FileText
+    FileText,
+    Package,
+    Search,
+    Shield,
+    Sparkles,
+    Users,
+    Workflow,
+    X,
 } from 'lucide-react';
-import { InitiativeTemplate, TemplateCategory, DRDAxis } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { DRDAxis, InitiativeTemplate, TemplateCategory } from '../../types';
 
 interface TemplateLibraryProps {
     templates: InitiativeTemplate[];
@@ -39,7 +40,7 @@ const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; icon: React.Rea
     CULTURE: { label: 'Culture & Change', icon: <Users size={16} />, color: 'amber' },
     SECURITY: { label: 'Security', icon: <Shield size={16} />, color: 'red' },
     AI_ML: { label: 'AI / ML', icon: <Brain size={16} />, color: 'pink' },
-    CUSTOM: { label: 'Custom', icon: <FileText size={16} />, color: 'slate' }
+    CUSTOM: { label: 'Custom', icon: <FileText size={16} />, color: 'slate' },
 };
 
 export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
@@ -47,7 +48,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     isLoading,
     selectedTemplateId,
     onSelect,
-    onSkip
+    onSkip,
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'ALL'>('ALL');
@@ -55,9 +56,10 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
     // Filter templates
     const filteredTemplates = useMemo(() => {
-        return templates.filter(t => {
+        return templates.filter((t) => {
             const matchesCategory = selectedCategory === 'ALL' || t.category === selectedCategory;
-            const matchesSearch = !searchQuery || 
+            const matchesSearch =
+                !searchQuery ||
                 t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.description?.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesCategory && matchesSearch;
@@ -67,7 +69,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     // Group templates by category
     const groupedTemplates = useMemo(() => {
         const groups: Record<string, InitiativeTemplate[]> = {};
-        filteredTemplates.forEach(t => {
+        filteredTemplates.forEach((t) => {
             if (!groups[t.category]) groups[t.category] = [];
             groups[t.category].push(t);
         });
@@ -77,7 +79,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     // Get category counts
     const categoryCounts = useMemo(() => {
         const counts: Record<string, number> = { ALL: templates.length };
-        templates.forEach(t => {
+        templates.forEach((t) => {
             counts[t.category] = (counts[t.category] || 0) + 1;
         });
         return counts;
@@ -96,9 +98,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
             {/* Header with Skip Option */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-                        Choose a Template
-                    </h3>
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Choose a Template</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Start with a template for faster setup, or skip for full AI generation
                     </p>
@@ -168,7 +168,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredTemplates.map(template => {
+                    {filteredTemplates.map((template) => {
                         const config = CATEGORY_CONFIG[template.category];
                         const isSelected = selectedTemplateId === template.id;
 
@@ -190,7 +190,9 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                 )}
 
                                 {/* Category Badge */}
-                                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-${config.color}-100 dark:bg-${config.color}-500/20 text-${config.color}-700 dark:text-${config.color}-400 mb-3`}>
+                                <div
+                                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-${config.color}-100 dark:bg-${config.color}-500/20 text-${config.color}-700 dark:text-${config.color}-400 mb-3`}
+                                >
                                     {config.icon}
                                     {config.label}
                                 </div>
@@ -214,7 +216,8 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                     {template.typicalBudgetRange && (
                                         <span className="flex items-center gap-1">
                                             <DollarSign size={10} />
-                                            {template.typicalBudgetRange.min / 1000}k - {template.typicalBudgetRange.max / 1000}k
+                                            {template.typicalBudgetRange.min / 1000}k -{' '}
+                                            {template.typicalBudgetRange.max / 1000}k
                                         </span>
                                     )}
                                     {template.suggestedTasks && (
@@ -248,7 +251,9 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                         {/* Header */}
                         <div className="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
                             <div>
-                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-${CATEGORY_CONFIG[previewTemplate.category].color}-100 dark:bg-${CATEGORY_CONFIG[previewTemplate.category].color}-500/20 text-${CATEGORY_CONFIG[previewTemplate.category].color}-700 dark:text-${CATEGORY_CONFIG[previewTemplate.category].color}-400 mb-1`}>
+                                <span
+                                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-${CATEGORY_CONFIG[previewTemplate.category].color}-100 dark:bg-${CATEGORY_CONFIG[previewTemplate.category].color}-500/20 text-${CATEGORY_CONFIG[previewTemplate.category].color}-700 dark:text-${CATEGORY_CONFIG[previewTemplate.category].color}-400 mb-1`}
+                                >
                                     {CATEGORY_CONFIG[previewTemplate.category].icon}
                                     {CATEGORY_CONFIG[previewTemplate.category].label}
                                 </span>
@@ -266,20 +271,25 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
                         {/* Content */}
                         <div className="p-4 overflow-y-auto max-h-[60vh] space-y-4">
-                            <p className="text-sm text-slate-600 dark:text-slate-300">
-                                {previewTemplate.description}
-                            </p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300">{previewTemplate.description}</p>
 
                             {/* Problem Template */}
                             {previewTemplate.problemStructured && (
                                 <div className="bg-red-50 dark:bg-red-500/10 p-3 rounded-lg">
-                                    <h4 className="text-xs font-bold text-red-700 dark:text-red-400 mb-2">Problem Template</h4>
+                                    <h4 className="text-xs font-bold text-red-700 dark:text-red-400 mb-2">
+                                        Problem Template
+                                    </h4>
                                     <div className="space-y-1 text-xs text-red-600 dark:text-red-300">
                                         {previewTemplate.problemStructured.symptom && (
-                                            <p><strong>Symptom:</strong> {previewTemplate.problemStructured.symptom}</p>
+                                            <p>
+                                                <strong>Symptom:</strong> {previewTemplate.problemStructured.symptom}
+                                            </p>
                                         )}
                                         {previewTemplate.problemStructured.rootCause && (
-                                            <p><strong>Root Cause:</strong> {previewTemplate.problemStructured.rootCause}</p>
+                                            <p>
+                                                <strong>Root Cause:</strong>{' '}
+                                                {previewTemplate.problemStructured.rootCause}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -288,7 +298,9 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                             {/* Target State */}
                             {previewTemplate.targetState && (
                                 <div className="bg-green-50 dark:bg-green-500/10 p-3 rounded-lg">
-                                    <h4 className="text-xs font-bold text-green-700 dark:text-green-400 mb-2">Target State</h4>
+                                    <h4 className="text-xs font-bold text-green-700 dark:text-green-400 mb-2">
+                                        Target State
+                                    </h4>
                                     <div className="grid grid-cols-3 gap-2 text-xs">
                                         {previewTemplate.targetState.process && (
                                             <div>
@@ -332,7 +344,10 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                     </h4>
                                     <div className="space-y-1">
                                         {previewTemplate.suggestedTasks.slice(0, 5).map((task, i) => (
-                                            <div key={i} className="text-xs text-blue-600 dark:text-blue-300 flex items-center gap-2">
+                                            <div
+                                                key={i}
+                                                className="text-xs text-blue-600 dark:text-blue-300 flex items-center gap-2"
+                                            >
                                                 <span className="w-4 h-4 rounded bg-blue-200 dark:bg-blue-600 text-blue-700 dark:text-white flex items-center justify-center text-[10px] font-bold">
                                                     {i + 1}
                                                 </span>
@@ -376,16 +391,4 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 };
 
 export default TemplateLibrary;
-
-
-
-
-
-
-
-
-
-
-
-
 

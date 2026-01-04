@@ -1,14 +1,12 @@
 /**
  * Roi Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadRoiservice = createCachedLazyService('../../services/roiService.js');
+import service from '../../services/roiService.js';
 
 // Export default instance (for backward compatibility)
-export default loadRoiservice();
+export default service;

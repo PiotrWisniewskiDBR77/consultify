@@ -1,6 +1,7 @@
+import { CheckCircle, Circle, GitBranch, Play, Square } from 'lucide-react';
 import React from 'react';
+
 import { PlaybookNode as PlaybookNodeType, PlaybookNodeType as NodeType } from '../../types';
-import { Play, Square, GitBranch, CheckCircle, Circle } from 'lucide-react';
 
 interface PlaybookNodeProps {
     node: PlaybookNodeType;
@@ -12,15 +13,10 @@ interface PlaybookNodeProps {
 /**
  * PlaybookNode Component
  * Step 13: Visual Playbook Editor
- * 
+ *
  * Renders a single node in the playbook canvas.
  */
-export const PlaybookNode: React.FC<PlaybookNodeProps> = ({
-    node,
-    isSelected,
-    onClick,
-    onDragStart
-}) => {
+export const PlaybookNode: React.FC<PlaybookNodeProps> = ({ node, isSelected, onClick, onDragStart }) => {
     const getNodeIcon = () => {
         switch (node.type) {
             case NodeType.START:
@@ -63,7 +59,7 @@ export const PlaybookNode: React.FC<PlaybookNodeProps> = ({
                 left: node.position.x,
                 top: node.position.y,
                 minWidth: '120px',
-                maxWidth: '200px'
+                maxWidth: '200px',
             }}
             onClick={onClick}
             draggable
@@ -75,9 +71,7 @@ export const PlaybookNode: React.FC<PlaybookNodeProps> = ({
                     <span className="text-sm font-medium truncate">{node.title}</span>
                 </div>
                 {node.data?.actionType && (
-                    <div className="text-xs text-gray-500 mt-1 truncate">
-                        {node.data.actionType}
-                    </div>
+                    <div className="text-xs text-gray-500 mt-1 truncate">{node.data.actionType}</div>
                 )}
             </div>
 

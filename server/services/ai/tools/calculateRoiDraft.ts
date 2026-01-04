@@ -33,12 +33,7 @@ export interface Context {
 }
 
 async function calculateRoiDraft(params: CalculateRoiParams, context: Context): Promise<RoiResult | RoiError> {
-    const {
-        initialInvestment,
-        annualBenefit,
-        years = 5,
-        discountRate = 0.1
-    } = params;
+    const { initialInvestment, annualBenefit, years = 5, discountRate = 0.1 } = params;
 
     // Validate inputs
     if (initialInvestment <= 0) {
@@ -64,7 +59,7 @@ async function calculateRoiDraft(params: CalculateRoiParams, context: Context): 
         breakdown.push({
             year,
             cashFlow: annualBenefit,
-            discountedCashFlow: Math.round(discountedCashFlow * 100) / 100
+            discountedCashFlow: Math.round(discountedCashFlow * 100) / 100,
         });
     }
 
@@ -76,7 +71,7 @@ async function calculateRoiDraft(params: CalculateRoiParams, context: Context): 
         npv: Math.round(npv * 100) / 100,
         paybackYears: Math.round(paybackYears * 100) / 100,
         breakdown,
-        summary: generateSummary(roi, npv, paybackYears)
+        summary: generateSummary(roi, npv, paybackYears),
     };
 }
 

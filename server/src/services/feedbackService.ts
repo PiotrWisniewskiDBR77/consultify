@@ -1,10 +1,10 @@
 /**
  * Feedback Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles user feedback for AI responses and feedback items management.
  * Fully migrated from server/services/feedbackService.js
- * 
+ *
  * Features:
  * - Save AI feedback (rating, correction)
  * - Get learning examples for few-shot learning
@@ -14,8 +14,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -146,7 +147,7 @@ class FeedbackServiceClass {
     /**
      * Database helper: Prepare and run (for SQLite-specific prepare API)
      */
-    private async dbPrepareRun(sql: string, params: unknown[]): Promise<void> {
+    private async _dbPrepareRun(sql: string, params: unknown[]): Promise<void> {
         // For SQLite, we can use prepare/run, but for compatibility with IDatabase,
         // we'll use the standard run method
         await this.dbRun(sql, params);
@@ -159,7 +160,7 @@ class FeedbackServiceClass {
         const id = uuidv4();
         await this.dbRun(
             `INSERT INTO ai_feedback (id, user_id, context, prompt, response, rating, correction) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [id, data.userId, data.context, data.prompt, data.response, data.rating, data.correction || '']
+            [id, data.userId, data.context, data.prompt, data.response, data.rating, data.correction || ''],
         );
     }
 
@@ -175,15 +176,19 @@ class FeedbackServiceClass {
                  WHERE context = ? AND rating >= 4
                  ORDER BY created_at DESC
                  LIMIT 3`,
-                [contextType]
+                [contextType],
             );
 
             // Format as string for prompt injection
-            const examples = rows.map(r => `
+            const examples = rows
+                .map(
+                    (r) => `
 Example Input: ${r.prompt.substring(0, 100)}...
 Good Response: ${r.response.substring(0, 200)}...
 ${r.correction ? `Correction to apply: ${r.correction}` : ''}
----`).join('\n');
+---`,
+                )
+                .join('\n');
 
             return examples;
         } catch (err: unknown) {
@@ -205,7 +210,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
 
         // 1. Get contexts with enough feedback
         const contexts = await this.dbAll<{ context: string; count: number }>(
-            "SELECT context, COUNT(*) as count FROM ai_feedback GROUP BY context HAVING count >= 3"
+            'SELECT context, COUNT(*) as count FROM ai_feedback GROUP BY context HAVING count >= 3',
         );
 
         for (const ctx of contexts) {
@@ -220,12 +225,14 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                 comment?: string;
                 correction?: string;
             }>(
-                "SELECT prompt, response, rating, comment, correction FROM ai_feedback WHERE context = ? ORDER BY created_at DESC LIMIT 20",
-                [contextType]
+                'SELECT prompt, response, rating, comment, correction FROM ai_feedback WHERE context = ? ORDER BY created_at DESC LIMIT 20',
+                [contextType],
             );
 
             // 3. Ask AI to synthesize a strategy
-            const feedbackText = feedback.map(f => `[Rating: ${f.rating}/5] User Comment: "${f.comment || ''}"`).join('\n');
+            const feedbackText = feedback
+                .map((f) => `[Rating: ${f.rating}/5] User Comment: "${f.comment || ''}"`)
+                .join('\n');
             const systemPrompt = `
                 You are a Process Optimization Expert. 
                 Analyze the following feedback logs for the task "${contextType}".
@@ -237,7 +244,17 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
 
             try {
                 // Access AiService's callLLM method
-                const aiServiceAny = AiService as { deps?: { callLLM?: (prompt: string, systemPrompt: string, context: unknown[], userId: string | null, type: string) => Promise<string> } };
+                const aiServiceAny = AiService as {
+                    deps?: {
+                        callLLM?: (
+                            prompt: string,
+                            systemPrompt: string,
+                            context: unknown[],
+                            userId: string | null,
+                            type: string,
+                        ) => Promise<string>;
+                    };
+                };
                 const callLLM = aiServiceAny.deps?.callLLM;
 
                 if (!callLLM) {
@@ -245,22 +262,25 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                     continue;
                 }
 
-                const jsonStr = await callLLM(
-                    `Feedback Logs:\n${feedbackText}`,
-                    systemPrompt,
-                    [],
-                    null,
-                    'analysis'
-                );
+                const jsonStr = await callLLM(`Feedback Logs:\n${feedbackText}`, systemPrompt, [], null, 'analysis');
 
-                const strategy = JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, '')) as { title?: string; description?: string };
+                const strategy = JSON.parse(jsonStr.replace(/```json/g, '').replace(/```/g, '')) as {
+                    title?: string;
+                    description?: string;
+                };
 
                 if (strategy && strategy.title) {
                     // 4. Save to Global Strategies
                     const id = uuidv4();
                     await this.dbRun(
                         `INSERT INTO global_strategies (id, title, description, is_active, created_by) VALUES (?, ?, ?, ?, ?)`,
-                        [id, `${contextType.toUpperCase()}: ${strategy.title}`, strategy.description || '', 1, 'AI_LEARNING']
+                        [
+                            id,
+                            `${contextType.toUpperCase()}: ${strategy.title}`,
+                            strategy.description || '',
+                            1,
+                            'AI_LEARNING',
+                        ],
                     );
                     logger.info(`[GlobalLearning] Learned new strategy: ${strategy.title}`);
                 }
@@ -328,8 +348,8 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                 feedbackData.priority || 'medium',
                 JSON.stringify(feedbackData.screenshots || []),
                 JSON.stringify(feedbackData.attachments || []),
-                JSON.stringify(feedbackData.metadata || {})
-            ]
+                JSON.stringify(feedbackData.metadata || {}),
+            ],
         );
 
         // Return created item (simplified)
@@ -343,27 +363,28 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             description: feedbackData.description,
             priority: feedbackData.priority || 'medium',
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
         };
     }
 
     /**
      * Vote on feedback
      */
-    async voteFeedback(feedbackId: string, userId: string, voteType: 'upvote' | 'downvote' = 'upvote'): Promise<{ id: string; feedbackId: string; userId: string; voteType: string }> {
+    async voteFeedback(
+        feedbackId: string,
+        userId: string,
+        voteType: 'upvote' | 'downvote' = 'upvote',
+    ): Promise<{ id: string; feedbackId: string; userId: string; voteType: string }> {
         const id = uuidv4();
         try {
             await this.dbRun(
                 `INSERT INTO feedback_votes (id, feedback_id, user_id, vote_type)
                  VALUES (?, ?, ?, ?)`,
-                [id, feedbackId, userId, voteType]
+                [id, feedbackId, userId, voteType],
             );
 
             // Update votes count
-            await this.dbRun(
-                `UPDATE feedback_items SET votes_count = votes_count + 1 WHERE id = ?`,
-                [feedbackId]
-            );
+            await this.dbRun(`UPDATE feedback_items SET votes_count = votes_count + 1 WHERE id = ?`, [feedbackId]);
 
             return { id, feedbackId, userId, voteType };
         } catch (err: unknown) {
@@ -377,12 +398,17 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
     /**
      * Add comment to feedback
      */
-    async addFeedbackComment(feedbackId: string, userId: string, commentText: string, isInternal = false): Promise<{ id: string; feedbackId: string; userId: string; commentText: string; isInternal: boolean }> {
+    async addFeedbackComment(
+        feedbackId: string,
+        userId: string,
+        commentText: string,
+        isInternal = false,
+    ): Promise<{ id: string; feedbackId: string; userId: string; commentText: string; isInternal: boolean }> {
         const id = uuidv4();
         await this.dbRun(
             `INSERT INTO feedback_comments (id, feedback_id, user_id, comment_text, is_internal)
              VALUES (?, ?, ?, ?, ?)`,
-            [id, feedbackId, userId, commentText, isInternal ? 1 : 0]
+            [id, feedbackId, userId, commentText, isInternal ? 1 : 0],
         );
 
         return { id, feedbackId, userId, commentText, isInternal };
@@ -436,10 +462,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
         fields.push('updated_at = datetime("now")');
         values.push(itemId);
 
-        const result = await this.dbRun(
-            `UPDATE feature_roadmap SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
+        const result = await this.dbRun(`UPDATE feature_roadmap SET ${fields.join(', ')} WHERE id = ?`, values);
 
         return { updated: result.changes > 0 };
     }
@@ -463,8 +486,12 @@ export const saveFeedback = (data: FeedbackData) => feedbackService.saveFeedback
 export const getLearningExamples = (contextType: string) => feedbackService.getLearningExamples(contextType);
 export const consolidateLearning = () => feedbackService.consolidateLearning();
 export const getFeedbackItems = (filters?: FeedbackFilters) => feedbackService.getFeedbackItems(filters);
-export const createFeedbackItem = (feedbackData: FeedbackItemCreateData) => feedbackService.createFeedbackItem(feedbackData);
-export const voteFeedback = (feedbackId: string, userId: string, voteType?: 'upvote' | 'downvote') => feedbackService.voteFeedback(feedbackId, userId, voteType);
-export const addFeedbackComment = (feedbackId: string, userId: string, commentText: string, isInternal?: boolean) => feedbackService.addFeedbackComment(feedbackId, userId, commentText, isInternal);
+export const createFeedbackItem = (feedbackData: FeedbackItemCreateData) =>
+    feedbackService.createFeedbackItem(feedbackData);
+export const voteFeedback = (feedbackId: string, userId: string, voteType?: 'upvote' | 'downvote') =>
+    feedbackService.voteFeedback(feedbackId, userId, voteType);
+export const addFeedbackComment = (feedbackId: string, userId: string, commentText: string, isInternal?: boolean) =>
+    feedbackService.addFeedbackComment(feedbackId, userId, commentText, isInternal);
 export const getFeatureRoadmap = (status?: string | null) => feedbackService.getFeatureRoadmap(status);
-export const updateFeatureRoadmap = (itemId: string, updates: FeatureRoadmapUpdate) => feedbackService.updateFeatureRoadmap(itemId, updates);
+export const updateFeatureRoadmap = (itemId: string, updates: FeatureRoadmapUpdate) =>
+    feedbackService.updateFeatureRoadmap(itemId, updates);

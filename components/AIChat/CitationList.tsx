@@ -1,24 +1,16 @@
 /**
  * CitationList
- * 
+ *
  * Renders citations from AI responses with links to source data.
  * Follows Perplexity-style inline citation markers [1], [2], etc.
  */
 
+import { ChevronDown, ChevronUp, ExternalLink, FileText, Globe, Lightbulb, Map, Target } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    ExternalLink, 
-    FileText, 
-    Target, 
-    Lightbulb, 
-    Map, 
-    Globe,
-    ChevronDown,
-    ChevronUp
-} from 'lucide-react';
-import { ChatCitation } from '../../types';
+
 import { useAppStore } from '../../store/useAppStore';
+import { ChatCitation } from '../../types';
 import { AppView } from '../../types';
 
 interface CitationListProps {
@@ -32,7 +24,7 @@ const CITATION_ICONS: Record<string, React.ElementType> = {
     initiative: Lightbulb,
     report: FileText,
     roadmap: Map,
-    external: Globe
+    external: Globe,
 };
 
 const CITATION_COLORS: Record<string, string> = {
@@ -40,14 +32,10 @@ const CITATION_COLORS: Record<string, string> = {
     initiative: 'text-green-500 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800',
     report: 'text-orange-500 bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800',
     roadmap: 'text-purple-500 bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800',
-    external: 'text-slate-500 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+    external: 'text-slate-500 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
 };
 
-export const CitationList: React.FC<CitationListProps> = ({
-    citations,
-    collapsed = false,
-    onToggle
-}) => {
+export const CitationList: React.FC<CitationListProps> = ({ citations, collapsed = false, onToggle }) => {
     const { t } = useTranslation();
     const { setCurrentView } = useAppStore();
 
@@ -87,9 +75,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                 <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-[10px]">
                     {citations.length}
                 </span>
-                {onToggle && (
-                    collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />
-                )}
+                {onToggle && (collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />)}
             </button>
 
             {/* Citations List */}
@@ -153,16 +139,12 @@ interface CitationMarkerProps {
     onClick?: () => void;
 }
 
-export const CitationMarker: React.FC<CitationMarkerProps> = ({
-    number,
-    citation,
-    onClick
-}) => {
+export const CitationMarker: React.FC<CitationMarkerProps> = ({ number, citation, onClick }) => {
     const [showTooltip, setShowTooltip] = React.useState(false);
     const Icon = CITATION_ICONS[citation.type] || FileText;
 
     return (
-        <span 
+        <span
             className="relative inline-flex"
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -184,23 +166,21 @@ export const CitationMarker: React.FC<CitationMarkerProps> = ({
 
             {/* Tooltip */}
             {showTooltip && (
-                <div className="
+                <div
+                    className="
                     absolute left-0 bottom-full mb-1 z-50
                     w-48 p-2
                     bg-white dark:bg-navy-800
                     border border-slate-200 dark:border-navy-700
                     rounded-lg shadow-lg
                     animate-in fade-in-0 zoom-in-95 duration-100
-                ">
+                "
+                >
                     <div className="flex items-start gap-2">
                         <Icon size={14} className="text-primary-500 shrink-0 mt-0.5" />
                         <div>
-                            <div className="text-xs font-medium text-navy-900 dark:text-white">
-                                {citation.title}
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {citation.reference}
-                            </div>
+                            <div className="text-xs font-medium text-navy-900 dark:text-white">{citation.title}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">{citation.reference}</div>
                         </div>
                     </div>
                 </div>
@@ -210,12 +190,4 @@ export const CitationMarker: React.FC<CitationMarkerProps> = ({
 };
 
 export default CitationList;
-
-
-
-
-
-
-
-
 

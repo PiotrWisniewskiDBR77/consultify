@@ -2,9 +2,10 @@
  * WatchingTab - Manage watched objects
  */
 
+import { Eye, FileText, FolderOpen, Target, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, FileText, Target, FolderOpen } from 'lucide-react';
+
 import type { Watcher } from '../../../hooks/useUserNotificationPreferences';
 
 interface WatchingTabProps {
@@ -16,29 +17,28 @@ interface WatchingTabProps {
 const TYPE_ICONS: Record<string, React.ElementType> = {
     task: FileText,
     initiative: Target,
-    project: FolderOpen
+    project: FolderOpen,
 };
 
 const TYPE_LABELS: Record<string, string> = {
     task: 'Task',
     initiative: 'Initiative',
-    project: 'Project'
+    project: 'Project',
 };
 
-const WatchingTab: React.FC<WatchingTabProps> = ({
-    watchers,
-    onAddWatcher,
-    onRemoveWatcher
-}) => {
+const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRemoveWatcher }) => {
     const { t } = useTranslation();
 
     // Group watchers by type
-    const grouped = watchers.reduce((acc, watcher) => {
-        const type = watcher.objectType;
-        if (!acc[type]) acc[type] = [];
-        acc[type].push(watcher);
-        return acc;
-    }, {} as Record<string, Watcher[]>);
+    const grouped = watchers.reduce(
+        (acc, watcher) => {
+            const type = watcher.objectType;
+            if (!acc[type]) acc[type] = [];
+            acc[type].push(watcher);
+            return acc;
+        },
+        {} as Record<string, Watcher[]>,
+    );
 
     return (
         <div className="space-y-6">
@@ -48,7 +48,7 @@ const WatchingTab: React.FC<WatchingTabProps> = ({
                     {t('settings.notifications.watchingTitle', 'Watching')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t('settings.notifications.watchingDesc', 'Objects you\'re following for updates.')}
+                    {t('settings.notifications.watchingDesc', "Objects you're following for updates.")}
                 </p>
             </div>
 
@@ -56,10 +56,13 @@ const WatchingTab: React.FC<WatchingTabProps> = ({
                 <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
                     <Eye size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                     <p className="text-slate-500 dark:text-slate-400">
-                        {t('settings.notifications.noWatchers', 'You\'re not watching anything yet.')}
+                        {t('settings.notifications.noWatchers', "You're not watching anything yet.")}
                     </p>
                     <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                        {t('settings.notifications.noWatchersHint', 'Click the eye icon on tasks, initiatives, or projects to start watching them.')}
+                        {t(
+                            'settings.notifications.noWatchersHint',
+                            'Click the eye icon on tasks, initiatives, or projects to start watching them.',
+                        )}
                     </p>
                 </div>
             ) : (
@@ -67,14 +70,14 @@ const WatchingTab: React.FC<WatchingTabProps> = ({
                     {Object.entries(grouped).map(([type, items]) => {
                         const Icon = TYPE_ICONS[type] || Eye;
                         const label = TYPE_LABELS[type] || type;
-                        
+
                         return (
                             <div key={type} className="space-y-2">
                                 <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                     <Icon size={16} />
                                     {label}s ({items.length})
                                 </h4>
-                                
+
                                 <div className="space-y-2">
                                     {items.map((watcher) => (
                                         <div
@@ -92,7 +95,7 @@ const WatchingTab: React.FC<WatchingTabProps> = ({
                                                     </p>
                                                 </div>
                                             </div>
-                                            
+
                                             <button
                                                 onClick={() => onRemoveWatcher(watcher.objectType, watcher.objectId)}
                                                 className="p-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
@@ -113,11 +116,4 @@ const WatchingTab: React.FC<WatchingTabProps> = ({
 };
 
 export default WatchingTab;
-
-
-
-
-
-
-
 

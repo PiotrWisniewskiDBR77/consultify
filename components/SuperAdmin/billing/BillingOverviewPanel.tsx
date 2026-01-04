@@ -1,28 +1,29 @@
 /**
  * BillingOverviewPanel - Billing Statistics & Overview
- * 
+ *
  * Features:
  * - Subscription stats (MRR, ARR, churn)
  * - Revenue charts
  * - Plan distribution
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    DollarSign,
-    TrendingUp,
-    TrendingDown,
-    Users,
-    CreditCard,
     AlertCircle,
-    RefreshCw,
-    Calendar,
-    ArrowUpRight,
     ArrowDownRight,
+    ArrowUpRight,
+    BarChart3,
+    Calendar,
+    CreditCard,
+    DollarSign,
     Loader2,
     PieChart,
-    BarChart3
+    RefreshCw,
+    TrendingDown,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { Api } from '../../../services/api';
 
 interface BillingStats {
@@ -75,7 +76,7 @@ export const BillingOverviewPanel: React.FC = () => {
     const formatCurrency = (cents: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'USD',
         }).format(cents / 100);
     };
 
@@ -100,14 +101,12 @@ export const BillingOverviewPanel: React.FC = () => {
                 <h2 className="text-xl font-semibold text-white">Billing Overview</h2>
                 <div className="flex items-center gap-3">
                     <div className="flex bg-slate-800 rounded-lg p-1">
-                        {(['7', '30', '90'] as const).map(p => (
+                        {(['7', '30', '90'] as const).map((p) => (
                             <button
                                 key={p}
                                 onClick={() => setPeriod(p)}
                                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                                    period === p
-                                        ? 'bg-violet-600 text-white'
-                                        : 'text-slate-400 hover:text-white'
+                                    period === p ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
                                 }`}
                             >
                                 {p}d
@@ -131,13 +130,9 @@ export const BillingOverviewPanel: React.FC = () => {
                         <DollarSign size={20} className="text-emerald-400" />
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-white">
-                            {formatCurrency(stats?.mrr || 0)}
-                        </span>
+                        <span className="text-3xl font-bold text-white">{formatCurrency(stats?.mrr || 0)}</span>
                     </div>
-                    <p className="text-sm text-emerald-400/70 mt-2">
-                        ARR: {formatCurrency(stats?.arr || 0)}
-                    </p>
+                    <p className="text-sm text-emerald-400/70 mt-2">ARR: {formatCurrency(stats?.arr || 0)}</p>
                 </div>
 
                 <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-5">
@@ -150,9 +145,7 @@ export const BillingOverviewPanel: React.FC = () => {
                             {formatCurrency(stats?.revenue.total || 0)}
                         </span>
                     </div>
-                    <p className="text-sm text-slate-500 mt-2">
-                        {stats?.revenue.invoiceCount || 0} paid invoices
-                    </p>
+                    <p className="text-sm text-slate-500 mt-2">{stats?.revenue.invoiceCount || 0} paid invoices</p>
                 </div>
 
                 <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-5">
@@ -166,27 +159,34 @@ export const BillingOverviewPanel: React.FC = () => {
                         </span>
                     </div>
                     <p className="text-sm text-slate-500 mt-2">
-                        Across {stats?.subscriptions.byPlan.filter(p => p.subscriber_count > 0).length || 0} plans
+                        Across {stats?.subscriptions.byPlan.filter((p) => p.subscriber_count > 0).length || 0} plans
                     </p>
                 </div>
 
-                <div className={`rounded-xl p-5 border ${
-                    (stats?.unpaidInvoices.count || 0) > 0
-                        ? 'bg-amber-500/10 border-amber-500/20'
-                        : 'bg-slate-800/50 border-white/[0.06]'
-                }`}>
+                <div
+                    className={`rounded-xl p-5 border ${
+                        (stats?.unpaidInvoices.count || 0) > 0
+                            ? 'bg-amber-500/10 border-amber-500/20'
+                            : 'bg-slate-800/50 border-white/[0.06]'
+                    }`}
+                >
                     <div className="flex items-center justify-between mb-3">
-                        <span className={`text-sm ${(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
+                        <span
+                            className={`text-sm ${(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400' : 'text-slate-400'}`}
+                        >
                             Unpaid Invoices
                         </span>
-                        <AlertCircle size={20} className={(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400' : 'text-slate-400'} />
+                        <AlertCircle
+                            size={20}
+                            className={(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400' : 'text-slate-400'}
+                        />
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-white">
-                            {stats?.unpaidInvoices.count || 0}
-                        </span>
+                        <span className="text-3xl font-bold text-white">{stats?.unpaidInvoices.count || 0}</span>
                     </div>
-                    <p className={`text-sm mt-2 ${(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400/70' : 'text-slate-500'}`}>
+                    <p
+                        className={`text-sm mt-2 ${(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400/70' : 'text-slate-500'}`}
+                    >
                         {formatCurrency(stats?.unpaidInvoices.totalAmount || 0)} outstanding
                     </p>
                 </div>
@@ -209,8 +209,14 @@ export const BillingOverviewPanel: React.FC = () => {
                         {stats?.subscriptions.byPlan.map((plan, idx) => {
                             const total = stats.subscriptions.byPlan.reduce((sum, p) => sum + p.subscriber_count, 0);
                             const percentage = total > 0 ? (plan.subscriber_count / total) * 100 : 0;
-                            const colors = ['bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
-                            
+                            const colors = [
+                                'bg-violet-500',
+                                'bg-blue-500',
+                                'bg-emerald-500',
+                                'bg-amber-500',
+                                'bg-rose-500',
+                            ];
+
                             return (
                                 <div key={plan.plan_name} className="space-y-2">
                                     <div className="flex items-center justify-between">
@@ -220,7 +226,7 @@ export const BillingOverviewPanel: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className={`h-full ${colors[idx % colors.length]} transition-all duration-500`}
                                             style={{ width: `${percentage}%` }}
                                         />
@@ -228,8 +234,8 @@ export const BillingOverviewPanel: React.FC = () => {
                                 </div>
                             );
                         })}
-                        
-                        {(!stats?.subscriptions.byPlan.length) && (
+
+                        {!stats?.subscriptions.byPlan.length && (
                             <p className="text-center py-8 text-slate-500">No subscriptions yet</p>
                         )}
                     </div>
@@ -247,10 +253,17 @@ export const BillingOverviewPanel: React.FC = () => {
                     </div>
 
                     <div className="space-y-3">
-                        {stats?.subscriptions.trends.slice(-7).map(day => (
-                            <div key={day.date} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+                        {stats?.subscriptions.trends.slice(-7).map((day) => (
+                            <div
+                                key={day.date}
+                                className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0"
+                            >
                                 <span className="text-sm text-slate-400">
-                                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                    {new Date(day.date).toLocaleDateString('en-US', {
+                                        weekday: 'short',
+                                        month: 'short',
+                                        day: 'numeric',
+                                    })}
                                 </span>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1 text-emerald-400">
@@ -264,8 +277,8 @@ export const BillingOverviewPanel: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-                        
-                        {(!stats?.subscriptions.trends.length) && (
+
+                        {!stats?.subscriptions.trends.length && (
                             <p className="text-center py-8 text-slate-500">No trend data available</p>
                         )}
                     </div>
@@ -285,7 +298,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-4 gap-4">
-                    {stats?.subscriptions.byPlan.map(plan => (
+                    {stats?.subscriptions.byPlan.map((plan) => (
                         <div key={plan.plan_name} className="bg-slate-900/50 rounded-lg p-4">
                             <h4 className="font-medium text-white mb-2">{plan.plan_name}</h4>
                             <p className="text-2xl font-bold text-emerald-400">
@@ -303,10 +316,4 @@ export const BillingOverviewPanel: React.FC = () => {
 };
 
 export default BillingOverviewPanel;
-
-
-
-
-
-
 

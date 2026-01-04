@@ -3,7 +3,8 @@
  * MUTATION - Requires user approval before execution
  */
 
-import db from '../../../database.js';
+import { getDatabase } from '../../../src/database/index.js';
+const db = getDatabase();
 
 async function updateAssessmentScore(params, context) {
     const { assessmentId, axisId, score } = params;
@@ -40,10 +41,11 @@ async function updateAssessmentScore(params, context) {
 }
 
 export {
-updateAssessmentScore
+    updateAssessmentScore
 };
 
 export default { updateAssessmentScore };
+
 
 
 

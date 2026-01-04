@@ -1,50 +1,45 @@
 /**
  * Portfolio View
- * 
+ *
  * Unified Portfolio & Roadmap view combining Initiative Management and Roadmap.
  * Provides 4 view modes: List, Kanban, Timeline, Matrix
- * 
+ *
  * Design inspired by Monday.com UX with Planview/ServiceNow enterprise functionality.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    List,
-    LayoutGrid,
-    Calendar,
-    Grid3X3,
-    Search,
-    Filter,
-    Plus,
-    RefreshCw,
-    Download,
-    Loader2,
-    Briefcase,
-    Lightbulb,
-    TrendingUp,
     AlertTriangle,
+    Briefcase,
+    Calendar,
     CheckCircle2,
+    ChevronDown,
     Clock,
     DollarSign,
-    ChevronDown,
-    X
+    Download,
+    Filter,
+    Grid3X3,
+    LayoutGrid,
+    Lightbulb,
+    List,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Search,
+    TrendingUp,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { InitiativeSidePanel } from '../components/Portfolio/InitiativeSidePanel';
+import { PortfolioKanbanView } from '../components/Portfolio/PortfolioKanbanView';
+import { PortfolioListView } from '../components/Portfolio/PortfolioListView';
+import { PortfolioMatrixView } from '../components/Portfolio/PortfolioMatrixView';
+import { PortfolioTimelineView } from '../components/Portfolio/PortfolioTimelineView';
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
-import {
-    PortfolioViewMode,
-    PortfolioFilters,
-    PortfolioStats,
-    PortfolioInitiative,
-    InitiativeStatus
-} from '../types';
-import { PortfolioListView } from '../components/Portfolio/PortfolioListView';
-import { PortfolioKanbanView } from '../components/Portfolio/PortfolioKanbanView';
-import { PortfolioTimelineView } from '../components/Portfolio/PortfolioTimelineView';
-import { PortfolioMatrixView } from '../components/Portfolio/PortfolioMatrixView';
-import { InitiativeSidePanel } from '../components/Portfolio/InitiativeSidePanel';
-import toast from 'react-hot-toast';
+import { InitiativeStatus, PortfolioFilters, PortfolioInitiative, PortfolioStats, PortfolioViewMode } from '../types';
 
 // ============================================
 // VIEW MODE CONFIGURATION
@@ -54,7 +49,7 @@ const VIEW_MODES: { id: PortfolioViewMode; icon: React.ReactNode; label: string 
     { id: 'list', icon: <List size={18} />, label: 'List' },
     { id: 'kanban', icon: <LayoutGrid size={18} />, label: 'Kanban' },
     { id: 'timeline', icon: <Calendar size={18} />, label: 'Timeline' },
-    { id: 'matrix', icon: <Grid3X3 size={18} />, label: 'Matrix' }
+    { id: 'matrix', icon: <Grid3X3 size={18} />, label: 'Matrix' },
 ];
 
 const STATUS_OPTIONS = [
@@ -64,14 +59,14 @@ const STATUS_OPTIONS = [
     { value: 'APPROVED', label: 'Approved' },
     { value: 'EXECUTING', label: 'Executing' },
     { value: 'DONE', label: 'Done' },
-    { value: 'BLOCKED', label: 'Blocked' }
+    { value: 'BLOCKED', label: 'Blocked' },
 ];
 
 const PRIORITY_OPTIONS = [
     { value: 'CRITICAL', label: 'Critical' },
     { value: 'HIGH', label: 'High' },
     { value: 'MEDIUM', label: 'Medium' },
-    { value: 'LOW', label: 'Low' }
+    { value: 'LOW', label: 'Low' },
 ];
 
 // ============================================
@@ -104,43 +99,45 @@ export const PortfolioView: React.FC = () => {
     // DATA FETCHING
     // ============================================
 
-    const fetchData = useCallback(async (showRefreshIndicator = false) => {
-        if (showRefreshIndicator) {
-            setIsRefreshing(true);
-        } else {
-            setIsLoading(true);
-        }
+    const fetchData = useCallback(
+        async (showRefreshIndicator = false) => {
+            if (showRefreshIndicator) {
+                setIsRefreshing(true);
+            } else {
+                setIsLoading(true);
+            }
 
-        try {
-            const params = new URLSearchParams();
-            if (filters.projectId) params.append('projectId', filters.projectId);
-            if (filters.status?.length) filters.status.forEach(s => params.append('status', s));
-            if (filters.priority?.length) filters.priority.forEach(p => params.append('priority', p));
-            if (filters.owner) params.append('owner', filters.owner);
-            if (filters.quarter) params.append('quarter', filters.quarter);
-            if (filters.search) params.append('search', filters.search);
+            try {
+                const params = new URLSearchParams();
+                if (filters.projectId) params.append('projectId', filters.projectId);
+                if (filters.status?.length) filters.status.forEach((s) => params.append('status', s));
+                if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
+                if (filters.owner) params.append('owner', filters.owner);
+                if (filters.quarter) params.append('quarter', filters.quarter);
+                if (filters.search) params.append('search', filters.search);
 
-            const response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
-            setInitiatives(response.initiatives || []);
-            setStats(response.stats || null);
+                const response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
+                setInitiatives(response.initiatives || []);
+                setStats(response.stats || null);
 
-            // Extract unique projects
-            const uniqueProjects = new Map<string, string>();
-            (response.initiatives || []).forEach((init: PortfolioInitiative) => {
-                if (init.projectId && init.projectName) {
-                    uniqueProjects.set(init.projectId, init.projectName);
-                }
-            });
-            setProjects(Array.from(uniqueProjects, ([id, name]) => ({ id, name })));
-
-        } catch (error) {
-            console.error('[PortfolioView] Fetch error:', error);
-            toast.error('Failed to load portfolio data');
-        } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
-        }
-    }, [filters]);
+                // Extract unique projects
+                const uniqueProjects = new Map<string, string>();
+                (response.initiatives || []).forEach((init: PortfolioInitiative) => {
+                    if (init.projectId && init.projectName) {
+                        uniqueProjects.set(init.projectId, init.projectName);
+                    }
+                });
+                setProjects(Array.from(uniqueProjects, ([id, name]) => ({ id, name })));
+            } catch (error) {
+                console.error('[PortfolioView] Fetch error:', error);
+                toast.error('Failed to load portfolio data');
+            } finally {
+                setIsLoading(false);
+                setIsRefreshing(false);
+            }
+        },
+        [filters],
+    );
 
     useEffect(() => {
         fetchData();
@@ -163,9 +160,7 @@ export const PortfolioView: React.FC = () => {
     const handleStatusChange = useCallback(async (initiativeId: string, newStatus: InitiativeStatus) => {
         try {
             await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-            setInitiatives(prev => prev.map(i =>
-                i.id === initiativeId ? { ...i, status: newStatus } : i
-            ));
+            setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
             toast.success('Status updated');
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to update status');
@@ -175,16 +170,14 @@ export const PortfolioView: React.FC = () => {
     const handleQuickUpdate = useCallback(async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
         try {
             await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
-            setInitiatives(prev => prev.map(i =>
-                i.id === initiativeId ? { ...i, ...updates } : i
-            ));
+            setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i)));
         } catch (error: any) {
             toast.error('Failed to update');
         }
     }, []);
 
     const handleFilterChange = useCallback((key: keyof PortfolioFilters, value: any) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+        setFilters((prev) => ({ ...prev, [key]: value }));
     }, []);
 
     const clearFilters = useCallback(() => {
@@ -192,8 +185,14 @@ export const PortfolioView: React.FC = () => {
     }, []);
 
     const hasActiveFilters = useMemo(() => {
-        return filters.projectId || filters.status?.length || filters.priority?.length ||
-            filters.owner || filters.quarter || filters.search;
+        return (
+            filters.projectId ||
+            filters.status?.length ||
+            filters.priority?.length ||
+            filters.owner ||
+            filters.quarter ||
+            filters.search
+        );
     }, [filters]);
 
     // ============================================
@@ -259,9 +258,7 @@ export const PortfolioView: React.FC = () => {
                         <AlertTriangle size={16} className="text-red-500" />
                         <span className="text-xs text-slate-500 dark:text-slate-400">Blocked</span>
                     </div>
-                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                        {stats.blockedCount || 0}
-                    </div>
+                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.blockedCount || 0}</div>
                 </div>
 
                 {/* Total Budget */}
@@ -279,7 +276,9 @@ export const PortfolioView: React.FC = () => {
     };
 
     const renderFilters = () => (
-        <div className={`overflow-hidden transition-all duration-300 ${showFilters ? 'max-h-32 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+        <div
+            className={`overflow-hidden transition-all duration-300 ${showFilters ? 'max-h-32 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
+        >
             <div className="flex flex-wrap items-center gap-3 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg">
                 {/* Project Filter */}
                 {projects.length > 0 && (
@@ -289,8 +288,10 @@ export const PortfolioView: React.FC = () => {
                         className="px-3 py-1.5 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                     >
                         <option value="">All Projects</option>
-                        {projects.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
+                        {projects.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name}
+                            </option>
                         ))}
                     </select>
                 )}
@@ -302,8 +303,10 @@ export const PortfolioView: React.FC = () => {
                     className="px-3 py-1.5 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                 >
                     <option value="">All Statuses</option>
-                    {STATUS_OPTIONS.map(s => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
+                    {STATUS_OPTIONS.map((s) => (
+                        <option key={s.value} value={s.value}>
+                            {s.label}
+                        </option>
                     ))}
                 </select>
 
@@ -314,8 +317,10 @@ export const PortfolioView: React.FC = () => {
                     className="px-3 py-1.5 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                 >
                     <option value="">All Priorities</option>
-                    {PRIORITY_OPTIONS.map(p => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
+                    {PRIORITY_OPTIONS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                            {p.label}
+                        </option>
                     ))}
                 </select>
 
@@ -348,9 +353,7 @@ export const PortfolioView: React.FC = () => {
                     <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
                         <Briefcase className="w-10 h-10 text-slate-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white mb-2">
-                        No initiatives yet
-                    </h3>
+                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white mb-2">No initiatives yet</h3>
                     <p className="text-slate-500 dark:text-slate-400 max-w-md">
                         Create your first initiative or generate from assessment to start building your portfolio.
                     </p>
@@ -389,12 +392,7 @@ export const PortfolioView: React.FC = () => {
                     />
                 );
             case 'matrix':
-                return (
-                    <PortfolioMatrixView
-                        initiatives={initiatives}
-                        onInitiativeClick={handleInitiativeClick}
-                    />
-                );
+                return <PortfolioMatrixView initiatives={initiatives} onInitiativeClick={handleInitiativeClick} />;
             default:
                 return null;
         }
@@ -443,14 +441,15 @@ export const PortfolioView: React.FC = () => {
                 <div className="flex items-center justify-between">
                     {/* View Mode Toggle */}
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-950 rounded-lg p-1">
-                        {VIEW_MODES.map(mode => (
+                        {VIEW_MODES.map((mode) => (
                             <button
                                 key={mode.id}
                                 onClick={() => setViewMode(mode.id)}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === mode.id
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                    viewMode === mode.id
                                         ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 shadow-sm'
                                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
+                                }`}
                             >
                                 {mode.icon}
                                 <span className="hidden sm:inline">{mode.label}</span>
@@ -473,17 +472,19 @@ export const PortfolioView: React.FC = () => {
 
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters || hasActiveFilters
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                showFilters || hasActiveFilters
                                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                                }`}
+                            }`}
                         >
                             <Filter size={16} />
                             Filters
-                            {hasActiveFilters && (
-                                <span className="w-2 h-2 rounded-full bg-purple-500" />
-                            )}
-                            <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                            {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-purple-500" />}
+                            <ChevronDown
+                                size={14}
+                                className={`transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -493,9 +494,7 @@ export const PortfolioView: React.FC = () => {
             </div>
 
             {/* Stats Row */}
-            <div className="shrink-0 px-6 py-4">
-                {renderStats()}
-            </div>
+            <div className="shrink-0 px-6 py-4">{renderStats()}</div>
 
             {/* Main Content */}
             <div className="flex-1 overflow-hidden px-6 pb-6">
@@ -510,7 +509,7 @@ export const PortfolioView: React.FC = () => {
                 isOpen={isSidePanelOpen}
                 onClose={handleCloseSidePanel}
                 onUpdate={(updated) => {
-                    setInitiatives(prev => prev.map(i => i.id === updated.id ? updated : i));
+                    setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
                 }}
             />
         </div>
@@ -518,4 +517,3 @@ export const PortfolioView: React.FC = () => {
 };
 
 export default PortfolioView;
-

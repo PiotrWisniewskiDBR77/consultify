@@ -11,48 +11,49 @@ import { z } from 'zod';
 
 export const CreateInitiativeSchema = z.object({
     projectId: z.string().uuid('Invalid project ID'),
-    title: z.string()
-        .min(1, 'Initiative title is required')
-        .max(255, 'Initiative title too long')
-        .trim(),
-    description: z.string()
-        .max(10000, 'Description too long')
-        .optional(),
-    status: z.enum(['draft', 'planning', 'active', 'completed', 'cancelled'])
-        .optional()
-        .default('draft'),
-    priority: z.enum(['low', 'medium', 'high', 'critical'])
-        .optional()
-        .default('medium'),
+    title: z.string().min(1, 'Initiative title is required').max(255, 'Initiative title too long').trim(),
+    description: z.string().max(10000, 'Description too long').optional(),
+    status: z.enum(['draft', 'planning', 'active', 'completed', 'cancelled']).optional().default('draft'),
+    priority: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
     owner: z.string().uuid().optional().nullable(),
     startDate: z.string().datetime().optional().nullable(),
     endDate: z.string().datetime().optional().nullable(),
-    
+
     // Financial metrics
     budget: z.number().min(0).max(1000000000).optional(),
     actualCost: z.number().min(0).optional(),
     roi: z.number().min(-100).max(10000).optional(),
-    
+
     // Strategic alignment
     strategicAlignment: z.number().min(0).max(100).optional(),
     riskLevel: z.enum(['low', 'medium', 'high']).optional(),
     category: z.string().max(100).optional(),
     tags: z.array(z.string().max(50)).max(20).optional(),
-    
+
     // KPIs
-    kpis: z.array(z.object({
-        name: z.string().min(1).max(100),
-        target: z.number(),
-        current: z.number().default(0),
-        unit: z.string().max(20),
-    })).max(20).optional(),
-    
+    kpis: z
+        .array(
+            z.object({
+                name: z.string().min(1).max(100),
+                target: z.number(),
+                current: z.number().default(0),
+                unit: z.string().max(20),
+            }),
+        )
+        .max(20)
+        .optional(),
+
     // Benefits
-    expectedBenefits: z.array(z.object({
-        description: z.string().max(500),
-        type: z.enum(['financial', 'operational', 'strategic', 'compliance']),
-        value: z.number().optional(),
-    })).max(20).optional(),
+    expectedBenefits: z
+        .array(
+            z.object({
+                description: z.string().max(500),
+                type: z.enum(['financial', 'operational', 'strategic', 'compliance']),
+                value: z.number().optional(),
+            }),
+        )
+        .max(20)
+        .optional(),
 });
 
 export type CreateInitiativeInput = z.infer<typeof CreateInitiativeSchema>;
@@ -67,15 +68,19 @@ export type UpdateInitiativeInput = z.infer<typeof UpdateInitiativeSchema>;
 
 export const ValidateInitiativeSchema = z.object({
     initiativeId: z.string().uuid(),
-    validationRules: z.array(z.enum([
-        'budget_feasibility',
-        'timeline_realistic',
-        'resource_availability',
-        'risk_assessment',
-        'strategic_fit',
-        'dependency_check',
-        'kpi_measurability'
-    ])).optional(),
+    validationRules: z
+        .array(
+            z.enum([
+                'budget_feasibility',
+                'timeline_realistic',
+                'resource_availability',
+                'risk_assessment',
+                'strategic_fit',
+                'dependency_check',
+                'kpi_measurability',
+            ]),
+        )
+        .optional(),
 });
 
 export type ValidateInitiativeInput = z.infer<typeof ValidateInitiativeSchema>;
@@ -99,5 +104,3 @@ export const InitiativeFilterSchema = z.object({
 });
 
 export type InitiativeFilterInput = z.infer<typeof InitiativeFilterSchema>;
-
-

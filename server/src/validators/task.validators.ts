@@ -1,7 +1,7 @@
 /**
  * Task Validators
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Zod schemas for task-related API endpoints
  */
 
@@ -11,7 +11,16 @@ import { z } from 'zod';
 // ENUMS
 // ==========================================
 
-export const TaskStatusEnum = z.enum(['todo', 'in_progress', 'review', 'done', 'blocked', 'on_hold', 'backlog', 'cancelled']);
+export const TaskStatusEnum = z.enum([
+    'todo',
+    'in_progress',
+    'review',
+    'done',
+    'blocked',
+    'on_hold',
+    'backlog',
+    'cancelled',
+]);
 export const PriorityEnum = z.enum(['low', 'medium', 'high', 'urgent', 'critical']);
 export const TaskTypeEnum = z.enum(['execution', 'analysis', 'decision', 'design', 'build', 'test', 'deploy', 'other']);
 
@@ -51,6 +60,7 @@ export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId
 export const AssignTaskSchema = z.object({
     assigneeId: z.string().uuid(),
     notify: z.boolean().optional().default(true),
+    slaHours: z.number().positive().optional(),
 });
 
 export const ReassignTaskSchema = z.object({
@@ -86,7 +96,7 @@ export const GetTasksQuerySchema = z.object({
     initiativeId: z.string().uuid().optional(),
     search: z.string().optional(),
     page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+    limit: z.coerce.number().int().min(1).max(100).optional().default(100),
 });
 
 // ==========================================
@@ -101,7 +111,4 @@ export type EscalateTaskRequest = z.infer<typeof EscalateTaskSchema>;
 export type ResolveEscalationRequest = z.infer<typeof ResolveEscalationSchema>;
 export type AddTaskCommentRequest = z.infer<typeof AddTaskCommentSchema>;
 export type GetTasksQuery = z.infer<typeof GetTasksQuerySchema>;
-
-
-
 

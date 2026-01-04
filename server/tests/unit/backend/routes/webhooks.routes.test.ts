@@ -1,12 +1,12 @@
 /**
  * Webhooks Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for webhooks routes - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Express, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Webhooks Routes', () => {
     let mockReq: Partial<Request>;
@@ -315,4 +315,3 @@ describe('Webhooks Routes', () => {
         });
     });
 });
-

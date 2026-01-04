@@ -8,7 +8,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import db from '../../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import WebSearchService from '../../webSearchService.js';
 import IndustryIntelligenceService from './industryIntelligenceService.js';
 
@@ -665,6 +666,7 @@ class BenchmarkDataService {
 }
 
 export default BenchmarkDataService;
+
 
 
 

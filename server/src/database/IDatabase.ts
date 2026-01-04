@@ -1,7 +1,7 @@
 /**
  * Database Interface
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Common interface for both SQLite and PostgreSQL implementations
  */
 
@@ -25,7 +25,7 @@ export interface IDatabase {
     get<T = unknown>(
         sql: string,
         params?: unknown[],
-        callback?: (err: Error | null, row: T | null) => void
+        callback?: (err: Error | null, row: T | null) => void,
     ): this | Promise<T | null>;
 
     /**
@@ -34,17 +34,13 @@ export interface IDatabase {
     all<T = unknown>(
         sql: string,
         params?: unknown[],
-        callback?: (err: Error | null, rows: T[]) => void
+        callback?: (err: Error | null, rows: T[]) => void,
     ): this | Promise<T[]>;
 
     /**
      * Execute a query (INSERT/UPDATE/DELETE)
      */
-    run(
-        sql: string,
-        params?: unknown[],
-        callback?: (err: Error | null) => void
-    ): this | Promise<RunResult>;
+    run(sql: string, params?: unknown[], callback?: (err: Error | null) => void): this | Promise<RunResult>;
 
     /**
      * Execute SQL script (multiple statements)
@@ -66,7 +62,4 @@ export interface IDatabase {
      */
     query<T = unknown>(text: string, params?: unknown[]): Promise<QueryResult<T>>;
 }
-
-
-
 

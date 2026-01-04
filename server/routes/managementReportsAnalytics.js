@@ -9,7 +9,7 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
 // Database helpers
@@ -323,6 +323,7 @@ router.get('/projects', authMiddleware, async (req, res) => {
 });
 
 export default router;
+
 
 
 

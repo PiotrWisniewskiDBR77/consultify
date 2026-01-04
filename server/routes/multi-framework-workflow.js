@@ -14,7 +14,7 @@ import { multiFrameworkRBAC,
  } from '../middleware/assessmentRBAC.js';
 import frameworkRBACServiceModule from '../services/frameworkRBACService.js';
 const FrameworkRBACService = frameworkRBACServiceModule.FrameworkRBACService || frameworkRBACServiceModule;
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import * as multiFrameworkAuditServiceModule from '../services/multiFrameworkAuditService.js';
 const multiFrameworkAuditService = multiFrameworkAuditServiceModule.default || multiFrameworkAuditServiceModule;

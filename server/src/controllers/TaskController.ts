@@ -1,45 +1,55 @@
 /**
  * Task Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles all task-related business logic
  */
 
 import type { Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+import ActivityService from '../services/ActivityService.js';
+import NotificationService from '../services/NotificationService.js';
+import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { v4 as uuidv4 } from 'uuid';
 import DbPromise from '../utils/DbPromise.js';
-import NotificationService from '../services/NotificationService.js';
-import ActivityService from '../services/ActivityService.js';
-import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import type {
-    CreateTaskRequest,
-    UpdateTaskRequest,
-    AssignTaskRequest,
-    ReassignTaskRequest,
-    EscalateTaskRequest,
-    ResolveEscalationRequest,
     AddTaskCommentRequest,
+    EscalateTaskRequest,
+    AssignTaskRequest,
+    CreateTaskRequest,
     GetTasksQuery,
+    ReassignTaskRequest,
+    ResolveEscalationRequest,
+    UpdateTaskRequest,
 } from '../validators/task.validators.js';
+import TaskAssignmentService from '../../services/taskAssignmentService.js';
+
+const ESCALATION_TRIGGERS = {
+    SLA_BREACH: 'SLA_BREACH',
+    BLOCKED: 'BLOCKED',
+    MANUAL: 'MANUAL',
+    PRIORITY_CHANGE: 'PRIORITY_CHANGE',
+} as const;
 
 // ==========================================
 // TYPES
 // ==========================================
 
-interface TaskAssignee {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string;
-}
 
-interface TaskReporter {
+type SQLParam = string | number | boolean | null | undefined;
+
+interface CommentRow {
     id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string;
+    task_id: string;
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url?: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
 }
 
 interface TaskRow {
@@ -104,6 +114,7 @@ export class TaskController {
      * Get all tasks with filters
      */
     static getTasks = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        console.log('[TaskController] getTasks called', { user: req.user?.id, org: req.user?.organizationId });
         const orgId = req.user?.organizationId;
         const userId = req.user?.id;
         if (!orgId || !userId) {
@@ -112,6 +123,11 @@ export class TaskController {
         }
 
         const query = req.query as unknown as GetTasksQuery;
+        // Default page 1, default limit 100 (or from schema default)
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 100;
+        const offset = (page - 1) * limit;
+
         const { projectId, status, assigneeId, priority, initiativeId } = query;
 
         let sql = `
@@ -132,38 +148,50 @@ export class TaskController {
             LEFT JOIN initiatives i ON t.initiative_id = i.id
             WHERE t.organization_id = ?
         `;
-        type SQLParam = string | number | boolean | null | undefined;
+        const countSql = `SELECT COUNT(*) as total FROM tasks t WHERE t.organization_id = ?`;
+
         const params: SQLParam[] = [orgId];
+        const countParams: SQLParam[] = [orgId];
 
-        // Apply filters
-        if (projectId) {
-            sql += ` AND t.project_id = ?`;
-            params.push(projectId);
-        }
-        if (status) {
-            sql += ` AND t.status = ?`;
-            params.push(status);
-        }
-        if (assigneeId) {
-            sql += ` AND t.assignee_id = ?`;
-            params.push(assigneeId);
-        }
-        if (priority) {
-            sql += ` AND t.priority = ?`;
-            params.push(priority);
-        }
-        if (initiativeId) {
-            sql += ` AND t.initiative_id = ?`;
-            params.push(initiativeId);
-        }
+        const applyFilters = (baseSql: string, baseParams: SQLParam[]) => {
+            let s = baseSql;
+            const p = [...baseParams];
 
-        // For regular users, show only tasks assigned to them or reported by them
-        if (req.user?.role === 'team_member' || req.user?.role === 'viewer') {
-            sql += ` AND (t.assignee_id = ? OR t.reporter_id = ?)`;
-            params.push(userId, userId);
-        }
+            if (projectId) {
+                s += ` AND t.project_id = ?`;
+                p.push(projectId);
+            }
+            if (status) {
+                s += ` AND t.status = ?`;
+                p.push(status);
+            }
+            if (assigneeId) {
+                s += ` AND t.assignee_id = ?`;
+                p.push(assigneeId);
+            }
+            if (priority) {
+                s += ` AND t.priority = ?`;
+                p.push(priority);
+            }
+            if (initiativeId) {
+                s += ` AND t.initiative_id = ?`;
+                p.push(initiativeId);
+            }
 
-        sql += ` ORDER BY 
+            // For regular users, show only tasks assigned to them or reported by them
+            if (req.user?.role === 'team_member' || req.user?.role === 'viewer') {
+                s += ` AND (t.assignee_id = ? OR t.reporter_id = ?)`;
+                p.push(userId, userId);
+            }
+            return { sql: s, params: p };
+        };
+
+        // Filter valid parts
+        const filteredMain = applyFilters(sql, params);
+        const filteredCount = applyFilters(countSql, countParams);
+
+        // Sort and Paginate Main Query
+        filteredMain.sql += ` ORDER BY 
             CASE t.priority 
                 WHEN 'urgent' THEN 1 
                 WHEN 'critical' THEN 1
@@ -172,11 +200,26 @@ export class TaskController {
                 WHEN 'low' THEN 4 
             END,
             t.due_date ASC,
-            t.created_at DESC`;
+            t.created_at DESC
+            LIMIT ? OFFSET ?`;
+        filteredMain.params.push(limit, offset);
 
-        const rows = await DbPromise.all<TaskRow>(sql, params);
+        // Execute queries
+        const [rows, countResult] = await Promise.all([
+            DbPromise.all<TaskRow>(filteredMain.sql, filteredMain.params),
+            DbPromise.get<{ total: number }>(filteredCount.sql, filteredCount.params),
+        ]);
 
-        const tasks = rows.map(t => ({
+        const total = countResult?.total || 0;
+        const totalPages = Math.ceil(total / limit);
+
+        // Set Pagination Headers
+        res.setHeader('X-Total-Count', total);
+        res.setHeader('X-Page', page);
+        res.setHeader('X-Limit', limit);
+        res.setHeader('X-Total-Pages', totalPages);
+
+        const tasks = rows.map((t) => ({
             id: t.id,
             projectId: t.project_id,
             projectName: t.project_name,
@@ -186,19 +229,23 @@ export class TaskController {
             status: t.status,
             priority: t.priority,
             assigneeId: t.assignee_id,
-            assignee: t.assignee_id ? {
-                id: t.assignee_id,
-                firstName: t.assignee_first_name,
-                lastName: t.assignee_last_name,
-                avatarUrl: t.assignee_avatar
-            } : null,
+            assignee: t.assignee_id
+                ? {
+                    id: t.assignee_id,
+                    firstName: t.assignee_first_name,
+                    lastName: t.assignee_last_name,
+                    avatarUrl: t.assignee_avatar,
+                }
+                : null,
             reporterId: t.reporter_id,
-            reporter: t.reporter_id ? {
-                id: t.reporter_id,
-                firstName: t.reporter_first_name,
-                lastName: t.reporter_last_name,
-                avatarUrl: t.reporter_avatar
-            } : null,
+            reporter: t.reporter_id
+                ? {
+                    id: t.reporter_id,
+                    firstName: t.reporter_first_name,
+                    lastName: t.reporter_last_name,
+                    avatarUrl: t.reporter_avatar,
+                }
+                : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
             checklist: t.checklist ? JSON.parse(t.checklist) : [],
@@ -229,7 +276,7 @@ export class TaskController {
             slaDueAt: t.sla_due_at,
             escalationLevel: t.escalation_level || 0,
             escalatedToId: t.escalated_to_id,
-            lastEscalatedAt: t.last_escalated_at
+            lastEscalatedAt: t.last_escalated_at,
         }));
 
         res.json(tasks);
@@ -281,19 +328,23 @@ export class TaskController {
             status: t.status,
             priority: t.priority,
             assigneeId: t.assignee_id,
-            assignee: t.assignee_id ? {
-                id: t.assignee_id,
-                firstName: t.assignee_first_name,
-                lastName: t.assignee_last_name,
-                avatarUrl: t.assignee_avatar
-            } : null,
+            assignee: t.assignee_id
+                ? {
+                    id: t.assignee_id,
+                    firstName: t.assignee_first_name,
+                    lastName: t.assignee_last_name,
+                    avatarUrl: t.assignee_avatar,
+                }
+                : null,
             reporterId: t.reporter_id,
-            reporter: t.reporter_id ? {
-                id: t.reporter_id,
-                firstName: t.reporter_first_name,
-                lastName: t.reporter_last_name,
-                avatarUrl: t.reporter_avatar
-            } : null,
+            reporter: t.reporter_id
+                ? {
+                    id: t.reporter_id,
+                    firstName: t.reporter_first_name,
+                    lastName: t.reporter_last_name,
+                    avatarUrl: t.reporter_avatar,
+                }
+                : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
             checklist: t.checklist ? JSON.parse(t.checklist) : [],
@@ -324,7 +375,7 @@ export class TaskController {
             slaDueAt: t.sla_due_at,
             escalationLevel: t.escalation_level || 0,
             escalatedToId: t.escalated_to_id,
-            lastEscalatedAt: t.last_escalated_at
+            lastEscalatedAt: t.last_escalated_at,
         };
 
         res.json(task);
@@ -346,14 +397,28 @@ export class TaskController {
 
         const body = req.body as CreateTaskRequest;
         const {
-            projectId, title, description,
-            status, priority, assigneeId,
-            dueDate, estimatedHours, tags,
-            taskType, initiativeId, why,
-            expectedOutcome, decisionImpact,
-            evidenceRequired, strategicContribution,
-            roadmapInitiativeId, kpiId, raidItemId, assignees,
-            progress, blockedReason
+            projectId,
+            title,
+            description,
+            status,
+            priority,
+            assigneeId,
+            dueDate,
+            estimatedHours,
+            tags,
+            taskType,
+            initiativeId,
+            why,
+            expectedOutcome,
+            decisionImpact,
+            evidenceRequired,
+            strategicContribution,
+            roadmapInitiativeId,
+            kpiId,
+            raidItemId,
+            assignees,
+            progress,
+            blockedReason,
         } = body;
 
         if (!projectId) {
@@ -390,54 +455,89 @@ export class TaskController {
         `;
 
         await DbPromise.run(sql, [
-            id, projectId, orgId, title, description,
-            finalStatus, finalPriority, assigneeId, userId,
-            dueDate, estimatedHours, tags ? JSON.stringify(tags) : '[]',
-            finalTaskType, initiativeId, why,
-            finalExpectedOutcome, finalDecisionImpact, finalEvidenceRequired, finalStrategicContribution,
-            roadmapInitiativeId, kpiId, raidItemId, assignees ? JSON.stringify(assignees) : '[]',
-            finalProgress, finalBlockedReason,
-            now, now,
+            id,
+            projectId,
+            orgId,
+            title,
+            description,
+            finalStatus,
+            finalPriority,
+            assigneeId,
+            userId,
+            dueDate,
+            estimatedHours,
+            tags ? JSON.stringify(tags) : '[]',
+            finalTaskType,
+            initiativeId,
+            why,
+            finalExpectedOutcome,
+            finalDecisionImpact,
+            finalEvidenceRequired,
+            finalStrategicContribution,
+            roadmapInitiativeId,
+            kpiId,
+            raidItemId,
+            assignees ? JSON.stringify(assignees) : '[]',
+            finalProgress,
+            finalBlockedReason,
+            now,
+            now,
         ]);
 
         // Notifications
         if (assigneeId && assigneeId !== userId) {
-            (NotificationService as any).create({
-                userId: assigneeId,
-                organizationId: orgId,
-                projectId,
-                type: 'task_assigned',
-                title: 'New Task Assignment',
-                message: `You have been assigned to task "${title}"`,
-                relatedObjectType: 'TASK',
-                relatedObjectId: id
-            }).catch((err: any) => console.error('[TaskController] Notification failed:', err));
+            (NotificationService as any)
+                .create({
+                    userId: assigneeId,
+                    organizationId: orgId,
+                    projectId,
+                    type: 'task_assigned',
+                    title: 'New Task Assignment',
+                    message: `You have been assigned to task "${title}"`,
+                    relatedObjectType: 'TASK',
+                    relatedObjectId: id,
+                })
+                .catch((err: any) => console.error('[TaskController] Notification failed:', err));
         }
 
         // Activity logging
-        (ActivityService as any).log({
-            organizationId: orgId,
-            userId: userId,
-            action: 'created',
-            entityType: 'TASK',
-            entityId: id,
-            entityName: title,
-            newValue: body
-        }).catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+        (ActivityService as any)
+            .log({
+                organizationId: orgId,
+                userId: userId,
+                action: 'created',
+                entityType: 'TASK',
+                entityId: id,
+                entityName: title,
+                newValue: body,
+            })
+            .catch((err: any) => console.error('[TaskController] Activity log failed:', err));
 
         // Audit Trail (PMO Standard)
         await DbPromise.run(
             `INSERT INTO pmo_audit_trail (id, project_id, pmo_domain_id, object_type, object_id, action, actor_id, metadata, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), projectId, PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL, 'TASK', id, 'TASK_CREATED', userId, JSON.stringify(body), now]
-        ).catch(err => console.error('[TaskController] PMO Audit log failed:', err));
+            [
+                uuidv4(),
+                projectId,
+                PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL,
+                'TASK',
+                id,
+                'TASK_CREATED',
+                userId,
+                JSON.stringify(body),
+                now,
+            ],
+        ).catch((err: Error | null) => console.error('[TaskController] PMO Audit log failed:', err));
 
         // Recalculate Initiative Progress
         if (initiativeId) {
             // Lazy load for now to avoid circular dependency
-            const InitiativeService = await import('../services/initiativeService.js').then(m => m.default || m);
+            const InitiativeService = await import('../services/initiativeService.js').then((m) => m.default || m);
             if (InitiativeService && (InitiativeService as any).recalculateProgress) {
-                (InitiativeService as any).recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: any) => console.error('[TaskController] Recalc failed:', err));
+                (InitiativeService as any)
+                    .recalculateProgress({ organizationId: orgId, initiativeId })
+                    .catch((err: any) => console.error('[TaskController] Recalc failed:', err));
             }
         }
 
@@ -462,10 +562,10 @@ export class TaskController {
         }
 
         // Get current task
-        const currentTask = await DbPromise.get<TaskRow>(
-            `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
-            [id, orgId]
-        );
+        const currentTask = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [
+            id,
+            orgId,
+        ]);
 
         if (!currentTask) {
             res.status(404).json({ error: 'Task not found' });
@@ -473,13 +573,30 @@ export class TaskController {
         }
 
         const allowedFields = [
-            'title', 'description', 'status', 'priority',
-            'assignee_id', 'due_date', 'estimated_hours',
-            'checklist', 'attachments', 'tags', 'custom_status_id',
-            'task_type', 'initiative_id', 'why',
-            'expected_outcome', 'decision_impact', 'evidence_required',
-            'strategic_contribution', 'roadmap_initiative_id', 'kpi_id',
-            'raid_item_id', 'assignees', 'progress', 'blocked_reason'
+            'title',
+            'description',
+            'status',
+            'priority',
+            'assignee_id',
+            'due_date',
+            'estimated_hours',
+            'checklist',
+            'attachments',
+            'tags',
+            'custom_status_id',
+            'task_type',
+            'initiative_id',
+            'why',
+            'expected_outcome',
+            'decision_impact',
+            'evidence_required',
+            'strategic_contribution',
+            'roadmap_initiative_id',
+            'kpi_id',
+            'raid_item_id',
+            'assignees',
+            'progress',
+            'blocked_reason',
         ];
 
         const fieldMap: Record<string, string> = {
@@ -496,7 +613,7 @@ export class TaskController {
             roadmapInitiativeId: 'roadmap_initiative_id',
             kpiId: 'kpi_id',
             raidItemId: 'raid_item_id',
-            blockedReason: 'blocked_reason'
+            blockedReason: 'blocked_reason',
         };
 
         const sqlUpdates: string[] = [];
@@ -504,13 +621,23 @@ export class TaskController {
         const historyEntries: any[] = [];
         const now = new Date().toISOString();
 
-        Object.keys(updates).forEach(key => {
+        Object.keys(updates).forEach((key) => {
             const dbKey = fieldMap[key] || key;
             if (allowedFields.includes(dbKey)) {
                 let value = (updates as any)[key];
 
                 // Serialize JSON fields
-                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'strategic_contribution', 'assignees'].includes(dbKey)) {
+                if (
+                    [
+                        'checklist',
+                        'attachments',
+                        'tags',
+                        'decision_impact',
+                        'evidence_required',
+                        'strategic_contribution',
+                        'assignees',
+                    ].includes(dbKey)
+                ) {
                     if (typeof value === 'object') value = JSON.stringify(value);
                 }
 
@@ -525,7 +652,7 @@ export class TaskController {
                         field: dbKey,
                         oldValue: oldValue ? String(oldValue) : '',
                         newValue: value ? String(value) : '',
-                        changedBy: userId
+                        changedBy: userId,
                     });
                 }
             }
@@ -564,42 +691,48 @@ export class TaskController {
             for (const entry of historyEntries) {
                 await DbPromise.run(
                     `INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`,
-                    [uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy]
-                ).catch(err => console.error('[TaskController] History log failed:', err));
+                    [uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy],
+                ).catch((err: Error | null) => console.error('[TaskController] History log failed:', err));
             }
         }
 
         // Activity log
-        (ActivityService as any).log({
-            organizationId: orgId,
-            userId: userId,
-            action: 'updated',
-            entityType: 'TASK',
-            entityId: id,
-            entityName: currentTask.title,
-            newValue: updates
-        }).catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+        (ActivityService as any)
+            .log({
+                organizationId: orgId,
+                userId: userId,
+                action: 'updated',
+                entityType: 'TASK',
+                entityId: id,
+                entityName: currentTask.title,
+                newValue: updates,
+            })
+            .catch((err: any) => console.error('[TaskController] Activity log failed:', err));
 
         // Notifications
         const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;
         if (affectedUserId && affectedUserId !== userId) {
-            (NotificationService as any).create({
-                userId: affectedUserId,
-                organizationId: orgId,
-                type: 'task_updated',
-                title: 'Task Updated',
-                message: `Task "${currentTask.title}" has been updated`,
-                relatedObjectType: 'TASK',
-                relatedObjectId: id
-            }).catch((err: any) => console.error('[TaskController] Notification failed:', err));
+            (NotificationService as any)
+                .create({
+                    userId: affectedUserId,
+                    organizationId: orgId,
+                    type: 'task_updated',
+                    title: 'Task Updated',
+                    message: `Task "${currentTask.title}" has been updated`,
+                    relatedObjectType: 'TASK',
+                    relatedObjectId: id,
+                })
+                .catch((err: any) => console.error('[TaskController] Notification failed:', err));
         }
 
         // Initiative Progress Recalc
         const initiativeId = updates.initiativeId || currentTask.initiative_id;
         if (initiativeId) {
-            const InitiativeService = await import('../services/initiativeService.js').then(m => m.default || m);
+            const InitiativeService = await import('../services/initiativeService.js').then((m) => m.default || m);
             if (InitiativeService && InitiativeService.recalculateProgress) {
-                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch(err => console.error('[TaskController] Recalc failed:', err));
+                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: Error | null) =>
+                    console.error('[TaskController] Recalc failed:', err),
+                );
             }
         }
 
@@ -625,7 +758,7 @@ export class TaskController {
         // Check permission - only Admin/SuperAdmin or task reporter can delete
         const task = await DbPromise.get<TaskRow>(
             'SELECT reporter_id, initiative_id, title FROM tasks WHERE id = ? AND organization_id = ?',
-            [id, orgId]
+            [id, orgId],
         );
 
         if (!task) {
@@ -653,20 +786,24 @@ export class TaskController {
         }
 
         // Activity log
-        (ActivityService as any).log({
-            organizationId: orgId,
-            userId: userId,
-            action: 'deleted',
-            entityType: 'TASK',
-            entityId: id,
-            entityName: task.title
-        }).catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+        (ActivityService as any)
+            .log({
+                organizationId: orgId,
+                userId: userId,
+                action: 'deleted',
+                entityType: 'TASK',
+                entityId: id,
+                entityName: task.title,
+            })
+            .catch((err: any) => console.error('[TaskController] Activity log failed:', err));
 
         // Recalculate Initiative Progress
         if (task.initiative_id) {
-            const InitiativeService = await import('../services/initiativeService.js').then(m => m.default || m);
+            const InitiativeService = await import('../services/initiativeService.js').then((m) => m.default || m);
             if (InitiativeService && (InitiativeService as any).recalculateProgress) {
-                (InitiativeService as any).recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id }).catch((err: any) => console.error('[TaskController] Recalc failed:', err));
+                (InitiativeService as any)
+                    .recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id })
+                    .catch((err: any) => console.error('[TaskController] Recalc failed:', err));
             }
         }
 
@@ -685,9 +822,9 @@ export class TaskController {
         }
 
         // Verify task belongs to org
-        const task = await queryHelpers.queryOne<{ id: string }>(
+        const task = await DbPromise.get<{ id: string }>(
             'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
-            [taskId, orgId]
+            [taskId, orgId],
         );
 
         if (!task) {
@@ -703,19 +840,9 @@ export class TaskController {
             ORDER BY c.created_at ASC
         `;
 
-        const rows = await DbPromise.all<any>(sql, [taskId]);
+        const rows = await DbPromise.all<CommentRow>(sql, [taskId]);
 
-        const comments = rows.map((c: {
-            id: string;
-            task_id: string;
-            user_id: string;
-            first_name: string;
-            last_name: string;
-            avatar_url?: string;
-            content: string;
-            created_at: string;
-            updated_at: string;
-        }) => ({
+        const comments = rows.map((c) => ({
             id: c.id,
             taskId: c.task_id,
             userId: c.user_id,
@@ -723,11 +850,11 @@ export class TaskController {
                 id: c.user_id,
                 firstName: c.first_name,
                 lastName: c.last_name,
-                avatarUrl: c.avatar_url
+                avatarUrl: c.avatar_url,
             },
             content: c.content,
             createdAt: c.created_at,
-            updatedAt: c.updated_at
+            updatedAt: c.updated_at,
         }));
 
         res.json(comments);
@@ -740,7 +867,7 @@ export class TaskController {
         const { id: taskId } = req.params;
         const orgId = req.user?.organizationId;
         const userId = req.user?.id;
-        const { content } = req.body;
+        const { content } = req.body as AddTaskCommentRequest;
         if (!orgId || !userId) {
             res.status(401).json({ error: 'Unauthorized' });
             return;
@@ -752,10 +879,10 @@ export class TaskController {
         }
 
         // Verify task belongs to org
-        const task = await DbPromise.get<{ id: string }>(
-            'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
-            [taskId, orgId]
-        );
+        const task = await DbPromise.get<{ id: string }>('SELECT id FROM tasks WHERE id = ? AND organization_id = ?', [
+            taskId,
+            orgId,
+        ]);
 
         if (!task) {
             res.status(404).json({ error: 'Task not found' });
@@ -775,7 +902,7 @@ export class TaskController {
             userId,
             content,
             createdAt: now,
-            updatedAt: now
+            updatedAt: now,
         });
     });
 
@@ -783,7 +910,7 @@ export class TaskController {
      * Delete task comment
      */
     static deleteTaskComment = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { taskId, commentId } = req.params;
+        const { commentId } = req.params;
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });
@@ -791,9 +918,9 @@ export class TaskController {
         }
 
         // Check if user owns the comment or is admin
-        const comment = await queryHelpers.queryOne<{ user_id: string }>(
+        const comment = await DbPromise.get<{ user_id: string }>(
             'SELECT user_id FROM task_comments WHERE id = ?',
-            [commentId]
+            [commentId],
         );
 
         if (!comment) {
@@ -801,12 +928,16 @@ export class TaskController {
             return;
         }
 
-        if (req.user?.role === 'USER' && comment.user_id !== userId) {
+        if (
+            req.user?.role !== 'owner' &&
+            req.user?.role !== 'administrator' &&
+            comment.user_id !== userId
+        ) {
             res.status(403).json({ error: 'You can only delete your own comments' });
             return;
         }
 
-        await queryHelpers.queryRun('DELETE FROM task_comments WHERE id = ?', [commentId]);
+        await DbPromise.run('DELETE FROM task_comments WHERE id = ?', [commentId]);
 
         res.json({ message: 'Comment deleted' });
     });
@@ -818,10 +949,9 @@ export class TaskController {
         const { id: taskId } = req.params;
         const { assigneeId, slaHours } = req.body as AssignTaskRequest;
 
-        const { assignTask } = await import('../../services/taskAssignmentService.js');
-        const result = await assignTask(taskId, assigneeId, {
+        const result = await TaskAssignmentService.assignTask(taskId, assigneeId, {
             assignedById: req.user?.id,
-            slaHours
+            slaHours,
         });
 
         res.json(result);
@@ -832,13 +962,12 @@ export class TaskController {
      */
     static reassignTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id: taskId } = req.params;
-        const { newAssigneeId, reason } = req.body as ReassignTaskRequest;
+        const { toAssigneeId, reason } = req.body as ReassignTaskRequest;
 
-        const { reassignTask } = await import('../../services/taskAssignmentService.js');
-        const result = await reassignTask(taskId, newAssigneeId, {
+        const result = await TaskAssignmentService.reassignTask(taskId, toAssigneeId, {
             reassignedById: req.user?.id,
             reason,
-            resetSla: true
+            resetSla: true,
         });
 
         res.json(result);
@@ -850,8 +979,7 @@ export class TaskController {
     static unassignTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const { unassignTask } = await import('../../services/taskAssignmentService.js');
-        const result = await unassignTask(id);
+        const result = await TaskAssignmentService.unassignTask(id);
 
         res.json(result);
     });
@@ -861,10 +989,9 @@ export class TaskController {
      */
     static escalateTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id: taskId } = req.params;
-        const { reason, triggerType } = req.body as any;
+        const { reason } = req.body as EscalateTaskRequest;
 
-        const { escalateTask, ESCALATION_TRIGGERS } = await import('../../services/taskAssignmentService.js');
-        const result = await escalateTask(taskId, {
+        const result = await TaskAssignmentService.escalateTask(taskId, {
             reason: reason || 'Manual escalation',
             triggerType: ESCALATION_TRIGGERS.MANUAL,
             escalatedById: req.user?.id,
@@ -878,11 +1005,10 @@ export class TaskController {
      */
     static resolveEscalation = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { escalationId } = req.params;
-        const { resolutionNote } = req.body as ResolveEscalationRequest;
+        const { resolution } = req.body as ResolveEscalationRequest;
 
-        const { resolveEscalation } = await import('../../services/taskAssignmentService.js');
-        const result = await resolveEscalation(escalationId, {
-            resolutionNote: resolutionNote,
+        const result = await TaskAssignmentService.resolveEscalation(escalationId, {
+            resolutionNote: resolution,
             resolvedById: req.user?.id,
         });
 
@@ -895,8 +1021,7 @@ export class TaskController {
     static getTaskEscalations = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const { getTaskEscalationHistory } = await import('../../services/taskAssignmentService.js');
-        const escalations = await getTaskEscalationHistory(id);
+        const escalations = await TaskAssignmentService.getTaskEscalationHistory(id);
 
         res.json(escalations);
     });
@@ -912,10 +1037,9 @@ export class TaskController {
             return;
         }
 
-        const { getOverdueTasks } = await import('../../services/taskAssignmentService.js');
-        const tasks = await getOverdueTasks(projectId, {
+        const tasks = await TaskAssignmentService.getOverdueTasks(projectId, {
             escalationLevel: escalationLevel ? parseInt(String(escalationLevel)) : undefined,
-            limit: limit ? parseInt(String(limit)) : undefined
+            limit: limit ? parseInt(String(limit)) : undefined,
         });
 
         res.json(tasks);
@@ -932,10 +1056,9 @@ export class TaskController {
             return;
         }
 
-        const { getTasksApproachingSLA } = await import('../../services/taskAssignmentService.js');
-        const tasks = await getTasksApproachingSLA(
+        const tasks = await TaskAssignmentService.getTasksApproachingSLA(
             projectId,
-            hoursAhead ? parseInt(String(hoursAhead)) : 4
+            hoursAhead ? parseInt(String(hoursAhead)) : 4,
         );
 
         res.json(tasks);
@@ -948,9 +1071,8 @@ export class TaskController {
         const { userId } = req.params;
         const { projectId } = req.query;
 
-        const { getUserWorkload } = await import('../../services/taskAssignmentService.js');
-        const workload = await getUserWorkload(userId, {
-            projectId: projectId as string | undefined
+        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+            projectId: projectId as string | undefined,
         });
 
         res.json(workload);
@@ -967,9 +1089,8 @@ export class TaskController {
             return;
         }
 
-        const { getUserWorkload } = await import('../../services/taskAssignmentService.js');
-        const workload = await getUserWorkload(userId, {
-            projectId: projectId as string | undefined
+        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+            projectId: projectId as string | undefined,
         });
 
         res.json(workload);
@@ -977,4 +1098,3 @@ export class TaskController {
 }
 
 export default TaskController;
-

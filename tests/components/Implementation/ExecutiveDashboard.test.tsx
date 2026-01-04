@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { ExecutiveDashboard } from '../../../components/Implementation/ExecutiveDashboard';
+import { ExecutiveDashboard } from '../../components/Implementation/ExecutiveDashboard';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({

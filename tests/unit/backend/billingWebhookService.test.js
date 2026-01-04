@@ -6,25 +6,28 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-import BillingWebhookService, { BillingWebhookService as BillingWebhookServiceClass, BILLING_EVENT_TYPES } from '../../../server/services/billingWebhookService.js';
+import { BillingWebhookServiceClass, BILLING_EVENT_TYPES } from '../../../server/src/services/BillingWebhookService.ts';
 
 describe('BillingWebhookService', () => {
     let mockDb;
     let mockWebhookService;
+    let mockUuid;
+    let deps;
 
     beforeEach(async () => {
         mockDb = createMockDb();
+        mockUuid = () => 'test-uuid';
 
         // Mock webhook service
         mockWebhookService = {
             trigger: vi.fn().mockResolvedValue({ triggered: 1, results: [{ success: true }] })
         };
 
-        // Inject mock dependencies
-        BillingWebhookServiceClass.setDependencies({
+        deps = {
             db: mockDb,
+            uuidv4: mockUuid,
             webhookService: mockWebhookService
-        });
+        };
     });
 
     afterEach(() => {
@@ -69,16 +72,18 @@ describe('BillingWebhookService', () => {
             const payload = { subscription_id: 'sub-456' };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb.call({ changes: 1 }, null);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.recordBillingWebhookEvent(orgId, eventType, payload);
 
             expect(result).toHaveProperty('id');
             expect(result.organizationId).toBe(orgId);
             expect(result.eventType).toBe(eventType);
             expect(result.status).toBe('pending');
+            // Mock call verification
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO billing_webhook_events'),
                 expect.any(Array),
@@ -88,10 +93,11 @@ describe('BillingWebhookService', () => {
 
         it('should handle database errors', async () => {
             mockDb.run.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'));
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(new Error('DB Error'));
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             await expect(
                 service.recordBillingWebhookEvent('org-123', 'test.event', {})
             ).rejects.toThrow('DB Error');
@@ -109,10 +115,11 @@ describe('BillingWebhookService', () => {
             };
 
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, mockEvent);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, mockEvent);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.getEventById(eventId);
 
             expect(result.id).toBe(eventId);
@@ -121,10 +128,11 @@ describe('BillingWebhookService', () => {
 
         it('should return null for non-existent event', async () => {
             mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, null);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.getEventById('non-existent');
             expect(result).toBeNull();
         });
@@ -138,10 +146,11 @@ describe('BillingWebhookService', () => {
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, mockEvents);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, mockEvents);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.getPendingRetries(50);
 
             expect(result).toHaveLength(2);
@@ -154,10 +163,11 @@ describe('BillingWebhookService', () => {
 
         it('should respect limit parameter', async () => {
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, []);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             await service.getPendingRetries(10);
 
             expect(mockDb.all).toHaveBeenCalledWith(
@@ -175,10 +185,11 @@ describe('BillingWebhookService', () => {
             const data = { invoice_id: 'inv-456', amount: 5000 };
 
             mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb.call({ changes: 1 }, null);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.triggerEvent(orgId, eventType, data);
 
             expect(result.recorded).toBe(true);
@@ -187,10 +198,11 @@ describe('BillingWebhookService', () => {
 
         it('should only record when recordOnly option is true', async () => {
             mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb.call({ changes: 1 }, null);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.triggerEvent('org-123', 'test.event', {}, { recordOnly: true });
 
             expect(result.recorded).toBe(true);
@@ -201,33 +213,34 @@ describe('BillingWebhookService', () => {
     describe('Convenience Methods', () => {
         beforeEach(() => {
             mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb.call({ changes: 1 }, null);
             });
         });
 
         it('subscriptionCreated() should trigger correct event', async () => {
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.subscriptionCreated('org-123', { id: 'sub-456', plan: 'pro' });
 
             expect(result.recorded).toBe(true);
         });
 
         it('invoicePaid() should trigger correct event', async () => {
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.invoicePaid('org-123', { id: 'inv-456', amount: 1000 });
 
             expect(result.recorded).toBe(true);
         });
 
         it('paymentFailed() should include error information', async () => {
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.paymentFailed('org-123', { id: 'pay-456' }, 'Card declined');
 
             expect(result.recorded).toBe(true);
         });
 
         it('creditNoteIssued() should trigger correct event', async () => {
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.creditNoteIssued('org-123', { id: 'cn-456', amount: 500 });
 
             expect(result.recorded).toBe(true);
@@ -242,10 +255,11 @@ describe('BillingWebhookService', () => {
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, mockStats);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, mockStats);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.getEventStats('org-123', '30 days');
 
             expect(result).toHaveLength(2);
@@ -265,10 +279,11 @@ describe('BillingWebhookService', () => {
             ];
 
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, mockEvents);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, mockEvents);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.getRecentEvents('org-123', 50);
 
             expect(result).toHaveLength(2);
@@ -279,10 +294,11 @@ describe('BillingWebhookService', () => {
     describe('getFailedEvents()', () => {
         it('should return failed events under retry limit', async () => {
             mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ id: 'evt-1', status: 'failed', attempt_count: 3 }]);
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(null, [{ id: 'evt-1', status: 'failed', attempt_count: 3 }]);
             });
 
-            const service = new BillingWebhookServiceClass(mockDb);
+            const service = new BillingWebhookServiceClass(deps);
             const result = await service.getFailedEvents(50);
 
             expect(mockDb.all).toHaveBeenCalledWith(
@@ -293,10 +309,4 @@ describe('BillingWebhookService', () => {
         });
     });
 });
-
-
-
-
-
-
 

@@ -142,7 +142,7 @@ class FrameworkRBACService {
      * @returns {Promise<boolean>} Has permission
      */
     static async hasPermission(userId, framework, action, context = {}) {
-        const db = (await import('../database.js')).default;
+        const db = (await import('../src/database/index.js')).default;
         
         // Get user roles
         const userRoles = await this.getUserRoles(userId);

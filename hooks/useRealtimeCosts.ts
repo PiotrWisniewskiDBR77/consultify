@@ -1,11 +1,11 @@
 /**
  * useRealtimeCosts Hook
- * 
+ *
  * Provides real-time cost tracking via WebSocket connection.
  * Updates cost data live as AI requests are processed.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface CostUpdate {
     type: 'cost_update';
@@ -42,13 +42,7 @@ interface UseRealtimeCostsOptions {
 }
 
 export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
-    const {
-        enabled = true,
-        maxRecentRequests = 10,
-        onCostUpdate,
-        onBudgetAlert,
-        budgetLimit
-    } = options;
+    const { enabled = true, maxRecentRequests = 10, onCostUpdate, onBudgetAlert, budgetLimit } = options;
 
     const [connected, setConnected] = useState(false);
     const [summary, setSummary] = useState<CostSummary>({
@@ -59,7 +53,7 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
         totalTokensToday: 0,
         totalTokensThisMonth: 0,
         lastUpdate: new Date().toISOString(),
-        recentRequests: []
+        recentRequests: [],
     });
     const [error, setError] = useState<string | null>(null);
 
@@ -80,7 +74,7 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
         try {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws?token=${token}`;
-            
+
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
 
@@ -91,24 +85,26 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
                 reconnectAttempts.current = 0;
 
                 // Subscribe to cost updates
-                ws.send(JSON.stringify({
-                    type: 'subscribe',
-                    payload: { channel: 'cost_updates' }
-                }));
+                ws.send(
+                    JSON.stringify({
+                        type: 'subscribe',
+                        payload: { channel: 'cost_updates' },
+                    }),
+                );
             };
 
             ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    
+
                     if (message.type === 'cost_update') {
                         handleCostUpdate(message.data);
                     } else if (message.type === 'cost_summary') {
                         // Initial summary on connect
-                        setSummary(prev => ({
+                        setSummary((prev) => ({
                             ...prev,
                             ...message.data,
-                            lastUpdate: new Date().toISOString()
+                            lastUpdate: new Date().toISOString(),
                         }));
                     } else if (message.type === 'budget_alert') {
                         if (onBudgetAlert) {
@@ -123,7 +119,7 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
             ws.onclose = () => {
                 console.log('[RealtimeCosts] WebSocket closed');
                 setConnected(false);
-                
+
                 // Attempt reconnection
                 if (reconnectAttempts.current < maxReconnectAttempts) {
                     const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
@@ -144,49 +140,52 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
         }
     }, [enabled, onBudgetAlert]);
 
-    const handleCostUpdate = useCallback((data: CostUpdate['data']) => {
-        setSummary(prev => {
-            const now = new Date();
-            const requestDate = new Date(data.timestamp);
-            const isToday = requestDate.toDateString() === now.toDateString();
-            const isThisMonth = requestDate.getMonth() === now.getMonth() && 
-                               requestDate.getFullYear() === now.getFullYear();
+    const handleCostUpdate = useCallback(
+        (data: CostUpdate['data']) => {
+            setSummary((prev) => {
+                const now = new Date();
+                const requestDate = new Date(data.timestamp);
+                const isToday = requestDate.toDateString() === now.toDateString();
+                const isThisMonth =
+                    requestDate.getMonth() === now.getMonth() && requestDate.getFullYear() === now.getFullYear();
 
-            const newSummary: CostSummary = {
-                ...prev,
-                totalCostThisMonth: prev.totalCostThisMonth + data.cost,
-                totalRequestsThisMonth: prev.totalRequestsThisMonth + 1,
-                totalTokensThisMonth: prev.totalTokensThisMonth + data.tokensUsed,
-                lastUpdate: new Date().toISOString(),
-                recentRequests: [data, ...prev.recentRequests].slice(0, maxRecentRequests)
-            };
+                const newSummary: CostSummary = {
+                    ...prev,
+                    totalCostThisMonth: prev.totalCostThisMonth + data.cost,
+                    totalRequestsThisMonth: prev.totalRequestsThisMonth + 1,
+                    totalTokensThisMonth: prev.totalTokensThisMonth + data.tokensUsed,
+                    lastUpdate: new Date().toISOString(),
+                    recentRequests: [data, ...prev.recentRequests].slice(0, maxRecentRequests),
+                };
 
-            if (isToday) {
-                newSummary.totalCostToday = prev.totalCostToday + data.cost;
-                newSummary.totalRequestsToday = prev.totalRequestsToday + 1;
-                newSummary.totalTokensToday = prev.totalTokensToday + data.tokensUsed;
-            }
-
-            // Check budget alert
-            if (budgetLimit && onBudgetAlert) {
-                const percentage = (newSummary.totalCostThisMonth / budgetLimit) * 100;
-                if (percentage >= 70 && prev.totalCostThisMonth / budgetLimit * 100 < 70) {
-                    onBudgetAlert(70);
-                } else if (percentage >= 85 && prev.totalCostThisMonth / budgetLimit * 100 < 85) {
-                    onBudgetAlert(85);
-                } else if (percentage >= 95 && prev.totalCostThisMonth / budgetLimit * 100 < 95) {
-                    onBudgetAlert(95);
+                if (isToday) {
+                    newSummary.totalCostToday = prev.totalCostToday + data.cost;
+                    newSummary.totalRequestsToday = prev.totalRequestsToday + 1;
+                    newSummary.totalTokensToday = prev.totalTokensToday + data.tokensUsed;
                 }
+
+                // Check budget alert
+                if (budgetLimit && onBudgetAlert) {
+                    const percentage = (newSummary.totalCostThisMonth / budgetLimit) * 100;
+                    if (percentage >= 70 && (prev.totalCostThisMonth / budgetLimit) * 100 < 70) {
+                        onBudgetAlert(70);
+                    } else if (percentage >= 85 && (prev.totalCostThisMonth / budgetLimit) * 100 < 85) {
+                        onBudgetAlert(85);
+                    } else if (percentage >= 95 && (prev.totalCostThisMonth / budgetLimit) * 100 < 95) {
+                        onBudgetAlert(95);
+                    }
+                }
+
+                return newSummary;
+            });
+
+            // Call external handler
+            if (onCostUpdate) {
+                onCostUpdate(data);
             }
-
-            return newSummary;
-        });
-
-        // Call external handler
-        if (onCostUpdate) {
-            onCostUpdate(data);
-        }
-    }, [maxRecentRequests, budgetLimit, onBudgetAlert, onCostUpdate]);
+        },
+        [maxRecentRequests, budgetLimit, onBudgetAlert, onCostUpdate],
+    );
 
     const disconnect = useCallback(() => {
         if (wsRef.current) {
@@ -204,17 +203,17 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/ai-settings/user/costs?period=30d', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
-                setSummary(prev => ({
+                setSummary((prev) => ({
                     ...prev,
                     totalCostThisMonth: data.totalCost || prev.totalCostThisMonth,
                     totalRequestsThisMonth: data.totalRequests || prev.totalRequestsThisMonth,
                     totalTokensThisMonth: data.totalTokens || prev.totalTokensThisMonth,
-                    lastUpdate: new Date().toISOString()
+                    lastUpdate: new Date().toISOString(),
                 }));
             }
         } catch (e) {
@@ -240,19 +239,13 @@ export function useRealtimeCosts(options: UseRealtimeCostsOptions = {}) {
         error,
         refresh,
         disconnect,
-        reconnect: connect
+        reconnect: connect,
     };
 }
 
 // Organization-level hook for admins
 export function useRealtimeOrgCosts(organizationId: string, options: UseRealtimeCostsOptions = {}) {
-    const {
-        enabled = true,
-        maxRecentRequests = 20,
-        onCostUpdate,
-        onBudgetAlert,
-        budgetLimit
-    } = options;
+    const { enabled = true, maxRecentRequests = 20, onCostUpdate, onBudgetAlert, budgetLimit } = options;
 
     const [connected, setConnected] = useState(false);
     const [orgSummary, setOrgSummary] = useState<{
@@ -266,7 +259,7 @@ export function useRealtimeOrgCosts(organizationId: string, options: UseRealtime
         byUser: {},
         byTier: {},
         recentActivity: [],
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
     });
 
     const wsRef = useRef<WebSocket | null>(null);
@@ -280,45 +273,47 @@ export function useRealtimeOrgCosts(organizationId: string, options: UseRealtime
         try {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws?token=${token}`;
-            
+
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
 
             ws.onopen = () => {
                 setConnected(true);
                 // Subscribe to org-level cost updates
-                ws.send(JSON.stringify({
-                    type: 'subscribe',
-                    payload: { channel: 'org_cost_updates', organizationId }
-                }));
+                ws.send(
+                    JSON.stringify({
+                        type: 'subscribe',
+                        payload: { channel: 'org_cost_updates', organizationId },
+                    }),
+                );
             };
 
             ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    
+
                     if (message.type === 'org_cost_update') {
                         const data = message.data;
-                        
-                        setOrgSummary(prev => ({
+
+                        setOrgSummary((prev) => ({
                             totalCost: prev.totalCost + data.cost,
                             byUser: {
                                 ...prev.byUser,
                                 [data.userId]: {
                                     cost: (prev.byUser[data.userId]?.cost || 0) + data.cost,
                                     requests: (prev.byUser[data.userId]?.requests || 0) + 1,
-                                    tokens: (prev.byUser[data.userId]?.tokens || 0) + data.tokensUsed
-                                }
+                                    tokens: (prev.byUser[data.userId]?.tokens || 0) + data.tokensUsed,
+                                },
                             },
                             byTier: {
                                 ...prev.byTier,
                                 [data.tier]: {
                                     cost: (prev.byTier[data.tier]?.cost || 0) + data.cost,
-                                    requests: (prev.byTier[data.tier]?.requests || 0) + 1
-                                }
+                                    requests: (prev.byTier[data.tier]?.requests || 0) + 1,
+                                },
                             },
                             recentActivity: [data, ...prev.recentActivity].slice(0, maxRecentRequests),
-                            lastUpdate: new Date().toISOString()
+                            lastUpdate: new Date().toISOString(),
                         }));
 
                         if (onCostUpdate) {
@@ -355,13 +350,8 @@ export function useRealtimeOrgCosts(organizationId: string, options: UseRealtime
     return {
         connected,
         orgSummary,
-        refresh: connect
+        refresh: connect,
     };
 }
 
 export default useRealtimeCosts;
-
-
-
-
-

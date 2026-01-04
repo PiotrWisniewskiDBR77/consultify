@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, Trash2, AlertCircle, Info, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bell, Check, CheckCircle, Info, Sparkles, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { Api } from '../services/api';
 import { Notification } from '../types';
-import toast from 'react-hot-toast';
 
 export const NotificationDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +17,7 @@ export const NotificationDropdown = () => {
             setLoading(true);
             const [data, count] = await Promise.all([
                 Api.getNotifications(false, 20), // Get recent 20
-                Api.getUnreadNotificationCount()
+                Api.getUnreadNotificationCount(),
             ]);
             setNotifications(data);
             setUnreadCount(count);
@@ -54,8 +55,8 @@ export const NotificationDropdown = () => {
         event.stopPropagation();
         try {
             await Api.markNotificationRead(id);
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+            setUnreadCount((prev) => Math.max(0, prev - 1));
         } catch {
             toast.error('Failed to mark as read');
         }
@@ -64,7 +65,7 @@ export const NotificationDropdown = () => {
     const handleMarkAllRead = async () => {
         try {
             await Api.markAllNotificationsRead();
-            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
             setUnreadCount(0);
             toast.success('All marked as read');
         } catch {
@@ -76,9 +77,9 @@ export const NotificationDropdown = () => {
         event.stopPropagation();
         try {
             await Api.deleteNotification(id);
-            setNotifications(prev => prev.filter(n => n.id !== id));
-            if (!notifications.find(n => n.id === id)?.isRead) {
-                setUnreadCount(prev => Math.max(0, prev - 1));
+            setNotifications((prev) => prev.filter((n) => n.id !== id));
+            if (!notifications.find((n) => n.id === id)?.isRead) {
+                setUnreadCount((prev) => Math.max(0, prev - 1));
             }
         } catch {
             toast.error('Failed to delete');
@@ -154,28 +155,38 @@ export const NotificationDropdown = () => {
                                 <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-3">
                                     <Bell size={20} className="text-slate-300" />
                                 </div>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No notifications yet</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                                    No notifications yet
+                                </p>
                                 <p className="text-slate-400 text-xs mt-1">You're all caught up!</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-50 dark:divide-white/5">
-                                {notifications.map(notification => (
+                                {notifications.map((notification) => (
                                     <div
                                         key={notification.id}
-                                        className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${!notification.isRead
-                                            ? (notification.type.includes('ai') ? 'bg-purple-900/20 dark:bg-purple-900/30' : 'bg-slate-100/50 dark:bg-navy-800/50')
-                                            : ''
-                                            }`}
-
-                                        onClick={() => !notification.isRead && handleMarkAsRead(notification.id, {} as any)}
+                                        className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                                            !notification.isRead
+                                                ? notification.type.includes('ai')
+                                                    ? 'bg-purple-900/20 dark:bg-purple-900/30'
+                                                    : 'bg-slate-100/50 dark:bg-navy-800/50'
+                                                : ''
+                                        }`}
+                                        onClick={() =>
+                                            !notification.isRead && handleMarkAsRead(notification.id, {} as any)
+                                        }
                                     >
                                         <div className="flex gap-3">
-                                            <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm' : 'bg-slate-100 dark:bg-white/5'}`}>
+                                            <div
+                                                className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm' : 'bg-slate-100 dark:bg-white/5'}`}
+                                            >
                                                 {getIcon(notification.type)}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between gap-2">
-                                                    <p className={`text-sm font-medium truncate ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                                                    <p
+                                                        className={`text-sm font-medium truncate ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                                                    >
                                                         {notification.title}
                                                     </p>
                                                     <span className="text-[10px] text-slate-400 shrink-0 whitespace-nowrap">
@@ -193,7 +204,8 @@ export const NotificationDropdown = () => {
                                                         className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-purple-600 hover:text-purple-700 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-md transition-colors"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
-                                                        {notification.data.actionLabel || 'View'} <ArrowRight size={10} />
+                                                        {notification.data.actionLabel || 'View'}{' '}
+                                                        <ArrowRight size={10} />
                                                     </a>
                                                 )}
                                             </div>
@@ -220,8 +232,11 @@ export const NotificationDropdown = () => {
                                         </div>
 
                                         {!notification.isRead && (
-                                            <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
-                                                }`}></div>
+                                            <div
+                                                className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
+                                                    notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
+                                                }`}
+                                            ></div>
                                         )}
                                     </div>
                                 ))}

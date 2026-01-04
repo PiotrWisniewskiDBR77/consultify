@@ -3,24 +3,25 @@
  * Clean, clickable cards that open detail modal for actions
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Scale,
+    AlertCircle,
     CheckCircle2,
-    Loader2,
-    User,
-    Hourglass,
-    ChevronRight,
-    Target,
     CheckSquare,
+    ChevronRight,
     Clock,
-    AlertCircle
+    Hourglass,
+    Loader2,
+    Scale,
+    Target,
+    User,
 } from 'lucide-react';
-import { DecisionGroup } from './WorkSidebar';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { DecisionGroup } from './WorkSidebar';
 
 export interface Decision {
     id: string;
@@ -57,15 +58,15 @@ interface DecisionsListProps {
 const getTypeLabel = (type: string | undefined): string => {
     if (!type) return 'Decision';
     const types: Record<string, string> = {
-        'INITIATIVE_APPROVAL': 'Initiative Approval',
-        'PHASE_TRANSITION': 'Phase Transition',
-        'TASK_UNBLOCK': 'Unblock Task',
-        'UNBLOCK': 'Unblock',
-        'BUDGET': 'Budget',
-        'SCOPE_CHANGE': 'Scope Change',
-        'RESOURCE_ALLOCATION': 'Resource',
-        'EXCEPTION': 'Exception',
-        'GENERAL': 'General'
+        INITIATIVE_APPROVAL: 'Initiative Approval',
+        PHASE_TRANSITION: 'Phase Transition',
+        TASK_UNBLOCK: 'Unblock Task',
+        UNBLOCK: 'Unblock',
+        BUDGET: 'Budget',
+        SCOPE_CHANGE: 'Scope Change',
+        RESOURCE_ALLOCATION: 'Resource',
+        EXCEPTION: 'Exception',
+        GENERAL: 'General',
     };
     return types[type] || type.replace(/_/g, ' ');
 };
@@ -129,9 +130,9 @@ const DecisionCard: React.FC<{
                         </span>
                     )}
                 </div>
-                <ChevronRight 
-                    size={14} 
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors" 
+                <ChevronRight
+                    size={14}
+                    className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
                 />
             </div>
 
@@ -152,7 +153,8 @@ const DecisionCard: React.FC<{
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 mb-2">
                     {getRelatedIcon(decision.relatedObjectType)}
                     <span className="truncate">
-                        {decision.relatedObjectName || `${decision.relatedObjectType} #${decision.relatedObjectId?.slice(0, 8)}`}
+                        {decision.relatedObjectName ||
+                            `${decision.relatedObjectType} #${decision.relatedObjectId?.slice(0, 8)}`}
                     </span>
                 </div>
             )}
@@ -163,10 +165,9 @@ const DecisionCard: React.FC<{
                     <div className="flex items-center gap-1">
                         <User size={11} />
                         <span className="truncate max-w-[80px]">
-                            {isMyDecision 
+                            {isMyDecision
                                 ? decision.requestedByName || 'Requested'
-                                : decision.ownerName || 'Unassigned'
-                            }
+                                : decision.ownerName || 'Unassigned'}
                         </span>
                     </div>
                     {!isUrgent && (
@@ -176,13 +177,13 @@ const DecisionCard: React.FC<{
                         </div>
                     )}
                 </div>
-                
+
                 {/* Action hint on hover */}
                 <span className="text-[10px] text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isMyDecision 
+                    {isMyDecision
                         ? t('decisions.clickToReview', 'Click to review')
-                        : t('decisions.clickToView', 'View details')
-                    } →
+                        : t('decisions.clickToView', 'View details')}{' '}
+                    →
                 </span>
             </div>
         </motion.div>
@@ -193,14 +194,14 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
     activeGroup,
     onCountsChange,
     onDecisionClick,
-    onCreateDecision
+    onCreateDecision,
 }) => {
     const { t } = useTranslation();
     const [decisions, setDecisions] = useState<Decision[]>([]);
     const [loading, setLoading] = useState(true);
-    
-    const currentProjectId = useAppStore(state => state.currentProjectId);
-    const currentUserId = useAppStore(state => state.currentUser?.id);
+
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
+    const currentUserId = useAppStore((state) => state.currentUser?.id);
 
     // Fetch decisions
     useEffect(() => {
@@ -224,9 +225,9 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
 
     // Categorize decisions
     const { myDecisions, awaitingDecisions } = useMemo(() => {
-        const my = decisions.filter(d => d.decisionOwnerId === currentUserId);
+        const my = decisions.filter((d) => d.decisionOwnerId === currentUserId);
         const awaiting = decisions.filter(
-            d => d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId
+            (d) => d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId,
         );
         return { myDecisions: my, awaitingDecisions: awaiting };
     }, [decisions, currentUserId]);
@@ -236,7 +237,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
         onCountsChange({
             total: myDecisions.length + awaitingDecisions.length,
             my: myDecisions.length,
-            awaiting: awaitingDecisions.length
+            awaiting: awaitingDecisions.length,
         });
     }, [myDecisions, awaitingDecisions, onCountsChange]);
 
@@ -261,7 +262,9 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
             <div className="shrink-0 px-4 py-2 border-b border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
                     <button
-                        onClick={() => {/* Parent controls this via activeGroup */}}
+                        onClick={() => {
+                            /* Parent controls this via activeGroup */
+                        }}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                             activeGroup === 'my' || activeGroup === 'all'
                                 ? 'bg-white dark:bg-navy-700 text-slate-800 dark:text-white shadow-sm'
@@ -270,16 +273,20 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
                     >
                         <User size={12} />
                         {t('decisions.myDecisions', 'My Decisions')}
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            activeGroup === 'my' || activeGroup === 'all'
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                : 'bg-slate-200 dark:bg-white/10'
-                        }`}>
+                        <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                activeGroup === 'my' || activeGroup === 'all'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                    : 'bg-slate-200 dark:bg-white/10'
+                            }`}
+                        >
                             {myDecisions.length}
                         </span>
                     </button>
                     <button
-                        onClick={() => {/* Parent controls this via activeGroup */}}
+                        onClick={() => {
+                            /* Parent controls this via activeGroup */
+                        }}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                             activeGroup === 'awaiting'
                                 ? 'bg-white dark:bg-navy-700 text-slate-800 dark:text-white shadow-sm'
@@ -288,11 +295,13 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
                     >
                         <Hourglass size={12} />
                         {t('decisions.awaiting', 'Awaiting Others')}
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            activeGroup === 'awaiting'
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                : 'bg-slate-200 dark:bg-white/10'
-                        }`}>
+                        <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                activeGroup === 'awaiting'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                    : 'bg-slate-200 dark:bg-white/10'
+                            }`}
+                        >
                             {awaitingDecisions.length}
                         </span>
                     </button>
@@ -305,10 +314,9 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <CheckCircle2 size={48} className="text-green-400 dark:text-green-600 mb-4" />
                         <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-                            {activeGroup === 'my' 
+                            {activeGroup === 'my'
                                 ? t('decisions.noMyDecisions', 'No decisions awaiting your action')
-                                : t('decisions.noAwaitingOthers', 'No decisions pending from others')
-                            }
+                                : t('decisions.noAwaitingOthers', 'No decisions pending from others')}
                         </h3>
                         <p className="text-sm text-slate-400 dark:text-slate-500">
                             {t('decisions.allCaughtUp', 'All caught up!')}
@@ -317,7 +325,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
                 ) : (
                     <div className="space-y-2">
                         <AnimatePresence>
-                            {displayedDecisions.map(decision => (
+                            {displayedDecisions.map((decision) => (
                                 <DecisionCard
                                     key={decision.id}
                                     decision={decision}

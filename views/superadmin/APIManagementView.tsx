@@ -1,6 +1,6 @@
 /**
  * APIManagementView - Super Admin API Keys Management
- * 
+ *
  * Enterprise API management:
  * - API key creation and management
  * - Scope-based permissions
@@ -9,34 +9,35 @@
  * - Webhook management
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    KeyRound,
-    Plus,
+    Activity,
+    AlertTriangle,
+    BarChart3,
+    Building2,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
     Copy,
     Eye,
     EyeOff,
-    Trash2,
-    RefreshCw,
-    Settings,
-    BarChart3,
     Globe,
-    Shield,
-    Clock,
-    AlertTriangle,
-    CheckCircle2,
-    XCircle,
+    KeyRound,
     Loader2,
-    ChevronRight,
-    Building2,
-    User,
+    Lock,
+    Plus,
+    RefreshCw,
     Server,
+    Settings,
+    Shield,
+    Trash2,
+    User,
     Webhook,
-    Activity,
-    Lock
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 interface APIKey {
     id: string;
@@ -89,15 +90,15 @@ const AVAILABLE_SCOPES = {
 };
 
 const SCOPE_GROUPS = {
-    'Users': ['read:users', 'write:users', 'delete:users'],
-    'Organizations': ['read:organizations', 'write:organizations'],
-    'Projects': ['read:projects', 'write:projects'],
-    'Assessments': ['read:assessments', 'write:assessments'],
-    'Initiatives': ['read:initiatives', 'write:initiatives'],
-    'Tasks': ['read:tasks', 'write:tasks'],
-    'Reports': ['read:reports', 'export:reports'],
-    'AI': ['use:ai', 'read:ai_usage'],
-    'Admin': ['admin:billing', 'admin:audit', 'manage:webhooks'],
+    Users: ['read:users', 'write:users', 'delete:users'],
+    Organizations: ['read:organizations', 'write:organizations'],
+    Projects: ['read:projects', 'write:projects'],
+    Assessments: ['read:assessments', 'write:assessments'],
+    Initiatives: ['read:initiatives', 'write:initiatives'],
+    Tasks: ['read:tasks', 'write:tasks'],
+    Reports: ['read:reports', 'export:reports'],
+    AI: ['use:ai', 'read:ai_usage'],
+    Admin: ['admin:billing', 'admin:audit', 'manage:webhooks'],
 };
 
 const CreateKeyModal: React.FC<CreateKeyModalProps> = ({ isOpen, onClose, onCreated, organizations }) => {
@@ -112,18 +113,16 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({ isOpen, onClose, onCrea
     const [creating, setCreating] = useState(false);
 
     const toggleScope = (scope: string) => {
-        setSelectedScopes(prev =>
-            prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope]
-        );
+        setSelectedScopes((prev) => (prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope]));
     };
 
     const selectAllInGroup = (group: string) => {
         const groupScopes = SCOPE_GROUPS[group as keyof typeof SCOPE_GROUPS] || [];
-        const allSelected = groupScopes.every(s => selectedScopes.includes(s));
+        const allSelected = groupScopes.every((s) => selectedScopes.includes(s));
         if (allSelected) {
-            setSelectedScopes(prev => prev.filter(s => !groupScopes.includes(s)));
+            setSelectedScopes((prev) => prev.filter((s) => !groupScopes.includes(s)));
         } else {
-            setSelectedScopes(prev => [...new Set([...prev, ...groupScopes])]);
+            setSelectedScopes((prev) => [...new Set([...prev, ...groupScopes])]);
         }
     };
 
@@ -193,7 +192,9 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({ isOpen, onClose, onCrea
                             >
                                 <option value="">Select organization...</option>
                                 {organizations.map((org) => (
-                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                    <option key={org.id} value={org.id}>
+                                        {org.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -264,7 +265,9 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({ isOpen, onClose, onCrea
                                                     onChange={() => toggleScope(scope)}
                                                     className="w-4 h-4 rounded border-slate-300 text-violet-600"
                                                 />
-                                                <span className="text-xs text-slate-600 dark:text-slate-400">{scope}</span>
+                                                <span className="text-xs text-slate-600 dark:text-slate-400">
+                                                    {scope}
+                                                </span>
                                             </label>
                                         ))}
                                     </div>
@@ -380,7 +383,7 @@ export const APIManagementView: React.FC = () => {
 
     const handleRevokeKey = async (keyId: string) => {
         if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) return;
-        
+
         try {
             await Api.delete(`/api/superadmin/api-keys/${keyId}`);
             fetchData();
@@ -405,7 +408,7 @@ export const APIManagementView: React.FC = () => {
 
     const stats = {
         total: apiKeys.length,
-        active: apiKeys.filter(k => k.isActive).length,
+        active: apiKeys.filter((k) => k.isActive).length,
         totalUsage: apiKeys.reduce((sum, k) => sum + k.usageCount, 0),
     };
 
@@ -419,7 +422,9 @@ export const APIManagementView: React.FC = () => {
                             <CheckCircle2 className="text-white" size={20} />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-emerald-900 dark:text-emerald-300">API Key Created: {newlyCreatedKey.name}</h3>
+                            <h3 className="font-semibold text-emerald-900 dark:text-emerald-300">
+                                API Key Created: {newlyCreatedKey.name}
+                            </h3>
                             <p className="text-sm text-emerald-800 dark:text-emerald-400 mt-1">
                                 Copy this key now. You won't be able to see it again!
                             </p>
@@ -435,7 +440,10 @@ export const APIManagementView: React.FC = () => {
                                 </button>
                             </div>
                         </div>
-                        <button onClick={() => setNewlyCreatedKey(null)} className="text-emerald-600 hover:text-emerald-800">
+                        <button
+                            onClick={() => setNewlyCreatedKey(null)}
+                            className="text-emerald-600 hover:text-emerald-800"
+                        >
                             <XCircle size={20} />
                         </button>
                     </div>
@@ -472,7 +480,9 @@ export const APIManagementView: React.FC = () => {
                             <Activity className="text-blue-500" size={20} />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalUsage.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {stats.totalUsage.toLocaleString()}
+                            </div>
                             <div className="text-sm text-slate-500">Total API Calls</div>
                         </div>
                     </div>
@@ -495,12 +505,24 @@ export const APIManagementView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10">
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Key</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Organization</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Scopes</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Usage</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Key
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Organization
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Scopes
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Usage
+                            </th>
+                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -511,11 +533,15 @@ export const APIManagementView: React.FC = () => {
                                         <div className="font-medium text-slate-900 dark:text-white">{key.name}</div>
                                         <div className="flex items-center gap-2 mt-1">
                                             <code className="text-xs text-slate-500 font-mono">{key.keyPrefix}...</code>
-                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                                key.keyType === 'org' ? 'bg-violet-500/10 text-violet-600' :
-                                                key.keyType === 'service' ? 'bg-blue-500/10 text-blue-600' :
-                                                'bg-slate-500/10 text-slate-600'
-                                            }`}>
+                                            <span
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                                    key.keyType === 'org'
+                                                        ? 'bg-violet-500/10 text-violet-600'
+                                                        : key.keyType === 'service'
+                                                          ? 'bg-blue-500/10 text-blue-600'
+                                                          : 'bg-slate-500/10 text-slate-600'
+                                                }`}
+                                            >
                                                 {key.keyType.toUpperCase()}
                                             </span>
                                         </div>
@@ -523,13 +549,18 @@ export const APIManagementView: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                                        {key.organizationName || organizations.find(o => o.id === key.organizationId)?.name || 'Unknown'}
+                                        {key.organizationName ||
+                                            organizations.find((o) => o.id === key.organizationId)?.name ||
+                                            'Unknown'}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-wrap gap-1 max-w-xs">
                                         {key.scopes.slice(0, 3).map((scope) => (
-                                            <span key={scope} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+                                            <span
+                                                key={scope}
+                                                className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400"
+                                            >
                                                 {scope}
                                             </span>
                                         ))}
@@ -542,7 +573,9 @@ export const APIManagementView: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm">
-                                        <div className="font-medium text-slate-900 dark:text-white">{key.usageCount.toLocaleString()}</div>
+                                        <div className="font-medium text-slate-900 dark:text-white">
+                                            {key.usageCount.toLocaleString()}
+                                        </div>
                                         {key.lastUsedAt && (
                                             <div className="text-xs text-slate-500">
                                                 Last: {new Date(key.lastUsedAt).toLocaleDateString()}
@@ -562,12 +595,13 @@ export const APIManagementView: React.FC = () => {
                                             Revoked
                                         </span>
                                     )}
-                                    {key.expiresAt && new Date(key.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 ml-1">
-                                            <Clock size={12} />
-                                            Expiring soon
-                                        </span>
-                                    )}
+                                    {key.expiresAt &&
+                                        new Date(key.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 ml-1">
+                                                <Clock size={12} />
+                                                Expiring soon
+                                            </span>
+                                        )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
@@ -597,7 +631,9 @@ export const APIManagementView: React.FC = () => {
                                     <div className="text-slate-500">
                                         <KeyRound size={40} className="mx-auto mb-3 opacity-30" />
                                         <p className="font-medium">No API keys created yet</p>
-                                        <p className="text-sm">Create your first API key to enable programmatic access</p>
+                                        <p className="text-sm">
+                                            Create your first API key to enable programmatic access
+                                        </p>
                                     </div>
                                 </td>
                             </tr>
@@ -612,7 +648,7 @@ export const APIManagementView: React.FC = () => {
         <div className="space-y-6">
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-white/10">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">API Usage Analytics</h3>
-                
+
                 {selectedKeyForUsage && usageData ? (
                     <div className="space-y-6">
                         {/* Summary */}
@@ -642,19 +678,31 @@ export const APIManagementView: React.FC = () => {
                             <h4 className="font-medium text-slate-900 dark:text-white mb-3">Top Endpoints</h4>
                             <div className="space-y-2">
                                 {usageData.endpoints?.map((ep: any, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                                ep.method === 'GET' ? 'bg-blue-500/10 text-blue-600' :
-                                                ep.method === 'POST' ? 'bg-emerald-500/10 text-emerald-600' :
-                                                ep.method === 'PUT' ? 'bg-amber-500/10 text-amber-600' :
-                                                'bg-red-500/10 text-red-600'
-                                            }`}>
+                                            <span
+                                                className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                                    ep.method === 'GET'
+                                                        ? 'bg-blue-500/10 text-blue-600'
+                                                        : ep.method === 'POST'
+                                                          ? 'bg-emerald-500/10 text-emerald-600'
+                                                          : ep.method === 'PUT'
+                                                            ? 'bg-amber-500/10 text-amber-600'
+                                                            : 'bg-red-500/10 text-red-600'
+                                                }`}
+                                            >
                                                 {ep.method}
                                             </span>
-                                            <span className="text-sm text-slate-700 dark:text-slate-300 font-mono">{ep.endpoint}</span>
+                                            <span className="text-sm text-slate-700 dark:text-slate-300 font-mono">
+                                                {ep.endpoint}
+                                            </span>
                                         </div>
-                                        <span className="text-sm font-medium text-slate-900 dark:text-white">{ep.count}</span>
+                                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                            {ep.count}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -676,7 +724,9 @@ export const APIManagementView: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Webhooks</h3>
-                        <p className="text-sm text-slate-500 mt-1">Configure outbound webhooks for real-time event notifications</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Configure outbound webhooks for real-time event notifications
+                        </p>
                     </div>
                     <button className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
                         <Plus size={16} />
@@ -761,4 +811,3 @@ export const APIManagementView: React.FC = () => {
 };
 
 export default APIManagementView;
-

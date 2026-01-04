@@ -1,6 +1,7 @@
+import { Brain, ChevronRight, Database, Rocket, Sparkles, TrendingUp, Users, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { TrendingUp, X, Rocket, Users, Database, Brain, ChevronRight, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
@@ -16,55 +17,58 @@ interface UpgradePromptBannerProps {
     dismissible?: boolean;
 }
 
-const LIMIT_CONFIG: Record<LimitType, {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    upgradeFeature: string;
-    color: string;
-}> = {
+const LIMIT_CONFIG: Record<
+    LimitType,
+    {
+        icon: React.ReactNode;
+        title: string;
+        description: string;
+        upgradeFeature: string;
+        color: string;
+    }
+> = {
     projects: {
         icon: <Rocket className="w-5 h-5" />,
         title: 'upgrade.projectLimit.title',
         description: 'upgrade.projectLimit.description',
         upgradeFeature: 'Unlimited projects',
-        color: 'from-blue-500 to-indigo-500'
+        color: 'from-blue-500 to-indigo-500',
     },
     users: {
         icon: <Users className="w-5 h-5" />,
         title: 'upgrade.userLimit.title',
         description: 'upgrade.userLimit.description',
         upgradeFeature: 'Unlimited team members',
-        color: 'from-purple-500 to-pink-500'
+        color: 'from-purple-500 to-pink-500',
     },
     storage: {
         icon: <Database className="w-5 h-5" />,
         title: 'upgrade.storageLimit.title',
         description: 'upgrade.storageLimit.description',
         upgradeFeature: 'Expanded storage',
-        color: 'from-emerald-500 to-teal-500'
+        color: 'from-emerald-500 to-teal-500',
     },
     ai_calls: {
         icon: <Brain className="w-5 h-5" />,
         title: 'upgrade.aiLimit.title',
         description: 'upgrade.aiLimit.description',
         upgradeFeature: 'Unlimited AI calls',
-        color: 'from-amber-500 to-orange-500'
+        color: 'from-amber-500 to-orange-500',
     },
     tokens: {
         icon: <Sparkles className="w-5 h-5" />,
         title: 'upgrade.tokenLimit.title',
         description: 'upgrade.tokenLimit.description',
         upgradeFeature: 'More tokens',
-        color: 'from-rose-500 to-red-500'
+        color: 'from-rose-500 to-red-500',
     },
     general: {
         icon: <TrendingUp className="w-5 h-5" />,
         title: 'upgrade.general.title',
         description: 'upgrade.general.description',
         upgradeFeature: 'Premium features',
-        color: 'from-violet-500 to-purple-500'
-    }
+        color: 'from-violet-500 to-purple-500',
+    },
 };
 
 export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
@@ -74,7 +78,7 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
     className = '',
     variant = 'banner',
     onDismiss,
-    dismissible = true
+    dismissible = true,
 }) => {
     const { t } = useTranslation();
     const { setCurrentView } = useAppStore();
@@ -96,18 +100,15 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
 
     if (variant === 'inline') {
         return (
-            <div className={`flex items-center justify-between p-3 rounded-lg bg-gradient-to-r ${config.color} bg-opacity-10 border border-current/20 ${className}`}>
+            <div
+                className={`flex items-center justify-between p-3 rounded-lg bg-gradient-to-r ${config.color} bg-opacity-10 border border-current/20 ${className}`}
+            >
                 <div className="flex items-center gap-2 text-sm">
                     {config.icon}
                     <span className="font-medium">{t(config.title, 'Limit reached')}</span>
-                    {percentage !== null && (
-                        <span className="text-xs opacity-75">({percentage}% used)</span>
-                    )}
+                    {percentage !== null && <span className="text-xs opacity-75">({percentage}% used)</span>}
                 </div>
-                <button
-                    onClick={handleUpgrade}
-                    className="text-sm font-medium hover:underline flex items-center gap-1"
-                >
+                <button onClick={handleUpgrade} className="text-sm font-medium hover:underline flex items-center gap-1">
                     {t('common.upgrade', 'Upgrade')}
                     <ChevronRight className="w-4 h-4" />
                 </button>
@@ -117,11 +118,15 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
 
     if (variant === 'card') {
         return (
-            <div className={`bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}>
+            <div
+                className={`bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}
+            >
                 <div className={`h-1.5 bg-gradient-to-r ${config.color}`} />
                 <div className="p-6">
                     <div className="flex items-start gap-4">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-white flex-shrink-0`}>
+                        <div
+                            className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-white flex-shrink-0`}
+                        >
                             {config.icon}
                         </div>
                         <div className="flex-1">
@@ -134,7 +139,9 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
                             {percentage !== null && (
                                 <div className="mt-3">
                                     <div className="flex justify-between text-xs text-slate-500 mb-1">
-                                        <span>{currentUsage} / {maxLimit}</span>
+                                        <span>
+                                            {currentUsage} / {maxLimit}
+                                        </span>
                                         <span>{percentage}%</span>
                                     </div>
                                     <div className="w-full bg-slate-100 dark:bg-navy-800 rounded-full h-2">
@@ -161,11 +168,15 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
 
     // Default: banner variant
     return (
-        <div className={`relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 ${className}`}>
+        <div
+            className={`relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 ${className}`}
+        >
             <div className={`absolute inset-0 bg-gradient-to-r ${config.color} opacity-5`} />
             <div className="relative flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center text-white`}>
+                    <div
+                        className={`w-10 h-10 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center text-white`}
+                    >
                         {config.icon}
                     </div>
                     <div>
@@ -201,12 +212,4 @@ export const UpgradePromptBanner: React.FC<UpgradePromptBannerProps> = ({
 };
 
 export default UpgradePromptBanner;
-
-
-
-
-
-
-
-
 

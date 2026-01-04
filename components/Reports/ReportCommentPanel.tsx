@@ -1,27 +1,27 @@
 /**
  * ReportCommentPanel
- * 
+ *
  * Side panel for viewing and adding comments on report sections.
  * Supports AI-powered comment processing and section regeneration.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
+    AlertCircle,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Loader2,
+    MessageCircle,
     MessageSquare,
-    X,
+    MoreVertical,
+    RefreshCw,
     Send,
     Sparkles,
-    RefreshCw,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Loader2,
-    MoreVertical,
     Trash2,
-    MessageCircle,
-    ChevronDown,
-    ChevronUp
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
 
@@ -56,15 +56,18 @@ const COMMENT_TYPE_CONFIG = {
     FEEDBACK: { label: 'Feedback', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     SUGGESTION: { label: 'Suggestion', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
     QUESTION: { label: 'Question', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-    APPROVAL: { label: 'Approval', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-    REJECTION: { label: 'Rejection', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }
+    APPROVAL: {
+        label: 'Approval',
+        color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    },
+    REJECTION: { label: 'Rejection', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
 };
 
 const STATUS_CONFIG = {
     OPEN: { label: 'Open', icon: Clock, color: 'text-amber-500' },
     IN_PROGRESS: { label: 'In Progress', icon: RefreshCw, color: 'text-blue-500' },
     RESOLVED: { label: 'Resolved', icon: CheckCircle2, color: 'text-green-500' },
-    DISMISSED: { label: 'Dismissed', icon: X, color: 'text-slate-400' }
+    DISMISSED: { label: 'Dismissed', icon: X, color: 'text-slate-400' },
 };
 
 export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
@@ -72,7 +75,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
     sectionId,
     sectionName,
     onClose,
-    onRegenerateSection
+    onRegenerateSection,
 }) => {
     const token = getAuthToken();
     const [comments, setComments] = useState<Comment[]>([]);
@@ -93,7 +96,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                 : `/api/report-comments/${reportId}`;
 
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -120,19 +123,19 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
             const response = await fetch(`/api/report-comments/${reportId}`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     sectionId,
                     content: newComment.trim(),
-                    commentType
-                })
+                    commentType,
+                }),
             });
 
             if (response.ok) {
                 const created = await response.json();
-                setComments(prev => [created, ...prev]);
+                setComments((prev) => [created, ...prev]);
                 setNewComment('');
             }
         } catch (error) {
@@ -148,17 +151,24 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
         try {
             const response = await fetch(`/api/report-comments/${reportId}/${commentId}/process-ai`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
                 const result = await response.json();
-                setComments(prev => prev.map(c => 
-                    c.id === commentId 
-                        ? { ...c, aiResponse: result.aiResponse, aiSuggestedEdits: result.suggestedEdits, aiProcessedAt: result.processedAt }
-                        : c
-                ));
-                setExpandedComments(prev => new Set([...prev, commentId]));
+                setComments((prev) =>
+                    prev.map((c) =>
+                        c.id === commentId
+                            ? {
+                                  ...c,
+                                  aiResponse: result.aiResponse,
+                                  aiSuggestedEdits: result.suggestedEdits,
+                                  aiProcessedAt: result.processedAt,
+                              }
+                            : c,
+                    ),
+                );
+                setExpandedComments((prev) => new Set([...prev, commentId]));
             }
         } catch (error) {
             console.error('[ReportCommentPanel] AI process error:', error);
@@ -173,16 +183,16 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
             const response = await fetch(`/api/report-comments/${reportId}/${commentId}`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({ status }),
             });
 
             if (response.ok) {
-                setComments(prev => prev.map(c => 
-                    c.id === commentId ? { ...c, status: status as Comment['status'] } : c
-                ));
+                setComments((prev) =>
+                    prev.map((c) => (c.id === commentId ? { ...c, status: status as Comment['status'] } : c)),
+                );
             }
         } catch (error) {
             console.error('[ReportCommentPanel] Status update error:', error);
@@ -196,11 +206,11 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
         try {
             const response = await fetch(`/api/report-comments/${reportId}/${commentId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
-                setComments(prev => prev.filter(c => c.id !== commentId));
+                setComments((prev) => prev.filter((c) => c.id !== commentId));
             }
         } catch (error) {
             console.error('[ReportCommentPanel] Delete error:', error);
@@ -209,7 +219,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
 
     // Toggle comment expansion
     const toggleExpanded = (commentId: string) => {
-        setExpandedComments(prev => {
+        setExpandedComments((prev) => {
             const next = new Set(prev);
             if (next.has(commentId)) {
                 next.delete(commentId);
@@ -227,7 +237,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
             day: 'numeric',
             month: 'short',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -239,14 +249,8 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                     <div className="flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-purple-500" />
                         <div>
-                            <h3 className="font-semibold text-navy-900 dark:text-white">
-                                Comments
-                            </h3>
-                            {sectionName && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {sectionName}
-                                </p>
-                            )}
+                            <h3 className="font-semibold text-navy-900 dark:text-white">Comments</h3>
+                            {sectionName && <p className="text-xs text-slate-500 dark:text-slate-400">{sectionName}</p>}
                         </div>
                     </div>
                     <button
@@ -259,16 +263,14 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
 
                 {/* Stats */}
                 <div className="flex items-center gap-4 mt-3 text-xs">
-                    <span className="text-slate-500">
-                        {comments.length} comments
-                    </span>
+                    <span className="text-slate-500">{comments.length} comments</span>
                     <span className="flex items-center gap-1 text-amber-500">
                         <Clock size={12} />
-                        {comments.filter(c => c.status === 'OPEN').length} open
+                        {comments.filter((c) => c.status === 'OPEN').length} open
                     </span>
                     <span className="flex items-center gap-1 text-green-500">
                         <CheckCircle2 size={12} />
-                        {comments.filter(c => c.status === 'RESOLVED').length} resolved
+                        {comments.filter((c) => c.status === 'RESOLVED').length} resolved
                     </span>
                 </div>
             </div>
@@ -282,15 +284,13 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                 ) : comments.length === 0 ? (
                     <div className="text-center py-8">
                         <MessageCircle className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            No comments yet
-                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">No comments yet</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500">
                             Add a comment to start the discussion
                         </p>
                     </div>
                 ) : (
-                    comments.map(comment => {
+                    comments.map((comment) => {
                         const isExpanded = expandedComments.has(comment.id);
                         const StatusIcon = STATUS_CONFIG[comment.status]?.icon || Clock;
                         const typeConfig = COMMENT_TYPE_CONFIG[comment.commentType] || COMMENT_TYPE_CONFIG.FEEDBACK;
@@ -312,9 +312,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <StatusIcon size={14} className={STATUS_CONFIG[comment.status]?.color} />
-                                        <span className="text-xs text-slate-400">
-                                            {formatDate(comment.createdAt)}
-                                        </span>
+                                        <span className="text-xs text-slate-400">{formatDate(comment.createdAt)}</span>
                                     </div>
                                 </div>
 
@@ -334,18 +332,20 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                                             <p className="text-sm text-purple-800 dark:text-purple-300">
                                                 {comment.aiResponse}
                                             </p>
-                                            {comment.aiSuggestedEdits && comment.aiSuggestedEdits.length > 0 && isExpanded && (
-                                                <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-500/30">
-                                                    <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
-                                                        Suggested edits:
-                                                    </p>
-                                                    <ul className="text-xs text-purple-700 dark:text-purple-300 list-disc pl-4">
-                                                        {comment.aiSuggestedEdits.map((edit, i) => (
-                                                            <li key={i}>{edit}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
+                                            {comment.aiSuggestedEdits &&
+                                                comment.aiSuggestedEdits.length > 0 &&
+                                                isExpanded && (
+                                                    <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-500/30">
+                                                        <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
+                                                            Suggested edits:
+                                                        </p>
+                                                        <ul className="text-xs text-purple-700 dark:text-purple-300 list-disc pl-4">
+                                                            {comment.aiSuggestedEdits.map((edit, i) => (
+                                                                <li key={i}>{edit}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
                                         </div>
                                     )}
                                 </div>
@@ -413,7 +413,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                         </button>
                         {showTypeSelector && (
                             <div className="absolute bottom-full left-0 mb-1 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-10">
-                                {(['FEEDBACK', 'SUGGESTION', 'QUESTION'] as const).map(type => (
+                                {(['FEEDBACK', 'SUGGESTION', 'QUESTION'] as const).map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => {
@@ -448,11 +448,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                         }`}
                     >
-                        {submitting ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                            <Send size={18} />
-                        )}
+                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                 </div>
 
@@ -461,14 +457,14 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                     <button
                         onClick={() => {
                             const feedback = comments
-                                .filter(c => c.status === 'OPEN')
-                                .map(c => c.content)
+                                .filter((c) => c.status === 'OPEN')
+                                .map((c) => c.content)
                                 .join('\n');
                             if (feedback) {
                                 onRegenerateSection(sectionId, feedback);
                             }
                         }}
-                        disabled={comments.filter(c => c.status === 'OPEN').length === 0}
+                        disabled={comments.filter((c) => c.status === 'OPEN').length === 0}
                         className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <RefreshCw size={14} />
@@ -481,4 +477,3 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
 };
 
 export default ReportCommentPanel;
-

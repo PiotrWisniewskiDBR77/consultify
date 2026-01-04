@@ -1,6 +1,6 @@
 /**
  * SoundNotificationsSettings - Sound preferences per notification type
- * 
+ *
  * Features:
  * - Enable/disable sounds
  * - Select sound per notification type
@@ -8,20 +8,13 @@
  * - Desktop notification duration
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Volume2,
-    VolumeX,
-    Monitor,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Loader2, Monitor, Save, Volume2, VolumeX } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface SoundNotificationsSettingsProps {
     currentUser: User;
@@ -50,9 +43,9 @@ const NOTIFICATION_TYPES = [
     { id: 'milestone', label: 'Milestones' },
 ] as const;
 
-export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
+export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProps> = ({
+    currentUser,
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [soundEnabled, setSoundEnabled] = useState(true);
@@ -83,18 +76,18 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/notifications/sounds', {
                 soundEnabled,
                 soundPerType,
                 desktopPosition,
-                desktopDuration
+                desktopDuration,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.notifications.sounds.saved', 'Sound preferences saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -111,14 +104,21 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
                     {t('settings.notifications.sounds.title', 'Sound & Desktop Notifications')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.notifications.sounds.subtitle', 'Configure sound alerts and desktop notification settings')}
+                    {t(
+                        'settings.notifications.sounds.subtitle',
+                        'Configure sound alerts and desktop notification settings',
+                    )}
                 </p>
             </div>
 
             {/* Sound Toggle */}
             <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
-                    {soundEnabled ? <Volume2 size={20} className="text-purple-600" /> : <VolumeX size={20} className="text-slate-400" />}
+                    {soundEnabled ? (
+                        <Volume2 size={20} className="text-purple-600" />
+                    ) : (
+                        <VolumeX size={20} className="text-slate-400" />
+                    )}
                     <div>
                         <label className="text-sm font-medium text-slate-900 dark:text-white">
                             {t('settings.notifications.sounds.enableSounds', 'Enable Sounds')}
@@ -156,7 +156,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
                                 onChange={(e) => setSoundPerType({ ...soundPerType, [type.id]: e.target.value })}
                                 className="px-3 py-1.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
                             >
-                                {SOUND_OPTIONS.map(option => (
+                                {SOUND_OPTIONS.map((option) => (
                                     <option key={option.value} value={option.value}>
                                         {option.label}
                                     </option>

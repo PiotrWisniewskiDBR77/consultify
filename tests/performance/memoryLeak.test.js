@@ -8,7 +8,12 @@
  * - API requests
  */
 
-const db = require('../../server/database');
+import { describe, it, expect, beforeAll } from 'vitest';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const dbModule = await import('../../server/database.js');
+const db = dbModule.default || dbModule;
 
 describe('Memory Leak Tests', () => {
     beforeAll(async () => {
@@ -20,7 +25,7 @@ describe('Memory Leak Tests', () => {
     describe('Database Connection Leaks', () => {
         it('should not leak database connections on repeated queries', async () => {
             const initialMemory = process.memoryUsage().heapUsed;
-            
+
             // Perform many database operations
             for (let i = 0; i < 100; i++) {
                 await new Promise((resolve, reject) => {
@@ -30,24 +35,24 @@ describe('Memory Leak Tests', () => {
                     });
                 });
             }
-            
+
             // Force garbage collection if available
             if (global.gc) {
                 global.gc();
             }
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             const finalMemory = process.memoryUsage().heapUsed;
             const memoryIncrease = finalMemory - initialMemory;
-            
+
             // Memory increase should be reasonable (< 10MB for 100 queries)
             expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
         });
 
         it('should properly close database connections', async () => {
             const connectionsBefore = db.openConnections || 0;
-            
+
             // Perform operations
             for (let i = 0; i < 50; i++) {
                 await new Promise((resolve, reject) => {
@@ -57,9 +62,9 @@ describe('Memory Leak Tests', () => {
                     });
                 });
             }
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             // Connections should not grow unbounded
             const connectionsAfter = db.openConnections || 0;
             expect(connectionsAfter).toBeLessThanOrEqual(connectionsBefore + 5);
@@ -70,16 +75,16 @@ describe('Memory Leak Tests', () => {
         it('should not accumulate event listeners', () => {
             const EventEmitter = require('events');
             const emitter = new EventEmitter();
-            
+
             const initialListeners = emitter.listenerCount('test');
-            
+
             // Add and remove listeners multiple times
             for (let i = 0; i < 100; i++) {
-                const handler = () => {};
+                const handler = () => { };
                 emitter.on('test', handler);
                 emitter.off('test', handler);
             }
-            
+
             const finalListeners = emitter.listenerCount('test');
             expect(finalListeners).toBe(initialListeners);
         });
@@ -88,25 +93,25 @@ describe('Memory Leak Tests', () => {
     describe('Promise Leaks', () => {
         it('should not accumulate unresolved promises', async () => {
             const initialMemory = process.memoryUsage().heapUsed;
-            
+
             // Create and resolve many promises
             const promises = [];
             for (let i = 0; i < 1000; i++) {
                 promises.push(Promise.resolve(i));
             }
-            
+
             await Promise.all(promises);
-            
+
             // Force garbage collection if available
             if (global.gc) {
                 global.gc();
             }
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             const finalMemory = process.memoryUsage().heapUsed;
             const memoryIncrease = finalMemory - initialMemory;
-            
+
             // Memory increase should be reasonable
             expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
         });
@@ -115,26 +120,27 @@ describe('Memory Leak Tests', () => {
     describe('Timer Leaks', () => {
         it('should clean up timers', async () => {
             const initialTimers = process._getActiveHandles ? process._getActiveHandles().length : 0;
-            
+
             // Create and clear timers
             const timers = [];
             for (let i = 0; i < 100; i++) {
-                const timer = setTimeout(() => {}, 1000);
+                const timer = setTimeout(() => { }, 1000);
                 timers.push(timer);
             }
-            
+
             // Clear all timers
             timers.forEach(timer => clearTimeout(timer));
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             const finalTimers = process._getActiveHandles ? process._getActiveHandles().length : 0;
-            
+
             // Timer count should not grow significantly
             expect(finalTimers).toBeLessThanOrEqual(initialTimers + 10);
         });
     });
 });
+
 
 
 

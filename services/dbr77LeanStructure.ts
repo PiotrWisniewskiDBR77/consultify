@@ -1,11 +1,11 @@
 /**
  * DBR77 Lean 4.0 Assessment Structure
- * 
+ *
  * Autorska metoda DBR77 Consultify:
  * KROK 1: POMIERZ (Measure) - analiza stanu obecnego
  * KROK 2: ZOPTYMALIZUJ (Optimize) - klasyczne metody Lean
  * KROK 3: AUTOMATYZUJ (Automate) - audyt możliwości automatyzacji i AI
- * 
+ *
  * Dwa wymiary oceny:
  * - PROCESY (flows, value streams)
  * - STANOWISKA (workstations, roles)
@@ -19,8 +19,26 @@ import { FrameworkLevel } from './frameworkRegistry';
 
 export type DBR77Phase = 'MEASURE' | 'OPTIMIZE' | 'AUTOMATE';
 export type DBR77Dimension = 'PROCESSES' | 'WORKSTATIONS';
-export type WasteType = 'TRANSPORTATION' | 'INVENTORY' | 'MOTION' | 'WAITING' | 'OVERPRODUCTION' | 'OVER_PROCESSING' | 'DEFECTS' | 'SKILLS';
-export type AutomationTech = 'RPA' | 'AI_ML' | 'IOT' | 'COBOT' | 'AMR' | 'VISION' | 'NLP' | 'DIGITAL_TWIN' | 'WORKFLOW' | 'ANALYTICS';
+export type WasteType =
+    | 'TRANSPORTATION'
+    | 'INVENTORY'
+    | 'MOTION'
+    | 'WAITING'
+    | 'OVERPRODUCTION'
+    | 'OVER_PROCESSING'
+    | 'DEFECTS'
+    | 'SKILLS';
+export type AutomationTech =
+    | 'RPA'
+    | 'AI_ML'
+    | 'IOT'
+    | 'COBOT'
+    | 'AMR'
+    | 'VISION'
+    | 'NLP'
+    | 'DIGITAL_TWIN'
+    | 'WORKFLOW'
+    | 'ANALYTICS';
 export type RoleEvolution = 'ELIMINATE' | 'TRANSFORM' | 'AUGMENT' | 'MAINTAIN';
 
 export interface DBR77PhaseConfig {
@@ -103,16 +121,16 @@ export interface ProcessAssessment {
     department: string;
     category: 'VALUE_STREAM' | 'FLOW' | 'SUPPORT' | 'MANAGEMENT';
     description?: string;
-    
+
     // KROK 1: POMIERZ
     currentState: ProcessCurrentState;
-    
+
     // KROK 2: ZOPTYMALIZUJ
     leanAssessment: ProcessLeanAssessment;
-    
+
     // KROK 3: AUTOMATYZUJ
     automationPotential: ProcessAutomationPotential;
-    
+
     // Metadata
     priority: number; // 1-5
     owner?: string;
@@ -165,16 +183,16 @@ export interface WorkstationAssessment {
     department: string;
     headcount: number;
     description?: string;
-    
+
     // KROK 1: POMIERZ
     currentState: WorkstationCurrentState;
-    
+
     // KROK 2: ZOPTYMALIZUJ
     leanAssessment: WorkstationLeanAssessment;
-    
+
     // KROK 3: AUTOMATYZUJ
     automationPotential: WorkstationAutomationPotential;
-    
+
     // Metadata
     priority: number; // 1-5
     manager?: string;
@@ -197,7 +215,7 @@ export interface ManagementPracticesAssessment {
         leaderStandardWork: boolean;
         gembaWalks: number; // per week
     };
-    
+
     continuousImprovement: {
         kaizenEvents: number; // per year
         suggestionSystem: boolean;
@@ -208,7 +226,7 @@ export interface ManagementPracticesAssessment {
         lessonsLearned: boolean;
         improvementBacklog: boolean;
     };
-    
+
     peopleDevelopment: {
         trainingHoursPerYear: number;
         multiSkilling: number; // 1-5
@@ -218,7 +236,7 @@ export interface ManagementPracticesAssessment {
         certifications: string[];
         careerPaths: boolean;
     };
-    
+
     performanceManagement: {
         kpiCascading: boolean;
         balancedScorecard: boolean;
@@ -237,7 +255,7 @@ export interface DBR77AssessmentData {
     processes: ProcessAssessment[];
     workstations: WorkstationAssessment[];
     managementPractices: ManagementPracticesAssessment;
-    
+
     // Aggregated scores
     summary: {
         totalProcesses: number;
@@ -249,7 +267,7 @@ export interface DBR77AssessmentData {
         topWastes: WasteType[];
         priorityInitiatives: string[];
     };
-    
+
     metadata: {
         assessmentDate: string;
         version: string;
@@ -272,13 +290,7 @@ export const DBR77_PHASES: DBR77PhaseConfig[] = [
         descriptionEN: 'Current state analysis - processes and workstations. Collect data, measure metrics.',
         color: 'blue',
         icon: 'Ruler',
-        outputs: [
-            'Process Maps',
-            'Time Studies',
-            'Waste Analysis',
-            'Current State VSM',
-            'Workstation Profiles',
-        ],
+        outputs: ['Process Maps', 'Time Studies', 'Waste Analysis', 'Current State VSM', 'Workstation Profiles'],
     },
     {
         id: 'OPTIMIZE',
@@ -482,7 +494,10 @@ export const DBR77_AUTOMATION_TECHNOLOGIES: DBR77AutomationTechConfig[] = [
     },
 ];
 
-export const DBR77_ROLE_EVOLUTION: Record<RoleEvolution, { name: string; nameEN: string; description: string; color: string }> = {
+export const DBR77_ROLE_EVOLUTION: Record<
+    RoleEvolution,
+    { name: string; nameEN: string; description: string; color: string }
+> = {
     ELIMINATE: {
         name: 'Eliminacja',
         nameEN: 'Eliminate',
@@ -549,43 +564,47 @@ export const DBR77_LEAN_MATURITY_LEVELS: FrameworkLevel[] = [
  * Get phase configuration by ID
  */
 export function getPhaseConfig(phaseId: DBR77Phase): DBR77PhaseConfig {
-    return DBR77_PHASES.find(p => p.id === phaseId)!;
+    return DBR77_PHASES.find((p) => p.id === phaseId)!;
 }
 
 /**
  * Get waste configuration by ID
  */
 export function getWasteConfig(wasteId: WasteType): DBR77WasteConfig {
-    return DBR77_WASTES.find(w => w.id === wasteId)!;
+    return DBR77_WASTES.find((w) => w.id === wasteId)!;
 }
 
 /**
  * Get automation technology configuration by ID
  */
 export function getAutomationTechConfig(techId: AutomationTech): DBR77AutomationTechConfig {
-    return DBR77_AUTOMATION_TECHNOLOGIES.find(t => t.id === techId)!;
+    return DBR77_AUTOMATION_TECHNOLOGIES.find((t) => t.id === techId)!;
 }
 
 /**
  * Calculate overall Lean maturity score
  */
 export function calculateLeanMaturity(assessment: DBR77AssessmentData): number {
-    const processScores = assessment.processes.map(p => 
-        (p.leanAssessment.fiveSLevel + 
-         p.leanAssessment.visualManagement + 
-         p.leanAssessment.continuousFlow + 
-         p.leanAssessment.tpm) / 4
+    const processScores = assessment.processes.map(
+        (p) =>
+            (p.leanAssessment.fiveSLevel +
+                p.leanAssessment.visualManagement +
+                p.leanAssessment.continuousFlow +
+                p.leanAssessment.tpm) /
+            4,
     );
-    
-    const workstationScores = assessment.workstations.map(w =>
-        (w.leanAssessment.workplaceOrganization + 
-         w.leanAssessment.crossTraining + 
-         w.leanAssessment.workloadBalance) / 3
+
+    const workstationScores = assessment.workstations.map(
+        (w) =>
+            (w.leanAssessment.workplaceOrganization +
+                w.leanAssessment.crossTraining +
+                w.leanAssessment.workloadBalance) /
+            3,
     );
-    
-    const allScores = [...processScores, ...workstationScores].filter(s => s > 0);
+
+    const allScores = [...processScores, ...workstationScores].filter((s) => s > 0);
     if (allScores.length === 0) return 0;
-    
+
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
 }
 
@@ -593,14 +612,14 @@ export function calculateLeanMaturity(assessment: DBR77AssessmentData): number {
  * Calculate overall automation potential
  */
 export function calculateAutomationPotential(assessment: DBR77AssessmentData): number {
-    const processScores = assessment.processes.map(p => p.automationPotential.feasibility);
-    const workstationScores = assessment.workstations.map(w => 
-        (w.automationPotential.taskAutomationPercent + w.automationPotential.augmentationPercent) / 20 // Convert to 1-5 scale
+    const processScores = assessment.processes.map((p) => p.automationPotential.feasibility);
+    const workstationScores = assessment.workstations.map(
+        (w) => (w.automationPotential.taskAutomationPercent + w.automationPotential.augmentationPercent) / 20, // Convert to 1-5 scale
     );
-    
-    const allScores = [...processScores, ...workstationScores].filter(s => s > 0);
+
+    const allScores = [...processScores, ...workstationScores].filter((s) => s > 0);
     if (allScores.length === 0) return 0;
-    
+
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
 }
 
@@ -608,11 +627,13 @@ export function calculateAutomationPotential(assessment: DBR77AssessmentData): n
  * Calculate total estimated savings
  */
 export function calculateTotalSavings(assessment: DBR77AssessmentData): number {
-    const processSavings = assessment.processes.reduce((sum, p) => 
-        sum + (p.automationPotential.estimatedSavings || 0), 0
+    const processSavings = assessment.processes.reduce(
+        (sum, p) => sum + (p.automationPotential.estimatedSavings || 0),
+        0,
     );
-    const workstationSavings = assessment.workstations.reduce((sum, w) => 
-        sum + (w.automationPotential.estimatedSavings || 0), 0
+    const workstationSavings = assessment.workstations.reduce(
+        (sum, w) => sum + (w.automationPotential.estimatedSavings || 0),
+        0,
     );
     return processSavings + workstationSavings;
 }
@@ -622,19 +643,19 @@ export function calculateTotalSavings(assessment: DBR77AssessmentData): number {
  */
 export function getTopWastes(assessment: DBR77AssessmentData, limit: number = 5): WasteType[] {
     const wasteCounts: Record<WasteType, number> = {} as Record<WasteType, number>;
-    
-    assessment.processes.forEach(p => {
-        p.leanAssessment.wasteIdentified.forEach(w => {
+
+    assessment.processes.forEach((p) => {
+        p.leanAssessment.wasteIdentified.forEach((w) => {
             wasteCounts[w] = (wasteCounts[w] || 0) + (p.leanAssessment.wasteImpact[w] || 1);
         });
     });
-    
-    assessment.workstations.forEach(ws => {
-        ws.leanAssessment.wasteInRole.forEach(w => {
+
+    assessment.workstations.forEach((ws) => {
+        ws.leanAssessment.wasteInRole.forEach((w) => {
             wasteCounts[w] = (wasteCounts[w] || 0) + (ws.leanAssessment.wasteImpact[w] || 1);
         });
     });
-    
+
     return Object.entries(wasteCounts)
         .sort(([, a], [, b]) => b - a)
         .slice(0, limit)
@@ -805,14 +826,14 @@ export function createEmptyWorkstationAssessment(id: string, name: string): Work
  */
 export function mapWasteToDRDAxis(wasteType: WasteType): string {
     const mapping: Record<WasteType, string> = {
-        'TRANSPORTATION': 'processes',
-        'INVENTORY': 'processes',
-        'MOTION': 'processes',
-        'WAITING': 'processes',
-        'OVERPRODUCTION': 'processes',
-        'OVER_PROCESSING': 'processes',
-        'DEFECTS': 'processes',
-        'SKILLS': 'culture',
+        TRANSPORTATION: 'processes',
+        INVENTORY: 'processes',
+        MOTION: 'processes',
+        WAITING: 'processes',
+        OVERPRODUCTION: 'processes',
+        OVER_PROCESSING: 'processes',
+        DEFECTS: 'processes',
+        SKILLS: 'culture',
     };
     return mapping[wasteType];
 }
@@ -824,12 +845,4 @@ export default {
     DBR77_ROLE_EVOLUTION,
     DBR77_LEAN_MATURITY_LEVELS,
 };
-
-
-
-
-
-
-
-
 

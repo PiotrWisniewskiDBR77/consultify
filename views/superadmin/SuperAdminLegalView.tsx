@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { AlertCircle, Check, Edit, Eye, FileText, Loader2, Plus, RefreshCw, Shield, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Plus, Check, X, Eye, Edit, Trash2, RefreshCw, Loader2, AlertCircle, Shield } from 'lucide-react';
-import { LegalDocument, LegalDocType } from '../../types';
+
+import { LegalDocType, LegalDocument } from '../../types';
 
 type SuperAdminLegalViewProps = Record<string, never>;
 
@@ -11,7 +12,7 @@ const DOC_TYPE_OPTIONS: { value: LegalDocType; label: string }[] = [
     { value: 'COOKIES', label: 'Cookie Policy' },
     { value: 'AUP', label: 'Acceptable Use Policy' },
     { value: 'AI_POLICY', label: 'AI Usage Policy' },
-    { value: 'DPA', label: 'Data Processing Addendum' }
+    { value: 'DPA', label: 'Data Processing Addendum' },
 ];
 
 export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
@@ -40,7 +41,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
         try {
             const token = localStorage.getItem('token');
             const res = await fetch('/api/superadmin/legal/all', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) throw new Error('Failed to fetch documents');
@@ -63,16 +64,16 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
             const res = await fetch('/api/superadmin/legal/publish', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     docType: formDocType,
                     version: formVersion,
                     title: formTitle,
                     effectiveFrom: formEffectiveFrom,
-                    contentMd: formContent
-                })
+                    contentMd: formContent,
+                }),
             });
 
             if (!res.ok) {
@@ -101,10 +102,10 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
             await fetch(`/api/superadmin/legal/${docId}/toggle-active`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ isActive })
+                body: JSON.stringify({ isActive }),
             });
             fetchDocuments();
         } catch (err) {
@@ -116,7 +117,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`/api/superadmin/legal/${docId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
                 const doc = await res.json();
@@ -131,7 +132,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
         return new Date(dateStr).toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -139,7 +140,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
     const generateVersion = () => {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
-        const existing = documents.filter(d => d.doc_type === formDocType && d.version.startsWith(dateStr));
+        const existing = documents.filter((d) => d.doc_type === formDocType && d.version.startsWith(dateStr));
         return `${dateStr}.${existing.length + 1}`;
     };
 
@@ -213,8 +214,10 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
                                     onChange={(e) => setFormDocType(e.target.value as LegalDocType)}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-navy-900"
                                 >
-                                    {DOC_TYPE_OPTIONS.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    {DOC_TYPE_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -303,21 +306,33 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
                         <tr>
                             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Title</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Version</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Effective</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Status</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                Version
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                                Effective
+                            </th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">
+                                Status
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                        {documents.map(doc => (
+                        {documents.map((doc) => (
                             <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                 <td className="px-4 py-3">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-white">{doc.doc_type}</span>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                        {doc.doc_type}
+                                    </span>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{doc.title}</td>
                                 <td className="px-4 py-3">
-                                    <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">{doc.version}</code>
+                                    <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                                        {doc.version}
+                                    </code>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-slate-500">{formatDate(doc.effective_from)}</td>
                                 <td className="px-4 py-3 text-center">
@@ -368,7 +383,10 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
 
                 {documents.length === 0 && (
                     <div className="p-8 text-center text-slate-500">
-                        {t('superadmin.legal.noDocuments', 'No legal documents found. Click "Publish New Version" to add one.')}
+                        {t(
+                            'superadmin.legal.noDocuments',
+                            'No legal documents found. Click "Publish New Version" to add one.',
+                        )}
                     </div>
                 )}
             </div>
@@ -395,9 +413,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
                         </div>
                         <div className="flex-1 overflow-auto p-6">
                             <div className="prose dark:prose-invert max-w-none">
-                                <pre className="whitespace-pre-wrap text-sm font-sans">
-                                    {selectedDoc.content_md}
-                                </pre>
+                                <pre className="whitespace-pre-wrap text-sm font-sans">{selectedDoc.content_md}</pre>
                             </div>
                         </div>
                     </div>

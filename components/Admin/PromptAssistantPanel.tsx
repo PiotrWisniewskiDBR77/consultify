@@ -1,30 +1,30 @@
 /**
  * Prompt Assistant Panel
- * 
+ *
  * AI-powered chat interface for helping SuperAdmins create and optimize
  * language-independent prompt templates.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    MessageSquare, 
-    Send, 
-    Sparkles, 
-    TestTube, 
-    Languages, 
-    Minimize2,
-    Trash2,
-    CheckCircle,
+import {
     AlertTriangle,
-    Info,
-    Copy,
-    Check,
-    Loader2,
-    Zap,
     BookOpen,
-    FileText
+    Check,
+    CheckCircle,
+    Copy,
+    FileText,
+    Info,
+    Languages,
+    Loader2,
+    MessageSquare,
+    Minimize2,
+    Send,
+    Sparkles,
+    TestTube,
+    Trash2,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
     id: string;
@@ -50,7 +50,7 @@ export const PromptAssistantPanel: React.FC<PromptAssistantPanelProps> = ({
     templateCode,
     onSuggestionApply,
     onBlockSelect,
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -69,10 +69,11 @@ export const PromptAssistantPanel: React.FC<PromptAssistantPanelProps> = ({
     // Add welcome message on mount
     useEffect(() => {
         if (messages.length === 0) {
-            setMessages([{
-                id: 'welcome',
-                role: 'assistant',
-                content: `👋 **Welcome to Prompt Engineering Assistant!**
+            setMessages([
+                {
+                    id: 'welcome',
+                    role: 'assistant',
+                    content: `👋 **Welcome to Prompt Engineering Assistant!**
 
 I can help you create effective, language-independent prompts for the Consultify platform.
 
@@ -89,8 +90,9 @@ I can help you create effective, language-independent prompts for the Consultify
 - Click "Test" to validate across languages
 
 How can I help you today?`,
-                timestamp: new Date()
-            }]);
+                    timestamp: new Date(),
+                },
+            ]);
         }
     }, []);
 
@@ -101,10 +103,10 @@ How can I help you today?`,
             id: `user_${Date.now()}`,
             role: 'user',
             content: input.trim(),
-            timestamp: new Date()
+            timestamp: new Date(),
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        setMessages((prev) => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
 
@@ -114,21 +116,21 @@ How can I help you today?`,
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     message: userMessage.content,
                     promptId,
                     promptContent,
                     templateCode,
-                    conversationId
-                })
+                    conversationId,
+                }),
             });
 
             if (!response.ok) throw new Error('Failed to send message');
 
             const data = await response.json();
-            
+
             if (data.data?.conversationId) {
                 setConversationId(data.data.conversationId);
             }
@@ -139,18 +141,21 @@ How can I help you today?`,
                 content: data.data?.message || 'No response received.',
                 timestamp: new Date(),
                 suggestions: data.data?.suggestions,
-                codeBlocks: data.data?.codeBlocks
+                codeBlocks: data.data?.codeBlocks,
             };
 
-            setMessages(prev => [...prev, assistantMessage]);
+            setMessages((prev) => [...prev, assistantMessage]);
         } catch (error) {
             console.error('Chat error:', error);
-            setMessages(prev => [...prev, {
-                id: `error_${Date.now()}`,
-                role: 'assistant',
-                content: '❌ Sorry, I encountered an error. Please try again.',
-                timestamp: new Date()
-            }]);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: `error_${Date.now()}`,
+                    role: 'assistant',
+                    content: '❌ Sorry, I encountered an error. Please try again.',
+                    timestamp: new Date(),
+                },
+            ]);
         } finally {
             setIsLoading(false);
         }
@@ -158,23 +163,24 @@ How can I help you today?`,
 
     const handleQuickAction = async (action: string) => {
         let message = '';
-        
+
         switch (action) {
             case 'analyze':
-                message = promptContent 
-                    ? `Please analyze this prompt for issues and suggest improvements:\n\n\`\`\`\n${promptContent.slice(0, 2000)}\n\`\`\`` 
+                message = promptContent
+                    ? `Please analyze this prompt for issues and suggest improvements:\n\n\`\`\`\n${promptContent.slice(0, 2000)}\n\`\`\``
                     : 'Please explain how to analyze a prompt for language independence.';
                 break;
             case 'suggest-blocks':
-                message = 'What blocks would you recommend for a strategic consulting prompt that needs to work in multiple languages?';
+                message =
+                    'What blocks would you recommend for a strategic consulting prompt that needs to work in multiple languages?';
                 break;
             case 'test':
-                message = templateCode 
+                message = templateCode
                     ? `How would I test the template "${templateCode}" across different languages?`
                     : 'Explain how to test prompts across multiple languages.';
                 break;
             case 'improve':
-                message = promptContent 
+                message = promptContent
                     ? `Please improve this prompt to be more language-independent:\n\n\`\`\`\n${promptContent.slice(0, 2000)}\n\`\`\``
                     : 'What are the best practices for creating language-independent prompts?';
                 break;
@@ -224,11 +230,11 @@ How can I help you today?`,
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ conversationId })
+                body: JSON.stringify({ conversationId }),
             });
-            
+
             setMessages([]);
             setConversationId(null);
         } catch (error) {
@@ -240,27 +246,34 @@ How can I help you today?`,
         const isUser = message.role === 'user';
 
         return (
-            <div 
-                key={message.id}
-                className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}
-            >
+            <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
                 <div className={`max-w-[85%] ${isUser ? 'order-2' : 'order-1'}`}>
                     {/* Message bubble */}
-                    <div className={`rounded-2xl px-4 py-3 ${
-                        isUser 
-                            ? 'bg-blue-600 text-white rounded-br-md' 
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white rounded-bl-md'
-                    }`}>
+                    <div
+                        className={`rounded-2xl px-4 py-3 ${
+                            isUser
+                                ? 'bg-blue-600 text-white rounded-br-md'
+                                : 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white rounded-bl-md'
+                        }`}
+                    >
                         {/* Render markdown-like content */}
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                             {message.content.split('\n').map((line, i) => {
                                 // Bold text
                                 if (line.startsWith('**') && line.endsWith('**')) {
-                                    return <p key={i} className="font-bold mb-1">{line.slice(2, -2)}</p>;
+                                    return (
+                                        <p key={i} className="font-bold mb-1">
+                                            {line.slice(2, -2)}
+                                        </p>
+                                    );
                                 }
                                 // Bullet points
                                 if (line.startsWith('- ')) {
-                                    return <p key={i} className="ml-4 mb-1">• {line.slice(2)}</p>;
+                                    return (
+                                        <p key={i} className="ml-4 mb-1">
+                                            • {line.slice(2)}
+                                        </p>
+                                    );
                                 }
                                 // Code blocks (simple)
                                 if (line.startsWith('```')) {
@@ -268,7 +281,11 @@ How can I help you today?`,
                                 }
                                 // Regular text
                                 if (line.trim()) {
-                                    return <p key={i} className="mb-1">{line}</p>;
+                                    return (
+                                        <p key={i} className="mb-1">
+                                            {line}
+                                        </p>
+                                    );
                                 }
                                 return <br key={i} />;
                             })}
@@ -277,7 +294,10 @@ How can I help you today?`,
 
                     {/* Code blocks */}
                     {message.codeBlocks?.map((block, idx) => (
-                        <div key={idx} className="mt-2 rounded-lg overflow-hidden border border-slate-200 dark:border-navy-700">
+                        <div
+                            key={idx}
+                            className="mt-2 rounded-lg overflow-hidden border border-slate-200 dark:border-navy-700"
+                        >
                             <div className="flex items-center justify-between bg-slate-200 dark:bg-navy-700 px-3 py-1.5 text-xs">
                                 <span className="text-slate-600 dark:text-slate-400">{block.language}</span>
                                 <div className="flex gap-2">
@@ -314,7 +334,9 @@ How can I help you today?`,
     };
 
     return (
-        <div className={`flex flex-col h-full bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 ${className}`}>
+        <div
+            className={`flex flex-col h-full bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 ${className}`}
+        >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center gap-2">
@@ -322,12 +344,8 @@ How can I help you today?`,
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
-                            Prompt Assistant
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                            AI-powered prompt engineering help
-                        </p>
+                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Prompt Assistant</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">AI-powered prompt engineering help</p>
                     </div>
                 </div>
                 <button
@@ -390,7 +408,7 @@ How can I help you today?`,
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4">
                 {messages.map(renderMessage)}
-                
+
                 {isLoading && (
                     <div className="flex justify-start mb-4">
                         <div className="bg-slate-100 dark:bg-navy-800 rounded-2xl rounded-bl-md px-4 py-3">
@@ -401,7 +419,7 @@ How can I help you today?`,
                         </div>
                     </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
             </div>
 
@@ -428,13 +446,10 @@ How can I help you today?`,
                         <Send size={18} />
                     </button>
                 </div>
-                <p className="text-xs text-slate-400 mt-2 text-center">
-                    Press Enter to send, Shift+Enter for new line
-                </p>
+                <p className="text-xs text-slate-400 mt-2 text-center">Press Enter to send, Shift+Enter for new line</p>
             </div>
         </div>
     );
 };
 
 export default PromptAssistantPanel;
-

@@ -7,7 +7,8 @@
 
 import aiService from '../aiService.js';
 import promptTemplateService from './promptTemplateService.js';
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -513,6 +514,7 @@ Respond in JSON: { "response": string, "suggestedEdits": string[] }`;
 }
 
 export default new ReportContentGenerator();
+
 
 
 

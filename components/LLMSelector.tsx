@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useAppStore } from '../store/useAppStore';
+import { AlertTriangle, ChevronDown, Coins, Cpu, Crown, Gauge, Layers, Shield, Sparkles, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { Api } from '../services/api';
-import { ChevronDown, Zap, Layers, Sparkles, Shield, AlertTriangle, Gauge, Coins, Crown, Cpu } from 'lucide-react';
+import { useAppStore } from '../store/useAppStore';
 
 interface Tier {
     id: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
@@ -19,7 +20,7 @@ const TIERS: Tier[] = [
         description: 'Simple questions, fast responses',
         icon: <Coins size={16} />,
         color: 'bg-emerald-500',
-        darkColor: 'bg-emerald-400'
+        darkColor: 'bg-emerald-400',
     },
     {
         id: 'STANDARD',
@@ -27,7 +28,7 @@ const TIERS: Tier[] = [
         description: 'Most tasks, balanced performance',
         icon: <Zap size={16} />,
         color: 'bg-blue-500',
-        darkColor: 'bg-blue-400'
+        darkColor: 'bg-blue-400',
     },
     {
         id: 'PREMIUM',
@@ -35,7 +36,7 @@ const TIERS: Tier[] = [
         description: 'Complex analysis, reports',
         icon: <Crown size={16} />,
         color: 'bg-purple-500',
-        darkColor: 'bg-purple-400'
+        darkColor: 'bg-purple-400',
     },
     {
         id: 'REASONING',
@@ -43,8 +44,8 @@ const TIERS: Tier[] = [
         description: 'MAX Mode, deep thinking',
         icon: <Cpu size={16} />,
         color: 'bg-amber-500',
-        darkColor: 'bg-amber-400'
-    }
+        darkColor: 'bg-amber-400',
+    },
 ];
 
 interface LLMSelectorProps {
@@ -78,7 +79,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
     };
 
     // Get active tier object
-    const activeTier = TIERS.find(t => t.id === aiConfig.selectedTier) || TIERS[0];
+    const activeTier = TIERS.find((t) => t.id === aiConfig.selectedTier) || TIERS[0];
 
     // Fetch recommended provider name for display
     useEffect(() => {
@@ -105,7 +106,6 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         }
     }, [isOpen, activeTier.id, aiConfig.selectedModelId]);
 
-
     return (
         <div className="relative z-50" ref={menuRef}>
             <button
@@ -118,44 +118,58 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                 {!compact && <span>{activeTier.name}</span>}
                 {compact && <span className="max-w-[60px] truncate">{activeTier.name}</span>}
 
-                <ChevronDown size={compact ? 10 : 12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                    size={compact ? 10 : 12}
+                    className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                />
             </button>
 
             {isOpen && (
                 <div className="absolute top-full mt-2 right-0 w-80 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
-
                     {/* Header */}
                     <div className="p-3 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-navy-950/30">
-                        <div className="text-xs font-semibold text-slate-500 uppercase mb-2">Model Routing per Tier</div>
+                        <div className="text-xs font-semibold text-slate-500 uppercase mb-2">
+                            Model Routing per Tier
+                        </div>
                         <p className="text-[10px] text-slate-400">
-                            Define which LLM level to use. System automatically selects the best available model in that tier.
+                            Define which LLM level to use. System automatically selects the best available model in that
+                            tier.
                         </p>
                     </div>
 
                     {/* Tier List */}
                     <div className="p-2 space-y-1">
-                        {TIERS.map(tier => (
+                        {TIERS.map((tier) => (
                             <button
                                 key={tier.id}
                                 onClick={() => handleTierSelect(tier.id)}
-                                className={`w-full text-left px-3 py-3 flex items-center justify-between rounded-lg transition-colors group ${aiConfig.selectedTier === tier.id
+                                className={`w-full text-left px-3 py-3 flex items-center justify-between rounded-lg transition-colors group ${
+                                    aiConfig.selectedTier === tier.id
                                         ? 'bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500/20'
                                         : 'hover:bg-slate-100 dark:hover:bg-white/5'
-                                    }`}
+                                }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${tier.id === aiConfig.selectedTier ? 'bg-white dark:bg-white/10' : 'bg-slate-100 dark:bg-white/5 group-hover:bg-white dark:group-hover:bg-white/10'}`}>
-                                        <div className={tier.id === aiConfig.selectedTier ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400'}>
+                                    <div
+                                        className={`p-2 rounded-lg ${tier.id === aiConfig.selectedTier ? 'bg-white dark:bg-white/10' : 'bg-slate-100 dark:bg-white/5 group-hover:bg-white dark:group-hover:bg-white/10'}`}
+                                    >
+                                        <div
+                                            className={
+                                                tier.id === aiConfig.selectedTier
+                                                    ? 'text-purple-600 dark:text-purple-400'
+                                                    : 'text-slate-500 dark:text-slate-400'
+                                            }
+                                        >
                                             {tier.icon}
                                         </div>
                                     </div>
                                     <div>
-                                        <div className={`text-sm font-medium ${tier.id === aiConfig.selectedTier ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                                        <div
+                                            className={`text-sm font-medium ${tier.id === aiConfig.selectedTier ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                                        >
                                             {tier.name}
                                         </div>
-                                        <div className="text-[10px] text-slate-400">
-                                            {tier.description}
-                                        </div>
+                                        <div className="text-[10px] text-slate-400">{tier.description}</div>
                                     </div>
                                 </div>
                                 {aiConfig.selectedTier === tier.id && (

@@ -1,10 +1,4 @@
-export { VisualCustomizationSettings } from './VisualCustomizationSettings';
-export { LayoutPreferencesSettings } from './LayoutPreferencesSettings';
 export { KeyboardShortcutsSettings } from './KeyboardShortcutsSettings';
-
-
-
-
-
-
+export { LayoutPreferencesSettings } from './LayoutPreferencesSettings';
+export { VisualCustomizationSettings } from './VisualCustomizationSettings';
 

@@ -1,24 +1,25 @@
+import { AlertCircle, ArrowLeft, ArrowRight, Brain, Briefcase, Building2, Check, User } from 'lucide-react';
 import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, Building2, User, Briefcase, Brain, Check, AlertCircle } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
-import { Api } from '../services/api';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
 /**
  * OrgSetupWizard — Phase D: Organization Setup
- * 
+ *
  * ENTERPRISE SPEC COMPLIANCE:
  * - EPIC-D1: Organization as Decision Container
  * - EPIC-D2: Deliberate Slowness Over Convenience
  * - EPIC-D3: System Memory Activation
- * 
+ *
  * RULES:
  * - 4 steps required, no shortcuts
  * - No defaults pre-selected
  * - Memory activation requires explicit consent
  * - Language is organizational, not personal
- * 
+ *
  * OUTPUT: Organization created with memory activated
  */
 
@@ -48,27 +49,27 @@ const USER_ROLES = [
     {
         value: 'EXECUTIVE' as OrgUserRole,
         label: 'Zarząd / C-Suite',
-        description: 'Decyzje strategiczne, alokacja zasobów'
+        description: 'Decyzje strategiczne, alokacja zasobów',
     },
     {
         value: 'DIRECTOR' as OrgUserRole,
         label: 'Dyrektor / Senior Manager',
-        description: 'Decyzje operacyjne, koordynacja zespołów'
+        description: 'Decyzje operacyjne, koordynacja zespołów',
     },
     {
         value: 'MANAGER' as OrgUserRole,
         label: 'Manager / Team Lead',
-        description: 'Decyzje taktyczne, realizacja celów'
+        description: 'Decyzje taktyczne, realizacja celów',
     },
     {
         value: 'SPECIALIST' as OrgUserRole,
         label: 'Specjalista / Ekspert',
-        description: 'Wiedza domenowa, perspektywa merytoryczna'
+        description: 'Wiedza domenowa, perspektywa merytoryczna',
     },
     {
         value: 'CONSULTANT' as OrgUserRole,
         label: 'Konsultant zewnętrzny',
-        description: 'Rola doradcza, obiektywna facylitacja'
+        description: 'Rola doradcza, obiektywna facylitacja',
     },
 ];
 
@@ -86,16 +87,21 @@ export const OrgSetupWizard: React.FC = () => {
     });
 
     const updateState = (updates: Partial<OrgSetupState>) => {
-        setState(prev => ({ ...prev, ...updates }));
+        setState((prev) => ({ ...prev, ...updates }));
     };
 
     const canProceed = (): boolean => {
         switch (state.step) {
-            case 1: return state.orgName.trim().length >= 3;
-            case 2: return state.userRole !== null;
-            case 3: return state.orgType !== null && state.industry !== '';
-            case 4: return state.memoryConsent === true;
-            default: return false;
+            case 1:
+                return state.orgName.trim().length >= 3;
+            case 2:
+                return state.userRole !== null;
+            case 3:
+                return state.orgType !== null && state.industry !== '';
+            case 4:
+                return state.memoryConsent === true;
+            default:
+                return false;
         }
     };
 
@@ -140,32 +146,34 @@ export const OrgSetupWizard: React.FC = () => {
     return (
         <div className="min-h-screen bg-white dark:bg-navy-950 flex items-center justify-center p-6">
             <div className="w-full max-w-xl">
-
                 {/* Progress Indicator */}
                 <div className="mb-12">
                     <div className="flex items-center justify-between mb-4">
                         {[1, 2, 3, 4].map((step) => (
                             <div key={step} className="flex items-center">
-                                <div className={`
+                                <div
+                                    className={`
                                     w-10 h-10 rounded-full flex items-center justify-center font-semibold
-                                    ${state.step === step
-                                        ? 'bg-purple-600 text-white'
-                                        : state.step > step
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                    ${
+                                        state.step === step
+                                            ? 'bg-purple-600 text-white'
+                                            : state.step > step
+                                              ? 'bg-green-500 text-white'
+                                              : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                     }
-                                `}>
+                                `}
+                                >
                                     {state.step > step ? <Check size={18} /> : step}
                                 </div>
                                 {step < 4 && (
-                                    <div className={`w-16 h-1 mx-2 ${state.step > step ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                                    <div
+                                        className={`w-16 h-1 mx-2 ${state.step > step ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    />
                                 )}
                             </div>
                         ))}
                     </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-                        Krok {state.step} z 4
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center">Krok {state.step} z 4</p>
                 </div>
 
                 {/* Step 1: Organization Name */}
@@ -177,8 +185,8 @@ export const OrgSetupWizard: React.FC = () => {
                                 Nazwa Twojej organizacji
                             </h1>
                             <p className="text-slate-600 dark:text-slate-400">
-                                To jest nazwa przestrzeni decyzyjnej, którą tworzysz.
-                                Będzie widoczna dla wszystkich członków zespołu.
+                                To jest nazwa przestrzeni decyzyjnej, którą tworzysz. Będzie widoczna dla wszystkich
+                                członków zespołu.
                             </p>
                         </div>
 
@@ -214,8 +222,7 @@ export const OrgSetupWizard: React.FC = () => {
                                 Twoja rola w organizacji
                             </h1>
                             <p className="text-slate-600 dark:text-slate-400">
-                                To, jak myślisz o decyzjach, wpływa na to,
-                                jak system Cię wspiera.
+                                To, jak myślisz o decyzjach, wpływa na to, jak system Cię wspiera.
                             </p>
                         </div>
 
@@ -226,15 +233,14 @@ export const OrgSetupWizard: React.FC = () => {
                                     onClick={() => updateState({ userRole: role.value })}
                                     className={`
                                         w-full p-4 text-left rounded-lg border-2 transition-all
-                                        ${state.userRole === role.value
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                        ${
+                                            state.userRole === role.value
+                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                                         }
                                     `}
                                 >
-                                    <div className="font-semibold text-navy-900 dark:text-white">
-                                        {role.label}
-                                    </div>
+                                    <div className="font-semibold text-navy-900 dark:text-white">{role.label}</div>
                                     <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                         {role.description}
                                     </div>
@@ -267,9 +273,10 @@ export const OrgSetupWizard: React.FC = () => {
                                     onClick={() => updateState({ orgType: 'OPERATING' })}
                                     className={`
                                         p-4 text-center rounded-lg border-2 transition-all
-                                        ${state.orgType === 'OPERATING'
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                            : 'border-slate-200 dark:border-slate-700'
+                                        ${
+                                            state.orgType === 'OPERATING'
+                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                : 'border-slate-200 dark:border-slate-700'
                                         }
                                     `}
                                 >
@@ -282,9 +289,10 @@ export const OrgSetupWizard: React.FC = () => {
                                     onClick={() => updateState({ orgType: 'CONSULTING' })}
                                     className={`
                                         p-4 text-center rounded-lg border-2 transition-all
-                                        ${state.orgType === 'CONSULTING'
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                            : 'border-slate-200 dark:border-slate-700'
+                                        ${
+                                            state.orgType === 'CONSULTING'
+                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                : 'border-slate-200 dark:border-slate-700'
                                         }
                                     `}
                                 >
@@ -308,9 +316,10 @@ export const OrgSetupWizard: React.FC = () => {
                                         onClick={() => updateState({ industry: ind.value })}
                                         className={`
                                             w-full p-3 text-left rounded-lg border-2 transition-all
-                                            ${state.industry === ind.value
-                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                                : 'border-slate-200 dark:border-slate-700'
+                                            ${
+                                                state.industry === ind.value
+                                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                    : 'border-slate-200 dark:border-slate-700'
                                             }
                                         `}
                                     >
@@ -355,8 +364,7 @@ export const OrgSetupWizard: React.FC = () => {
                                 </li>
                             </ul>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-                                Tworzy to ciągłość w procesie decyzyjnym.
-                                Pamięć należy do organizacji, nie do osób.
+                                Tworzy to ciągłość w procesie decyzyjnym. Pamięć należy do organizacji, nie do osób.
                             </p>
                         </div>
 
@@ -403,9 +411,10 @@ export const OrgSetupWizard: React.FC = () => {
                             disabled={!canProceed()}
                             className={`
                                 flex items-center gap-2 px-6 py-3 rounded-lg font-semibold
-                                ${canProceed()
-                                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                ${
+                                    canProceed()
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                                 }
                                 transition-colors
                             `}
@@ -419,9 +428,10 @@ export const OrgSetupWizard: React.FC = () => {
                             disabled={!canProceed() || state.isSubmitting}
                             className={`
                                 flex items-center gap-2 px-6 py-3 rounded-lg font-semibold
-                                ${canProceed() && !state.isSubmitting
-                                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                ${
+                                    canProceed() && !state.isSubmitting
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                                 }
                                 transition-colors
                             `}

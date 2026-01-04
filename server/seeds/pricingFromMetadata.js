@@ -9,7 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // Path to legal metadata

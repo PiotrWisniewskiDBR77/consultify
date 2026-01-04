@@ -1,7 +1,7 @@
 /**
  * CommandPalette - Global quick actions for executives
  * Inspired by Linear/Notion Cmd+K pattern
- * 
+ *
  * Features:
  * - Global keyboard shortcut (Cmd/Ctrl + K)
  * - Quick navigation to any view
@@ -10,36 +10,37 @@
  * - Fuzzy search
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Search,
-    Command,
     ArrowRight,
-    LayoutDashboard,
-    Target,
-    Inbox,
-    CheckSquare,
-    FileQuestion,
-    Users,
-    Settings,
-    Plus,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    Zap,
-    History,
-    Star,
-    TrendingUp,
-    Calendar,
     Bell,
+    Calendar,
+    CheckCircle2,
+    CheckSquare,
+    Clock,
+    Command,
+    FileQuestion,
     Filter,
-    SortAsc
+    History,
+    Inbox,
+    LayoutDashboard,
+    Plus,
+    Search,
+    Settings,
+    SortAsc,
+    Star,
+    Target,
+    TrendingUp,
+    Users,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+
 import { Api } from '../../services/api';
-import toast from 'react-hot-toast';
 
 interface CommandItem {
     id: string;
@@ -62,9 +63,9 @@ interface CommandPaletteProps {
 const fuzzyMatch = (query: string, text: string): boolean => {
     const queryLower = query.toLowerCase();
     const textLower = text.toLowerCase();
-    
+
     if (textLower.includes(queryLower)) return true;
-    
+
     // Fuzzy matching: all query chars must appear in order
     let queryIndex = 0;
     for (const char of textLower) {
@@ -76,11 +77,7 @@ const fuzzyMatch = (query: string, text: string): boolean => {
     return false;
 };
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({
-    isOpen,
-    onClose,
-    onNavigate
-}) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
@@ -91,179 +88,185 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const listRef = useRef<HTMLDivElement>(null);
 
     // Navigation items
-    const navigationItems: CommandItem[] = useMemo(() => [
-        {
-            id: 'nav-dashboard',
-            title: t('command.nav.dashboard', 'Dashboard'),
-            subtitle: t('command.nav.dashboardDesc', 'Executive overview'),
-            icon: <LayoutDashboard size={18} />,
-            category: 'navigation',
-            shortcut: 'G D',
-            keywords: ['home', 'overview', 'executive'],
-            action: () => {
-                onNavigate?.('dashboard');
-                onClose();
-            }
-        },
-        {
-            id: 'nav-focus',
-            title: t('command.nav.focus', 'Focus Board'),
-            subtitle: t('command.nav.focusDesc', 'Daily focus tasks'),
-            icon: <Target size={18} />,
-            category: 'navigation',
-            shortcut: 'G F',
-            keywords: ['today', 'daily', 'tasks'],
-            action: () => {
-                onNavigate?.('focus');
-                onClose();
-            }
-        },
-        {
-            id: 'nav-inbox',
-            title: t('command.nav.inbox', 'Inbox'),
-            subtitle: t('command.nav.inboxDesc', 'Triage new items'),
-            icon: <Inbox size={18} />,
-            category: 'navigation',
-            shortcut: 'G I',
-            keywords: ['triage', 'new', 'incoming'],
-            action: () => {
-                onNavigate?.('inbox');
-                onClose();
-            }
-        },
-        {
-            id: 'nav-tasks',
-            title: t('command.nav.tasks', 'All Tasks'),
-            subtitle: t('command.nav.tasksDesc', 'View all tasks'),
-            icon: <CheckSquare size={18} />,
-            category: 'navigation',
-            shortcut: 'G T',
-            keywords: ['list', 'all', 'todo'],
-            action: () => {
-                onNavigate?.('tasks');
-                onClose();
-            }
-        },
-        {
-            id: 'nav-decisions',
-            title: t('command.nav.decisions', 'Decisions'),
-            subtitle: t('command.nav.decisionsDesc', 'Pending decisions'),
-            icon: <FileQuestion size={18} />,
-            category: 'navigation',
-            shortcut: 'G E',
-            keywords: ['approve', 'reject', 'pending'],
-            action: () => {
-                onNavigate?.('decisions');
-                onClose();
-            }
-        },
-        {
-            id: 'nav-team',
-            title: t('command.nav.team', 'Team Performance'),
-            subtitle: t('command.nav.teamDesc', 'Team analytics & capacity'),
-            icon: <Users size={18} />,
-            category: 'navigation',
-            shortcut: 'G M',
-            keywords: ['workload', 'capacity', 'members'],
-            action: () => {
-                onNavigate?.('team');
-                onClose();
-            }
-        },
-        {
-            id: 'nav-settings',
-            title: t('command.nav.settings', 'Settings'),
-            subtitle: t('command.nav.settingsDesc', 'Preferences & notifications'),
-            icon: <Settings size={18} />,
-            category: 'navigation',
-            shortcut: 'G S',
-            keywords: ['preferences', 'config', 'notifications'],
-            action: () => {
-                onNavigate?.('settings');
-                onClose();
-            }
-        }
-    ], [t, onNavigate, onClose]);
+    const navigationItems: CommandItem[] = useMemo(
+        () => [
+            {
+                id: 'nav-dashboard',
+                title: t('command.nav.dashboard', 'Dashboard'),
+                subtitle: t('command.nav.dashboardDesc', 'Executive overview'),
+                icon: <LayoutDashboard size={18} />,
+                category: 'navigation',
+                shortcut: 'G D',
+                keywords: ['home', 'overview', 'executive'],
+                action: () => {
+                    onNavigate?.('dashboard');
+                    onClose();
+                },
+            },
+            {
+                id: 'nav-focus',
+                title: t('command.nav.focus', 'Focus Board'),
+                subtitle: t('command.nav.focusDesc', 'Daily focus tasks'),
+                icon: <Target size={18} />,
+                category: 'navigation',
+                shortcut: 'G F',
+                keywords: ['today', 'daily', 'tasks'],
+                action: () => {
+                    onNavigate?.('focus');
+                    onClose();
+                },
+            },
+            {
+                id: 'nav-inbox',
+                title: t('command.nav.inbox', 'Inbox'),
+                subtitle: t('command.nav.inboxDesc', 'Triage new items'),
+                icon: <Inbox size={18} />,
+                category: 'navigation',
+                shortcut: 'G I',
+                keywords: ['triage', 'new', 'incoming'],
+                action: () => {
+                    onNavigate?.('inbox');
+                    onClose();
+                },
+            },
+            {
+                id: 'nav-tasks',
+                title: t('command.nav.tasks', 'All Tasks'),
+                subtitle: t('command.nav.tasksDesc', 'View all tasks'),
+                icon: <CheckSquare size={18} />,
+                category: 'navigation',
+                shortcut: 'G T',
+                keywords: ['list', 'all', 'todo'],
+                action: () => {
+                    onNavigate?.('tasks');
+                    onClose();
+                },
+            },
+            {
+                id: 'nav-decisions',
+                title: t('command.nav.decisions', 'Decisions'),
+                subtitle: t('command.nav.decisionsDesc', 'Pending decisions'),
+                icon: <FileQuestion size={18} />,
+                category: 'navigation',
+                shortcut: 'G E',
+                keywords: ['approve', 'reject', 'pending'],
+                action: () => {
+                    onNavigate?.('decisions');
+                    onClose();
+                },
+            },
+            {
+                id: 'nav-team',
+                title: t('command.nav.team', 'Team Performance'),
+                subtitle: t('command.nav.teamDesc', 'Team analytics & capacity'),
+                icon: <Users size={18} />,
+                category: 'navigation',
+                shortcut: 'G M',
+                keywords: ['workload', 'capacity', 'members'],
+                action: () => {
+                    onNavigate?.('team');
+                    onClose();
+                },
+            },
+            {
+                id: 'nav-settings',
+                title: t('command.nav.settings', 'Settings'),
+                subtitle: t('command.nav.settingsDesc', 'Preferences & notifications'),
+                icon: <Settings size={18} />,
+                category: 'navigation',
+                shortcut: 'G S',
+                keywords: ['preferences', 'config', 'notifications'],
+                action: () => {
+                    onNavigate?.('settings');
+                    onClose();
+                },
+            },
+        ],
+        [t, onNavigate, onClose],
+    );
 
     // Action items
-    const actionItems: CommandItem[] = useMemo(() => [
-        {
-            id: 'action-create-task',
-            title: t('command.action.createTask', 'Create Task'),
-            subtitle: t('command.action.createTaskDesc', 'Add a new task'),
-            icon: <Plus size={18} className="text-emerald-500" />,
-            category: 'action',
-            shortcut: 'C',
-            keywords: ['new', 'add', 'todo'],
-            action: () => {
-                // Trigger task creation modal
-                window.dispatchEvent(new CustomEvent('create-task'));
-                onClose();
-            }
-        },
-        {
-            id: 'action-approve-all',
-            title: t('command.action.approveAll', 'Quick Approve'),
-            subtitle: t('command.action.approveAllDesc', 'Approve pending decision'),
-            icon: <CheckCircle2 size={18} className="text-emerald-500" />,
-            category: 'action',
-            keywords: ['approve', 'accept', 'decision'],
-            action: async () => {
-                if (pendingDecisions.length > 0) {
-                    try {
-                        await Api.put(`/decisions/${pendingDecisions[0].id}/decide`, { 
-                            status: 'APPROVED', 
-                            outcome: '' 
-                        });
-                        toast.success(t('command.action.approved', 'Decision approved'));
-                    } catch (error) {
-                        toast.error(t('command.action.error', 'Failed to approve'));
+    const actionItems: CommandItem[] = useMemo(
+        () => [
+            {
+                id: 'action-create-task',
+                title: t('command.action.createTask', 'Create Task'),
+                subtitle: t('command.action.createTaskDesc', 'Add a new task'),
+                icon: <Plus size={18} className="text-emerald-500" />,
+                category: 'action',
+                shortcut: 'C',
+                keywords: ['new', 'add', 'todo'],
+                action: () => {
+                    // Trigger task creation modal
+                    window.dispatchEvent(new CustomEvent('create-task'));
+                    onClose();
+                },
+            },
+            {
+                id: 'action-approve-all',
+                title: t('command.action.approveAll', 'Quick Approve'),
+                subtitle: t('command.action.approveAllDesc', 'Approve pending decision'),
+                icon: <CheckCircle2 size={18} className="text-emerald-500" />,
+                category: 'action',
+                keywords: ['approve', 'accept', 'decision'],
+                action: async () => {
+                    if (pendingDecisions.length > 0) {
+                        try {
+                            await Api.put(`/decisions/${pendingDecisions[0].id}/decide`, {
+                                status: 'APPROVED',
+                                outcome: '',
+                            });
+                            toast.success(t('command.action.approved', 'Decision approved'));
+                        } catch (error) {
+                            toast.error(t('command.action.error', 'Failed to approve'));
+                        }
+                    } else {
+                        toast(t('command.action.noDecisions', 'No pending decisions'), { icon: 'ℹ️' });
                     }
-                } else {
-                    toast(t('command.action.noDecisions', 'No pending decisions'), { icon: 'ℹ️' });
-                }
-                onClose();
-            }
-        },
-        {
-            id: 'action-mark-done',
-            title: t('command.action.markDone', 'Mark Task Done'),
-            subtitle: t('command.action.markDoneDesc', 'Complete current task'),
-            icon: <CheckCircle2 size={18} className="text-cyan-500" />,
-            category: 'action',
-            shortcut: 'D',
-            keywords: ['complete', 'finish', 'done'],
-            action: () => {
-                window.dispatchEvent(new CustomEvent('mark-task-done'));
-                onClose();
-            }
-        },
-        {
-            id: 'action-filter-overdue',
-            title: t('command.action.filterOverdue', 'Show Overdue'),
-            subtitle: t('command.action.filterOverdueDesc', 'Filter overdue tasks'),
-            icon: <Clock size={18} className="text-rose-500" />,
-            category: 'action',
-            keywords: ['overdue', 'late', 'urgent'],
-            action: () => {
-                onNavigate?.('tasks');
-                window.dispatchEvent(new CustomEvent('filter-tasks', { detail: { filter: 'overdue' } }));
-                onClose();
-            }
-        },
-        {
-            id: 'action-schedule',
-            title: t('command.action.schedule', 'Open Calendar'),
-            subtitle: t('command.action.scheduleDesc', 'View scheduled items'),
-            icon: <Calendar size={18} className="text-violet-500" />,
-            category: 'action',
-            keywords: ['calendar', 'schedule', 'timeline'],
-            action: () => {
-                navigate('/projects');
-                onClose();
-            }
-        }
-    ], [t, pendingDecisions, onClose, onNavigate, navigate]);
+                    onClose();
+                },
+            },
+            {
+                id: 'action-mark-done',
+                title: t('command.action.markDone', 'Mark Task Done'),
+                subtitle: t('command.action.markDoneDesc', 'Complete current task'),
+                icon: <CheckCircle2 size={18} className="text-cyan-500" />,
+                category: 'action',
+                shortcut: 'D',
+                keywords: ['complete', 'finish', 'done'],
+                action: () => {
+                    window.dispatchEvent(new CustomEvent('mark-task-done'));
+                    onClose();
+                },
+            },
+            {
+                id: 'action-filter-overdue',
+                title: t('command.action.filterOverdue', 'Show Overdue'),
+                subtitle: t('command.action.filterOverdueDesc', 'Filter overdue tasks'),
+                icon: <Clock size={18} className="text-rose-500" />,
+                category: 'action',
+                keywords: ['overdue', 'late', 'urgent'],
+                action: () => {
+                    onNavigate?.('tasks');
+                    window.dispatchEvent(new CustomEvent('filter-tasks', { detail: { filter: 'overdue' } }));
+                    onClose();
+                },
+            },
+            {
+                id: 'action-schedule',
+                title: t('command.action.schedule', 'Open Calendar'),
+                subtitle: t('command.action.scheduleDesc', 'View scheduled items'),
+                icon: <Calendar size={18} className="text-violet-500" />,
+                category: 'action',
+                keywords: ['calendar', 'schedule', 'timeline'],
+                action: () => {
+                    navigate('/projects');
+                    onClose();
+                },
+            },
+        ],
+        [t, pendingDecisions, onClose, onNavigate, navigate],
+    );
 
     // Combined items
     const allItems = useMemo(() => {
@@ -276,8 +279,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             // Show categories when no query
             return allItems.slice(0, 10);
         }
-        
-        return allItems.filter(item => {
+
+        return allItems.filter((item) => {
             const searchText = `${item.title} ${item.subtitle || ''} ${item.keywords?.join(' ') || ''}`;
             return fuzzyMatch(query, searchText);
         });
@@ -289,13 +292,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             navigation: [],
             action: [],
             recent: [],
-            search: []
+            search: [],
         };
-        
-        filteredItems.forEach(item => {
+
+        filteredItems.forEach((item) => {
             groups[item.category].push(item);
         });
-        
+
         return groups;
     }, [filteredItems]);
 
@@ -303,7 +306,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     useEffect(() => {
         if (isOpen) {
             Api.get('/decisions?status=PENDING&limit=5')
-                .then(res => {
+                .then((res) => {
                     if (Array.isArray(res)) {
                         setPendingDecisions(res);
                     }
@@ -322,28 +325,31 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [isOpen]);
 
     // Keyboard navigation
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                setSelectedIndex(prev => Math.min(prev + 1, filteredItems.length - 1));
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                setSelectedIndex(prev => Math.max(prev - 1, 0));
-                break;
-            case 'Enter':
-                e.preventDefault();
-                if (filteredItems[selectedIndex]) {
-                    filteredItems[selectedIndex].action();
-                }
-                break;
-            case 'Escape':
-                e.preventDefault();
-                onClose();
-                break;
-        }
-    }, [filteredItems, selectedIndex, onClose]);
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setSelectedIndex((prev) => Math.min(prev + 1, filteredItems.length - 1));
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setSelectedIndex((prev) => Math.max(prev - 1, 0));
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (filteredItems[selectedIndex]) {
+                        filteredItems[selectedIndex].action();
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    onClose();
+                    break;
+            }
+        },
+        [filteredItems, selectedIndex, onClose],
+    );
 
     // Scroll selected item into view
     useEffect(() => {
@@ -358,7 +364,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     const renderGroup = (title: string, items: CommandItem[], categoryKey: string) => {
         if (items.length === 0) return null;
-        
+
         return (
             <div key={categoryKey} className="mb-2">
                 <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
@@ -367,7 +373,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 {items.map((item, idx) => {
                     const globalIndex = filteredItems.indexOf(item);
                     const isSelected = globalIndex === selectedIndex;
-                    
+
                     return (
                         <motion.button
                             key={item.id}
@@ -380,17 +386,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             className={`
                                 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
                                 transition-colors cursor-pointer text-left
-                                ${isSelected 
-                                    ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-900 dark:text-violet-100' 
-                                    : 'hover:bg-slate-100 dark:hover:bg-white/5 text-navy-900 dark:text-white'
+                                ${
+                                    isSelected
+                                        ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-900 dark:text-violet-100'
+                                        : 'hover:bg-slate-100 dark:hover:bg-white/5 text-navy-900 dark:text-white'
                                 }
                             `}
                         >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                isSelected 
-                                    ? 'bg-violet-200 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300' 
-                                    : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                            }`}>
+                            <div
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                    isSelected
+                                        ? 'bg-violet-200 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300'
+                                        : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                                }`}
+                            >
                                 {item.icon}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -402,19 +411,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 )}
                             </div>
                             {item.shortcut && (
-                                <kbd className={`
+                                <kbd
+                                    className={`
                                     hidden sm:flex items-center gap-0.5 px-2 py-1 rounded text-[10px] font-mono font-medium
-                                    ${isSelected 
-                                        ? 'bg-violet-200/50 dark:bg-violet-700/50 text-violet-700 dark:text-violet-300' 
-                                        : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                                    ${
+                                        isSelected
+                                            ? 'bg-violet-200/50 dark:bg-violet-700/50 text-violet-700 dark:text-violet-300'
+                                            : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                                     }
-                                `}>
+                                `}
+                                >
                                     {item.shortcut}
                                 </kbd>
                             )}
-                            <ArrowRight size={14} className={`shrink-0 ${
-                                isSelected ? 'text-violet-500' : 'text-slate-300 dark:text-slate-600'
-                            }`} />
+                            <ArrowRight
+                                size={14}
+                                className={`shrink-0 ${
+                                    isSelected ? 'text-violet-500' : 'text-slate-300 dark:text-slate-600'
+                                }`}
+                            />
                         </motion.button>
                     );
                 })}
@@ -435,7 +450,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
                         onClick={onClose}
                     />
-                    
+
                     {/* Palette */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -458,8 +473,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     className="flex-1 bg-transparent text-navy-900 dark:text-white placeholder-slate-400 outline-none text-sm"
                                 />
                                 <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-[10px] font-mono text-slate-500">
-                                    <Command size={10} />
-                                    K
+                                    <Command size={10} />K
                                 </kbd>
                             </div>
 
@@ -467,9 +481,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             <div ref={listRef} className="max-h-[400px] overflow-y-auto p-2">
                                 {filteredItems.length > 0 ? (
                                     <>
-                                        {renderGroup(t('command.category.navigation', 'Navigate'), groupedItems.navigation, 'navigation')}
-                                        {renderGroup(t('command.category.actions', 'Actions'), groupedItems.action, 'action')}
-                                        {renderGroup(t('command.category.recent', 'Recent'), groupedItems.recent, 'recent')}
+                                        {renderGroup(
+                                            t('command.category.navigation', 'Navigate'),
+                                            groupedItems.navigation,
+                                            'navigation',
+                                        )}
+                                        {renderGroup(
+                                            t('command.category.actions', 'Actions'),
+                                            groupedItems.action,
+                                            'action',
+                                        )}
+                                        {renderGroup(
+                                            t('command.category.recent', 'Recent'),
+                                            groupedItems.recent,
+                                            'recent',
+                                        )}
                                     </>
                                 ) : (
                                     <div className="py-8 text-center">
@@ -522,7 +548,7 @@ export const useCommandPalette = () => {
             // Cmd/Ctrl + K to open
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
-                setIsOpen(prev => !prev);
+                setIsOpen((prev) => !prev);
             }
         };
 
@@ -534,16 +560,8 @@ export const useCommandPalette = () => {
         isOpen,
         open: () => setIsOpen(true),
         close: () => setIsOpen(false),
-        toggle: () => setIsOpen(prev => !prev)
+        toggle: () => setIsOpen((prev) => !prev),
     };
 };
 
 export default CommandPalette;
-
-
-
-
-
-
-
-

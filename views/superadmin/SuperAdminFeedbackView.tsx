@@ -1,18 +1,9 @@
+import { format } from 'date-fns';
+import { enUS, pl } from 'date-fns/locale';
+import { Bug, CheckCircle2, Clock, Filter, Lightbulb, Mail, MessageSquareWarning, Search, User } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    MessageSquareWarning,
-    CheckCircle2,
-    Clock,
-    Bug,
-    Lightbulb,
-    User,
-    Mail,
-    Filter,
-    Search
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { pl, enUS } from 'date-fns/locale';
+
 import { Api } from '../../services/api';
 
 interface FeedbackItem {
@@ -50,23 +41,22 @@ export const SuperAdminFeedbackView: React.FC = () => {
     const updateStatus = async (id: string, newStatus: 'READ' | 'RESOLVED') => {
         try {
             await Api.updateFeedbackStatus(id, newStatus);
-            setFeedback(prev => prev.map(item =>
-                item.id === id ? { ...item, status: newStatus } : item
-            ));
+            setFeedback((prev) => prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item)));
         } catch (error) {
             console.error('Error updating status:', error);
         }
     };
 
     const filteredFeedback = feedback
-        .filter(item => {
+        .filter((item) => {
             if (filter === 'ALL') return true;
             if (filter === 'NEW') return item.status === 'NEW' || item.status === 'READ';
             return item.status === 'RESOLVED';
         })
-        .filter(item =>
-            item.message.toLowerCase().includes(search.toLowerCase()) ||
-            item.user_email.toLowerCase().includes(search.toLowerCase())
+        .filter(
+            (item) =>
+                item.message.toLowerCase().includes(search.toLowerCase()) ||
+                item.user_email.toLowerCase().includes(search.toLowerCase()),
         );
 
     return (
@@ -118,20 +108,28 @@ export const SuperAdminFeedbackView: React.FC = () => {
                         </div>
                     ) : (
                         filteredFeedback.map((item) => (
-                            <div key={item.id} className="bg-navy-800 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition-colors">
+                            <div
+                                key={item.id}
+                                className="bg-navy-800 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition-colors"
+                            >
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1 space-y-3">
                                         <div className="flex items-center gap-3">
-                                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 ${item.type === 'BUG'
-                                                ? 'bg-red-900/40 text-red-400 border border-red-900'
-                                                : 'bg-amber-900/40 text-amber-400 border border-amber-900'
-                                                }`}>
+                                            <span
+                                                className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 ${
+                                                    item.type === 'BUG'
+                                                        ? 'bg-red-900/40 text-red-400 border border-red-900'
+                                                        : 'bg-amber-900/40 text-amber-400 border border-amber-900'
+                                                }`}
+                                            >
                                                 {item.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}
                                                 {item.type}
                                             </span>
                                             <span className="text-slate-500 text-xs flex items-center gap-1">
                                                 <Clock size={12} />
-                                                {format(new Date(item.created_at), 'PPP p', { locale: i18n.language === 'pl' ? pl : enUS })}
+                                                {format(new Date(item.created_at), 'PPP p', {
+                                                    locale: i18n.language === 'pl' ? pl : enUS,
+                                                })}
                                             </span>
                                         </div>
 
@@ -143,7 +141,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                                             <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center">
                                                 <User size={12} className="text-slate-300" />
                                             </div>
-                                            <span className="text-xs text-slate-400 font-medium">{item.user_email}</span>
+                                            <span className="text-xs text-slate-400 font-medium">
+                                                {item.user_email}
+                                            </span>
                                         </div>
                                     </div>
 
@@ -157,10 +157,15 @@ export const SuperAdminFeedbackView: React.FC = () => {
                                                 Mark Resolved
                                             </button>
                                         )}
-                                        <div className={`px-3 py-1.5 rounded-lg text-xs font-bold text-center border ${item.status === 'NEW' ? 'bg-blue-600/10 text-blue-400 border-blue-600/20' :
-                                            item.status === 'RESOLVED' ? 'bg-slate-700/50 text-slate-400 border-slate-700' :
-                                                'bg-slate-700/50 text-slate-400 border-slate-700'
-                                            }`}>
+                                        <div
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold text-center border ${
+                                                item.status === 'NEW'
+                                                    ? 'bg-blue-600/10 text-blue-400 border-blue-600/20'
+                                                    : item.status === 'RESOLVED'
+                                                      ? 'bg-slate-700/50 text-slate-400 border-slate-700'
+                                                      : 'bg-slate-700/50 text-slate-400 border-slate-700'
+                                            }`}
+                                        >
                                             {item.status}
                                         </div>
                                     </div>

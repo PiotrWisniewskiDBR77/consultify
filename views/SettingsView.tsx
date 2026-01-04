@@ -1,95 +1,95 @@
 /**
  * SettingsView - Main Settings Panel with 6-Module Tab Structure
- * 
+ *
  * Modules: Profile | AI Preferences | Notifications | Security | Integrations | Appearance
- * 
+ *
  * Uses tabs within the content area - NO separate sidebar.
  * Navigation is handled via the main Sidebar floating menu.
  */
 
-import React, { useMemo } from 'react';
-import { User, AppView } from '../types';
-import { useAppStore } from '../store/useAppStore';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
-    UserCircle,
-    Brain,
+    Accessibility,
     Bell,
-    Shield,
-    Link,
-    Palette,
-    User as UserIcon,
-    Image,
-    Key,
-    CreditCard,
-    Trash2,
-    MessageSquare,
-    History,
-    Mic,
-    Volume2,
-    Mail,
-    Smartphone,
+    Brain,
+    Calendar,
+    ClipboardList,
     Clock,
-    Fingerprint,
-    Monitor,
+    CreditCard,
     Database,
     EyeOff,
-    LayoutGrid,
-    Webhook,
-    Calendar,
-    Sun,
+    Fingerprint,
     Globe,
-    Accessibility,
-    Settings,
-    ClipboardList,
+    History,
+    Image,
+    Key,
+    LayoutGrid,
+    Link,
+    Mail,
+    MessageSquare,
+    Mic,
+    Monitor,
     Moon,
+    Palette,
+    Settings,
+    Shield,
     Sliders,
+    Smartphone,
+    Sun,
+    Trash2,
+    User as UserIcon,
+    UserCircle,
+    Volume2,
+    Webhook,
     Zap,
 } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// Import settings components
-import { ProfileSettings } from '../components/settings/ProfileSettings';
-import { AvatarUploader } from '../components/settings/AvatarUploader';
-import { PasswordSettings } from '../components/settings/PasswordSettings';
-import { BillingSettings } from '../components/settings/BillingSettings';
+import { MFASetup } from '../components/Profile/MFASetup';
+import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
 import AccountManagementSettings from '../components/settings/AccountManagementSettings';
+import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
+import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
 import { AIInstructionsSettings } from '../components/settings/AIInstructionsSettings';
+import { AIIntegrationsSettings } from '../components/settings/AIIntegrationsSettings';
 import { AIMemorySettings } from '../components/settings/AIMemorySettings';
-import { ResponseStyleSettings } from '../components/settings/ResponseStyleSettings';
-import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
-import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { AIModelSelectionSettings } from '../components/settings/AIModelSelectionSettings';
 import { AIParametersSettings } from '../components/settings/AIParametersSettings';
 import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
-import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
-import { NotificationSettings } from '../components/settings/NotificationSettings';
-import { EmailNotificationsSettings } from '../components/settings/EmailNotificationsSettings';
-import { PushNotificationsSettings } from '../components/settings/PushNotificationsSettings';
-import { NotificationScheduleSettings } from '../components/settings/NotificationScheduleSettings';
-import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
-import { NotificationGroupingSettings } from '../components/settings/NotificationGroupingSettings';
-import { NotificationDigestSettings } from '../components/settings/NotificationDigestSettings';
-import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
-import { DNDModeSettings } from '../components/settings/DNDModeSettings';
-import { MFASetup } from '../components/Profile/MFASetup';
-import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
-import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
-import { DataControlsSettings } from '../components/settings/DataControlsSettings';
-import { PrivacySettings } from '../components/settings/PrivacySettings';
-import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
-import { WebhooksSettings } from '../components/settings/WebhooksSettings';
-import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
-import { AIIntegrationsSettings } from '../components/settings/AIIntegrationsSettings';
-import { ThemeSettings } from '../components/settings/ThemeSettings';
-import { LanguageSettings } from '../components/settings/LanguageSettings';
-import { RegionalSettings } from '../components/settings/RegionalSettings';
-import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
-import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
-import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
-import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { AppearanceSettings } from '../components/settings/AppearanceSettings';
+import { AvatarUploader } from '../components/settings/AvatarUploader';
+import { BillingSettings } from '../components/settings/BillingSettings';
+import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
+import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
+import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
+import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
+import { DataControlsSettings } from '../components/settings/DataControlsSettings';
+import { DNDModeSettings } from '../components/settings/DNDModeSettings';
+import { EmailNotificationsSettings } from '../components/settings/EmailNotificationsSettings';
+import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
+import { LanguageSettings } from '../components/settings/LanguageSettings';
+import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
+import { NotificationDigestSettings } from '../components/settings/NotificationDigestSettings';
+import { NotificationGroupingSettings } from '../components/settings/NotificationGroupingSettings';
+import { NotificationScheduleSettings } from '../components/settings/NotificationScheduleSettings';
+import { NotificationSettings } from '../components/settings/NotificationSettings';
+import { PasswordSettings } from '../components/settings/PasswordSettings';
+import { PrivacySettings } from '../components/settings/PrivacySettings';
+// Import settings components
+import { ProfileSettings } from '../components/settings/ProfileSettings';
+import { PushNotificationsSettings } from '../components/settings/PushNotificationsSettings';
+import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
+import { RegionalSettings } from '../components/settings/RegionalSettings';
+import { ResponseStyleSettings } from '../components/settings/ResponseStyleSettings';
+import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
+import { ThemeSettings } from '../components/settings/ThemeSettings';
+import { VoiceSettings } from '../components/settings/VoiceSettings';
+import { WebhooksSettings } from '../components/settings/WebhooksSettings';
+import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { useAppStore } from '../store/useAppStore';
+import { AppView, User } from '../types';
 
 // Settings section type
 type SettingsSection = 'profile' | 'ai-preferences' | 'notifications' | 'security' | 'integrations' | 'appearance';
@@ -108,24 +108,43 @@ const getSettingsSection = (view: AppView): SettingsSection => {
     if (view === AppView.SETTINGS_PROFILE || view === AppView.SETTINGS_BILLING) {
         return 'profile';
     }
-    if (view === AppView.SETTINGS_AI || view === AppView.SETTINGS_AI_MEMORY || view === AppView.SETTINGS_AI_RESPONSE_STYLE ||
-        view === AppView.SETTINGS_AI_CHAT_HISTORY || view === AppView.SETTINGS_AI_VOICE) {
+    if (
+        view === AppView.SETTINGS_AI ||
+        view === AppView.SETTINGS_AI_MEMORY ||
+        view === AppView.SETTINGS_AI_RESPONSE_STYLE ||
+        view === AppView.SETTINGS_AI_CHAT_HISTORY ||
+        view === AppView.SETTINGS_AI_VOICE
+    ) {
         return 'ai-preferences';
     }
     if (view === AppView.SETTINGS_NOTIFICATIONS) {
         return 'notifications';
     }
-    if (view === AppView.SETTINGS_SECURITY || view === AppView.SETTINGS_MFA || view === AppView.SETTINGS_ACTIVE_SESSIONS ||
-        view === AppView.SETTINGS_LOGIN_HISTORY || view === AppView.SETTINGS_DATA_CONTROLS || view === AppView.SETTINGS_PRIVACY) {
+    if (
+        view === AppView.SETTINGS_SECURITY ||
+        view === AppView.SETTINGS_MFA ||
+        view === AppView.SETTINGS_ACTIVE_SESSIONS ||
+        view === AppView.SETTINGS_LOGIN_HISTORY ||
+        view === AppView.SETTINGS_DATA_CONTROLS ||
+        view === AppView.SETTINGS_PRIVACY
+    ) {
         return 'security';
     }
-    if (view === AppView.SETTINGS_INTEGRATIONS || view === AppView.SETTINGS_API_ACCESS ||
-        view === AppView.SETTINGS_WEBHOOKS || view === AppView.SETTINGS_CALENDAR_SYNC) {
+    if (
+        view === AppView.SETTINGS_INTEGRATIONS ||
+        view === AppView.SETTINGS_API_ACCESS ||
+        view === AppView.SETTINGS_WEBHOOKS ||
+        view === AppView.SETTINGS_CALENDAR_SYNC
+    ) {
         return 'integrations';
     }
-    if (view === AppView.SETTINGS_APPEARANCE || view === AppView.SETTINGS_REGIONALIZATION ||
-        view === AppView.SETTINGS_ACCESSIBILITY || view === AppView.SETTINGS_WORK_PREFERENCES ||
-        view === AppView.SETTINGS_DASHBOARD_PREFERENCES) {
+    if (
+        view === AppView.SETTINGS_APPEARANCE ||
+        view === AppView.SETTINGS_REGIONALIZATION ||
+        view === AppView.SETTINGS_ACCESSIBILITY ||
+        view === AppView.SETTINGS_WORK_PREFERENCES ||
+        view === AppView.SETTINGS_DASHBOARD_PREFERENCES
+    ) {
         return 'appearance';
     }
     return 'profile';
@@ -138,12 +157,7 @@ interface SettingsViewProps {
     toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({
-    currentUser,
-    onUpdateUser,
-    theme,
-    toggleTheme
-}) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
     const { currentView, setCurrentView } = useAppStore();
     const { t } = useTranslation();
 
@@ -182,32 +196,38 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             case 'profile':
                 return {
                     title: t('settings.profile.title', 'Profile'),
-                    subtitle: t('settings.profile.subtitle', 'Manage your personal information and account settings')
+                    subtitle: t('settings.profile.subtitle', 'Manage your personal information and account settings'),
                 };
             case 'ai-preferences':
                 return {
                     title: t('settings.aiPreferences.title', 'AI Preferences'),
-                    subtitle: t('settings.aiPreferences.subtitle', 'Customize how AI responds to you')
+                    subtitle: t('settings.aiPreferences.subtitle', 'Customize how AI responds to you'),
                 };
             case 'notifications':
                 return {
                     title: t('settings.notifications.title', 'Notifications'),
-                    subtitle: t('settings.notifications.subtitle', 'Control how and when you receive notifications')
+                    subtitle: t('settings.notifications.subtitle', 'Control how and when you receive notifications'),
                 };
             case 'security':
                 return {
                     title: t('settings.security.title', 'Security & Privacy'),
-                    subtitle: t('settings.security.subtitle', 'Manage your security settings and data')
+                    subtitle: t('settings.security.subtitle', 'Manage your security settings and data'),
                 };
             case 'integrations':
                 return {
                     title: t('settings.integrations.title', 'Integrations'),
-                    subtitle: t('settings.integrations.subtitle', 'Connect apps, manage API keys, and configure webhooks')
+                    subtitle: t(
+                        'settings.integrations.subtitle',
+                        'Connect apps, manage API keys, and configure webhooks',
+                    ),
                 };
             case 'appearance':
                 return {
                     title: t('settings.appearance.title', 'Appearance & Regional'),
-                    subtitle: t('settings.appearance.subtitle', 'Customize your visual preferences and regional settings')
+                    subtitle: t(
+                        'settings.appearance.subtitle',
+                        'Customize your visual preferences and regional settings',
+                    ),
                 };
             default:
                 return { title: 'Settings', subtitle: '' };
@@ -430,10 +450,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             </TabsTrigger>
                         </TabsList>
                         <TabsContent value="mfa" className="mt-6">
-                            <MFASetup
-                                isEnabled={currentUser?.mfaEnabled || false}
-                                onUpdate={() => onUpdateUser({})}
-                            />
+                            <MFASetup isEnabled={currentUser?.mfaEnabled || false} onUpdate={() => onUpdateUser({})} />
                         </TabsContent>
                         <TabsContent value="sessions" className="mt-6">
                             <ActiveSessionsSettings />
@@ -565,12 +582,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="p-6">
                 {/* Header */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {sectionInfo.title}
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">
-                        {sectionInfo.subtitle}
-                    </p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{sectionInfo.title}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">{sectionInfo.subtitle}</p>
                 </div>
 
                 {/* Content with tabs */}

@@ -1,34 +1,35 @@
 /**
  * InitiativesTable
- * 
+ *
  * Table view for transformation initiatives in Assessment Module:
  * - Shows only DRAFT and PLANNING status initiatives
  * - When status changes to REVIEW, initiative moves to Initiative Management module
  * - Includes status dropdown for transitions and completeness checker
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Search,
-    Lightbulb,
+    ArrowRight,
+    Building2,
     Edit,
     Eye,
-    Trash2,
+    Lightbulb,
+    Loader2,
+    MapPin,
     MoreVertical,
     RefreshCw,
-    Loader2,
-    TrendingUp,
-    ArrowRight,
+    Search,
     Sparkles,
-    MapPin,
-    Building2
+    Trash2,
+    TrendingUp,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { InitiativeStatus } from '../../types';
+import { InitiativeCompletenessChecker } from '../PMO/InitiativeCompletenessChecker';
+import { StatusTransitionDropdown } from '../PMO/StatusTransitionDropdown';
+import { GenerateInitiativesModal } from './modals/GenerateInitiativesModal';
 import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
 import { TransferToRoadmapModal } from './modals/TransferToRoadmapModal';
-import { GenerateInitiativesModal } from './modals/GenerateInitiativesModal';
-import { StatusTransitionDropdown } from '../PMO/StatusTransitionDropdown';
-import { InitiativeCompletenessChecker } from '../PMO/InitiativeCompletenessChecker';
-import { InitiativeStatus } from '../../types';
 
 interface Initiative {
     id: string;
@@ -85,7 +86,7 @@ const mapApiToInitiative = (item: any): Initiative => ({
     locationId: item.locationId,
     locationName: item.locationName,
     axis: item.axis || '',
-    status: item.status as InitiativeStatus || InitiativeStatus.DRAFT,
+    status: (item.status as InitiativeStatus) || InitiativeStatus.DRAFT,
     priority: (item.priority || item.businessValue || 'MEDIUM').toUpperCase() as Initiative['priority'],
     estimatedROI: item.expectedRoi || item.estimatedROI || 0,
     estimatedBudget: item.costCapex || item.estimatedBudget || 0,
@@ -105,7 +106,7 @@ const mapApiToInitiative = (item: any): Initiative => ({
     keyRisks: item.keyRisks || [],
     createdAt: item.createdAt,
     updatedAt: item.updatedAt || item.createdAt,
-    createdBy: item.createdBy || undefined
+    createdBy: item.createdBy || undefined,
 });
 
 type FilterStatus = 'all' | 'draft' | 'planning';
@@ -120,17 +121,13 @@ interface InitiativesTableProps {
 }
 
 const PRIORITY_CONFIG = {
-    'LOW': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-    'MEDIUM': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    'HIGH': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    'CRITICAL': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+    LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+    MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    HIGH: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    CRITICAL: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
-export const InitiativesTable: React.FC<InitiativesTableProps> = ({
-    projectId,
-    pendingReportId,
-    onOpenInitiative
-}) => {
+export const InitiativesTable: React.FC<InitiativesTableProps> = ({ projectId, pendingReportId, onOpenInitiative }) => {
     // State
     const [initiatives, setInitiatives] = useState<Initiative[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -143,8 +140,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     const [showGenerateModal, setShowGenerateModal] = useState(!!pendingReportId);
     const [viewingInitiativeId, setViewingInitiativeId] = useState<string | null>(null);
     const [transferringInitiativeId, setTransferringInitiativeId] = useState<string | null>(null);
-    const [projects, setProjects] = useState<{id: string; name: string}[]>([]);
-    const [locations, setLocations] = useState<{id: string; name: string}[]>([]);
+    const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+    const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
 
     // Fetch initiatives - only DRAFT and PLANNING for Assessment module
     const fetchInitiatives = useCallback(async () => {
@@ -154,7 +151,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             // Fetch only DRAFT and PLANNING initiatives for Assessment module
             const url = `/api/initiatives/by-status/DRAFT,PLANNING${projectId ? `?projectId=${projectId}` : ''}`;
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -189,18 +186,19 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     }, [fetchInitiatives]);
 
     // Handle status change from dropdown
-    const handleStatusChange = useCallback((initiativeId: string, newStatus: InitiativeStatus, moduleTransition?: any) => {
-        // If initiative moved to REVIEW, it leaves this module
-        if (newStatus === InitiativeStatus.REVIEW) {
-            // Remove from list (it's now in Initiative Management module)
-            setInitiatives(prev => prev.filter(i => i.id !== initiativeId));
-        } else {
-            // Update status locally
-            setInitiatives(prev => prev.map(i => 
-                i.id === initiativeId ? { ...i, status: newStatus } : i
-            ));
-        }
-    }, []);
+    const handleStatusChange = useCallback(
+        (initiativeId: string, newStatus: InitiativeStatus, moduleTransition?: any) => {
+            // If initiative moved to REVIEW, it leaves this module
+            if (newStatus === InitiativeStatus.REVIEW) {
+                // Remove from list (it's now in Initiative Management module)
+                setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
+            } else {
+                // Update status locally
+                setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
+            }
+        },
+        [],
+    );
 
     // Delete initiative
     const handleDelete = async (initiativeId: string) => {
@@ -210,7 +208,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             const token = localStorage.getItem('token');
             await fetch(`/api/initiatives/${initiativeId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             await fetchInitiatives();
         } catch (err) {
@@ -219,7 +217,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     };
 
     // Filter initiatives
-    const filteredInitiatives = initiatives.filter(initiative => {
+    const filteredInitiatives = initiatives.filter((initiative) => {
         // Status filter
         if (filterStatus !== 'all') {
             if (filterStatus === 'draft' && initiative.status !== InitiativeStatus.DRAFT) return false;
@@ -260,8 +258,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     // Stats
     const stats = {
         total: initiatives.length,
-        draft: initiatives.filter(i => i.status === InitiativeStatus.DRAFT).length,
-        planning: initiatives.filter(i => i.status === InitiativeStatus.PLANNING).length
+        draft: initiatives.filter((i) => i.status === InitiativeStatus.DRAFT).length,
+        planning: initiatives.filter((i) => i.status === InitiativeStatus.PLANNING).length,
     };
 
     return (
@@ -270,9 +268,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                            Strategic Initiatives Board
-                        </h2>
+                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">Strategic Initiatives Board</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Initiatives in draft and planning phase • {stats.total} total
                         </p>
@@ -293,8 +289,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         <button
                             onClick={() => setFilterStatus('all')}
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                filterStatus === 'all' 
-                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm' 
+                                filterStatus === 'all'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}
                         >
@@ -303,8 +299,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         <button
                             onClick={() => setFilterStatus('draft')}
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                filterStatus === 'draft' 
-                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm' 
+                                filterStatus === 'draft'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}
                         >
@@ -313,8 +309,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         <button
                             onClick={() => setFilterStatus('planning')}
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                filterStatus === 'planning' 
-                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm' 
+                                filterStatus === 'planning'
+                                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}
                         >
@@ -332,8 +328,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                             className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                         >
                             <option value="">All Projects</option>
-                            {projects.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
+                            {projects.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
                             ))}
                         </select>
                     )}
@@ -346,8 +344,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                             className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                         >
                             <option value="">All Locations</option>
-                            {locations.map(l => (
-                                <option key={l.id} value={l.id}>{l.name}</option>
+                            {locations.map((l) => (
+                                <option key={l.id} value={l.id}>
+                                    {l.name}
+                                </option>
                             ))}
                         </select>
                     )}
@@ -436,7 +436,11 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                         <button
                                                             onClick={() => {
                                                                 if (onOpenInitiative) {
-                                                                    onOpenInitiative(initiative.id, initiative.name, initiative.status);
+                                                                    onOpenInitiative(
+                                                                        initiative.id,
+                                                                        initiative.name,
+                                                                        initiative.status,
+                                                                    );
                                                                 } else {
                                                                     setViewingInitiativeId(initiative.id);
                                                                 }
@@ -448,7 +452,11 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                         <button
                                                             onClick={() => {
                                                                 if (onOpenInitiative) {
-                                                                    onOpenInitiative(initiative.id, initiative.name, initiative.status);
+                                                                    onOpenInitiative(
+                                                                        initiative.id,
+                                                                        initiative.name,
+                                                                        initiative.status,
+                                                                    );
                                                                 } else {
                                                                     setViewingInitiativeId(initiative.id);
                                                                 }
@@ -491,7 +499,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                 initiativeId={initiative.id}
                                                 currentStatus={initiative.status}
                                                 charterCompleteness={initiative.charterCompleteness}
-                                                onStatusChange={(newStatus, moduleTransition) => 
+                                                onStatusChange={(newStatus, moduleTransition) =>
                                                     handleStatusChange(initiative.id, newStatus, moduleTransition)
                                                 }
                                                 size="sm"
@@ -506,13 +514,17 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                         </td>
                                         <td className="px-4 py-4">
                                             {initiative.ownerBusiness ? (
-                                                <div 
+                                                <div
                                                     className="flex items-center gap-2 cursor-default"
                                                     title={`${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`}
                                                 >
                                                     <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
                                                         {initiative.ownerBusiness.avatarUrl ? (
-                                                            <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                            <img
+                                                                src={initiative.ownerBusiness.avatarUrl}
+                                                                alt=""
+                                                                className="w-full h-full object-cover"
+                                                            />
                                                         ) : (
                                                             `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
                                                         )}
@@ -526,7 +538,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                             )}
                                         </td>
                                         <td className="px-4 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}>
+                                            <span
+                                                className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}
+                                            >
                                                 {initiative.priority}
                                             </span>
                                         </td>
@@ -549,7 +563,11 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                 <button
                                                     onClick={() => {
                                                         if (onOpenInitiative) {
-                                                            onOpenInitiative(initiative.id, initiative.name, initiative.status);
+                                                            onOpenInitiative(
+                                                                initiative.id,
+                                                                initiative.name,
+                                                                initiative.status,
+                                                            );
                                                         } else {
                                                             setViewingInitiativeId(initiative.id);
                                                         }
@@ -563,7 +581,11 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                 {/* More menu */}
                                                 <div className="relative">
                                                     <button
-                                                        onClick={() => setActiveRowMenu(activeRowMenu === initiative.id ? null : initiative.id)}
+                                                        onClick={() =>
+                                                            setActiveRowMenu(
+                                                                activeRowMenu === initiative.id ? null : initiative.id,
+                                                            )
+                                                        }
                                                         className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                                     >
                                                         <MoreVertical size={16} />
@@ -571,10 +593,14 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
 
                                                     {activeRowMenu === initiative.id && (
                                                         <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-10">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => {
                                                                     if (onOpenInitiative) {
-                                                                        onOpenInitiative(initiative.id, initiative.name, initiative.status);
+                                                                        onOpenInitiative(
+                                                                            initiative.id,
+                                                                            initiative.name,
+                                                                            initiative.status,
+                                                                        );
                                                                     } else {
                                                                         setViewingInitiativeId(initiative.id);
                                                                     }
@@ -589,7 +615,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                                                 <RefreshCw size={14} />
                                                                 Duplicate
                                                             </button>
-                                                            {(initiative.status === InitiativeStatus.DRAFT || initiative.status === InitiativeStatus.PLANNING) && (
+                                                            {(initiative.status === InitiativeStatus.DRAFT ||
+                                                                initiative.status === InitiativeStatus.PLANNING) && (
                                                                 <>
                                                                     <div className="border-t border-slate-200 dark:border-white/10 my-1" />
                                                                     <button
@@ -623,7 +650,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                     initiativeId={viewingInitiativeId}
                     onClose={() => setViewingInitiativeId(null)}
                     onEdit={(id) => {
-                        const initiative = initiatives.find(i => i.id === id);
+                        const initiative = initiatives.find((i) => i.id === id);
                         if (initiative) {
                             setEditingInitiative(initiative);
                         }
@@ -640,7 +667,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             {transferringInitiativeId && (
                 <TransferToRoadmapModal
                     initiativeId={transferringInitiativeId}
-                    initiativeName={initiatives.find(i => i.id === transferringInitiativeId)?.name || 'Initiative'}
+                    initiativeName={initiatives.find((i) => i.id === transferringInitiativeId)?.name || 'Initiative'}
                     onClose={() => setTransferringInitiativeId(null)}
                     onTransferred={() => {
                         fetchInitiatives();
@@ -664,4 +691,3 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         </div>
     );
 };
-

@@ -1,10 +1,11 @@
 import React, { useCallback } from 'react';
-import { SplitLayout } from '../components/SplitLayout';
-import { FullRolloutWorkspace } from '../components/FullRolloutWorkspace'; // New Component
-import { AppView, AIMessageHistory, FullInitiative } from '../types';
-import { useAppStore } from '../store/useAppStore';
-import { sendMessageToAI } from '../services/ai/gemini';
+
 import { AIFeedbackButton } from '../components/AIFeedbackButton';
+import { FullRolloutWorkspace } from '../components/FullRolloutWorkspace'; // New Component
+import { SplitLayout } from '../components/SplitLayout';
+import { sendMessageToAI } from '../services/ai/gemini';
+import { useAppStore } from '../store/useAppStore';
+import { AIMessageHistory, AppView, FullInitiative } from '../types';
 
 export const FullRolloutView: React.FC = () => {
     const {
@@ -14,7 +15,7 @@ export const FullRolloutView: React.FC = () => {
         addChatMessage: addMessage,
         setIsBotTyping: setTyping,
         setCurrentView: onNavigate,
-        activeChatMessages: messages
+        activeChatMessages: messages,
     } = useAppStore();
 
     const language = currentUser?.preferredLanguage || 'EN';
@@ -23,27 +24,30 @@ export const FullRolloutView: React.FC = () => {
         addMessage({ id: Date.now().toString(), role: 'user', content, timestamp: new Date() });
     };
 
-    const addAiMessage = useCallback((content: string, delay = 600) => {
-        setTyping(true);
-        setTimeout(() => {
-            addMessage({
-                id: Date.now().toString(),
-                role: 'ai',
-                content,
-                timestamp: new Date()
-            });
-            setTyping(false);
-        }, delay);
-    }, [addMessage, setTyping]);
+    const addAiMessage = useCallback(
+        (content: string, delay = 600) => {
+            setTyping(true);
+            setTimeout(() => {
+                addMessage({
+                    id: Date.now().toString(),
+                    role: 'ai',
+                    content,
+                    timestamp: new Date(),
+                });
+                setTyping(false);
+            }, delay);
+        },
+        [addMessage, setTyping],
+    );
 
     const handleAiChat = async (text: string) => {
         addUserMessage(text);
         setTyping(true);
 
         try {
-            const history: AIMessageHistory[] = messages.map(m => ({
+            const history: AIMessageHistory[] = messages.map((m) => ({
                 role: m.role === 'user' ? 'user' : 'model',
-                parts: [{ text: m.content }]
+                parts: [{ text: m.content }],
             }));
 
             // Context: Full Rollout
@@ -56,16 +60,15 @@ export const FullRolloutView: React.FC = () => {
 
             const response = await sendMessageToAI(history, context);
             addAiMessage(response, 0);
-
         } catch (e) {
             console.error(e);
-            addAiMessage("I apologize, I am having trouble processing that right now.");
+            addAiMessage('I apologize, I am having trouble processing that right now.');
             setTyping(false);
         }
     };
 
     const handleUpdateInitiative = (updated: FullInitiative) => {
-        const newInits = fullSession.initiatives.map(i => i.id === updated.id ? updated : i);
+        const newInits = fullSession.initiatives.map((i) => (i.id === updated.id ? updated : i));
         updateFullSession({ initiatives: newInits });
     };
 

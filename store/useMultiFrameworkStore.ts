@@ -1,22 +1,23 @@
 /**
  * Multi-Framework Assessment Store
- * 
+ *
  * Zustand store for managing assessment data across all frameworks:
  * - SIRI (Smart Industry Readiness Index)
  * - ADMA (Advanced Digital Maturity Assessment)
  * - CMMI (Capability Maturity Model Integration)
  * - LEAN (DBR77 Lean 4.0)
- * 
+ *
  * Provides unified state management with framework-specific data structures.
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { SIRIAssessmentData } from '../services/siriStructure';
+
 import { ADMAAssessmentData } from '../services/admaStructure';
 import { CMMIAssessmentData } from '../services/cmmiStructure';
 import { DBR77AssessmentData } from '../services/dbr77LeanStructure';
+import { SIRIAssessmentData } from '../services/siriStructure';
 
 // ============================================
 // TYPES
@@ -77,7 +78,12 @@ export interface MultiFrameworkActions {
     setLeanData: (data: Partial<DBR77AssessmentData>) => void;
 
     // Assessment lifecycle
-    createAssessment: (projectId: string, organizationId: string, framework: AssessmentFramework, name: string) => Promise<string>;
+    createAssessment: (
+        projectId: string,
+        organizationId: string,
+        framework: AssessmentFramework,
+        name: string,
+    ) => Promise<string>;
     loadAssessment: (id: string, framework: AssessmentFramework) => Promise<void>;
     saveAssessment: () => Promise<void>;
     deleteAssessment: (id: string) => Promise<void>;
@@ -196,7 +202,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                     const response = await fetch(`/api/mf-assessments/${projectId}/${framework}`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ name, organizationId }),
@@ -240,7 +246,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                 try {
                     const token = localStorage.getItem('token');
                     const response = await fetch(`/api/mf-assessments/${id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` },
+                        headers: { Authorization: `Bearer ${token}` },
                     });
 
                     if (!response.ok) {
@@ -310,7 +316,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                     const response = await fetch(`/api/mf-assessments/${state.activeAssessmentId}`, {
                         method: 'PUT',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
@@ -345,7 +351,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                 const token = localStorage.getItem('token');
                 const response = await fetch(`/api/mf-assessments/${id}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (!response.ok) {
@@ -359,7 +365,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
 
                 // Remove from recents
                 set((state) => {
-                    state.recentAssessments = state.recentAssessments.filter(a => a.id !== id);
+                    state.recentAssessments = state.recentAssessments.filter((a) => a.id !== id);
                 });
             },
 
@@ -368,7 +374,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                 const response = await fetch(`/api/mf-assessments/${id}/duplicate`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ name: newName }),
@@ -403,11 +409,11 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                     {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ reviewerIds }),
-                    }
+                    },
                 );
 
                 if (!response.ok) {
@@ -433,11 +439,11 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                     {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ feedback }),
-                    }
+                    },
                 );
 
                 if (!response.ok) {
@@ -463,11 +469,11 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                     {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            Authorization: `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ reason }),
-                    }
+                    },
                 );
 
                 if (!response.ok) {
@@ -544,7 +550,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
             addToRecent: (assessment) => {
                 set((state) => {
                     // Remove if already exists
-                    state.recentAssessments = state.recentAssessments.filter(a => a.id !== assessment.id);
+                    state.recentAssessments = state.recentAssessments.filter((a) => a.id !== assessment.id);
                     // Add to front
                     state.recentAssessments.unshift(assessment);
                     // Keep only last 10
@@ -561,8 +567,8 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
                 activeAssessmentId: state.activeAssessmentId,
                 activeFramework: state.activeFramework,
             }),
-        }
-    )
+        },
+    ),
 );
 
 // ============================================
@@ -614,12 +620,4 @@ export function useAutoSave(intervalMs: number = 30000) {
 }
 
 export default useMultiFrameworkStore;
-
-
-
-
-
-
-
-
 

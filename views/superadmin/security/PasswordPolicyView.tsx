@@ -3,10 +3,11 @@
  * Manages password policies for organizations
  */
 
-import React, { useState, useEffect } from 'react';
 import { Lock, Save } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const PasswordPolicyView: React.FC = () => {
     const [selectedOrgId, setSelectedOrgId] = useState<string>('');
@@ -21,7 +22,7 @@ export const PasswordPolicyView: React.FC = () => {
         preventReuseCount: 5,
         lockoutAttempts: 5,
         lockoutDurationMinutes: 30,
-        requireMfa: false
+        requireMfa: false,
     });
     const [loading, setLoading] = useState(false);
 
@@ -63,7 +64,7 @@ export const PasswordPolicyView: React.FC = () => {
                     preventReuseCount: pol.prevent_reuse_count,
                     lockoutAttempts: pol.lockout_attempts,
                     lockoutDurationMinutes: pol.lockout_duration_minutes,
-                    requireMfa: pol.require_mfa === 1
+                    requireMfa: pol.require_mfa === 1,
                 });
             }
         } catch (err) {
@@ -100,8 +101,10 @@ export const PasswordPolicyView: React.FC = () => {
                         className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
                     >
                         <option value="">Select Organization</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
                     <button
@@ -135,7 +138,12 @@ export const PasswordPolicyView: React.FC = () => {
                             <input
                                 type="number"
                                 value={policy.maxAgeDays || ''}
-                                onChange={(e) => setPolicy({ ...policy, maxAgeDays: e.target.value ? parseInt(e.target.value) : null })}
+                                onChange={(e) =>
+                                    setPolicy({
+                                        ...policy,
+                                        maxAgeDays: e.target.value ? parseInt(e.target.value) : null,
+                                    })
+                                }
                                 className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
                                 placeholder="No expiration"
                             />
@@ -193,7 +201,9 @@ export const PasswordPolicyView: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm text-slate-300 mb-2">Prevent Reuse (last N passwords)</label>
+                            <label className="block text-sm text-slate-300 mb-2">
+                                Prevent Reuse (last N passwords)
+                            </label>
                             <input
                                 type="number"
                                 value={policy.preventReuseCount}
@@ -219,7 +229,9 @@ export const PasswordPolicyView: React.FC = () => {
                             <input
                                 type="number"
                                 value={policy.lockoutDurationMinutes}
-                                onChange={(e) => setPolicy({ ...policy, lockoutDurationMinutes: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setPolicy({ ...policy, lockoutDurationMinutes: parseInt(e.target.value) })
+                                }
                                 className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
                                 min="5"
                                 max="1440"
@@ -231,10 +243,4 @@ export const PasswordPolicyView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

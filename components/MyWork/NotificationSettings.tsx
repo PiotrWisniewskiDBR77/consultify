@@ -1,7 +1,7 @@
 /**
  * NotificationSettings - User notification preferences
  * Part of My Work Module PMO Upgrade
- * 
+ *
  * Features:
  * - Email notification settings
  * - In-app notification settings
@@ -9,27 +9,28 @@
  * - Per-category toggles
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Bell,
-    Mail,
-    Moon,
-    Clock,
-    Save,
-    Loader2,
-    CheckCircle2,
     AlertTriangle,
+    Bell,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    Loader2,
+    Mail,
     MessageSquare,
-    Users,
-    Target,
-    Sparkles,
+    Moon,
+    Save,
     Shield,
-    Calendar
+    Sparkles,
+    Target,
+    Users,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 interface NotificationPreferences {
     // Email settings
@@ -39,14 +40,14 @@ interface NotificationPreferences {
     emailMentions: boolean;
     emailDeadlines: boolean;
     emailWeeklyReport: boolean;
-    
+
     // In-app settings
     inAppOverdue: boolean;
     inAppAISuggestions: boolean;
     inAppGateReviews: boolean;
     inAppTeamUpdates: boolean;
     inAppComments: boolean;
-    
+
     // Quiet hours
     quietHoursEnabled: boolean;
     quietHoursStart: string;
@@ -69,7 +70,7 @@ const defaultSettings: NotificationPreferences = {
     quietHoursEnabled: false,
     quietHoursStart: '22:00',
     quietHoursEnd: '08:00',
-    quietHoursWeekends: true
+    quietHoursWeekends: true,
 };
 
 /**
@@ -91,20 +92,14 @@ const SettingToggle: React.FC<{
                     </div>
                 )}
                 <div>
-                    <p className="text-sm font-medium text-navy-900 dark:text-white">
-                        {label}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {description}
-                    </p>
+                    <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
                 </div>
             </div>
             <button
                 onClick={() => onChange(!value)}
                 className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-                    value 
-                        ? 'bg-purple-600' 
-                        : 'bg-slate-200 dark:bg-white/10'
+                    value ? 'bg-purple-600' : 'bg-slate-200 dark:bg-white/10'
                 }`}
             >
                 <motion.div
@@ -138,20 +133,12 @@ const SettingsSection: React.FC<{
                         {icon}
                     </div>
                     <div>
-                        <h4 className="font-semibold text-navy-900 dark:text-white">
-                            {title}
-                        </h4>
-                        {description && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {description}
-                            </p>
-                        )}
+                        <h4 className="font-semibold text-navy-900 dark:text-white">{title}</h4>
+                        {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
                     </div>
                 </div>
             </div>
-            <div className="p-4">
-                {children}
-            </div>
+            <div className="p-4">{children}</div>
         </motion.div>
     );
 };
@@ -164,15 +151,11 @@ const TimeSelect: React.FC<{
     value: string;
     onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => {
-    const hours = Array.from({ length: 24 }, (_, i) => 
-        `${i.toString().padStart(2, '0')}:00`
-    );
+    const hours = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 
     return (
         <div className="flex-1">
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                {label}
-            </label>
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</label>
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
@@ -216,11 +199,8 @@ export const NotificationSettings: React.FC = () => {
         }
     };
 
-    const updateSetting = <K extends keyof NotificationPreferences>(
-        key: K, 
-        value: NotificationPreferences[K]
-    ) => {
-        setSettings(prev => ({ ...prev, [key]: value }));
+    const updateSetting = <K extends keyof NotificationPreferences>(key: K, value: NotificationPreferences[K]) => {
+        setSettings((prev) => ({ ...prev, [key]: value }));
         setHasChanges(true);
     };
 
@@ -263,18 +243,14 @@ export const NotificationSettings: React.FC = () => {
                         disabled={saving}
                         className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm font-medium"
                     >
-                        {saving ? (
-                            <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                            <Save size={16} />
-                        )}
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         {t('notifications.save', 'Save Changes')}
                     </button>
                 </motion.div>
             )}
 
             {/* Email Notifications */}
-            <SettingsSection 
+            <SettingsSection
                 title={t('notifications.email.title', 'Email Notifications')}
                 icon={<Mail size={18} />}
                 description={t('notifications.email.description', 'Configure which emails you receive')}
@@ -282,7 +258,10 @@ export const NotificationSettings: React.FC = () => {
                 <SettingToggle
                     icon={<Calendar size={14} />}
                     label={t('notifications.email.dailyDigest', 'Daily Digest')}
-                    description={t('notifications.email.dailyDigestDesc', 'Summary of your tasks and updates every morning')}
+                    description={t(
+                        'notifications.email.dailyDigestDesc',
+                        'Summary of your tasks and updates every morning',
+                    )}
                     value={settings.emailDailyDigest}
                     onChange={(v) => updateSetting('emailDailyDigest', v)}
                 />
@@ -324,7 +303,7 @@ export const NotificationSettings: React.FC = () => {
             </SettingsSection>
 
             {/* In-App Notifications */}
-            <SettingsSection 
+            <SettingsSection
                 title={t('notifications.inApp.title', 'In-App Notifications')}
                 icon={<Bell size={18} />}
                 description={t('notifications.inApp.description', 'Notifications that appear in the app')}
@@ -367,7 +346,7 @@ export const NotificationSettings: React.FC = () => {
             </SettingsSection>
 
             {/* Quiet Hours */}
-            <SettingsSection 
+            <SettingsSection
                 title={t('notifications.quietHours.title', 'Quiet Hours')}
                 icon={<Moon size={18} />}
                 description={t('notifications.quietHours.description', 'Pause notifications during specific times')}
@@ -379,7 +358,7 @@ export const NotificationSettings: React.FC = () => {
                     value={settings.quietHoursEnabled}
                     onChange={(v) => updateSetting('quietHoursEnabled', v)}
                 />
-                
+
                 {settings.quietHoursEnabled && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
@@ -399,18 +378,24 @@ export const NotificationSettings: React.FC = () => {
                                 onChange={(v) => updateSetting('quietHoursEnd', v)}
                             />
                         </div>
-                        
+
                         <SettingToggle
                             icon={<Calendar size={14} />}
                             label={t('notifications.quietHours.weekends', 'Include Weekends')}
-                            description={t('notifications.quietHours.weekendsDesc', 'Also apply quiet hours on weekends')}
+                            description={t(
+                                'notifications.quietHours.weekendsDesc',
+                                'Also apply quiet hours on weekends',
+                            )}
                             value={settings.quietHoursWeekends}
                             onChange={(v) => updateSetting('quietHoursWeekends', v)}
                         />
-                        
+
                         <div className="p-3 bg-slate-50 dark:bg-navy-800 rounded-lg text-xs text-slate-500 dark:text-slate-400">
                             <p>
-                                {t('notifications.quietHours.info', 'During quiet hours, you will not receive any push notifications. You can still see them in your notification center.')}
+                                {t(
+                                    'notifications.quietHours.info',
+                                    'During quiet hours, you will not receive any push notifications. You can still see them in your notification center.',
+                                )}
                             </p>
                         </div>
                     </motion.div>
@@ -424,11 +409,7 @@ export const NotificationSettings: React.FC = () => {
                     disabled={saving || !hasChanges}
                     className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
-                    {saving ? (
-                        <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                        <Save size={18} />
-                    )}
+                    {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                     {t('notifications.saveSettings', 'Save Settings')}
                 </button>
             </div>

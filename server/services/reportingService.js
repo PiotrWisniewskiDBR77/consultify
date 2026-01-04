@@ -3,8 +3,9 @@
 // REFACTORED: Uses BaseService for common functionality
 
 import BaseService from './BaseService.js';
-import * as queryHelpers from '../src/utils/queryHelpers.js';
-import db from '../database.js';
+import * as queryHelpers from '../dist/utils/queryHelpers.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import StabilizationService from './stabilizationService.js';
 import EconomicsService from './economicsService.js';
 

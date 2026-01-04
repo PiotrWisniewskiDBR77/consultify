@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DemoButton } from '../../../components/Landing/DemoButton';
+import { DemoButton } from '../../components/Landing/DemoButton';
 
 describe('DemoButton Component', () => {
     const user = userEvent.setup();
@@ -25,6 +25,7 @@ describe('DemoButton Component', () => {
         expect(onClick).toHaveBeenCalled();
     });
 });
+
 
 
 

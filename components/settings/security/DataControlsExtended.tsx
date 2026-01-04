@@ -1,6 +1,6 @@
 /**
  * DataControlsExtended - Extended Data Controls
- * 
+ *
  * Features:
  * - Data retention per data type
  * - Automatic data anonymization schedule
@@ -9,29 +9,30 @@
  * - Data portability
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
+    AlertTriangle,
+    Archive,
+    Calendar,
+    CheckCircle,
+    Clock,
     Database,
     Download,
-    Trash2,
-    Clock,
     FileJson,
     FileSpreadsheet,
     FileText,
-    Calendar,
-    AlertTriangle,
-    CheckCircle,
     Loader2,
+    RefreshCw,
     Save,
     Shield,
-    Archive,
-    RefreshCw,
-    Upload
+    Trash2,
+    Upload,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface DataControlsExtendedProps {
@@ -67,13 +68,10 @@ const defaultRetention: DataRetentionSettings = {
     comments: 365,
     files: 0,
     activityLogs: 90,
-    aiConversations: 30
+    aiConversations: 30,
 };
 
-export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -96,7 +94,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             setLoading(true);
             const [retentionRes, categoriesRes] = await Promise.all([
                 Api.get('/api/user/data-controls/retention').catch(() => ({ data: null })),
-                Api.get('/api/user/data-controls/categories').catch(() => ({ data: [] }))
+                Api.get('/api/user/data-controls/categories').catch(() => ({ data: [] })),
             ]);
 
             if (retentionRes.data) {
@@ -110,13 +108,76 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             } else {
                 // Default categories for UI
                 setDataCategories([
-                    { id: 'tasks', name: 'Tasks', description: 'Your tasks and subtasks', icon: CheckCircle, count: 0, size: '0 KB', canDelete: true, canExport: true },
-                    { id: 'projects', name: 'Projects', description: 'Project data and settings', icon: Database, count: 0, size: '0 KB', canDelete: false, canExport: true },
-                    { id: 'messages', name: 'Messages', description: 'Direct messages and notifications', icon: FileText, count: 0, size: '0 KB', canDelete: true, canExport: true },
-                    { id: 'comments', name: 'Comments', description: 'Comments on tasks and projects', icon: FileText, count: 0, size: '0 KB', canDelete: true, canExport: true },
-                    { id: 'files', name: 'Files', description: 'Uploaded files and attachments', icon: Archive, count: 0, size: '0 KB', canDelete: true, canExport: true },
-                    { id: 'activity', name: 'Activity Logs', description: 'Your activity history', icon: Clock, count: 0, size: '0 KB', canDelete: true, canExport: true },
-                    { id: 'ai', name: 'AI Conversations', description: 'AI chat history and context', icon: RefreshCw, count: 0, size: '0 KB', canDelete: true, canExport: true }
+                    {
+                        id: 'tasks',
+                        name: 'Tasks',
+                        description: 'Your tasks and subtasks',
+                        icon: CheckCircle,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: true,
+                        canExport: true,
+                    },
+                    {
+                        id: 'projects',
+                        name: 'Projects',
+                        description: 'Project data and settings',
+                        icon: Database,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: false,
+                        canExport: true,
+                    },
+                    {
+                        id: 'messages',
+                        name: 'Messages',
+                        description: 'Direct messages and notifications',
+                        icon: FileText,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: true,
+                        canExport: true,
+                    },
+                    {
+                        id: 'comments',
+                        name: 'Comments',
+                        description: 'Comments on tasks and projects',
+                        icon: FileText,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: true,
+                        canExport: true,
+                    },
+                    {
+                        id: 'files',
+                        name: 'Files',
+                        description: 'Uploaded files and attachments',
+                        icon: Archive,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: true,
+                        canExport: true,
+                    },
+                    {
+                        id: 'activity',
+                        name: 'Activity Logs',
+                        description: 'Your activity history',
+                        icon: Clock,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: true,
+                        canExport: true,
+                    },
+                    {
+                        id: 'ai',
+                        name: 'AI Conversations',
+                        description: 'AI chat history and context',
+                        icon: RefreshCw,
+                        count: 0,
+                        size: '0 KB',
+                        canDelete: true,
+                        canExport: true,
+                    },
                 ]);
             }
         } catch (error) {
@@ -132,7 +193,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             await Api.put('/api/user/data-controls/retention', {
                 retention,
                 anonymizationEnabled,
-                anonymizationSchedule
+                anonymizationSchedule,
             });
             toast.success(t('settings.dataControls.saved', 'Data retention settings saved'));
         } catch (error) {
@@ -147,7 +208,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
             setExporting(categoryId);
             const response = await Api.post('/api/user/data-controls/export', {
                 category: categoryId,
-                format: exportFormat
+                format: exportFormat,
             });
 
             if (response.success && response.downloadUrl) {
@@ -155,7 +216,9 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 window.open(response.downloadUrl, '_blank');
                 toast.success(t('settings.dataControls.exportStarted', 'Export started'));
             } else {
-                toast.success(t('settings.dataControls.exportQueued', 'Export queued. You will receive an email when ready.'));
+                toast.success(
+                    t('settings.dataControls.exportQueued', 'Export queued. You will receive an email when ready.'),
+                );
             }
         } catch (error) {
             toast.error(t('settings.dataControls.exportError', 'Failed to export data'));
@@ -168,7 +231,12 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         try {
             setExporting('all');
             await Api.post('/api/user/data-controls/export-all', { format: exportFormat });
-            toast.success(t('settings.dataControls.exportAllQueued', 'Full data export queued. You will receive an email when ready.'));
+            toast.success(
+                t(
+                    'settings.dataControls.exportAllQueued',
+                    'Full data export queued. You will receive an email when ready.',
+                ),
+            );
         } catch (error) {
             toast.error(t('settings.dataControls.exportError', 'Failed to export data'));
         } finally {
@@ -202,7 +270,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         { value: 90, label: '90 days' },
         { value: 180, label: '6 months' },
         { value: 365, label: '1 year' },
-        { value: 730, label: '2 years' }
+        { value: 730, label: '2 years' },
     ];
 
     if (loading) {
@@ -258,8 +326,10 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                                 onChange={(e) => setRetention({ ...retention, [key]: parseInt(e.target.value) })}
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
                             >
-                                {retentionOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                {retentionOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -270,16 +340,22 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 <div className="border-t border-slate-200 dark:border-white/10 pt-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <label className="font-medium text-slate-900 dark:text-white">Automatic Data Anonymization</label>
+                            <label className="font-medium text-slate-900 dark:text-white">
+                                Automatic Data Anonymization
+                            </label>
                             <p className="text-sm text-slate-500">Automatically anonymize old data on schedule</p>
                         </div>
                         <button
                             onClick={() => setAnonymizationEnabled(!anonymizationEnabled)}
-                            className={`relative w-12 h-6 rounded-full transition-colors ${anonymizationEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${
+                                anonymizationEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                            }`}
                         >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${anonymizationEnabled ? 'left-7' : 'left-1'
-                                }`} />
+                            <span
+                                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                    anonymizationEnabled ? 'left-7' : 'left-1'
+                                }`}
+                            />
                         </button>
                     </div>
 
@@ -313,19 +389,23 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                     {[
                         { value: 'json', label: 'JSON', icon: FileJson, description: 'Machine-readable format' },
                         { value: 'csv', label: 'CSV', icon: FileSpreadsheet, description: 'Spreadsheet compatible' },
-                        { value: 'pdf', label: 'PDF', icon: FileText, description: 'Human-readable report' }
-                    ].map(format => {
+                        { value: 'pdf', label: 'PDF', icon: FileText, description: 'Human-readable report' },
+                    ].map((format) => {
                         const Icon = format.icon;
                         return (
                             <button
                                 key={format.value}
                                 onClick={() => setExportFormat(format.value as any)}
-                                className={`flex-1 p-4 rounded-lg border-2 transition-all ${exportFormat === format.value
+                                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                                    exportFormat === format.value
                                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-purple-300'
-                                    }`}
+                                }`}
                             >
-                                <Icon size={24} className={exportFormat === format.value ? 'text-purple-600' : 'text-slate-400'} />
+                                <Icon
+                                    size={24}
+                                    className={exportFormat === format.value ? 'text-purple-600' : 'text-slate-400'}
+                                />
                                 <p className="font-medium text-slate-900 dark:text-white mt-2">{format.label}</p>
                                 <p className="text-xs text-slate-500">{format.description}</p>
                             </button>
@@ -351,17 +431,18 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 </h3>
 
                 <div className="space-y-3">
-                    {dataCategories.map(category => {
+                    {dataCategories.map((category) => {
                         const Icon = category.icon;
                         const isConfirming = confirmDelete === category.id;
 
                         return (
                             <div
                                 key={category.id}
-                                className={`p-4 rounded-lg border transition-all ${isConfirming
+                                className={`p-4 rounded-lg border transition-all ${
+                                    isConfirming
                                         ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
                                         : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950'
-                                    }`}
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -369,7 +450,9 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                                             <Icon size={18} className="text-slate-600 dark:text-slate-400" />
                                         </div>
                                         <div>
-                                            <p className="font-medium text-slate-900 dark:text-white">{category.name}</p>
+                                            <p className="font-medium text-slate-900 dark:text-white">
+                                                {category.name}
+                                            </p>
                                             <p className="text-sm text-slate-500">{category.description}</p>
                                             <p className="text-xs text-slate-400 mt-1">
                                                 {category.count} items • {category.size}
@@ -395,10 +478,11 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                                             <button
                                                 onClick={() => handleDelete(category.id)}
                                                 disabled={deleting === category.id}
-                                                className={`p-2 rounded-lg transition-colors ${isConfirming
+                                                className={`p-2 rounded-lg transition-colors ${
+                                                    isConfirming
                                                         ? 'bg-red-600 text-white'
                                                         : 'hover:bg-white dark:hover:bg-white/10 text-red-600'
-                                                    }`}
+                                                }`}
                                                 title={isConfirming ? 'Click again to confirm' : 'Delete'}
                                             >
                                                 {deleting === category.id ? (
@@ -414,7 +498,8 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                                     <div className="mt-3 p-3 bg-red-100 dark:bg-red-500/20 rounded-lg">
                                         <p className="text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
                                             <AlertTriangle size={16} />
-                                            Click delete again to permanently remove all {category.name.toLowerCase()}. This cannot be undone.
+                                            Click delete again to permanently remove all {category.name.toLowerCase()}.
+                                            This cannot be undone.
                                         </p>
                                         <button
                                             onClick={() => setConfirmDelete(null)}
@@ -470,7 +555,10 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                     <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-amber-800 dark:text-amber-200">
                         <p className="font-medium mb-1">Important</p>
-                        <p>Data deletion is permanent and cannot be reversed. Make sure to export your data before deleting if you need a backup.</p>
+                        <p>
+                            Data deletion is permanent and cannot be reversed. Make sure to export your data before
+                            deleting if you need a backup.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -479,10 +567,4 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
 };
 
 export default DataControlsExtended;
-
-
-
-
-
-
 

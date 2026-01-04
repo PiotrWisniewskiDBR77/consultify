@@ -11,7 +11,8 @@
  * - Comprehensive analytics
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { aiLogger } from './logger.js';
 import crypto from 'crypto';
 

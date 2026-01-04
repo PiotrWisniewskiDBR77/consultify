@@ -2,7 +2,7 @@
  * RapidLean Observation Form - Mobile-Optimized
  * Production floor observation form for Gemba Walk
  * DBR77 Format - follows DRD principles
- * 
+ *
  * Mobile optimizations:
  * - Min 48px touch targets
  * - Dark mode toggle for production floors
@@ -10,8 +10,22 @@
  * - Haptic feedback on actions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Camera, CheckCircle, X, MapPin, Clock, Save, ArrowLeft, ArrowRight, Sun, Moon, Wifi, WifiOff } from 'lucide-react';
+import {
+    ArrowLeft,
+    ArrowRight,
+    Camera,
+    CheckCircle,
+    Clock,
+    MapPin,
+    Moon,
+    Save,
+    Sun,
+    Wifi,
+    WifiOff,
+    X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { ObservationTemplate } from '../../data/rapidLeanObservationTemplates';
 
 interface ObservationData {
@@ -36,7 +50,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     templateIndex,
     totalTemplates,
     onComplete,
-    onCancel
+    onCancel,
 }) => {
     const [location, setLocation] = useState('');
     const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -79,7 +93,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
             answers,
             photos,
             notes,
-            savedAt: new Date().toISOString()
+            savedAt: new Date().toISOString(),
         };
         localStorage.setItem(`rapidlean_draft_${template.id}`, JSON.stringify(saveData));
         setLastSaveTime(new Date());
@@ -108,7 +122,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     }, [template.id]);
 
     const handleAnswer = (itemId: string, value: any) => {
-        setAnswers(prev => ({ ...prev, [itemId]: value }));
+        setAnswers((prev) => ({ ...prev, [itemId]: value }));
         setAutoSaveStatus('unsaved');
     };
 
@@ -120,11 +134,11 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
         input.multiple = true;
         input.onchange = (e: any) => {
             const files = Array.from(e.target.files || []) as File[];
-            files.forEach(file => {
+            files.forEach((file) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const photoUrl = event.target?.result as string;
-                    setPhotos(prev => [...prev, photoUrl]);
+                    setPhotos((prev) => [...prev, photoUrl]);
                 };
                 reader.readAsDataURL(file);
             });
@@ -133,7 +147,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     };
 
     const handleRemovePhoto = (index: number) => {
-        setPhotos(prev => prev.filter((_, i) => i !== index));
+        setPhotos((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleSave = () => {
@@ -143,17 +157,17 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
             timestamp: new Date().toISOString(),
             answers,
             photos,
-            notes
+            notes,
         };
         onComplete(observationData);
     };
 
     const getRequiredItems = () => {
-        return template.checklist.filter(item => item.required);
+        return template.checklist.filter((item) => item.required);
     };
 
     const getCompletedItems = () => {
-        return template.checklist.filter(item => {
+        return template.checklist.filter((item) => {
             const answer = answers[item.id];
             if (item.type === 'photo') {
                 return photos.length > 0;
@@ -165,7 +179,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     const isTemplateComplete = () => {
         const required = getRequiredItems();
         const completed = getCompletedItems();
-        return required.every(req => completed.some(comp => comp.id === req.id));
+        return required.every((req) => completed.some((comp) => comp.id === req.id));
     };
 
     const completionPercentage = (getCompletedItems().length / template.checklist.length) * 100;
@@ -173,10 +187,14 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     return (
         <div className={`min-h-screen pb-24 ${forceDarkMode ? 'dark bg-gray-900' : 'bg-gray-50 dark:bg-gray-900'}`}>
             {/* Header - Mobile Optimized with Dark Mode Toggle */}
-            <div className={`sticky top-0 z-10 shadow-sm border-b ${forceDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+            <div
+                className={`sticky top-0 z-10 shadow-sm border-b ${forceDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}
+            >
                 <div className="px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
-                        <h2 className={`text-lg font-bold ${forceDarkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                        <h2
+                            className={`text-lg font-bold ${forceDarkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}
+                        >
                             {template.name}
                         </h2>
                         <div className="flex items-center gap-2">
@@ -199,7 +217,9 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                                     <Moon className="w-5 h-5 text-gray-500" />
                                 )}
                             </button>
-                            <span className={`text-sm font-medium ${forceDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                            <span
+                                className={`text-sm font-medium ${forceDarkMode ? 'text-gray-300' : 'text-gray-500'}`}
+                            >
                                 {templateIndex + 1}/{totalTemplates}
                             </span>
                         </div>
@@ -209,7 +229,9 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                     </p>
                     <div className="mt-3 flex items-center gap-4 text-sm">
                         {/* Location Input - Larger touch target */}
-                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${forceDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}`}>
+                        <div
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${forceDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}`}
+                        >
                             <MapPin className="w-4 h-4 text-blue-500" />
                             <input
                                 type="text"
@@ -221,7 +243,9 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                         </div>
                         <div className={`flex items-center gap-1 ${forceDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                             <Clock className="w-4 h-4" />
-                            <span className="text-sm">{new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-sm">
+                                {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                         </div>
                         {/* Auto-save Status */}
                         {autoSaveStatus === 'saved' && (
@@ -253,54 +277,55 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                 {template.checklist.map((item) => {
                     const answer = answers[item.id];
                     const isPhotoItem = item.type === 'photo';
-                    const isCompleted = isPhotoItem ? photos.length > 0 : (answer !== undefined && answer !== null && answer !== '');
+                    const isCompleted = isPhotoItem
+                        ? photos.length > 0
+                        : answer !== undefined && answer !== null && answer !== '';
 
                     return (
                         <div
                             key={item.id}
-                            className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-2 ${item.required && !isCompleted
-                                ? 'border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10'
-                                : isCompleted
-                                    ? 'border-green-300 bg-green-50 dark:bg-green-900/10'
-                                    : 'border-gray-200 dark:border-gray-700'
-                                }`}
+                            className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-2 ${
+                                item.required && !isCompleted
+                                    ? 'border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10'
+                                    : isCompleted
+                                      ? 'border-green-300 bg-green-50 dark:bg-green-900/10'
+                                      : 'border-gray-200 dark:border-gray-700'
+                            }`}
                         >
                             <div className="flex items-start justify-between mb-2">
                                 <label className="font-medium text-sm flex-1">
                                     {item.text}
                                     {item.required && <span className="text-red-500 ml-1">*</span>}
                                 </label>
-                                {isCompleted && (
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                )}
+                                {isCompleted && <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />}
                             </div>
 
-                            {item.helpText && (
-                                <p className="text-xs text-gray-500 mb-3 italic">{item.helpText}</p>
-                            )}
+                            {item.helpText && <p className="text-xs text-gray-500 mb-3 italic">{item.helpText}</p>}
 
                             {/* Render input based on type */}
                             {item.type === 'yes_no' && (
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => handleAnswer(item.id, true)}
-                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${answer === true
-                                            ? 'bg-green-500 text-white shadow-lg shadow-green-500/25'
-                                            : forceDarkMode
-                                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                                            }`}
+                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${
+                                            answer === true
+                                                ? 'bg-green-500 text-white shadow-lg shadow-green-500/25'
+                                                : forceDarkMode
+                                                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                                        }`}
                                     >
                                         ✓ Yes
                                     </button>
                                     <button
                                         onClick={() => handleAnswer(item.id, false)}
-                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${answer === false
-                                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/25'
-                                            : forceDarkMode
-                                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                                            }`}
+                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${
+                                            answer === false
+                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/25'
+                                                : forceDarkMode
+                                                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                                        }`}
                                     >
                                         ✗ No
                                     </button>
@@ -309,16 +334,17 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
 
                             {item.type === 'scale' && (
                                 <div className="grid grid-cols-5 gap-2">
-                                    {[1, 2, 3, 4, 5].map(value => (
+                                    {[1, 2, 3, 4, 5].map((value) => (
                                         <button
                                             key={value}
                                             onClick={() => handleAnswer(item.id, value)}
-                                            className={`min-h-[48px] py-3 px-2 rounded-xl text-base font-semibold transition-all active:scale-95 ${answer === value
-                                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                                                : forceDarkMode
-                                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                                                }`}
+                                            className={`min-h-[48px] py-3 px-2 rounded-xl text-base font-semibold transition-all active:scale-95 ${
+                                                answer === value
+                                                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                                                    : forceDarkMode
+                                                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                                            }`}
                                         >
                                             {value}
                                         </button>
@@ -352,15 +378,17 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                                         className="w-full py-3 px-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:border-blue-500"
                                     >
                                         <Camera className="w-5 h-5" />
-                                        {photos.length > 0
-                                            ? `Add Another Photo (${photos.length})`
-                                            : 'Take Photo'}
+                                        {photos.length > 0 ? `Add Another Photo (${photos.length})` : 'Take Photo'}
                                     </button>
                                     {photos.length > 0 && (
                                         <div className="mt-2 grid grid-cols-3 gap-2">
                                             {photos.map((photo, idx) => (
                                                 <div key={idx} className="relative">
-                                                    <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-24 object-cover rounded" />
+                                                    <img
+                                                        src={photo}
+                                                        alt={`Photo ${idx + 1}`}
+                                                        className="w-full h-24 object-cover rounded"
+                                                    />
                                                     <button
                                                         onClick={() => handleRemovePhoto(idx)}
                                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
@@ -379,9 +407,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
 
                 {/* General Notes */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                    <label className="font-medium text-sm mb-2 block">
-                        Additional Notes
-                    </label>
+                    <label className="font-medium text-sm mb-2 block">Additional Notes</label>
                     <textarea
                         placeholder="Any additional observations..."
                         value={notes}
@@ -415,4 +441,3 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
         </div>
     );
 };
-

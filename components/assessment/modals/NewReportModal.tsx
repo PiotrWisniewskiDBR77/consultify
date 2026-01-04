@@ -1,13 +1,14 @@
 /**
  * NewReportModal
- * 
+ *
  * Modal for creating a new report from an approved assessment.
  * Fetches list of approved assessments and allows selecting one to create a report.
  * Includes context readiness validation before allowing report creation.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { FileText, X, Loader2, CheckCircle2, AlertCircle, FileOutput, Plus, Search, Building2 } from 'lucide-react';
+import { AlertCircle, Building2, CheckCircle2, FileOutput, FileText, Loader2, Plus, Search, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { ContextReadinessGate } from '../ContextReadinessGate';
 
 interface ApprovedAssessment {
@@ -30,7 +31,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
     projectId,
     preselectedAssessmentId,
     onClose,
-    onCreated
+    onCreated,
 }) => {
     const [assessments, setAssessments] = useState<ApprovedAssessment[]>([]);
     const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(preselectedAssessmentId || null);
@@ -40,12 +41,12 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    
+
     // Context readiness state
     const [canGenerateReport, setCanGenerateReport] = useState(false);
     const [contextScore, setContextScore] = useState(0);
     const [showContextGate, setShowContextGate] = useState(false);
-    
+
     // Handle context readiness change
     const handleReadinessChange = useCallback((canFinalize: boolean, score: number) => {
         setCanGenerateReport(canFinalize);
@@ -66,19 +67,19 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                 const url = projectId
                     ? `/api/assessments?status=APPROVED&projectId=${projectId}`
                     : '/api/assessments?status=APPROVED';
-                    
+
                 const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     setAssessments(data.assessments || []);
-                    
+
                     // Auto-select if preselected
                     if (preselectedAssessmentId) {
                         const found = (data.assessments || []).find(
-                            (a: ApprovedAssessment) => a.id === preselectedAssessmentId
+                            (a: ApprovedAssessment) => a.id === preselectedAssessmentId,
                         );
                         if (found) {
                             setReportName(`Report - ${found.name}`);
@@ -99,13 +100,16 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
     }, [projectId, preselectedAssessmentId]);
 
     // Handle assessment selection
-    const handleSelectAssessment = useCallback((assessmentId: string) => {
-        setSelectedAssessmentId(assessmentId);
-        const selected = assessments.find(a => a.id === assessmentId);
-        if (selected && !reportName) {
-            setReportName(`Report - ${selected.name}`);
-        }
-    }, [assessments, reportName]);
+    const handleSelectAssessment = useCallback(
+        (assessmentId: string) => {
+            setSelectedAssessmentId(assessmentId);
+            const selected = assessments.find((a) => a.id === assessmentId);
+            if (selected && !reportName) {
+                setReportName(`Report - ${selected.name}`);
+            }
+        },
+        [assessments, reportName],
+    );
 
     // Create report
     const handleCreate = async () => {
@@ -127,14 +131,14 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
             const response = await fetch('/api/assessment-reports', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     assessmentId: selectedAssessmentId,
                     name: reportName.trim(),
-                    projectId
-                })
+                    projectId,
+                }),
             });
 
             if (response.ok) {
@@ -157,13 +161,10 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
     };
 
     // Filter assessments by search
-    const filteredAssessments = assessments.filter(a => {
+    const filteredAssessments = assessments.filter((a) => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
-        return (
-            a.name.toLowerCase().includes(query) ||
-            a.projectName.toLowerCase().includes(query)
-        );
+        return a.name.toLowerCase().includes(query) || a.projectName.toLowerCase().includes(query);
     });
 
     // Format date
@@ -172,7 +173,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
         return date.toLocaleDateString('pl-PL', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
@@ -187,9 +188,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                 <FileOutput className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Nowy Raport
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nowy Raport</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     Utwórz raport z zatwierdzonego assessmentu
                                 </p>
@@ -220,7 +219,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                             />
                         </div>
                     )}
-                    
+
                     {/* Context check for projectId */}
                     {projectId && !showContextGate && !canGenerateReport && (
                         <div className="hidden">
@@ -231,15 +230,13 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                             />
                         </div>
                     )}
-                    
+
                     {success ? (
                         <div className="flex flex-col items-center justify-center py-8">
                             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
                                 <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                             </div>
-                            <p className="text-lg font-medium text-navy-900 dark:text-white">
-                                Raport utworzony!
-                            </p>
+                            <p className="text-lg font-medium text-navy-900 dark:text-white">Raport utworzony!</p>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Możesz teraz edytować treść raportu
                             </p>
@@ -277,7 +274,10 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                             {/* Search */}
                             {assessments.length > 3 && (
                                 <div className="relative mb-4">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         value={searchQuery}
@@ -294,7 +294,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                     Wybierz assessment ({filteredAssessments.length})
                                 </label>
                                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                                    {filteredAssessments.map(assessment => {
+                                    {filteredAssessments.map((assessment) => {
                                         const isSelected = selectedAssessmentId === assessment.id;
                                         return (
                                             <button
@@ -302,22 +302,28 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                 onClick={() => handleSelectAssessment(assessment.id)}
                                                 className={`
                                                     w-full text-left p-3 rounded-lg border-2 transition-all
-                                                    ${isSelected
-                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                                    ${
+                                                        isSelected
+                                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                                     }
                                                 `}
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`
+                                                        <div
+                                                            className={`
                                                             w-5 h-5 rounded-full flex items-center justify-center border-2
-                                                            ${isSelected
-                                                                ? 'bg-purple-600 border-purple-600'
-                                                                : 'border-slate-300 dark:border-slate-600'
+                                                            ${
+                                                                isSelected
+                                                                    ? 'bg-purple-600 border-purple-600'
+                                                                    : 'border-slate-300 dark:border-slate-600'
                                                             }
-                                                        `}>
-                                                            {isSelected && <CheckCircle2 size={12} className="text-white" />}
+                                                        `}
+                                                        >
+                                                            {isSelected && (
+                                                                <CheckCircle2 size={12} className="text-white" />
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-navy-900 dark:text-white text-sm">
@@ -334,7 +340,9 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                             Zatwierdzony
                                                         </span>
                                                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                                                            {assessment.completedAt ? formatDate(assessment.completedAt) : ''}
+                                                            {assessment.completedAt
+                                                                ? formatDate(assessment.completedAt)
+                                                                : ''}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -367,15 +375,28 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                             </button>
                             <button
                                 onClick={handleCreate}
-                                disabled={!selectedAssessmentId || !reportName.trim() || creating || (projectId ? !canGenerateReport : false)}
+                                disabled={
+                                    !selectedAssessmentId ||
+                                    !reportName.trim() ||
+                                    creating ||
+                                    (projectId ? !canGenerateReport : false)
+                                }
                                 className={`
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                    ${selectedAssessmentId && reportName.trim() && !creating && (!projectId || canGenerateReport)
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                    ${
+                                        selectedAssessmentId &&
+                                        reportName.trim() &&
+                                        !creating &&
+                                        (!projectId || canGenerateReport)
+                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                     }
                                 `}
-                                title={projectId && !canGenerateReport ? `Context score (${contextScore}%) is below required threshold` : undefined}
+                                title={
+                                    projectId && !canGenerateReport
+                                        ? `Context score (${contextScore}%) is below required threshold`
+                                        : undefined
+                                }
                             >
                                 {creating ? (
                                     <>
@@ -401,4 +422,3 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
         </div>
     );
 };
-

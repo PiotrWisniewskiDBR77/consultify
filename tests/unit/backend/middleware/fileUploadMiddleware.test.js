@@ -1,6 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fileFilter } from '../../../../server/middleware/fileUploadMiddleware';
 
+vi.mock('multer', () => {
+    const multerFn = vi.fn(() => ({
+        array: vi.fn(() => (req, res, next) => next()),
+        single: vi.fn(() => (req, res, next) => next())
+    }));
+    multerFn.diskStorage = vi.fn();
+    return {
+        default: multerFn
+    };
+});
+
 describe('File Upload Middleware', () => {
     describe('fileFilter', () => {
         const mockCb = vi.fn();

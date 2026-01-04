@@ -1,16 +1,11 @@
+import { BarChart3, Brain, FileText, LayoutDashboard, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
-import { TabLayout, Tab } from '../../../components/SuperAdmin/TabLayout';
-import {
-    LayoutDashboard,
-    FileText,
-    TrendingUp,
-    Brain,
-    BarChart3
-} from 'lucide-react';
-import DashboardBuilderView from './DashboardBuilderView';
-import SavedReportsView from './SavedReportsView';
+
+import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import BusinessMetricsView from './BusinessMetricsView';
+import DashboardBuilderView from './DashboardBuilderView';
 import PredictiveAnalyticsView from './PredictiveAnalyticsView';
+import SavedReportsView from './SavedReportsView';
 
 const tabs: Tab[] = [
     { id: 'dashboards', label: 'Dashboard Builder', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -39,18 +34,11 @@ const AnalyticsModuleView: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col">
-            <TabLayout
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-            >
-                <div className="flex-1 overflow-auto p-6">
-                    {renderContent()}
-                </div>
+            <TabLayout tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
+                <div className="flex-1 overflow-auto p-6">{renderContent()}</div>
             </TabLayout>
         </div>
     );
 };
 
 export default AnalyticsModuleView;
-

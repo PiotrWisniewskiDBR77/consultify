@@ -1,36 +1,37 @@
 /**
  * ADMA Assessment Map Component
- * 
+ *
  * Advanced Digital Maturity Assessment (European DIH) visualization:
  * - 5 Pillars with Pentagon Radar Chart
  * - 12 Dimensions across pillars
  * - Scale 1-5
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
 import {
-    Target,
-    Cpu,
-    Settings,
-    Truck,
-    Database,
-    Info,
+    AlertTriangle,
     ChevronDown,
     ChevronRight,
-    AlertTriangle,
+    Cpu,
+    Database,
+    HelpCircle,
+    Info,
+    Settings,
+    Target,
     TrendingUp,
-    HelpCircle
+    Truck,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import {
-    ADMA_PILLARS,
     ADMA_DIMENSIONS,
     ADMA_MATURITY_LEVELS,
-    ADMAPillarId,
-    ADMADimension,
+    ADMA_PILLARS,
     ADMAAssessmentData,
-    calculatePillarScore,
+    ADMADimension,
+    ADMAPillarId,
     calculateOverallADMAScore,
+    calculatePillarScore,
     createEmptyADMAAssessment,
     getAllPillarIds,
     getPillarRadarData,
@@ -63,7 +64,7 @@ const ADMAPentagonRadar: React.FC<{
     const size = 280;
     const center = size / 2;
     const radius = size * 0.4;
-    
+
     const getPoint = (index: number, value: number) => {
         const angle = (Math.PI * 2 * index) / labels.length - Math.PI / 2;
         const r = (value / maxValue) * radius;
@@ -72,34 +73,40 @@ const ADMAPentagonRadar: React.FC<{
             y: center + r * Math.sin(angle),
         };
     };
-    
+
     const createPath = (values: number[]) => {
-        return values.map((value, i) => {
-            const point = getPoint(i, value);
-            return `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
-        }).join(' ') + ' Z';
+        return (
+            values
+                .map((value, i) => {
+                    const point = getPoint(i, value);
+                    return `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
+                })
+                .join(' ') + ' Z'
+        );
     };
-    
+
     // Grid levels
     const gridLevels = [1, 2, 3, 4, 5];
-    
+
     return (
         <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[280px] mx-auto">
             {/* Grid */}
-            {gridLevels.map(level => (
+            {gridLevels.map((level) => (
                 <polygon
                     key={level}
-                    points={labels.map((_, i) => {
-                        const point = getPoint(i, level);
-                        return `${point.x},${point.y}`;
-                    }).join(' ')}
+                    points={labels
+                        .map((_, i) => {
+                            const point = getPoint(i, level);
+                            return `${point.x},${point.y}`;
+                        })
+                        .join(' ')}
                     fill="none"
                     stroke="currentColor"
                     strokeOpacity="0.1"
                     className="text-slate-500"
                 />
             ))}
-            
+
             {/* Axis lines */}
             {labels.map((_, i) => {
                 const point = getPoint(i, maxValue);
@@ -116,7 +123,7 @@ const ADMAPentagonRadar: React.FC<{
                     />
                 );
             })}
-            
+
             {/* Target area */}
             <path
                 d={createPath(target)}
@@ -125,29 +132,16 @@ const ADMAPentagonRadar: React.FC<{
                 strokeWidth="2"
                 strokeDasharray="4 4"
             />
-            
+
             {/* Current area */}
-            <path
-                d={createPath(current)}
-                fill="rgba(59, 130, 246, 0.2)"
-                stroke="rgb(59, 130, 246)"
-                strokeWidth="2"
-            />
-            
+            <path d={createPath(current)} fill="rgba(59, 130, 246, 0.2)" stroke="rgb(59, 130, 246)" strokeWidth="2" />
+
             {/* Points */}
             {current.map((value, i) => {
                 const point = getPoint(i, value);
-                return (
-                    <circle
-                        key={i}
-                        cx={point.x}
-                        cy={point.y}
-                        r="4"
-                        fill="rgb(59, 130, 246)"
-                    />
-                );
+                return <circle key={i} cx={point.x} cy={point.y} r="4" fill="rgb(59, 130, 246)" />;
             })}
-            
+
             {/* Labels */}
             {labels.map((label, i) => {
                 const point = getPoint(i, maxValue + 0.8);
@@ -181,33 +175,43 @@ const ADMAPillarCard: React.FC<{
     readOnly?: boolean;
     expanded?: boolean;
     onToggleExpand: () => void;
-}> = ({ pillarId, dimensions, pillarScore, dimensionScores, onDimensionChange, readOnly, expanded, onToggleExpand }) => {
+}> = ({
+    pillarId,
+    dimensions,
+    pillarScore,
+    dimensionScores,
+    onDimensionChange,
+    readOnly,
+    expanded,
+    onToggleExpand,
+}) => {
     const config = ADMA_PILLARS[pillarId];
-    
+
     const IconMap: Record<string, React.FC<{ className?: string; size?: number }>> = {
-        'Target': Target,
-        'Cpu': Cpu,
-        'Settings': Settings,
-        'Truck': Truck,
-        'Database': Database,
+        Target: Target,
+        Cpu: Cpu,
+        Settings: Settings,
+        Truck: Truck,
+        Database: Database,
     };
     const IconComponent = IconMap[config.icon] || Target;
-    
+
     const gap = Math.max(0, pillarScore.target - pillarScore.current);
-    
+
     return (
-        <div className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
-            expanded 
-                ? `border-${config.color}-500 shadow-lg` 
-                : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
-        }`}>
+        <div
+            className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
+                expanded
+                    ? `border-${config.color}-500 shadow-lg`
+                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
+            }`}
+        >
             {/* Header */}
-            <button
-                onClick={onToggleExpand}
-                className="w-full p-4 flex items-center justify-between"
-            >
+            <button onClick={onToggleExpand} className="w-full p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}>
+                    <div
+                        className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}
+                    >
                         <IconComponent className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
                     </div>
                     <div className="text-left">
@@ -218,30 +222,28 @@ const ADMAPillarCard: React.FC<{
                 <div className="flex items-center gap-3">
                     <div className="text-right">
                         <div className="flex items-center gap-2">
-                            <span className={`text-lg font-bold text-${config.color}-600 dark:text-${config.color}-400`}>
+                            <span
+                                className={`text-lg font-bold text-${config.color}-600 dark:text-${config.color}-400`}
+                            >
                                 {pillarScore.current.toFixed(1)}
                             </span>
                             <span className="text-slate-400">/</span>
                             <span className="text-sm text-slate-500">{pillarScore.target.toFixed(1)}</span>
                         </div>
-                        {gap > 0 && (
-                            <span className="text-xs text-red-500">Gap: {gap.toFixed(1)}</span>
-                        )}
+                        {gap > 0 && <span className="text-xs text-red-500">Gap: {gap.toFixed(1)}</span>}
                     </div>
                     {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                 </div>
             </button>
-            
+
             {/* Expanded Content */}
             {expanded && (
                 <div className="px-4 pb-4 border-t border-slate-200 dark:border-white/10 pt-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        {config.descriptionPL}
-                    </p>
-                    
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{config.descriptionPL}</p>
+
                     {/* Dimensions */}
                     <div className="space-y-3">
-                        {dimensions.map(dim => {
+                        {dimensions.map((dim) => {
                             const score = dimensionScores[dim.id] || { current: 0, target: 0 };
                             return (
                                 <div key={dim.id} className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-3">
@@ -253,16 +255,19 @@ const ADMAPillarCard: React.FC<{
                                             <p className="text-xs text-slate-500">{dim.name}</p>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Score Selectors */}
                                     <div className="flex items-center gap-4">
                                         <div className="flex-1">
                                             <label className="text-xs text-slate-500 mb-1 block">Current</label>
                                             <div className="flex gap-1">
-                                                {[1, 2, 3, 4, 5].map(level => (
+                                                {[1, 2, 3, 4, 5].map((level) => (
                                                     <button
                                                         key={level}
-                                                        onClick={() => !readOnly && onDimensionChange(dim.id, level, score.target || level)}
+                                                        onClick={() =>
+                                                            !readOnly &&
+                                                            onDimensionChange(dim.id, level, score.target || level)
+                                                        }
                                                         disabled={readOnly}
                                                         className={`flex-1 h-8 rounded text-xs font-medium transition-all ${
                                                             score.current === level
@@ -278,10 +283,13 @@ const ADMAPillarCard: React.FC<{
                                         <div className="flex-1">
                                             <label className="text-xs text-slate-500 mb-1 block">Target</label>
                                             <div className="flex gap-1">
-                                                {[1, 2, 3, 4, 5].map(level => (
+                                                {[1, 2, 3, 4, 5].map((level) => (
                                                     <button
                                                         key={level}
-                                                        onClick={() => !readOnly && onDimensionChange(dim.id, score.current || 1, level)}
+                                                        onClick={() =>
+                                                            !readOnly &&
+                                                            onDimensionChange(dim.id, score.current || 1, level)
+                                                        }
                                                         disabled={readOnly}
                                                         className={`flex-1 h-8 rounded text-xs font-medium transition-all ${
                                                             score.target === level
@@ -330,64 +338,63 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
     showLegalNotice = true,
 }) => {
     const { t } = useTranslation();
-    
+
     // Initialize data
-    const [data, setData] = useState<ADMAAssessmentData>(() => 
-        initialData || createEmptyADMAAssessment()
-    );
-    
+    const [data, setData] = useState<ADMAAssessmentData>(() => initialData || createEmptyADMAAssessment());
+
     // Track expanded pillars
-    const [expandedPillars, setExpandedPillars] = useState<Set<ADMAPillarId>>(
-        new Set(['strategy'])
-    );
-    
+    const [expandedPillars, setExpandedPillars] = useState<Set<ADMAPillarId>>(new Set(['strategy']));
+
     // Handlers
-    const handleDimensionChange = useCallback((dimensionId: string, current: number, target: number) => {
-        setData(prev => {
-            const newData = {
-                ...prev,
-                dimensions: {
-                    ...prev.dimensions,
-                    [dimensionId]: {
-                        current,
-                        target,
-                        gap: Math.max(0, target - current),
+    const handleDimensionChange = useCallback(
+        (dimensionId: string, current: number, target: number) => {
+            setData((prev) => {
+                const newData = {
+                    ...prev,
+                    dimensions: {
+                        ...prev.dimensions,
+                        [dimensionId]: {
+                            current,
+                            target,
+                            gap: Math.max(0, target - current),
+                        },
                     },
-                },
-            };
-            
-            // Recalculate pillar scores
-            const currentScores: Record<string, number> = {};
-            Object.entries(newData.dimensions).forEach(([id, score]) => {
-                currentScores[id] = score.current;
-            });
-            
-            getAllPillarIds().forEach(pillarId => {
-                const pillarScore = calculatePillarScore(currentScores, pillarId);
-                const targetScores: Record<string, number> = {};
-                Object.entries(newData.dimensions).forEach(([id, score]) => {
-                    targetScores[id] = score.target;
-                });
-                const pillarTarget = calculatePillarScore(targetScores, pillarId);
-                
-                newData.pillars[pillarId] = {
-                    current: pillarScore,
-                    target: pillarTarget,
-                    gap: Math.max(0, pillarTarget - pillarScore),
-                    dimensionScores: currentScores,
                 };
+
+                // Recalculate pillar scores
+                const currentScores: Record<string, number> = {};
+                Object.entries(newData.dimensions).forEach(([id, score]) => {
+                    currentScores[id] = score.current;
+                });
+
+                getAllPillarIds().forEach((pillarId) => {
+                    const pillarScore = calculatePillarScore(currentScores, pillarId);
+                    const targetScores: Record<string, number> = {};
+                    Object.entries(newData.dimensions).forEach(([id, score]) => {
+                        targetScores[id] = score.target;
+                    });
+                    const pillarTarget = calculatePillarScore(targetScores, pillarId);
+
+                    newData.pillars[pillarId] = {
+                        current: pillarScore,
+                        target: pillarTarget,
+                        gap: Math.max(0, pillarTarget - pillarScore),
+                        dimensionScores: currentScores,
+                    };
+                });
+
+                // Recalculate overall score
+                newData.overallMaturity = calculateOverallADMAScore(currentScores);
+
+                onChange?.(newData);
+                return newData;
             });
-            
-            // Recalculate overall score
-            newData.overallMaturity = calculateOverallADMAScore(currentScores);
-            
-            onChange?.(newData);
-            return newData;
-        });
-    }, [onChange]);
-    
+        },
+        [onChange],
+    );
+
     const togglePillarExpand = useCallback((pillarId: ADMAPillarId) => {
-        setExpandedPillars(prev => {
+        setExpandedPillars((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(pillarId)) {
                 newSet.delete(pillarId);
@@ -397,13 +404,13 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
             return newSet;
         });
     }, []);
-    
+
     // Calculate stats and radar data
     const stats = useMemo(() => {
         const dimensionScores = Object.values(data.dimensions);
-        const filledDimensions = dimensionScores.filter(d => d.current > 0).length;
+        const filledDimensions = dimensionScores.filter((d) => d.current > 0).length;
         const totalGap = dimensionScores.reduce((sum, d) => sum + d.gap, 0);
-        
+
         return {
             overall: data.overallMaturity,
             filledDimensions,
@@ -412,11 +419,11 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
             progress: Math.round((filledDimensions / ADMA_DIMENSIONS.length) * 100),
         };
     }, [data]);
-    
+
     const radarData = useMemo(() => {
         return getPillarRadarData(data.pillars);
     }, [data.pillars]);
-    
+
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 overflow-hidden">
             {/* Header */}
@@ -427,9 +434,7 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
                             <Database className="text-green-500" />
                             ADMA Assessment
                         </h2>
-                        <p className="text-sm text-slate-500">
-                            Advanced Digital Maturity Assessment 2.0
-                        </p>
+                        <p className="text-sm text-slate-500">Advanced Digital Maturity Assessment 2.0</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="bg-green-100 dark:bg-green-900/30 px-4 py-2 rounded-xl text-center">
@@ -439,9 +444,7 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
                             <div className="text-xs text-green-600/70">Overall</div>
                         </div>
                         <div className="bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-xl text-center">
-                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {stats.progress}%
-                            </div>
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.progress}%</div>
                             <div className="text-xs text-blue-600/70">Progress</div>
                         </div>
                         <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-xl text-center">
@@ -452,21 +455,21 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all"
                         style={{ width: `${stats.progress}%` }}
                     />
                 </div>
             </div>
-            
+
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto p-4">
                 {/* Legal Notice */}
                 {showLegalNotice && <ADMALegalNotice />}
-                
+
                 {/* Radar Chart */}
                 <div className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-white/10 p-4 mt-4">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
@@ -491,24 +494,24 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
                         </span>
                     </div>
                 </div>
-                
+
                 {/* Pillars */}
                 <div className="mt-6 space-y-3">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                         <Target size={18} />
                         Pillar Assessment
                     </h3>
-                    
-                    {getAllPillarIds().map(pillarId => {
-                        const dimensions = ADMA_DIMENSIONS.filter(d => d.pillar === pillarId);
+
+                    {getAllPillarIds().map((pillarId) => {
+                        const dimensions = ADMA_DIMENSIONS.filter((d) => d.pillar === pillarId);
                         const dimensionScores: Record<string, { current: number; target: number }> = {};
-                        dimensions.forEach(d => {
+                        dimensions.forEach((d) => {
                             dimensionScores[d.id] = {
                                 current: data.dimensions[d.id]?.current || 0,
                                 target: data.dimensions[d.id]?.target || 0,
                             };
                         });
-                        
+
                         return (
                             <ADMAPillarCard
                                 key={pillarId}
@@ -533,12 +536,4 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
 };
 
 export default ADMAAssessmentMap;
-
-
-
-
-
-
-
-
 

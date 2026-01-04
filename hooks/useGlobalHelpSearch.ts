@@ -1,22 +1,23 @@
 /**
  * Global Help Search Hook
- * 
+ *
  * Provides Cmd+K / Ctrl+K keyboard shortcut and search state management
  * for the global help search modal.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-    searchHelp, 
-    SearchResult, 
-    SearchResultType,
-    getRecentSearches,
-    saveRecentSearch,
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { HelpModuleId } from '../config/viewToModuleMapping';
+import {
     clearRecentSearches,
     getPopularSearches,
-    getSearchSuggestions
+    getRecentSearches,
+    getSearchSuggestions,
+    saveRecentSearch,
+    searchHelp,
+    SearchResult,
+    SearchResultType,
 } from '../services/helpSearchService';
-import { HelpModuleId } from '../config/viewToModuleMapping';
 
 export interface UseGlobalHelpSearchResult {
     // State
@@ -29,7 +30,7 @@ export interface UseGlobalHelpSearchResult {
     popularSearches: string[];
     suggestions: string[];
     activeFilter: SearchResultType | 'all';
-    
+
     // Actions
     open: () => void;
     close: () => void;
@@ -52,16 +53,9 @@ interface UseGlobalHelpSearchOptions {
     debounceMs?: number;
 }
 
-export function useGlobalHelpSearch(
-    options: UseGlobalHelpSearchOptions = {}
-): UseGlobalHelpSearchResult {
-    const {
-        language = 'en',
-        moduleId,
-        onSelect,
-        debounceMs = 150
-    } = options;
-    
+export function useGlobalHelpSearch(options: UseGlobalHelpSearchOptions = {}): UseGlobalHelpSearchResult {
+    const { language = 'en', moduleId, onSelect, debounceMs = 150 } = options;
+
     // State
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -71,115 +65,117 @@ export function useGlobalHelpSearch(
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [activeFilter, setActiveFilter] = useState<SearchResultType | 'all'>('all');
-    
+
     // Refs
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
-    
+
     // Get popular searches (static)
     const popularSearches = getPopularSearches(language);
-    
+
     // Load recent searches on mount
     useEffect(() => {
         setRecentSearches(getRecentSearches());
     }, []);
-    
+
     // Perform search with debounce
-    const performSearch = useCallback((searchQuery: string) => {
-        if (searchQuery.trim().length < 2) {
-            setResults([]);
+    const performSearch = useCallback(
+        (searchQuery: string) => {
+            if (searchQuery.trim().length < 2) {
+                setResults([]);
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
+
+            const types = activeFilter === 'all' ? undefined : [activeFilter];
+
+            const searchResults = searchHelp(searchQuery, {
+                limit: 15,
+                types,
+                moduleId,
+                language,
+            });
+
+            setResults(searchResults);
+            setSelectedIndex(0);
             setIsLoading(false);
-            return;
-        }
-        
-        setIsLoading(true);
-        
-        const types = activeFilter === 'all' 
-            ? undefined 
-            : [activeFilter];
-        
-        const searchResults = searchHelp(searchQuery, {
-            limit: 15,
-            types,
-            moduleId,
-            language
-        });
-        
-        setResults(searchResults);
-        setSelectedIndex(0);
-        setIsLoading(false);
-        
-        // Get suggestions
-        const newSuggestions = getSearchSuggestions(searchQuery, language, 5);
-        setSuggestions(newSuggestions);
-    }, [activeFilter, moduleId, language]);
-    
+
+            // Get suggestions
+            const newSuggestions = getSearchSuggestions(searchQuery, language, 5);
+            setSuggestions(newSuggestions);
+        },
+        [activeFilter, moduleId, language],
+    );
+
     // Debounced search
-    const search = useCallback((searchQuery: string) => {
-        setQuery(searchQuery);
-        
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-        
-        if (searchQuery.trim().length < 2) {
-            setResults([]);
-            setSuggestions([]);
-            return;
-        }
-        
-        setIsLoading(true);
-        
-        debounceRef.current = setTimeout(() => {
-            performSearch(searchQuery);
-        }, debounceMs);
-    }, [performSearch, debounceMs]);
-    
+    const search = useCallback(
+        (searchQuery: string) => {
+            setQuery(searchQuery);
+
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+
+            if (searchQuery.trim().length < 2) {
+                setResults([]);
+                setSuggestions([]);
+                return;
+            }
+
+            setIsLoading(true);
+
+            debounceRef.current = setTimeout(() => {
+                performSearch(searchQuery);
+            }, debounceMs);
+        },
+        [performSearch, debounceMs],
+    );
+
     // Re-search when filter changes
     useEffect(() => {
         if (query.trim().length >= 2) {
             performSearch(query);
         }
     }, [activeFilter, performSearch, query]);
-    
+
     // Handle keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Cmd+K / Ctrl+K to open
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
-                setIsOpen(prev => !prev);
+                setIsOpen((prev) => !prev);
                 return;
             }
-            
+
             // Only handle other keys when open
             if (!isOpen) return;
-            
+
             switch (e.key) {
                 case 'Escape':
                     e.preventDefault();
                     setIsOpen(false);
                     break;
-                    
+
                 case 'ArrowDown':
                     e.preventDefault();
-                    setSelectedIndex(prev => 
-                        Math.min(prev + 1, results.length - 1)
-                    );
+                    setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1));
                     break;
-                    
+
                 case 'ArrowUp':
                     e.preventDefault();
-                    setSelectedIndex(prev => Math.max(prev - 1, 0));
+                    setSelectedIndex((prev) => Math.max(prev - 1, 0));
                     break;
-                    
+
                 case 'Enter':
                     e.preventDefault();
                     if (results[selectedIndex]) {
                         selectResult(results[selectedIndex]);
                     }
                     break;
-                    
+
                 case 'Tab':
                     // Use suggestion
                     if (suggestions.length > 0) {
@@ -190,11 +186,11 @@ export function useGlobalHelpSearch(
                     break;
             }
         };
-        
+
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, results, selectedIndex, suggestions, performSearch]);
-    
+
     // Focus input when opening
     useEffect(() => {
         if (isOpen) {
@@ -210,54 +206,57 @@ export function useGlobalHelpSearch(
             setSuggestions([]);
         }
     }, [isOpen]);
-    
+
     // Actions
     const open = useCallback(() => setIsOpen(true), []);
     const close = useCallback(() => setIsOpen(false), []);
-    const toggle = useCallback(() => setIsOpen(prev => !prev), []);
-    
+    const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
+
     const clearQuery = useCallback(() => {
         setQuery('');
         setResults([]);
         setSuggestions([]);
     }, []);
-    
-    const selectResult = useCallback((result: SearchResult) => {
-        // Save to recent searches
-        const displayTitle = language === 'pl' && result.titlePl ? result.titlePl : result.title;
-        saveRecentSearch(displayTitle);
-        setRecentSearches(getRecentSearches());
-        
-        // Call callback
-        onSelect?.(result);
-        
-        // Close modal
-        setIsOpen(false);
-    }, [language, onSelect]);
-    
+
+    const selectResult = useCallback(
+        (result: SearchResult) => {
+            // Save to recent searches
+            const displayTitle = language === 'pl' && result.titlePl ? result.titlePl : result.title;
+            saveRecentSearch(displayTitle);
+            setRecentSearches(getRecentSearches());
+
+            // Call callback
+            onSelect?.(result);
+
+            // Close modal
+            setIsOpen(false);
+        },
+        [language, onSelect],
+    );
+
     const navigateUp = useCallback(() => {
-        setSelectedIndex(prev => Math.max(prev - 1, 0));
+        setSelectedIndex((prev) => Math.max(prev - 1, 0));
     }, []);
-    
+
     const navigateDown = useCallback(() => {
-        setSelectedIndex(prev => Math.min(prev + 1, results.length - 1));
+        setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1));
     }, [results.length]);
-    
+
     const selectCurrent = useCallback(() => {
         if (results[selectedIndex]) {
             selectResult(results[selectedIndex]);
         }
     }, [results, selectedIndex, selectResult]);
-    
+
     const clearRecent = useCallback(() => {
         clearRecentSearches();
         setRecentSearches([]);
     }, []);
-    
+
     const setFilter = useCallback((filter: SearchResultType | 'all') => {
         setActiveFilter(filter);
     }, []);
-    
+
     return {
         // State
         isOpen,
@@ -269,7 +268,7 @@ export function useGlobalHelpSearch(
         popularSearches,
         suggestions,
         activeFilter,
-        
+
         // Actions
         open,
         close,
@@ -282,17 +281,9 @@ export function useGlobalHelpSearch(
         navigateDown,
         selectCurrent,
         clearRecent,
-        setFilter
+        setFilter,
     };
 }
 
 export default useGlobalHelpSearch;
-
-
-
-
-
-
-
-
 

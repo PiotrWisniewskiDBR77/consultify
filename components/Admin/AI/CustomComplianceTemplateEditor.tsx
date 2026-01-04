@@ -1,30 +1,30 @@
 /**
  * CustomComplianceTemplateEditor - Custom Compliance Template Builder
- * 
+ *
  * Allows organizations to create custom compliance frameworks
  * with their own sections, checkpoints, and validation rules.
  */
 
-import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    FileText,
-    Plus,
-    Trash2,
-    Save,
-    Download,
-    Upload,
-    CheckCircle,
     AlertTriangle,
-    Clipboard,
-    Settings,
-    Edit3,
+    CheckCircle,
     ChevronDown,
     ChevronUp,
+    Clipboard,
     Copy,
-    X
+    Download,
+    Edit3,
+    FileText,
+    Plus,
+    Save,
+    Settings,
+    Trash2,
+    Upload,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface ComplianceCheckpoint {
     id: string;
@@ -73,30 +73,33 @@ const BASE_TEMPLATES = [
     { id: 'PRINCE2', name: 'PRINCE2®', description: 'Projects IN Controlled Environments' },
     { id: 'GDPR', name: 'GDPR', description: 'General Data Protection Regulation' },
     { id: 'SOC2', name: 'SOC 2 Type II', description: 'Service Organization Control' },
-    { id: 'CUSTOM', name: 'Blank Template', description: 'Start from scratch' }
+    { id: 'CUSTOM', name: 'Blank Template', description: 'Start from scratch' },
 ];
 
 export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEditorProps> = ({
     organizationId,
     existingTemplate,
     onSave,
-    onClose
+    onClose,
 }) => {
-    const [template, setTemplate] = useState<ComplianceTemplate>(() => existingTemplate || {
-        id: crypto.randomUUID(),
-        name: '',
-        description: '',
-        version: '1.0.0',
-        basedOn: null,
-        sections: [],
-        metadata: {
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: 'admin',
-            tags: []
-        }
-    });
-    
+    const [template, setTemplate] = useState<ComplianceTemplate>(
+        () =>
+            existingTemplate || {
+                id: crypto.randomUUID(),
+                name: '',
+                description: '',
+                version: '1.0.0',
+                basedOn: null,
+                sections: [],
+                metadata: {
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: 'admin',
+                    tags: [],
+                },
+            },
+    );
+
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [showBaseTemplateSelector, setShowBaseTemplateSelector] = useState(!existingTemplate);
     const [newTag, setNewTag] = useState('');
@@ -108,19 +111,19 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
     // Select base template
     const selectBaseTemplate = (baseId: string) => {
         if (baseId === 'CUSTOM') {
-            setTemplate(prev => ({
+            setTemplate((prev) => ({
                 ...prev,
                 basedOn: null,
-                sections: []
+                sections: [],
             }));
         } else {
             // Load predefined sections based on template
             const baseSections = getBaseSections(baseId);
-            setTemplate(prev => ({
+            setTemplate((prev) => ({
                 ...prev,
                 basedOn: baseId,
                 name: `Custom ${baseId} Framework`,
-                sections: baseSections
+                sections: baseSections,
             }));
         }
         setShowBaseTemplateSelector(false);
@@ -136,20 +139,56 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     description: 'Governance and decision-making processes',
                     expanded: true,
                     checkpoints: [
-                        { id: generateId(), name: 'Audit Trail Enabled', description: 'All AI actions are logged', required: true, weight: 3, validationType: 'automatic', automationRule: 'settings.auditPolicyChanges === true' },
-                        { id: generateId(), name: 'Policy Defined', description: 'AI policy level is configured', required: true, weight: 2, validationType: 'automatic' },
-                        { id: generateId(), name: 'Roles Configured', description: 'AI roles are assigned', required: true, weight: 2, validationType: 'automatic' }
-                    ]
+                        {
+                            id: generateId(),
+                            name: 'Audit Trail Enabled',
+                            description: 'All AI actions are logged',
+                            required: true,
+                            weight: 3,
+                            validationType: 'automatic',
+                            automationRule: 'settings.auditPolicyChanges === true',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Policy Defined',
+                            description: 'AI policy level is configured',
+                            required: true,
+                            weight: 2,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Roles Configured',
+                            description: 'AI roles are assigned',
+                            required: true,
+                            weight: 2,
+                            validationType: 'automatic',
+                        },
+                    ],
                 },
                 {
                     id: generateId(),
                     name: 'Resource Management',
                     description: 'AI resource allocation and limits',
                     checkpoints: [
-                        { id: generateId(), name: 'Usage Limits Set', description: 'Token and API limits configured', required: true, weight: 2, validationType: 'automatic' },
-                        { id: generateId(), name: 'Budget Control Active', description: 'Monthly budget is defined', required: false, weight: 1, validationType: 'automatic' }
-                    ]
-                }
+                        {
+                            id: generateId(),
+                            name: 'Usage Limits Set',
+                            description: 'Token and API limits configured',
+                            required: true,
+                            weight: 2,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Budget Control Active',
+                            description: 'Monthly budget is defined',
+                            required: false,
+                            weight: 1,
+                            validationType: 'automatic',
+                        },
+                    ],
+                },
             ],
             GDPR: [
                 {
@@ -158,20 +197,55 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     description: 'Personal data protection measures',
                     expanded: true,
                     checkpoints: [
-                        { id: generateId(), name: 'PII Detection', description: 'PII detection is enabled', required: true, weight: 3, validationType: 'automatic' },
-                        { id: generateId(), name: 'Data Retention Policy', description: 'Retention periods are defined', required: true, weight: 3, validationType: 'manual' },
-                        { id: generateId(), name: 'Consent Management', description: 'User consent is obtained', required: true, weight: 3, validationType: 'manual' }
-                    ]
+                        {
+                            id: generateId(),
+                            name: 'PII Detection',
+                            description: 'PII detection is enabled',
+                            required: true,
+                            weight: 3,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Data Retention Policy',
+                            description: 'Retention periods are defined',
+                            required: true,
+                            weight: 3,
+                            validationType: 'manual',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Consent Management',
+                            description: 'User consent is obtained',
+                            required: true,
+                            weight: 3,
+                            validationType: 'manual',
+                        },
+                    ],
                 },
                 {
                     id: generateId(),
                     name: 'Rights Management',
                     description: 'Data subject rights',
                     checkpoints: [
-                        { id: generateId(), name: 'Right to Erasure', description: 'Data can be deleted on request', required: true, weight: 2, validationType: 'manual' },
-                        { id: generateId(), name: 'Data Portability', description: 'Data export is available', required: true, weight: 2, validationType: 'automatic' }
-                    ]
-                }
+                        {
+                            id: generateId(),
+                            name: 'Right to Erasure',
+                            description: 'Data can be deleted on request',
+                            required: true,
+                            weight: 2,
+                            validationType: 'manual',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Data Portability',
+                            description: 'Data export is available',
+                            required: true,
+                            weight: 2,
+                            validationType: 'automatic',
+                        },
+                    ],
+                },
             ],
             SOC2: [
                 {
@@ -180,11 +254,32 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     description: 'Security controls and measures',
                     expanded: true,
                     checkpoints: [
-                        { id: generateId(), name: 'Access Control', description: 'Role-based access is enforced', required: true, weight: 3, validationType: 'automatic' },
-                        { id: generateId(), name: 'Encryption', description: 'Data encryption is enabled', required: true, weight: 3, validationType: 'automatic' },
-                        { id: generateId(), name: 'Audit Logging', description: 'Security events are logged', required: true, weight: 3, validationType: 'automatic' }
-                    ]
-                }
+                        {
+                            id: generateId(),
+                            name: 'Access Control',
+                            description: 'Role-based access is enforced',
+                            required: true,
+                            weight: 3,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Encryption',
+                            description: 'Data encryption is enabled',
+                            required: true,
+                            weight: 3,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Audit Logging',
+                            description: 'Security events are logged',
+                            required: true,
+                            weight: 3,
+                            validationType: 'automatic',
+                        },
+                    ],
+                },
             ],
             PMBOK7: [
                 {
@@ -193,10 +288,24 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     description: 'AI performance measurement',
                     expanded: true,
                     checkpoints: [
-                        { id: generateId(), name: 'Metrics Tracking', description: 'Performance metrics are collected', required: true, weight: 2, validationType: 'automatic' },
-                        { id: generateId(), name: 'Quality Validation', description: 'AI output quality is checked', required: true, weight: 3, validationType: 'automatic' }
-                    ]
-                }
+                        {
+                            id: generateId(),
+                            name: 'Metrics Tracking',
+                            description: 'Performance metrics are collected',
+                            required: true,
+                            weight: 2,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Quality Validation',
+                            description: 'AI output quality is checked',
+                            required: true,
+                            weight: 3,
+                            validationType: 'automatic',
+                        },
+                    ],
+                },
             ],
             PRINCE2: [
                 {
@@ -205,19 +314,40 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     description: 'AI value and justification',
                     expanded: true,
                     checkpoints: [
-                        { id: generateId(), name: 'ROI Tracking', description: 'AI ROI is measured', required: false, weight: 2, validationType: 'manual' }
-                    ]
+                        {
+                            id: generateId(),
+                            name: 'ROI Tracking',
+                            description: 'AI ROI is measured',
+                            required: false,
+                            weight: 2,
+                            validationType: 'manual',
+                        },
+                    ],
                 },
                 {
                     id: generateId(),
                     name: 'Change Theme',
                     description: 'Configuration and change management',
                     checkpoints: [
-                        { id: generateId(), name: 'Version Control', description: 'Prompt versions are tracked', required: true, weight: 2, validationType: 'automatic' },
-                        { id: generateId(), name: 'Change Approval', description: 'Changes require approval', required: false, weight: 1, validationType: 'manual' }
-                    ]
-                }
-            ]
+                        {
+                            id: generateId(),
+                            name: 'Version Control',
+                            description: 'Prompt versions are tracked',
+                            required: true,
+                            weight: 2,
+                            validationType: 'automatic',
+                        },
+                        {
+                            id: generateId(),
+                            name: 'Change Approval',
+                            description: 'Changes require approval',
+                            required: false,
+                            weight: 1,
+                            validationType: 'manual',
+                        },
+                    ],
+                },
+            ],
         };
         return sections[baseId] || [];
     };
@@ -229,41 +359,37 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             name: 'New Section',
             description: '',
             checkpoints: [],
-            expanded: true
+            expanded: true,
         };
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: [...prev.sections, newSection]
+            sections: [...prev.sections, newSection],
         }));
         setActiveSection(newSection.id);
     };
 
     // Remove section
     const removeSection = (sectionId: string) => {
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: prev.sections.filter(s => s.id !== sectionId)
+            sections: prev.sections.filter((s) => s.id !== sectionId),
         }));
         if (activeSection === sectionId) setActiveSection(null);
     };
 
     // Update section
     const updateSection = (sectionId: string, updates: Partial<ComplianceSection>) => {
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: prev.sections.map(s => 
-                s.id === sectionId ? { ...s, ...updates } : s
-            )
+            sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s)),
         }));
     };
 
     // Toggle section expansion
     const toggleSection = (sectionId: string) => {
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: prev.sections.map(s =>
-                s.id === sectionId ? { ...s, expanded: !s.expanded } : s
-            )
+            sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, expanded: !s.expanded } : s)),
         }));
     };
 
@@ -275,56 +401,50 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             description: '',
             required: false,
             weight: 1,
-            validationType: 'manual'
+            validationType: 'manual',
         };
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: prev.sections.map(s =>
-                s.id === sectionId
-                    ? { ...s, checkpoints: [...s.checkpoints, newCheckpoint] }
-                    : s
-            )
+            sections: prev.sections.map((s) =>
+                s.id === sectionId ? { ...s, checkpoints: [...s.checkpoints, newCheckpoint] } : s,
+            ),
         }));
     };
 
     // Remove checkpoint
     const removeCheckpoint = (sectionId: string, checkpointId: string) => {
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: prev.sections.map(s =>
-                s.id === sectionId
-                    ? { ...s, checkpoints: s.checkpoints.filter(c => c.id !== checkpointId) }
-                    : s
-            )
+            sections: prev.sections.map((s) =>
+                s.id === sectionId ? { ...s, checkpoints: s.checkpoints.filter((c) => c.id !== checkpointId) } : s,
+            ),
         }));
     };
 
     // Update checkpoint
     const updateCheckpoint = (sectionId: string, checkpointId: string, updates: Partial<ComplianceCheckpoint>) => {
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
-            sections: prev.sections.map(s =>
+            sections: prev.sections.map((s) =>
                 s.id === sectionId
                     ? {
-                        ...s,
-                        checkpoints: s.checkpoints.map(c =>
-                            c.id === checkpointId ? { ...c, ...updates } : c
-                        )
-                    }
-                    : s
-            )
+                          ...s,
+                          checkpoints: s.checkpoints.map((c) => (c.id === checkpointId ? { ...c, ...updates } : c)),
+                      }
+                    : s,
+            ),
         }));
     };
 
     // Add tag
     const addTag = () => {
         if (newTag.trim() && !template.metadata.tags.includes(newTag.trim())) {
-            setTemplate(prev => ({
+            setTemplate((prev) => ({
                 ...prev,
                 metadata: {
                     ...prev.metadata,
-                    tags: [...prev.metadata.tags, newTag.trim()]
-                }
+                    tags: [...prev.metadata.tags, newTag.trim()],
+                },
             }));
             setNewTag('');
         }
@@ -332,12 +452,12 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
     // Remove tag
     const removeTag = (tag: string) => {
-        setTemplate(prev => ({
+        setTemplate((prev) => ({
             ...prev,
             metadata: {
                 ...prev.metadata,
-                tags: prev.metadata.tags.filter(t => t !== tag)
-            }
+                tags: prev.metadata.tags.filter((t) => t !== tag),
+            },
         }));
     };
 
@@ -369,8 +489,8 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     metadata: {
                         ...imported.metadata,
                         createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    }
+                        updatedAt: new Date().toISOString(),
+                    },
                 });
                 setShowBaseTemplateSelector(false);
                 toast.success('Template imported');
@@ -398,16 +518,16 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                 method: existingTemplate ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     ...template,
                     organizationId,
                     metadata: {
                         ...template.metadata,
-                        updatedAt: new Date().toISOString()
-                    }
-                })
+                        updatedAt: new Date().toISOString(),
+                    },
+                }),
             });
 
             if (res.ok) {
@@ -424,7 +544,10 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
     // Calculate total checkpoints
     const totalCheckpoints = template.sections.reduce((sum, s) => sum + s.checkpoints.length, 0);
-    const requiredCheckpoints = template.sections.reduce((sum, s) => sum + s.checkpoints.filter(c => c.required).length, 0);
+    const requiredCheckpoints = template.sections.reduce(
+        (sum, s) => sum + s.checkpoints.filter((c) => c.required).length,
+        0,
+    );
 
     if (showBaseTemplateSelector) {
         return (
@@ -444,7 +567,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                 <p className="text-slate-400">Choose a base template to start from, or create a blank template:</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {BASE_TEMPLATES.map(base => (
+                    {BASE_TEMPLATES.map((base) => (
                         <button
                             key={base.id}
                             onClick={() => selectBaseTemplate(base.id)}
@@ -461,12 +584,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     <label className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg cursor-pointer transition-colors">
                         <Upload size={16} />
                         Import JSON
-                        <input
-                            type="file"
-                            accept=".json"
-                            onChange={importTemplate}
-                            className="hidden"
-                        />
+                        <input type="file" accept=".json" onChange={importTemplate} className="hidden" />
                     </label>
                 </div>
             </div>
@@ -482,9 +600,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                         <FileText size={24} className="text-violet-400" />
                         {existingTemplate ? 'Edit' : 'Create'} Compliance Template
                     </h2>
-                    {template.basedOn && (
-                        <p className="text-sm text-slate-400 mt-1">Based on: {template.basedOn}</p>
-                    )}
+                    {template.basedOn && <p className="text-sm text-slate-400 mt-1">Based on: {template.basedOn}</p>}
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -517,7 +633,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     <input
                         type="text"
                         value={template.name}
-                        onChange={(e) => setTemplate(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
                         placeholder="e.g. Custom AI Governance Framework"
                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-violet-500 outline-none"
                     />
@@ -527,7 +643,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     <input
                         type="text"
                         value={template.version}
-                        onChange={(e) => setTemplate(prev => ({ ...prev, version: e.target.value }))}
+                        onChange={(e) => setTemplate((prev) => ({ ...prev, version: e.target.value }))}
                         placeholder="1.0.0"
                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-violet-500 outline-none"
                     />
@@ -536,7 +652,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     <label className="block text-sm text-slate-400 mb-2">Description</label>
                     <textarea
                         value={template.description}
-                        onChange={(e) => setTemplate(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) => setTemplate((prev) => ({ ...prev, description: e.target.value }))}
                         placeholder="Describe the purpose and scope of this compliance framework..."
                         rows={2}
                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-violet-500 outline-none resize-none"
@@ -548,7 +664,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             <div>
                 <label className="block text-sm text-slate-400 mb-2">Tags</label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                    {template.metadata.tags.map(tag => (
+                    {template.metadata.tags.map((tag) => (
                         <span
                             key={tag}
                             className="inline-flex items-center gap-1 px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm"
@@ -617,7 +733,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                             className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden"
                         >
                             {/* Section Header */}
-                            <div 
+                            <div
                                 className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
                                 onClick={() => toggleSection(section.id)}
                             >
@@ -642,7 +758,9 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs text-slate-500">{section.checkpoints.length} checkpoints</span>
+                                    <span className="text-xs text-slate-500">
+                                        {section.checkpoints.length} checkpoints
+                                    </span>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -652,7 +770,11 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                                     >
                                         <Trash2 size={16} />
                                     </button>
-                                    {section.expanded ? <ChevronUp size={18} className="text-slate-500" /> : <ChevronDown size={18} className="text-slate-500" />}
+                                    {section.expanded ? (
+                                        <ChevronUp size={18} className="text-slate-500" />
+                                    ) : (
+                                        <ChevronDown size={18} className="text-slate-500" />
+                                    )}
                                 </div>
                             </div>
 
@@ -665,25 +787,37 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                                             className="flex items-center gap-4 p-3 bg-black/20 rounded-lg"
                                         >
                                             <span className="text-xs text-slate-600 font-mono w-6">{cpIndex + 1}</span>
-                                            
+
                                             <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
                                                 <input
                                                     type="text"
                                                     value={checkpoint.name}
-                                                    onChange={(e) => updateCheckpoint(section.id, checkpoint.id, { name: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateCheckpoint(section.id, checkpoint.id, {
+                                                            name: e.target.value,
+                                                        })
+                                                    }
                                                     placeholder="Checkpoint name"
                                                     className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={checkpoint.description}
-                                                    onChange={(e) => updateCheckpoint(section.id, checkpoint.id, { description: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateCheckpoint(section.id, checkpoint.id, {
+                                                            description: e.target.value,
+                                                        })
+                                                    }
                                                     placeholder="Description"
                                                     className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
                                                 />
                                                 <select
                                                     value={checkpoint.validationType}
-                                                    onChange={(e) => updateCheckpoint(section.id, checkpoint.id, { validationType: e.target.value as any })}
+                                                    onChange={(e) =>
+                                                        updateCheckpoint(section.id, checkpoint.id, {
+                                                            validationType: e.target.value as any,
+                                                        })
+                                                    }
                                                     className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
                                                 >
                                                     <option value="manual">Manual</option>
@@ -695,7 +829,11 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                                                         <input
                                                             type="checkbox"
                                                             checked={checkpoint.required}
-                                                            onChange={(e) => updateCheckpoint(section.id, checkpoint.id, { required: e.target.checked })}
+                                                            onChange={(e) =>
+                                                                updateCheckpoint(section.id, checkpoint.id, {
+                                                                    required: e.target.checked,
+                                                                })
+                                                            }
                                                             className="rounded bg-slate-700 border-slate-600"
                                                         />
                                                         Required
@@ -703,7 +841,11 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                                                     <input
                                                         type="number"
                                                         value={checkpoint.weight}
-                                                        onChange={(e) => updateCheckpoint(section.id, checkpoint.id, { weight: parseInt(e.target.value) || 1 })}
+                                                        onChange={(e) =>
+                                                            updateCheckpoint(section.id, checkpoint.id, {
+                                                                weight: parseInt(e.target.value) || 1,
+                                                            })
+                                                        }
                                                         min={1}
                                                         max={5}
                                                         className="w-14 bg-slate-800/50 border border-slate-700 rounded px-2 py-1 text-white text-sm"
@@ -746,11 +888,4 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 };
 
 export default CustomComplianceTemplateEditor;
-
-
-
-
-
-
-
 

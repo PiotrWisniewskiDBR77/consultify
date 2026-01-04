@@ -4,13 +4,23 @@
  * Supports threaded replies, mentions, and resolution
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-    MessageSquare, Send, Reply, CheckCircle, MoreVertical,
-    User, Clock, AlertCircle, Smile, ThumbsUp, Flag
-} from 'lucide-react';
 import axios from 'axios';
+import {
+    AlertCircle,
+    CheckCircle,
+    Clock,
+    Flag,
+    MessageSquare,
+    MoreVertical,
+    Reply,
+    Send,
+    Smile,
+    ThumbsUp,
+    User,
+} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useAppStore } from '../../store/useAppStore';
 
 interface Comment {
@@ -46,7 +56,7 @@ const AXIS_COLORS: Record<string, { bg: string; border: string; text: string }> 
     dataManagement: { bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700' },
     culture: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
     cybersecurity: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
-    aiMaturity: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' }
+    aiMaturity: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
 };
 
 export const AxisCommentsPanel: React.FC<Props> = ({
@@ -54,11 +64,11 @@ export const AxisCommentsPanel: React.FC<Props> = ({
     axisId,
     axisLabel,
     isReadOnly = false,
-    onCommentCountChange
+    onCommentCountChange,
 }) => {
     const { t } = useTranslation();
     const { currentUser } = useAppStore();
-    
+
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -66,7 +76,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showResolved, setShowResolved] = useState(false);
-    
+
     const commentInputRef = useRef<HTMLTextAreaElement>(null);
     const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -86,10 +96,10 @@ export const AxisCommentsPanel: React.FC<Props> = ({
         setLoading(true);
         try {
             const res = await axios.get(`/api/assessment-workflow/${assessmentId}/comments`, {
-                params: { axisId }
+                params: { axisId },
             });
             setComments(res.data.comments || []);
-            
+
             // Count total comments including replies
             const countComments = (arr: Comment[]): number => {
                 return arr.reduce((acc, c) => acc + 1 + countComments(c.replies || []), 0);
@@ -111,16 +121,16 @@ export const AxisCommentsPanel: React.FC<Props> = ({
             await axios.post(`/api/assessment-workflow/${assessmentId}/comments`, {
                 axisId,
                 comment: text.trim(),
-                parentCommentId: parentId
+                parentCommentId: parentId,
             });
-            
+
             if (parentId) {
                 setReplyText('');
                 setReplyTo(null);
             } else {
                 setNewComment('');
             }
-            
+
             loadComments();
         } catch (error) {
             console.error('Error submitting comment:', error);
@@ -139,7 +149,12 @@ export const AxisCommentsPanel: React.FC<Props> = ({
     };
 
     const getInitials = (name: string) => {
-        return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+        return name
+            .split(' ')
+            .map((n) => n.charAt(0))
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
     };
 
     const getTimeAgo = (dateString: string) => {
@@ -157,17 +172,17 @@ export const AxisCommentsPanel: React.FC<Props> = ({
         return date.toLocaleDateString();
     };
 
-    const filteredComments = showResolved 
-        ? comments 
-        : comments.filter(c => !c.is_resolved);
+    const filteredComments = showResolved ? comments : comments.filter((c) => !c.is_resolved);
 
-    const resolvedCount = comments.filter(c => c.is_resolved).length;
+    const resolvedCount = comments.filter((c) => c.is_resolved).length;
     const unresolvedCount = comments.length - resolvedCount;
 
     return (
         <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
             {/* Header */}
-            <div className={`px-4 py-3 ${axisColors.bg} dark:bg-navy-800 border-b ${axisColors.border} dark:border-white/10`}>
+            <div
+                className={`px-4 py-3 ${axisColors.bg} dark:bg-navy-800 border-b ${axisColors.border} dark:border-white/10`}
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <MessageSquare className={`w-4 h-4 ${axisColors.text} dark:text-white`} />
@@ -180,7 +195,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                             </span>
                         )}
                     </div>
-                    
+
                     {resolvedCount > 0 && (
                         <button
                             onClick={() => setShowResolved(!showResolved)}
@@ -207,7 +222,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                         </p>
                     </div>
                 ) : (
-                    filteredComments.map(comment => (
+                    filteredComments.map((comment) => (
                         <CommentThread
                             key={comment.id}
                             comment={comment}
@@ -233,7 +248,13 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                 <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950/50">
                     <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-full bg-purple-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-medium">
-                            {currentUser ? getInitials(`${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email || 'U') : 'U'}
+                            {currentUser
+                                ? getInitials(
+                                      `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
+                                          currentUser.email ||
+                                          'U',
+                                  )
+                                : 'U'}
                         </div>
                         <div className="flex-1">
                             <textarea
@@ -250,9 +271,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                                 }}
                             />
                             <div className="flex justify-between items-center mt-2">
-                                <span className="text-xs text-slate-400">
-                                    Press ⌘+Enter to send
-                                </span>
+                                <span className="text-xs text-slate-400">Press ⌘+Enter to send</span>
                                 <button
                                     onClick={() => handleSubmitComment()}
                                     disabled={!newComment.trim() || submitting}
@@ -302,7 +321,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
     getTimeAgo,
     submitting,
     replyInputRef,
-    depth = 0
+    depth = 0,
 }) => {
     const [showMenu, setShowMenu] = useState(false);
     const maxDepth = 2;
@@ -311,12 +330,14 @@ const CommentThread: React.FC<CommentThreadProps> = ({
         <div className={`${depth > 0 ? 'ml-8 pt-3 border-l-2 border-slate-200 dark:border-white/10 pl-4' : ''}`}>
             <div className={`group ${comment.is_resolved ? 'opacity-60' : ''}`}>
                 <div className="flex gap-3">
-                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-medium ${
-                        comment.user_id === currentUserId ? 'bg-purple-500' : 'bg-slate-500'
-                    }`}>
+                    <div
+                        className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-medium ${
+                            comment.user_id === currentUserId ? 'bg-purple-500' : 'bg-slate-500'
+                        }`}
+                    >
                         {getInitials(comment.author_name || 'User')}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-navy-900 dark:text-white">
@@ -333,11 +354,11 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                                 </span>
                             )}
                         </div>
-                        
+
                         <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                             {comment.comment}
                         </p>
-                        
+
                         {/* Actions */}
                         <div className="mt-2 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             {!isReadOnly && depth < maxDepth && (
@@ -349,7 +370,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                                     Reply
                                 </button>
                             )}
-                            
+
                             {!isReadOnly && !comment.is_resolved && (
                                 <button
                                     onClick={() => onResolve(comment.id)}
@@ -359,12 +380,12 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                                     Resolve
                                 </button>
                             )}
-                            
+
                             <button className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">
                                 <ThumbsUp size={12} />
                             </button>
                         </div>
-                        
+
                         {/* Reply Input */}
                         {replyTo === comment.id && (
                             <div className="mt-3 flex gap-2">
@@ -404,11 +425,11 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                     </div>
                 </div>
             </div>
-            
+
             {/* Nested Replies */}
             {comment.replies && comment.replies.length > 0 && (
                 <div className="space-y-3">
-                    {comment.replies.map(reply => (
+                    {comment.replies.map((reply) => (
                         <CommentThread
                             key={reply.id}
                             comment={reply}
@@ -432,4 +453,3 @@ const CommentThread: React.FC<CommentThreadProps> = ({
         </div>
     );
 };
-

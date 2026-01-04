@@ -4,7 +4,8 @@
  * Provides presence indicators, activity feed, and live updates
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { useAppStore } from '../store/useAppStore';
 
 // Types
@@ -51,8 +52,14 @@ interface UseAssessmentCollaborationOptions {
 // Generate consistent avatar color from user ID
 const getAvatarColor = (userId: string): string => {
     const colors = [
-        'bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-amber-500',
-        'bg-pink-500', 'bg-indigo-500', 'bg-cyan-500', 'bg-rose-500'
+        'bg-purple-500',
+        'bg-blue-500',
+        'bg-green-500',
+        'bg-amber-500',
+        'bg-pink-500',
+        'bg-indigo-500',
+        'bg-cyan-500',
+        'bg-rose-500',
     ];
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
@@ -69,22 +76,22 @@ const AXIS_LABELS: Record<string, string> = {
     dataManagement: 'Data & Analytics',
     culture: 'Organizational Culture',
     cybersecurity: 'Cybersecurity',
-    aiMaturity: 'AI Maturity'
+    aiMaturity: 'AI Maturity',
 };
 
 export const useAssessmentCollaboration = ({
     assessmentId,
     projectId,
     enablePolling = true,
-    pollingInterval = 5000
+    pollingInterval = 5000,
 }: UseAssessmentCollaborationOptions) => {
     const { currentUser } = useAppStore();
-    
+
     const [state, setState] = useState<CollaborationState>({
         collaborators: [],
         activities: [],
         isConnected: false,
-        connectionError: null
+        connectionError: null,
     });
 
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -109,24 +116,24 @@ export const useAssessmentCollaboration = ({
                     userId: currentUser.id,
                     userName: getUserDisplayName(currentUser),
                     currentAxis: currentAxisRef.current,
-                    currentView: 'assessment'
-                })
+                    currentView: 'assessment',
+                }),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                setState(prev => ({
+                setState((prev) => ({
                     ...prev,
                     collaborators: data.collaborators || [],
                     isConnected: true,
-                    connectionError: null
+                    connectionError: null,
                 }));
             }
         } catch (error) {
-            setState(prev => ({
+            setState((prev) => ({
                 ...prev,
                 isConnected: false,
-                connectionError: 'Connection lost'
+                connectionError: 'Connection lost',
             }));
         }
     }, [currentUser, assessmentId]);
@@ -137,15 +144,15 @@ export const useAssessmentCollaboration = ({
 
         try {
             const response = await fetch(
-                `/api/assessment-workflow/${assessmentId}/activities?since=${lastActivityRef.current.toISOString()}`
+                `/api/assessment-workflow/${assessmentId}/activities?since=${lastActivityRef.current.toISOString()}`,
             );
 
             if (response.ok) {
                 const data = await response.json();
                 if (data.activities && data.activities.length > 0) {
-                    setState(prev => ({
+                    setState((prev) => ({
                         ...prev,
-                        activities: [...data.activities, ...prev.activities].slice(0, 50)
+                        activities: [...data.activities, ...prev.activities].slice(0, 50),
                     }));
                     lastActivityRef.current = new Date();
                 }
@@ -156,90 +163,106 @@ export const useAssessmentCollaboration = ({
     }, [assessmentId]);
 
     // Set current axis (for presence indicator)
-    const setCurrentAxis = useCallback((axisId: string | undefined) => {
-        currentAxisRef.current = axisId;
-        sendHeartbeat(); // Immediate update
-    }, [sendHeartbeat]);
+    const setCurrentAxis = useCallback(
+        (axisId: string | undefined) => {
+            currentAxisRef.current = axisId;
+            sendHeartbeat(); // Immediate update
+        },
+        [sendHeartbeat],
+    );
 
     // Broadcast activity
-    const broadcastActivity = useCallback(async (activity: Omit<ActivityEvent, 'id' | 'userId' | 'userName' | 'timestamp'>) => {
-        if (!currentUser || !assessmentId) return;
+    const broadcastActivity = useCallback(
+        async (activity: Omit<ActivityEvent, 'id' | 'userId' | 'userName' | 'timestamp'>) => {
+            if (!currentUser || !assessmentId) return;
 
-        const userName = getUserDisplayName(currentUser);
-        
-        try {
-            await fetch(`/api/assessment-workflow/${assessmentId}/activities`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...activity,
+            const userName = getUserDisplayName(currentUser);
+
+            try {
+                await fetch(`/api/assessment-workflow/${assessmentId}/activities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...activity,
+                        userId: currentUser.id,
+                        userName,
+                    }),
+                });
+
+                // Immediately add to local state
+                const newActivity: ActivityEvent = {
+                    id: `local-${Date.now()}`,
                     userId: currentUser.id,
-                    userName
-                })
-            });
+                    userName: userName || 'You',
+                    timestamp: new Date(),
+                    ...activity,
+                };
 
-            // Immediately add to local state
-            const newActivity: ActivityEvent = {
-                id: `local-${Date.now()}`,
-                userId: currentUser.id,
-                userName: userName || 'You',
-                timestamp: new Date(),
-                ...activity
-            };
-
-            setState(prev => ({
-                ...prev,
-                activities: [newActivity, ...prev.activities].slice(0, 50)
-            }));
-        } catch (error) {
-            console.error('Error broadcasting activity:', error);
-        }
-    }, [currentUser, assessmentId]);
+                setState((prev) => ({
+                    ...prev,
+                    activities: [newActivity, ...prev.activities].slice(0, 50),
+                }));
+            } catch (error) {
+                console.error('Error broadcasting activity:', error);
+            }
+        },
+        [currentUser, assessmentId],
+    );
 
     // Axis update notification
-    const notifyAxisUpdate = useCallback((axisId: string, actualScore: number, targetScore: number, previousActual?: number) => {
-        broadcastActivity({
-            type: 'AXIS_UPDATE',
-            data: {
-                axisId,
-                axisName: AXIS_LABELS[axisId] || axisId,
-                oldValue: previousActual,
-                newValue: actualScore,
-                message: `updated ${AXIS_LABELS[axisId] || axisId} to ${actualScore}/${targetScore}`
-            }
-        });
-    }, [broadcastActivity]);
+    const notifyAxisUpdate = useCallback(
+        (axisId: string, actualScore: number, targetScore: number, previousActual?: number) => {
+            broadcastActivity({
+                type: 'AXIS_UPDATE',
+                data: {
+                    axisId,
+                    axisName: AXIS_LABELS[axisId] || axisId,
+                    oldValue: previousActual,
+                    newValue: actualScore,
+                    message: `updated ${AXIS_LABELS[axisId] || axisId} to ${actualScore}/${targetScore}`,
+                },
+            });
+        },
+        [broadcastActivity],
+    );
 
     // Comment notification
-    const notifyCommentAdded = useCallback((axisId: string, commentPreview: string) => {
-        broadcastActivity({
-            type: 'COMMENT_ADDED',
-            data: {
-                axisId,
-                axisName: AXIS_LABELS[axisId] || axisId,
-                message: commentPreview.slice(0, 100)
-            }
-        });
-    }, [broadcastActivity]);
+    const notifyCommentAdded = useCallback(
+        (axisId: string, commentPreview: string) => {
+            broadcastActivity({
+                type: 'COMMENT_ADDED',
+                data: {
+                    axisId,
+                    axisName: AXIS_LABELS[axisId] || axisId,
+                    message: commentPreview.slice(0, 100),
+                },
+            });
+        },
+        [broadcastActivity],
+    );
 
     // Status change notification
-    const notifyStatusChange = useCallback((oldStatus: string, newStatus: string) => {
-        broadcastActivity({
-            type: 'STATUS_CHANGE',
-            data: {
-                oldValue: oldStatus,
-                newValue: newStatus,
-                message: `changed status from ${oldStatus} to ${newStatus}`
-            }
-        });
-    }, [broadcastActivity]);
+    const notifyStatusChange = useCallback(
+        (oldStatus: string, newStatus: string) => {
+            broadcastActivity({
+                type: 'STATUS_CHANGE',
+                data: {
+                    oldValue: oldStatus,
+                    newValue: newStatus,
+                    message: `changed status from ${oldStatus} to ${newStatus}`,
+                },
+            });
+        },
+        [broadcastActivity],
+    );
 
     // Get collaborators on same axis
-    const getCollaboratorsOnAxis = useCallback((axisId: string): CollaboratorPresence[] => {
-        return state.collaborators.filter(c => 
-            c.currentAxis === axisId && c.userId !== currentUser?.id
-        );
-    }, [state.collaborators, currentUser]);
+    const getCollaboratorsOnAxis = useCallback(
+        (axisId: string): CollaboratorPresence[] => {
+            return state.collaborators.filter((c) => c.currentAxis === axisId && c.userId !== currentUser?.id);
+        },
+        [state.collaborators, currentUser],
+    );
 
     // Start/stop polling
     useEffect(() => {
@@ -270,7 +293,7 @@ export const useAssessmentCollaboration = ({
                 fetch(`/api/assessment-workflow/${assessmentId}/presence/leave`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: currentUser.id })
+                    body: JSON.stringify({ userId: currentUser.id }),
                 }).catch(() => {});
             }
         };
@@ -287,7 +310,7 @@ export const useAssessmentCollaboration = ({
         refresh: () => {
             sendHeartbeat();
             fetchActivities();
-        }
+        },
     };
 };
 
@@ -311,22 +334,27 @@ export const PresenceIndicator: React.FC<{
                     title={collaborator.userName}
                 >
                     {collaborator.userName.charAt(0).toUpperCase()}
-                    
+
                     {/* Tooltip */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {collaborator.userName}
                         {collaborator.currentAxis && (
-                            <span className="text-gray-300"> • {AXIS_LABELS[collaborator.currentAxis] || collaborator.currentAxis}</span>
+                            <span className="text-gray-300">
+                                {' '}
+                                • {AXIS_LABELS[collaborator.currentAxis] || collaborator.currentAxis}
+                            </span>
                         )}
                     </div>
 
                     {/* Active indicator */}
-                    <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-navy-900 ${
-                        collaborator.isActive ? 'bg-green-500' : 'bg-gray-400'
-                    }`} />
+                    <span
+                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-navy-900 ${
+                            collaborator.isActive ? 'bg-green-500' : 'bg-gray-400'
+                        }`}
+                    />
                 </div>
             ))}
-            
+
             {overflow > 0 && (
                 <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium border-2 border-white dark:border-navy-900">
                     +{overflow}
@@ -343,13 +371,20 @@ export const ActivityFeed: React.FC<{
 }> = ({ activities, maxItems = 10 }) => {
     const getActivityIcon = (type: ActivityEvent['type']) => {
         switch (type) {
-            case 'AXIS_UPDATE': return '📊';
-            case 'COMMENT_ADDED': return '💬';
-            case 'REVIEW_SUBMITTED': return '✅';
-            case 'STATUS_CHANGE': return '🔄';
-            case 'USER_JOINED': return '👋';
-            case 'USER_LEFT': return '🚶';
-            default: return '📝';
+            case 'AXIS_UPDATE':
+                return '📊';
+            case 'COMMENT_ADDED':
+                return '💬';
+            case 'REVIEW_SUBMITTED':
+                return '✅';
+            case 'STATUS_CHANGE':
+                return '🔄';
+            case 'USER_JOINED':
+                return '👋';
+            case 'USER_LEFT':
+                return '🚶';
+            default:
+                return '📝';
         }
     };
 
@@ -365,27 +400,20 @@ export const ActivityFeed: React.FC<{
     };
 
     if (activities.length === 0) {
-        return (
-            <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
-                No recent activity
-            </div>
-        );
+        return <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">No recent activity</div>;
     }
 
     return (
         <div className="space-y-3">
-            {activities.slice(0, maxItems).map(activity => (
+            {activities.slice(0, maxItems).map((activity) => (
                 <div key={activity.id} className="flex items-start gap-2">
                     <span className="text-sm">{getActivityIcon(activity.type)}</span>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-700 dark:text-gray-300">
-                            <span className="font-medium">{activity.userName}</span>
-                            {' '}
+                            <span className="font-medium">{activity.userName}</span>{' '}
                             {activity.data.message || activity.type.toLowerCase().replace(/_/g, ' ')}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {getTimeAgo(activity.timestamp)}
-                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{getTimeAgo(activity.timestamp)}</p>
                     </div>
                 </div>
             ))}
@@ -394,4 +422,3 @@ export const ActivityFeed: React.FC<{
 };
 
 export default useAssessmentCollaboration;
-

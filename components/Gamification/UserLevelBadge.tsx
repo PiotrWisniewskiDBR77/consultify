@@ -1,10 +1,11 @@
+import { ChevronRight, Star, Trophy } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Trophy, Star, ChevronRight } from 'lucide-react';
+
 import { Api } from '../../services/api';
 
 /**
  * UserLevelBadge — Displays user level and points progress
- * 
+ *
  * Used in Sidebar or Profile.
  */
 
@@ -44,7 +45,10 @@ export const UserLevelBadge: React.FC<{ compact?: boolean }> = ({ compact = fals
 
     if (compact) {
         return (
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-bold text-xs" title={`Level ${stats.level.level}: ${stats.level.name}`}>
+            <div
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-bold text-xs"
+                title={`Level ${stats.level.level}: ${stats.level.name}`}
+            >
                 {stats.level.level}
             </div>
         );

@@ -2,14 +2,12 @@
  * UsageAlertsConfig - Configure billing alerts and cost caps
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-    Bell, AlertTriangle, TrendingUp, DollarSign, Loader2,
-    Shield, Zap, HardDrive, Save
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertTriangle, Bell, DollarSign, HardDrive, Loader2, Save, Shield, TrendingUp, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 
 interface AlertSettings {
     token_threshold_80: number;
@@ -42,17 +40,14 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
         auto_upgrade_enabled: 0,
         auto_upgrade_plan_id: null,
         cost_cap_monthly: null,
-        email_notifications: 1
+        email_notifications: 1,
     });
     const [plans, setPlans] = useState<any[]>([]);
 
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [alertsData, plansData] = await Promise.all([
-                Api.getBillingAlerts(),
-                Api.getSubscriptionPlans()
-            ]);
+            const [alertsData, plansData] = await Promise.all([Api.getBillingAlerts(), Api.getSubscriptionPlans()]);
             if (alertsData.alerts) {
                 setSettings(alertsData.alerts);
             }
@@ -84,9 +79,9 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
     };
 
     const toggleSetting = (key: keyof AlertSettings) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            [key]: prev[key] === 1 ? 0 : 1
+            [key]: prev[key] === 1 ? 0 : 1,
         }));
     };
 
@@ -131,9 +126,11 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                             settings.email_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
-                            settings.email_notifications ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                settings.email_notifications ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>
@@ -148,18 +145,20 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 </div>
 
                 <div className="space-y-3">
-                    {[80, 90, 100].map(threshold => {
+                    {[80, 90, 100].map((threshold) => {
                         const key = `token_threshold_${threshold}` as keyof AlertSettings;
                         return (
                             <div key={key} className="flex items-center justify-between py-2">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                                        threshold === 100 
-                                            ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
-                                            : threshold === 90
-                                                ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
-                                                : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                                    }`}>
+                                    <div
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                                            threshold === 100
+                                                ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                                : threshold === 90
+                                                  ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                                                  : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                                        }`}
+                                    >
                                         {threshold}%
                                     </div>
                                     <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -172,9 +171,11 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                                         settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                 >
-                                    <div className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
-                                        settings[key] ? 'translate-x-5' : 'translate-x-0.5'
-                                    }`} />
+                                    <div
+                                        className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
+                                            settings[key] ? 'translate-x-5' : 'translate-x-0.5'
+                                        }`}
+                                    />
                                 </button>
                             </div>
                         );
@@ -192,22 +193,27 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 </div>
 
                 <div className="space-y-3">
-                    {[80, 90, 100].map(threshold => {
+                    {[80, 90, 100].map((threshold) => {
                         const key = `storage_threshold_${threshold}` as keyof AlertSettings;
                         return (
                             <div key={key} className="flex items-center justify-between py-2">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                                        threshold === 100 
-                                            ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
-                                            : threshold === 90
-                                                ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
-                                                : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                                    }`}>
+                                    <div
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                                            threshold === 100
+                                                ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                                : threshold === 90
+                                                  ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                                                  : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                                        }`}
+                                    >
                                         {threshold}%
                                     </div>
                                     <span className="text-sm text-slate-600 dark:text-slate-400">
-                                        {t(`billing.alerts.storageThreshold${threshold}`, `Alert at ${threshold}% storage`)}
+                                        {t(
+                                            `billing.alerts.storageThreshold${threshold}`,
+                                            `Alert at ${threshold}% storage`,
+                                        )}
                                     </span>
                                 </div>
                                 <button
@@ -216,9 +222,11 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                                         settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                 >
-                                    <div className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
-                                        settings[key] ? 'translate-x-5' : 'translate-x-0.5'
-                                    }`} />
+                                    <div
+                                        className={`w-4 h-4 bg-white rounded-full transform transition-transform ${
+                                            settings[key] ? 'translate-x-5' : 'translate-x-0.5'
+                                        }`}
+                                    />
                                 </button>
                             </div>
                         );
@@ -235,7 +243,10 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                     </h4>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('billing.alerts.costCapDesc', 'Set a hard limit on monthly spending (overage charges will be blocked)')}
+                    {t(
+                        'billing.alerts.costCapDesc',
+                        'Set a hard limit on monthly spending (overage charges will be blocked)',
+                    )}
                 </p>
 
                 <div className="relative">
@@ -243,10 +254,12 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                     <input
                         type="number"
                         value={settings.cost_cap_monthly || ''}
-                        onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            cost_cap_monthly: e.target.value ? parseFloat(e.target.value) : null
-                        }))}
+                        onChange={(e) =>
+                            setSettings((prev) => ({
+                                ...prev,
+                                cost_cap_monthly: e.target.value ? parseFloat(e.target.value) : null,
+                            }))
+                        }
                         placeholder={t('billing.alerts.noCap', 'No limit')}
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     />
@@ -263,7 +276,10 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                                 {t('billing.alerts.autoUpgrade', 'Auto-Upgrade')}
                             </p>
                             <p className="text-sm text-slate-500">
-                                {t('billing.alerts.autoUpgradeDesc', 'Automatically upgrade plan when limits are reached')}
+                                {t(
+                                    'billing.alerts.autoUpgradeDesc',
+                                    'Automatically upgrade plan when limits are reached',
+                                )}
                             </p>
                         </div>
                     </div>
@@ -273,23 +289,27 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                             settings.auto_upgrade_enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
-                            settings.auto_upgrade_enabled ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                settings.auto_upgrade_enabled ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
 
                 {settings.auto_upgrade_enabled === 1 && plans.length > 0 && (
                     <select
                         value={settings.auto_upgrade_plan_id || ''}
-                        onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            auto_upgrade_plan_id: e.target.value || null
-                        }))}
+                        onChange={(e) =>
+                            setSettings((prev) => ({
+                                ...prev,
+                                auto_upgrade_plan_id: e.target.value || null,
+                            }))
+                        }
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     >
                         <option value="">{t('billing.alerts.selectPlan', 'Select upgrade plan...')}</option>
-                        {plans.map(plan => (
+                        {plans.map((plan) => (
                             <option key={plan.id} value={plan.id}>
                                 {plan.name} - ${plan.price_monthly}/mo
                             </option>
@@ -323,11 +343,4 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
 };
 
 export default UsageAlertsConfig;
-
-
-
-
-
-
-
 

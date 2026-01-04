@@ -1,7 +1,7 @@
 /**
  * Base Service Class
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Provides common functionality for all services:
  * - Database query helpers
  * - Cache integration
@@ -9,11 +9,11 @@
  * - Logging
  */
 
-import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -55,9 +55,9 @@ export abstract class BaseService<T extends { id: string }> {
     protected async queryAll<R = unknown>(
         sql: string,
         params: unknown[] = [],
-        options: QueryOptions = {}
+        options: QueryOptions = {},
     ): Promise<R[]> {
-        const { cacheKey, ttl, parseJson = false, jsonFields = [] } = options;
+        const { _cacheKey, _ttl, parseJson = false, jsonFields = [] } = options;
 
         // TODO: Implement cache integration when cacheHelper is migrated
         // if (cacheKey) {
@@ -68,7 +68,7 @@ export abstract class BaseService<T extends { id: string }> {
         // }
 
         const rows = await this.queryAllInternal<R>(sql, params);
-        return parseJson ? rows.map(r => this.parseJsonFields(r, jsonFields)) : rows;
+        return parseJson ? rows.map((r) => this.parseJsonFields(r, jsonFields)) : rows;
     }
 
     /**
@@ -77,9 +77,9 @@ export abstract class BaseService<T extends { id: string }> {
     protected async queryOne<R = unknown>(
         sql: string,
         params: unknown[] = [],
-        options: QueryOptions = {}
+        options: QueryOptions = {},
     ): Promise<R | null> {
-        const { cacheKey, ttl, parseJson = false, jsonFields = [] } = options;
+        const { _cacheKey, _ttl, parseJson = false, jsonFields = [] } = options;
 
         // TODO: Implement cache integration when cacheHelper is migrated
         // if (cacheKey) {
@@ -96,10 +96,7 @@ export abstract class BaseService<T extends { id: string }> {
     /**
      * Execute INSERT/UPDATE/DELETE query
      */
-    protected async queryRun(
-        sql: string,
-        params: unknown[] = []
-    ): Promise<RunResult> {
+    protected async queryRun(sql: string, params: unknown[] = []): Promise<RunResult> {
         const result = await DbPromise.run(sql, params);
         return {
             lastID: result.lastID,
@@ -126,7 +123,7 @@ export abstract class BaseService<T extends { id: string }> {
      */
     private parseJsonFields(row: Record<string, unknown>, jsonFields: string[]): Record<string, unknown> {
         const parsed = { ...row };
-        jsonFields.forEach(field => {
+        jsonFields.forEach((field) => {
             if (parsed[field] && typeof parsed[field] === 'string') {
                 try {
                     parsed[field] = JSON.parse(parsed[field] as string);

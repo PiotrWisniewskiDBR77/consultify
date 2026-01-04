@@ -1,7 +1,7 @@
 /**
  * PII Redactor Utility
  * Step 14: Governance, Security & Enterprise Controls
- * 
+ *
  * Redacts personally identifiable information from audit logs and exports.
  * Ensures SOC2/ISO compliance for data privacy.
  */
@@ -28,7 +28,7 @@ export const DEFAULT_PII_FIELDS = [
     'phone_number',
     'ssn',
     'credit_card',
-    'creditCard'
+    'creditCard',
 ] as const;
 
 export const REDACTION_PLACEHOLDER = '[REDACTED]';
@@ -45,7 +45,7 @@ const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z9.-]+\.[A-Z|a-z]{2,}\b/g;
  */
 const TOKEN_REGEX = /\b(Bearer\s+)?[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\b/gi;
 
-type RedactableValue = string | number | boolean | null | undefined | Record<string, unknown> | unknown[];
+type _RedactableValue = string | number | boolean | null | undefined | Record<string, unknown> | unknown[];
 
 /**
  * Deep clone helper
@@ -53,9 +53,7 @@ type RedactableValue = string | number | boolean | null | undefined | Record<str
 const deepClone = <T>(obj: T): T => {
     if (obj === null || typeof obj !== 'object') return obj;
     if (Array.isArray(obj)) return obj.map(deepClone) as unknown as T;
-    return Object.fromEntries(
-        Object.entries(obj as Record<string, unknown>).map(([k, v]) => [k, deepClone(v)])
-    ) as T;
+    return Object.fromEntries(Object.entries(obj as Record<string, unknown>).map(([k, v]) => [k, deepClone(v)])) as T;
 };
 
 /**
@@ -63,7 +61,7 @@ const deepClone = <T>(obj: T): T => {
  */
 const isPiiField = (fieldName: string, fieldsToRedact: readonly string[]): boolean => {
     const lowerField = fieldName.toLowerCase();
-    return fieldsToRedact.some(pii => lowerField.includes(pii.toLowerCase()));
+    return fieldsToRedact.some((pii) => lowerField.includes(pii.toLowerCase()));
 };
 
 interface PiiRedactor {
@@ -151,7 +149,7 @@ const PiiRedactor: PiiRedactor = {
     redactKeys: <T extends Record<string, unknown>>(obj: T, keys: string[]): T => {
         if (obj === null || typeof obj !== 'object') return obj;
         const redacted = { ...obj };
-        keys.forEach(key => {
+        keys.forEach((key) => {
             if (key in redacted) {
                 redacted[key] = REDACTION_PLACEHOLDER;
             }
@@ -165,8 +163,7 @@ const PiiRedactor: PiiRedactor = {
     createAuditSnapshot: (data: unknown): string => {
         const redacted = PiiRedactor.redact(data);
         return JSON.stringify(redacted);
-    }
+    },
 };
 
 export default PiiRedactor;
-

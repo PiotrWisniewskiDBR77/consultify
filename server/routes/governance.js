@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import * as GovernanceServiceModule from '../services/governanceService.js';
 const GovernanceService = GovernanceServiceModule.default || GovernanceServiceModule;
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

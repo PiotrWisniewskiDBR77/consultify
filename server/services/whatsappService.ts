@@ -19,7 +19,7 @@ class WhatsappService implements WhatsappServiceInterface {
     constructor() {
         this.client = null;
         this.fromNumber = process.env.WHATSAPP_FROM; // e.g. 'whatsapp:+14155238886'
-        this.toNumber = process.env.WHATSAPP_TO;     // e.g. 'whatsapp:+1234567890'
+        this.toNumber = process.env.WHATSAPP_TO; // e.g. 'whatsapp:+1234567890'
         this.isEnabled = false;
 
         const sid = process.env.WHATSAPP_SID;
@@ -46,7 +46,8 @@ class WhatsappService implements WhatsappServiceInterface {
 
         try {
             const emoji = feedback.type === 'BUG' ? '🐛' : '💡';
-            const message = `*New ${feedback.type} Report* ${emoji}\n\n` +
+            const message =
+                `*New ${feedback.type} Report* ${emoji}\n\n` +
                 `*User:* ${feedback.userEmail || 'Anonymous'}\n` +
                 `*Message:* ${feedback.message}\n` +
                 `*Time:* ${new Date().toLocaleString('pl-PL')}`;
@@ -54,7 +55,7 @@ class WhatsappService implements WhatsappServiceInterface {
             await this.client.messages.create({
                 from: this.fromNumber,
                 to: this.toNumber,
-                body: message
+                body: message,
             });
             console.log('[WhatsappService] Feedback alert sent');
         } catch (error) {

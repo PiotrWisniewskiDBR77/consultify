@@ -1,18 +1,13 @@
 /**
  * RoadmapCapacityHeatmap
- * 
+ *
  * Shows resource capacity and workload across the roadmap timeline.
  * Highlights overallocation and helps with workload balancing.
  */
 
+import { AlertTriangle, Calendar, TrendingUp, Users, Zap } from 'lucide-react';
 import React, { useMemo } from 'react';
-import {
-    AlertTriangle,
-    Users,
-    Calendar,
-    TrendingUp,
-    Zap
-} from 'lucide-react';
+
 import { FullInitiative } from '../types';
 
 interface CapacityData {
@@ -36,7 +31,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
     initiatives,
     teamCapacity = 160, // Default: 1 FTE
-    onMonthClick
+    onMonthClick,
 }) => {
     // Calculate capacity data per month
     const capacityData = useMemo(() => {
@@ -54,7 +49,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
             let initiativeCount = 0;
             let totalEffort = 0;
 
-            initiatives.forEach(init => {
+            initiatives.forEach((init) => {
                 const initAsAny = init as any;
                 let initStart: Date | null = null;
                 let initEnd: Date | null = null;
@@ -88,7 +83,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                 totalEffort,
                 capacity: teamCapacity,
                 utilizationPercent,
-                isOverloaded: utilizationPercent > 100
+                isOverloaded: utilizationPercent > 100,
             });
         }
 
@@ -107,14 +102,14 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
 
     // Calculate summary stats
     const stats = useMemo(() => {
-        const overloaded = capacityData.filter(d => d.isOverloaded).length;
+        const overloaded = capacityData.filter((d) => d.isOverloaded).length;
         const avgUtilization = capacityData.reduce((sum, d) => sum + d.utilizationPercent, 0) / capacityData.length;
-        const peakMonth = capacityData.reduce((max, d) => d.utilizationPercent > max.utilizationPercent ? d : max);
+        const peakMonth = capacityData.reduce((max, d) => (d.utilizationPercent > max.utilizationPercent ? d : max));
 
         return {
             overloadedMonths: overloaded,
             avgUtilization: Math.round(avgUtilization),
-            peakMonth
+            peakMonth,
         };
     }, [capacityData]);
 
@@ -123,7 +118,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
         const groups: { year: number; months: CapacityData[] }[] = [];
         let currentYear = -1;
 
-        capacityData.forEach(d => {
+        capacityData.forEach((d) => {
             if (d.year !== currentYear) {
                 currentYear = d.year;
                 groups.push({ year: d.year, months: [] });
@@ -166,8 +161,13 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                 </div>
                 <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Avg Utilization</p>
-                    <p className={`text-lg font-bold ${stats.avgUtilization > 100 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                        }`}>
+                    <p
+                        className={`text-lg font-bold ${
+                            stats.avgUtilization > 100
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-green-600 dark:text-green-400'
+                        }`}
+                    >
                         {stats.avgUtilization}%
                     </p>
                 </div>
@@ -179,8 +179,13 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                 </div>
                 <div className="text-center">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Overloaded</p>
-                    <p className={`text-lg font-bold ${stats.overloadedMonths > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                        }`}>
+                    <p
+                        className={`text-lg font-bold ${
+                            stats.overloadedMonths > 0
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-green-600 dark:text-green-400'
+                        }`}
+                    >
                         {stats.overloadedMonths} months
                     </p>
                 </div>
@@ -188,24 +193,26 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
 
             {/* Heatmap Grid */}
             <div className="p-4">
-                {yearGroups.map(group => (
+                {yearGroups.map((group) => (
                     <div key={group.year} className="mb-4 last:mb-0">
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
-                            {group.year}
-                        </p>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">{group.year}</p>
                         <div className="grid grid-cols-12 gap-1">
                             {group.months.map((d, idx) => (
                                 <div
                                     key={idx}
                                     onClick={() => onMonthClick?.(d.month, d.year)}
-                                    className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${getUtilizationColor(d.utilizationPercent)
-                                        }`}
+                                    className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${getUtilizationColor(
+                                        d.utilizationPercent,
+                                    )}`}
                                 >
                                     <p className="text-[10px] font-medium text-center text-slate-700 dark:text-slate-200">
                                         {d.month}
                                     </p>
-                                    <p className={`text-xs font-bold text-center ${d.isOverloaded ? 'text-white' : 'text-slate-600 dark:text-slate-300'
-                                        }`}>
+                                    <p
+                                        className={`text-xs font-bold text-center ${
+                                            d.isOverloaded ? 'text-white' : 'text-slate-600 dark:text-slate-300'
+                                        }`}
+                                    >
                                         {d.utilizationPercent}%
                                     </p>
                                     {d.isOverloaded && (
@@ -217,9 +224,13 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
                                     {/* Tooltip */}
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
                                         <div className="bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
-                                            <p className="font-semibold">{d.month} {d.year}</p>
+                                            <p className="font-semibold">
+                                                {d.month} {d.year}
+                                            </p>
                                             <p>{d.initiativeCount} initiatives</p>
-                                            <p>{d.totalEffort}h / {d.capacity}h</p>
+                                            <p>
+                                                {d.totalEffort}h / {d.capacity}h
+                                            </p>
                                             <p className={d.isOverloaded ? 'text-red-400' : 'text-green-400'}>
                                                 {d.utilizationPercent}% utilized
                                             </p>
@@ -263,12 +274,4 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
 };
 
 export default RoadmapCapacityHeatmap;
-
-
-
-
-
-
-
-
 

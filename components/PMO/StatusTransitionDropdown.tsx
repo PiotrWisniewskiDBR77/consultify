@@ -1,108 +1,115 @@
 /**
  * StatusTransitionDropdown
- * 
+ *
  * Reusable component for initiative status transitions.
  * Shows only valid transitions based on StatusMachine rules.
  * Handles confirmation dialogs and reason input for specific transitions.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
 import {
-    ChevronDown,
-    Check,
     AlertTriangle,
-    XCircle,
-    Clock,
-    Rocket,
     Archive,
     Ban,
-    Play,
-    Pause,
+    Check,
+    ChevronDown,
+    Clock,
     FileCheck,
-    Send
+    Pause,
+    Play,
+    Rocket,
+    Send,
+    XCircle,
 } from 'lucide-react';
-import { InitiativeStatus, StatusTransition } from '../../types';
-import { Api } from '../../services/api';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { Api } from '../../services/api';
+import { InitiativeStatus, StatusTransition } from '../../types';
+
 // Status colors and icons mapping
-const STATUS_CONFIG: Record<InitiativeStatus, {
-    color: string;
-    bgColor: string;
-    darkBgColor: string;
-    icon: React.ReactNode;
-    label: string;
-}> = {
+const STATUS_CONFIG: Record<
+    InitiativeStatus,
+    {
+        color: string;
+        bgColor: string;
+        darkBgColor: string;
+        icon: React.ReactNode;
+        label: string;
+    }
+> = {
     [InitiativeStatus.DRAFT]: {
         color: 'text-slate-600 dark:text-slate-400',
         bgColor: 'bg-slate-100',
         darkBgColor: 'dark:bg-slate-800',
         icon: <Clock size={14} />,
-        label: 'Draft'
+        label: 'Draft',
     },
     [InitiativeStatus.PLANNING]: {
         color: 'text-blue-600 dark:text-blue-400',
         bgColor: 'bg-blue-100',
         darkBgColor: 'dark:bg-blue-900/30',
         icon: <FileCheck size={14} />,
-        label: 'Planning'
+        label: 'Planning',
     },
     [InitiativeStatus.REVIEW]: {
         color: 'text-amber-600 dark:text-amber-400',
         bgColor: 'bg-amber-100',
         darkBgColor: 'dark:bg-amber-900/30',
         icon: <Send size={14} />,
-        label: 'In Review'
+        label: 'In Review',
     },
     [InitiativeStatus.APPROVED]: {
         color: 'text-emerald-600 dark:text-emerald-400',
         bgColor: 'bg-emerald-100',
         darkBgColor: 'dark:bg-emerald-900/30',
         icon: <Check size={14} />,
-        label: 'Approved'
+        label: 'Approved',
     },
     [InitiativeStatus.EXECUTING]: {
         color: 'text-purple-600 dark:text-purple-400',
         bgColor: 'bg-purple-100',
         darkBgColor: 'dark:bg-purple-900/30',
         icon: <Rocket size={14} />,
-        label: 'Executing'
+        label: 'Executing',
     },
     [InitiativeStatus.BLOCKED]: {
         color: 'text-red-600 dark:text-red-400',
         bgColor: 'bg-red-100',
         darkBgColor: 'dark:bg-red-900/30',
         icon: <Pause size={14} />,
-        label: 'Blocked'
+        label: 'Blocked',
     },
     [InitiativeStatus.DONE]: {
         color: 'text-green-600 dark:text-green-400',
         bgColor: 'bg-green-100',
         darkBgColor: 'dark:bg-green-900/30',
         icon: <Check size={14} />,
-        label: 'Done'
+        label: 'Done',
     },
     [InitiativeStatus.CANCELLED]: {
         color: 'text-gray-600 dark:text-gray-400',
         bgColor: 'bg-gray-100',
         darkBgColor: 'dark:bg-gray-800',
         icon: <Ban size={14} />,
-        label: 'Cancelled'
+        label: 'Cancelled',
     },
     [InitiativeStatus.ARCHIVED]: {
         color: 'text-gray-500 dark:text-gray-500',
         bgColor: 'bg-gray-50',
         darkBgColor: 'dark:bg-gray-900',
         icon: <Archive size={14} />,
-        label: 'Archived'
-    }
+        label: 'Archived',
+    },
 };
 
 interface StatusTransitionDropdownProps {
     initiativeId: string;
     currentStatus: InitiativeStatus;
     charterCompleteness?: number;
-    onStatusChange?: (newStatus: InitiativeStatus, moduleTransition?: { crossesModule: boolean; fromModule: string; toModule: string }) => void;
+    onStatusChange?: (
+        newStatus: InitiativeStatus,
+        moduleTransition?: { crossesModule: boolean; fromModule: string; toModule: string },
+    ) => void;
     disabled?: boolean;
     size?: 'sm' | 'md' | 'lg';
     showLabel?: boolean;
@@ -117,7 +124,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
     disabled = false,
     size = 'md',
     showLabel = true,
-    className = ''
+    className = '',
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -177,7 +184,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
         try {
             const response = await Api.patch(`/initiatives/${initiativeId}/status`, {
                 status: newStatus,
-                reason: transitionReason
+                reason: transitionReason,
             });
 
             if (response.success) {
@@ -201,7 +208,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
     const sizeClasses = {
         sm: 'px-2 py-1 text-xs',
         md: 'px-3 py-1.5 text-sm',
-        lg: 'px-4 py-2 text-base'
+        lg: 'px-4 py-2 text-base',
     };
 
     const iconSize = size === 'sm' ? 12 : size === 'lg' ? 16 : 14;
@@ -245,9 +252,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                                         <span className={`${transitionConfig?.color || 'text-slate-600'}`}>
                                             {transitionConfig?.icon}
                                         </span>
-                                        <span className="flex-1 text-navy-900 dark:text-white">
-                                            {transition.label}
-                                        </span>
+                                        <span className="flex-1 text-navy-900 dark:text-white">{transition.label}</span>
                                         {transition.requiresReason && (
                                             <AlertTriangle size={12} className="text-amber-500" />
                                         )}
@@ -274,16 +279,18 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
                         <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2">
-                            {pendingStatus === InitiativeStatus.BLOCKED ? 'Block Initiative' :
-                                pendingStatus === InitiativeStatus.CANCELLED ? 'Cancel Initiative' :
-                                    'Provide Reason'}
+                            {pendingStatus === InitiativeStatus.BLOCKED
+                                ? 'Block Initiative'
+                                : pendingStatus === InitiativeStatus.CANCELLED
+                                  ? 'Cancel Initiative'
+                                  : 'Provide Reason'}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                             {pendingStatus === InitiativeStatus.BLOCKED
                                 ? 'Please provide a reason for blocking this initiative.'
                                 : pendingStatus === InitiativeStatus.CANCELLED
-                                    ? 'Please provide a reason for cancelling this initiative.'
-                                    : 'Please provide additional information for this status change.'}
+                                  ? 'Please provide a reason for cancelling this initiative.'
+                                  : 'Please provide additional information for this status change.'}
                         </p>
                         <textarea
                             value={reason}
@@ -336,16 +343,18 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                             )}
                             <div>
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    {pendingStatus === InitiativeStatus.DONE ? 'Complete Initiative' :
-                                        pendingStatus === InitiativeStatus.ARCHIVED ? 'Archive Initiative' :
-                                            'Confirm Status Change'}
+                                    {pendingStatus === InitiativeStatus.DONE
+                                        ? 'Complete Initiative'
+                                        : pendingStatus === InitiativeStatus.ARCHIVED
+                                          ? 'Archive Initiative'
+                                          : 'Confirm Status Change'}
                                 </h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {pendingStatus === InitiativeStatus.DONE
                                         ? 'Mark this initiative as completed?'
                                         : pendingStatus === InitiativeStatus.ARCHIVED
-                                            ? 'Move this initiative to archive?'
-                                            : `Change status to ${STATUS_CONFIG[pendingStatus]?.label}?`}
+                                          ? 'Move this initiative to archive?'
+                                          : `Change status to ${STATUS_CONFIG[pendingStatus]?.label}?`}
                                 </p>
                             </div>
                         </div>
@@ -362,10 +371,11 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                             <button
                                 onClick={() => executeTransition(pendingStatus)}
                                 disabled={isLoading}
-                                className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${pendingStatus === InitiativeStatus.DONE
+                                className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${
+                                    pendingStatus === InitiativeStatus.DONE
                                         ? 'bg-green-600 hover:bg-green-500'
                                         : 'bg-purple-600 hover:bg-purple-500'
-                                    }`}
+                                }`}
                             >
                                 {isLoading ? 'Updating...' : 'Confirm'}
                             </button>
@@ -378,12 +388,4 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
 };
 
 export default StatusTransitionDropdown;
-
-
-
-
-
-
-
-
 

@@ -1,14 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
 import { BillingQueryService } from '../BillingQueryService.js';
 
-const createDeps = () => ({
-    db: {
-        all: vi.fn(),
-        get: vi.fn()
-    },
-    uuidv4: () => 'uuid',
-    stripe: null
-} as any);
+const createDeps = () =>
+    ({
+        db: {
+            all: vi.fn(),
+            get: vi.fn(),
+        },
+        uuidv4: () => 'uuid',
+        stripe: null,
+    }) as any;
 
 describe('BillingQueryService', () => {
     it('returns paged plans', async () => {
@@ -20,7 +22,10 @@ describe('BillingQueryService', () => {
         const result = await service.getPlans();
 
         expect(result).toEqual(plans);
-        expect(deps.db.all).toHaveBeenCalledWith('SELECT * FROM subscription_plans WHERE is_active = 1 ORDER BY price_monthly DESC', []);
+        expect(deps.db.all).toHaveBeenCalledWith(
+            'SELECT * FROM subscription_plans WHERE is_active = 1 ORDER BY price_monthly DESC',
+            [],
+        );
     });
 
     it('returns null for unknown plan', async () => {

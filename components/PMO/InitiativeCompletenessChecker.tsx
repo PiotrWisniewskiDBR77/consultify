@@ -1,23 +1,23 @@
 /**
  * InitiativeCompletenessChecker
- * 
+ *
  * Shows charter completeness progress and missing fields.
  * Used in Initiative cards and detail modals.
  */
 
-import React from 'react';
-import { 
-    CheckCircle2, 
-    Circle, 
+import {
     AlertCircle,
-    User,
-    Calendar,
-    DollarSign,
-    Target,
-    FileText,
     AlertTriangle,
-    ListChecks
+    Calendar,
+    CheckCircle2,
+    Circle,
+    DollarSign,
+    FileText,
+    ListChecks,
+    Target,
+    User,
 } from 'lucide-react';
+import React from 'react';
 
 interface FieldStatus {
     field: string;
@@ -61,7 +61,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <FileText size={14} />,
             weight: 10,
             isFilled: !!initiative.name,
-            isRequired: true
+            isRequired: true,
         },
         {
             field: 'summary',
@@ -69,7 +69,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <FileText size={14} />,
             weight: 10,
             isFilled: !!initiative.summary,
-            isRequired: true
+            isRequired: true,
         },
         {
             field: 'problemStatement',
@@ -77,7 +77,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <AlertCircle size={14} />,
             weight: 15,
             isFilled: !!initiative.problemStatement,
-            isRequired: true
+            isRequired: true,
         },
         {
             field: 'hypothesis',
@@ -85,7 +85,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <Target size={14} />,
             weight: 10,
             isFilled: !!initiative.hypothesis,
-            isRequired: true
+            isRequired: true,
         },
         {
             field: 'businessValue',
@@ -93,7 +93,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <DollarSign size={14} />,
             weight: 10,
             isFilled: !!initiative.businessValue && initiative.businessValue !== 0,
-            isRequired: true
+            isRequired: true,
         },
         {
             field: 'costCapex',
@@ -101,7 +101,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <DollarSign size={14} />,
             weight: 5,
             isFilled: initiative.costCapex !== undefined && initiative.costCapex !== null,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'costOpex',
@@ -109,7 +109,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <DollarSign size={14} />,
             weight: 5,
             isFilled: initiative.costOpex !== undefined && initiative.costOpex !== null,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'expectedRoi',
@@ -117,7 +117,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <Target size={14} />,
             weight: 5,
             isFilled: initiative.expectedRoi !== undefined && initiative.expectedRoi !== null,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'ownerBusiness',
@@ -125,7 +125,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <User size={14} />,
             weight: 10,
             isFilled: !!(initiative.ownerBusinessId || initiative.ownerBusiness),
-            isRequired: true
+            isRequired: true,
         },
         {
             field: 'ownerExecution',
@@ -133,7 +133,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <User size={14} />,
             weight: 5,
             isFilled: !!(initiative.ownerExecutionId || initiative.ownerExecution),
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'plannedStartDate',
@@ -141,7 +141,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <Calendar size={14} />,
             weight: 5,
             isFilled: !!initiative.plannedStartDate,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'plannedEndDate',
@@ -149,7 +149,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <Calendar size={14} />,
             weight: 5,
             isFilled: !!initiative.plannedEndDate,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'deliverables',
@@ -157,7 +157,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <ListChecks size={14} />,
             weight: 5,
             isFilled: Array.isArray(initiative.deliverables) && initiative.deliverables.length > 0,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'successCriteria',
@@ -165,7 +165,7 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <CheckCircle2 size={14} />,
             weight: 5,
             isFilled: Array.isArray(initiative.successCriteria) && initiative.successCriteria.length > 0,
-            isRequired: false
+            isRequired: false,
         },
         {
             field: 'keyRisks',
@@ -173,8 +173,8 @@ const calculateFieldStatuses = (initiative: InitiativeCompletenessCheckerProps['
             icon: <AlertTriangle size={14} />,
             weight: 5,
             isFilled: Array.isArray(initiative.keyRisks) && initiative.keyRisks.length > 0,
-            isRequired: false
-        }
+            isRequired: false,
+        },
     ];
 
     return fields;
@@ -190,12 +190,12 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
     initiative,
     showDetails = false,
     compact = false,
-    className = ''
+    className = '',
 }) => {
     const fields = calculateFieldStatuses(initiative);
     const completeness = calculateCompleteness(fields);
-    const missingRequired = fields.filter(f => f.isRequired && !f.isFilled);
-    const missingOptional = fields.filter(f => !f.isRequired && !f.isFilled);
+    const missingRequired = fields.filter((f) => f.isRequired && !f.isFilled);
+    const missingOptional = fields.filter((f) => !f.isRequired && !f.isFilled);
 
     const getProgressColor = () => {
         if (completeness >= 80) return 'bg-green-500';
@@ -215,7 +215,7 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
         return (
             <div className={`flex items-center gap-2 ${className}`}>
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className={`h-full ${getProgressColor()} transition-all duration-300`}
                         style={{ width: `${completeness}%` }}
                     />
@@ -232,29 +232,25 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
             {/* Progress Bar */}
             <div className="flex items-center gap-3 mb-2">
                 <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className={`h-full ${getProgressColor()} transition-all duration-300`}
                         style={{ width: `${completeness}%` }}
                     />
                 </div>
-                <span className="text-sm font-bold text-navy-900 dark:text-white">
-                    {completeness}%
-                </span>
+                <span className="text-sm font-bold text-navy-900 dark:text-white">{completeness}%</span>
             </div>
 
             {/* Status Badge */}
             <div className="flex items-center justify-between mb-3">
-                <span className={`text-xs font-medium ${
-                    completeness >= 60 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : 'text-amber-600 dark:text-amber-400'
-                }`}>
+                <span
+                    className={`text-xs font-medium ${
+                        completeness >= 60 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}
+                >
                     {getStatusText()}
                 </span>
                 {completeness < 60 && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                        Min. 60% required for Review
-                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">Min. 60% required for Review</span>
                 )}
             </div>
 
@@ -268,8 +264,8 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
                                 Missing Required ({missingRequired.length})
                             </div>
                             <div className="space-y-1">
-                                {missingRequired.map(field => (
-                                    <div 
+                                {missingRequired.map((field) => (
+                                    <div
                                         key={field.field}
                                         className="flex items-center gap-2 px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-700 dark:text-red-400"
                                     >
@@ -288,8 +284,8 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
                                 Optional ({missingOptional.length})
                             </div>
                             <div className="space-y-1">
-                                {missingOptional.slice(0, 4).map(field => (
-                                    <div 
+                                {missingOptional.slice(0, 4).map((field) => (
+                                    <div
                                         key={field.field}
                                         className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-navy-800/50 rounded text-xs text-slate-500 dark:text-slate-400"
                                     >
@@ -307,21 +303,23 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
                     )}
 
                     {/* Completed Fields */}
-                    {showDetails && fields.filter(f => f.isFilled).length > 0 && (
+                    {showDetails && fields.filter((f) => f.isFilled).length > 0 && (
                         <div>
                             <div className="text-[10px] uppercase tracking-wider font-semibold text-green-600 dark:text-green-400 mb-1.5">
-                                Completed ({fields.filter(f => f.isFilled).length})
+                                Completed ({fields.filter((f) => f.isFilled).length})
                             </div>
                             <div className="flex flex-wrap gap-1">
-                                {fields.filter(f => f.isFilled).map(field => (
-                                    <div 
-                                        key={field.field}
-                                        className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-900/20 rounded text-[10px] text-green-700 dark:text-green-400"
-                                    >
-                                        <CheckCircle2 size={10} />
-                                        <span>{field.label}</span>
-                                    </div>
-                                ))}
+                                {fields
+                                    .filter((f) => f.isFilled)
+                                    .map((field) => (
+                                        <div
+                                            key={field.field}
+                                            className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-900/20 rounded text-[10px] text-green-700 dark:text-green-400"
+                                        >
+                                            <CheckCircle2 size={10} />
+                                            <span>{field.label}</span>
+                                        </div>
+                                    ))}
                             </div>
                         </div>
                     )}
@@ -338,12 +336,4 @@ export const getInitiativeCompleteness = (initiative: InitiativeCompletenessChec
 };
 
 export default InitiativeCompletenessChecker;
-
-
-
-
-
-
-
-
 

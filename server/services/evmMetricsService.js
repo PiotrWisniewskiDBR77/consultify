@@ -22,7 +22,8 @@
  * - TCPI (To-Complete Performance Index)
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 
 
@@ -386,6 +387,7 @@ const EVMMetricsService = {
 };
 
 export default EVMMetricsService;
+
 
 
 

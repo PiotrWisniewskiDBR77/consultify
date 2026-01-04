@@ -62,7 +62,7 @@ const logger = {
                 url: req.originalUrl,
                 status: res.statusCode,
                 duration: `${duration}ms`,
-                ip: req.ip || (req.socket?.remoteAddress) || 'unknown',
+                ip: req.ip || req.socket?.remoteAddress || 'unknown',
                 userAgent: req.get('User-Agent') || 'unknown',
             };
             if (res.statusCode >= 400) {
@@ -73,7 +73,7 @@ const logger = {
             }
         });
         next();
-    }
+    },
 };
 export default logger;
 //# sourceMappingURL=logger.js.map

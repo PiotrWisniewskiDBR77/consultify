@@ -1,6 +1,6 @@
 /**
  * OrganizationProfileView - Organization Profile & Branding Management
- * 
+ *
  * Features:
  * - Organization name, logo, description
  * - Branding (colors, favicon)
@@ -9,33 +9,34 @@
  * - Industry & company size
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Building2,
-    Image,
-    Globe,
-    Palette,
-    Save,
-    Upload,
-    Check,
     AlertCircle,
-    ExternalLink,
-    RefreshCw,
+    Building2,
     Calendar,
+    Check,
     Clock,
-    Languages,
     DollarSign,
+    ExternalLink,
+    Globe,
+    Image,
+    Languages,
     Link,
     Linkedin,
+    Palette,
+    RefreshCw,
+    Save,
     Twitter,
-    Users
+    Upload,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
-import { OrganizationProfile, CompanySize } from '../../types';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
+import { CompanySize, OrganizationProfile } from '../../types';
 
 // Industry options
 const INDUSTRIES = [
@@ -53,7 +54,7 @@ const INDUSTRIES = [
     'Legal',
     'Media & Entertainment',
     'Transportation & Logistics',
-    'Other'
+    'Other',
 ];
 
 // Company size options
@@ -64,7 +65,7 @@ const COMPANY_SIZES: { value: CompanySize; label: string }[] = [
     { value: '201-500', label: '201-500 employees' },
     { value: '501-1000', label: '501-1000 employees' },
     { value: '1001-5000', label: '1001-5000 employees' },
-    { value: '5000+', label: '5000+ employees' }
+    { value: '5000+', label: '5000+ employees' },
 ];
 
 // Timezone options (simplified list)
@@ -81,7 +82,7 @@ const TIMEZONES = [
     'Asia/Tokyo',
     'Asia/Shanghai',
     'Asia/Dubai',
-    'Australia/Sydney'
+    'Australia/Sydney',
 ];
 
 // Language options
@@ -91,7 +92,7 @@ const LANGUAGES = [
     { code: 'de', name: 'Deutsch' },
     { code: 'fr', name: 'Français' },
     { code: 'es', name: 'Español' },
-    { code: 'ar', name: 'العربية' }
+    { code: 'ar', name: 'العربية' },
 ];
 
 // Currency options
@@ -101,7 +102,7 @@ const CURRENCIES = [
     { code: 'GBP', symbol: '£', name: 'British Pound' },
     { code: 'PLN', symbol: 'zł', name: 'Polish Zloty' },
     { code: 'SAR', symbol: 'ر.س', name: 'Saudi Riyal' },
-    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' }
+    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
 ];
 
 interface OrganizationProfileViewProps {
@@ -137,7 +138,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         timeFormat: '24h',
         currency: 'USD',
         linkedinUrl: '',
-        twitterUrl: ''
+        twitterUrl: '',
     });
 
     useEffect(() => {
@@ -150,13 +151,13 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         setLoading(true);
         try {
             const res = await fetch(`/api/organization-profiles/${currentOrganization?.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
                 // API returns { exists, profile, completeness }
                 if (data.exists && data.profile) {
-                    setProfile(prev => ({ ...prev, ...data.profile }));
+                    setProfile((prev) => ({ ...prev, ...data.profile }));
                 }
             }
         } catch (error) {
@@ -173,9 +174,9 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(profile)
+                body: JSON.stringify(profile),
             });
 
             if (res.ok) {
@@ -191,7 +192,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
     };
 
     const updateProfile = <K extends keyof OrganizationProfile>(key: K, value: OrganizationProfile[K]) => {
-        setProfile(prev => ({ ...prev, [key]: value }));
+        setProfile((prev) => ({ ...prev, [key]: value }));
         setHasChanges(true);
     };
 
@@ -217,8 +218,8 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         try {
             const res = await fetch(`/api/organizations/${currentOrganization?.id}/logo`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                body: formData
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                body: formData,
             });
 
             if (res.ok) {
@@ -239,9 +240,9 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ domain: profile.customDomain })
+                body: JSON.stringify({ domain: profile.customDomain }),
             });
 
             if (res.ok) {
@@ -263,7 +264,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         { id: 'profile' as const, label: t('admin.org.tabs.profile', 'Profile'), icon: Building2 },
         { id: 'branding' as const, label: t('admin.org.tabs.branding', 'Branding'), icon: Palette },
         { id: 'regional' as const, label: t('admin.org.tabs.regional', 'Regional'), icon: Globe },
-        { id: 'domain' as const, label: t('admin.org.tabs.domain', 'Custom Domain'), icon: Link }
+        { id: 'domain' as const, label: t('admin.org.tabs.domain', 'Custom Domain'), icon: Link },
     ];
 
     if (loading) {
@@ -286,7 +287,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         {t('admin.org.profile.title', 'Organization Profile')}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('admin.org.profile.desc', 'Manage your organization\'s profile, branding, and settings')}
+                        {t('admin.org.profile.desc', "Manage your organization's profile, branding, and settings")}
                     </p>
                 </div>
                 <button
@@ -294,9 +295,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     disabled={saving || !hasChanges}
                     className={`
                         flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all
-                        ${hasChanges
-                            ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                        ${
+                            hasChanges
+                                ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                         }
                     `}
                 >
@@ -307,15 +309,16 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`
                             flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2
-                            ${activeTab === tab.id
-                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                            ${
+                                activeTab === tab.id
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                             }
                         `}
                     >
@@ -340,12 +343,16 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                             <div className="flex items-start gap-6">
                                 {/* Logo Upload */}
                                 <div className="flex-shrink-0">
-                                    <div 
+                                    <div
                                         className="w-24 h-24 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-700 dark:to-navy-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-violet-500 transition-all overflow-hidden"
                                         onClick={() => fileInputRef.current?.click()}
                                     >
                                         {profile.logoUrl ? (
-                                            <img src={profile.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                            <img
+                                                src={profile.logoUrl}
+                                                alt="Logo"
+                                                className="w-full h-full object-cover"
+                                            />
                                         ) : (
                                             <div className="text-center">
                                                 <Upload className="w-6 h-6 text-slate-400 mx-auto mb-1" />
@@ -408,8 +415,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         onChange={(e) => updateProfile('industry', e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                                     >
-                                        {INDUSTRIES.map(industry => (
-                                            <option key={industry} value={industry}>{industry}</option>
+                                        {INDUSTRIES.map((industry) => (
+                                            <option key={industry} value={industry}>
+                                                {industry}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -422,8 +431,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         onChange={(e) => updateProfile('companySize', e.target.value as CompanySize)}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                                     >
-                                        {COMPANY_SIZES.map(size => (
-                                            <option key={size.value} value={size.value}>{size.label}</option>
+                                        {COMPANY_SIZES.map((size) => (
+                                            <option key={size.value} value={size.value}>
+                                                {size.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -432,7 +443,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         {t('admin.org.website', 'Website')}
                                     </label>
                                     <div className="relative">
-                                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <Globe
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="url"
                                             value={profile.website || ''}
@@ -456,7 +470,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         LinkedIn
                                     </label>
                                     <div className="relative">
-                                        <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <Linkedin
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="url"
                                             value={profile.linkedinUrl || ''}
@@ -471,7 +488,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         Twitter / X
                                     </label>
                                     <div className="relative">
-                                        <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <Twitter
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                            size={16}
+                                        />
                                         <input
                                             type="url"
                                             value={profile.twitterUrl || ''}
@@ -557,10 +577,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                     >
                                         Accent Button
                                     </button>
-                                    <span
-                                        style={{ color: profile.brandColor }}
-                                        className="font-semibold"
-                                    >
+                                    <span style={{ color: profile.brandColor }} className="font-semibold">
                                         Primary Text
                                     </span>
                                 </div>
@@ -588,11 +605,15 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                     ref={faviconInputRef}
                                     type="file"
                                     accept="image/*,.ico"
-                                    onChange={(e) => {/* Similar to logo upload */}}
+                                    onChange={(e) => {
+                                        /* Similar to logo upload */
+                                    }}
                                     className="hidden"
                                 />
                                 <div>
-                                    <p className="text-sm text-slate-700 dark:text-slate-300">Upload a favicon (16x16 or 32x32 pixels)</p>
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                                        Upload a favicon (16x16 or 32x32 pixels)
+                                    </p>
                                     <p className="text-xs text-slate-500">PNG, ICO, or SVG recommended</p>
                                 </div>
                             </div>
@@ -625,8 +646,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         onChange={(e) => updateProfile('defaultTimezone', e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                                     >
-                                        {TIMEZONES.map(tz => (
-                                            <option key={tz} value={tz}>{tz}</option>
+                                        {TIMEZONES.map((tz) => (
+                                            <option key={tz} value={tz}>
+                                                {tz}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -640,8 +663,10 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         onChange={(e) => updateProfile('defaultLanguage', e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                                     >
-                                        {LANGUAGES.map(lang => (
-                                            <option key={lang.code} value={lang.code}>{lang.name}</option>
+                                        {LANGUAGES.map((lang) => (
+                                            <option key={lang.code} value={lang.code}>
+                                                {lang.name}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -684,7 +709,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         onChange={(e) => updateProfile('currency', e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                                     >
-                                        {CURRENCIES.map(curr => (
+                                        {CURRENCIES.map((curr) => (
                                             <option key={curr.code} value={curr.code}>
                                                 {curr.symbol} {curr.code} - {curr.name}
                                             </option>
@@ -754,11 +779,15 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         </div>
                                         <div className="flex justify-between mt-1">
                                             <span className="text-slate-500">Name:</span>
-                                            <span className="text-slate-900 dark:text-white">{profile.customDomain?.split('.')[0]}</span>
+                                            <span className="text-slate-900 dark:text-white">
+                                                {profile.customDomain?.split('.')[0]}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between mt-1">
                                             <span className="text-slate-500">Value:</span>
-                                            <span className="text-slate-900 dark:text-white">custom.consultify.app</span>
+                                            <span className="text-slate-900 dark:text-white">
+                                                custom.consultify.app
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -786,4 +815,3 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
 };
 
 export default OrganizationProfileView;
-

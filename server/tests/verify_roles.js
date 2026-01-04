@@ -1,4 +1,4 @@
-import AiService from '../services/aiService.js';
+import AiService from '../src/services/aiService.js';
 import db from '../database.js';
 
 // Mock dependencies if needed, but we want to test DB integration mainly.

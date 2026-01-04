@@ -1,14 +1,12 @@
 /**
  * Initiativestatus Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadInitiativestatusservice = createCachedLazyService('../../services/initiativeStatusService.js');
+import service from '../../services/initiativeStatusService.js';
 
 // Export default instance (for backward compatibility)
-export default loadInitiativestatusservice();
+export default service;

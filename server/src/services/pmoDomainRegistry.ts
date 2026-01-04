@@ -1,11 +1,12 @@
 /**
  * PMO Domain Registry Service
- * 
+ *
  * SCMS Meta-PMO Framework: Certifiable, Methodology-Neutral PMO Model
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { queryRun, queryAll, queryOne } from '../utils/queryHelpers.js';
+
+import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
 
 /**
  * PMO Domain IDs - Certifiable Core Domains
@@ -17,10 +18,10 @@ export const PMO_DOMAIN_IDS = {
     RISK_ISSUE_MANAGEMENT: 'RISK_ISSUE_MANAGEMENT',
     RESOURCE_RESPONSIBILITY: 'RESOURCE_RESPONSIBILITY',
     PERFORMANCE_MONITORING: 'PERFORMANCE_MONITORING',
-    BENEFITS_REALIZATION: 'BENEFITS_REALIZATION'
+    BENEFITS_REALIZATION: 'BENEFITS_REALIZATION',
 } as const;
 
-export type PMODomainId = typeof PMO_DOMAIN_IDS[keyof typeof PMO_DOMAIN_IDS];
+export type PMODomainId = (typeof PMO_DOMAIN_IDS)[keyof typeof PMO_DOMAIN_IDS];
 
 export interface PMODomain {
     id: string;
@@ -49,7 +50,8 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 1,
         scmsObjects: ['Decision', 'Escalation', 'GovernancePolicy', 'StageGate', 'ChangeRequest'],
-        certificationNotes: 'Provides traceability for governance audit trails. Maps to ISO 21500 Clause 4.3 (Governance framework).'
+        certificationNotes:
+            'Provides traceability for governance audit trails. Maps to ISO 21500 Clause 4.3 (Governance framework).',
     },
     {
         id: PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL,
@@ -61,7 +63,7 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 2,
         scmsObjects: ['Initiative', 'Task', 'ScheduleBaseline', 'ChangeRequest'],
-        certificationNotes: 'Supports ISO 21500 Clause 4.4.4 (Define scope) and PMBOK integrated change control.'
+        certificationNotes: 'Supports ISO 21500 Clause 4.4.4 (Define scope) and PMBOK integrated change control.',
     },
     {
         id: PMO_DOMAIN_IDS.SCHEDULE_MILESTONES,
@@ -73,7 +75,8 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 3,
         scmsObjects: ['Phase', 'StageGate', 'Roadmap', 'RoadmapInitiative', 'Wave'],
-        certificationNotes: 'Maps to ISO 21500 Clause 4.4.6 (Define sequence of activities). Phase gates align with PRINCE2 Stage boundaries.'
+        certificationNotes:
+            'Maps to ISO 21500 Clause 4.4.6 (Define sequence of activities). Phase gates align with PRINCE2 Stage boundaries.',
     },
     {
         id: PMO_DOMAIN_IDS.RISK_ISSUE_MANAGEMENT,
@@ -85,7 +88,7 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 4,
         scmsObjects: ['Risk', 'Issue', 'BlockedReason', 'RiskAssessment'],
-        certificationNotes: 'Provides RAID log functionality. Maps to ISO 21500 Clause 4.4.13 (Identify risks).'
+        certificationNotes: 'Provides RAID log functionality. Maps to ISO 21500 Clause 4.4.13 (Identify risks).',
     },
     {
         id: PMO_DOMAIN_IDS.RESOURCE_RESPONSIBILITY,
@@ -97,7 +100,8 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 5,
         scmsObjects: ['User', 'Team', 'Assignment', 'Capacity', 'Owner'],
-        certificationNotes: 'Supports RACI matrices and resource leveling. Maps to ISO 21500 Clause 4.4.8 (Develop team).'
+        certificationNotes:
+            'Supports RACI matrices and resource leveling. Maps to ISO 21500 Clause 4.4.8 (Develop team).',
     },
     {
         id: PMO_DOMAIN_IDS.PERFORMANCE_MONITORING,
@@ -109,7 +113,8 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 6,
         scmsObjects: ['PMOHealth', 'KPI', 'VarianceReport', 'Progress', 'ExecutiveReport'],
-        certificationNotes: 'Provides earned value and health scoring. Maps to ISO 21500 Clause 4.4.22 (Control project work).'
+        certificationNotes:
+            'Provides earned value and health scoring. Maps to ISO 21500 Clause 4.4.22 (Control project work).',
     },
     {
         id: PMO_DOMAIN_IDS.BENEFITS_REALIZATION,
@@ -121,8 +126,9 @@ export const PMO_DOMAINS: PMODomain[] = [
         isConfigurable: true,
         sortOrder: 7,
         scmsObjects: ['ValueHypothesis', 'FinancialAssumption', 'ProjectClosure', 'StabilizationStatus'],
-        certificationNotes: 'Placeholder domain for future enhancement. Maps to PRINCE2 continued business justification principle.'
-    }
+        certificationNotes:
+            'Placeholder domain for future enhancement. Maps to PRINCE2 continued business justification principle.',
+    },
 ];
 
 export class PMODomainRegistry {
@@ -131,20 +137,23 @@ export class PMODomainRegistry {
      */
     static async seedDomains(): Promise<{ seeded: number }> {
         for (const domain of PMO_DOMAINS) {
-            await queryRun(`
+            await queryRun(
+                `
                 INSERT OR REPLACE INTO pmo_domains 
                 (id, name, description, iso21500_term, pmbok_term, prince2_term, is_configurable, sort_order)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                domain.id,
-                domain.name,
-                domain.description,
-                domain.iso21500Term,
-                domain.pmbokTerm,
-                domain.prince2Term,
-                domain.isConfigurable ? 1 : 0,
-                domain.sortOrder
-            ]);
+            `,
+                [
+                    domain.id,
+                    domain.name,
+                    domain.description,
+                    domain.iso21500Term,
+                    domain.pmbokTerm,
+                    domain.prince2Term,
+                    domain.isConfigurable ? 1 : 0,
+                    domain.sortOrder,
+                ],
+            );
         }
         return { seeded: PMO_DOMAINS.length };
     }
@@ -161,7 +170,7 @@ export class PMODomainRegistry {
      * Get a specific domain by ID
      */
     static async getDomain(domainId: string): Promise<any> {
-        const domain = PMO_DOMAINS.find(d => d.id === domainId);
+        const domain = PMO_DOMAINS.find((d) => d.id === domainId);
         if (!domain) {
             throw new Error(`Unknown PMO domain: ${domainId}`);
         }
@@ -174,16 +183,19 @@ export class PMODomainRegistry {
      * Get enabled domains for a project
      */
     static async getProjectDomains(projectId: string): Promise<any[]> {
-        const rows = await queryAll(`
+        const rows = await queryAll(
+            `
             SELECT pd.*, ppd.is_enabled, ppd.enabled_at
             FROM pmo_domains pd
             LEFT JOIN project_pmo_domains ppd ON pd.id = ppd.domain_id AND ppd.project_id = ?
             ORDER BY pd.sort_order
-        `, [projectId]);
+        `,
+            [projectId],
+        );
 
         return (rows || []).map((row: any) => ({
             ...row,
-            isEnabled: row.is_enabled !== 0 // null or 1 = enabled
+            isEnabled: row.is_enabled !== 0, // null or 1 = enabled
         }));
     }
 
@@ -192,19 +204,25 @@ export class PMODomainRegistry {
      */
     static async configureProjectDomains(projectId: string, enabledDomainIds: string[], userId: string): Promise<any> {
         // First, set all domains to disabled for this project
-        await queryRun(`
+        await queryRun(
+            `
             INSERT OR REPLACE INTO project_pmo_domains (project_id, domain_id, is_enabled, enabled_by, enabled_at)
             SELECT ?, id, 0, ?, CURRENT_TIMESTAMP FROM pmo_domains
-        `, [projectId, userId]);
+        `,
+            [projectId, userId],
+        );
 
         // Then enable the specified domains
         if (enabledDomainIds.length > 0) {
             const placeholders = enabledDomainIds.map(() => '?').join(',');
-            const result = await queryRun(`
+            const result = await queryRun(
+                `
                 UPDATE project_pmo_domains 
                 SET is_enabled = 1, enabled_by = ?, enabled_at = CURRENT_TIMESTAMP
                 WHERE project_id = ? AND domain_id IN (${placeholders})
-            `, [userId, projectId, ...enabledDomainIds]);
+            `,
+                [userId, projectId, ...enabledDomainIds],
+            );
 
             return { projectId, enabledDomains: enabledDomainIds, changes: result.changes };
         }
@@ -216,7 +234,7 @@ export class PMODomainRegistry {
      * Get SCMS objects that belong to a specific domain
      */
     static getDomainObjects(domainId: string): string[] {
-        const domain = PMO_DOMAINS.find(d => d.id === domainId);
+        const domain = PMO_DOMAINS.find((d) => d.id === domainId);
         return domain ? domain.scmsObjects : [];
     }
 
@@ -224,10 +242,10 @@ export class PMODomainRegistry {
      * Determine which domain an SCMS object belongs to
      */
     static getDomainForObject(objectType: string): PMODomain {
-        const domain = PMO_DOMAINS.find(d => d.scmsObjects.includes(objectType));
+        const domain = PMO_DOMAINS.find((d) => d.scmsObjects.includes(objectType));
         if (domain) return domain;
 
-        const fallback = PMO_DOMAINS.find(d => d.id === 'integration_management');
+        const fallback = PMO_DOMAINS.find((d) => d.id === 'integration_management');
         if (fallback) return fallback;
 
         // Final fallback to the first domain if integration_management is missing
@@ -238,7 +256,7 @@ export class PMODomainRegistry {
      * Get certification notes for a domain
      */
     static getCertificationNotes(domainId: string): string {
-        const domain = PMO_DOMAINS.find(d => d.id === domainId);
+        const domain = PMO_DOMAINS.find((d) => d.id === domainId);
         return domain ? domain.certificationNotes : '';
     }
 
@@ -246,18 +264,10 @@ export class PMODomainRegistry {
      * Record an action in the PMO audit trail
      */
     static async recordAuditEntry(auditData: any): Promise<any> {
-        const {
-            projectId,
-            pmoDomainId,
-            pmoPhase,
-            objectType,
-            objectId,
-            action,
-            actorId
-        } = auditData;
+        const { projectId, pmoDomainId, pmoPhase, objectType, objectId, action, actorId } = auditData;
 
         const id = uuidv4();
-        const domain = PMO_DOMAINS.find(d => d.id === pmoDomainId);
+        const domain = PMO_DOMAINS.find((d) => d.id === pmoDomainId);
 
         const sql = `
             INSERT INTO pmo_audit_trail 
@@ -276,7 +286,7 @@ export class PMODomainRegistry {
             actorId,
             domain?.iso21500Term || 'N/A',
             domain?.pmbokTerm || 'N/A',
-            domain?.prince2Term || 'N/A'
+            domain?.prince2Term || 'N/A',
         ]);
 
         return { id, ...auditData };

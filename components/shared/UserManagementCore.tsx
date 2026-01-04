@@ -1,11 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { User, UserRole } from '../../types';
-import { Api } from '../../services/api';
-import { 
-    Users, Search, Plus, Trash2, Edit, Shield, Lock, UserPlus,
-    CheckCircle, AlertCircle, X, GitBranch
+import {
+    AlertCircle,
+    CheckCircle,
+    Edit,
+    GitBranch,
+    Lock,
+    Plus,
+    Search,
+    Shield,
+    Trash2,
+    UserPlus,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
+import { User, UserRole } from '../../types';
 import { UserAssignmentsPanel } from '../Admin/UserAssignmentsPanel';
 
 export interface UserManagementCoreProps {
@@ -41,12 +52,12 @@ export const UserTableRow: React.FC<{
     showBlock?: boolean;
     showAssignments?: boolean;
     mode: 'org-admin' | 'platform';
-}> = ({ 
-    user, 
-    userPlans, 
-    onEdit, 
-    onDelete, 
-    onMove, 
+}> = ({
+    user,
+    userPlans,
+    onEdit,
+    onDelete,
+    onMove,
     onBlock,
     onImpersonate,
     onResetPassword,
@@ -55,7 +66,7 @@ export const UserTableRow: React.FC<{
     showImpersonate,
     showBlock,
     showAssignments,
-    mode
+    mode,
 }) => {
     const getRoleBadgeColor = (role?: string) => {
         if (role === 'SUPERADMIN') return 'bg-red-500/20 text-red-400';
@@ -71,7 +82,9 @@ export const UserTableRow: React.FC<{
                         {user.firstName?.[0] || '?'}
                     </div>
                     <div>
-                        <div className="text-white font-medium">{user.firstName} {user.lastName}</div>
+                        <div className="text-white font-medium">
+                            {user.firstName} {user.lastName}
+                        </div>
                         <div className="text-xs text-slate-400">{user.email}</div>
                     </div>
                 </div>
@@ -88,11 +101,13 @@ export const UserTableRow: React.FC<{
             </td>
             <td className="px-6 py-4">
                 <span className="text-xs text-slate-400">
-                    {userPlans.find(p => p.id === user.licensePlanId)?.name || 'Standard'}
+                    {userPlans.find((p) => p.id === user.licensePlanId)?.name || 'Standard'}
                 </span>
             </td>
             <td className="px-6 py-4">
-                <span className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
+                <span
+                    className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-red-400'}`}
+                >
                     {user.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
                     {user.status || 'active'}
                 </span>
@@ -100,8 +115,8 @@ export const UserTableRow: React.FC<{
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">
                     {onResetPassword && (
-                        <button 
-                            onClick={() => onResetPassword(user.id)} 
+                        <button
+                            onClick={() => onResetPassword(user.id)}
                             className="p-2 hover:bg-yellow-500/20 rounded-lg text-slate-400 hover:text-yellow-400"
                             title="Reset Password"
                         >
@@ -109,8 +124,8 @@ export const UserTableRow: React.FC<{
                         </button>
                     )}
                     {onEdit && (
-                        <button 
-                            onClick={() => onEdit(user)} 
+                        <button
+                            onClick={() => onEdit(user)}
                             className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"
                             title="Edit"
                         >
@@ -118,8 +133,8 @@ export const UserTableRow: React.FC<{
                         </button>
                     )}
                     {showAssignments && onAssignments && (
-                        <button 
-                            onClick={() => onAssignments(user)} 
+                        <button
+                            onClick={() => onAssignments(user)}
                             className="p-2 hover:bg-green-500/20 rounded-lg text-slate-400 hover:text-green-400"
                             title="Manage Assignments"
                         >
@@ -127,8 +142,8 @@ export const UserTableRow: React.FC<{
                         </button>
                     )}
                     {showMove && onMove && (
-                        <button 
-                            onClick={() => onMove(user)} 
+                        <button
+                            onClick={() => onMove(user)}
                             className="p-2 hover:bg-blue-500/20 rounded-lg text-slate-400 hover:text-blue-400 text-xs font-medium"
                             title="Move to Organization"
                         >
@@ -136,8 +151,8 @@ export const UserTableRow: React.FC<{
                         </button>
                     )}
                     {showImpersonate && onImpersonate && user.role !== 'SUPERADMIN' && (
-                        <button 
-                            onClick={() => onImpersonate(user.id)} 
+                        <button
+                            onClick={() => onImpersonate(user.id)}
                             className="p-2 hover:bg-purple-500/20 rounded-lg text-slate-400 hover:text-purple-400 text-xs font-medium"
                             title="Impersonate"
                         >
@@ -145,11 +160,11 @@ export const UserTableRow: React.FC<{
                         </button>
                     )}
                     {showBlock && onBlock && user.role !== 'SUPERADMIN' && (
-                        <button 
-                            onClick={() => onBlock(user.id, user.status || 'active')} 
+                        <button
+                            onClick={() => onBlock(user.id, user.status || 'active')}
                             className={`p-2 rounded-lg text-xs font-medium ${
-                                user.status === 'active' 
-                                    ? 'hover:bg-red-500/20 text-slate-400 hover:text-red-400' 
+                                user.status === 'active'
+                                    ? 'hover:bg-red-500/20 text-slate-400 hover:text-red-400'
                                     : 'hover:bg-green-500/20 text-red-400 hover:text-green-400'
                             }`}
                             title={user.status === 'active' ? 'Block' : 'Unblock'}
@@ -158,8 +173,8 @@ export const UserTableRow: React.FC<{
                         </button>
                     )}
                     {onDelete && (
-                        <button 
-                            onClick={() => onDelete(user.id)} 
+                        <button
+                            onClick={() => onDelete(user.id)}
                             className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"
                             title="Delete"
                         >
@@ -186,7 +201,7 @@ export const UserFormModal: React.FC<{
         email: '',
         role: UserRole.OTHER,
         status: 'active',
-        licensePlanId: ''
+        licensePlanId: '',
     });
 
     useEffect(() => {
@@ -197,7 +212,7 @@ export const UserFormModal: React.FC<{
                 email: editingUser.email || '',
                 role: (editingUser.role as UserRole) || UserRole.OTHER,
                 status: editingUser.status || 'active',
-                licensePlanId: editingUser.licensePlanId || ''
+                licensePlanId: editingUser.licensePlanId || '',
             });
         } else {
             setFormData({
@@ -206,7 +221,7 @@ export const UserFormModal: React.FC<{
                 email: '',
                 role: UserRole.OTHER,
                 status: 'active',
-                licensePlanId: ''
+                licensePlanId: '',
             });
         }
     }, [editingUser]);
@@ -222,57 +237,57 @@ export const UserFormModal: React.FC<{
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-white">
-                        {editingUser ? 'Edit User' : 'Add New User'}
-                    </h2>
+                    <h2 className="text-xl font-bold text-white">{editingUser ? 'Edit User' : 'Add New User'}</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-white">
                         <X size={20} />
                     </button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input 
-                        required 
-                        placeholder="First Name" 
-                        value={formData.firstName} 
-                        onChange={e => setFormData({ ...formData, firstName: e.target.value })} 
-                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" 
+                    <input
+                        required
+                        placeholder="First Name"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
                     />
-                    <input 
-                        required 
-                        placeholder="Last Name" 
-                        value={formData.lastName} 
-                        onChange={e => setFormData({ ...formData, lastName: e.target.value })} 
-                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" 
+                    <input
+                        required
+                        placeholder="Last Name"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
                     />
-                    <input 
-                        required 
+                    <input
+                        required
                         type="email"
-                        placeholder="Email" 
-                        value={formData.email} 
-                        onChange={e => setFormData({ ...formData, email: e.target.value })} 
-                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" 
+                        placeholder="Email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
                     />
-                    <select 
-                        value={formData.role} 
-                        onChange={e => setFormData({ ...formData, role: e.target.value as any })} 
+                    <select
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                         className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
                     >
                         <option value="USER">User</option>
                         <option value="MANAGER">Manager</option>
                         <option value="ADMIN">Admin</option>
                     </select>
-                    <select 
-                        value={formData.licensePlanId} 
-                        onChange={e => setFormData({ ...formData, licensePlanId: e.target.value })} 
+                    <select
+                        value={formData.licensePlanId}
+                        onChange={(e) => setFormData({ ...formData, licensePlanId: e.target.value })}
                         className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
                     >
                         <option value="">Select License...</option>
-                        {userPlans.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} (${p.price_monthly})</option>
+                        {userPlans.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name} (${p.price_monthly})
+                            </option>
                         ))}
                     </select>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4"
                     >
                         Save
@@ -311,7 +326,7 @@ export const InviteUserModal: React.FC<{
                             type="email"
                             required
                             value={inviteForm.email}
-                            onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
+                            onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                         />
                     </div>
@@ -319,7 +334,7 @@ export const InviteUserModal: React.FC<{
                         <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>
                         <select
                             value={inviteForm.role}
-                            onChange={e => setInviteForm({ ...inviteForm, role: e.target.value })}
+                            onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
                             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                         >
                             <option value="USER">User (Standard)</option>
@@ -331,26 +346,28 @@ export const InviteUserModal: React.FC<{
                         <label className="block text-xs font-medium text-slate-400 mb-1">Organization</label>
                         <select
                             value={inviteForm.organizationId}
-                            onChange={e => setInviteForm({ ...inviteForm, organizationId: e.target.value })}
+                            onChange={(e) => setInviteForm({ ...inviteForm, organizationId: e.target.value })}
                             required
                             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                         >
                             <option value="">Select Organization...</option>
-                            {organizations.map(org => (
-                                <option key={org.id} value={org.id}>{org.name}</option>
+                            {organizations.map((org) => (
+                                <option key={org.id} value={org.id}>
+                                    {org.name}
+                                </option>
                             ))}
                         </select>
                     </div>
                     <div className="flex gap-3 pt-4">
-                        <button 
-                            type="button" 
-                            onClick={onClose} 
+                        <button
+                            type="button"
+                            onClick={onClose}
                             className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 rounded text-slate-300"
                         >
                             Cancel
                         </button>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium"
                         >
                             Send Invitation
@@ -385,33 +402,39 @@ export const MoveUserModal: React.FC<{
             <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
                 <h3 className="text-xl font-bold mb-4 text-white">Move User to Organization</h3>
                 <p className="text-sm text-slate-400 mb-4">
-                    Select the new organization for <span className="text-white font-medium">{user.firstName} {user.lastName}</span> ({user.email}).
+                    Select the new organization for{' '}
+                    <span className="text-white font-medium">
+                        {user.firstName} {user.lastName}
+                    </span>{' '}
+                    ({user.email}).
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">Target Organization</label>
                         <select
                             value={targetOrgId}
-                            onChange={e => setTargetOrgId(e.target.value)}
+                            onChange={(e) => setTargetOrgId(e.target.value)}
                             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                             required
                         >
                             <option value="">Select Organization...</option>
-                            {organizations.map(org => (
-                                <option key={org.id} value={org.id}>{org.name} ({org.status})</option>
+                            {organizations.map((org) => (
+                                <option key={org.id} value={org.id}>
+                                    {org.name} ({org.status})
+                                </option>
                             ))}
                         </select>
                     </div>
                     <div className="flex gap-3 pt-4">
-                        <button 
-                            type="button" 
-                            onClick={onClose} 
+                        <button
+                            type="button"
+                            onClick={onClose}
                             className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 rounded text-slate-300"
                         >
                             Cancel
                         </button>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium"
                         >
                             Move User
@@ -434,7 +457,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     showBlock = false,
     showRoleManagement = true,
     showLicenseManagement = true,
-    className = ''
+    className = '',
 }) => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [userPlans, setUserPlans] = useState<any[]>([]);
@@ -451,9 +474,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     const loadUsers = useCallback(async () => {
         try {
             setLoading(true);
-            const fetchedUsers = mode === 'platform' 
-                ? await Api.getSuperAdminUsers()
-                : await Api.getUsers();
+            const fetchedUsers = mode === 'platform' ? await Api.getSuperAdminUsers() : await Api.getUsers();
             setUsers(fetchedUsers);
         } catch (e) {
             console.error('Failed to load users', e);
@@ -476,10 +497,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
         loadData();
     }, [loadUsers]);
 
-    const filteredUsers = users.filter(u =>
-        (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.lastName || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredUsers = users.filter(
+        (u) =>
+            (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (u.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (u.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     const handleSaveUser = async (formData: any) => {
@@ -619,7 +641,10 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                             </tr>
                         ) : filteredUsers.length === 0 ? (
                             <tr>
-                                <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
+                                <td
+                                    colSpan={mode === 'platform' ? 6 : 5}
+                                    className="px-6 py-12 text-center text-slate-500"
+                                >
                                     No users found
                                 </td>
                             </tr>
@@ -652,7 +677,10 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 isOpen={showUserModal}
                 editingUser={editingUser}
                 userPlans={userPlans}
-                onClose={() => { setShowUserModal(false); setEditingUser(null); }}
+                onClose={() => {
+                    setShowUserModal(false);
+                    setEditingUser(null);
+                }}
                 onSave={handleSaveUser}
             />
 
@@ -691,4 +719,3 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
 };
 
 export default UserManagementCore;
-

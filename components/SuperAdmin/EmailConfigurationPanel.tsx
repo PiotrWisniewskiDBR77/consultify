@@ -1,6 +1,6 @@
 /**
  * EmailConfigurationPanel - Email Configuration Management
- * 
+ *
  * Features:
  * - SMTP full config (username, password, TLS)
  * - Email provider selection (SMTP, SendGrid, Mailgun)
@@ -8,27 +8,28 @@
  * - Test email button
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Mail,
-    Server,
-    Shield,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
+    Building2,
+    CheckCircle2,
+    Eye,
+    EyeOff,
+    Globe,
+    Info,
+    Loader2,
+    Lock,
+    Mail,
     RefreshCw,
     Save,
     Send,
-    Eye,
-    EyeOff,
-    Building2,
-    Globe,
-    Lock,
-    Loader2,
-    Info
+    Server,
+    Shield,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface EmailConfig {
     id?: string;
@@ -89,19 +90,21 @@ export const EmailConfigurationPanel: React.FC = () => {
 
     const fetchConfig = useCallback(async () => {
         if (!selectedOrgId) return;
-        
+
         setLoading(true);
         try {
             const result = await Api.get(`/settings/email-config?organizationId=${selectedOrgId}`);
-            setConfig(result.config || {
-                organization_id: selectedOrgId,
-                provider: 'smtp',
-                smtp_port: 587,
-                smtp_use_tls: true,
-                spf_verified: false,
-                dkim_verified: false,
-                dmarc_verified: false
-            });
+            setConfig(
+                result.config || {
+                    organization_id: selectedOrgId,
+                    provider: 'smtp',
+                    smtp_port: 587,
+                    smtp_use_tls: true,
+                    spf_verified: false,
+                    dkim_verified: false,
+                    dmarc_verified: false,
+                },
+            );
             setHasChanges(false);
         } catch (error) {
             console.error('Failed to fetch email config:', error);
@@ -112,7 +115,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                 smtp_use_tls: true,
                 spf_verified: false,
                 dkim_verified: false,
-                dmarc_verified: false
+                dmarc_verified: false,
             });
         } finally {
             setLoading(false);
@@ -131,7 +134,7 @@ export const EmailConfigurationPanel: React.FC = () => {
 
     const handleSave = async () => {
         if (!config) return;
-        
+
         setSaving(true);
         try {
             await Api.put(`/settings/email-config?organizationId=${selectedOrgId}`, config);
@@ -165,13 +168,17 @@ export const EmailConfigurationPanel: React.FC = () => {
         setVerifying(true);
         try {
             const result = await Api.post(`/settings/email-config/verify-dns?organizationId=${selectedOrgId}`, {});
-            setConfig(prev => prev ? {
-                ...prev,
-                spf_verified: result.spf,
-                dkim_verified: result.dkim,
-                dmarc_verified: result.dmarc,
-                last_verified_at: new Date().toISOString()
-            } : null);
+            setConfig((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          spf_verified: result.spf,
+                          dkim_verified: result.dkim,
+                          dmarc_verified: result.dmarc,
+                          last_verified_at: new Date().toISOString(),
+                      }
+                    : null,
+            );
             toast.success('DNS verification completed');
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'DNS verification failed';
@@ -183,7 +190,7 @@ export const EmailConfigurationPanel: React.FC = () => {
 
     const updateConfig = (field: keyof EmailConfig, value: any) => {
         if (!config) return;
-        setConfig(prev => prev ? { ...prev, [field]: value } : null);
+        setConfig((prev) => (prev ? { ...prev, [field]: value } : null));
         setHasChanges(true);
     };
 
@@ -265,7 +272,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                         type={showPassword ? 'text' : 'password'}
                         value={config?.api_key_encrypted || ''}
                         onChange={(e) => updateConfig('api_key_encrypted', e.target.value)}
-                        placeholder={`Your ${PROVIDERS.find(p => p.id === config?.provider)?.name} API key`}
+                        placeholder={`Your ${PROVIDERS.find((p) => p.id === config?.provider)?.name} API key`}
                         className="w-full px-4 py-2.5 pr-10 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                     />
                     <button
@@ -337,7 +344,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                     { key: 'dkim_verified', label: 'DKIM', description: 'DomainKeys Identified Mail' },
                     { key: 'dmarc_verified', label: 'DMARC', description: 'Domain-based Message Auth' },
                 ].map(({ key, label, description }) => (
-                    <div 
+                    <div
                         key={key}
                         className={`p-4 rounded-lg border ${
                             config?.[key as keyof EmailConfig]
@@ -375,12 +382,16 @@ export const EmailConfigurationPanel: React.FC = () => {
                     onChange={(e) => setSelectedOrgId(e.target.value)}
                     className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none min-w-[200px]"
                 >
-                    <option value="" disabled>Select Organization</option>
-                    {organizations.map(org => (
-                        <option key={org.id} value={org.id}>{org.name}</option>
+                    <option value="" disabled>
+                        Select Organization
+                    </option>
+                    {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                            {org.name}
+                        </option>
                     ))}
                 </select>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchConfig}
@@ -408,145 +419,152 @@ export const EmailConfigurationPanel: React.FC = () => {
                 <div className="flex items-center justify-center py-20">
                     <Loader2 size={32} className="animate-spin text-violet-500" />
                 </div>
-            ) : config && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Provider Selection & Config */}
-                    <div className="space-y-6">
-                        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                                    <Server size={20} className="text-violet-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-white">Email Provider</h3>
-                                    <p className="text-sm text-slate-400">Choose your email service</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                                {PROVIDERS.map(provider => (
-                                    <button
-                                        key={provider.id}
-                                        onClick={() => updateConfig('provider', provider.id)}
-                                        className={`p-4 rounded-lg border text-left transition-colors ${
-                                            config.provider === provider.id
-                                                ? 'bg-violet-500/20 border-violet-500/50'
-                                                : 'bg-slate-900/50 border-white/[0.06] hover:border-white/20'
-                                        }`}
-                                    >
-                                        <p className={`font-medium ${config.provider === provider.id ? 'text-violet-400' : 'text-white'}`}>
-                                            {provider.name}
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-1">{provider.description}</p>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {config.provider === 'smtp' ? renderSMTPConfig() : renderAPIConfig()}
-                        </div>
-
-                        {/* From Settings */}
-                        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                                    <Mail size={20} className="text-blue-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-white">Sender Settings</h3>
-                                    <p className="text-sm text-slate-400">Configure email sender details</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+            ) : (
+                config && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Provider Selection & Config */}
+                        <div className="space-y-6">
+                            <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                                        <Server size={20} className="text-violet-400" />
+                                    </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">From Email</label>
+                                        <h3 className="font-semibold text-white">Email Provider</h3>
+                                        <p className="text-sm text-slate-400">Choose your email service</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                    {PROVIDERS.map((provider) => (
+                                        <button
+                                            key={provider.id}
+                                            onClick={() => updateConfig('provider', provider.id)}
+                                            className={`p-4 rounded-lg border text-left transition-colors ${
+                                                config.provider === provider.id
+                                                    ? 'bg-violet-500/20 border-violet-500/50'
+                                                    : 'bg-slate-900/50 border-white/[0.06] hover:border-white/20'
+                                            }`}
+                                        >
+                                            <p
+                                                className={`font-medium ${config.provider === provider.id ? 'text-violet-400' : 'text-white'}`}
+                                            >
+                                                {provider.name}
+                                            </p>
+                                            <p className="text-xs text-slate-500 mt-1">{provider.description}</p>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {config.provider === 'smtp' ? renderSMTPConfig() : renderAPIConfig()}
+                            </div>
+
+                            {/* From Settings */}
+                            <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                        <Mail size={20} className="text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-white">Sender Settings</h3>
+                                        <p className="text-sm text-slate-400">Configure email sender details</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                                From Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={config.from_email || ''}
+                                                onChange={(e) => updateConfig('from_email', e.target.value)}
+                                                placeholder="noreply@example.com"
+                                                className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                                From Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={config.from_name || ''}
+                                                onChange={(e) => updateConfig('from_name', e.target.value)}
+                                                placeholder="Consultify"
+                                                className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Reply-To Email (optional)
+                                        </label>
                                         <input
                                             type="email"
-                                            value={config.from_email || ''}
-                                            onChange={(e) => updateConfig('from_email', e.target.value)}
-                                            placeholder="noreply@example.com"
+                                            value={config.reply_to_email || ''}
+                                            onChange={(e) => updateConfig('reply_to_email', e.target.value)}
+                                            placeholder="support@example.com"
                                             className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                         />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* DNS & Test */}
+                        <div className="space-y-6">
+                            {renderDNSVerification()}
+
+                            {/* Test Email */}
+                            <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                                        <Send size={20} className="text-amber-400" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">From Name</label>
-                                        <input
-                                            type="text"
-                                            value={config.from_name || ''}
-                                            onChange={(e) => updateConfig('from_name', e.target.value)}
-                                            placeholder="Consultify"
-                                            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
-                                        />
+                                        <h3 className="font-semibold text-white">Test Configuration</h3>
+                                        <p className="text-sm text-slate-400">Send a test email</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Reply-To Email (optional)</label>
+
+                                <div className="flex gap-3">
                                     <input
                                         type="email"
-                                        value={config.reply_to_email || ''}
-                                        onChange={(e) => updateConfig('reply_to_email', e.target.value)}
-                                        placeholder="support@example.com"
-                                        className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
+                                        value={testEmail}
+                                        onChange={(e) => setTestEmail(e.target.value)}
+                                        placeholder="test@example.com"
+                                        className="flex-1 px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                     />
+                                    <button
+                                        onClick={handleTestEmail}
+                                        disabled={testing}
+                                        className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+                                    >
+                                        {testing ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                                        Send Test
+                                    </button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* DNS & Test */}
-                    <div className="space-y-6">
-                        {renderDNSVerification()}
-
-                        {/* Test Email */}
-                        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                                    <Send size={20} className="text-amber-400" />
-                                </div>
+                            {/* Info */}
+                            <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                <Info size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
                                 <div>
-                                    <h3 className="font-semibold text-white">Test Configuration</h3>
-                                    <p className="text-sm text-slate-400">Send a test email</p>
+                                    <p className="text-sm text-blue-300">
+                                        <strong>Recommended:</strong> Set up SPF, DKIM, and DMARC records to improve
+                                        email deliverability and prevent spoofing.
+                                    </p>
                                 </div>
-                            </div>
-
-                            <div className="flex gap-3">
-                                <input
-                                    type="email"
-                                    value={testEmail}
-                                    onChange={(e) => setTestEmail(e.target.value)}
-                                    placeholder="test@example.com"
-                                    className="flex-1 px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
-                                />
-                                <button
-                                    onClick={handleTestEmail}
-                                    disabled={testing}
-                                    className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
-                                >
-                                    {testing ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                                    Send Test
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                            <Info size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-sm text-blue-300">
-                                    <strong>Recommended:</strong> Set up SPF, DKIM, and DMARC records to improve email deliverability and prevent spoofing.
-                                </p>
                             </div>
                         </div>
                     </div>
-                </div>
+                )
             )}
         </div>
     );
 };
 
 export default EmailConfigurationPanel;
-
-
-
-

@@ -1,17 +1,18 @@
 /**
  * AIModule - AI & LLM Management
- * 
+ *
  * Tabs: LLM Config | AI Health | Help Analytics | Token Management
  */
 
+import { Coins, Cpu, HeartPulse, HelpCircle } from 'lucide-react';
 import React, { useState } from 'react';
-import { Cpu, HeartPulse, HelpCircle, Coins } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { AdminLLMView } from './AdminLLMView';
+import { useTranslation } from 'react-i18next';
+
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { AdminLLMView } from './AdminLLMView';
 import { HelpAnalyticsDashboard } from './HelpAnalyticsDashboard';
 import { TokenBillingManagementView } from './TokenBillingManagementView';
-import { useTranslation } from 'react-i18next';
 
 interface AIModuleProps {
     initialTab?: string;
@@ -22,25 +23,25 @@ export const AIModule: React.FC<AIModuleProps> = ({ initialTab }) => {
     const [activeTab, setActiveTab] = useState(initialTab || 'llm-config');
 
     const tabs: Tab[] = [
-        { 
-            id: 'llm-config', 
-            label: t('admin.tabs.llmConfig', 'LLM Config'), 
-            icon: <Cpu size={16} /> 
+        {
+            id: 'llm-config',
+            label: t('admin.tabs.llmConfig', 'LLM Config'),
+            icon: <Cpu size={16} />,
         },
-        { 
-            id: 'ai-health', 
-            label: t('admin.tabs.aiHealth', 'AI Health'), 
-            icon: <HeartPulse size={16} /> 
+        {
+            id: 'ai-health',
+            label: t('admin.tabs.aiHealth', 'AI Health'),
+            icon: <HeartPulse size={16} />,
         },
-        { 
-            id: 'help-analytics', 
-            label: t('admin.tabs.helpAnalytics', 'Help Analytics'), 
-            icon: <HelpCircle size={16} /> 
+        {
+            id: 'help-analytics',
+            label: t('admin.tabs.helpAnalytics', 'Help Analytics'),
+            icon: <HelpCircle size={16} />,
         },
-        { 
-            id: 'token-management', 
-            label: t('admin.tabs.tokenManagement', 'Tokens'), 
-            icon: <Coins size={16} /> 
+        {
+            id: 'token-management',
+            label: t('admin.tabs.tokenManagement', 'Tokens'),
+            icon: <Coins size={16} />,
         },
     ];
 
@@ -85,11 +86,4 @@ export const AIModule: React.FC<AIModuleProps> = ({ initialTab }) => {
 };
 
 export default AIModule;
-
-
-
-
-
-
-
 

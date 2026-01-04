@@ -17,7 +17,7 @@ vi.mock('framer-motion', () => ({
 }));
 
 // Import after mock
-import { ProactivitySelector } from '../../../components/AISettings/ProactivitySelector';
+import { ProactivitySelector } from '../../components/AISettings/ProactivitySelector';
 
 describe('ProactivitySelector', () => {
     const defaultProps = {

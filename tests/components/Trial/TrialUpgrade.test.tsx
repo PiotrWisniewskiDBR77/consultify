@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TrialUpgrade } from '../../../components/Trial/TrialUpgrade';
+import { TrialUpgrade } from '../../components/Trial/TrialUpgrade';
 
 describe('TrialUpgrade Component', () => {
     const user = userEvent.setup();
@@ -25,6 +25,7 @@ describe('TrialUpgrade Component', () => {
         expect(onUpgrade).toHaveBeenCalled();
     });
 });
+
 
 
 

@@ -1,6 +1,6 @@
 /**
  * IntegrationHealthDashboard - Integration Monitoring & Management
- * 
+ *
  * Features:
  * - Integration health status
  * - Integration usage statistics
@@ -9,27 +9,28 @@
  * - Bulk disconnect integrations
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
     Activity,
-    CheckCircle,
-    AlertTriangle,
-    XCircle,
-    RefreshCw,
-    Trash2,
-    Clock,
-    BarChart3,
-    Loader2,
     AlertCircle,
+    AlertTriangle,
+    BarChart3,
+    CheckCircle,
+    Clock,
     ExternalLink,
-    Settings,
+    Loader2,
+    Pause,
     Play,
-    Pause
+    RefreshCw,
+    Settings,
+    Trash2,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface IntegrationHealthDashboardProps {
@@ -57,7 +58,7 @@ interface IntegrationHealth {
 
 export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProps> = ({
     currentUser,
-    onUpdateUser
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
@@ -98,14 +99,12 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     };
 
     const toggleIntegration = async (integrationId: string) => {
-        const integration = integrations.find(i => i.id === integrationId);
+        const integration = integrations.find((i) => i.id === integrationId);
         if (!integration) return;
 
         try {
             await Api.put(`/api/integrations/${integrationId}/toggle`, { enabled: !integration.enabled });
-            setIntegrations(integrations.map(i =>
-                i.id === integrationId ? { ...i, enabled: !i.enabled } : i
-            ));
+            setIntegrations(integrations.map((i) => (i.id === integrationId ? { ...i, enabled: !i.enabled } : i)));
             toast.success(integration.enabled ? 'Integration paused' : 'Integration enabled');
         } catch (error) {
             toast.error('Failed to update integration');
@@ -118,10 +117,8 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
         if (!window.confirm(`Disconnect ${selectedIntegrations.length} integration(s)?`)) return;
 
         try {
-            await Promise.all(selectedIntegrations.map(id =>
-                Api.post(`/api/integrations/${id}/disconnect`, {})
-            ));
-            setIntegrations(integrations.filter(i => !selectedIntegrations.includes(i.id)));
+            await Promise.all(selectedIntegrations.map((id) => Api.post(`/api/integrations/${id}/disconnect`, {})));
+            setIntegrations(integrations.filter((i) => !selectedIntegrations.includes(i.id)));
             setSelectedIntegrations([]);
             toast.success('Integrations disconnected');
         } catch (error) {
@@ -131,28 +128,36 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'healthy': return <CheckCircle size={18} className="text-green-500" />;
-            case 'warning': return <AlertTriangle size={18} className="text-amber-500" />;
-            case 'error': return <XCircle size={18} className="text-red-500" />;
-            default: return <AlertCircle size={18} className="text-slate-400" />;
+            case 'healthy':
+                return <CheckCircle size={18} className="text-green-500" />;
+            case 'warning':
+                return <AlertTriangle size={18} className="text-amber-500" />;
+            case 'error':
+                return <XCircle size={18} className="text-red-500" />;
+            default:
+                return <AlertCircle size={18} className="text-slate-400" />;
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'healthy': return 'border-green-500/50 bg-green-50 dark:bg-green-500/5';
-            case 'warning': return 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5';
-            case 'error': return 'border-red-500/50 bg-red-50 dark:bg-red-500/5';
-            default: return 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950';
+            case 'healthy':
+                return 'border-green-500/50 bg-green-50 dark:bg-green-500/5';
+            case 'warning':
+                return 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5';
+            case 'error':
+                return 'border-red-500/50 bg-red-50 dark:bg-red-500/5';
+            default:
+                return 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950';
         }
     };
 
     const totalStats = {
         requestsToday: integrations.reduce((sum, i) => sum + i.usageStats.requestsToday, 0),
         requestsThisMonth: integrations.reduce((sum, i) => sum + i.usageStats.requestsThisMonth, 0),
-        healthy: integrations.filter(i => i.status === 'healthy').length,
-        warnings: integrations.filter(i => i.status === 'warning').length,
-        errors: integrations.filter(i => i.status === 'error').length
+        healthy: integrations.filter((i) => i.status === 'healthy').length,
+        warnings: integrations.filter((i) => i.status === 'warning').length,
+        errors: integrations.filter((i) => i.status === 'error').length,
     };
 
     if (loading) {
@@ -208,14 +213,16 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                     <p className="text-sm text-slate-500">Requests Today</p>
                 </div>
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalStats.requestsThisMonth.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                        {totalStats.requestsThisMonth.toLocaleString()}
+                    </p>
                     <p className="text-sm text-slate-500">This Month</p>
                 </div>
             </div>
 
             {/* Integration List */}
             <div className="space-y-4">
-                {integrations.map(integration => (
+                {integrations.map((integration) => (
                     <div
                         key={integration.id}
                         className={`rounded-xl border-2 transition-all ${getStatusColor(integration.status)}`}
@@ -230,7 +237,9 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                                             if (e.target.checked) {
                                                 setSelectedIntegrations([...selectedIntegrations, integration.id]);
                                             } else {
-                                                setSelectedIntegrations(selectedIntegrations.filter(id => id !== integration.id));
+                                                setSelectedIntegrations(
+                                                    selectedIntegrations.filter((id) => id !== integration.id),
+                                                );
                                             }
                                         }}
                                         className="rounded"
@@ -249,10 +258,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => toggleIntegration(integration.id)}
-                                        className={`p-2 rounded-lg transition-colors ${integration.enabled
-                                            ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
-                                            : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                            }`}
+                                        className={`p-2 rounded-lg transition-colors ${
+                                            integration.enabled
+                                                ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
+                                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                        }`}
                                         title={integration.enabled ? 'Pause' : 'Enable'}
                                     >
                                         {integration.enabled ? <Pause size={18} /> : <Play size={18} />}
@@ -263,10 +273,15 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                                         className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors disabled:opacity-50"
                                         title="Sync now"
                                     >
-                                        <RefreshCw size={18} className={syncing === integration.id ? 'animate-spin' : ''} />
+                                        <RefreshCw
+                                            size={18}
+                                            className={syncing === integration.id ? 'animate-spin' : ''}
+                                        />
                                     </button>
                                     <button
-                                        onClick={() => setShowErrorLogs(showErrorLogs === integration.id ? null : integration.id)}
+                                        onClick={() =>
+                                            setShowErrorLogs(showErrorLogs === integration.id ? null : integration.id)
+                                        }
                                         className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                         title="View logs"
                                     >
@@ -279,19 +294,27 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                             <div className="grid grid-cols-4 gap-4 text-sm">
                                 <div>
                                     <p className="text-slate-500">Sync Frequency</p>
-                                    <p className="font-medium text-slate-900 dark:text-white">{integration.syncFrequency}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                        {integration.syncFrequency}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-slate-500">Requests Today</p>
-                                    <p className="font-medium text-slate-900 dark:text-white">{integration.usageStats.requestsToday}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                        {integration.usageStats.requestsToday}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-slate-500">This Month</p>
-                                    <p className="font-medium text-slate-900 dark:text-white">{integration.usageStats.requestsThisMonth}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                        {integration.usageStats.requestsThisMonth}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-slate-500">Data Transferred</p>
-                                    <p className="font-medium text-slate-900 dark:text-white">{integration.usageStats.dataTransferred}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                        {integration.usageStats.dataTransferred}
+                                    </p>
                                 </div>
                             </div>
 
@@ -346,4 +369,3 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 };
 
 export default IntegrationHealthDashboard;
-

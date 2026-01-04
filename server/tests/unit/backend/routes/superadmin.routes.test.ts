@@ -3,8 +3,9 @@
  * Unit tests for superadmin routes
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { AuthRequest } from '../../../../src/middleware/auth.middleware.js';
 
 // Mock superAdminController
@@ -101,9 +102,7 @@ describe('Super Admin Routes', () => {
 
     describe('GET /organizations', () => {
         it('should return all organizations', async () => {
-            const mockOrgs = [
-                { id: 'org-1', name: 'Test Org', plan: 'pro', status: 'active' },
-            ];
+            const mockOrgs = [{ id: 'org-1', name: 'Test Org', plan: 'pro', status: 'active' }];
 
             mockSuperAdminController.getOrganizations.mockResolvedValue(mockOrgs);
 
@@ -127,9 +126,7 @@ describe('Super Admin Routes', () => {
 
     describe('GET /activities', () => {
         it('should return all activities', async () => {
-            const mockActivities = [
-                { id: 'activity-1', action: 'created', entityType: 'project' },
-            ];
+            const mockActivities = [{ id: 'activity-1', action: 'created', entityType: 'project' }];
 
             mockSuperAdminController.getActivities.mockResolvedValue(mockActivities);
 
@@ -160,9 +157,7 @@ describe('Super Admin Routes', () => {
 
     describe('GET /users', () => {
         it('should return all users', async () => {
-            const mockUsers = [
-                { id: 'user-1', email: 'test@example.com', role: 'USER' },
-            ];
+            const mockUsers = [{ id: 'user-1', email: 'test@example.com', role: 'USER' }];
 
             mockSuperAdminController.getUsers.mockResolvedValue(mockUsers);
 
@@ -209,7 +204,4 @@ describe('Super Admin Routes', () => {
         });
     });
 });
-
-
-
 

@@ -3,7 +3,8 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import logger from '../../../src/utils/Logger.js';
 
 describe('Logger', () => {
@@ -40,7 +41,4 @@ describe('Logger', () => {
         expect(() => logger.debug('Debug message', { key: 'value' })).not.toThrow();
     });
 });
-
-
-
 

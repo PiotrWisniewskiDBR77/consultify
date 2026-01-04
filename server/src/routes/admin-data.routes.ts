@@ -7,31 +7,31 @@
  * - Sessions Management
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
-import {
-    OrgIdParamSchema,
-    UserTierParamsSchema,
-    EventIdParamSchema,
-    SessionIdParamSchema,
-    ScheduledEventIdParamSchema,
-    UserTiersQuerySchema,
-    SecurityEventsQuerySchema,
-    RecentActivityQuerySchema,
-    SessionsQuerySchema,
-    LoginHistoryQuerySchema,
-    ScheduledEventsQuerySchema,
-    UpdateUserTierBodySchema,
-    ResolveSecurityEventBodySchema,
-    CreateScheduledEventBodySchema,
-    UpdateScheduledEventBodySchema,
-} from '../validators/admin-data.validators.js';
-
-import { getDatabase } from '../database/Database.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+
+import { _getDatabase } from '../database/Database.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import {
+    CreateScheduledEventBodySchema,
+    EventIdParamSchema,
+    LoginHistoryQuerySchema,
+    OrgIdParamSchema,
+    RecentActivityQuerySchema,
+    ResolveSecurityEventBodySchema,
+    ScheduledEventIdParamSchema,
+    ScheduledEventsQuerySchema,
+    SecurityEventsQuerySchema,
+    SessionIdParamSchema,
+    SessionsQuerySchema,
+    UpdateScheduledEventBodySchema,
+    UpdateUserTierBodySchema,
+    UserTierParamsSchema,
+    UserTiersQuerySchema,
+} from '../validators/admin-data.validators.js';
 
 const router = Router();
 
@@ -52,7 +52,7 @@ router.get(
     validateQuery(UserTiersQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        
+
         const users = await dbAll<{
             userId: string;
             userName: string;
@@ -60,7 +60,8 @@ router.get(
             currentTier: string;
             usage: number;
             cost: number;
-        }>(`
+        }>(
+            `
             SELECT 
                 u.id as userId,
                 u.first_name || ' ' || u.last_name as userName,
@@ -73,10 +74,12 @@ router.get(
                 AND aus.period_start >= date('now', '-7 days')
             WHERE u.organization_id = ?
             ORDER BY aus.cost_usd DESC NULLS LAST
-        `, [orgId]);
+        `,
+            [orgId],
+        );
 
         res.json(users);
-    })
+    }),
 );
 
 /**
@@ -90,19 +93,22 @@ router.put(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId, userId } = req.params;
         const { tier } = req.body;
-        
-        const runResult = await dbRun(`
+
+        const runResult = await dbRun(
+            `
             INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
             VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
             ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
-        `, [uuidv4(), orgId, userId, tier, tier]);
-        
+        `,
+            [uuidv4(), orgId, userId, tier, tier],
+        );
+
         if (!runResult.success) {
             throw new Error(runResult.error || 'Failed to update user tier');
         }
 
         res.json({ success: true, tier });
-    })
+    }),
 );
 
 /**
@@ -114,7 +120,7 @@ router.get(
     validateParams(OrgIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        
+
         const userCosts = await dbAll<{
             entityType: string;
             entityId: string;
@@ -122,7 +128,8 @@ router.get(
             requests: number;
             tokens: number;
             cost: number;
-        }>(`
+        }>(
+            `
             SELECT 
                 'user' as entityType,
                 aus.user_id as entityId,
@@ -138,7 +145,9 @@ router.get(
             GROUP BY aus.user_id
             ORDER BY cost DESC
             LIMIT 10
-        `, [orgId]);
+        `,
+            [orgId],
+        );
 
         const projectCosts = await dbAll<{
             entityType: string;
@@ -147,7 +156,8 @@ router.get(
             requests: number;
             tokens: number;
             cost: number;
-        }>(`
+        }>(
+            `
             SELECT 
                 'project' as entityType,
                 aus.project_id as entityId,
@@ -163,18 +173,22 @@ router.get(
             GROUP BY aus.project_id
             ORDER BY cost DESC
             LIMIT 10
-        `, [orgId]);
+        `,
+            [orgId],
+        );
 
         const allCosts = [...userCosts, ...projectCosts];
         const totalCost = allCosts.reduce((sum, item) => sum + (item.cost || 0), 0);
-        
-        const costAttribution = allCosts.map(item => ({
-            ...item,
-            percentage: totalCost > 0 ? Math.round((item.cost / totalCost) * 100) : 0
-        })).sort((a, b) => b.cost - a.cost);
+
+        const costAttribution = allCosts
+            .map((item) => ({
+                ...item,
+                percentage: totalCost > 0 ? Math.round((item.cost / totalCost) * 100) : 0,
+            }))
+            .sort((a, b) => b.cost - a.cost);
 
         res.json(costAttribution);
-    })
+    }),
 );
 
 // ==========================================
@@ -192,28 +206,31 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
         const { limit = 50, resolved } = req.query;
-        
+
         let whereClause = 'WHERE organization_id = ?';
         const params: unknown[] = [orgId];
-        
+
         if (resolved !== undefined) {
             whereClause += ' AND resolved = ?';
             params.push(resolved === 'true' ? 1 : 0);
         }
-        
-        const events = await new Promise<Array<{
-            id: string;
-            type: string;
-            severity: string;
-            userId: string;
-            userEmail: string;
-            details: string;
-            resolved: number;
-            timestamp: string;
-            resolved_at: string | null;
-            resolved_by: string | null;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const events = await new Promise<
+            Array<{
+                id: string;
+                type: string;
+                severity: string;
+                userId: string;
+                userEmail: string;
+                details: string;
+                resolved: number;
+                timestamp: string;
+                resolved_at: string | null;
+                resolved_by: string | null;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     se.id,
                     se.type,
@@ -230,25 +247,31 @@ router.get(
                 ${whereClause}
                 ORDER BY se.created_at DESC
                 LIMIT ?
-            `, [...params, parseInt(limit as string)], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    type: string;
-                    severity: string;
-                    userId: string;
-                    userEmail: string;
-                    details: string;
-                    resolved: number;
-                    timestamp: string;
-                    resolved_at: string | null;
-                    resolved_by: string | null;
-                }>);
-            });
+            `,
+                [...params, parseInt(limit as string)],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                type: string;
+                                severity: string;
+                                userId: string;
+                                userEmail: string;
+                                details: string;
+                                resolved: number;
+                                timestamp: string;
+                                resolved_at: string | null;
+                                resolved_by: string | null;
+                            }>,
+                        );
+                },
+            );
         });
 
         res.json(events);
-    })
+    }),
 );
 
 /**
@@ -262,25 +285,29 @@ router.put(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { eventId } = req.params;
         const userId = req.user?.id;
-        
+
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });
             return;
         }
-        
+
         await new Promise<void>((resolve, reject) => {
-            db.run(`
+            db.run(
+                `
                 UPDATE security_events 
                 SET resolved = 1, resolved_at = datetime('now'), resolved_by = ?
                 WHERE id = ?
-            `, [userId, eventId], (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
+            `,
+                [userId, eventId],
+                (err: Error | null) => {
+                    if (err) reject(err);
+                    else resolve();
+                },
+            );
         });
 
         res.json({ success: true });
-    })
+    }),
 );
 
 // ==========================================
@@ -298,16 +325,19 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
         const { limit = 10 } = req.query;
-        
-        const activity = await new Promise<Array<{
-            id: string;
-            type: string;
-            description: string;
-            timestamp: string;
-            userEmail: string;
-            userName: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const activity = await new Promise<
+            Array<{
+                id: string;
+                type: string;
+                description: string;
+                timestamp: string;
+                userEmail: string;
+                userName: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     ae.id,
                     ae.action_type as type,
@@ -320,29 +350,35 @@ router.get(
                 WHERE ae.org_id = ?
                 ORDER BY ae.ts DESC
                 LIMIT ?
-            `, [orgId, parseInt(limit as string)], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    type: string;
-                    description: string;
-                    timestamp: string;
-                    userEmail: string;
-                    userName: string;
-                }>);
-            });
+            `,
+                [orgId, parseInt(limit as string)],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                type: string;
+                                description: string;
+                                timestamp: string;
+                                userEmail: string;
+                                userName: string;
+                            }>,
+                        );
+                },
+            );
         });
 
-        const formattedActivity = activity.map(a => ({
+        const formattedActivity = activity.map((a) => ({
             id: a.id,
             type: mapEventType(a.type),
             description: a.description || formatEventDescription(a.type),
             timestamp: formatTimestamp(a.timestamp),
-            user: a.userEmail
+            user: a.userEmail,
         }));
 
         res.json(formattedActivity);
-    })
+    }),
 );
 
 /**
@@ -351,7 +387,7 @@ router.get(
  */
 router.get(
     '/system-health',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (_req: AuthRequest, res: Response): Promise<void> => {
         const dbHealthy = await (async () => {
             try {
                 await dbGet('SELECT 1 as ok', []);
@@ -369,12 +405,12 @@ router.get(
                 { name: 'API', status: 'up' },
                 { name: 'Database', status: dbHealthy ? 'up' : 'down' },
                 { name: 'AI Services', status: 'up' },
-                { name: 'Storage', status: 'up' }
-            ]
+                { name: 'Storage', status: 'up' },
+            ],
         };
 
         res.json(health);
-    })
+    }),
 );
 
 // ==========================================
@@ -391,20 +427,23 @@ router.get(
     validateQuery(SessionsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        
-        const sessions = await new Promise<Array<{
-            id: string;
-            userId: string;
-            userEmail: string;
-            userName: string;
-            deviceName: string;
-            ipAddress: string;
-            location: string;
-            isCurrent: number;
-            lastActivity: string;
-            createdAt: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const sessions = await new Promise<
+            Array<{
+                id: string;
+                userId: string;
+                userEmail: string;
+                userName: string;
+                deviceName: string;
+                ipAddress: string;
+                location: string;
+                isCurrent: number;
+                lastActivity: string;
+                createdAt: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     us.id,
                     us.user_id as userId,
@@ -421,25 +460,31 @@ router.get(
                 WHERE u.organization_id = ?
                     AND (us.expires_at IS NULL OR us.expires_at > datetime('now'))
                 ORDER BY us.last_active_at DESC
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    userId: string;
-                    userEmail: string;
-                    userName: string;
-                    deviceName: string;
-                    ipAddress: string;
-                    location: string;
-                    isCurrent: number;
-                    lastActivity: string;
-                    createdAt: string;
-                }>);
-            });
+            `,
+                [orgId],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                userId: string;
+                                userEmail: string;
+                                userName: string;
+                                deviceName: string;
+                                ipAddress: string;
+                                location: string;
+                                isCurrent: number;
+                                lastActivity: string;
+                                createdAt: string;
+                            }>,
+                        );
+                },
+            );
         });
 
         res.json(sessions);
-    })
+    }),
 );
 
 /**
@@ -453,20 +498,23 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
         const { limit = 50 } = req.query;
-        
-        const history = await new Promise<Array<{
-            id: string;
-            userId: string;
-            userEmail: string;
-            userName: string;
-            ipAddress: string;
-            userAgent: string;
-            location: string;
-            status: string;
-            failureReason: string | null;
-            timestamp: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const history = await new Promise<
+            Array<{
+                id: string;
+                userId: string;
+                userEmail: string;
+                userName: string;
+                ipAddress: string;
+                userAgent: string;
+                location: string;
+                status: string;
+                failureReason: string | null;
+                timestamp: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     lh.id,
                     lh.user_id as userId,
@@ -483,25 +531,31 @@ router.get(
                 WHERE lh.organization_id = ?
                 ORDER BY lh.created_at DESC
                 LIMIT ?
-            `, [orgId, parseInt(limit as string)], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    userId: string;
-                    userEmail: string;
-                    userName: string;
-                    ipAddress: string;
-                    userAgent: string;
-                    location: string;
-                    status: string;
-                    failureReason: string | null;
-                    timestamp: string;
-                }>);
-            });
+            `,
+                [orgId, parseInt(limit as string)],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                userId: string;
+                                userEmail: string;
+                                userName: string;
+                                ipAddress: string;
+                                userAgent: string;
+                                location: string;
+                                status: string;
+                                failureReason: string | null;
+                                timestamp: string;
+                            }>,
+                        );
+                },
+            );
         });
 
         res.json(history);
-    })
+    }),
 );
 
 /**
@@ -513,14 +567,14 @@ router.delete(
     validateParams(SessionIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { sessionId } = req.params;
-        
+
         const result = await dbRun('DELETE FROM user_sessions WHERE id = ?', [sessionId]);
         if (!result.success) {
             throw new Error(result.error || 'Failed to delete session');
         }
 
         res.json({ success: true });
-    })
+    }),
 );
 
 // ==========================================
@@ -536,16 +590,19 @@ router.get(
     validateParams(OrgIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        
-        const reports = await new Promise<Array<{
-            id: string;
-            name: string;
-            standard: string;
-            status: string;
-            findings: number;
-            generatedAt: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const reports = await new Promise<
+            Array<{
+                id: string;
+                name: string;
+                standard: string;
+                status: string;
+                findings: number;
+                generatedAt: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     id,
                     name,
@@ -556,21 +613,27 @@ router.get(
                 FROM compliance_reports
                 WHERE organization_id = ?
                 ORDER BY generated_at DESC
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    name: string;
-                    standard: string;
-                    status: string;
-                    findings: number;
-                    generatedAt: string;
-                }>);
-            });
+            `,
+                [orgId],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                name: string;
+                                standard: string;
+                                status: string;
+                                findings: number;
+                                generatedAt: string;
+                            }>,
+                        );
+                },
+            );
         });
 
         res.json(reports);
-    })
+    }),
 );
 
 /**
@@ -582,18 +645,21 @@ router.get(
     validateParams(OrgIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        
-        const templates = await new Promise<Array<{
-            id: string;
-            name: string;
-            description: string;
-            basedOn: string;
-            sectionsCount: number;
-            checkpointsCount: number;
-            createdAt: string;
-            updatedAt: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const templates = await new Promise<
+            Array<{
+                id: string;
+                name: string;
+                description: string;
+                basedOn: string;
+                sectionsCount: number;
+                checkpointsCount: number;
+                createdAt: string;
+                updatedAt: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     id,
                     name,
@@ -606,23 +672,29 @@ router.get(
                 FROM custom_compliance_templates
                 WHERE organization_id = ?
                 ORDER BY updated_at DESC
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    name: string;
-                    description: string;
-                    basedOn: string;
-                    sectionsCount: number;
-                    checkpointsCount: number;
-                    createdAt: string;
-                    updatedAt: string;
-                }>);
-            });
+            `,
+                [orgId],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                name: string;
+                                description: string;
+                                basedOn: string;
+                                sectionsCount: number;
+                                checkpointsCount: number;
+                                createdAt: string;
+                                updatedAt: string;
+                            }>,
+                        );
+                },
+            );
         });
 
         res.json(templates);
-    })
+    }),
 );
 
 // ==========================================
@@ -638,17 +710,20 @@ router.get(
     validateParams(OrgIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        
-        const groups = await new Promise<Array<{
-            id: string;
-            name: string;
-            description: string;
-            color: string;
-            membersCount: number;
-            permissions: string;
-            createdAt: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const groups = await new Promise<
+            Array<{
+                id: string;
+                name: string;
+                description: string;
+                color: string;
+                membersCount: number;
+                permissions: string;
+                createdAt: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     id,
                     name,
@@ -660,22 +735,28 @@ router.get(
                 FROM user_groups
                 WHERE organization_id = ?
                 ORDER BY name ASC
-            `, [orgId], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    name: string;
-                    description: string;
-                    color: string;
-                    membersCount: number;
-                    permissions: string;
-                    createdAt: string;
-                }>);
-            });
+            `,
+                [orgId],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                name: string;
+                                description: string;
+                                color: string;
+                                membersCount: number;
+                                permissions: string;
+                                createdAt: string;
+                            }>,
+                        );
+                },
+            );
         });
 
         res.json(groups);
-    })
+    }),
 );
 
 // ==========================================
@@ -693,30 +774,33 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
         const { limit = 10, includeCompleted = 'false' } = req.query;
-        
+
         let whereClause = `WHERE se.organization_id = ? AND se.start_time >= datetime('now', '-1 day')`;
         if (includeCompleted === 'false') {
             whereClause += ` AND se.status != 'COMPLETED' AND se.status != 'CANCELLED'`;
         }
-        
-        const events = await new Promise<Array<{
-            id: string;
-            title: string;
-            description: string;
-            eventType: string;
-            startTime: string;
-            endTime: string;
-            location: string;
-            isAllDay: number;
-            status: string;
-            projectId: string | null;
-            projectName: string | null;
-            attendees: string;
-            createdBy: string;
-            creatorEmail: string;
-            creatorName: string;
-        }>>((resolve, reject) => {
-            db.all(`
+
+        const events = await new Promise<
+            Array<{
+                id: string;
+                title: string;
+                description: string;
+                eventType: string;
+                startTime: string;
+                endTime: string;
+                location: string;
+                isAllDay: number;
+                status: string;
+                projectId: string | null;
+                projectName: string | null;
+                attendees: string;
+                createdBy: string;
+                creatorEmail: string;
+                creatorName: string;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `
                 SELECT 
                     se.id,
                     se.title,
@@ -739,35 +823,41 @@ router.get(
                 ${whereClause}
                 ORDER BY se.start_time ASC
                 LIMIT ?
-            `, [orgId, parseInt(limit as string)], (err: Error | null, rows: unknown[]) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    title: string;
-                    description: string;
-                    eventType: string;
-                    startTime: string;
-                    endTime: string;
-                    location: string;
-                    isAllDay: number;
-                    status: string;
-                    projectId: string | null;
-                    projectName: string | null;
-                    attendees: string;
-                    createdBy: string;
-                    creatorEmail: string;
-                    creatorName: string;
-                }>);
-            });
+            `,
+                [orgId, parseInt(limit as string)],
+                (err: Error | null, rows: unknown[]) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                title: string;
+                                description: string;
+                                eventType: string;
+                                startTime: string;
+                                endTime: string;
+                                location: string;
+                                isAllDay: number;
+                                status: string;
+                                projectId: string | null;
+                                projectName: string | null;
+                                attendees: string;
+                                createdBy: string;
+                                creatorEmail: string;
+                                creatorName: string;
+                            }>,
+                        );
+                },
+            );
         });
 
-        const formattedEvents = events.map(e => ({
+        const formattedEvents = events.map((e) => ({
             ...e,
-            attendees: e.attendees ? JSON.parse(e.attendees) : []
+            attendees: e.attendees ? JSON.parse(e.attendees) : [],
         }));
 
         res.json(formattedEvents);
-    })
+    }),
 );
 
 /**
@@ -780,57 +870,70 @@ router.post(
     validateBody(CreateScheduledEventBodySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
-        const { 
-            title, 
-            description, 
-            eventType = 'meeting', 
-            startTime, 
-            endTime, 
-            location = '', 
+        const {
+            title,
+            description,
+            eventType = 'meeting',
+            startTime,
+            endTime,
+            location = '',
             isAllDay = false,
             projectId = null,
-            attendees = []
+            attendees = [],
         } = req.body;
         const userId = req.user?.id;
-        
+
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });
             return;
         }
 
         const eventId = uuidv4();
-        
+
         await new Promise<void>((resolve, reject) => {
-            db.run(`
+            db.run(
+                `
                 INSERT INTO scheduled_events (
                     id, organization_id, title, description, event_type, 
                     start_time, end_time, location, is_all_day, status, 
                     project_id, attendees, created_by, created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?, ?, datetime('now'))
-            `, [
-                eventId, orgId, title, description, eventType,
-                startTime, endTime, location, isAllDay ? 1 : 0,
-                projectId, JSON.stringify(attendees), userId
-            ], (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
+            `,
+                [
+                    eventId,
+                    orgId,
+                    title,
+                    description,
+                    eventType,
+                    startTime,
+                    endTime,
+                    location,
+                    isAllDay ? 1 : 0,
+                    projectId,
+                    JSON.stringify(attendees),
+                    userId,
+                ],
+                (err: Error | null) => {
+                    if (err) reject(err);
+                    else resolve();
+                },
+            );
         });
 
-        res.status(201).json({ 
-            id: eventId, 
-            title, 
+        res.status(201).json({
+            id: eventId,
+            title,
             description,
             eventType,
-            startTime, 
-            endTime, 
+            startTime,
+            endTime,
             location,
             isAllDay,
             status: 'SCHEDULED',
             projectId,
-            attendees 
+            attendees,
         });
-    })
+    }),
 );
 
 /**
@@ -843,49 +946,73 @@ router.put(
     validateBody(UpdateScheduledEventBodySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { eventId } = req.params;
-        const { 
-            title, 
-            description, 
-            eventType, 
-            startTime, 
-            endTime, 
-            location, 
-            isAllDay,
-            status,
-            projectId,
-            attendees 
-        } = req.body;
-        
+        const { title, description, eventType, startTime, endTime, location, isAllDay, status, projectId, attendees } =
+            req.body;
+
         const updates: string[] = [];
         const params: unknown[] = [];
-        
-        if (title !== undefined) { updates.push('title = ?'); params.push(title); }
-        if (description !== undefined) { updates.push('description = ?'); params.push(description); }
-        if (eventType !== undefined) { updates.push('event_type = ?'); params.push(eventType); }
-        if (startTime !== undefined) { updates.push('start_time = ?'); params.push(startTime); }
-        if (endTime !== undefined) { updates.push('end_time = ?'); params.push(endTime); }
-        if (location !== undefined) { updates.push('location = ?'); params.push(location); }
-        if (isAllDay !== undefined) { updates.push('is_all_day = ?'); params.push(isAllDay ? 1 : 0); }
-        if (status !== undefined) { updates.push('status = ?'); params.push(status); }
-        if (projectId !== undefined) { updates.push('project_id = ?'); params.push(projectId); }
-        if (attendees !== undefined) { updates.push('attendees = ?'); params.push(JSON.stringify(attendees)); }
-        
-        updates.push('updated_at = datetime(\'now\')');
+
+        if (title !== undefined) {
+            updates.push('title = ?');
+            params.push(title);
+        }
+        if (description !== undefined) {
+            updates.push('description = ?');
+            params.push(description);
+        }
+        if (eventType !== undefined) {
+            updates.push('event_type = ?');
+            params.push(eventType);
+        }
+        if (startTime !== undefined) {
+            updates.push('start_time = ?');
+            params.push(startTime);
+        }
+        if (endTime !== undefined) {
+            updates.push('end_time = ?');
+            params.push(endTime);
+        }
+        if (location !== undefined) {
+            updates.push('location = ?');
+            params.push(location);
+        }
+        if (isAllDay !== undefined) {
+            updates.push('is_all_day = ?');
+            params.push(isAllDay ? 1 : 0);
+        }
+        if (status !== undefined) {
+            updates.push('status = ?');
+            params.push(status);
+        }
+        if (projectId !== undefined) {
+            updates.push('project_id = ?');
+            params.push(projectId);
+        }
+        if (attendees !== undefined) {
+            updates.push('attendees = ?');
+            params.push(JSON.stringify(attendees));
+        }
+
+        updates.push("updated_at = datetime('now')");
         params.push(eventId);
-        
+
         await new Promise<void>((resolve, reject) => {
-            db.run(`
+            db.run(
+                `
                 UPDATE scheduled_events 
                 SET ${updates.join(', ')}
                 WHERE id = ?
-            `, params, (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            });
+            `,
+                params,
+                (err: Error | null) => {
+                    if (err) reject(err);
+                    else resolve();
+                },
+            );
         });
 
         res.json({ success: true });
-    })
+    }),
 );
 
 /**
@@ -897,14 +1024,14 @@ router.delete(
     validateParams(ScheduledEventIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
         const { eventId } = req.params;
-        
+
         const result = await dbRun('DELETE FROM scheduled_events WHERE id = ?', [eventId]);
         if (!result.success) {
             throw new Error(result.error || 'Failed to delete event');
         }
 
         res.json({ success: true });
-    })
+    }),
 );
 
 // ==========================================
@@ -913,36 +1040,36 @@ router.delete(
 
 function mapEventType(type: string): string {
     const typeMap: Record<string, string> = {
-        'USER_LOGIN': 'user_joined',
-        'PROJECT_CREATE': 'project_created',
-        'TASK_COMPLETE': 'task_completed',
-        'INVITATION_SEND': 'invitation_sent',
-        'SETTINGS_UPDATE': 'settings_changed',
-        'USER_ROLE_CHANGE': 'user_role_changed'
+        USER_LOGIN: 'user_joined',
+        PROJECT_CREATE: 'project_created',
+        TASK_COMPLETE: 'task_completed',
+        INVITATION_SEND: 'invitation_sent',
+        SETTINGS_UPDATE: 'settings_changed',
+        USER_ROLE_CHANGE: 'user_role_changed',
     };
     return typeMap[type] || 'activity';
 }
 
 function formatEventDescription(type: string): string {
     const descMap: Record<string, string> = {
-        'USER_LOGIN': 'User logged in',
-        'PROJECT_CREATE': 'New project created',
-        'TASK_COMPLETE': 'Task marked complete',
-        'INVITATION_SEND': 'Invitation sent',
-        'SETTINGS_UPDATE': 'Settings updated',
-        'USER_ROLE_CHANGE': 'User role changed'
+        USER_LOGIN: 'User logged in',
+        PROJECT_CREATE: 'New project created',
+        TASK_COMPLETE: 'Task marked complete',
+        INVITATION_SEND: 'Invitation sent',
+        SETTINGS_UPDATE: 'Settings updated',
+        USER_ROLE_CHANGE: 'User role changed',
     };
     return descMap[type] || 'Activity recorded';
 }
 
 function formatTimestamp(timestamp: string): string {
     if (!timestamp) return 'Unknown';
-    
+
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
+
     if (diffHours < 1) return 'Just now';
     if (diffHours < 24) return `${diffHours} hours ago`;
     if (diffHours < 48) return 'Yesterday';

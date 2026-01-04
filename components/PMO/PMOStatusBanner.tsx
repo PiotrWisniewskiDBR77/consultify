@@ -1,7 +1,8 @@
+import { AlertCircle, AlertTriangle, ArrowRight, CheckCircle2, Clock, Info } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, AlertTriangle, Info, CheckCircle2, ArrowRight, Clock } from 'lucide-react';
-import { usePMOStore, PMOSystemMessage, PMOBlockingIssue } from '../../store/usePMOStore';
+
+import { PMOBlockingIssue, PMOSystemMessage, usePMOStore } from '../../store/usePMOStore';
 
 interface PMOStatusBannerProps {
     compact?: boolean;
@@ -13,53 +14,49 @@ interface PMOStatusBannerProps {
  * Displays current phase, system messages, and blocking issue indicators
  * Non-intrusive banner for phase-driven UI behavior
  */
-export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
-    compact = false,
-    showBlockingCount = true
-}) => {
+export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({ compact = false, showBlockingCount = true }) => {
     const { t } = useTranslation();
-    const {
-        currentPhase,
-        phaseNumber,
-        totalPhases,
-        gateStatus,
-        systemMessages,
-        blockingIssues,
-        isLoading
-    } = usePMOStore();
+    const { currentPhase, phaseNumber, totalPhases, gateStatus, systemMessages, blockingIssues, isLoading } =
+        usePMOStore();
 
     if (isLoading || !currentPhase) {
         return null;
     }
 
-    const warningMessages = systemMessages.filter(m => m.severity === 'warning');
-    const criticalMessages = systemMessages.filter(m => m.severity === 'critical');
-    const infoMessages = systemMessages.filter(m => m.severity === 'info');
+    const warningMessages = systemMessages.filter((m) => m.severity === 'warning');
+    const criticalMessages = systemMessages.filter((m) => m.severity === 'critical');
+    const infoMessages = systemMessages.filter((m) => m.severity === 'info');
     const hasBlockers = blockingIssues.length > 0;
 
     // Phase color mapping
     const phaseColors: Record<string, string> = {
-        'Context': 'from-blue-500 to-blue-600',
-        'Assessment': 'from-indigo-500 to-indigo-600',
-        'Initiatives': 'from-purple-500 to-purple-600',
-        'Roadmap': 'from-violet-500 to-violet-600',
-        'Execution': 'from-emerald-500 to-emerald-600',
-        'Stabilization': 'from-teal-500 to-teal-600'
+        Context: 'from-blue-500 to-blue-600',
+        Assessment: 'from-indigo-500 to-indigo-600',
+        Initiatives: 'from-purple-500 to-purple-600',
+        Roadmap: 'from-violet-500 to-violet-600',
+        Execution: 'from-emerald-500 to-emerald-600',
+        Stabilization: 'from-teal-500 to-teal-600',
     };
 
     const getSeverityIcon = (severity: string) => {
         switch (severity) {
-            case 'critical': return <AlertCircle size={14} className="text-red-500" />;
-            case 'warning': return <AlertTriangle size={14} className="text-amber-500" />;
-            default: return <Info size={14} className="text-blue-500" />;
+            case 'critical':
+                return <AlertCircle size={14} className="text-red-500" />;
+            case 'warning':
+                return <AlertTriangle size={14} className="text-amber-500" />;
+            default:
+                return <Info size={14} className="text-blue-500" />;
         }
     };
 
     const getSeverityClass = (severity: string) => {
         switch (severity) {
-            case 'critical': return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-300';
-            case 'warning': return 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-300';
-            default: return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-300';
+            case 'critical':
+                return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-300';
+            case 'warning':
+                return 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-300';
+            default:
+                return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-300';
         }
     };
 
@@ -67,7 +64,9 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
     if (compact) {
         return (
             <div className="flex items-center gap-2">
-                <div className={`px-2 py-1 rounded-md text-xs font-medium text-white bg-gradient-to-r ${phaseColors[currentPhase] || 'from-slate-500 to-slate-600'}`}>
+                <div
+                    className={`px-2 py-1 rounded-md text-xs font-medium text-white bg-gradient-to-r ${phaseColors[currentPhase] || 'from-slate-500 to-slate-600'}`}
+                >
                     {t('pmo.phase', 'Phase')} {phaseNumber}/{totalPhases}: {currentPhase}
                 </div>
                 {hasBlockers && showBlockingCount && (
@@ -92,13 +91,13 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
             {/* Phase Header */}
             <div className="flex items-center justify-between bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-white/10 p-3">
                 <div className="flex items-center gap-3">
-                    <div className={`px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r ${phaseColors[currentPhase] || 'from-slate-500 to-slate-600'} shadow-sm`}>
+                    <div
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r ${phaseColors[currentPhase] || 'from-slate-500 to-slate-600'} shadow-sm`}
+                    >
                         {t('pmo.phase', 'Phase')} {phaseNumber}/{totalPhases}
                     </div>
                     <div>
-                        <div className="font-semibold text-navy-900 dark:text-white">
-                            {currentPhase}
-                        </div>
+                        <div className="font-semibold text-navy-900 dark:text-white">{currentPhase}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                             {t(`pmo.phases.${currentPhase?.toLowerCase()}`, currentPhase)}
                         </div>
@@ -108,10 +107,13 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
                 <div className="flex items-center gap-2">
                     {/* Gate Status */}
                     {gateStatus && (
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${gateStatus === 'READY'
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                            }`}>
+                        <div
+                            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                                gateStatus === 'READY'
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                            }`}
+                        >
                             {gateStatus === 'READY' ? (
                                 <>
                                     <CheckCircle2 size={12} />
@@ -141,7 +143,10 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
                 <div className="space-y-1">
                     {/* Critical messages first */}
                     {criticalMessages.map((msg, idx) => (
-                        <div key={`critical-${idx}`} className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${getSeverityClass('critical')}`}>
+                        <div
+                            key={`critical-${idx}`}
+                            className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${getSeverityClass('critical')}`}
+                        >
                             {getSeverityIcon('critical')}
                             <span>{msg.message}</span>
                         </div>
@@ -149,7 +154,10 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
 
                     {/* Warning messages */}
                     {warningMessages.map((msg, idx) => (
-                        <div key={`warning-${idx}`} className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${getSeverityClass('warning')}`}>
+                        <div
+                            key={`warning-${idx}`}
+                            className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${getSeverityClass('warning')}`}
+                        >
                             {getSeverityIcon('warning')}
                             <span>{msg.message}</span>
                         </div>
@@ -157,7 +165,9 @@ export const PMOStatusBanner: React.FC<PMOStatusBannerProps> = ({
 
                     {/* Info messages (show first one only in full mode) */}
                     {infoMessages.length > 0 && (
-                        <div className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${getSeverityClass('info')}`}>
+                        <div
+                            className={`flex items-start gap-2 px-3 py-2 rounded-lg border text-xs ${getSeverityClass('info')}`}
+                        >
                             {getSeverityIcon('info')}
                             <span>{infoMessages[0].message}</span>
                         </div>
@@ -179,7 +189,9 @@ export const PMOPhaseIndicator: React.FC = () => {
     return (
         <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
             <span className="font-medium">{currentPhase}</span>
-            <span className="opacity-60">({phaseNumber}/{totalPhases})</span>
+            <span className="opacity-60">
+                ({phaseNumber}/{totalPhases})
+            </span>
         </span>
     );
 };

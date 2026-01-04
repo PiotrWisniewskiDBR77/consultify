@@ -1,15 +1,16 @@
 /**
  * Admin Alerts Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Admin alert management endpoints (requires ADMIN role)
  */
 
 import { Router } from 'express';
-import { verifyToken } from '../middleware/auth.middleware.js';
-import { verifyAdmin } from '../middleware/admin.middleware.js';
-import { validateBody } from '../middleware/validation.middleware.js';
+
 import AdminAlertController from '../controllers/AdminAlertController.js';
+import { verifyAdmin } from '../middleware/admin.middleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateBody } from '../middleware/validation.middleware.js';
 import { CreateAdminAlertSchema } from '../validators/admin.validators.js';
 
 const router = Router();
@@ -32,11 +33,7 @@ router.get('/', AdminAlertController.getAlerts);
  * POST /api/admin-alerts
  * Create admin alert
  */
-router.post(
-    '/',
-    validateBody(CreateAdminAlertSchema),
-    AdminAlertController.createAlert
-);
+router.post('/', validateBody(CreateAdminAlertSchema), AdminAlertController.createAlert);
 
 /**
  * GET /api/admin-alerts/history

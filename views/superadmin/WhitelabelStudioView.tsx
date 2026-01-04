@@ -1,6 +1,6 @@
 /**
  * WhitelabelStudioView - Super Admin White-label & Branding
- * 
+ *
  * Enterprise branding customization:
  * - Logo and favicon uploads
  * - Color theme customization
@@ -10,33 +10,34 @@
  * - Email template branding
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-    Palette,
-    Image,
-    Type,
-    Globe,
-    Mail,
-    Settings,
-    Upload,
-    Eye,
-    Save,
-    RefreshCw,
-    Loader2,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
+    Building2,
+    CheckCircle2,
+    ChevronRight,
     Copy,
     ExternalLink,
+    Eye,
+    Globe,
+    Image,
+    Loader2,
+    Mail,
     Monitor,
     Moon,
+    Palette,
+    RefreshCw,
+    Save,
+    Settings,
     Sun,
-    Building2,
-    ChevronRight,
-    Trash2
+    Trash2,
+    Type,
+    Upload,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 interface BrandingConfig {
     id?: string;
@@ -143,7 +144,7 @@ export const WhitelabelStudioView: React.FC = () => {
             const brandingMap = new Map((result.brandings || []).map((b: any) => [b.organizationId, b]));
             const orgsWithBranding = orgs.map((org: any) => ({
                 ...org,
-                hasBranding: brandingMap.has(org.id)
+                hasBranding: brandingMap.has(org.id),
             }));
 
             setOrganizations(orgsWithBranding);
@@ -194,7 +195,11 @@ export const WhitelabelStudioView: React.FC = () => {
     };
 
     const handleDelete = async (orgId: string) => {
-        if (!window.confirm('Are you sure you want to reset branding to defaults? This will remove all custom branding for this organization.')) {
+        if (
+            !window.confirm(
+                'Are you sure you want to reset branding to defaults? This will remove all custom branding for this organization.',
+            )
+        ) {
             return;
         }
 
@@ -237,10 +242,15 @@ export const WhitelabelStudioView: React.FC = () => {
             const result = await Api.upload(`/superadmin/branding/${selectedOrg}/logo`, formData);
 
             // Update branding with new URL
-            const urlField = type === 'light' ? 'logoLightUrl' :
-                type === 'dark' ? 'logoDarkUrl' :
-                    type === 'icon' ? 'logoIconUrl' : 'faviconUrl';
-            setBranding(prev => ({ ...prev, [urlField]: result.url }));
+            const urlField =
+                type === 'light'
+                    ? 'logoLightUrl'
+                    : type === 'dark'
+                      ? 'logoDarkUrl'
+                      : type === 'icon'
+                        ? 'logoIconUrl'
+                        : 'faviconUrl';
+            setBranding((prev) => ({ ...prev, [urlField]: result.url }));
         } catch (error) {
             console.error('Failed to upload logo:', error);
         } finally {
@@ -249,14 +259,16 @@ export const WhitelabelStudioView: React.FC = () => {
     };
 
     const updateField = (field: keyof BrandingConfig, value: any) => {
-        setBranding(prev => ({ ...prev, [field]: value }));
+        setBranding((prev) => ({ ...prev, [field]: value }));
     };
 
-    const ColorPicker: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
+    const ColorPicker: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({
+        label,
+        value,
+        onChange,
+    }) => (
         <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                {label}
-            </label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{label}</label>
             <div className="flex items-center gap-2">
                 <input
                     type="color"
@@ -274,26 +286,34 @@ export const WhitelabelStudioView: React.FC = () => {
         </div>
     );
 
-    const LogoUploader: React.FC<{ label: string; type: 'light' | 'dark' | 'icon' | 'favicon'; currentUrl?: string }> = ({ label, type, currentUrl }) => (
+    const LogoUploader: React.FC<{
+        label: string;
+        type: 'light' | 'dark' | 'icon' | 'favicon';
+        currentUrl?: string;
+    }> = ({ label, type, currentUrl }) => (
         <div className="p-4 border border-dashed border-slate-300 dark:border-white/20 rounded-xl">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                {label}
-            </label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{label}</label>
             <div className="flex items-center gap-4">
                 {currentUrl ? (
                     <div className="relative">
                         <img
                             src={currentUrl}
                             alt={label}
-                            className={`object-contain rounded-lg border border-slate-200 dark:border-white/10 ${type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-auto max-w-32'
-                                }`}
+                            className={`object-contain rounded-lg border border-slate-200 dark:border-white/10 ${
+                                type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-auto max-w-32'
+                            }`}
                             style={{ backgroundColor: previewMode === 'dark' ? '#0F172A' : '#F8FAFC' }}
                         />
                         <button
                             onClick={() => {
-                                const urlField = type === 'light' ? 'logoLightUrl' :
-                                    type === 'dark' ? 'logoDarkUrl' :
-                                        type === 'icon' ? 'logoIconUrl' : 'faviconUrl';
+                                const urlField =
+                                    type === 'light'
+                                        ? 'logoLightUrl'
+                                        : type === 'dark'
+                                          ? 'logoDarkUrl'
+                                          : type === 'icon'
+                                            ? 'logoIconUrl'
+                                            : 'faviconUrl';
                                 updateField(urlField, undefined);
                             }}
                             className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
@@ -302,8 +322,11 @@ export const WhitelabelStudioView: React.FC = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className={`flex items-center justify-center bg-slate-100 dark:bg-navy-700 rounded-lg ${type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-32'
-                        }`}>
+                    <div
+                        className={`flex items-center justify-center bg-slate-100 dark:bg-navy-700 rounded-lg ${
+                            type === 'favicon' ? 'w-8 h-8' : type === 'icon' ? 'w-12 h-12' : 'h-12 w-32'
+                        }`}
+                    >
                         <Image size={type === 'favicon' ? 12 : 20} className="text-slate-400" />
                     </div>
                 )}
@@ -319,11 +342,7 @@ export const WhitelabelStudioView: React.FC = () => {
                         htmlFor={`logo-${type}`}
                         className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 rounded-lg cursor-pointer flex items-center gap-2 text-slate-700 dark:text-slate-300"
                     >
-                        {uploadingLogo === type ? (
-                            <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                            <Upload size={14} />
-                        )}
+                        {uploadingLogo === type ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                         Upload
                     </label>
                     <p className="text-xs text-slate-500 mt-1">
@@ -413,11 +432,31 @@ export const WhitelabelStudioView: React.FC = () => {
                         <Sun size={16} />
                         Light Mode
                     </h4>
-                    <ColorPicker label="Primary Color" value={branding.primaryColor} onChange={(v) => updateField('primaryColor', v)} />
-                    <ColorPicker label="Secondary Color" value={branding.secondaryColor} onChange={(v) => updateField('secondaryColor', v)} />
-                    <ColorPicker label="Accent Color" value={branding.accentColor} onChange={(v) => updateField('accentColor', v)} />
-                    <ColorPicker label="Background Color" value={branding.backgroundColor} onChange={(v) => updateField('backgroundColor', v)} />
-                    <ColorPicker label="Text Color" value={branding.textColor} onChange={(v) => updateField('textColor', v)} />
+                    <ColorPicker
+                        label="Primary Color"
+                        value={branding.primaryColor}
+                        onChange={(v) => updateField('primaryColor', v)}
+                    />
+                    <ColorPicker
+                        label="Secondary Color"
+                        value={branding.secondaryColor}
+                        onChange={(v) => updateField('secondaryColor', v)}
+                    />
+                    <ColorPicker
+                        label="Accent Color"
+                        value={branding.accentColor}
+                        onChange={(v) => updateField('accentColor', v)}
+                    />
+                    <ColorPicker
+                        label="Background Color"
+                        value={branding.backgroundColor}
+                        onChange={(v) => updateField('backgroundColor', v)}
+                    />
+                    <ColorPicker
+                        label="Text Color"
+                        value={branding.textColor}
+                        onChange={(v) => updateField('textColor', v)}
+                    />
                 </div>
 
                 {/* Dark Mode Colors */}
@@ -426,10 +465,26 @@ export const WhitelabelStudioView: React.FC = () => {
                         <Moon size={16} />
                         Dark Mode
                     </h4>
-                    <ColorPicker label="Primary Color" value={branding.darkPrimaryColor} onChange={(v) => updateField('darkPrimaryColor', v)} />
-                    <ColorPicker label="Secondary Color" value={branding.darkSecondaryColor} onChange={(v) => updateField('darkSecondaryColor', v)} />
-                    <ColorPicker label="Background Color" value={branding.darkBackgroundColor} onChange={(v) => updateField('darkBackgroundColor', v)} />
-                    <ColorPicker label="Text Color" value={branding.darkTextColor} onChange={(v) => updateField('darkTextColor', v)} />
+                    <ColorPicker
+                        label="Primary Color"
+                        value={branding.darkPrimaryColor}
+                        onChange={(v) => updateField('darkPrimaryColor', v)}
+                    />
+                    <ColorPicker
+                        label="Secondary Color"
+                        value={branding.darkSecondaryColor}
+                        onChange={(v) => updateField('darkSecondaryColor', v)}
+                    />
+                    <ColorPicker
+                        label="Background Color"
+                        value={branding.darkBackgroundColor}
+                        onChange={(v) => updateField('darkBackgroundColor', v)}
+                    />
+                    <ColorPicker
+                        label="Text Color"
+                        value={branding.darkTextColor}
+                        onChange={(v) => updateField('darkTextColor', v)}
+                    />
                 </div>
             </div>
 
@@ -446,13 +501,18 @@ export const WhitelabelStudioView: React.FC = () => {
                 <p className="mb-4">This is how your branded interface will look.</p>
                 <div className="flex gap-3">
                     <button
-                        style={{ backgroundColor: previewMode === 'dark' ? branding.darkPrimaryColor : branding.primaryColor }}
+                        style={{
+                            backgroundColor: previewMode === 'dark' ? branding.darkPrimaryColor : branding.primaryColor,
+                        }}
                         className="px-4 py-2 rounded-lg text-white font-medium"
                     >
                         Primary Button
                     </button>
                     <button
-                        style={{ backgroundColor: previewMode === 'dark' ? branding.darkSecondaryColor : branding.secondaryColor }}
+                        style={{
+                            backgroundColor:
+                                previewMode === 'dark' ? branding.darkSecondaryColor : branding.secondaryColor,
+                        }}
                         className="px-4 py-2 rounded-lg text-white font-medium"
                     >
                         Secondary Button
@@ -481,7 +541,9 @@ export const WhitelabelStudioView: React.FC = () => {
                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                     >
                         {FONT_OPTIONS.map((font) => (
-                            <option key={font} value={font}>{font}</option>
+                            <option key={font} value={font}>
+                                {font}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -495,7 +557,9 @@ export const WhitelabelStudioView: React.FC = () => {
                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                     >
                         {FONT_OPTIONS.map((font) => (
-                            <option key={font} value={font}>{font}</option>
+                            <option key={font} value={font}>
+                                {font}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -505,21 +569,29 @@ export const WhitelabelStudioView: React.FC = () => {
             <div className="bg-slate-50 dark:bg-navy-900 rounded-xl p-6">
                 <h4 className="font-medium text-slate-900 dark:text-white mb-4">Typography Preview</h4>
                 <div className="space-y-4" style={{ fontFamily: branding.fontFamily }}>
-                    <h1 style={{ fontFamily: branding.headingFontFamily }} className="text-3xl font-bold text-slate-900 dark:text-white">
+                    <h1
+                        style={{ fontFamily: branding.headingFontFamily }}
+                        className="text-3xl font-bold text-slate-900 dark:text-white"
+                    >
                         Heading 1 - The quick brown fox
                     </h1>
-                    <h2 style={{ fontFamily: branding.headingFontFamily }} className="text-2xl font-semibold text-slate-800 dark:text-slate-200">
+                    <h2
+                        style={{ fontFamily: branding.headingFontFamily }}
+                        className="text-2xl font-semibold text-slate-800 dark:text-slate-200"
+                    >
                         Heading 2 - The quick brown fox
                     </h2>
-                    <h3 style={{ fontFamily: branding.headingFontFamily }} className="text-xl font-semibold text-slate-700 dark:text-slate-300">
+                    <h3
+                        style={{ fontFamily: branding.headingFontFamily }}
+                        className="text-xl font-semibold text-slate-700 dark:text-slate-300"
+                    >
                         Heading 3 - The quick brown fox
                     </h3>
                     <p className="text-slate-600 dark:text-slate-400">
-                        Body text - The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+                        Body text - The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor
+                        jugs.
                     </p>
-                    <p className="text-sm text-slate-500">
-                        Small text - The quick brown fox jumps over the lazy dog.
-                    </p>
+                    <p className="text-sm text-slate-500">Small text - The quick brown fox jumps over the lazy dog.</p>
                 </div>
             </div>
         </div>
@@ -560,7 +632,9 @@ export const WhitelabelStudioView: React.FC = () => {
                 <div
                     className="rounded-xl overflow-hidden border border-slate-200 dark:border-white/10"
                     style={{
-                        backgroundImage: branding.loginBackgroundUrl ? `url(${branding.loginBackgroundUrl})` : undefined,
+                        backgroundImage: branding.loginBackgroundUrl
+                            ? `url(${branding.loginBackgroundUrl})`
+                            : undefined,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                     }}
@@ -569,10 +643,15 @@ export const WhitelabelStudioView: React.FC = () => {
                         {branding.logoLightUrl ? (
                             <img src={branding.logoLightUrl} alt="Logo" className="h-12 mb-6" />
                         ) : (
-                            <div className="w-12 h-12 rounded-xl mb-6" style={{ backgroundColor: branding.primaryColor }} />
+                            <div
+                                className="w-12 h-12 rounded-xl mb-6"
+                                style={{ backgroundColor: branding.primaryColor }}
+                            />
                         )}
                         {branding.loginTagline && (
-                            <p className="text-slate-600 dark:text-slate-400 mb-8 text-center">{branding.loginTagline}</p>
+                            <p className="text-slate-600 dark:text-slate-400 mb-8 text-center">
+                                {branding.loginTagline}
+                            </p>
                         )}
                         <div className="w-full max-w-sm space-y-4">
                             <input
@@ -627,7 +706,9 @@ export const WhitelabelStudioView: React.FC = () => {
                     {branding.customDomain && (
                         <div className="bg-slate-50 dark:bg-navy-900 rounded-lg p-4">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Domain Status</span>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Domain Status
+                                </span>
                                 {branding.customDomainVerified ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600">
                                         <CheckCircle2 size={12} />
@@ -660,12 +741,20 @@ export const WhitelabelStudioView: React.FC = () => {
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
                         <span className="text-sm text-slate-700 dark:text-slate-300">SSL Certificate</span>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${branding.customDomainSslStatus === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
-                            branding.customDomainSslStatus === 'failed' ? 'bg-red-500/10 text-red-600' :
-                                'bg-amber-500/10 text-amber-600'
-                            }`}>
-                            {branding.customDomainSslStatus === 'active' ? 'Active' :
-                                branding.customDomainSslStatus === 'failed' ? 'Failed' : 'Pending'}
+                        <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                branding.customDomainSslStatus === 'active'
+                                    ? 'bg-emerald-500/10 text-emerald-600'
+                                    : branding.customDomainSslStatus === 'failed'
+                                      ? 'bg-red-500/10 text-red-600'
+                                      : 'bg-amber-500/10 text-amber-600'
+                            }`}
+                        >
+                            {branding.customDomainSslStatus === 'active'
+                                ? 'Active'
+                                : branding.customDomainSslStatus === 'failed'
+                                  ? 'Failed'
+                                  : 'Pending'}
                         </span>
                     </div>
                 </div>
@@ -682,7 +771,13 @@ export const WhitelabelStudioView: React.FC = () => {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">White-label Studio</h1>
                         <p className="text-slate-500 mt-1">Customize branding for organizations</p>
                     </div>
-                    <InfoButton cardId="superadmin-whitelabel" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-whitelabel"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                 </div>
 
                 {loading ? (
@@ -703,7 +798,10 @@ export const WhitelabelStudioView: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         {org.hasBranding && (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleDelete(org.id); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(org.id);
+                                                }}
                                                 className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
                                                 title="Reset to defaults"
                                             >
@@ -714,14 +812,14 @@ export const WhitelabelStudioView: React.FC = () => {
                                             onClick={() => handleSelectOrg(org.id)}
                                             className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                                         >
-                                            <ChevronRight size={20} className="text-slate-400 group-hover:text-violet-500 transition-colors" />
+                                            <ChevronRight
+                                                size={20}
+                                                className="text-slate-400 group-hover:text-violet-500 transition-colors"
+                                            />
                                         </button>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleSelectOrg(org.id)}
-                                    className="text-left w-full"
-                                >
+                                <button onClick={() => handleSelectOrg(org.id)} className="text-left w-full">
                                     <h3 className="font-semibold text-slate-900 dark:text-white">{org.name}</h3>
                                     <div className="mt-2">
                                         {org.hasBranding ? (
@@ -758,13 +856,19 @@ export const WhitelabelStudioView: React.FC = () => {
                     </button>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            {organizations.find(o => o.id === selectedOrg)?.name} - Branding
+                            {organizations.find((o) => o.id === selectedOrg)?.name} - Branding
                         </h1>
                         <p className="text-slate-500 mt-1">Customize the look and feel</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <InfoButton cardId="superadmin-whitelabel" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-whitelabel"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                     <button className="px-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2">
                         <Eye size={16} />
                         Preview
@@ -782,10 +886,13 @@ export const WhitelabelStudioView: React.FC = () => {
 
             {/* Status Message */}
             {message && (
-                <div className={`p-4 rounded-lg border ${message.type === 'success'
-                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
-                    }`}>
+                <div
+                    className={`p-4 rounded-lg border ${
+                        message.type === 'success'
+                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                            : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
+                    }`}
+                >
                     <div className="flex items-center gap-2">
                         {message.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
                         {message.text}
@@ -805,10 +912,11 @@ export const WhitelabelStudioView: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as TabType)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                            ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            activeTab === tab.id
+                                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
                     >
                         {tab.icon}
                         {tab.label}
@@ -829,4 +937,3 @@ export const WhitelabelStudioView: React.FC = () => {
 };
 
 export default WhitelabelStudioView;
-

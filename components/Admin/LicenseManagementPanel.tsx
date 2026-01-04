@@ -1,6 +1,6 @@
 /**
  * LicenseManagementPanel - Manage user seat licenses
- * 
+ *
  * Features:
  * - License dashboard (used/available)
  * - Assign/revoke licenses
@@ -8,15 +8,27 @@
  * - Bulk operations
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Users, UserPlus, UserMinus, Crown, Shield, Briefcase,
-    Search, Filter, Loader2, Check, X, AlertTriangle,
-    MoreHorizontal, Mail
+    AlertTriangle,
+    Briefcase,
+    Check,
+    Crown,
+    Filter,
+    Loader2,
+    Mail,
+    MoreHorizontal,
+    Search,
+    Shield,
+    UserMinus,
+    UserPlus,
+    Users,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface LicensePlan {
@@ -54,10 +66,7 @@ export const LicenseManagementPanel: React.FC = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [usersData, plansData] = await Promise.all([
-                Api.getUsers(),
-                Api.getUserPlans()
-            ]);
+            const [usersData, plansData] = await Promise.all([Api.getUsers(), Api.getUserPlans()]);
 
             setUsers(usersData);
             setLicensePlans(plansData);
@@ -66,7 +75,7 @@ export const LicenseManagementPanel: React.FC = () => {
             const totalSeats = 50; // This would come from org subscription
             const usedSeats = usersData.filter((u: User) => u.licensePlanId).length;
             const byType: { planId: string; planName: string; count: number }[] = [];
-            
+
             plansData.forEach((plan: LicensePlan) => {
                 const count = usersData.filter((u: User) => u.licensePlanId === plan.id).length;
                 if (count > 0) {
@@ -78,7 +87,7 @@ export const LicenseManagementPanel: React.FC = () => {
                 totalSeats,
                 usedSeats,
                 availableSeats: totalSeats - usedSeats,
-                byType
+                byType,
             });
         } catch (error) {
             console.error('Failed to fetch license data:', error);
@@ -111,8 +120,8 @@ export const LicenseManagementPanel: React.FC = () => {
 
         try {
             setAssigningLicense('bulk');
-            const promises = Array.from(selectedUsers).map(userId =>
-                Api.updateUser(userId, { licensePlanId: bulkAssignPlan || null })
+            const promises = Array.from(selectedUsers).map((userId) =>
+                Api.updateUser(userId, { licensePlanId: bulkAssignPlan || null }),
             );
             await Promise.all(promises);
             toast.success(t('admin.licenses.bulkAssigned', `${selectedUsers.size} licenses updated`));
@@ -127,11 +136,13 @@ export const LicenseManagementPanel: React.FC = () => {
         }
     };
 
-    const filteredUsers = users.filter(user => {
+    const filteredUsers = users.filter((user) => {
         const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-        const matchesSearch = user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        const matchesSearch =
+            user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             fullName.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filterLicense === 'all' ||
+        const matchesFilter =
+            filterLicense === 'all' ||
             (filterLicense === 'none' ? !user.licensePlanId : user.licensePlanId === filterLicense);
         return matchesSearch && matchesFilter;
     });
@@ -150,7 +161,7 @@ export const LicenseManagementPanel: React.FC = () => {
         if (selectedUsers.size === filteredUsers.length) {
             setSelectedUsers(new Set());
         } else {
-            setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+            setSelectedUsers(new Set(filteredUsers.map((u) => u.id)));
         }
     };
 
@@ -183,7 +194,9 @@ export const LicenseManagementPanel: React.FC = () => {
                 </div>
                 <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
                     <p className="text-sm text-slate-500">{t('admin.licenses.available', 'Available')}</p>
-                    <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{stats?.availableSeats || 0}</p>
+                    <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                        {stats?.availableSeats || 0}
+                    </p>
                 </div>
                 <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
                     <p className="text-sm text-slate-500">{t('admin.licenses.utilization', 'Utilization')}</p>
@@ -200,8 +213,11 @@ export const LicenseManagementPanel: React.FC = () => {
                         {t('admin.licenses.byType', 'Licenses by Type')}
                     </h4>
                     <div className="flex flex-wrap gap-3">
-                        {stats.byType.map(item => (
-                            <div key={item.planId} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/10 rounded-full">
+                        {stats.byType.map((item) => (
+                            <div
+                                key={item.planId}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/10 rounded-full"
+                            >
                                 {getLicenseIcon(item.planName)}
                                 <span className="text-sm text-slate-700 dark:text-slate-300">{item.planName}</span>
                                 <span className="text-sm font-bold text-slate-900 dark:text-white">{item.count}</span>
@@ -231,8 +247,10 @@ export const LicenseManagementPanel: React.FC = () => {
                     >
                         <option value="all">{t('admin.licenses.allLicenses', 'All Licenses')}</option>
                         <option value="none">{t('admin.licenses.noLicense', 'No License')}</option>
-                        {licensePlans.map(plan => (
-                            <option key={plan.id} value={plan.id}>{plan.name}</option>
+                        {licensePlans.map((plan) => (
+                            <option key={plan.id} value={plan.id}>
+                                {plan.name}
+                            </option>
                         ))}
                     </select>
                     {selectedUsers.size > 0 && (
@@ -275,8 +293,8 @@ export const LicenseManagementPanel: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                        {filteredUsers.map(user => {
-                            const userLicense = licensePlans.find(p => p.id === user.licensePlanId);
+                        {filteredUsers.map((user) => {
+                            const userLicense = licensePlans.find((p) => p.id === user.licensePlanId);
                             return (
                                 <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                     <td className="px-4 py-3">
@@ -293,7 +311,10 @@ export const LicenseManagementPanel: React.FC = () => {
                                                 {(user.firstName || user.email).charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="font-medium text-slate-900 dark:text-white">{`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email}</p>
+                                                <p className="font-medium text-slate-900 dark:text-white">
+                                                    {`${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+                                                        user.email}
+                                                </p>
                                                 <p className="text-sm text-slate-500">{user.email}</p>
                                             </div>
                                         </div>
@@ -305,14 +326,15 @@ export const LicenseManagementPanel: React.FC = () => {
                                                 {userLicense.name}
                                             </span>
                                         ) : (
-                                            <span className="text-slate-400">{t('admin.licenses.none', 'No license')}</span>
+                                            <span className="text-slate-400">
+                                                {t('admin.licenses.none', 'No license')}
+                                            </span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-slate-500">
-                                        {user.licenseAssignedAt 
+                                        {user.licenseAssignedAt
                                             ? new Date(user.licenseAssignedAt).toLocaleDateString()
-                                            : '-'
-                                        }
+                                            : '-'}
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-end gap-2">
@@ -323,8 +345,10 @@ export const LicenseManagementPanel: React.FC = () => {
                                                 className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                                             >
                                                 <option value="">{t('admin.licenses.noLicense', 'No License')}</option>
-                                                {licensePlans.map(plan => (
-                                                    <option key={plan.id} value={plan.id}>{plan.name}</option>
+                                                {licensePlans.map((plan) => (
+                                                    <option key={plan.id} value={plan.id}>
+                                                        {plan.name}
+                                                    </option>
                                                 ))}
                                             </select>
                                             {assigningLicense === user.id && (
@@ -354,7 +378,10 @@ export const LicenseManagementPanel: React.FC = () => {
                                 {t('admin.licenses.bulkAssignTitle', 'Bulk Assign Licenses')}
                             </h3>
                             <p className="text-sm text-slate-500 mt-1">
-                                {t('admin.licenses.bulkAssignDesc', `Assign license to ${selectedUsers.size} selected users`)}
+                                {t(
+                                    'admin.licenses.bulkAssignDesc',
+                                    `Assign license to ${selectedUsers.size} selected users`,
+                                )}
                             </p>
                         </div>
                         <div className="p-6 space-y-4">
@@ -368,8 +395,10 @@ export const LicenseManagementPanel: React.FC = () => {
                                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="">{t('admin.licenses.removeLicense', 'Remove License')}</option>
-                                    {licensePlans.map(plan => (
-                                        <option key={plan.id} value={plan.id}>{plan.name} - ${plan.price_monthly}/mo</option>
+                                    {licensePlans.map((plan) => (
+                                        <option key={plan.id} value={plan.id}>
+                                            {plan.name} - ${plan.price_monthly}/mo
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -407,11 +436,4 @@ export const LicenseManagementPanel: React.FC = () => {
 };
 
 export default LicenseManagementPanel;
-
-
-
-
-
-
-
 

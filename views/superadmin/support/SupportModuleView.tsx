@@ -3,12 +3,13 @@
  * Manages support tickets and customer success
  */
 
+import { Activity, FileText, HeadphonesIcon, Heart } from 'lucide-react';
 import React, { useState } from 'react';
-import { HeadphonesIcon, FileText, Heart, Activity } from 'lucide-react';
-import { TabLayout, Tab } from '../../../components/SuperAdmin/TabLayout';
-import { SupportTicketsView } from './SupportTicketsView';
-import { CustomerSuccessNotesView } from './CustomerSuccessNotesView';
+
+import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import { CustomerHealthView } from './CustomerHealthView';
+import { CustomerSuccessNotesView } from './CustomerSuccessNotesView';
+import { SupportTicketsView } from './SupportTicketsView';
 
 export const SupportModuleView: React.FC = () => {
     const [activeTab, setActiveTab] = useState('tickets');
@@ -44,10 +45,4 @@ export const SupportModuleView: React.FC = () => {
         </TabLayout>
     );
 };
-
-
-
-
-
-
 

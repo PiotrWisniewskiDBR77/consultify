@@ -1,31 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { User } from '../../types';
 import {
-    Save,
-    RefreshCw,
-    Shield,
-    Mail,
-    FileText,
-    Settings,
-    Users,
-    Plus,
-    Trash2,
-    Check,
     AlertCircle,
-    HardDrive,
-    Clock,
-    Database,
-    Table,
-    Search,
+    Check,
     ChevronDown,
     ChevronRight,
+    Clock,
+    Database,
     Eye,
-    EyeOff
+    EyeOff,
+    FileText,
+    HardDrive,
+    Mail,
+    Plus,
+    RefreshCw,
+    Save,
+    Search,
+    Settings,
+    Shield,
+    Table,
+    Trash2,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { SuperAdminStorageDetailModal } from './SuperAdminStorageDetailModal';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
+import { User } from '../../types';
+import { SuperAdminStorageDetailModal } from './SuperAdminStorageDetailModal';
 
 type SettingsTab = 'GENERAL' | 'SECURITY' | 'EMAIL' | 'LEGAL' | 'ADMINS' | 'STORAGE' | 'AUDIT' | 'ADVANCED';
 
@@ -41,7 +42,7 @@ export const SystemSettings: React.FC = () => {
 
     // Storage State
     const [storageStats, setStorageStats] = useState<any>(null);
-    const [selectedOrg, setSelectedOrg] = useState<{ id: string, name: string } | null>(null);
+    const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
 
     // Audit Logs State
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -78,7 +79,7 @@ export const SystemSettings: React.FC = () => {
     const fetchAdmins = async () => {
         try {
             const users = await Api.getSuperAdminUsers();
-            setAdmins(users.filter(u => u.role === 'SUPERADMIN'));
+            setAdmins(users.filter((u) => u.role === 'SUPERADMIN'));
         } catch (_) {
             toast.error('Failed to load admins');
         }
@@ -141,7 +142,7 @@ export const SystemSettings: React.FC = () => {
     const handleSaveSetting = async (key: string, value: string) => {
         try {
             await Api.saveSetting(key, value);
-            setSettings(prev => ({ ...prev, [key]: value }));
+            setSettings((prev) => ({ ...prev, [key]: value }));
             toast.success('Setting saved');
         } catch (_) {
             toast.error('Failed to save setting');
@@ -231,12 +232,14 @@ export const SystemSettings: React.FC = () => {
                 <h3 className="text-base font-medium mb-4 text-slate-100">Application Identity</h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Application Name</label>
+                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                            Application Name
+                        </label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={settings['app_name'] || ''}
-                                onChange={e => setSettings(prev => ({ ...prev, 'app_name': e.target.value }))}
+                                onChange={(e) => setSettings((prev) => ({ ...prev, app_name: e.target.value }))}
                                 className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
                                 placeholder="TechnoLex"
                             />
@@ -249,11 +252,13 @@ export const SystemSettings: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Default Language</label>
+                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                            Default Language
+                        </label>
                         <div className="flex gap-2">
                             <select
                                 value={settings['default_language'] || 'EN'}
-                                onChange={e => handleSaveSetting('default_language', e.target.value)}
+                                onChange={(e) => handleSaveSetting('default_language', e.target.value)}
                                 className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
                             >
                                 <option value="EN">English</option>
@@ -277,7 +282,7 @@ export const SystemSettings: React.FC = () => {
                             type="checkbox"
                             className="sr-only peer"
                             checked={settings['maintenance_mode'] === 'true'}
-                            onChange={e => handleSaveSetting('maintenance_mode', String(e.target.checked))}
+                            onChange={(e) => handleSaveSetting('maintenance_mode', String(e.target.checked))}
                         />
                         <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
@@ -294,7 +299,7 @@ export const SystemSettings: React.FC = () => {
                         <input
                             type="text"
                             value={settings['system_announcement'] || ''}
-                            onChange={e => setSettings(prev => ({ ...prev, 'system_announcement': e.target.value }))}
+                            onChange={(e) => setSettings((prev) => ({ ...prev, system_announcement: e.target.value }))}
                             className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                             placeholder="e.g. Scheduled maintenance at 22:00"
                         />
@@ -325,23 +330,29 @@ export const SystemSettings: React.FC = () => {
                                 type="checkbox"
                                 className="sr-only peer"
                                 checked={settings['enforce_mfa'] === 'true'}
-                                onChange={e => handleSaveSetting('enforce_mfa', String(e.target.checked))}
+                                onChange={(e) => handleSaveSetting('enforce_mfa', String(e.target.checked))}
                             />
                             <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Session Timeout (minutes)</label>
+                        <label className="block text-sm font-medium text-slate-400 mb-2">
+                            Session Timeout (minutes)
+                        </label>
                         <div className="flex gap-2">
                             <input
                                 type="number"
                                 value={settings['session_timeout_mins'] || '60'}
-                                onChange={e => setSettings(prev => ({ ...prev, 'session_timeout_mins': e.target.value }))}
+                                onChange={(e) =>
+                                    setSettings((prev) => ({ ...prev, session_timeout_mins: e.target.value }))
+                                }
                                 className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                             />
                             <button
-                                onClick={() => handleSaveSetting('session_timeout_mins', settings['session_timeout_mins'])}
+                                onClick={() =>
+                                    handleSaveSetting('session_timeout_mins', settings['session_timeout_mins'])
+                                }
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
                             >
                                 <Save size={18} />
@@ -364,7 +375,7 @@ export const SystemSettings: React.FC = () => {
                             <input
                                 type="text"
                                 value={settings['smtp_host'] || ''}
-                                onChange={e => setSettings(prev => ({ ...prev, 'smtp_host': e.target.value }))}
+                                onChange={(e) => setSettings((prev) => ({ ...prev, smtp_host: e.target.value }))}
                                 className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                                 placeholder="smtp.example.com"
                             />
@@ -383,7 +394,7 @@ export const SystemSettings: React.FC = () => {
                                 <input
                                     type="text"
                                     value={settings['smtp_port'] || ''}
-                                    onChange={e => setSettings(prev => ({ ...prev, 'smtp_port': e.target.value }))}
+                                    onChange={(e) => setSettings((prev) => ({ ...prev, smtp_port: e.target.value }))}
                                     className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                                     placeholder="587"
                                 />
@@ -401,7 +412,7 @@ export const SystemSettings: React.FC = () => {
                                 <input
                                     type="text"
                                     value={settings['smtp_from'] || ''}
-                                    onChange={e => setSettings(prev => ({ ...prev, 'smtp_from': e.target.value }))}
+                                    onChange={(e) => setSettings((prev) => ({ ...prev, smtp_from: e.target.value }))}
                                     className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                                     placeholder="noreply@technolex.com"
                                 />
@@ -430,7 +441,7 @@ export const SystemSettings: React.FC = () => {
                             <input
                                 type="text"
                                 value={settings['legal_tos_url'] || ''}
-                                onChange={e => setSettings(prev => ({ ...prev, 'legal_tos_url': e.target.value }))}
+                                onChange={(e) => setSettings((prev) => ({ ...prev, legal_tos_url: e.target.value }))}
                                 className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                                 placeholder="https://..."
                             />
@@ -448,7 +459,9 @@ export const SystemSettings: React.FC = () => {
                             <input
                                 type="text"
                                 value={settings['legal_privacy_url'] || ''}
-                                onChange={e => setSettings(prev => ({ ...prev, 'legal_privacy_url': e.target.value }))}
+                                onChange={(e) =>
+                                    setSettings((prev) => ({ ...prev, legal_privacy_url: e.target.value }))
+                                }
                                 className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
                                 placeholder="https://..."
                             />
@@ -489,12 +502,16 @@ export const SystemSettings: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm">
-                        {admins.map(admin => (
+                        {admins.map((admin) => (
                             <tr key={admin.id} className="hover:bg-white/5 transition-colors">
-                                <td className="p-4 font-medium text-white">{admin.firstName} {admin.lastName}</td>
+                                <td className="p-4 font-medium text-white">
+                                    {admin.firstName} {admin.lastName}
+                                </td>
                                 <td className="p-4 text-slate-300">{admin.email}</td>
                                 <td className="p-4">
-                                    <span className={`flex items-center gap-1.5 ${admin.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
+                                    <span
+                                        className={`flex items-center gap-1.5 ${admin.status === 'active' ? 'text-green-400' : 'text-red-400'}`}
+                                    >
                                         {admin.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
                                         {admin.status}
                                     </span>
@@ -529,7 +546,7 @@ export const SystemSettings: React.FC = () => {
                                     <input
                                         required
                                         value={newAdmin.firstName}
-                                        onChange={e => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
+                                        onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
                                         className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                                     />
                                 </div>
@@ -538,7 +555,7 @@ export const SystemSettings: React.FC = () => {
                                     <input
                                         required
                                         value={newAdmin.lastName}
-                                        onChange={e => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
+                                        onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
                                         className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                                     />
                                 </div>
@@ -549,7 +566,7 @@ export const SystemSettings: React.FC = () => {
                                     required
                                     type="email"
                                     value={newAdmin.email}
-                                    onChange={e => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                                    onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
                                     className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                                 />
                             </div>
@@ -559,7 +576,7 @@ export const SystemSettings: React.FC = () => {
                                     required
                                     type="password"
                                     value={newAdmin.password}
-                                    onChange={e => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                                     className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
                                 />
                             </div>
@@ -591,7 +608,9 @@ export const SystemSettings: React.FC = () => {
             <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-2">Total System Storage</h2>
                 <div className="flex items-end gap-3">
-                    <span className="text-4xl font-bold text-pink-500">{storageStats ? formatBytes(storageStats.totalSize) : '0 Bytes'}</span>
+                    <span className="text-4xl font-bold text-pink-500">
+                        {storageStats ? formatBytes(storageStats.totalSize) : '0 Bytes'}
+                    </span>
                     <span className="text-slate-500 mb-1">consumed</span>
                 </div>
             </div>
@@ -617,34 +636,41 @@ export const SystemSettings: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm">
                         {!storageStats?.breakdown?.length ? (
-                            <tr><td colSpan={3} className="p-6 text-center text-slate-500">No uploads found</td></tr>
+                            <tr>
+                                <td colSpan={3} className="p-6 text-center text-slate-500">
+                                    No uploads found
+                                </td>
+                            </tr>
                         ) : (
-                            storageStats.breakdown.sort((a: any, b: any) => b.size - a.size).map((item: any) => {
-                                const percent = storageStats.totalSize > 0 ? (item.size / storageStats.totalSize) * 100 : 0;
-                                return (
-                                    <tr
-                                        key={item.name}
-                                        className="hover:bg-white/5 cursor-pointer transition-colors"
-                                        onClick={() => setSelectedOrg({ id: item.name, name: item.displayName })}
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="font-medium text-white">{item.displayName}</div>
-                                            <div className="text-xs text-slate-500 font-mono">{item.name}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right text-slate-300 font-mono">
-                                            {formatBytes(item.size)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-pink-500 rounded-full"
-                                                    style={{ width: `${Math.max(percent, 1)}%` }}
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })
+                            storageStats.breakdown
+                                .sort((a: any, b: any) => b.size - a.size)
+                                .map((item: any) => {
+                                    const percent =
+                                        storageStats.totalSize > 0 ? (item.size / storageStats.totalSize) * 100 : 0;
+                                    return (
+                                        <tr
+                                            key={item.name}
+                                            className="hover:bg-white/5 cursor-pointer transition-colors"
+                                            onClick={() => setSelectedOrg({ id: item.name, name: item.displayName })}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-white">{item.displayName}</div>
+                                                <div className="text-xs text-slate-500 font-mono">{item.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-slate-300 font-mono">
+                                                {formatBytes(item.size)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-pink-500 rounded-full"
+                                                        style={{ width: `${Math.max(percent, 1)}%` }}
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                         )}
                     </tbody>
                 </table>
@@ -663,28 +689,32 @@ export const SystemSettings: React.FC = () => {
     );
 
     const renderAudit = () => {
-        const filteredLogs = auditFilter === 'all'
-            ? auditLogs
-            : auditLogs.filter(log => {
-                if (auditFilter === 'user') return log.entity_type === 'user';
-                if (auditFilter === 'system') return log.entity_type === 'system' || log.entity_type === 'settings';
-                if (auditFilter === 'security') return log.action?.includes('login') || log.action?.includes('auth');
-                return true;
-            });
+        const filteredLogs =
+            auditFilter === 'all'
+                ? auditLogs
+                : auditLogs.filter((log) => {
+                      if (auditFilter === 'user') return log.entity_type === 'user';
+                      if (auditFilter === 'system')
+                          return log.entity_type === 'system' || log.entity_type === 'settings';
+                      if (auditFilter === 'security')
+                          return log.action?.includes('login') || log.action?.includes('auth');
+                      return true;
+                  });
 
         return (
             <div className="space-y-6">
                 {/* Filters */}
                 <div className="flex items-center justify-between">
                     <div className="flex gap-2">
-                        {(['all', 'user', 'system', 'security'] as const).map(f => (
+                        {(['all', 'user', 'system', 'security'] as const).map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setAuditFilter(f)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${auditFilter === f
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                                    }`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    auditFilter === f
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                                }`}
                             >
                                 {f.charAt(0).toUpperCase() + f.slice(1)}
                             </button>
@@ -712,20 +742,32 @@ export const SystemSettings: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm">
                             {filteredLogs.length === 0 ? (
-                                <tr><td colSpan={5} className="p-8 text-center text-slate-500">No audit logs found</td></tr>
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-slate-500">
+                                        No audit logs found
+                                    </td>
+                                </tr>
                             ) : (
                                 filteredLogs.slice(0, 50).map((log: any, idx: number) => (
                                     <tr key={log.id || idx} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4 text-slate-500 text-xs">
                                             {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
                                         </td>
-                                        <td className="px-6 py-4 text-white">{log.user_name || log.user_email || 'System'}</td>
+                                        <td className="px-6 py-4 text-white">
+                                            {log.user_name || log.user_email || 'System'}
+                                        </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${log.action === 'created' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                log.action === 'deleted' ? 'bg-red-500/20 text-red-400' :
-                                                    log.action === 'updated' ? 'bg-blue-500/20 text-blue-400' :
-                                                        'bg-slate-700 text-slate-300'
-                                                }`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                                    log.action === 'created'
+                                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                                        : log.action === 'deleted'
+                                                          ? 'bg-red-500/20 text-red-400'
+                                                          : log.action === 'updated'
+                                                            ? 'bg-blue-500/20 text-blue-400'
+                                                            : 'bg-slate-700 text-slate-300'
+                                                }`}
+                                            >
                                                 {log.action}
                                             </span>
                                         </td>
@@ -744,8 +786,8 @@ export const SystemSettings: React.FC = () => {
     };
 
     const renderAdvanced = () => {
-        const filteredRows = tableRows.filter(row =>
-            JSON.stringify(row).toLowerCase().includes(dbSearchTerm.toLowerCase())
+        const filteredRows = tableRows.filter((row) =>
+            JSON.stringify(row).toLowerCase().includes(dbSearchTerm.toLowerCase()),
         );
         const columns = tableRows.length > 0 ? Object.keys(tableRows[0]) : [];
 
@@ -757,7 +799,8 @@ export const SystemSettings: React.FC = () => {
                     <div>
                         <h3 className="font-semibold text-red-400">Advanced Database Access</h3>
                         <p className="text-sm text-red-300/80 mt-1">
-                            Direct database access is for debugging only. Changes here bypass all validation. Use with extreme caution.
+                            Direct database access is for debugging only. Changes here bypass all validation. Use with
+                            extreme caution.
                         </p>
                     </div>
                 </div>
@@ -769,14 +812,15 @@ export const SystemSettings: React.FC = () => {
                             <Table size={16} /> Tables ({tables.length})
                         </h2>
                         <div className="space-y-1">
-                            {tables.map(table => (
+                            {tables.map((table) => (
                                 <button
                                     key={table}
                                     onClick={() => setSelectedTable(table)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedTable === table
-                                        ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                                        : 'text-slate-400 hover:bg-white/5'
-                                        }`}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        selectedTable === table
+                                            ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                                            : 'text-slate-400 hover:bg-white/5'
+                                    }`}
                                 >
                                     {table}
                                 </button>
@@ -800,24 +844,33 @@ export const SystemSettings: React.FC = () => {
                         <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
                             {tableRows.length === 0 ? (
                                 <div className="p-12 text-center text-slate-400">
-                                    {selectedTable ? `No rows found in ${selectedTable}` : 'Select a table to view data'}
+                                    {selectedTable
+                                        ? `No rows found in ${selectedTable}`
+                                        : 'Select a table to view data'}
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto max-h-[50vh]">
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-navy-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-white/10 sticky top-0">
                                             <tr>
-                                                {columns.map(col => (
-                                                    <th key={col} className="px-6 py-4 whitespace-nowrap">{col}</th>
+                                                {columns.map((col) => (
+                                                    <th key={col} className="px-6 py-4 whitespace-nowrap">
+                                                        {col}
+                                                    </th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
                                             {filteredRows.map((row, i) => (
                                                 <tr key={i} className="hover:bg-white/5 transition-colors">
-                                                    {columns.map(col => (
-                                                        <td key={`${i}-${col}`} className="px-6 py-4 text-slate-300 whitespace-nowrap max-w-xs truncate">
-                                                            {typeof row[col] === 'object' ? JSON.stringify(row[col]) : String(row[col] ?? '')}
+                                                    {columns.map((col) => (
+                                                        <td
+                                                            key={`${i}-${col}`}
+                                                            className="px-6 py-4 text-slate-300 whitespace-nowrap max-w-xs truncate"
+                                                        >
+                                                            {typeof row[col] === 'object'
+                                                                ? JSON.stringify(row[col])
+                                                                : String(row[col] ?? '')}
                                                         </td>
                                                     ))}
                                                 </tr>
@@ -842,7 +895,13 @@ export const SystemSettings: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-white">System Settings</h1>
                 <div className="flex items-center gap-2">
-                    <InfoButton cardId="superadmin-settings" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-settings"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                     <button
                         onClick={fetchSettings}
                         className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors text-white"

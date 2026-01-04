@@ -1,29 +1,30 @@
 /**
  * Response Quality Indicator
- * 
+ *
  * Visual indicator showing AI response quality metrics:
  * - Relevance score
  * - Groundedness (hallucination check)
  * - Completeness
  * - Overall quality
- * 
+ *
  * Part of UX Excellence - Phase 4.4
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    CheckCircle2,
     AlertCircle,
     AlertTriangle,
-    Info,
+    CheckCircle2,
     ChevronDown,
     ChevronUp,
+    FileCheck,
+    Info,
+    Shield,
     Sparkles,
     Target,
-    FileCheck,
-    Shield
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { cn } from '../../utils/cn';
 
 interface QualityMetrics {
@@ -51,7 +52,7 @@ const DEFAULT_METRICS: QualityMetrics = {
     groundedness: 0,
     coherence: 0,
     overall: 0,
-    qualityLevel: 'FAIR'
+    qualityLevel: 'FAIR',
 };
 
 export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> = ({
@@ -60,7 +61,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
     loading = false,
     compact = false,
     showDetails: initialShowDetails = false,
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const [showDetails, setShowDetails] = useState(initialShowDetails);
@@ -97,35 +98,35 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                     bg: 'bg-green-50 dark:bg-green-900/20',
                     border: 'border-green-200 dark:border-green-800',
                     text: 'text-green-700 dark:text-green-400',
-                    icon: CheckCircle2
+                    icon: CheckCircle2,
                 };
             case 'GOOD':
                 return {
                     bg: 'bg-blue-50 dark:bg-blue-900/20',
                     border: 'border-blue-200 dark:border-blue-800',
                     text: 'text-blue-700 dark:text-blue-400',
-                    icon: CheckCircle2
+                    icon: CheckCircle2,
                 };
             case 'FAIR':
                 return {
                     bg: 'bg-amber-50 dark:bg-amber-900/20',
                     border: 'border-amber-200 dark:border-amber-800',
                     text: 'text-amber-700 dark:text-amber-400',
-                    icon: AlertTriangle
+                    icon: AlertTriangle,
                 };
             case 'POOR':
                 return {
                     bg: 'bg-red-50 dark:bg-red-900/20',
                     border: 'border-red-200 dark:border-red-800',
                     text: 'text-red-700 dark:text-red-400',
-                    icon: AlertCircle
+                    icon: AlertCircle,
                 };
             default:
                 return {
                     bg: 'bg-gray-50 dark:bg-gray-900/20',
                     border: 'border-gray-200 dark:border-gray-800',
                     text: 'text-gray-700 dark:text-gray-400',
-                    icon: Info
+                    icon: Info,
                 };
         }
     };
@@ -163,7 +164,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                     'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium',
                     qualityStyle.bg,
                     qualityStyle.text,
-                    className
+                    className,
                 )}
                 title={t('quality.overallScore', 'Quality Score: {{score}}%', { score: animatedScore })}
             >
@@ -179,7 +180,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                 'rounded-lg border transition-all duration-200',
                 qualityStyle.bg,
                 qualityStyle.border,
-                className
+                className,
             )}
         >
             {/* Header */}
@@ -194,9 +195,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                     <span className={cn('text-sm font-medium', qualityStyle.text)}>
                         {t(`quality.level.${metrics.qualityLevel}`, metrics.qualityLevel)}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                        ({animatedScore}%)
-                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">({animatedScore}%)</span>
                 </div>
                 {showDetails ? (
                     <ChevronUp size={14} className="text-gray-400" />
@@ -225,7 +224,9 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                                     style={{ width: `${formatScore(metrics.relevance)}%` }}
                                 />
                             </div>
-                            <span className={cn('text-xs font-medium w-8 text-right', getScoreColor(metrics.relevance))}>
+                            <span
+                                className={cn('text-xs font-medium w-8 text-right', getScoreColor(metrics.relevance))}
+                            >
                                 {formatScore(metrics.relevance)}%
                             </span>
                         </div>
@@ -242,7 +243,12 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                                     style={{ width: `${formatScore(metrics.groundedness)}%` }}
                                 />
                             </div>
-                            <span className={cn('text-xs font-medium w-8 text-right', getScoreColor(metrics.groundedness))}>
+                            <span
+                                className={cn(
+                                    'text-xs font-medium w-8 text-right',
+                                    getScoreColor(metrics.groundedness),
+                                )}
+                            >
                                 {formatScore(metrics.groundedness)}%
                             </span>
                         </div>
@@ -259,7 +265,12 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                                     style={{ width: `${formatScore(metrics.completeness)}%` }}
                                 />
                             </div>
-                            <span className={cn('text-xs font-medium w-8 text-right', getScoreColor(metrics.completeness))}>
+                            <span
+                                className={cn(
+                                    'text-xs font-medium w-8 text-right',
+                                    getScoreColor(metrics.completeness),
+                                )}
+                            >
                                 {formatScore(metrics.completeness)}%
                             </span>
                         </div>
@@ -276,7 +287,9 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
                                     style={{ width: `${formatScore(metrics.coherence)}%` }}
                                 />
                             </div>
-                            <span className={cn('text-xs font-medium w-8 text-right', getScoreColor(metrics.coherence))}>
+                            <span
+                                className={cn('text-xs font-medium w-8 text-right', getScoreColor(metrics.coherence))}
+                            >
                                 {formatScore(metrics.coherence)}%
                             </span>
                         </div>
@@ -312,5 +325,3 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
 };
 
 export default ResponseQualityIndicator;
-
-

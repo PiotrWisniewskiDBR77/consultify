@@ -1,31 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    BarChart2,
-    TrendingUp,
-    TrendingDown,
-    Clock,
-    Play,
-    CheckCircle2,
-    XCircle,
-    AlertCircle,
     Activity,
-    Users,
-    Eye,
-    Edit,
+    AlertCircle,
+    BarChart2,
+    Calendar,
+    CheckCircle2,
+    Clock,
     Copy,
     Download,
+    Edit,
+    Eye,
+    Play,
     RefreshCw,
-    Calendar
+    TrendingDown,
+    TrendingUp,
+    Users,
+    XCircle,
 } from 'lucide-react';
-import type { PlaybookTemplateStats, ContentAnalyticsEvent } from '../../types';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import type { ContentAnalyticsEvent, PlaybookTemplateStats } from '../../types';
 
 interface PlaybookTemplateAnalyticsProps {
     templateId: string;
 }
 
-export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps> = ({
-    templateId
-}) => {
+export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps> = ({ templateId }) => {
     const token = localStorage.getItem('token');
 
     const [stats, setStats] = useState<PlaybookTemplateStats | null>(null);
@@ -37,7 +36,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         setLoading(true);
         try {
             const res = await fetch(`/api/content/playbooks/templates/${templateId}/analytics`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -65,7 +64,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             CLONE: <Copy size={14} className="text-pink-400" />,
             PUBLISH: <CheckCircle2 size={14} className="text-emerald-400" />,
             DEPRECATE: <AlertCircle size={14} className="text-slate-400" />,
-            RESTORE: <RefreshCw size={14} className="text-amber-400" />
+            RESTORE: <RefreshCw size={14} className="text-amber-400" />,
         };
         return icons[eventType] || <Activity size={14} className="text-slate-400" />;
     };
@@ -122,9 +121,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                         <span className="text-sm text-slate-400">Total Runs</span>
                     </div>
                     <div className="text-2xl font-bold text-white">{totalRuns}</div>
-                    <div className="text-xs text-slate-500 mt-1">
-                        Playbook executions
-                    </div>
+                    <div className="text-xs text-slate-500 mt-1">Playbook executions</div>
                 </div>
 
                 {/* Success Rate */}
@@ -137,18 +134,18 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                         )}
                         <span className="text-sm text-slate-400">Success Rate</span>
                     </div>
-                    <div className={`text-2xl font-bold ${
-                        stats.successRate && stats.successRate >= 70
-                            ? 'text-emerald-400'
-                            : stats.successRate && stats.successRate >= 40
-                            ? 'text-amber-400'
-                            : 'text-red-400'
-                    }`}>
+                    <div
+                        className={`text-2xl font-bold ${
+                            stats.successRate && stats.successRate >= 70
+                                ? 'text-emerald-400'
+                                : stats.successRate && stats.successRate >= 40
+                                  ? 'text-amber-400'
+                                  : 'text-red-400'
+                        }`}
+                    >
                         {stats.successRate !== null ? `${stats.successRate}%` : 'N/A'}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                        Completed successfully
-                    </div>
+                    <div className="text-xs text-slate-500 mt-1">Completed successfully</div>
                 </div>
 
                 {/* Avg Duration */}
@@ -158,13 +155,9 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                         <span className="text-sm text-slate-400">Avg. Duration</span>
                     </div>
                     <div className="text-2xl font-bold text-white">
-                        {stats.avgExecutionTimeMins
-                            ? `${stats.avgExecutionTimeMins}m`
-                            : 'N/A'}
+                        {stats.avgExecutionTimeMins ? `${stats.avgExecutionTimeMins}m` : 'N/A'}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                        Average execution time
-                    </div>
+                    <div className="text-xs text-slate-500 mt-1">Average execution time</div>
                 </div>
 
                 {/* Usage Count */}
@@ -174,20 +167,16 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                         <span className="text-sm text-slate-400">Usage Count</span>
                     </div>
                     <div className="text-2xl font-bold text-white">{stats.usageCount}</div>
-                    <div className="text-xs text-slate-500 mt-1">
-                        Times template used
-                    </div>
+                    <div className="text-xs text-slate-500 mt-1">Times template used</div>
                 </div>
             </div>
 
             {/* Run Status Breakdown */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
                 <h4 className="font-medium text-white mb-4">Run Status Breakdown</h4>
-                
+
                 {totalRuns === 0 ? (
-                    <div className="text-center py-4 text-slate-400">
-                        No runs recorded yet
-                    </div>
+                    <div className="text-center py-4 text-slate-400">No runs recorded yet</div>
                 ) : (
                     <>
                         {/* Progress bar */}
@@ -226,27 +215,19 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                                <span className="text-sm text-slate-300">
-                                    Completed ({completedRuns})
-                                </span>
+                                <span className="text-sm text-slate-300">Completed ({completedRuns})</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-blue-500" />
-                                <span className="text-sm text-slate-300">
-                                    In Progress ({inProgressRuns})
-                                </span>
+                                <span className="text-sm text-slate-300">In Progress ({inProgressRuns})</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-red-500" />
-                                <span className="text-sm text-slate-300">
-                                    Failed ({failedRuns})
-                                </span>
+                                <span className="text-sm text-slate-300">Failed ({failedRuns})</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-slate-500" />
-                                <span className="text-sm text-slate-300">
-                                    Cancelled ({cancelledRuns})
-                                </span>
+                                <span className="text-sm text-slate-300">Cancelled ({cancelledRuns})</span>
                             </div>
                         </div>
                     </>
@@ -256,11 +237,9 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             {/* Recent Activity */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
                 <h4 className="font-medium text-white mb-4">Recent Activity</h4>
-                
+
                 {events.length === 0 ? (
-                    <div className="text-center py-4 text-slate-400">
-                        No recent activity
-                    </div>
+                    <div className="text-center py-4 text-slate-400">No recent activity</div>
                 ) : (
                     <div className="space-y-3">
                         {events.slice(0, 10).map((event) => (
@@ -310,10 +289,4 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
 };
 
 export default PlaybookTemplateAnalytics;
-
-
-
-
-
-
 

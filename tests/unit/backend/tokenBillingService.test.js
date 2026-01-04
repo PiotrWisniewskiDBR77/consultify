@@ -6,21 +6,51 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations } from '../../fixtures/testData.js';
 
-const require = createRequire(import.meta.url);
+// Hoisted mock - defined inline
+const mockDb = vi.hoisted(() => ({
+    get: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, null));
+    }),
+    all: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, []));
+    }),
+    run: vi.fn(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
+    }),
+    exec: vi.fn((sql, callback) => {
+        if (callback) process.nextTick(() => callback(null));
+    }),
+    serialize: vi.fn((cb) => { if (cb) cb(); }),
+    prepare: vi.fn(),
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    initPromise: Promise.resolve()
+}));
+
+const mockSqliteAsync = vi.hoisted(() => ({
+    runAsync: vi.fn(),
+    getAsync: vi.fn(),
+    allAsync: vi.fn(),
+    withTransaction: vi.fn((fn) => fn(mockDb))
+}));
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
+vi.mock('../../../server/db/sqliteAsync', () => mockSqliteAsync);
 
 describe('TokenBillingService', () => {
-    let mockDb;
-    let mockCrypto;
     let TokenBillingService;
+    let mockCrypto;
 
-    beforeEach(() => {
-        vi.resetModules();
+    beforeEach(async () => {
+        vi.clearAllMocks();
 
-        mockDb = createMockDb();
         mockCrypto = {
             randomBytes: vi.fn(() => Buffer.from('0123456789abcdef')),
             createCipheriv: vi.fn(() => ({
@@ -33,31 +63,19 @@ describe('TokenBillingService', () => {
             }))
         };
 
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
-
-        vi.doMock('../../../server/db/sqliteAsync', () => ({
-            runAsync: vi.fn(),
-            getAsync: vi.fn(),
-            allAsync: vi.fn(),
-            withTransaction: vi.fn((fn) => fn(mockDb))
-        }));
-
-        TokenBillingService = require('../../../server/services/tokenBillingService.js');
+        // Dynamic import for ESM compatibility - import from TypeScript source
+        const module = await import('../../../server/src/services/tokenBillingService.ts');
+        TokenBillingService = module.default;
 
         // Inject mock dependencies
-        TokenBillingService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'test-uuid-1234',
-            crypto: mockCrypto,
-            sqliteAsync: {
-                runAsync: vi.fn(),
-                getAsync: vi.fn(),
-                allAsync: vi.fn(),
-                withTransaction: vi.fn((fn) => fn(mockDb))
-            }
-        });
+        if (TokenBillingService.setDependencies) {
+            TokenBillingService.setDependencies({
+                db: mockDb,
+                uuidv4: () => 'test-uuid-1234',
+                crypto: mockCrypto,
+                sqliteAsync: mockSqliteAsync
+            });
+        }
     });
 
     afterEach(() => {

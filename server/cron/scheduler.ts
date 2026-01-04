@@ -1,16 +1,17 @@
 import cron from 'node-cron';
-import RetentionPolicyService from '../src/services/retentionPolicyService.ts';
-import StorageReconciliationService from '../src/services/storageReconciliationService.ts';
-import TrialCron from './trialCron.ts'; // Assuming JS usage for legacy or TS if Vitest resolves
-import MetricsAggregator from '../src/services/metricsAggregator.ts';
-import SLAService from '../src/services/slaService.ts';
-import AICostControlService from '../src/services/aiCostControlService.ts';
-import ScheduledReportsService from '../src/services/scheduledReportsService.ts';
-import ReportEmailService from '../src/services/reportEmailService.ts';
+
+import AIMemoryMetricsService from '../src/services/ai/aiMemoryMetricsService.ts';
 import { learningSystem } from '../src/services/ai/learningSystem.ts'; // Check if file exists
+import AICostControlService from '../src/services/aiCostControlService.ts';
 import AIMemoryManager from '../src/services/aiMemoryManager.ts';
 import FeedbackService from '../src/services/feedbackService.ts';
-import AIMemoryMetricsService from '../src/services/ai/aiMemoryMetricsService.ts';
+import MetricsAggregator from '../src/services/metricsAggregator.ts';
+import ReportEmailService from '../src/services/reportEmailService.ts';
+import RetentionPolicyService from '../src/services/retentionPolicyService.ts';
+import ScheduledReportsService from '../src/services/scheduledReportsService.ts';
+import SLAService from '../src/services/slaService.ts';
+import StorageReconciliationService from '../src/services/storageReconciliationService.ts';
+import TrialCron from './trialCron.ts'; // Assuming JS usage for legacy or TS if Vitest resolves
 
 const Scheduler = {
     init: () => {
@@ -59,23 +60,27 @@ const Scheduler = {
         // 8. AI Monthly Budget Reset - Run on the 1st of every month at midnight
         cron.schedule('0 0 1 * *', () => {
             console.log('[Scheduler] Running Monthly AI Budget Reset');
-            AICostControlService.resetMonthlyUsage().then((result: any) => {
-                console.log(`[Scheduler] AI Monthly Budget Reset completed. Count: ${result.resetCount}`);
-            }).catch((err: any) => {
-                console.error('[Scheduler] AI Monthly Budget Reset failed:', err.message);
-            });
+            AICostControlService.resetMonthlyUsage()
+                .then((result: any) => {
+                    console.log(`[Scheduler] AI Monthly Budget Reset completed. Count: ${result.resetCount}`);
+                })
+                .catch((err: any) => {
+                    console.error('[Scheduler] AI Monthly Budget Reset failed:', err.message);
+                });
         });
 
         // 9. Scheduled Management Reports - Run every hour at minute 0
         cron.schedule('0 * * * *', () => {
             console.log('[Scheduler] Checking Scheduled Management Reports');
-            ScheduledReportsService.processScheduledReports().then((result: any) => {
-                if (result.processed > 0) {
-                    console.log(`[Scheduler] Processed ${result.processed} scheduled report(s)`);
-                }
-            }).catch((err: any) => {
-                console.error('[Scheduler] Scheduled Reports processing failed:', err.message);
-            });
+            ScheduledReportsService.processScheduledReports()
+                .then((result: any) => {
+                    if (result.processed > 0) {
+                        console.log(`[Scheduler] Processed ${result.processed} scheduled report(s)`);
+                    }
+                })
+                .catch((err: any) => {
+                    console.error('[Scheduler] Scheduled Reports processing failed:', err.message);
+                });
         });
 
         // 10. Scheduled Emails - Run every 15 minutes
@@ -94,7 +99,9 @@ const Scheduler = {
             console.log('[Scheduler] Running AI Pattern Extraction');
             try {
                 const result = await learningSystem.extractAllPatterns();
-                console.log(`[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`);
+                console.log(
+                    `[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`,
+                );
             } catch (err: any) {
                 console.error('[Scheduler] AI Pattern Extraction failed:', err.message);
             }
@@ -105,7 +112,9 @@ const Scheduler = {
             console.log('[Scheduler] Running AI Learning Consolidation');
             try {
                 const result = await learningSystem.consolidateLearnings();
-                console.log(`[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`);
+                console.log(
+                    `[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`,
+                );
             } catch (err: any) {
                 console.error('[Scheduler] AI Learning Consolidation failed:', err.message);
             }
@@ -132,7 +141,7 @@ const Scheduler = {
                     projectMemory: result.projectMemory?.deleted || 0,
                     partialResponses: result.partialResponses?.deleted || 0,
                     feedback: result.feedback?.deleted || 0,
-                    duration: `${result.duration}ms`
+                    duration: `${result.duration}ms`,
                 });
             } catch (err: any) {
                 console.error('[Scheduler] AI Memory Cleanup failed:', err.message);
@@ -170,15 +179,18 @@ const Scheduler = {
             console.log('[Scheduler] Running AI Memory Metrics Aggregation');
             try {
                 const result = await AIMemoryMetricsService.aggregateDailyMetrics();
-                console.log(`[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`);
+                console.log(
+                    `[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`,
+                );
             } catch (err: any) {
                 console.error('[Scheduler] Memory Metrics Aggregation failed:', err.message);
             }
         });
 
-        console.log('[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM)');
-
-    }
+        console.log(
+            '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM)',
+        );
+    },
 };
 
 export default Scheduler;

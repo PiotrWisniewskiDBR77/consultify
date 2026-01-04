@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Sidebar } from '../../../components/Sidebar';
+import { Sidebar } from '../../components/Sidebar';
 import { useAppStore } from '../../../store/useAppStore';
 
 vi.mock('../../../store/useAppStore', () => ({

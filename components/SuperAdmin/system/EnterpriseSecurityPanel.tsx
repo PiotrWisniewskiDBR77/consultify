@@ -1,6 +1,6 @@
 /**
  * EnterpriseSecurityPanel - Comprehensive Security & Compliance Management
- * 
+ *
  * Features:
  * - Security Events Dashboard
  * - Session Management
@@ -10,40 +10,41 @@
  * - SIEM Integration
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Shield,
-    AlertTriangle,
-    Lock,
-    Unlock,
-    Globe,
-    Key,
-    Users,
-    Clock,
     Activity,
+    AlertCircle,
+    AlertTriangle,
+    Building,
     CheckCircle,
-    XCircle,
-    Plus,
-    Trash2,
-    Edit,
-    RefreshCw,
-    Filter,
-    Search,
+    ChevronRight,
+    Clock,
     Download,
+    Edit,
     ExternalLink,
-    Monitor,
-    Smartphone,
-    Laptop,
-    Loader2,
     Eye,
     EyeOff,
-    ChevronRight,
-    AlertCircle,
     FileCheck,
-    Building
+    Filter,
+    Globe,
+    Key,
+    Laptop,
+    Loader2,
+    Lock,
+    Monitor,
+    Plus,
+    RefreshCw,
+    Search,
+    Shield,
+    Smartphone,
+    Trash2,
+    Unlock,
+    Users,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface SecurityEvent {
     id: string;
@@ -112,13 +113,24 @@ const SEVERITY_CONFIG = {
 };
 
 const EVENT_TYPES = [
-    'LOGIN_FAILED', 'LOGIN_SUCCESS', 'LOGOUT', 'PASSWORD_CHANGED', 'MFA_ENABLED',
-    'MFA_DISABLED', 'API_KEY_CREATED', 'API_KEY_REVOKED', 'PERMISSION_CHANGED',
-    'SUSPICIOUS_ACTIVITY', 'BRUTE_FORCE_ATTEMPT', 'SESSION_HIJACK_ATTEMPT'
+    'LOGIN_FAILED',
+    'LOGIN_SUCCESS',
+    'LOGOUT',
+    'PASSWORD_CHANGED',
+    'MFA_ENABLED',
+    'MFA_DISABLED',
+    'API_KEY_CREATED',
+    'API_KEY_REVOKED',
+    'PERMISSION_CHANGED',
+    'SUSPICIOUS_ACTIVITY',
+    'BRUTE_FORCE_ATTEMPT',
+    'SESSION_HIJACK_ATTEMPT',
 ];
 
 export const EnterpriseSecurityPanel: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'events' | 'sessions' | 'ip-rules' | 'policies' | 'compliance'>('events');
+    const [activeTab, setActiveTab] = useState<'events' | 'sessions' | 'ip-rules' | 'policies' | 'compliance'>(
+        'events',
+    );
     const [loading, setLoading] = useState(true);
 
     // Events state
@@ -141,9 +153,9 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchSecurityEvents = useCallback(async () => {
         try {
-            const data = await (Api as any).getSecurityEvents?.(eventFilters) || [];
+            const data = (await (Api as any).getSecurityEvents?.(eventFilters)) || [];
             setEvents(data);
-            const stats = await (Api as any).getSecurityEventStats?.() || null;
+            const stats = (await (Api as any).getSecurityEventStats?.()) || null;
             setEventStats(stats);
         } catch (error) {
             console.error('Failed to fetch security events:', error);
@@ -152,7 +164,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchSessions = useCallback(async () => {
         try {
-            const response = await (Api as any).getActiveSessions?.() || { sessions: [] };
+            const response = (await (Api as any).getActiveSessions?.()) || { sessions: [] };
             setSessions(((response as any).sessions || []) as Session[]);
         } catch (error) {
             console.error('Failed to fetch sessions:', error);
@@ -176,7 +188,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchIPRules = useCallback(async () => {
         try {
-            const data = await (Api as any).getIPAccessRules?.() || [];
+            const data = (await (Api as any).getIPAccessRules?.()) || [];
             setIPRules(data);
         } catch (error) {
             console.error('Failed to fetch IP rules:', error);
@@ -186,7 +198,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchPolicies = useCallback(async () => {
         try {
-            const data = await (Api as any).getSecurityPolicies?.() || [];
+            const data = (await (Api as any).getSecurityPolicies?.()) || [];
             setPolicies(data);
         } catch (error) {
             // Mock data
@@ -233,7 +245,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
     const fetchCompliance = useCallback(async () => {
         try {
-            const data = await (Api as any).getComplianceFrameworks?.() || [];
+            const data = (await (Api as any).getComplianceFrameworks?.()) || [];
             setFrameworks(data);
         } catch (error) {
             // Mock data
@@ -350,13 +362,28 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     const getComplianceColor = (status: string) => {
         switch (status) {
             case 'compliant':
-                return { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', color: 'bg-emerald-500' };
+                return {
+                    bg: 'bg-emerald-500/10',
+                    border: 'border-emerald-500/30',
+                    text: 'text-emerald-400',
+                    color: 'bg-emerald-500',
+                };
             case 'non_compliant':
                 return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', color: 'bg-red-500' };
             case 'partial':
-                return { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', color: 'bg-amber-500' };
+                return {
+                    bg: 'bg-amber-500/10',
+                    border: 'border-amber-500/30',
+                    text: 'text-amber-400',
+                    color: 'bg-amber-500',
+                };
             default:
-                return { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', color: 'bg-slate-500' };
+                return {
+                    bg: 'bg-slate-500/10',
+                    border: 'border-slate-500/30',
+                    text: 'text-slate-400',
+                    color: 'bg-slate-500',
+                };
         }
     };
 
@@ -384,10 +411,11 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === id
-                            ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                            activeTab === id
+                                ? 'bg-white/10 text-white border-b-2 border-purple-500'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -411,13 +439,17 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                         <div className="text-sm text-slate-400">Total Events</div>
                                         <div className="text-2xl font-bold text-white">{eventStats.total || 0}</div>
                                     </div>
-                                    <div className={`p-4 rounded-xl ${SEVERITY_CONFIG.CRITICAL.bg} ${SEVERITY_CONFIG.CRITICAL.border}`}>
+                                    <div
+                                        className={`p-4 rounded-xl ${SEVERITY_CONFIG.CRITICAL.bg} ${SEVERITY_CONFIG.CRITICAL.border}`}
+                                    >
                                         <div className="text-sm text-slate-400">Critical</div>
                                         <div className={`text-2xl font-bold ${SEVERITY_CONFIG.CRITICAL.text}`}>
                                             {eventStats.critical || 0}
                                         </div>
                                     </div>
-                                    <div className={`p-4 rounded-xl ${SEVERITY_CONFIG.HIGH.bg} ${SEVERITY_CONFIG.HIGH.border}`}>
+                                    <div
+                                        className={`p-4 rounded-xl ${SEVERITY_CONFIG.HIGH.bg} ${SEVERITY_CONFIG.HIGH.border}`}
+                                    >
                                         <div className="text-sm text-slate-400">High</div>
                                         <div className={`text-2xl font-bold ${SEVERITY_CONFIG.HIGH.text}`}>
                                             {eventStats.high || 0}
@@ -440,8 +472,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                     className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
                                 >
                                     <option value="">All Severities</option>
-                                    {Object.keys(SEVERITY_CONFIG).map(s => (
-                                        <option key={s} value={s}>{s}</option>
+                                    {Object.keys(SEVERITY_CONFIG).map((s) => (
+                                        <option key={s} value={s}>
+                                            {s}
+                                        </option>
                                     ))}
                                 </select>
                                 <select
@@ -450,8 +484,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                     className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
                                 >
                                     <option value="">All Event Types</option>
-                                    {EVENT_TYPES.map(t => (
-                                        <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                                    {EVENT_TYPES.map((t) => (
+                                        <option key={t} value={t}>
+                                            {t.replace(/_/g, ' ')}
+                                        </option>
                                     ))}
                                 </select>
                                 <select
@@ -483,14 +519,18 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-4">
                                                         <div className={`p-2 rounded-lg ${severityConfig.bg}`}>
-                                                            <AlertTriangle className={`w-4 h-4 ${severityConfig.text}`} />
+                                                            <AlertTriangle
+                                                                className={`w-4 h-4 ${severityConfig.text}`}
+                                                            />
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-medium text-white">
                                                                     {event.event_type.replace(/_/g, ' ')}
                                                                 </span>
-                                                                <span className={`px-2 py-0.5 text-xs rounded ${severityConfig.bg} ${severityConfig.text}`}>
+                                                                <span
+                                                                    className={`px-2 py-0.5 text-xs rounded ${severityConfig.bg} ${severityConfig.text}`}
+                                                                >
                                                                     {event.severity}
                                                                 </span>
                                                                 {event.resolved ? (
@@ -500,10 +540,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                                                                <span>{new Date(event.created_at).toLocaleString()}</span>
+                                                                <span>
+                                                                    {new Date(event.created_at).toLocaleString()}
+                                                                </span>
                                                                 {event.ip_address && <span>{event.ip_address}</span>}
                                                                 {event.location_city && (
-                                                                    <span>{event.location_city}, {event.location_country}</span>
+                                                                    <span>
+                                                                        {event.location_city}, {event.location_country}
+                                                                    </span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -547,19 +591,26 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                         return (
                                             <div
                                                 key={session.id}
-                                                className={`p-4 rounded-xl border transition-colors ${session.is_current
-                                                    ? 'bg-emerald-500/10 border-emerald-500/30'
-                                                    : 'bg-white/5 border-white/10'
-                                                    }`}
+                                                className={`p-4 rounded-xl border transition-colors ${
+                                                    session.is_current
+                                                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                                                        : 'bg-white/5 border-white/10'
+                                                }`}
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`p-2 rounded-lg ${session.is_current ? 'bg-emerald-500/20' : 'bg-white/10'}`}>
-                                                            <DeviceIcon className={`w-5 h-5 ${session.is_current ? 'text-emerald-400' : 'text-slate-400'}`} />
+                                                        <div
+                                                            className={`p-2 rounded-lg ${session.is_current ? 'bg-emerald-500/20' : 'bg-white/10'}`}
+                                                        >
+                                                            <DeviceIcon
+                                                                className={`w-5 h-5 ${session.is_current ? 'text-emerald-400' : 'text-slate-400'}`}
+                                                            />
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="font-medium text-white">{session.user_email}</span>
+                                                                <span className="font-medium text-white">
+                                                                    {session.user_email}
+                                                                </span>
                                                                 {session.is_current && (
                                                                     <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded">
                                                                         Current
@@ -574,7 +625,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                                 <span>{session.location}</span>
                                                             </div>
                                                             <div className="text-xs text-slate-500 mt-1">
-                                                                Last active: {new Date(session.last_activity).toLocaleString()}
+                                                                Last active:{' '}
+                                                                {new Date(session.last_activity).toLocaleString()}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -615,8 +667,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                     <div>
                                         <h4 className="font-medium text-amber-400">IP Filtering Mode</h4>
                                         <p className="text-sm text-slate-400 mt-1">
-                                            Currently using <strong>allowlist mode</strong>. Only IPs matching allow rules can access the system.
-                                            Deny rules take precedence over allow rules.
+                                            Currently using <strong>allowlist mode</strong>. Only IPs matching allow
+                                            rules can access the system. Deny rules take precedence over allow rules.
                                         </p>
                                     </div>
                                 </div>
@@ -633,15 +685,21 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                     ipRules.map((rule) => (
                                         <div
                                             key={rule.id}
-                                            className={`p-4 rounded-xl border transition-colors ${rule.rule_type === 'allow'
-                                                ? 'bg-emerald-500/5 border-emerald-500/20'
-                                                : 'bg-red-500/5 border-red-500/20'
-                                                }`}
+                                            className={`p-4 rounded-xl border transition-colors ${
+                                                rule.rule_type === 'allow'
+                                                    ? 'bg-emerald-500/5 border-emerald-500/20'
+                                                    : 'bg-red-500/5 border-red-500/20'
+                                            }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`p-2 rounded-lg ${rule.rule_type === 'allow' ? 'bg-emerald-500/20' : 'bg-red-500/20'
-                                                        }`}>
+                                                    <div
+                                                        className={`p-2 rounded-lg ${
+                                                            rule.rule_type === 'allow'
+                                                                ? 'bg-emerald-500/20'
+                                                                : 'bg-red-500/20'
+                                                        }`}
+                                                    >
                                                         {rule.rule_type === 'allow' ? (
                                                             <CheckCircle className="w-4 h-4 text-emerald-400" />
                                                         ) : (
@@ -650,24 +708,32 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <code className="font-mono text-white">{rule.ip_pattern}</code>
-                                                            <span className={`px-2 py-0.5 text-xs rounded ${rule.rule_type === 'allow'
-                                                                ? 'bg-emerald-500/20 text-emerald-400'
-                                                                : 'bg-red-500/20 text-red-400'
-                                                                }`}>
+                                                            <code className="font-mono text-white">
+                                                                {rule.ip_pattern}
+                                                            </code>
+                                                            <span
+                                                                className={`px-2 py-0.5 text-xs rounded ${
+                                                                    rule.rule_type === 'allow'
+                                                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                                                        : 'bg-red-500/20 text-red-400'
+                                                                }`}
+                                                            >
                                                                 {rule.rule_type.toUpperCase()}
                                                             </span>
                                                         </div>
-                                                        <p className="text-sm text-slate-400 mt-1">{rule.description}</p>
+                                                        <p className="text-sm text-slate-400 mt-1">
+                                                            {rule.description}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => handleToggleIPRule(rule.id, !rule.enabled)}
-                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${rule.enabled
-                                                            ? 'bg-emerald-500/20 text-emerald-400'
-                                                            : 'bg-slate-700 text-slate-400'
-                                                            }`}
+                                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                                                            rule.enabled
+                                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                                : 'bg-slate-700 text-slate-400'
+                                                        }`}
                                                     >
                                                         {rule.enabled ? 'Enabled' : 'Disabled'}
                                                     </button>
@@ -711,10 +777,11 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                             </div>
                                             <button
                                                 onClick={() => handleTogglePolicy(policy.id, !policy.enabled)}
-                                                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${policy.enabled
-                                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                                    : 'bg-slate-700 text-slate-400'
-                                                    }`}
+                                                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                                                    policy.enabled
+                                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                                        : 'bg-slate-700 text-slate-400'
+                                                }`}
                                             >
                                                 {policy.enabled ? 'Enabled' : 'Disabled'}
                                             </button>
@@ -739,7 +806,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {frameworks.map((framework) => {
                                     const statusColors = getComplianceColor(framework.status);
-                                    const compliancePercent = (framework.controls_compliant / framework.controls_total) * 100;
+                                    const compliancePercent =
+                                        (framework.controls_compliant / framework.controls_total) * 100;
                                     return (
                                         <div
                                             key={framework.id}
@@ -747,7 +815,9 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                         >
                                             <div className="flex items-center justify-between mb-3">
                                                 <h4 className="font-medium text-white">{framework.name}</h4>
-                                                <span className={`px-2 py-0.5 text-xs rounded ${statusColors.bg} ${statusColors.text}`}>
+                                                <span
+                                                    className={`px-2 py-0.5 text-xs rounded ${statusColors.bg} ${statusColors.text}`}
+                                                >
                                                     {framework.status.replace('_', ' ').toUpperCase()}
                                                 </span>
                                             </div>
@@ -766,7 +836,8 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                                     />
                                                 </div>
                                                 <div className="text-xs text-slate-500">
-                                                    Last assessment: {new Date(framework.last_assessment).toLocaleDateString()}
+                                                    Last assessment:{' '}
+                                                    {new Date(framework.last_assessment).toLocaleDateString()}
                                                 </div>
                                             </div>
                                         </div>
@@ -800,9 +871,3 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 };
 
 export default EnterpriseSecurityPanel;
-
-
-
-
-
-

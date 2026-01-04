@@ -1,6 +1,6 @@
 /**
  * Conversation Migration Utility
- * 
+ *
  * Migrates chat messages from localStorage (legacy Zustand store)
  * to the new database-backed conversation system.
  */
@@ -66,11 +66,11 @@ function extractConversations(legacyData: LegacyStoreState): Array<{
             if (messages && messages.length > 0) {
                 conversations.push({
                     projectId: projectId === 'global' ? undefined : projectId,
-                    messages: messages.map(m => ({
+                    messages: messages.map((m) => ({
                         role: m.role,
                         content: m.content,
-                        timestamp: m.timestamp
-                    }))
+                        timestamp: m.timestamp,
+                    })),
                 });
             }
         }
@@ -79,18 +79,19 @@ function extractConversations(legacyData: LegacyStoreState): Array<{
     // Extract active messages if not already captured
     if (activeChatMessages && activeChatMessages.length > 0) {
         // Check if these are different from project messages
-        const isAlreadyCaptured = conversations.some(c => 
-            c.messages.length === activeChatMessages.length &&
-            c.messages[0]?.content === activeChatMessages[0]?.content
+        const isAlreadyCaptured = conversations.some(
+            (c) =>
+                c.messages.length === activeChatMessages.length &&
+                c.messages[0]?.content === activeChatMessages[0]?.content,
         );
 
         if (!isAlreadyCaptured) {
             conversations.push({
-                messages: activeChatMessages.map(m => ({
+                messages: activeChatMessages.map((m) => ({
                     role: m.role,
                     content: m.content,
-                    timestamp: m.timestamp
-                }))
+                    timestamp: m.timestamp,
+                })),
             });
         }
     }
@@ -144,7 +145,7 @@ export async function migrateConversations(): Promise<{
 
             return {
                 success: true,
-                migratedCount: result.migrated.length
+                migratedCount: result.migrated.length,
             };
         } else {
             throw new Error('Migration API returned failure');
@@ -154,7 +155,7 @@ export async function migrateConversations(): Promise<{
         return {
             success: false,
             migratedCount: 0,
-            error: err instanceof Error ? err.message : 'Unknown error'
+            error: err instanceof Error ? err.message : 'Unknown error',
         };
     }
 }
@@ -198,7 +199,7 @@ export function useMigration(): { migrating: boolean; migrated: boolean } {
         if (!migrated && !migrating) {
             setMigrating(true);
             migrateConversations()
-                .then(result => {
+                .then((result) => {
                     setMigrated(result.success);
                 })
                 .finally(() => {
@@ -218,14 +219,6 @@ export default {
     migrateConversations,
     cleanupLegacyData,
     resetMigrationFlag,
-    useMigration
+    useMigration,
 };
-
-
-
-
-
-
-
-
 

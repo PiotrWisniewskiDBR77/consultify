@@ -1,6 +1,6 @@
 /**
  * VideoPlayer Component
- * 
+ *
  * Enterprise-grade video player for help tutorials with:
  * - Chapters/markers support
  * - Playback speed control
@@ -10,24 +10,24 @@
  * - Bilingual support
  */
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Play,
-    Pause,
-    Volume2,
-    VolumeX,
-    Maximize,
-    Minimize,
-    SkipBack,
-    SkipForward,
-    Settings,
+    BookOpen,
     Check,
-    X,
     ChevronRight,
     Clock,
-    BookOpen
+    Maximize,
+    Minimize,
+    Pause,
+    Play,
+    Settings,
+    SkipBack,
+    SkipForward,
+    Volume2,
+    VolumeX,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Video progress storage key
 const VIDEO_PROGRESS_KEY = 'consultify_video_progress';
@@ -128,7 +128,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     onComplete,
     onProgress,
     autoplay = false,
-    className = ''
+    className = '',
 }) => {
     const { t, i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
@@ -420,7 +420,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             )}
 
             {/* Controls Overlay */}
-            <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+            <div
+                className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
+            >
                 {/* Title & Chapter */}
                 <div className="px-4 pt-8 pb-2">
                     <h4 className="text-white font-medium text-sm truncate">{displayTitle}</h4>
@@ -432,11 +434,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 </div>
 
                 {/* Progress Bar */}
-                <div
-                    ref={progressRef}
-                    className="px-4 py-2 cursor-pointer"
-                    onClick={handleProgressClick}
-                >
+                <div ref={progressRef} className="px-4 py-2 cursor-pointer" onClick={handleProgressClick}>
                     <div className="relative h-1 bg-white/20 rounded-full group-hover:h-1.5 transition-all">
                         {/* Buffered */}
                         <div
@@ -460,7 +458,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         {/* Thumb */}
                         <div
                             className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
+                            style={{
+                                left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+                                transform: 'translate(-50%, -50%)',
+                            }}
                         />
                     </div>
                 </div>
@@ -515,7 +516,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         {chapters.length > 0 && (
                             <div className="relative">
                                 <button
-                                    onClick={() => { setShowChapters(!showChapters); setShowSettings(false); }}
+                                    onClick={() => {
+                                        setShowChapters(!showChapters);
+                                        setShowSettings(false);
+                                    }}
                                     className="p-1.5 text-white hover:text-purple-400 transition-colors"
                                     title={t('help.video.chapters')}
                                 >
@@ -538,7 +542,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                                                 >
                                                     <Clock size={12} className="flex-shrink-0 opacity-50" />
                                                     <span className="text-xs flex-1 truncate">
-                                                        {lang === 'pl' && chapter.titlePl ? chapter.titlePl : chapter.title}
+                                                        {lang === 'pl' && chapter.titlePl
+                                                            ? chapter.titlePl
+                                                            : chapter.title}
                                                     </span>
                                                     <span className="text-xs opacity-50 font-mono">
                                                         {formatTime(chapter.time)}
@@ -554,7 +560,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         {/* Settings (Speed) */}
                         <div className="relative">
                             <button
-                                onClick={() => { setShowSettings(!showSettings); setShowChapters(false); }}
+                                onClick={() => {
+                                    setShowSettings(!showSettings);
+                                    setShowChapters(false);
+                                }}
                                 className="p-1.5 text-white hover:text-purple-400 transition-colors"
                                 title={t('help.video.settings')}
                             >
@@ -568,7 +577,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                                             {t('help.video.speed')}
                                         </span>
                                     </div>
-                                    {PLAYBACK_SPEEDS.map(speed => (
+                                    {PLAYBACK_SPEEDS.map((speed) => (
                                         <button
                                             key={speed}
                                             onClick={() => handleSpeedChange(speed)}
@@ -586,7 +595,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         <button
                             onClick={toggleFullscreen}
                             className="p-1.5 text-white hover:text-purple-400 transition-colors"
-                            title={isFullscreen ? t('help.video.controls.exitFullscreen') : t('help.video.controls.fullscreen')}
+                            title={
+                                isFullscreen
+                                    ? t('help.video.controls.exitFullscreen')
+                                    : t('help.video.controls.fullscreen')
+                            }
                         >
                             {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
                         </button>
@@ -596,21 +609,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
             {/* Keyboard Shortcuts Hint */}
             {!isPlaying && !showControls && (
-                <div className="absolute bottom-4 left-4 text-white/40 text-xs">
-                    {t('help.video.shortcuts')}
-                </div>
+                <div className="absolute bottom-4 left-4 text-white/40 text-xs">{t('help.video.shortcuts')}</div>
             )}
         </div>
     );
 };
 
 export default VideoPlayer;
-
-
-
-
-
-
-
-
 

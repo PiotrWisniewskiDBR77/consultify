@@ -1,5 +1,5 @@
-const cron = require('node-cron');
-const metricsPersistenceService = import('metricsPersistenceService.js');
+import cron from 'node-cron';
+import metricsPersistenceService from '../src/services/metricsPersistenceService.js';
 /**
  * Initializes the metrics snapshot cron job.
  * Runs every hour at minute 0.

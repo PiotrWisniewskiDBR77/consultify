@@ -1,6 +1,6 @@
 /**
  * EnterpriseBackupPanel - Backup & Disaster Recovery Management
- * 
+ *
  * Features:
  * - Automated backup schedules
  * - Manual backup creation
@@ -10,33 +10,34 @@
  * - DR testing & validation
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    HardDrive,
-    Plus,
-    Trash2,
-    Download,
-    Upload,
-    RefreshCw,
-    Clock,
-    CheckCircle,
-    XCircle,
     AlertTriangle,
     Calendar,
-    Lock,
-    Cloud,
-    Server,
-    Play,
-    Pause,
-    Settings,
-    Loader2,
+    CheckCircle,
     ChevronRight,
+    Clock,
+    Cloud,
+    Download,
     FileArchive,
+    HardDrive,
+    Loader2,
+    Lock,
+    Pause,
+    Play,
+    Plus,
+    RefreshCw,
+    Server,
+    Settings,
     Shield,
-    Zap
+    Trash2,
+    Upload,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface Backup {
     id: string;
@@ -109,7 +110,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
     const fetchBackups = useCallback(async () => {
         try {
-            const data = await (Api as any).getBackups?.() || [];
+            const data = (await (Api as any).getBackups?.()) || [];
             setBackups(data);
         } catch (error) {
             console.error('Failed to fetch backups:', error);
@@ -235,7 +236,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
     const handleToggleSchedule = async (id: string, enabled: boolean) => {
         try {
-            setSchedules(prev => prev.map(s => s.id === id ? { ...s, enabled } : s));
+            setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
             toast.success(`Schedule ${enabled ? 'enabled' : 'disabled'}`);
         } catch (error) {
             toast.error('Failed to update schedule');
@@ -260,9 +261,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white">Backup & Recovery</h2>
-                    <p className="text-slate-400 text-sm">
-                        Manage database backups and disaster recovery procedures
-                    </p>
+                    <p className="text-slate-400 text-sm">Manage database backups and disaster recovery procedures</p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
@@ -293,7 +292,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
                     <div className="text-sm text-slate-400">Active Schedules</div>
                     <div className="text-2xl font-bold text-purple-400">
-                        {schedules.filter(s => s.enabled).length}
+                        {schedules.filter((s) => s.enabled).length}
                     </div>
                 </div>
             </div>
@@ -309,10 +308,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
-                            ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
+                            activeTab === id
+                                ? 'bg-white/10 text-white border-b-2 border-purple-500'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -349,12 +349,17 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`p-2 rounded-lg ${statusConfig.color}/20`}>
-                                                        <StatusIcon className={`w-5 h-5 ${statusConfig.text} ${backup.status === 'in_progress' ? 'animate-spin' : ''
-                                                            }`} />
+                                                        <StatusIcon
+                                                            className={`w-5 h-5 ${statusConfig.text} ${
+                                                                backup.status === 'in_progress' ? 'animate-spin' : ''
+                                                            }`}
+                                                        />
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className={`px-2 py-0.5 text-xs rounded ${typeConfig.color}`}>
+                                                            <span
+                                                                className={`px-2 py-0.5 text-xs rounded ${typeConfig.color}`}
+                                                            >
                                                                 {typeConfig.label}
                                                             </span>
                                                             <code className="text-sm text-white font-mono">
@@ -370,14 +375,18 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                                         <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                                                             <span>{backup.sizeMB} MB</span>
                                                             <span>•</span>
-                                                            <span>Created: {new Date(backup.createdAt).toLocaleString()}</span>
+                                                            <span>
+                                                                Created: {new Date(backup.createdAt).toLocaleString()}
+                                                            </span>
                                                             <span>•</span>
                                                             <span>Reason: {backup.reason}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-1 text-xs rounded ${statusConfig.color}/20 ${statusConfig.text}`}>
+                                                    <span
+                                                        className={`px-2 py-1 text-xs rounded ${statusConfig.color}/20 ${statusConfig.text}`}
+                                                    >
                                                         {backup.status.replace('_', ' ')}
                                                     </span>
                                                     {backup.status === 'completed' && (
@@ -434,30 +443,38 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
                             <div className="space-y-2">
                                 {schedules.map((schedule) => (
-                                    <div
-                                        key={schedule.id}
-                                        className="p-4 bg-white/5 rounded-xl border border-white/10"
-                                    >
+                                    <div key={schedule.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-700'}`}>
-                                                    <Calendar className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-400' : 'text-slate-500'}`} />
+                                                <div
+                                                    className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-700'}`}
+                                                >
+                                                    <Calendar
+                                                        className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-400' : 'text-slate-500'}`}
+                                                    />
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-medium text-white">{schedule.name}</span>
-                                                        <span className={`px-2 py-0.5 text-xs rounded ${BACKUP_TYPE_CONFIG[schedule.type].color}`}>
+                                                        <span
+                                                            className={`px-2 py-0.5 text-xs rounded ${BACKUP_TYPE_CONFIG[schedule.type].color}`}
+                                                        >
                                                             {BACKUP_TYPE_CONFIG[schedule.type].label}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                                                        <span className="capitalize">{schedule.frequency} at {schedule.time}</span>
+                                                        <span className="capitalize">
+                                                            {schedule.frequency} at {schedule.time}
+                                                        </span>
                                                         <span>•</span>
                                                         <span>Retention: {schedule.retention_days} days</span>
                                                         {schedule.next_run && (
                                                             <>
                                                                 <span>•</span>
-                                                                <span>Next run: {new Date(schedule.next_run).toLocaleString()}</span>
+                                                                <span>
+                                                                    Next run:{' '}
+                                                                    {new Date(schedule.next_run).toLocaleString()}
+                                                                </span>
                                                             </>
                                                         )}
                                                     </div>
@@ -466,10 +483,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleToggleSchedule(schedule.id, !schedule.enabled)}
-                                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${schedule.enabled
-                                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                                        : 'bg-slate-700 text-slate-400'
-                                                        }`}
+                                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                                                        schedule.enabled
+                                                            ? 'bg-emerald-500/20 text-emerald-400'
+                                                            : 'bg-slate-700 text-slate-400'
+                                                    }`}
                                                 >
                                                     {schedule.enabled ? 'Enabled' : 'Disabled'}
                                                 </button>
@@ -496,16 +514,25 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <input
                                                 type="number"
                                                 value={config.retention_days}
-                                                onChange={(e) => setConfig({ ...config, retention_days: parseInt(e.target.value) })}
+                                                onChange={(e) =>
+                                                    setConfig({ ...config, retention_days: parseInt(e.target.value) })
+                                                }
                                                 className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm text-slate-400 mb-1">Max Local Backups</label>
+                                            <label className="block text-sm text-slate-400 mb-1">
+                                                Max Local Backups
+                                            </label>
                                             <input
                                                 type="number"
                                                 value={config.max_local_backups}
-                                                onChange={(e) => setConfig({ ...config, max_local_backups: parseInt(e.target.value) })}
+                                                onChange={(e) =>
+                                                    setConfig({
+                                                        ...config,
+                                                        max_local_backups: parseInt(e.target.value),
+                                                    })
+                                                }
                                                 className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white"
                                             />
                                         </div>
@@ -520,7 +547,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <input
                                                 type="checkbox"
                                                 checked={config.encryption_enabled}
-                                                onChange={(e) => setConfig({ ...config, encryption_enabled: e.target.checked })}
+                                                onChange={(e) =>
+                                                    setConfig({ ...config, encryption_enabled: e.target.checked })
+                                                }
                                                 className="rounded border-slate-600 bg-slate-800 text-purple-500"
                                             />
                                         </label>
@@ -529,7 +558,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             <input
                                                 type="checkbox"
                                                 checked={config.auto_verify}
-                                                onChange={(e) => setConfig({ ...config, auto_verify: e.target.checked })}
+                                                onChange={(e) =>
+                                                    setConfig({ ...config, auto_verify: e.target.checked })
+                                                }
                                                 className="rounded border-slate-600 bg-slate-800 text-purple-500"
                                             />
                                         </label>
@@ -546,7 +577,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                         <input
                                             type="checkbox"
                                             checked={config.cloud_storage_enabled}
-                                            onChange={(e) => setConfig({ ...config, cloud_storage_enabled: e.target.checked })}
+                                            onChange={(e) =>
+                                                setConfig({ ...config, cloud_storage_enabled: e.target.checked })
+                                            }
                                             className="rounded border-slate-600 bg-slate-800 text-purple-500"
                                         />
                                     </label>
@@ -555,10 +588,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                             {['AWS S3', 'Google Cloud Storage', 'Azure Blob'].map((provider) => (
                                                 <button
                                                     key={provider}
-                                                    className={`p-3 rounded-lg border transition-colors ${config.cloud_provider === provider
-                                                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                                                        : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
-                                                        }`}
+                                                    className={`p-3 rounded-lg border transition-colors ${
+                                                        config.cloud_provider === provider
+                                                            ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                                            : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
+                                                    }`}
                                                     onClick={() => setConfig({ ...config, cloud_provider: provider })}
                                                 >
                                                     {provider}
@@ -586,8 +620,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                     <div>
                                         <h3 className="text-lg font-bold text-white mb-2">Disaster Recovery Testing</h3>
                                         <p className="text-slate-400 mb-4">
-                                            Regularly test your backup and recovery procedures to ensure business continuity.
-                                            DR tests run in an isolated environment and do not affect production data.
+                                            Regularly test your backup and recovery procedures to ensure business
+                                            continuity. DR tests run in an isolated environment and do not affect
+                                            production data.
                                         </p>
                                         <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors">
                                             <Play className="w-4 h-4" />
@@ -628,11 +663,29 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                 <h4 className="font-medium text-white mb-4">DR Test History</h4>
                                 <div className="space-y-2">
                                     {[
-                                        { date: '2024-12-19', status: 'passed', duration: '4m 32s', type: 'Full restore' },
-                                        { date: '2024-12-05', status: 'passed', duration: '3m 58s', type: 'Full restore' },
-                                        { date: '2024-11-21', status: 'passed', duration: '4m 15s', type: 'Point-in-time' },
+                                        {
+                                            date: '2024-12-19',
+                                            status: 'passed',
+                                            duration: '4m 32s',
+                                            type: 'Full restore',
+                                        },
+                                        {
+                                            date: '2024-12-05',
+                                            status: 'passed',
+                                            duration: '3m 58s',
+                                            type: 'Full restore',
+                                        },
+                                        {
+                                            date: '2024-11-21',
+                                            status: 'passed',
+                                            duration: '4m 15s',
+                                            type: 'Point-in-time',
+                                        },
                                     ].map((test, i) => (
-                                        <div key={i} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <div
+                                            key={i}
+                                            className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <CheckCircle className="w-4 h-4 text-emerald-400" />
                                                 <span className="text-sm text-white">{test.type}</span>
@@ -688,9 +741,3 @@ export const EnterpriseBackupPanel: React.FC = () => {
 };
 
 export default EnterpriseBackupPanel;
-
-
-
-
-
-

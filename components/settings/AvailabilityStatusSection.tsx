@@ -1,6 +1,6 @@
 /**
  * AvailabilityStatusSection - User Availability & Status
- * 
+ *
  * Features:
  * - Custom status message (with emoji support)
  * - Out of office dates (calendar picker, reason field)
@@ -8,25 +8,26 @@
  * - Do not disturb hours (time range, days selection)
  */
 
-import React, { useState, useEffect } from 'react';
-import { User, OutOfOfficePeriod, WorkingHours, DoNotDisturbHours } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    Clock,
-    Calendar,
-    Moon,
-    MessageSquare,
-    Plus,
-    Trash2,
-    Edit2,
-    Save,
-    X,
-    Loader2,
     AlertCircle,
-    CheckCircle
+    Calendar,
+    CheckCircle,
+    Clock,
+    Edit2,
+    Loader2,
+    MessageSquare,
+    Moon,
+    Plus,
+    Save,
+    Trash2,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { DoNotDisturbHours, OutOfOfficePeriod, User, WorkingHours } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface AvailabilityStatusSectionProps {
@@ -34,28 +35,25 @@ interface AvailabilityStatusSectionProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
-export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    
+
     // State
     const [statusMessage, setStatusMessage] = useState('');
     const [workingHours, setWorkingHours] = useState<WorkingHours>({
         timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        days: {}
+        days: {},
     });
     const [doNotDisturbHours, setDoNotDisturbHours] = useState<DoNotDisturbHours>({
         enabled: false,
         startTime: '22:00',
         endTime: '08:00',
-        days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
     });
     const [outOfOfficePeriods, setOutOfOfficePeriods] = useState<OutOfOfficePeriod[]>([]);
-    
+
     // Edit states
     const [editingOOO, setEditingOOO] = useState<string | null>(null);
     const [showOOOForm, setShowOOOForm] = useState(false);
@@ -70,16 +68,20 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             const data = await Api.get('/api/user/availability');
             if (data.success && data.data) {
                 setStatusMessage(data.data.statusMessage || '');
-                setWorkingHours(data.data.workingHours || {
-                    timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    days: {}
-                });
-                setDoNotDisturbHours(data.data.doNotDisturbHours || {
-                    enabled: false,
-                    startTime: '22:00',
-                    endTime: '08:00',
-                    days: []
-                });
+                setWorkingHours(
+                    data.data.workingHours || {
+                        timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        days: {},
+                    },
+                );
+                setDoNotDisturbHours(
+                    data.data.doNotDisturbHours || {
+                        enabled: false,
+                        startTime: '22:00',
+                        endTime: '08:00',
+                        days: [],
+                    },
+                );
                 setOutOfOfficePeriods(data.data.outOfOfficePeriods || []);
             }
         } catch (error) {
@@ -96,7 +98,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             await Api.put('/api/user/availability', {
                 statusMessage,
                 workingHours,
-                doNotDisturbHours
+                doNotDisturbHours,
             });
             toast.success(t('settings.availability.saved', 'Availability settings saved'));
         } catch (error) {
@@ -112,7 +114,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             startDate: new Date().toISOString().split('T')[0],
             endDate: new Date().toISOString().split('T')[0],
             reason: '',
-            isAllDay: true
+            isAllDay: true,
         };
         setOutOfOfficePeriods([...outOfOfficePeriods, newOOO]);
         setEditingOOO(newOOO.id);
@@ -120,7 +122,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
     };
 
     const updateOutOfOffice = (id: string, updates: Partial<OutOfOfficePeriod>) => {
-        setOutOfOfficePeriods(periods => periods.map(p => p.id === id ? { ...p, ...updates } : p));
+        setOutOfOfficePeriods((periods) => periods.map((p) => (p.id === id ? { ...p, ...updates } : p)));
     };
 
     const saveOutOfOffice = async (period: OutOfOfficePeriod) => {
@@ -131,12 +133,12 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                     startDate: period.startDate,
                     endDate: period.endDate,
                     reason: period.reason,
-                    isAllDay: period.isAllDay
+                    isAllDay: period.isAllDay,
                 });
                 if (result.success) {
-                    setOutOfOfficePeriods(periods => periods.map(p => 
-                        p.id === period.id ? { ...p, id: result.data.id } : p
-                    ));
+                    setOutOfOfficePeriods((periods) =>
+                        periods.map((p) => (p.id === period.id ? { ...p, id: result.data.id } : p)),
+                    );
                     setEditingOOO(null);
                     setShowOOOForm(false);
                     toast.success(t('settings.availability.oooSaved', 'Out of office period saved'));
@@ -148,12 +150,12 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                     startDate: period.startDate,
                     endDate: period.endDate,
                     reason: period.reason,
-                    isAllDay: period.isAllDay
+                    isAllDay: period.isAllDay,
                 });
                 if (result.success) {
-                    setOutOfOfficePeriods(periods => periods.map(p => 
-                        p.id === period.id ? { ...p, id: result.data.id } : p
-                    ));
+                    setOutOfOfficePeriods((periods) =>
+                        periods.map((p) => (p.id === period.id ? { ...p, id: result.data.id } : p)),
+                    );
                     setEditingOOO(null);
                     setShowOOOForm(false);
                     toast.success(t('settings.availability.oooSaved', 'Out of office period saved'));
@@ -167,32 +169,33 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
     const removeOutOfOffice = async (id: string) => {
         try {
             await Api.delete(`/api/user/availability/out-of-office/${id}`);
-            setOutOfOfficePeriods(periods => periods.filter(p => p.id !== id));
+            setOutOfOfficePeriods((periods) => periods.filter((p) => p.id !== id));
             toast.success(t('settings.availability.oooDeleted', 'Out of office period deleted'));
         } catch (error) {
             toast.error(t('settings.availability.oooDeleteError', 'Failed to delete out of office period'));
         }
     };
 
-    const updateWorkingHoursDay = (day: keyof WorkingHours['days'], updates: Partial<WorkingHours['days'][typeof day]>) => {
-        setWorkingHours(prev => ({
+    const updateWorkingHoursDay = (
+        day: keyof WorkingHours['days'],
+        updates: Partial<WorkingHours['days'][typeof day]>,
+    ) => {
+        setWorkingHours((prev) => ({
             ...prev,
             days: {
                 ...prev.days,
                 [day]: {
                     ...prev.days[day],
-                    ...updates
-                } as WorkingHours['days'][typeof day]
-            }
+                    ...updates,
+                } as WorkingHours['days'][typeof day],
+            },
         }));
     };
 
     const toggleDNDDay = (day: DoNotDisturbHours['days'][number]) => {
-        setDoNotDisturbHours(prev => ({
+        setDoNotDisturbHours((prev) => ({
             ...prev,
-            days: prev.days.includes(day)
-                ? prev.days.filter(d => d !== day)
-                : [...prev.days, day]
+            days: prev.days.includes(day) ? prev.days.filter((d) => d !== day) : [...prev.days, day],
         }));
     };
 
@@ -211,13 +214,13 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
         { key: 'thursday', label: t('settings.availability.days.thursday', 'Thursday') },
         { key: 'friday', label: t('settings.availability.days.friday', 'Friday') },
         { key: 'saturday', label: t('settings.availability.days.saturday', 'Saturday') },
-        { key: 'sunday', label: t('settings.availability.days.sunday', 'Sunday') }
+        { key: 'sunday', label: t('settings.availability.days.sunday', 'Sunday') },
     ] as const;
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-availability-status" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -269,9 +272,16 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                 </p>
                 <div className="space-y-3">
                     {daysOfWeek.map(({ key, label }) => {
-                        const dayHours = workingHours.days[key] || { enabled: false, startTime: '09:00', endTime: '17:00' };
+                        const dayHours = workingHours.days[key] || {
+                            enabled: false,
+                            startTime: '09:00',
+                            endTime: '17:00',
+                        };
                         return (
-                            <div key={key} className="flex items-center gap-4 p-3 border border-slate-200 dark:border-white/10 rounded-lg">
+                            <div
+                                key={key}
+                                className="flex items-center gap-4 p-3 border border-slate-200 dark:border-white/10 rounded-lg"
+                            >
                                 <div className="w-24">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -323,12 +333,14 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                             </p>
                         </div>
                         <button
-                            onClick={() => setDoNotDisturbHours(prev => ({ ...prev, enabled: !prev.enabled }))}
+                            onClick={() => setDoNotDisturbHours((prev) => ({ ...prev, enabled: !prev.enabled }))}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                                 doNotDisturbHours.enabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${doNotDisturbHours.enabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${doNotDisturbHours.enabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -342,7 +354,9 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                                     <input
                                         type="time"
                                         value={doNotDisturbHours.startTime}
-                                        onChange={(e) => setDoNotDisturbHours(prev => ({ ...prev, startTime: e.target.value }))}
+                                        onChange={(e) =>
+                                            setDoNotDisturbHours((prev) => ({ ...prev, startTime: e.target.value }))
+                                        }
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
                                     />
                                 </div>
@@ -353,7 +367,9 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                                     <input
                                         type="time"
                                         value={doNotDisturbHours.endTime}
-                                        onChange={(e) => setDoNotDisturbHours(prev => ({ ...prev, endTime: e.target.value }))}
+                                        onChange={(e) =>
+                                            setDoNotDisturbHours((prev) => ({ ...prev, endTime: e.target.value }))
+                                        }
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
                                     />
                                 </div>
@@ -445,7 +461,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
     onSave,
     onCancel,
     onUpdate,
-    onDelete
+    onDelete,
 }) => {
     const { t } = useTranslation();
 
@@ -501,7 +517,10 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
                     <button onClick={onSave} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">
                         {t('common.save', 'Save')}
                     </button>
-                    <button onClick={onCancel} className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                    >
                         {t('common.cancel', 'Cancel')}
                     </button>
                     <button onClick={onDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto">
@@ -517,11 +536,13 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
     const isPast = endDate < new Date();
 
     return (
-        <div className={`p-4 border rounded-lg transition-colors ${
-            isPast 
-                ? 'border-slate-200 dark:border-white/10 opacity-60' 
-                : 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/5'
-        }`}>
+        <div
+            className={`p-4 border rounded-lg transition-colors ${
+                isPast
+                    ? 'border-slate-200 dark:border-white/10 opacity-60'
+                    : 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/5'
+            }`}
+        >
             <div className="flex items-start justify-between">
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -530,15 +551,11 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
                             {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
                         </span>
                         {isPast && (
-                            <span className="text-xs text-slate-500">
-                                {t('settings.availability.past', 'Past')}
-                            </span>
+                            <span className="text-xs text-slate-500">{t('settings.availability.past', 'Past')}</span>
                         )}
                     </div>
                     {period.reason && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                            {period.reason}
-                        </p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{period.reason}</p>
                     )}
                     {period.isAllDay && (
                         <span className="text-xs text-slate-500 mt-1 block">
@@ -550,7 +567,10 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
                     <button onClick={onEdit} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                         <Edit2 size={16} />
                     </button>
-                    <button onClick={onDelete} className="p-2 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-red-600">
+                    <button
+                        onClick={onDelete}
+                        className="p-2 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-red-600"
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -560,4 +580,3 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
 };
 
 export default AvailabilityStatusSection;
-

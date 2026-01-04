@@ -1,14 +1,15 @@
 /**
  * ProjectList
- * 
+ *
  * List of chat projects (folders) with create button.
  * Each project can be expanded to show its conversations.
  */
 
-import React, { useState, useEffect } from 'react';
+import { Folder, FolderPlus, Loader2, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderPlus, Loader2, Folder } from 'lucide-react';
-import { useChatProjectStore, ChatProject } from '../../store/useChatProjectStore';
+
+import { ChatProject, useChatProjectStore } from '../../store/useChatProjectStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { ProjectItem } from './ProjectItem';
 
@@ -20,7 +21,7 @@ interface ProjectListProps {
 // Project color options
 const PROJECT_COLORS = [
     '#6366f1', // Indigo
-    '#8b5cf6', // Violet  
+    '#8b5cf6', // Violet
     '#ec4899', // Pink
     '#ef4444', // Red
     '#f97316', // Orange
@@ -31,20 +32,11 @@ const PROJECT_COLORS = [
     '#3b82f6', // Blue
 ];
 
-export const ProjectList: React.FC<ProjectListProps> = ({
-    onSelectConversation,
-    activeConversationId
-}) => {
+export const ProjectList: React.FC<ProjectListProps> = ({ onSelectConversation, activeConversationId }) => {
     const { t } = useTranslation();
-    const { 
-        projects, 
-        expandedProjectIds, 
-        isLoading, 
-        fetchProjects, 
-        createProject, 
-        toggleProjectExpanded 
-    } = useChatProjectStore();
-    
+    const { projects, expandedProjectIds, isLoading, fetchProjects, createProject, toggleProjectExpanded } =
+        useChatProjectStore();
+
     const [isCreating, setIsCreating] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
     const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[0]);
@@ -61,7 +53,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         try {
             await createProject({
                 name: newProjectName.trim(),
-                color: newProjectColor
+                color: newProjectColor,
             });
             setIsCreating(false);
             setNewProjectName('');
@@ -104,18 +96,19 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                             transition-all
                         "
                     />
-                    
+
                     {/* Color Picker */}
                     <div className="flex items-center gap-1.5">
-                        {PROJECT_COLORS.map(color => (
+                        {PROJECT_COLORS.map((color) => (
                             <button
                                 key={color}
                                 onClick={() => setNewProjectColor(color)}
                                 className={`
                                     w-5 h-5 rounded-full transition-all
-                                    ${newProjectColor === color 
-                                        ? 'ring-2 ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ring-slate-600 dark:ring-white scale-110' 
-                                        : 'hover:scale-105 opacity-70 hover:opacity-100'
+                                    ${
+                                        newProjectColor === color
+                                            ? 'ring-2 ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ring-slate-600 dark:ring-white scale-110'
+                                            : 'hover:scale-105 opacity-70 hover:opacity-100'
                                     }
                                 `}
                                 style={{ backgroundColor: color }}
@@ -149,11 +142,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                                 disabled:opacity-50 disabled:cursor-not-allowed
                             "
                         >
-                            {isSubmitting ? (
-                                <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                                <Plus size={14} />
-                            )}
+                            {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                             {t('common.create', 'Utwórz')}
                         </button>
                     </div>
@@ -172,9 +161,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                     "
                 >
                     <FolderPlus size={16} />
-                    <span className="text-sm font-medium">
-                        {t('aiChat.project.create', 'Nowy projekt')}
-                    </span>
+                    <span className="text-sm font-medium">{t('aiChat.project.create', 'Nowy projekt')}</span>
                 </button>
             )}
 
@@ -187,16 +174,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                 ) : projects.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 dark:text-slate-500">
                         <Folder size={40} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">
-                            {t('aiChat.project.noProjects', 'Brak projektów')}
-                        </p>
+                        <p className="text-sm">{t('aiChat.project.noProjects', 'Brak projektów')}</p>
                         <p className="text-xs mt-1">
                             {t('aiChat.project.noProjectsHint', 'Utwórz projekt, aby grupować rozmowy')}
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-1 py-2">
-                        {projects.map(project => (
+                        {projects.map((project) => (
                             <ProjectItem
                                 key={project.id}
                                 project={project}
@@ -214,11 +199,4 @@ export const ProjectList: React.FC<ProjectListProps> = ({
 };
 
 export default ProjectList;
-
-
-
-
-
-
-
 

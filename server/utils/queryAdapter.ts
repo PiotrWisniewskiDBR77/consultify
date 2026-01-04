@@ -1,17 +1,21 @@
 /**
  * Database Query Adapter
- * 
+ *
  * Provides a unified interface for both SQLite and PostgreSQL
  * This is used by services that need database-agnostic queries
  */
 
-import dbConfig from '../config/database.config';
+import dbConfig from '../config/database.config.js';
 
 interface Database {
     query?: (sql: string, params: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }>;
     all?: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
     get?: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    run?: (sql: string, params: unknown[], callback: (this: { changes: number; lastID?: number }, err: Error | null) => void) => void;
+    run?: (
+        sql: string,
+        params: unknown[],
+        callback: (this: { changes: number; lastID?: number }, err: Error | null) => void,
+    ) => void;
 }
 
 interface RunResult {
@@ -94,14 +98,18 @@ export class QueryAdapter {
             const result = await this.db.query(adapted.sql, adapted.params);
             return {
                 changes: result.rowCount,
-                lastID: (result.rows[0] as { id?: number })?.id // For RETURNING id
+                lastID: (result.rows[0] as { id?: number })?.id, // For RETURNING id
             };
         } else if (this.db.run) {
             return new Promise((resolve, reject) => {
-                this.db.run!(adapted.sql, adapted.params, function (this: { changes: number; lastID?: number }, err: Error | null) {
-                    if (err) reject(err);
-                    else resolve({ changes: this.changes, lastID: this.lastID });
-                });
+                this.db.run!(
+                    adapted.sql,
+                    adapted.params,
+                    function (this: { changes: number; lastID?: number }, err: Error | null) {
+                        if (err) reject(err);
+                        else resolve({ changes: this.changes, lastID: this.lastID });
+                    },
+                );
             });
         }
         throw new Error('Database method not available');
@@ -167,4 +175,3 @@ export class QueryAdapter {
 }
 
 export default QueryAdapter;
-

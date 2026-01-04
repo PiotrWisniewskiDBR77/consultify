@@ -1,6 +1,8 @@
 // Default Dependencies
+import AuditLogService from '../services/auditLogService.js';
+
 const deps = {
-    ActivityService: import('activityService.js')
+    AuditLogService
 };
 
 /**
@@ -15,7 +17,6 @@ const auditLogMiddleware = (req, res, next) => {
 
     // Capture original end function
     const originalEnd = res.end;
-    let responseBody;
 
     // Override end to capture status
     res.end = function (chunk, encoding) {
@@ -28,6 +29,7 @@ const auditLogMiddleware = (req, res, next) => {
                 // Extract User Info
                 const user = req.user;
                 const userId = user ? user.id : 'anonymous';
+                const userEmail = user ? user.email : 'anonymous';
                 const organizationId = user ? user.organizationId : ((req.body && req.body.organizationId) || 'unknown');
 
                 // Determine Entity & Action
@@ -44,17 +46,23 @@ const auditLogMiddleware = (req, res, next) => {
                 };
                 const action = actionMap[req.method] || 'modified';
 
+                // Prepare metadata
+                const metadata = {
+                    entityName: (req.body && (req.body.name || req.body.title)) || entityType
+                };
+
                 // Log asynchronously
-                Promise.resolve(deps.ActivityService.log({
-                    organizationId,
-                    userId,
-                    action,
-                    entityType: entityType.replace(/s$/, ''), // singularize roughly
-                    entityId,
-                    entityName: (req.body && (req.body.name || req.body.title)) || entityType,
-                    newValue: (req.method !== 'DELETE' && req.body) ? req.body : null,
-                    ipAddress: req.ip,
-                    userAgent: req.get('user-agent')
+                Promise.resolve(deps.AuditLogService.createLog({
+                    user_id: userId,
+                    user_email: userEmail,
+                    organization_id: organizationId,
+                    action_type: action,
+                    resource_type: entityType.replace(/s$/, ''),
+                    resource_id: entityId,
+                    after_data: (req.method !== 'DELETE' && req.body) ? req.body : null,
+                    ip_address: req.ip,
+                    user_agent: req.get('user-agent'),
+                    metadata
                 })).catch(err => console.error('[AuditLog] Failed to log:', err.message));
 
             } catch (err) {

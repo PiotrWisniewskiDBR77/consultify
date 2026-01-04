@@ -1,7 +1,8 @@
 import { StateCreator } from 'zustand';
-import { AppState } from '../useAppStore';
+
 import { AppView } from '../../types';
 import { NavigationOptions } from '../../types/workspace';
+import { AppState } from '../useAppStore';
 
 export interface UISlice {
     currentView: AppView;
@@ -56,10 +57,11 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => (
 
     setCurrentView: (view) => set({ currentView: view }),
 
-    toggleTheme: (newTheme) => set((state) => {
-        if (newTheme) return { theme: newTheme };
-        return { theme: state.theme === 'dark' ? 'light' : 'dark' };
-    }),
+    toggleTheme: (newTheme) =>
+        set((state) => {
+            if (newTheme) return { theme: newTheme };
+            return { theme: state.theme === 'dark' ? 'light' : 'dark' };
+        }),
 
     setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
     toggleSidebarCollapse: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
@@ -70,26 +72,29 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => (
     toggleChatSlidingPanel: () => set((state) => ({ isChatSlidingPanelOpen: !state.isChatSlidingPanelOpen })),
     setChatSlidingPanelOpen: (open) => set({ isChatSlidingPanelOpen: open }),
 
-    toggleSidePanel: (panel) => set((state) => ({
-        activeSidePanel: state.activeSidePanel === panel ? null : panel
-    })),
+    toggleSidePanel: (panel) =>
+        set((state) => ({
+            activeSidePanel: state.activeSidePanel === panel ? null : panel,
+        })),
     closeSidePanel: () => set({ activeSidePanel: null }),
 
-    navigateWithChatContext: (view: AppView, options?: NavigationOptions) => set((state) => {
-        console.log('[UISlice] navigateWithChatContext:', view, options);
-        return {
-            previousView: state.currentView,
-            currentView: view
-        };
-    }),
+    navigateWithChatContext: (view: AppView, options?: NavigationOptions) =>
+        set((state) => {
+            console.log('[UISlice] navigateWithChatContext:', view, options);
+            return {
+                previousView: state.currentView,
+                currentView: view,
+            };
+        }),
 
-    returnToFullChat: () => set((state) => {
-        console.log('[UISlice] returnToFullChat from:', state.currentView);
-        return {
-            previousView: state.currentView,
-            currentView: AppView.AI_CHAT
-        };
-    }),
+    returnToFullChat: () =>
+        set((state) => {
+            console.log('[UISlice] returnToFullChat from:', state.currentView);
+            return {
+                previousView: state.currentView,
+                currentView: AppView.AI_CHAT,
+            };
+        }),
 
     setPreviousView: (view) => set({ previousView: view }),
 });

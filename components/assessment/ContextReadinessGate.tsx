@@ -1,23 +1,23 @@
 /**
  * ContextReadinessGate Component
- * 
+ *
  * Displays context readiness status and blocks assessment finalization
  * when context score is below required threshold.
  * BCG/McKinsey-level context validation.
  */
 
-import React, { useEffect, useState } from 'react';
-import { 
-    AlertCircle, 
-    CheckCircle2, 
-    AlertTriangle, 
-    ChevronRight, 
+import {
+    AlertCircle,
+    AlertTriangle,
     Building2,
-    Target,
-    Sparkles,
+    CheckCircle2,
+    ChevronRight,
+    Info,
     Loader2,
-    Info
+    Sparkles,
+    Target,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Helper to get auth token from localStorage
@@ -70,22 +70,42 @@ interface ContextReadinessGateProps {
 }
 
 const LEVEL_COLORS = {
-    'Insufficient': { bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-200 dark:border-red-500/30', text: 'text-red-700 dark:text-red-400', icon: AlertCircle },
-    'Minimal': { bg: 'bg-orange-50 dark:bg-orange-500/10', border: 'border-orange-200 dark:border-orange-500/30', text: 'text-orange-700 dark:text-orange-400', icon: AlertTriangle },
-    'Standard': { bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/30', text: 'text-blue-700 dark:text-blue-400', icon: CheckCircle2 },
-    'Complete': { bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-200 dark:border-green-500/30', text: 'text-green-700 dark:text-green-400', icon: Sparkles }
+    Insufficient: {
+        bg: 'bg-red-50 dark:bg-red-500/10',
+        border: 'border-red-200 dark:border-red-500/30',
+        text: 'text-red-700 dark:text-red-400',
+        icon: AlertCircle,
+    },
+    Minimal: {
+        bg: 'bg-orange-50 dark:bg-orange-500/10',
+        border: 'border-orange-200 dark:border-orange-500/30',
+        text: 'text-orange-700 dark:text-orange-400',
+        icon: AlertTriangle,
+    },
+    Standard: {
+        bg: 'bg-blue-50 dark:bg-blue-500/10',
+        border: 'border-blue-200 dark:border-blue-500/30',
+        text: 'text-blue-700 dark:text-blue-400',
+        icon: CheckCircle2,
+    },
+    Complete: {
+        bg: 'bg-green-50 dark:bg-green-500/10',
+        border: 'border-green-200 dark:border-green-500/30',
+        text: 'text-green-700 dark:text-green-400',
+        icon: Sparkles,
+    },
 };
 
 const CATEGORY_ICONS = {
     organization: Building2,
     strategy: Target,
-    transformation: Sparkles
+    transformation: Sparkles,
 };
 
 const CATEGORY_LABELS = {
     organization: 'Organization Profile',
     strategy: 'Strategic Context',
-    transformation: 'Transformation Details'
+    transformation: 'Transformation Details',
 };
 
 export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
@@ -93,7 +113,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
     onReadinessChange,
     onNavigateToContext,
     compact = false,
-    showRecommendations = true
+    showRecommendations = true,
 }) => {
     const { t } = useTranslation();
     const token = getAuthToken();
@@ -108,15 +128,15 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
 
     const fetchReadiness = async () => {
         if (!projectId) return;
-        
+
         setLoading(true);
         setError(null);
 
         try {
             const response = await fetch(`/api/context/${projectId}/finalization-check`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) {
@@ -124,12 +144,12 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
             }
 
             const data = await response.json();
-            
+
             // Fetch full readiness data
             const contextResponse = await fetch(`/api/context/${projectId}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (contextResponse.ok) {
@@ -175,16 +195,14 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
     // Compact view for sidebar/header
     if (compact) {
         return (
-            <div 
+            <div
                 className={`p-3 rounded-lg border ${levelStyle.bg} ${levelStyle.border} cursor-pointer hover:opacity-90 transition-opacity`}
                 onClick={onNavigateToContext}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <LevelIcon className={`w-4 h-4 ${levelStyle.text}`} />
-                        <span className={`text-sm font-medium ${levelStyle.text}`}>
-                            Context: {readiness.score}%
-                        </span>
+                        <span className={`text-sm font-medium ${levelStyle.text}`}>Context: {readiness.score}%</span>
                     </div>
                     {!readiness.canFinalize && (
                         <span className="text-xs text-red-600 dark:text-red-400 font-medium">
@@ -207,34 +225,26 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                             <LevelIcon className={`w-6 h-6 ${levelStyle.text}`} />
                         </div>
                         <div>
-                            <h3 className={`font-semibold ${levelStyle.text}`}>
-                                Context Readiness: {readiness.level}
-                            </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {readiness.levelDescription}
-                            </p>
+                            <h3 className={`font-semibold ${levelStyle.text}`}>Context Readiness: {readiness.level}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{readiness.levelDescription}</p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className={`text-2xl font-bold ${levelStyle.text}`}>
-                            {readiness.score}%
-                        </div>
-                        <div className="text-xs text-slate-500">
-                            Required: {readiness.requiredThreshold}%
-                        </div>
+                        <div className={`text-2xl font-bold ${levelStyle.text}`}>{readiness.score}%</div>
+                        <div className="text-xs text-slate-500">Required: {readiness.requiredThreshold}%</div>
                     </div>
                 </div>
 
                 {/* Progress bar */}
                 <div className="mt-4">
                     <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className={`h-full transition-all duration-500 ${
-                                readiness.canFinalize 
-                                    ? 'bg-green-500' 
-                                    : readiness.score >= 40 
-                                        ? 'bg-orange-500' 
-                                        : 'bg-red-500'
+                                readiness.canFinalize
+                                    ? 'bg-green-500'
+                                    : readiness.score >= 40
+                                      ? 'bg-orange-500'
+                                      : 'bg-red-500'
                             }`}
                             style={{ width: `${readiness.score}%` }}
                         />
@@ -250,18 +260,19 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
 
             {/* Category breakdown */}
             <div className="p-4 space-y-3">
-                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Context Categories
-                </h4>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Context Categories</h4>
                 {Object.entries(readiness.byCategory).map(([category, scores]) => {
                     const CategoryIcon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
                     const categoryLabel = CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS];
                     const percentage = scores.total > 0 ? Math.round((scores.score / scores.total) * 100) : 0;
                     const isExpanded = expandedCategory === category;
-                    const categoryGaps = readiness.gaps.filter(g => g.category === category);
+                    const categoryGaps = readiness.gaps.filter((g) => g.category === category);
 
                     return (
-                        <div key={category} className="bg-white/50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div
+                            key={category}
+                            className="bg-white/50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-slate-700"
+                        >
                             <button
                                 className="w-full p-3 flex items-center justify-between"
                                 onClick={() => setExpandedCategory(isExpanded ? null : category)}
@@ -273,30 +284,33 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-sm font-medium ${
-                                        percentage >= 80 ? 'text-green-600' : 
-                                        percentage >= 50 ? 'text-orange-600' : 'text-red-600'
-                                    }`}>
+                                    <span
+                                        className={`text-sm font-medium ${
+                                            percentage >= 80
+                                                ? 'text-green-600'
+                                                : percentage >= 50
+                                                  ? 'text-orange-600'
+                                                  : 'text-red-600'
+                                        }`}
+                                    >
                                         {scores.score}/{scores.total}pts
                                     </span>
-                                    <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                    <ChevronRight
+                                        className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                    />
                                 </div>
                             </button>
-                            
+
                             {isExpanded && categoryGaps.length > 0 && (
                                 <div className="px-3 pb-3 border-t border-slate-200 dark:border-slate-700">
                                     <div className="pt-2 space-y-1">
-                                        {categoryGaps.map(gap => (
-                                            <div 
+                                        {categoryGaps.map((gap) => (
+                                            <div
                                                 key={gap.key}
                                                 className="flex items-center justify-between text-sm py-1"
                                             >
-                                                <span className="text-slate-600 dark:text-slate-400">
-                                                    {gap.label}
-                                                </span>
-                                                <span className="text-red-500 font-medium">
-                                                    -{gap.weight}pts
-                                                </span>
+                                                <span className="text-slate-600 dark:text-slate-400">{gap.label}</span>
+                                                <span className="text-red-500 font-medium">-{gap.weight}pts</span>
                                             </div>
                                         ))}
                                     </div>
@@ -316,19 +330,17 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                     </h4>
                     <div className="space-y-2">
                         {readiness.recommendations.map((rec, idx) => (
-                            <div 
+                            <div
                                 key={idx}
                                 className={`p-3 rounded-lg text-sm ${
-                                    rec.priority === 'HIGH' 
+                                    rec.priority === 'HIGH'
                                         ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
                                         : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
                                 }`}
                             >
                                 <p>{rec.message}</p>
                                 {rec.fields && rec.fields.length > 0 && (
-                                    <p className="mt-1 text-xs opacity-75">
-                                        Fields: {rec.fields.join(', ')}
-                                    </p>
+                                    <p className="mt-1 text-xs opacity-75">Fields: {rec.fields.join(', ')}</p>
                                 )}
                             </div>
                         ))}
@@ -358,9 +370,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                 ) : (
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                         <CheckCircle2 className="w-5 h-5" />
-                        <span className="text-sm font-medium">
-                            Ready to finalize assessment and generate report
-                        </span>
+                        <span className="text-sm font-medium">Ready to finalize assessment and generate report</span>
                     </div>
                 )}
             </div>
@@ -369,4 +379,3 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
 };
 
 export default ContextReadinessGate;
-

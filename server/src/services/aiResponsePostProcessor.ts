@@ -1,10 +1,10 @@
 /**
  * AI Response Post-Processor
  * Step B: Guaranteed deterministic labeling for AI responses
- * 
+ *
  * This module ensures memory and external source labels are added
  * to AI responses even if the LLM ignores prompt instructions.
- * 
+ *
  * Fully migrated from server/services/aiResponsePostProcessor.js to TypeScript
  */
 
@@ -116,12 +116,15 @@ export const hasExternalPrefix = (text: string): boolean => {
 
 /**
  * Post-process AI response to ensure required labels are present
- * 
+ *
  * @param responseText - The raw AI response text
  * @param context - The AI context object containing memory/external info
  * @returns The processed response with guaranteed labels
  */
-export const aiResponsePostProcessor = (responseText: string | null | undefined, context: AIContext | null | undefined): string => {
+export const aiResponsePostProcessor = (
+    responseText: string | null | undefined,
+    context: AIContext | null | undefined,
+): string => {
     if (!responseText || typeof responseText !== 'string') {
         return responseText || '';
     }
@@ -177,7 +180,7 @@ const aiResponsePostProcessorService = {
     hasExternalPrefix,
     stripPrefixes,
     MEMORY_PREFIX,
-    EXTERNAL_PREFIX
+    EXTERNAL_PREFIX,
 };
 
 export default aiResponsePostProcessorService;

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { WorkloadChart } from '../../../components/WorkloadChart';
+import { WorkloadChart } from '../../components/WorkloadChart';
 
 const mockInitiatives = [
     { id: 'init-1', quarter: '2024-Q1', effortProfile: { analytical: 2, operational: 1, change: 1 } },
@@ -25,6 +25,7 @@ describe('WorkloadChart Component', () => {
         expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument();
     });
 });
+
 
 
 

@@ -3,22 +3,23 @@
  * MRR/ARR tracking, churn analysis, LTV calculations, cohort analysis
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    TrendingUp,
-    TrendingDown,
-    Users,
-    DollarSign,
-    BarChart3,
-    RefreshCw,
-    Calendar,
-    Target,
     Activity,
-    ArrowUpRight,
     ArrowDownRight,
+    ArrowUpRight,
+    BarChart3,
+    Calendar,
+    Clock,
+    DollarSign,
     Percent,
-    Clock
+    RefreshCw,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 
 interface MRRData {
@@ -126,7 +127,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                 Api.get('/billing/analytics/churn'),
                 Api.get('/billing/analytics/ltv'),
                 Api.get('/billing/analytics/cohorts'),
-                Api.get('/billing/analytics/expansion')
+                Api.get('/billing/analytics/expansion'),
             ]);
 
             setMRR(mrrRes.mrr);
@@ -147,7 +148,7 @@ export const SubscriptionAnalytics: React.FC = () => {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
+            maximumFractionDigits: decimals,
         }).format(amount / 100);
     };
 
@@ -173,7 +174,9 @@ export const SubscriptionAnalytics: React.FC = () => {
         return (
             <div className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
                 <p>{error}</p>
-                <button onClick={fetchAllData} className="mt-2 text-sm underline">Try again</button>
+                <button onClick={fetchAllData} className="mt-2 text-sm underline">
+                    Try again
+                </button>
             </div>
         );
     }
@@ -182,9 +185,7 @@ export const SubscriptionAnalytics: React.FC = () => {
         <div className="space-y-6">
             {/* Period Selector */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Subscription Analytics
-                </h2>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Subscription Analytics</h2>
                 <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-slate-400" />
                     <select
@@ -221,9 +222,11 @@ export const SubscriptionAnalytics: React.FC = () => {
                         {formatCurrency(mrr?.totalMRR || 0)}
                     </p>
                     {mrrTrend?.summary && (
-                        <div className={`flex items-center gap-1 mt-2 text-sm ${
-                            parseFloat(mrrTrend.summary.totalGrowth) >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <div
+                            className={`flex items-center gap-1 mt-2 text-sm ${
+                                parseFloat(mrrTrend.summary.totalGrowth) >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}
+                        >
                             {parseFloat(mrrTrend.summary.totalGrowth) >= 0 ? (
                                 <ArrowUpRight className="w-4 h-4" />
                             ) : (
@@ -243,9 +246,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                             <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(mrr?.arr || 0)}
-                    </p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(mrr?.arr || 0)}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
                         {mrr?.activeSubscriptions || 0} active subscriptions
                     </p>
@@ -262,9 +263,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">
                         {churn?.averages?.mrrChurnRate || '0'}%
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                        Monthly MRR churn
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Monthly MRR churn</p>
                 </div>
 
                 {/* LTV Card */}
@@ -275,9 +274,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                             <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(ltv?.ltv || 0)}
-                    </p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(ltv?.ltv || 0)}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
                         ARPA: {formatCurrency(ltv?.arpa || 0)}/mo
                     </p>
@@ -291,7 +288,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">MRR Trend</h3>
                     <div className="h-64 flex items-end gap-1">
                         {mrrTrend?.data?.slice(-30).map((day, i) => {
-                            const maxMRR = Math.max(...(mrrTrend?.data?.map(d => d.mrr) || [1]));
+                            const maxMRR = Math.max(...(mrrTrend?.data?.map((d) => d.mrr) || [1]));
                             const height = (day.mrr / maxMRR) * 100;
                             return (
                                 <div
@@ -321,7 +318,13 @@ export const SubscriptionAnalytics: React.FC = () => {
                         {mrr?.byPlan?.map((plan, i) => {
                             const totalMRR = mrr?.totalMRR || 1;
                             const percentage = (plan.plan_mrr / totalMRR) * 100;
-                            const colors = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-pink-500'];
+                            const colors = [
+                                'bg-purple-500',
+                                'bg-blue-500',
+                                'bg-green-500',
+                                'bg-amber-500',
+                                'bg-pink-500',
+                            ];
                             return (
                                 <div key={plan.plan_id}>
                                     <div className="flex items-center justify-between mb-1">
@@ -342,9 +345,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                             );
                         })}
                         {(!mrr?.byPlan || mrr.byPlan.length === 0) && (
-                            <div className="text-center py-8 text-slate-500">
-                                No plan distribution data
-                            </div>
+                            <div className="text-center py-8 text-slate-500">No plan distribution data</div>
                         )}
                     </div>
                 </div>
@@ -385,9 +386,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                             </tbody>
                         </table>
                         {(!churn?.data || churn.data.length === 0) && (
-                            <div className="text-center py-8 text-slate-500">
-                                No churn data available
-                            </div>
+                            <div className="text-center py-8 text-slate-500">No churn data available</div>
                         )}
                     </div>
                 </div>
@@ -417,19 +416,20 @@ export const SubscriptionAnalytics: React.FC = () => {
                                         <td className="py-2 text-right text-red-600 dark:text-red-400">
                                             -{formatCurrency(row.contraction_mrr)}
                                         </td>
-                                        <td className={`py-2 text-right font-medium ${
-                                            row.netExpansion >= 0 ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                            {row.netExpansion >= 0 ? '+' : ''}{formatCurrency(row.netExpansion)}
+                                        <td
+                                            className={`py-2 text-right font-medium ${
+                                                row.netExpansion >= 0 ? 'text-green-600' : 'text-red-600'
+                                            }`}
+                                        >
+                                            {row.netExpansion >= 0 ? '+' : ''}
+                                            {formatCurrency(row.netExpansion)}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                         {(!expansion?.data || expansion.data.length === 0) && (
-                            <div className="text-center py-8 text-slate-500">
-                                No expansion data available
-                            </div>
+                            <div className="text-center py-8 text-slate-500">No expansion data available</div>
                         )}
                     </div>
                 </div>
@@ -444,18 +444,14 @@ export const SubscriptionAnalytics: React.FC = () => {
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                                 {formatMonth(cohort.cohort)}
                             </p>
-                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                                {cohort.retentionRate}%
-                            </p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{cohort.retentionRate}%</p>
                             <p className="text-xs text-slate-500 mt-1">
                                 {cohort.currentActive}/{cohort.startingCount} active
                             </p>
                         </div>
                     ))}
                     {(!cohorts?.cohorts || cohorts.cohorts.length === 0) && (
-                        <div className="col-span-full text-center py-8 text-slate-500">
-                            No cohort data available
-                        </div>
+                        <div className="col-span-full text-center py-8 text-slate-500">No cohort data available</div>
                     )}
                 </div>
             </div>
@@ -501,10 +497,4 @@ export const SubscriptionAnalytics: React.FC = () => {
 };
 
 export default SubscriptionAnalytics;
-
-
-
-
-
-
 

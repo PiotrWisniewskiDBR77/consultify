@@ -1,6 +1,6 @@
 /**
  * NotificationChannelsSettings - Notification Channels Configuration
- * 
+ *
  * Features:
  * - Slack integration for notifications
  * - Microsoft Teams integration
@@ -9,26 +9,27 @@
  * - In-app notification center preferences
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    MessageSquare,
-    Save,
-    Loader2,
-    Link,
-    Unlink,
-    Check,
-    Phone,
-    Mail,
-    Bell,
-    ExternalLink,
-    Settings,
     AlertCircle,
-    Smartphone
+    Bell,
+    Check,
+    ExternalLink,
+    Link,
+    Loader2,
+    Mail,
+    MessageSquare,
+    Phone,
+    Save,
+    Settings,
+    Smartphone,
+    Unlink,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface NotificationChannelsSettingsProps {
@@ -69,13 +70,13 @@ const defaultChannels: ChannelsState = {
         showUnreadBadge: true,
         autoMarkAsRead: false,
         groupByType: true,
-        maxNotifications: 100
-    }
+        maxNotifications: 100,
+    },
 };
 
 export const NotificationChannelsSettings: React.FC<NotificationChannelsSettingsProps> = ({
     currentUser,
-    onUpdateUser
+    onUpdateUser,
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
@@ -126,7 +127,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                 } else {
                     setChannels({
                         ...channels,
-                        [channel]: { ...channels[channel as keyof ChannelsState], connected: true }
+                        [channel]: { ...channels[channel as keyof ChannelsState], connected: true },
                     });
                     toast.success(`${channel} connected successfully`);
                 }
@@ -143,7 +144,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             await Api.post(`/api/integrations/${channel}/disconnect`, {});
             setChannels({
                 ...channels,
-                [channel]: { ...channels[channel as keyof ChannelsState], connected: false, enabled: false }
+                [channel]: { ...channels[channel as keyof ChannelsState], connected: false, enabled: false },
             });
             toast.success(`${channel} disconnected`);
         } catch (error) {
@@ -166,7 +167,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             await Api.post('/api/user/notification-channels/sms/verify', { code: smsVerificationCode });
             setChannels({
                 ...channels,
-                sms: { ...channels.sms, connected: true, verified: true }
+                sms: { ...channels.sms, connected: true, verified: true },
             });
             setShowSmsVerification(false);
             toast.success('Phone number verified');
@@ -191,11 +192,13 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         iconColor: string;
         config: ChannelConfig;
     }> = ({ id, name, description, icon: Icon, iconColor, config }) => (
-        <div className={`p-6 rounded-xl border-2 transition-all ${
-            config.enabled && config.connected
-                ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
-                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900'
-        }`}>
+        <div
+            className={`p-6 rounded-xl border-2 transition-all ${
+                config.enabled && config.connected
+                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
+                    : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900'
+            }`}
+        >
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-xl ${iconColor}`}>
@@ -220,17 +223,21 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                         <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-600 dark:text-slate-400">Enable notifications</span>
                             <button
-                                onClick={() => setChannels({
-                                    ...channels,
-                                    [id]: { ...config, enabled: !config.enabled }
-                                })}
+                                onClick={() =>
+                                    setChannels({
+                                        ...channels,
+                                        [id]: { ...config, enabled: !config.enabled },
+                                    })
+                                }
                                 className={`relative w-12 h-6 rounded-full transition-colors ${
                                     config.enabled ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'
                                 }`}
                             >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                    config.enabled ? 'left-7' : 'left-1'
-                                }`} />
+                                <span
+                                    className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                        config.enabled ? 'left-7' : 'left-1'
+                                    }`}
+                                />
                             </button>
                         </div>
                         <button
@@ -247,11 +254,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                         disabled={connecting === id}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors disabled:opacity-50"
                     >
-                        {connecting === id ? (
-                            <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                            <Link size={16} />
-                        )}
+                        {connecting === id ? <Loader2 size={16} className="animate-spin" /> : <Link size={16} />}
                         Connect {name}
                     </button>
                 )}
@@ -262,7 +265,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-notification-channels" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -305,11 +308,13 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             </div>
 
             {/* SMS Notifications */}
-            <div className={`p-6 rounded-xl border-2 transition-all ${
-                channels.sms.enabled && channels.sms.connected
-                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
-                    : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900'
-            }`}>
+            <div
+                className={`p-6 rounded-xl border-2 transition-all ${
+                    channels.sms.enabled && channels.sms.connected
+                        ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
+                        : 'border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900'
+                }`}
+            >
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="p-3 rounded-xl bg-green-600">
@@ -334,10 +339,12 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                             type="tel"
                             placeholder="+1 (555) 123-4567"
                             className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
-                            onChange={(e) => setChannels({
-                                ...channels,
-                                sms: { ...channels.sms, phoneNumber: e.target.value }
-                            })}
+                            onChange={(e) =>
+                                setChannels({
+                                    ...channels,
+                                    sms: { ...channels.sms, phoneNumber: e.target.value },
+                                })
+                            }
                         />
                         <button
                             onClick={() => handleSmsSetup(channels.sms.phoneNumber || '')}
@@ -350,7 +357,9 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
 
                 {showSmsVerification && (
                     <div className="space-y-3">
-                        <p className="text-sm text-slate-600 dark:text-slate-400">Enter the verification code sent to your phone</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Enter the verification code sent to your phone
+                        </p>
                         <input
                             type="text"
                             placeholder="123456"
@@ -373,27 +382,36 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                         <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-600 dark:text-slate-400">Enable SMS notifications</span>
                             <button
-                                onClick={() => setChannels({
-                                    ...channels,
-                                    sms: { ...channels.sms, enabled: !channels.sms.enabled }
-                                })}
+                                onClick={() =>
+                                    setChannels({
+                                        ...channels,
+                                        sms: { ...channels.sms, enabled: !channels.sms.enabled },
+                                    })
+                                }
                                 className={`relative w-12 h-6 rounded-full transition-colors ${
                                     channels.sms.enabled ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
                                 }`}
                             >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                    channels.sms.enabled ? 'left-7' : 'left-1'
-                                }`} />
+                                <span
+                                    className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                        channels.sms.enabled ? 'left-7' : 'left-1'
+                                    }`}
+                                />
                             </button>
                         </div>
                         <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                             <input
                                 type="checkbox"
                                 checked={channels.sms.settings.criticalOnly !== false}
-                                onChange={(e) => setChannels({
-                                    ...channels,
-                                    sms: { ...channels.sms, settings: { ...channels.sms.settings, criticalOnly: e.target.checked } }
-                                })}
+                                onChange={(e) =>
+                                    setChannels({
+                                        ...channels,
+                                        sms: {
+                                            ...channels.sms,
+                                            settings: { ...channels.sms.settings, criticalOnly: e.target.checked },
+                                        },
+                                    })
+                                }
                                 className="rounded"
                             />
                             Critical notifications only (urgent tasks, security alerts)
@@ -426,27 +444,47 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
 
                 <div className="space-y-3">
                     {[
-                        { key: 'showUnreadBadge', label: 'Show Unread Badge', desc: 'Display count of unread notifications' },
-                        { key: 'autoMarkAsRead', label: 'Auto Mark as Read', desc: 'Mark notifications as read when viewed' },
-                        { key: 'groupByType', label: 'Group by Type', desc: 'Group similar notifications together' }
-                    ].map(item => (
-                        <div key={item.key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+                        {
+                            key: 'showUnreadBadge',
+                            label: 'Show Unread Badge',
+                            desc: 'Display count of unread notifications',
+                        },
+                        {
+                            key: 'autoMarkAsRead',
+                            label: 'Auto Mark as Read',
+                            desc: 'Mark notifications as read when viewed',
+                        },
+                        { key: 'groupByType', label: 'Group by Type', desc: 'Group similar notifications together' },
+                    ].map((item) => (
+                        <div
+                            key={item.key}
+                            className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                        >
                             <div>
                                 <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
                                 <p className="text-sm text-slate-500">{item.desc}</p>
                             </div>
                             <button
-                                onClick={() => setChannels({
-                                    ...channels,
-                                    inApp: { ...channels.inApp, [item.key]: !channels.inApp[item.key as keyof typeof channels.inApp] }
-                                })}
+                                onClick={() =>
+                                    setChannels({
+                                        ...channels,
+                                        inApp: {
+                                            ...channels.inApp,
+                                            [item.key]: !channels.inApp[item.key as keyof typeof channels.inApp],
+                                        },
+                                    })
+                                }
                                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                                    channels.inApp[item.key as keyof typeof channels.inApp] ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                                    channels.inApp[item.key as keyof typeof channels.inApp]
+                                        ? 'bg-blue-600'
+                                        : 'bg-slate-300 dark:bg-slate-600'
                                 }`}
                             >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                                    channels.inApp[item.key as keyof typeof channels.inApp] ? 'left-7' : 'left-1'
-                                }`} />
+                                <span
+                                    className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                        channels.inApp[item.key as keyof typeof channels.inApp] ? 'left-7' : 'left-1'
+                                    }`}
+                                />
                             </button>
                         </div>
                     ))}
@@ -457,10 +495,12 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                         </label>
                         <select
                             value={channels.inApp.maxNotifications}
-                            onChange={(e) => setChannels({
-                                ...channels,
-                                inApp: { ...channels.inApp, maxNotifications: parseInt(e.target.value) }
-                            })}
+                            onChange={(e) =>
+                                setChannels({
+                                    ...channels,
+                                    inApp: { ...channels.inApp, maxNotifications: parseInt(e.target.value) },
+                                })
+                            }
                             className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg"
                         >
                             <option value={50}>50 notifications</option>
@@ -485,17 +525,21 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                         </div>
                     </div>
                     <button
-                        onClick={() => setChannels({
-                            ...channels,
-                            email: { ...channels.email, enabled: !channels.email.enabled }
-                        })}
+                        onClick={() =>
+                            setChannels({
+                                ...channels,
+                                email: { ...channels.email, enabled: !channels.email.enabled },
+                            })
+                        }
                         className={`relative w-12 h-6 rounded-full transition-colors ${
                             channels.email.enabled ? 'bg-red-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                            channels.email.enabled ? 'left-7' : 'left-1'
-                        }`} />
+                        <span
+                            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                channels.email.enabled ? 'left-7' : 'left-1'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>
@@ -504,7 +548,3 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
 };
 
 export default NotificationChannelsSettings;
-
-
-
-

@@ -3,9 +3,10 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AuditLogService } from '../../../src/services/AuditLogService.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../src/database/IDatabase.js';
+import { AuditLogService } from '../../../src/services/AuditLogService.js';
 
 describe('AuditLogService', () => {
     let mockDb: IDatabase;
@@ -37,7 +38,4 @@ describe('AuditLogService', () => {
         expect(typeof service.getLogs).toBe('function');
     });
 });
-
-
-
 

@@ -4,9 +4,15 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { securityHeaders, createRateLimiter, rateLimitPresets, validateRequest } from '../../../../src/middleware/securityHeaders.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    createRateLimiter,
+    rateLimitPresets,
+    securityHeaders,
+    validateRequest,
+} from '../../../../src/middleware/securityHeaders.middleware.js';
 
 describe('Security Headers Middleware', () => {
     let mockReq: Partial<Request>;
@@ -41,7 +47,10 @@ describe('Security Headers Middleware', () => {
             expect(mockRes.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
             expect(mockRes.setHeader).toHaveBeenCalledWith('X-XSS-Protection', '1; mode=block');
             expect(mockRes.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'strict-origin-when-cross-origin');
-            expect(mockRes.setHeader).toHaveBeenCalledWith('Permissions-Policy', 'geolocation=(), microphone=(self), camera=()');
+            expect(mockRes.setHeader).toHaveBeenCalledWith(
+                'Permissions-Policy',
+                'geolocation=(), microphone=(self), camera=()',
+            );
             expect(mockNext).toHaveBeenCalled();
         });
 
@@ -49,7 +58,10 @@ describe('Security Headers Middleware', () => {
             process.env.NODE_ENV = 'production';
             securityHeaders(mockReq as Request, mockRes as Response, mockNext);
 
-            expect(mockRes.setHeader).toHaveBeenCalledWith('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            expect(mockRes.setHeader).toHaveBeenCalledWith(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains',
+            );
         });
 
         it('should not set HSTS header in development', () => {
@@ -108,9 +120,7 @@ describe('Security Headers Middleware', () => {
             limiter(mockReq as Request, mockRes as Response, mockNext);
             limiter(mockReq as Request, mockRes as Response, mockNext);
 
-            expect(mockRes.json).toHaveBeenCalledWith(
-                expect.objectContaining({ error: 'Custom message' })
-            );
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Custom message' }));
         });
     });
 
@@ -164,9 +174,7 @@ describe('Security Headers Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith({
                 error: 'Validation failed',
                 code: 'VALIDATION_ERROR',
-                details: expect.arrayContaining([
-                    expect.objectContaining({ field: 'name' }),
-                ]),
+                details: expect.arrayContaining([expect.objectContaining({ field: 'name' })]),
             });
         });
 
@@ -223,7 +231,4 @@ describe('Security Headers Middleware', () => {
         });
     });
 });
-
-
-
 

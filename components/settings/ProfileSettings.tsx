@@ -1,12 +1,25 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
 import {
-    UserCircle, Mail, Phone, Building2, Save, Loader2, CheckCircle, Globe,
-    Briefcase, Clock, Calendar, Users, MessageCircle, CalendarOff, User as UserIcon
+    Briefcase,
+    Building2,
+    Calendar,
+    CalendarOff,
+    CheckCircle,
+    Clock,
+    Globe,
+    Loader2,
+    Mail,
+    MessageCircle,
+    Phone,
+    Save,
+    User as UserIcon,
+    UserCircle,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface ProfileSettingsProps {
@@ -18,16 +31,36 @@ interface ProfileSettingsProps {
 
 // Job title suggestions
 const JOB_TITLE_SUGGESTIONS = [
-    'CEO', 'CTO', 'CFO', 'COO', 'CMO',
-    'VP of Engineering', 'VP of Product', 'VP of Operations',
-    'Director', 'Senior Manager', 'Manager',
-    'Project Manager', 'Product Manager', 'Program Manager',
-    'Team Lead', 'Tech Lead', 'Engineering Lead',
-    'Senior Developer', 'Developer', 'Software Engineer',
-    'Business Analyst', 'Data Analyst', 'Data Scientist',
-    'Consultant', 'Senior Consultant', 'Principal Consultant',
-    'Designer', 'UX Designer', 'Product Designer',
-    'Other'
+    'CEO',
+    'CTO',
+    'CFO',
+    'COO',
+    'CMO',
+    'VP of Engineering',
+    'VP of Product',
+    'VP of Operations',
+    'Director',
+    'Senior Manager',
+    'Manager',
+    'Project Manager',
+    'Product Manager',
+    'Program Manager',
+    'Team Lead',
+    'Tech Lead',
+    'Engineering Lead',
+    'Senior Developer',
+    'Developer',
+    'Software Engineer',
+    'Business Analyst',
+    'Data Analyst',
+    'Data Scientist',
+    'Consultant',
+    'Senior Consultant',
+    'Principal Consultant',
+    'Designer',
+    'UX Designer',
+    'Product Designer',
+    'Other',
 ];
 
 // Common timezones
@@ -138,9 +171,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     // Filter job title suggestions
     const filteredJobTitles = useMemo(() => {
         if (!formState.jobTitle) return JOB_TITLE_SUGGESTIONS;
-        return JOB_TITLE_SUGGESTIONS.filter(title =>
-            title.toLowerCase().includes(formState.jobTitle.toLowerCase())
-        );
+        return JOB_TITLE_SUGGESTIONS.filter((title) => title.toLowerCase().includes(formState.jobTitle.toLowerCase()));
     }, [formState.jobTitle]);
 
     // Initial state sync
@@ -181,12 +212,16 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
     };
 
     // Input class for consistent styling
-    const inputClass = "w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const inputWithIconClass = "w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const selectClass = "w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer";
-    const labelClass = "text-xs font-medium text-slate-500 dark:text-slate-400";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-white/5 pb-2";
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
+    const inputClass =
+        'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const inputWithIconClass =
+        'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const selectClass =
+        'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer';
+    const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-white/5 pb-2';
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
@@ -215,11 +250,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Left Column: Avatar & Basic Info */}
                 <div className="md:col-span-1 space-y-6">
-                    <div className={cardClass + " flex flex-col items-center text-center"}>
+                    <div className={cardClass + ' flex flex-col items-center text-center'}>
                         <div className="relative group cursor-pointer mb-4">
                             <div className="w-32 h-32 rounded-full bg-slate-100 dark:bg-navy-800 border-4 border-white dark:border-navy-900 shadow-xl overflow-hidden flex items-center justify-center">
                                 {currentUser.avatarUrl ? (
-                                    <img src={currentUser.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                                    <img
+                                        src={currentUser.avatarUrl}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
                                 ) : (
                                     <UserCircle size={64} className="text-slate-300 dark:text-slate-600" />
                                 )}
@@ -233,10 +272,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                         <h3 className="text-lg font-bold text-navy-900 dark:text-white">
                             {formState.displayName || `${currentUser.firstName} ${currentUser.lastName}`}
                         </h3>
-                        {formState.pronouns && (
-                            <p className="text-slate-400 text-xs">({formState.pronouns})</p>
-                        )}
-                        <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">{currentUser.companyName}</p>
+                        {formState.pronouns && <p className="text-slate-400 text-xs">({formState.pronouns})</p>}
+                        <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">
+                            {currentUser.companyName}
+                        </p>
 
                         {/* Status Badge */}
                         {(formState.statusMessage || formState.isOutOfOffice) && (
@@ -246,14 +285,18 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                         <CalendarOff size={12} />
                                         Out of Office
                                         {formState.outOfOfficeUntil && (
-                                            <span>until {new Date(formState.outOfOfficeUntil).toLocaleDateString()}</span>
+                                            <span>
+                                                until {new Date(formState.outOfOfficeUntil).toLocaleDateString()}
+                                            </span>
                                         )}
                                     </div>
-                                ) : formState.statusMessage && (
-                                    <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
-                                        <MessageCircle size={12} />
-                                        {formState.statusMessage}
-                                    </div>
+                                ) : (
+                                    formState.statusMessage && (
+                                        <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
+                                            <MessageCircle size={12} />
+                                            {formState.statusMessage}
+                                        </div>
+                                    )
                                 )}
                             </div>
                         )}
@@ -279,22 +322,22 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                 {/* Right Column: Edit Form */}
                 <div className="md:col-span-2 space-y-6">
-
                     {/* Public Profile Section */}
                     <div className={cardClass}>
-                        <h4 className={sectionTitleClass}>
-                            {t('settings.profile.publicProfile', 'Public Profile')}
-                        </h4>
+                        <h4 className={sectionTitleClass}>{t('settings.profile.publicProfile', 'Public Profile')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1.5 md:col-span-2">
                                 <label className={labelClass}>
                                     {t('settings.profile.displayName', 'Display Name')}
                                 </label>
                                 <div className="relative">
-                                    <UserIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <UserIcon
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         value={formState.displayName}
-                                        onChange={e => setFormState({ ...formState, displayName: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, displayName: e.target.value })}
                                         placeholder={`${formState.firstName} ${formState.lastName}`}
                                         className={inputWithIconClass}
                                     />
@@ -304,44 +347,67 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                 </p>
                             </div>
                             <div className="space-y-1.5">
-                                <label className={labelClass}>
-                                    {t('settings.profile.pronouns', 'Pronouns')}
-                                </label>
+                                <label className={labelClass}>{t('settings.profile.pronouns', 'Pronouns')}</label>
                                 <div className="relative">
                                     <select
                                         value={formState.pronouns}
-                                        onChange={e => setFormState({ ...formState, pronouns: e.target.value })}
-                                        className={inputClass + " appearance-none cursor-pointer pr-8"}
+                                        onChange={(e) => setFormState({ ...formState, pronouns: e.target.value })}
+                                        className={inputClass + ' appearance-none cursor-pointer pr-8'}
                                     >
-                                        {PRONOUNS_OPTIONS.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        {PRONOUNS_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        <svg
+                                            className="w-4 h-4 text-slate-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 9l-7 7-7-7"
+                                            />
                                         </svg>
                                     </div>
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <label className={labelClass}>
-                                    {t('settings.profile.department', 'Department')}
-                                </label>
+                                <label className={labelClass}>{t('settings.profile.department', 'Department')}</label>
                                 <div className="relative">
-                                    <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <Users
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                                    />
                                     <select
                                         value={formState.department}
-                                        onChange={e => setFormState({ ...formState, department: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, department: e.target.value })}
                                         className={selectClass}
                                     >
-                                        {DEPARTMENT_OPTIONS.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        {DEPARTMENT_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        <svg
+                                            className="w-4 h-4 text-slate-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 9l-7 7-7-7"
+                                            />
                                         </svg>
                                     </div>
                                 </div>
@@ -351,15 +417,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                     {/* Personal Information Section */}
                     <div className={cardClass}>
-                        <h4 className={sectionTitleClass}>
-                            {t('settings.profile.header', 'Personal Information')}
-                        </h4>
+                        <h4 className={sectionTitleClass}>{t('settings.profile.header', 'Personal Information')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1.5">
                                 <label className={labelClass}>{t('settings.profile.firstName', 'First Name')}</label>
                                 <input
                                     value={formState.firstName}
-                                    onChange={e => setFormState({ ...formState, firstName: e.target.value })}
+                                    onChange={(e) => setFormState({ ...formState, firstName: e.target.value })}
                                     className={inputClass}
                                 />
                             </div>
@@ -367,17 +431,20 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                 <label className={labelClass}>{t('settings.profile.lastName', 'Last Name')}</label>
                                 <input
                                     value={formState.lastName}
-                                    onChange={e => setFormState({ ...formState, lastName: e.target.value })}
+                                    onChange={(e) => setFormState({ ...formState, lastName: e.target.value })}
                                     className={inputClass}
                                 />
                             </div>
                             <div className="space-y-1.5">
                                 <label className={labelClass}>{t('auth.phone', 'Phone')}</label>
                                 <div className="relative">
-                                    <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <Phone
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         value={formState.phone}
-                                        onChange={e => setFormState({ ...formState, phone: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
                                         className={inputWithIconClass}
                                     />
                                 </div>
@@ -385,10 +452,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <div className="space-y-1.5">
                                 <label className={labelClass}>{t('settings.profile.company', 'Company')}</label>
                                 <div className="relative">
-                                    <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <Building2
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         value={formState.companyName}
-                                        onChange={e => setFormState({ ...formState, companyName: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, companyName: e.target.value })}
                                         className={inputWithIconClass}
                                     />
                                 </div>
@@ -396,10 +466,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <div className="space-y-1.5 md:col-span-2">
                                 <label className={labelClass}>LinkedIn Profile ID</label>
                                 <div className="relative">
-                                    <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <Globe
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         value={formState.linkedinId}
-                                        onChange={e => setFormState({ ...formState, linkedinId: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, linkedinId: e.target.value })}
                                         placeholder="e.g. piotr-wisniewski-123"
                                         className={inputWithIconClass}
                                     />
@@ -412,13 +485,19 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <div className="space-y-1.5 md:col-span-2">
                                 <label className={labelClass}>{t('settings.profile.jobTitle', 'Job Title')}</label>
                                 <div className="relative">
-                                    <Briefcase size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <Briefcase
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         value={formState.jobTitle}
-                                        onChange={e => setFormState({ ...formState, jobTitle: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, jobTitle: e.target.value })}
                                         onFocus={() => setShowJobTitleSuggestions(true)}
                                         onBlur={() => setTimeout(() => setShowJobTitleSuggestions(false), 200)}
-                                        placeholder={t('settings.profile.jobTitlePlaceholder', 'e.g. Product Manager, Developer...')}
+                                        placeholder={t(
+                                            'settings.profile.jobTitlePlaceholder',
+                                            'e.g. Product Manager, Developer...',
+                                        )}
                                         className={inputWithIconClass}
                                     />
                                     {/* Suggestions dropdown */}
@@ -456,10 +535,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                     {t('settings.profile.statusMessage', 'Status Message')}
                                 </label>
                                 <div className="relative">
-                                    <MessageCircle size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <MessageCircle
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    />
                                     <input
                                         value={formState.statusMessage}
-                                        onChange={e => setFormState({ ...formState, statusMessage: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, statusMessage: e.target.value })}
                                         placeholder="e.g. In meetings until 3pm, Working remotely..."
                                         maxLength={100}
                                         className={inputWithIconClass}
@@ -474,8 +556,17 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <div className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${formState.isOutOfOffice ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-slate-200 dark:bg-white/10'}`}>
-                                            <CalendarOff size={18} className={formState.isOutOfOffice ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'} />
+                                        <div
+                                            className={`p-2 rounded-lg ${formState.isOutOfOffice ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-slate-200 dark:bg-white/10'}`}
+                                        >
+                                            <CalendarOff
+                                                size={18}
+                                                className={
+                                                    formState.isOutOfOffice
+                                                        ? 'text-amber-600 dark:text-amber-400'
+                                                        : 'text-slate-400'
+                                                }
+                                            />
                                         </div>
                                         <div>
                                             <label className="text-sm font-medium text-navy-900 dark:text-white">
@@ -487,12 +578,18 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => setFormState({ ...formState, isOutOfOffice: !formState.isOutOfOffice })}
-                                        className={`relative w-12 h-6 rounded-full transition-colors ${formState.isOutOfOffice ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
-                                            }`}
+                                        onClick={() =>
+                                            setFormState({ ...formState, isOutOfOffice: !formState.isOutOfOffice })
+                                        }
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                                            formState.isOutOfOffice ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
+                                        }`}
                                     >
-                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${formState.isOutOfOffice ? 'left-7' : 'left-1'
-                                            }`} />
+                                        <span
+                                            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                                                formState.isOutOfOffice ? 'left-7' : 'left-1'
+                                            }`}
+                                        />
                                     </button>
                                 </div>
 
@@ -505,7 +602,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                             <input
                                                 type="date"
                                                 value={formState.outOfOfficeUntil}
-                                                onChange={e => setFormState({ ...formState, outOfOfficeUntil: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormState({ ...formState, outOfOfficeUntil: e.target.value })
+                                                }
                                                 min={new Date().toISOString().split('T')[0]}
                                                 className={inputClass}
                                             />
@@ -516,10 +615,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                             </label>
                                             <textarea
                                                 value={formState.outOfOfficeMessage}
-                                                onChange={e => setFormState({ ...formState, outOfOfficeMessage: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormState({ ...formState, outOfOfficeMessage: e.target.value })
+                                                }
                                                 placeholder="I'm currently out of office and will respond when I return..."
                                                 rows={3}
-                                                className={inputClass + " resize-none"}
+                                                className={inputClass + ' resize-none'}
                                             />
                                         </div>
                                     </div>
@@ -530,32 +631,50 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                     {/* Regional Settings */}
                     <div className={cardClass}>
-                        <h4 className={sectionTitleClass}>
-                            {t('settings.profile.regional', 'Regional Settings')}
-                        </h4>
+                        <h4 className={sectionTitleClass}>{t('settings.profile.regional', 'Regional Settings')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Timezone */}
                             <div className="space-y-1.5">
                                 <label className={labelClass}>{t('settings.profile.timezone', 'Timezone')}</label>
                                 <div className="relative">
-                                    <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <Clock
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                                    />
                                     <select
                                         value={formState.timezone}
-                                        onChange={e => setFormState({ ...formState, timezone: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, timezone: e.target.value })}
                                         className={selectClass}
                                     >
-                                        {COMMON_TIMEZONES.map(tz => (
-                                            <option key={tz.value} value={tz.value}>{tz.label}</option>
+                                        {COMMON_TIMEZONES.map((tz) => (
+                                            <option key={tz.value} value={tz.value}>
+                                                {tz.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        <svg
+                                            className="w-4 h-4 text-slate-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 9l-7 7-7-7"
+                                            />
                                         </svg>
                                     </div>
                                 </div>
                                 <p className="text-xs text-slate-400 mt-1">
-                                    {t('settings.profile.timezoneHint', 'Current local time:')} {new Date().toLocaleTimeString('en-US', { timeZone: formState.timezone, hour: '2-digit', minute: '2-digit' })}
+                                    {t('settings.profile.timezoneHint', 'Current local time:')}{' '}
+                                    {new Date().toLocaleTimeString('en-US', {
+                                        timeZone: formState.timezone,
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })}
                                 </p>
                             </div>
 
@@ -563,19 +682,34 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <div className="space-y-1.5">
                                 <label className={labelClass}>{t('settings.profile.dateFormat', 'Date Format')}</label>
                                 <div className="relative">
-                                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <Calendar
+                                        size={14}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                                    />
                                     <select
                                         value={formState.dateFormat}
-                                        onChange={e => setFormState({ ...formState, dateFormat: e.target.value })}
+                                        onChange={(e) => setFormState({ ...formState, dateFormat: e.target.value })}
                                         className={selectClass}
                                     >
-                                        {DATE_FORMATS.map(fmt => (
-                                            <option key={fmt.value} value={fmt.value}>{fmt.label}</option>
+                                        {DATE_FORMATS.map((fmt) => (
+                                            <option key={fmt.value} value={fmt.value}>
+                                                {fmt.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        <svg
+                                            className="w-4 h-4 text-slate-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 9l-7 7-7-7"
+                                            />
                                         </svg>
                                     </div>
                                 </div>
@@ -583,22 +717,27 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
                             {/* Time Format */}
                             <div className="space-y-1.5 md:col-span-2">
-                                <label className={labelClass + " mb-2 block"}>{t('settings.profile.timeFormat', 'Time Format')}</label>
+                                <label className={labelClass + ' mb-2 block'}>
+                                    {t('settings.profile.timeFormat', 'Time Format')}
+                                </label>
                                 <div className="flex gap-4">
-                                    {TIME_FORMATS.map(fmt => (
+                                    {TIME_FORMATS.map((fmt) => (
                                         <label
                                             key={fmt.value}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all ${formState.timeFormat === fmt.value
-                                                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
-                                                : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
-                                                }`}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all ${
+                                                formState.timeFormat === fmt.value
+                                                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
+                                                    : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                                            }`}
                                         >
                                             <input
                                                 type="radio"
                                                 name="timeFormat"
                                                 value={fmt.value}
                                                 checked={formState.timeFormat === fmt.value}
-                                                onChange={e => setFormState({ ...formState, timeFormat: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormState({ ...formState, timeFormat: e.target.value })
+                                                }
                                                 className="sr-only"
                                             />
                                             <span className="text-sm font-medium">{fmt.label}</span>
@@ -615,13 +754,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                             <label className="text-xs font-medium text-slate-500 mb-2 block uppercase tracking-wider">
                                 {t('settings.profile.preferences', 'Preferences')}
                             </label>
-                            <div className={cardClass + " space-y-6"}>
+                            <div className={cardClass + ' space-y-6'}>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
                                             {t('settings.profile.theme', 'Interface Theme')}
                                         </label>
-                                        <p className="text-xs text-slate-500 mt-1">Select your interface color theme.</p>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Select your interface color theme.
+                                        </p>
                                     </div>
                                     <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
                                         <button
@@ -653,14 +794,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                                         <p className="text-xs text-slate-500 mt-1">Select your preferred language.</p>
                                     </div>
                                     <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg flex-wrap gap-1">
-                                        {['en', 'pl', 'de', 'ar', 'ja', 'es'].map(lang => (
+                                        {['en', 'pl', 'de', 'ar', 'ja', 'es'].map((lang) => (
                                             <button
                                                 key={lang}
                                                 onClick={() => i18n.changeLanguage(lang)}
-                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${i18n.language === lang
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                                                    i18n.language === lang
                                                         ? 'bg-white shadow text-navy-900'
                                                         : 'text-slate-500 hover:text-navy-700'
-                                                    }`}
+                                                }`}
                                             >
                                                 {t(`common.languages.${lang}`)}
                                             </button>

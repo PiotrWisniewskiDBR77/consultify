@@ -1,18 +1,13 @@
 /**
  * InitiativeEditor
- * 
+ *
  * Modal/Panel component for editing an initiative before approval.
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-    X,
-    Save,
-    Plus,
-    Trash2,
-    AlertTriangle
-} from 'lucide-react';
-import { GeneratedInitiative, DRDAxis, InitiativeRiskLevel } from '../../types';
+import { AlertTriangle, Plus, Save, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { DRDAxis, GeneratedInitiative, InitiativeRiskLevel } from '../../types';
 
 interface InitiativeEditorProps {
     initiative: GeneratedInitiative;
@@ -27,29 +22,18 @@ const AXIS_OPTIONS: { value: DRDAxis; label: string }[] = [
     { value: 'dataManagement', label: 'Data Management' },
     { value: 'culture', label: 'Organizational Culture' },
     { value: 'cybersecurity', label: 'Cybersecurity' },
-    { value: 'aiMaturity', label: 'AI Maturity' }
+    { value: 'aiMaturity', label: 'AI Maturity' },
 ];
 
 const RISK_OPTIONS: { value: InitiativeRiskLevel; label: string }[] = [
     { value: 'LOW', label: 'Low Risk' },
     { value: 'MEDIUM', label: 'Medium Risk' },
-    { value: 'HIGH', label: 'High Risk' }
+    { value: 'HIGH', label: 'High Risk' },
 ];
 
-const TIMELINE_OPTIONS = [
-    '1-3 months',
-    '3-6 months',
-    '6-9 months',
-    '9-12 months',
-    '12-18 months',
-    '18-24 months'
-];
+const TIMELINE_OPTIONS = ['1-3 months', '3-6 months', '6-9 months', '9-12 months', '12-18 months', '18-24 months'];
 
-export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
-    initiative,
-    onSave,
-    onCancel
-}) => {
+export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({ initiative, onSave, onCancel }) => {
     // Form state
     const [name, setName] = useState(initiative.name);
     const [description, setDescription] = useState(initiative.description);
@@ -116,7 +100,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
             estimatedBudget,
             timeline,
             riskLevel,
-            objectives
+            objectives,
         });
     };
 
@@ -127,9 +111,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
             <div className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
                 {/* Header */}
                 <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                        Edit Initiative
-                    </h2>
+                    <h2 className="text-lg font-bold text-navy-900 dark:text-white">Edit Initiative</h2>
                     <button
                         onClick={onCancel}
                         className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
@@ -151,39 +133,35 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                             onChange={(e) => setName(e.target.value)}
                             className={`
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
-                                ${errors.name 
-                                    ? 'border-red-300 dark:border-red-500/50 focus:ring-red-500' 
-                                    : 'border-slate-200 dark:border-white/10 focus:ring-purple-500'
+                                ${
+                                    errors.name
+                                        ? 'border-red-300 dark:border-red-500/50 focus:ring-red-500'
+                                        : 'border-slate-200 dark:border-white/10 focus:ring-purple-500'
                                 }
                             `}
                             placeholder="Enter initiative name"
                         />
-                        {errors.name && (
-                            <p className="text-xs text-red-500">{errors.name}</p>
-                        )}
+                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Description *
-                        </label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description *</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={4}
                             className={`
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white resize-none
-                                ${errors.description 
-                                    ? 'border-red-300 dark:border-red-500/50 focus:ring-red-500' 
-                                    : 'border-slate-200 dark:border-white/10 focus:ring-purple-500'
+                                ${
+                                    errors.description
+                                        ? 'border-red-300 dark:border-red-500/50 focus:ring-red-500'
+                                        : 'border-slate-200 dark:border-white/10 focus:ring-purple-500'
                                 }
                             `}
                             placeholder="Describe the initiative..."
                         />
-                        {errors.description && (
-                            <p className="text-xs text-red-500">{errors.description}</p>
-                        )}
+                        {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
                     </div>
 
                     {/* Grid: Axis + Risk */}
@@ -197,23 +175,25 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 onChange={(e) => setSourceAxisId(e.target.value as DRDAxis)}
                                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                             >
-                                {AXIS_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                {AXIS_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                Risk Level
-                            </label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Risk Level</label>
                             <select
                                 value={riskLevel}
                                 onChange={(e) => setRiskLevel(e.target.value as InitiativeRiskLevel)}
                                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                             >
-                                {RISK_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                {RISK_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -231,15 +211,14 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 onChange={(e) => setEstimatedBudget(parseInt(e.target.value) || 0)}
                                 className={`
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
-                                    ${errors.estimatedBudget 
-                                        ? 'border-red-300 dark:border-red-500/50' 
-                                        : 'border-slate-200 dark:border-white/10'
+                                    ${
+                                        errors.estimatedBudget
+                                            ? 'border-red-300 dark:border-red-500/50'
+                                            : 'border-slate-200 dark:border-white/10'
                                     }
                                 `}
                             />
-                            {errors.estimatedBudget && (
-                                <p className="text-xs text-red-500">{errors.estimatedBudget}</p>
-                            )}
+                            {errors.estimatedBudget && <p className="text-xs text-red-500">{errors.estimatedBudget}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -253,28 +232,27 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 onChange={(e) => setEstimatedROI(parseFloat(e.target.value) || 0)}
                                 className={`
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
-                                    ${errors.estimatedROI 
-                                        ? 'border-red-300 dark:border-red-500/50' 
-                                        : 'border-slate-200 dark:border-white/10'
+                                    ${
+                                        errors.estimatedROI
+                                            ? 'border-red-300 dark:border-red-500/50'
+                                            : 'border-slate-200 dark:border-white/10'
                                     }
                                 `}
                             />
-                            {errors.estimatedROI && (
-                                <p className="text-xs text-red-500">{errors.estimatedROI}</p>
-                            )}
+                            {errors.estimatedROI && <p className="text-xs text-red-500">{errors.estimatedROI}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                Timeline
-                            </label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Timeline</label>
                             <select
                                 value={timeline}
                                 onChange={(e) => setTimeline(e.target.value)}
                                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                             >
-                                {TIMELINE_OPTIONS.map(t => (
-                                    <option key={t} value={t}>{t}</option>
+                                {TIMELINE_OPTIONS.map((t) => (
+                                    <option key={t} value={t}>
+                                        {t}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -282,23 +260,19 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
 
                     {/* Objectives */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Objectives
-                        </label>
-                        
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Objectives</label>
+
                         {objectives.length > 0 && (
                             <ul className="space-y-2 mb-3">
                                 {objectives.map((obj, idx) => (
-                                    <li 
+                                    <li
                                         key={idx}
                                         className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-950 rounded-lg"
                                     >
                                         <span className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400 shrink-0">
                                             {idx + 1}
                                         </span>
-                                        <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">
-                                            {obj}
-                                        </span>
+                                        <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{obj}</span>
                                         <button
                                             onClick={() => handleRemoveObjective(idx)}
                                             className="p-1 text-slate-400 hover:text-red-500 transition-colors"
@@ -338,7 +312,8 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     High-Risk, High-Budget Initiative
                                 </p>
                                 <p className="text-sm text-amber-600 dark:text-amber-400">
-                                    Consider breaking this into smaller phases or implementing additional governance controls.
+                                    Consider breaking this into smaller phases or implementing additional governance
+                                    controls.
                                 </p>
                             </div>
                         </div>
@@ -366,4 +341,3 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
         </div>
     );
 };
-

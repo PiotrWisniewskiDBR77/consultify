@@ -1,27 +1,41 @@
 /**
  * AdminSettingsModule - Organization Settings
- * 
+ *
  * Tabs: Organization | Billing | Payment | Tax | Alerts | Security | Feedback
  */
 
-import React, { useState, useEffect } from 'react';
-import { Building2, CreditCard, Shield, MessageSquare, Wallet, Receipt, Bell, Database, FileText, Palette, Webhook, Key } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { OrganizationProfileForm } from '../../components/settings/OrganizationProfileForm';
-import { BillingSettings } from '../../components/settings/BillingSettings';
-import { SecuritySettings } from '../../components/settings/SecuritySettings';
-import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
-import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
-import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
-import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
-import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
+import {
+    Bell,
+    Building2,
+    CreditCard,
+    Database,
+    FileText,
+    Key,
+    MessageSquare,
+    Palette,
+    Receipt,
+    Shield,
+    Wallet,
+    Webhook,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
+import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
 import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
-import { ApiKeysManagementView } from './ApiKeysManagementView';
-import { useTranslation } from 'react-i18next';
+import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
+import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
+import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
+import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
+import { BillingSettings } from '../../components/settings/BillingSettings';
+import { OrganizationProfileForm } from '../../components/settings/OrganizationProfileForm';
+import { SecuritySettings } from '../../components/settings/SecuritySettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { ApiKeysManagementView } from './ApiKeysManagementView';
 
 interface AdminSettingsModuleProps {
     initialTab?: string;
@@ -84,15 +98,18 @@ const AdminFeedbackView: React.FC = () => {
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className={`px-2 py-0.5 text-xs rounded-full ${item.status === 'new' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300' :
-                                            item.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' :
-                                                'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
-                                            }`}>
+                                        <span
+                                            className={`px-2 py-0.5 text-xs rounded-full ${
+                                                item.status === 'new'
+                                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300'
+                                                    : item.status === 'resolved'
+                                                      ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300'
+                                                      : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
+                                            }`}
+                                        >
                                             {item.status}
                                         </span>
-                                        <span className="text-xs text-slate-500">
-                                            {item.type || 'General'}
-                                        </span>
+                                        <span className="text-xs text-slate-500">{item.type || 'General'}</span>
                                     </div>
                                     <p className="text-sm text-slate-700 dark:text-slate-300">
                                         {item.message || item.content}
@@ -110,10 +127,7 @@ const AdminFeedbackView: React.FC = () => {
     );
 };
 
-export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
-    initialTab,
-    currentUser
-}) => {
+export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab, currentUser }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'organization');
     const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
@@ -136,63 +150,63 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         {
             id: 'organization',
             label: t('admin.tabs.organization', 'Organization'),
-            icon: <Building2 size={16} />
+            icon: <Building2 size={16} />,
         },
         {
             id: 'branding',
             label: t('admin.tabs.branding', 'Branding'),
-            icon: <Palette size={16} />
+            icon: <Palette size={16} />,
         },
         {
             id: 'billing',
             label: t('admin.tabs.billing', 'Plans'),
-            icon: <CreditCard size={16} />
+            icon: <CreditCard size={16} />,
         },
         {
             id: 'payment',
             label: t('admin.tabs.payment', 'Payment'),
-            icon: <Wallet size={16} />
+            icon: <Wallet size={16} />,
         },
         {
             id: 'tax',
             label: t('admin.tabs.tax', 'Tax'),
-            icon: <Receipt size={16} />
+            icon: <Receipt size={16} />,
         },
         {
             id: 'alerts',
             label: t('admin.tabs.alerts', 'Alerts'),
-            icon: <Bell size={16} />
+            icon: <Bell size={16} />,
         },
         {
             id: 'security',
             label: t('admin.tabs.security', 'Security'),
-            icon: <Shield size={16} />
+            icon: <Shield size={16} />,
         },
         {
             id: 'governance',
             label: t('admin.tabs.governance', 'Governance'),
-            icon: <Database size={16} />
+            icon: <Database size={16} />,
         },
         {
             id: 'audit',
             label: t('admin.tabs.audit', 'Audit'),
-            icon: <FileText size={16} />
+            icon: <FileText size={16} />,
         },
         {
             id: 'integrations',
             label: t('admin.tabs.integrations', 'Integrations'),
-            icon: <Webhook size={16} />
+            icon: <Webhook size={16} />,
         },
         {
             id: 'api',
             label: t('admin.tabs.api', 'API'),
-            icon: <Key size={16} />
+            icon: <Key size={16} />,
         },
         {
             id: 'feedback',
             label: t('admin.tabs.feedback', 'Feedback'),
             icon: <MessageSquare size={16} />,
-            badge: pendingFeedbackCount
+            badge: pendingFeedbackCount,
         },
     ];
 
@@ -285,7 +299,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
             activeTab={activeTab}
             onTabChange={setActiveTab}
             title={t('admin.modules.settings', 'Settings')}
-            subtitle={t('admin.modules.settingsDesc', 'Organization profile, billing, security, and feedback management')}
+            subtitle={t(
+                'admin.modules.settingsDesc',
+                'Organization profile, billing, security, and feedback management',
+            )}
         >
             {renderContent()}
         </TabLayout>
@@ -293,4 +310,3 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
 };
 
 export default AdminSettingsModule;
-

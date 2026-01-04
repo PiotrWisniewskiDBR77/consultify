@@ -1,13 +1,14 @@
 /**
  * SentryConfig Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for SentryConfig - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { initSentry } from '../../../../src/config/sentry.js';
 import type { Express } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { initSentry } from '../../../../src/config/sentry.js';
 
 describe('SentryConfig', () => {
     let mockApp: Express;
@@ -50,4 +51,3 @@ describe('SentryConfig', () => {
         });
     });
 });
-

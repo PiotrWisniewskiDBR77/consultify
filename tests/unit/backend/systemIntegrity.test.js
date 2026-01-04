@@ -1,95 +1,82 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
+import DbPromise from '../../../server/src/utils/DbPromise.ts';
 
-const require = createRequire(import.meta.url);
+// Mock DbPromise
+vi.mock('../../../server/src/utils/DbPromise.ts', () => ({
+    default: {
+        get: vi.fn(),
+        all: vi.fn(),
+    }
+}));
+
+// Mock Database (if constructor calls it)
+vi.mock('../../../server/src/database/Database.js', () => ({
+    getDatabase: vi.fn(() => ({}))
+}));
+
+// Import Service
+import SystemIntegrity from '../../../server/src/services/systemIntegrity.ts';
 
 describe('System Integrity Service', () => {
-    let SystemIntegrity;
     let mockDb;
 
     beforeEach(() => {
-        vi.resetModules();
+        vi.clearAllMocks();
 
-        mockDb = createMockDb();
+        mockDb = {}; // Mock DB object
+        SystemIntegrity.setDependencies({ db: mockDb });
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
-
-        SystemIntegrity = require('../../../server/services/systemIntegrity.js');
-        
-        // Inject mock dependencies
-        SystemIntegrity.setDependencies({
-            db: mockDb
-        });
+        // Default: Console spies to suppress output
+        vi.spyOn(console, 'log').mockImplementation(() => { });
+        vi.spyOn(console, 'error').mockImplementation(() => { });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('check', () => {
         it('should detect missing DBR77 anchor', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                if (sql.includes('DBR77')) {
-                    cb(null, null); // No anchor found
-                } else {
-                    cb(null, []);
-                }
-            });
-
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-            const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            // Mock DbPromise.get to return null (anchor not found)
+            vi.mocked(DbPromise.get).mockResolvedValue(null);
+            // Mock DbPromise.all for empty providers list so we don't crash later
+            vi.mocked(DbPromise.all).mockResolvedValue([]);
 
             await SystemIntegrity.check();
 
-            expect(mockDb.get).toHaveBeenCalled();
-            consoleSpy.mockRestore();
-            consoleErrorSpy.mockRestore();
+            expect(DbPromise.get).toHaveBeenCalled();
+            const [db, sql] = vi.mocked(DbPromise.get).mock.calls[0];
+            expect(sql).toContain('DBR77');
+
+            // Should verify that log was called with critical error?
+            // Since we spy on console, we can check calls.
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Anchor Tenant \'DBR77\' NOT FOUND'));
         });
 
         it('should detect valid DBR77 anchor', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                if (sql.includes('DBR77')) {
-                    cb(null, { id: 'dbr77', name: 'DBR77 Organization' });
-                } else {
-                    cb(null, []);
-                }
-            });
-
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            // Found anchor
+            vi.mocked(DbPromise.get).mockResolvedValue({ id: 'dbr77', name: 'DBR77 Organization' });
+            // Providers empty
+            vi.mocked(DbPromise.all).mockResolvedValue([]);
 
             await SystemIntegrity.check();
 
-            expect(mockDb.get).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+            expect(DbPromise.get).toHaveBeenCalled();
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Database Anchor Found'));
         });
 
         it('should check LLM providers', async () => {
-            mockDb.get.mockImplementation((sql, params, cb) => {
-                if (sql.includes('DBR77')) {
-                    cb(null, { id: 'dbr77', name: 'DBR77' });
-                } else {
-                    cb(null, []);
-                }
-            });
-
-            mockDb.all.mockImplementation((sql, params, cb) => {
-                if (sql.includes('llm_providers')) {
-                    cb(null, [
-                        { provider: 'openai', api_key: 'sk-real-key-123' }
-                    ]);
-                } else {
-                    cb(null, []);
-                }
-            });
-
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            // Found anchor
+            vi.mocked(DbPromise.get).mockResolvedValue({ id: 'dbr77', name: 'DBR77' });
+            // Providers list
+            vi.mocked(DbPromise.all).mockResolvedValue([
+                { provider: 'openai', api_key: 'sk-real-key-123' }
+            ]);
 
             await SystemIntegrity.check();
 
-            expect(mockDb.all).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+            expect(DbPromise.all).toHaveBeenCalled();
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Found 1 Valid LLM Providers'));
         });
     });
 });

@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+
 import * as DbPromise from '../../utils/DbPromise.js';
 import { isOpenAIResponse, validateDatabaseRow } from '../../utils/typeGuards.js';
 
@@ -73,7 +74,7 @@ type OpenAIConfig = {
 };
 
 const OpenAIConfigSchema = z.object({
-    api_key: z.string().min(1)
+    api_key: z.string().min(1),
 });
 
 const ScoresSchema = z.array(z.number().min(0).max(1));
@@ -82,7 +83,7 @@ const fallbackLogger: AiLogger = {
     debug: (component, message, data) => console.debug(`[AI:${component}] ${message}`, data ?? ''),
     info: (component, message, data) => console.info(`[AI:${component}] ${message}`, data ?? ''),
     warn: (component, message, data) => console.warn(`[AI:${component}] ${message}`, data ?? ''),
-    error: (component, message, error) => console.error(`[AI:${component}] ${message}`, error ?? '')
+    error: (component, message, error) => console.error(`[AI:${component}] ${message}`, error ?? ''),
 };
 
 // Dependency injection for testing
@@ -101,8 +102,9 @@ async function initDeps(): Promise<void> {
     }
     if (!deps.OpenAI) {
         const module = await import('openai');
-        const OpenAI = (module as { OpenAI?: OpenAIConstructor; default?: OpenAIConstructor }).OpenAI
-            ?? (module as { default?: OpenAIConstructor }).default;
+        const OpenAI =
+            (module as { OpenAI?: OpenAIConstructor; default?: OpenAIConstructor }).OpenAI ??
+            (module as { default?: OpenAIConstructor }).default;
         if (!OpenAI) {
             throw new Error('OpenAI client not available');
         }
@@ -125,7 +127,7 @@ const RERANKER_CONFIG = {
     timeout: 15000,
     batchSize: 5,
     cacheEnabled: true,
-    cacheTTL: 3600000 // 1 hour
+    cacheTTL: 3600000, // 1 hour
 };
 
 // Simple in-memory cache for re-ranking results
@@ -160,7 +162,10 @@ const getDocIdentity = (doc: RerankDocument): string => {
 };
 
 const parseScores = (scoresText: string): number[] => {
-    const cleanedText = scoresText.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+    const cleanedText = scoresText
+        .replace(/```json\n?/g, '')
+        .replace(/```/g, '')
+        .trim();
     try {
         const parsed = JSON.parse(cleanedText) as unknown;
         const validated = ScoresSchema.safeParse(parsed);
@@ -171,7 +176,7 @@ const parseScores = (scoresText: string): number[] => {
         // fall through to regex parse
     }
     const numbers = scoresText.match(/\d+\.?\d*/g);
-    return numbers ? numbers.map(n => clampScore(parseFloat(n))) : [];
+    return numbers ? numbers.map((n) => clampScore(parseFloat(n))) : [];
 };
 
 const RerankerService = {
@@ -182,12 +187,9 @@ const RerankerService = {
         query: string,
         documents: RerankDocument[],
         topK = 5,
-        options: RerankOptions = {}
+        options: RerankOptions = {},
     ): Promise<RerankedDocument[]> => {
-        const {
-            useCache = RERANKER_CONFIG.cacheEnabled,
-            model = RERANKER_CONFIG.model
-        } = options;
+        const { useCache = RERANKER_CONFIG.cacheEnabled, model = RERANKER_CONFIG.model } = options;
 
         if (!documents || documents.length === 0) {
             return [];
@@ -200,7 +202,7 @@ const RerankerService = {
         const logger = getLogger();
         logger.info(
             'RerankerService',
-            `Re-ranking ${docsToRank.length} documents for query: "${query.substring(0, 50)}..."`
+            `Re-ranking ${docsToRank.length} documents for query: "${query.substring(0, 50)}..."`,
         );
 
         // Check cache
@@ -218,18 +220,18 @@ const RerankerService = {
             const openaiConfig = await RerankerService._getOpenAIConfig();
             if (!openaiConfig) {
                 logger.warn('RerankerService', 'OpenAI not configured, returning original ranking');
-                return docsToRank.slice(0, topK).map(doc => ({
+                return docsToRank.slice(0, topK).map((doc) => ({
                     ...doc,
-                    rerankerScore: doc.hybridScore || doc.score || 0
+                    rerankerScore: doc.hybridScore || doc.score || 0,
                 }));
             }
 
             const OpenAI = deps.OpenAI;
             if (!OpenAI) {
                 logger.warn('RerankerService', 'OpenAI client not available, returning original ranking');
-                return docsToRank.slice(0, topK).map(doc => ({
+                return docsToRank.slice(0, topK).map((doc) => ({
                     ...doc,
-                    rerankerScore: doc.hybridScore || doc.score || 0
+                    rerankerScore: doc.hybridScore || doc.score || 0,
                 }));
             }
 
@@ -249,15 +251,17 @@ const RerankerService = {
 
             // Add re-ranking metadata
             const results = scoredDocs.map((doc, idx) => {
-                const originalRank = docsToRank.findIndex(d =>
-                    (d.id !== undefined && d.id === doc.id)
-                    || getDocContent(d).substring(0, 100) === getDocContent(doc).substring(0, 100)
-                ) + 1;
+                const originalRank =
+                    docsToRank.findIndex(
+                        (d) =>
+                            (d.id !== undefined && d.id === doc.id) ||
+                            getDocContent(d).substring(0, 100) === getDocContent(doc).substring(0, 100),
+                    ) + 1;
                 return {
                     ...doc,
                     originalRank,
                     rerankedPosition: idx + 1,
-                    rankChange: originalRank - (idx + 1)
+                    rankChange: originalRank - (idx + 1),
                 };
             });
 
@@ -266,7 +270,7 @@ const RerankerService = {
                 const cacheKey = RerankerService._generateCacheKey(query, docsToRank);
                 rerankerCache.set(cacheKey, {
                     results,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 });
             }
 
@@ -275,7 +279,7 @@ const RerankerService = {
                 documentsRanked: docsToRank.length,
                 topKReturned: Math.min(topK, results.length),
                 avgScoreChange: RerankerService._calculateAvgScoreChange(results),
-                model
+                model,
             });
 
             return results.slice(0, topK);
@@ -284,10 +288,10 @@ const RerankerService = {
             const err = error as Error;
             logger.error('RerankerService', `Re-ranking failed: ${err.message}`, err);
             // Return original ranking on error
-            return docsToRank.slice(0, topK).map(doc => ({
+            return docsToRank.slice(0, topK).map((doc) => ({
                 ...doc,
                 rerankerScore: doc.hybridScore || doc.score || 0,
-                rerankerFailed: true
+                rerankerFailed: true,
             }));
         }
     },
@@ -299,15 +303,17 @@ const RerankerService = {
         openai: OpenAIClient,
         query: string,
         documents: RerankDocument[],
-        model: string
+        model: string,
     ): Promise<RerankedDocument[]> => {
         const scoredDocs: RerankedDocument[] = [];
 
         // Build prompt for batch scoring
-        const docsText = documents.map((doc, idx) => {
-            const content = getDocContent(doc).substring(0, 500);
-            return `[Document ${idx + 1}]\n${content}`;
-        }).join('\n\n');
+        const docsText = documents
+            .map((doc, idx) => {
+                const content = getDocContent(doc).substring(0, 500);
+                return `[Document ${idx + 1}]\n${content}`;
+            })
+            .join('\n\n');
 
         const prompt = `You are a relevance scorer. Given a query and multiple documents, rate each document's relevance to the query.
 
@@ -331,7 +337,7 @@ Do not include any explanation, just the JSON array.`;
                 model,
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.1,
-                max_tokens: 100
+                max_tokens: 100,
             });
 
             const responseContent = isOpenAIResponse(response)
@@ -347,7 +353,7 @@ Do not include any explanation, just the JSON array.`;
                 scoredDocs.push({
                     ...documents[i],
                     rerankerScore,
-                    combinedScore: RerankerService._combineScores(hybridScore, rerankerScore)
+                    combinedScore: RerankerService._combineScores(hybridScore, rerankerScore),
                 });
             }
         } catch (error: unknown) {
@@ -360,7 +366,7 @@ Do not include any explanation, just the JSON array.`;
                 scoredDocs.push({
                     ...doc,
                     rerankerScore: doc.hybridScore || doc.score || 0.5,
-                    rerankerFailed: true
+                    rerankerFailed: true,
                 });
             }
         }
@@ -380,7 +386,7 @@ Do not include any explanation, just the JSON array.`;
      */
     _getOpenAIConfig: async (): Promise<OpenAIConfig | null> => {
         const row = await DbPromise.get<unknown>(
-            "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1"
+            "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
         );
         if (!row) {
             return null;
@@ -418,7 +424,7 @@ Do not include any explanation, just the JSON array.`;
         const logger = getLogger();
         logger.info('RerankerService', 'Re-ranking metrics:', {
             query: query.substring(0, 50),
-            ...metrics
+            ...metrics,
         });
     },
 
@@ -426,29 +432,25 @@ Do not include any explanation, just the JSON array.`;
      * Cross-encoder style re-ranking (more accurate but slower)
      * Scores query-document pairs individually for maximum accuracy
      */
-    rerankCrossEncoder: async (
-        query: string,
-        documents: RerankDocument[],
-        topK = 5
-    ): Promise<RerankedDocument[]> => {
+    rerankCrossEncoder: async (query: string, documents: RerankDocument[], topK = 5): Promise<RerankedDocument[]> => {
         if (!documents || documents.length === 0) return [];
 
         await initDeps();
         const logger = getLogger();
         const openaiConfig = await RerankerService._getOpenAIConfig();
         if (!openaiConfig) {
-            return documents.slice(0, topK).map(doc => ({
+            return documents.slice(0, topK).map((doc) => ({
                 ...doc,
-                rerankerScore: doc.hybridScore || doc.score || 0
+                rerankerScore: doc.hybridScore || doc.score || 0,
             }));
         }
 
         const OpenAI = deps.OpenAI;
         if (!OpenAI) {
             logger.warn('RerankerService', 'OpenAI client not available, returning original ranking');
-            return documents.slice(0, topK).map(doc => ({
+            return documents.slice(0, topK).map((doc) => ({
                 ...doc,
-                rerankerScore: doc.hybridScore || doc.score || 0
+                rerankerScore: doc.hybridScore || doc.score || 0,
             }));
         }
 
@@ -469,7 +471,7 @@ Respond with ONLY a number between 0.0 and 1.0 indicating relevance.`;
                     model: RERANKER_CONFIG.model,
                     messages: [{ role: 'user', content: prompt }],
                     temperature: 0,
-                    max_tokens: 10
+                    max_tokens: 10,
                 });
 
                 const responseContent = isOpenAIResponse(response)
@@ -480,13 +482,13 @@ Respond with ONLY a number between 0.0 and 1.0 indicating relevance.`;
                 scoredDocs.push({
                     ...doc,
                     rerankerScore: score,
-                    rerankerMethod: 'cross_encoder'
+                    rerankerMethod: 'cross_encoder',
                 });
             } catch (error: unknown) {
                 scoredDocs.push({
                     ...doc,
                     rerankerScore: doc.hybridScore || 0.5,
-                    rerankerFailed: true
+                    rerankerFailed: true,
                 });
             }
         }
@@ -501,7 +503,7 @@ Respond with ONLY a number between 0.0 and 1.0 indicating relevance.`;
     getStatistics: (): { cacheSize: number; config: typeof RERANKER_CONFIG } => {
         return {
             cacheSize: rerankerCache.size,
-            config: RERANKER_CONFIG
+            config: RERANKER_CONFIG,
         };
     },
 
@@ -512,7 +514,7 @@ Respond with ONLY a number between 0.0 and 1.0 indicating relevance.`;
         rerankerCache.clear();
         const logger = getLogger();
         logger.info('RerankerService', 'Cache cleared');
-    }
+    },
 };
 
 export default RerankerService;

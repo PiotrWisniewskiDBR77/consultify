@@ -1,8 +1,9 @@
 import crypto from 'crypto';
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 
 // GET Settings
 router.get('/', (req, res) => {

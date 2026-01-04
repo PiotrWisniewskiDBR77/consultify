@@ -1,17 +1,18 @@
 /**
  * OverviewModule - Super Admin Overview
- * 
+ *
  * Tabs: Dashboard | Metrics | Signals
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Radio } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
+import { BarChart3, LayoutDashboard, Radio } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { Api } from '../../services/api';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
 import { SuperAdminMetricsView } from './SuperAdminMetricsView';
-import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
-import { Api } from '../../services/api';
-import { toast } from 'react-hot-toast';
 
 interface OverviewModuleProps {
     onNavigateToSection?: (section: string) => void;
@@ -27,7 +28,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
         tokens: 0,
         activeUsers7d: 0,
         liveUsers: 0,
-        pendingRequests: 0
+        pendingRequests: 0,
     });
     const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,15 +39,15 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
             const orgs = await Api.getOrganizations();
             const totalUsers = orgs.reduce((acc: number, org: any) => acc + (org.user_count || 0), 0);
 
-            setStats(prev => ({
+            setStats((prev) => ({
                 ...prev,
                 totalOrgs: orgs.length,
-                totalUsers: totalUsers
+                totalUsers: totalUsers,
             }));
 
             try {
                 const dashboardData = await Api.getSuperAdminDashboard();
-                setStats(prev => ({
+                setStats((prev) => ({
                     ...prev,
                     totalOrgs: dashboardData?.counts?.total_orgs || prev.totalOrgs,
                     totalUsers: dashboardData?.counts?.total_users || prev.totalUsers,
@@ -54,7 +55,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
                     tokens: dashboardData?.ai?.total_tokens || 0,
                     activeUsers7d: dashboardData?.counts?.active_users_7d || 0,
                     liveUsers: dashboardData?.live?.total_active_connections || 0,
-                    pendingRequests: dashboardData?.activity?.total || 0
+                    pendingRequests: dashboardData?.activity?.total || 0,
                 }));
                 setActivities(dashboardData?.activities || []);
             } catch (err) {
@@ -123,12 +124,4 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
 };
 
 export default OverviewModule;
-
-
-
-
-
-
-
-
 

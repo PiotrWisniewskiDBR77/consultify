@@ -1,11 +1,12 @@
 /**
  * useDraftApproval Hook
- * 
+ *
  * Manages state and actions for the Draft-Review-Approve pattern.
  * Provides methods for fetching, approving, rejecting, and modifying AI drafts.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import api from '../services/api';
 
 export interface AIDraft {
@@ -64,12 +65,7 @@ interface UseDraftApprovalReturn {
 }
 
 export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraftApprovalReturn {
-    const { 
-        autoRefresh = false, 
-        refreshInterval = 30000,
-        projectId,
-        draftType
-    } = options;
+    const { autoRefresh = false, refreshInterval = 30000, projectId, draftType } = options;
 
     const [drafts, setDrafts] = useState<AIDraft[]>([]);
     const [loading, setLoading] = useState(false);
@@ -89,7 +85,7 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
             if (draftType) params.append('draftType', draftType);
 
             const response = await api.get(`/ai-drafts?${params.toString()}`);
-            
+
             if (response.data.success) {
                 setDrafts(response.data.drafts);
             } else {
@@ -109,7 +105,7 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
     const fetchStats = useCallback(async () => {
         try {
             const response = await api.get('/ai-drafts/user/stats');
-            
+
             if (response.data.success) {
                 setStats(response.data.stats);
             }
@@ -121,20 +117,16 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
     /**
      * Approve a draft (optionally with modifications)
      */
-    const approveDraft = useCallback(async (
-        draftId: string, 
-        notes?: string, 
-        modifications?: any
-    ): Promise<boolean> => {
+    const approveDraft = useCallback(async (draftId: string, notes?: string, modifications?: any): Promise<boolean> => {
         try {
             const response = await api.patch(`/ai-drafts/${draftId}/approve`, {
                 notes,
-                modifications
+                modifications,
             });
 
             if (response.data.success) {
                 // Remove from local state
-                setDrafts(prev => prev.filter(d => d.id !== draftId));
+                setDrafts((prev) => prev.filter((d) => d.id !== draftId));
                 return true;
             }
             return false;
@@ -148,16 +140,13 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
     /**
      * Reject a draft
      */
-    const rejectDraft = useCallback(async (
-        draftId: string, 
-        notes?: string
-    ): Promise<boolean> => {
+    const rejectDraft = useCallback(async (draftId: string, notes?: string): Promise<boolean> => {
         try {
             const response = await api.patch(`/ai-drafts/${draftId}/reject`, { notes });
 
             if (response.data.success) {
                 // Remove from local state
-                setDrafts(prev => prev.filter(d => d.id !== draftId));
+                setDrafts((prev) => prev.filter((d) => d.id !== draftId));
                 return true;
             }
             return false;
@@ -171,13 +160,10 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
     /**
      * Get drafts for a specific entity
      */
-    const getDraftsForEntity = useCallback(async (
-        entityType: string, 
-        entityId: string
-    ): Promise<AIDraft[]> => {
+    const getDraftsForEntity = useCallback(async (entityType: string, entityId: string): Promise<AIDraft[]> => {
         try {
             const response = await api.get(`/ai-drafts/entity/${entityType}/${entityId}`);
-            
+
             if (response.data.success) {
                 return response.data.drafts;
             }
@@ -191,16 +177,14 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
     /**
      * Create a new draft
      */
-    const createDraft = useCallback(async (
-        draftData: Partial<AIDraft>
-    ): Promise<AIDraft | null> => {
+    const createDraft = useCallback(async (draftData: Partial<AIDraft>): Promise<AIDraft | null> => {
         try {
             const response = await api.post('/ai-drafts', draftData);
-            
+
             if (response.data.success) {
                 // Add to local state
                 const newDraft = response.data.draft;
-                setDrafts(prev => [newDraft, ...prev]);
+                setDrafts((prev) => [newDraft, ...prev]);
                 return newDraft;
             }
             return null;
@@ -231,20 +215,14 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
         loading,
         error,
         stats,
-        pendingCount: drafts.filter(d => d.status === 'PENDING').length,
+        pendingCount: drafts.filter((d) => d.status === 'PENDING').length,
         fetchDrafts,
         fetchStats,
         approveDraft,
         rejectDraft,
         getDraftsForEntity,
-        createDraft
+        createDraft,
     };
 }
 
 export default useDraftApproval;
-
-
-
-
-
-

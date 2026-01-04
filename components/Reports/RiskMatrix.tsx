@@ -1,24 +1,16 @@
 /**
  * RiskMatrix
- * 
+ *
  * 2x2 quadrant risk matrix (Impact x Probability):
  * - Watch / Mitigate / Contingency / Avoid quadrants
  * - Draggable items between quadrants
  * - Color-coded severity
  */
 
-import React, { useState, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, Eye, GripVertical, Plus, Shield, X, Zap } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    AlertTriangle,
-    Shield,
-    Eye,
-    Zap,
-    X,
-    GripVertical,
-    Plus
-} from 'lucide-react';
 
 interface RiskItem {
     id: string;
@@ -52,7 +44,7 @@ const QUADRANTS = {
         color: '#10b981',
         bgColor: '#d1fae5',
         darkBgColor: 'rgba(16, 185, 129, 0.1)',
-        icon: Eye
+        icon: Eye,
     },
     mitigate: {
         impact: 'low' as const,
@@ -64,7 +56,7 @@ const QUADRANTS = {
         color: '#f59e0b',
         bgColor: '#fef3c7',
         darkBgColor: 'rgba(245, 158, 11, 0.1)',
-        icon: Shield
+        icon: Shield,
     },
     contingency: {
         impact: 'high' as const,
@@ -76,7 +68,7 @@ const QUADRANTS = {
         color: '#8b5cf6',
         bgColor: '#ede9fe',
         darkBgColor: 'rgba(139, 92, 246, 0.1)',
-        icon: Zap
+        icon: Zap,
     },
     avoid: {
         impact: 'high' as const,
@@ -88,8 +80,8 @@ const QUADRANTS = {
         color: '#ef4444',
         bgColor: '#fee2e2',
         darkBgColor: 'rgba(239, 68, 68, 0.1)',
-        icon: AlertTriangle
-    }
+        icon: AlertTriangle,
+    },
 };
 
 // Default transformation risks
@@ -102,7 +94,7 @@ const DEFAULT_RISKS: RiskItem[] = [
         descriptionPl: 'Niekompletne lub niespójne dane mogą wpłynąć na inicjatywy AI',
         impact: 'high',
         probability: 'high',
-        axis: 'dataManagement'
+        axis: 'dataManagement',
     },
     {
         id: 'r2',
@@ -112,7 +104,7 @@ const DEFAULT_RISKS: RiskItem[] = [
         descriptionPl: 'Pracownicy mogą opierać się nowym procesom cyfrowym',
         impact: 'high',
         probability: 'high',
-        axis: 'culture'
+        axis: 'culture',
     },
     {
         id: 'r3',
@@ -122,7 +114,7 @@ const DEFAULT_RISKS: RiskItem[] = [
         descriptionPl: 'Potencjalne luki w zabezpieczeniach podczas transformacji',
         impact: 'high',
         probability: 'low',
-        axis: 'cybersecurity'
+        axis: 'cybersecurity',
     },
     {
         id: 'r4',
@@ -132,7 +124,7 @@ const DEFAULT_RISKS: RiskItem[] = [
         descriptionPl: 'Brak umiejętności cyfrowych wśród pracowników',
         impact: 'low',
         probability: 'high',
-        axis: 'culture'
+        axis: 'culture',
     },
     {
         id: 'r5',
@@ -142,8 +134,8 @@ const DEFAULT_RISKS: RiskItem[] = [
         descriptionPl: 'Zależność od dostawcy ograniczająca przyszłą elastyczność',
         impact: 'low',
         probability: 'low',
-        axis: 'processes'
-    }
+        axis: 'processes',
+    },
 ];
 
 export const RiskMatrix: React.FC<RiskMatrixProps> = ({
@@ -152,7 +144,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
     onRiskMove,
     onRiskAdd,
     onRiskRemove,
-    className = ''
+    className = '',
 }) => {
     const { i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -166,12 +158,12 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
             watch: [],
             mitigate: [],
             contingency: [],
-            avoid: []
+            avoid: [],
         };
 
-        risks.forEach(risk => {
+        risks.forEach((risk) => {
             const quadrantKey = Object.entries(QUADRANTS).find(
-                ([_, config]) => config.impact === risk.impact && config.probability === risk.probability
+                ([_, config]) => config.impact === risk.impact && config.probability === risk.probability,
             )?.[0];
             if (quadrantKey) {
                 grouped[quadrantKey].push(risk);
@@ -182,12 +174,15 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
     }, [risks]);
 
     // Summary stats
-    const stats = useMemo(() => ({
-        total: risks.length,
-        critical: risksByQuadrant.avoid.length,
-        high: risksByQuadrant.mitigate.length + risksByQuadrant.contingency.length,
-        low: risksByQuadrant.watch.length
-    }), [risks, risksByQuadrant]);
+    const stats = useMemo(
+        () => ({
+            total: risks.length,
+            critical: risksByQuadrant.avoid.length,
+            high: risksByQuadrant.mitigate.length + risksByQuadrant.contingency.length,
+            low: risksByQuadrant.watch.length,
+        }),
+        [risks, risksByQuadrant],
+    );
 
     // Handle drag start
     const handleDragStart = (riskId: string) => {
@@ -256,9 +251,9 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                                     min-h-[200px] p-4 rounded-xl border-2 transition-all
                                     ${draggedRisk ? 'border-dashed' : 'border-solid'}
                                 `}
-                                style={{ 
+                                style={{
                                     backgroundColor: config.bgColor,
-                                    borderColor: config.color + '40'
+                                    borderColor: config.color + '40',
                                 }}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={() => handleDrop(config.impact, config.probability)}
@@ -269,7 +264,10 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                                     <span className="font-semibold" style={{ color: config.color }}>
                                         {isPolish ? config.labelPl : config.label}
                                     </span>
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/10" style={{ color: config.color }}>
+                                    <span
+                                        className="text-xs px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/10"
+                                        style={{ color: config.color }}
+                                    >
                                         {quadrantRisks.length}
                                     </span>
                                 </div>
@@ -311,7 +309,13 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                                 {/* Empty state */}
                                 {quadrantRisks.length === 0 && (
                                     <div className="flex items-center justify-center h-20 text-sm text-slate-400 dark:text-slate-500">
-                                        {editable ? (isPolish ? 'Przeciągnij tutaj' : 'Drop here') : (isPolish ? 'Brak ryzyk' : 'No risks')}
+                                        {editable
+                                            ? isPolish
+                                                ? 'Przeciągnij tutaj'
+                                                : 'Drop here'
+                                            : isPolish
+                                              ? 'Brak ryzyk'
+                                              : 'No risks'}
                                     </div>
                                 )}
                             </div>
@@ -331,9 +335,9 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                                     min-h-[200px] p-4 rounded-xl border-2 transition-all
                                     ${draggedRisk ? 'border-dashed' : 'border-solid'}
                                 `}
-                                style={{ 
+                                style={{
                                     backgroundColor: config.bgColor,
-                                    borderColor: config.color + '40'
+                                    borderColor: config.color + '40',
                                 }}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={() => handleDrop(config.impact, config.probability)}
@@ -344,7 +348,10 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                                     <span className="font-semibold" style={{ color: config.color }}>
                                         {isPolish ? config.labelPl : config.label}
                                     </span>
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/10" style={{ color: config.color }}>
+                                    <span
+                                        className="text-xs px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/10"
+                                        style={{ color: config.color }}
+                                    >
                                         {quadrantRisks.length}
                                     </span>
                                 </div>
@@ -386,7 +393,13 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                                 {/* Empty state */}
                                 {quadrantRisks.length === 0 && (
                                     <div className="flex items-center justify-center h-20 text-sm text-slate-400 dark:text-slate-500">
-                                        {editable ? (isPolish ? 'Przeciągnij tutaj' : 'Drop here') : (isPolish ? 'Brak ryzyk' : 'No risks')}
+                                        {editable
+                                            ? isPolish
+                                                ? 'Przeciągnij tutaj'
+                                                : 'Drop here'
+                                            : isPolish
+                                              ? 'Brak ryzyk'
+                                              : 'No risks'}
                                     </div>
                                 )}
                             </div>
@@ -411,7 +424,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     const Icon = config.icon;
                     return (
                         <div key={key} className="flex items-center gap-2">
-                            <div 
+                            <div
                                 className="w-4 h-4 rounded-full flex items-center justify-center"
                                 style={{ backgroundColor: config.bgColor }}
                             >
@@ -463,33 +476,63 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
                             {(selectedRisk.description || selectedRisk.descriptionPl) && (
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                    {isPolish && selectedRisk.descriptionPl ? selectedRisk.descriptionPl : selectedRisk.description}
+                                    {isPolish && selectedRisk.descriptionPl
+                                        ? selectedRisk.descriptionPl
+                                        : selectedRisk.description}
                                 </p>
                             )}
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className={`p-3 rounded-lg ${
-                                    selectedRisk.impact === 'high' ? 'bg-red-50 dark:bg-red-500/10' : 'bg-green-50 dark:bg-green-500/10'
-                                }`}>
+                                <div
+                                    className={`p-3 rounded-lg ${
+                                        selectedRisk.impact === 'high'
+                                            ? 'bg-red-50 dark:bg-red-500/10'
+                                            : 'bg-green-50 dark:bg-green-500/10'
+                                    }`}
+                                >
                                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                                         {isPolish ? 'Wpływ' : 'Impact'}
                                     </p>
-                                    <p className={`font-semibold ${
-                                        selectedRisk.impact === 'high' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                                    }`}>
-                                        {selectedRisk.impact === 'high' ? (isPolish ? 'Wysoki' : 'High') : (isPolish ? 'Niski' : 'Low')}
+                                    <p
+                                        className={`font-semibold ${
+                                            selectedRisk.impact === 'high'
+                                                ? 'text-red-600 dark:text-red-400'
+                                                : 'text-green-600 dark:text-green-400'
+                                        }`}
+                                    >
+                                        {selectedRisk.impact === 'high'
+                                            ? isPolish
+                                                ? 'Wysoki'
+                                                : 'High'
+                                            : isPolish
+                                              ? 'Niski'
+                                              : 'Low'}
                                     </p>
                                 </div>
-                                <div className={`p-3 rounded-lg ${
-                                    selectedRisk.probability === 'high' ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-blue-50 dark:bg-blue-500/10'
-                                }`}>
+                                <div
+                                    className={`p-3 rounded-lg ${
+                                        selectedRisk.probability === 'high'
+                                            ? 'bg-amber-50 dark:bg-amber-500/10'
+                                            : 'bg-blue-50 dark:bg-blue-500/10'
+                                    }`}
+                                >
                                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                                         {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
                                     </p>
-                                    <p className={`font-semibold ${
-                                        selectedRisk.probability === 'high' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'
-                                    }`}>
-                                        {selectedRisk.probability === 'high' ? (isPolish ? 'Wysokie' : 'High') : (isPolish ? 'Niskie' : 'Low')}
+                                    <p
+                                        className={`font-semibold ${
+                                            selectedRisk.probability === 'high'
+                                                ? 'text-amber-600 dark:text-amber-400'
+                                                : 'text-blue-600 dark:text-blue-400'
+                                        }`}
+                                    >
+                                        {selectedRisk.probability === 'high'
+                                            ? isPolish
+                                                ? 'Wysokie'
+                                                : 'High'
+                                            : isPolish
+                                              ? 'Niskie'
+                                              : 'Low'}
                                     </p>
                                 </div>
                             </div>
@@ -514,4 +557,3 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 };
 
 export default RiskMatrix;
-

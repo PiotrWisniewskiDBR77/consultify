@@ -12,31 +12,32 @@
 //   • Legend, loading spinner, error handling, smooth animations
 // ---------------------------------------------------------------
 
-import React, { useEffect, useState, useRef } from "react";
-import { RadarChart } from "../RadarChart";
+import React, { useEffect, useRef, useState } from 'react';
+
+import { RadarChart } from '../RadarChart';
 
 // Types matching the backend response from /api/megatrends/radar
 export interface RadarMegatrend {
     id: string; // stable key
     label: string;
-    type: "Technology" | "Business" | "Societal";
-    ring: "Now" | "Watch Closely" | "On the Horizon";
+    type: 'Technology' | 'Business' | 'Societal';
+    ring: 'Now' | 'Watch Closely' | 'On the Horizon';
     impact: number; // 1‑7
     description?: string;
 }
 
 // Ring order determines distance from centre (inner → outer)
-const ringOrder: Record<RadarMegatrend["ring"], number> = {
+const ringOrder: Record<RadarMegatrend['ring'], number> = {
     Now: 1,
-    "Watch Closely": 2,
-    "On the Horizon": 3,
+    'Watch Closely': 2,
+    'On the Horizon': 3,
 };
 
 // Colours and emojis per type
-const typeColors: Record<RadarMegatrend["type"], { bg: string; border: string; emoji: string }> = {
-    Technology: { bg: "bg-blue-500", border: "border-blue-700", emoji: "🔵" },
-    Business: { bg: "bg-purple-500", border: "border-purple-700", emoji: "🟣" },
-    Societal: { bg: "bg-orange-500", border: "border-orange-700", emoji: "🟠" },
+const typeColors: Record<RadarMegatrend['type'], { bg: string; border: string; emoji: string }> = {
+    Technology: { bg: 'bg-blue-500', border: 'border-blue-700', emoji: '🔵' },
+    Business: { bg: 'bg-purple-500', border: 'border-purple-700', emoji: '🟣' },
+    Societal: { bg: 'bg-orange-500', border: 'border-orange-700', emoji: '🟠' },
 };
 
 interface TrendRadarCardProps {
@@ -60,11 +61,9 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTre
             }
         };
         updateSize();
-        window.addEventListener("resize", updateSize);
-        return () => window.removeEventListener("resize", updateSize);
+        window.addEventListener('resize', updateSize);
+        return () => window.removeEventListener('resize', updateSize);
     }, []);
-
-
 
     // Helper to compute SVG coordinates (same as RadarChart)
     const radius = size / 2;
@@ -89,9 +88,13 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTre
                         cy={y}
                         r={sizePx}
                         className={`${bg} ${border} stroke-2 transition-transform duration-200 ease-out hover:scale-125 cursor-pointer`}
-                        onMouseEnter={e => {
+                        onMouseEnter={(e) => {
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setTooltip({ x: rect.x + rect.width / 2, y: rect.y, text: `${emoji} ${mt.label}: ${mt.description ?? ""}` });
+                            setTooltip({
+                                x: rect.x + rect.width / 2,
+                                y: rect.y,
+                                text: `${emoji} ${mt.label}: ${mt.description ?? ''}`,
+                            });
                         }}
                         onMouseLeave={() => setTooltip(null)}
                         onClick={() => onTrendSelect?.(mt.id)}
@@ -101,17 +104,26 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTre
             );
         });
 
-
-
     return (
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 space-y-4" ref={containerRef}>
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Trend Radar Map</h2>
 
-
             {loading && (
                 <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-                    <svg className="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <svg
+                        className="animate-spin h-5 w-5 text-indigo-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        ></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                     </svg>
                     <span>Loading radar data…</span>
@@ -121,7 +133,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({ data = [], onTre
 
             <div className="relative mx-auto" style={{ width: size, height: size }}>
                 {/* Base radar grid – dummy max values just to draw the web */}
-                <RadarChart data={data.map(d => ({ label: d.label, value: maxVal }))} size={size} />
+                <RadarChart data={data.map((d) => ({ label: d.label, value: maxVal }))} size={size} />
                 {/* Overlay points */}
                 <svg className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                     {renderPoints()}

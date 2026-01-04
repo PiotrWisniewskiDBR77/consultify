@@ -8,7 +8,8 @@
  * - AI recommendations and user feedback
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { aiLogger } from './logger.js';
 
@@ -447,6 +448,7 @@ export default {
     projectMemoryStore,
     MEMORY_TYPES
 };
+
 
 
 

@@ -1,11 +1,11 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Calendar, Check, MessageSquare, Sparkles, X } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, MessageSquare, Calendar, Sparkles, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
  * ExitIntentModal — Premium conversion prompt when user is leaving
- * 
+ *
  * Shows a professional, non-aggressive offer when exit intent is detected
  * Follows BCG/McKinsey style - elegant and value-focused
  */
@@ -19,7 +19,10 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
     const { t } = useTranslation();
 
     const handleScheduleDemo = () => {
-        window.open('https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017', '_blank');
+        window.open(
+            'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
+            '_blank',
+        );
         onClose();
     };
 
@@ -32,7 +35,7 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
         t('demo.exit.benefit1', 'Your own dedicated environment'),
         t('demo.exit.benefit2', 'Unlimited AI consultations'),
         t('demo.exit.benefit3', 'Real-time team collaboration'),
-        t('demo.exit.benefit4', 'Enterprise-grade security')
+        t('demo.exit.benefit4', 'Enterprise-grade security'),
     ];
 
     return (
@@ -80,7 +83,10 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
                             </h2>
 
                             <p className="text-white/70 text-center mb-8 max-w-md mx-auto">
-                                {t('demo.exit.subtitle', 'You\'ve seen what AI-powered consulting can do. Ready to transform your organization?')}
+                                {t(
+                                    'demo.exit.subtitle',
+                                    "You've seen what AI-powered consulting can do. Ready to transform your organization?",
+                                )}
                             </p>
 
                             {/* Benefits List */}
@@ -131,12 +137,4 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
 };
 
 export default ExitIntentModal;
-
-
-
-
-
-
-
-
 

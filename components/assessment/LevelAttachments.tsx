@@ -1,17 +1,15 @@
 /**
  * LevelAttachments Component
- * 
+ *
  * Displays and manages file attachments for a specific assessment level.
  * Allows uploading, viewing, and deleting evidence documents.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-    Paperclip, Upload, X, FileText, Image, File, 
-    Download, Trash2, Loader2, Plus, Eye 
-} from 'lucide-react';
+import { Download, Eye, File, FileText, Image, Loader2, Paperclip, Plus, Trash2, Upload, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAssessmentAttachments, LevelAttachment } from '../../hooks/useAssessmentAttachments';
+
+import { LevelAttachment, useAssessmentAttachments } from '../../hooks/useAssessmentAttachments';
 
 interface LevelAttachmentsProps {
     assessmentId: string;
@@ -27,7 +25,7 @@ const ATTACHMENT_TYPES = [
     { value: 'SCREENSHOT', label: 'Zrzut ekranu' },
     { value: 'DOCUMENT', label: 'Dokument' },
     { value: 'REPORT', label: 'Raport' },
-    { value: 'OTHER', label: 'Inne' }
+    { value: 'OTHER', label: 'Inne' },
 ] as const;
 
 const getFileIcon = (mimeType: string) => {
@@ -48,26 +46,19 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
     levelNumber,
     areaId,
     readOnly = false,
-    compact = false
+    compact = false,
 }) => {
     const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+
     const [attachments, setAttachments] = useState<LevelAttachment[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
     const [selectedType, setSelectedType] = useState<LevelAttachment['attachmentType']>('EVIDENCE');
     const [description, setDescription] = useState('');
     const [showUploadForm, setShowUploadForm] = useState(false);
 
-    const {
-        uploadAttachment,
-        getAttachments,
-        deleteAttachment,
-        getDownloadUrl,
-        isUploading,
-        isDeleting,
-        error
-    } = useAssessmentAttachments({ assessmentId });
+    const { uploadAttachment, getAttachments, deleteAttachment, getDownloadUrl, isUploading, isDeleting, error } =
+        useAssessmentAttachments({ assessmentId });
 
     // Fetch attachments on mount and when dependencies change
     const fetchAttachments = useCallback(async () => {
@@ -90,11 +81,11 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
         const result = await uploadAttachment(file, axisId, levelNumber, {
             areaId,
             attachmentType: selectedType,
-            description: description || undefined
+            description: description || undefined,
         });
 
         if (result) {
-            setAttachments(prev => [result, ...prev]);
+            setAttachments((prev) => [result, ...prev]);
             setDescription('');
             setShowUploadForm(false);
         }
@@ -109,7 +100,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
         if (window.confirm('Czy na pewno chcesz usunąć ten załącznik?')) {
             const success = await deleteAttachment(attachmentId);
             if (success) {
-                setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+                setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
             }
         }
     };
@@ -128,10 +119,9 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                 >
                     <Paperclip size={14} />
                     <span>
-                        {attachments.length > 0 
+                        {attachments.length > 0
                             ? `${attachments.length} załącznik${attachments.length === 1 ? '' : attachments.length < 5 ? 'i' : 'ów'}`
-                            : 'Dodaj załącznik'
-                        }
+                            : 'Dodaj załącznik'}
                     </span>
                 </button>
             </div>
@@ -146,7 +136,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                     <Paperclip size={14} />
                     <span>Załączniki ({attachments.length})</span>
                 </div>
-                
+
                 {!readOnly && (
                     <button
                         onClick={() => setShowUploadForm(!showUploadForm)}
@@ -158,10 +148,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                 )}
 
                 {compact && (
-                    <button
-                        onClick={() => setIsExpanded(false)}
-                        className="text-slate-400 hover:text-slate-600"
-                    >
+                    <button onClick={() => setIsExpanded(false)} className="text-slate-400 hover:text-slate-600">
                         <X size={16} />
                     </button>
                 )}
@@ -179,8 +166,10 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                                 onChange={(e) => setSelectedType(e.target.value as LevelAttachment['attachmentType'])}
                                 className="w-full text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md px-2 py-1.5"
                             >
-                                {ATTACHMENT_TYPES.map(type => (
-                                    <option key={type.value} value={type.value}>{type.label}</option>
+                                {ATTACHMENT_TYPES.map((type) => (
+                                    <option key={type.value} value={type.value}>
+                                        {type.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -265,7 +254,10 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                                     <div className="flex items-center gap-2 text-[10px] text-slate-400">
                                         <span>{formatFileSize(attachment.fileSize)}</span>
                                         <span>•</span>
-                                        <span>{ATTACHMENT_TYPES.find(t => t.value === attachment.attachmentType)?.label || attachment.attachmentType}</span>
+                                        <span>
+                                            {ATTACHMENT_TYPES.find((t) => t.value === attachment.attachmentType)
+                                                ?.label || attachment.attachmentType}
+                                        </span>
                                         {attachment.description && (
                                             <>
                                                 <span>•</span>
@@ -284,7 +276,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                                     >
                                         <Download size={14} />
                                     </button>
-                                    
+
                                     {!readOnly && (
                                         <button
                                             onClick={() => handleDelete(attachment.id)}
@@ -305,21 +297,11 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                     })}
                 </div>
             ) : (
-                <div className="text-center py-4 text-sm text-slate-400">
-                    Brak załączników dla tego poziomu
-                </div>
+                <div className="text-center py-4 text-sm text-slate-400">Brak załączników dla tego poziomu</div>
             )}
         </div>
     );
 };
 
 export default LevelAttachments;
-
-
-
-
-
-
-
-
 

@@ -1,6 +1,6 @@
 /**
  * Profile Extended API Service
- * 
+ *
  * API methods for extended user profile operations:
  * - Bio & About
  * - Professional Details
@@ -12,17 +12,17 @@
  * - Profile Completion
  */
 
-import { Api } from './api';
-import { 
-    UserProfileExtended, 
-    ProfileVisibility, 
-    EmailPreferences, 
-    OutOfOfficeSettings,
-    ExtendedSocialLinks,
+import {
+    EmailPreferences,
     ExtendedContactInfo,
+    ExtendedSocialLinks,
+    OutOfOfficeSettings,
+    ProfileCompletion,
+    ProfileVisibility,
+    UserProfileExtended,
     UserSkill,
-    ProfileCompletion
 } from '../types';
+import { Api } from './api';
 
 // Bio Data Interface
 interface BioData {
@@ -55,7 +55,9 @@ export const ProfileExtendedApi = {
     /**
      * Update extended profile
      */
-    updateExtendedProfile: async (data: Partial<UserProfileExtended>): Promise<{ success: boolean; profile: UserProfileExtended }> => {
+    updateExtendedProfile: async (
+        data: Partial<UserProfileExtended>,
+    ): Promise<{ success: boolean; profile: UserProfileExtended }> => {
         return Api.put('/profile/extended', data);
     },
 
@@ -83,7 +85,9 @@ export const ProfileExtendedApi = {
     /**
      * Update professional details
      */
-    updateProfessionalDetails: async (details: ProfessionalDetails): Promise<{ success: boolean; professional: ProfessionalDetails }> => {
+    updateProfessionalDetails: async (
+        details: ProfessionalDetails,
+    ): Promise<{ success: boolean; professional: ProfessionalDetails }> => {
         return Api.put('/profile/professional', details);
     },
 
@@ -97,7 +101,9 @@ export const ProfileExtendedApi = {
     /**
      * Update social links
      */
-    updateSocialLinks: async (links: Partial<ExtendedSocialLinks>): Promise<{ success: boolean; socialLinks: ExtendedSocialLinks }> => {
+    updateSocialLinks: async (
+        links: Partial<ExtendedSocialLinks>,
+    ): Promise<{ success: boolean; socialLinks: ExtendedSocialLinks }> => {
         return Api.put('/profile/social-links', links);
     },
 
@@ -111,7 +117,9 @@ export const ProfileExtendedApi = {
     /**
      * Update contact information
      */
-    updateContactInfo: async (contact: Partial<ExtendedContactInfo>): Promise<{ success: boolean; contact: ExtendedContactInfo }> => {
+    updateContactInfo: async (
+        contact: Partial<ExtendedContactInfo>,
+    ): Promise<{ success: boolean; contact: ExtendedContactInfo }> => {
         return Api.put('/profile/contact', contact);
     },
 
@@ -125,7 +133,9 @@ export const ProfileExtendedApi = {
     /**
      * Update visibility settings
      */
-    updateVisibility: async (visibility: Partial<ProfileVisibility>): Promise<{ success: boolean; visibility: ProfileVisibility }> => {
+    updateVisibility: async (
+        visibility: Partial<ProfileVisibility>,
+    ): Promise<{ success: boolean; visibility: ProfileVisibility }> => {
         return Api.put('/profile/visibility', visibility);
     },
 
@@ -139,14 +149,18 @@ export const ProfileExtendedApi = {
     /**
      * Update email preferences
      */
-    updateEmailPreferences: async (prefs: Partial<EmailPreferences>): Promise<{ success: boolean; emailPreferences: EmailPreferences }> => {
+    updateEmailPreferences: async (
+        prefs: Partial<EmailPreferences>,
+    ): Promise<{ success: boolean; emailPreferences: EmailPreferences }> => {
         return Api.put('/profile/email-preferences', prefs);
     },
 
     /**
      * Set out of office
      */
-    setOutOfOffice: async (settings: OutOfOfficeSettings): Promise<{ success: boolean; outOfOffice: OutOfOfficeSettings }> => {
+    setOutOfOffice: async (
+        settings: OutOfOfficeSettings,
+    ): Promise<{ success: boolean; outOfOffice: OutOfOfficeSettings }> => {
         return Api.put('/profile/out-of-office', settings);
     },
 
@@ -194,10 +208,4 @@ export const ProfileExtendedApi = {
 };
 
 export default ProfileExtendedApi;
-
-
-
-
-
-
 

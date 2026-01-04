@@ -12,15 +12,8 @@ interface ExportOptions {
  * @param elementId - The ID of the HTML element to export
  * @param options - Export options
  */
-export async function exportToPDF(
-    elementId: string,
-    options: ExportOptions = {}
-): Promise<void> {
-    const {
-        filename = 'report.pdf',
-        title,
-        orientation = 'portrait'
-    } = options;
+export async function exportToPDF(elementId: string, options: ExportOptions = {}): Promise<void> {
+    const { filename = 'report.pdf', title, orientation = 'portrait' } = options;
 
     const element = document.getElementById(elementId);
     if (!element) {
@@ -34,7 +27,7 @@ export async function exportToPDF(
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        windowHeight: element.scrollHeight,
     });
 
     const imgData = canvas.toDataURL('image/png');
@@ -43,13 +36,13 @@ export async function exportToPDF(
     const pdf = new jsPDF({
         orientation,
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
     });
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 10;
-    const contentWidth = pageWidth - (margin * 2);
+    const contentWidth = pageWidth - margin * 2;
 
     // Calculate image dimensions maintaining aspect ratio
     const imgWidth = contentWidth;
@@ -77,16 +70,7 @@ export async function exportToPDF(
 
     // First page
     const firstPageHeight = Math.min(imgHeight, availableHeight);
-    pdf.addImage(
-        imgData,
-        'PNG',
-        margin,
-        position,
-        imgWidth,
-        imgHeight,
-        undefined,
-        'FAST'
-    );
+    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
 
     // Add additional pages if needed
     remainingHeight -= availableHeight;
@@ -97,18 +81,9 @@ export async function exportToPDF(
         const clipY = imgHeight - remainingHeight;
         const pageImgHeight = Math.min(remainingHeight, pageHeight - 2 * margin);
 
-        pdf.addImage(
-            imgData,
-            'PNG',
-            margin,
-            margin - clipY,
-            imgWidth,
-            imgHeight,
-            undefined,
-            'FAST'
-        );
+        pdf.addImage(imgData, 'PNG', margin, margin - clipY, imgWidth, imgHeight, undefined, 'FAST');
 
-        remainingHeight -= (pageHeight - (margin * 2));
+        remainingHeight -= pageHeight - margin * 2;
     }
 
     // Add footer to each page
@@ -117,12 +92,7 @@ export async function exportToPDF(
         pdf.setPage(i);
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
-        pdf.text(
-            `Page ${i} of ${totalPages} • Consultinity`,
-            pageWidth - margin,
-            pageHeight - 5,
-            { align: 'right' }
-        );
+        pdf.text(`Page ${i} of ${totalPages} • Consultinity`, pageWidth - margin, pageHeight - 5, { align: 'right' });
     }
 
     // Download PDF

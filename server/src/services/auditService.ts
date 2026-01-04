@@ -1,22 +1,23 @@
 /**
  * Audit Service (HARDENED)
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Provides centralized, structured logging for all critical actions.
  * Fully migrated from server/services/auditService.js
- * 
+ *
  * Security Features:
  * - sanitizeMetadata: Redacts sensitive fields (tokens, passwords, secrets)
  * - Standard actor types: USER, CONSULTANT, SYSTEM, AI
  * - Fail-silent: Audit failures don't break main flow
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
 import type { Request } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -26,10 +27,10 @@ export const ACTOR_TYPES = {
     USER: 'USER',
     CONSULTANT: 'CONSULTANT',
     SYSTEM: 'SYSTEM',
-    AI: 'AI'
+    AI: 'AI',
 } as const;
 
-export type ActorType = typeof ACTOR_TYPES[keyof typeof ACTOR_TYPES];
+export type ActorType = (typeof ACTOR_TYPES)[keyof typeof ACTOR_TYPES];
 
 export const ACTION_TYPES = {
     // Invites
@@ -87,10 +88,10 @@ export const ACTION_TYPES = {
     // Phase E: Onboarding
     ONBOARDING_CONTEXT_SAVED: 'ONBOARDING_CONTEXT_SAVED',
     ONBOARDING_PLAN_GENERATED: 'ONBOARDING_PLAN_GENERATED',
-    ONBOARDING_PLAN_ACCEPTED: 'ONBOARDING_PLAN_ACCEPTED'
+    ONBOARDING_PLAN_ACCEPTED: 'ONBOARDING_PLAN_ACCEPTED',
 } as const;
 
-export type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];
+export type ActionType = (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES];
 
 interface LogEventParams {
     actorUserId?: string | null;
@@ -172,29 +173,53 @@ interface ExpressRequestWithUser extends Request {
 
 const SENSITIVE_KEYS = new Set([
     // Auth & Tokens
-    'password', 'passwordHash', 'password_hash',
-    'token', 'accessToken', 'access_token',
-    'refreshToken', 'refresh_token',
-    'jwt', 'jwtToken', 'bearer',
-    'authorization', 'auth',
+    'password',
+    'passwordHash',
+    'password_hash',
+    'token',
+    'accessToken',
+    'access_token',
+    'refreshToken',
+    'refresh_token',
+    'jwt',
+    'jwtToken',
+    'bearer',
+    'authorization',
+    'auth',
 
     // Secrets & Keys
-    'apiKey', 'api_key', 'apikey',
-    'secret', 'secretKey', 'secret_key',
-    'clientSecret', 'client_secret',
-    'privateKey', 'private_key',
-    'encryptionKey', 'encryption_key',
+    'apiKey',
+    'api_key',
+    'apikey',
+    'secret',
+    'secretKey',
+    'secret_key',
+    'clientSecret',
+    'client_secret',
+    'privateKey',
+    'private_key',
+    'encryptionKey',
+    'encryption_key',
 
     // Invite & Access Codes
-    'inviteCode', 'invite_code',
-    'accessCode', 'access_code',
-    'verificationCode', 'verification_code',
-    'resetToken', 'reset_token',
+    'inviteCode',
+    'invite_code',
+    'accessCode',
+    'access_code',
+    'verificationCode',
+    'verification_code',
+    'resetToken',
+    'reset_token',
 
     // PII (optional redaction)
-    'ssn', 'socialSecurityNumber',
-    'creditCard', 'credit_card', 'cardNumber', 'card_number',
-    'cvv', 'cvc'
+    'ssn',
+    'socialSecurityNumber',
+    'creditCard',
+    'credit_card',
+    'cardNumber',
+    'card_number',
+    'cvv',
+    'cvc',
 ]);
 
 /**
@@ -206,7 +231,7 @@ export function sanitizeMetadata(obj: unknown, depth = 0): unknown {
     if (typeof obj !== 'object') return obj;
 
     if (Array.isArray(obj)) {
-        return obj.map(item => sanitizeMetadata(item, depth + 1));
+        return obj.map((item) => sanitizeMetadata(item, depth + 1));
     }
 
     const sanitized: Record<string, unknown> = {};
@@ -220,8 +245,7 @@ export function sanitizeMetadata(obj: unknown, depth = 0): unknown {
         // Recursively sanitize nested objects
         else if (value && typeof value === 'object') {
             sanitized[key] = sanitizeMetadata(value, depth + 1);
-        }
-        else {
+        } else {
             sanitized[key] = value;
         }
     }
@@ -271,7 +295,7 @@ class AuditServiceClass {
             entityId = null,
             metadata = {},
             ip = null,
-            userAgent = null
+            userAgent = null,
         } = params;
 
         // SECURITY: Always sanitize metadata
@@ -283,7 +307,7 @@ class AuditServiceClass {
                 `INSERT INTO audit_events 
                  (id, actor_user_id, actor_type, org_id, action_type, entity_type, entity_id, metadata_json, ip, user_agent)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [id, actorUserId, actorType, orgId, actionType, entityType, entityId, metadataJson, ip, userAgent]
+                [id, actorUserId, actorType, orgId, actionType, entityType, entityId, metadataJson, ip, userAgent],
             );
 
             return {
@@ -291,14 +315,14 @@ class AuditServiceClass {
                 id,
                 actionType,
                 entityType,
-                entityId
+                entityId,
             };
         } catch (err: unknown) {
             logger.error('[AuditService] Failed to log event:', err instanceof Error ? err.message : String(err));
             // Fail-silent: audit failures should not break main flow
             return {
                 success: false,
-                error: err instanceof Error ? err.message : String(err)
+                error: err instanceof Error ? err.message : String(err),
             };
         }
     }
@@ -312,7 +336,7 @@ class AuditServiceClass {
         actionType: ActionType | string,
         entityType: string | null,
         entityId: string | null,
-        metadata: Record<string, unknown> = {}
+        metadata: Record<string, unknown> = {},
     ): Promise<LogEventResult> {
         // Determine actor type from request context
         let actorType: ActorType = ACTOR_TYPES.USER;
@@ -334,7 +358,7 @@ class AuditServiceClass {
             entityId,
             metadata,
             ip,
-            userAgent
+            userAgent,
         });
     }
 
@@ -346,7 +370,7 @@ class AuditServiceClass {
         entityType: string | null,
         entityId: string | null,
         orgId: string | null = null,
-        metadata: Record<string, unknown> = {}
+        metadata: Record<string, unknown> = {},
     ): Promise<LogEventResult> {
         return this.logEvent({
             actorUserId: null,
@@ -355,7 +379,7 @@ class AuditServiceClass {
             actionType,
             entityType,
             entityId,
-            metadata
+            metadata,
         });
     }
 
@@ -367,7 +391,7 @@ class AuditServiceClass {
         entityType: string | null,
         entityId: string | null,
         orgId: string | null = null,
-        metadata: Record<string, unknown> = {}
+        metadata: Record<string, unknown> = {},
     ): Promise<LogEventResult> {
         return this.logEvent({
             actorUserId: null,
@@ -376,7 +400,7 @@ class AuditServiceClass {
             actionType,
             entityType,
             entityId,
-            metadata
+            metadata,
         });
     }
 
@@ -386,14 +410,14 @@ class AuditServiceClass {
     async logSecurityEvent(
         req: ExpressRequestWithUser,
         actionType: ActionType | string,
-        metadata: Record<string, unknown> = {}
+        metadata: Record<string, unknown> = {},
     ): Promise<LogEventResult> {
         return this.logFromRequest(req, actionType, 'SECURITY', null, {
             ...metadata,
             attemptedOrg: req.params?.orgId || req.headers?.['x-org-id'],
             userOrg: req.user?.organization_id,
             path: req.originalUrl,
-            method: req.method
+            method: req.method,
         });
     }
 
@@ -401,15 +425,7 @@ class AuditServiceClass {
      * Query audit events with filters.
      */
     async getEvents(params: GetEventsParams = {}): Promise<AuditEvent[]> {
-        const {
-            orgId,
-            actorUserId,
-            actionType,
-            entityType,
-            entityId,
-            limit = 100,
-            offset = 0
-        } = params;
+        const { orgId, actorUserId, actionType, entityType, entityId, limit = 100, offset = 0 } = params;
 
         const conditions: string[] = [];
         const queryParams: unknown[] = [];
@@ -439,12 +455,12 @@ class AuditServiceClass {
 
         const rows = await this.dbAll<AuditEvent>(
             `SELECT * FROM audit_events ${whereClause} ORDER BY ts DESC LIMIT ? OFFSET ?`,
-            [...queryParams, limit, offset]
+            [...queryParams, limit, offset],
         );
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             ...row,
-            metadata: JSON.parse(row.metadata_json || '{}') as Record<string, unknown>
+            metadata: JSON.parse(row.metadata_json || '{}') as Record<string, unknown>,
         }));
     }
 
@@ -456,7 +472,7 @@ class AuditServiceClass {
         const events = await this.getEvents({ orgId, limit });
 
         const headers = ['Timestamp', 'Actor ID', 'Actor Type', 'Action', 'Entity Type', 'Entity ID', 'IP', 'Metadata'];
-        const rows = events.map(e => [
+        const rows = events.map((e) => [
             e.ts,
             e.actor_user_id || 'System',
             e.actor_type,
@@ -464,13 +480,12 @@ class AuditServiceClass {
             e.entity_type || 'N/A',
             e.entity_id || 'N/A',
             e.ip || 'N/A',
-            JSON.stringify(e.metadata || {}).replace(/"/g, '""')
+            JSON.stringify(e.metadata || {}).replace(/"/g, '""'),
         ]);
 
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
+        const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join(
+            '\n',
+        );
 
         return csvContent;
     }
@@ -503,26 +518,26 @@ export const logFromRequest = (
     actionType: ActionType | string,
     entityType: string | null,
     entityId: string | null,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
 ) => auditService.logFromRequest(req, actionType, entityType, entityId, metadata);
 export const logSystemEvent = (
     actionType: ActionType | string,
     entityType: string | null,
     entityId: string | null,
     orgId: string | null = null,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
 ) => auditService.logSystemEvent(actionType, entityType, entityId, orgId, metadata);
 export const logAIEvent = (
     actionType: ActionType | string,
     entityType: string | null,
     entityId: string | null,
     orgId: string | null = null,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
 ) => auditService.logAIEvent(actionType, entityType, entityId, orgId, metadata);
 export const logSecurityEvent = (
     req: ExpressRequestWithUser,
     actionType: ActionType | string,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
 ) => auditService.logSecurityEvent(req, actionType, metadata);
 export const getEvents = (params: GetEventsParams = {}) => auditService.getEvents(params);
 export const getCSVExport = (params: { orgId?: string; limit?: number } = {}) => auditService.getCSVExport(params);

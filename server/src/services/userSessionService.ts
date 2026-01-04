@@ -1,14 +1,41 @@
-/**
- * Usersession Service
- * Enterprise SaaS Architecture - TypeScript Backend
- * 
- * Lazy-loaded ES module wrapper for backward compatibility during migration
- */
+import { sessionCache } from './redis/CacheService.js';
+import logger from '../utils/Logger.js';
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
+export interface UserSession {
+    userId: string;
+    token: string;
+    expiresAt: number;
+    metadata?: Record<string, any>;
+}
 
-// Lazy load the JS service module
-const loadUsersessionservice = createCachedLazyService('../../services/userSessionService.js');
+class UserSessionService {
+    private readonly TTL = 86400; // 24 hours
 
-// Export default instance (for backward compatibility)
-export default loadUsersessionservice();
+    async createSession(userId: string, token: string, metadata: Record<string, any> = {}): Promise<void> {
+        const session: UserSession = {
+            userId,
+            token,
+            expiresAt: Date.now() + this.TTL * 1000,
+            metadata
+        };
+        await sessionCache.set(userId, session, this.TTL);
+        logger.info(`[Session] Created session for ${userId}`);
+    }
+
+    async getSession(userId: string): Promise<UserSession | null> {
+        return sessionCache.get<UserSession>(userId);
+    }
+
+    async isValidSession(userId: string, token: string): Promise<boolean> {
+        const session = await this.getSession(userId);
+        if (!session || session.token !== token) return false;
+        return Date.now() <= session.expiresAt;
+    }
+
+    async invalidateSession(userId: string): Promise<void> {
+        await sessionCache.del(userId);
+    }
+}
+
+export const userSessionService = new UserSessionService();
+export default userSessionService;

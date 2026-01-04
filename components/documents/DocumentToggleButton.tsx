@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
 import { FileText } from 'lucide-react';
-import DocumentSidePanel from './DocumentSidePanel';
-import { useAIContext } from '../../contexts/AIContext';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useAIContext } from '../../contexts/AIContext';
 import { useAppStore } from '../../store/useAppStore';
+import DocumentSidePanel from './DocumentSidePanel';
 
 // CSS for the document button (static purple)
 const docButtonStyle = `
@@ -32,13 +32,11 @@ export const DocumentToggleButton: React.FC = () => {
                 className="w-10 h-10 flex items-center justify-center text-white rounded-l-2xl rounded-r-none shadow-lg transition-all duration-300 group relative doc-btn-gradient"
                 title={t('widgets.documents.title', 'Document Library')}
             >
-                <FileText
-                    size={18}
-                    className="transition-transform group-hover:scale-110"
-                />
+                <FileText size={18} className="transition-transform group-hover:scale-110" />
 
                 {/* Tooltip */}
-                <div className={`
+                <div
+                    className={`
                     absolute right-full mr-3 
                     px-3 py-1.5 
                     bg-slate-900 dark:bg-slate-800 
@@ -49,7 +47,8 @@ export const DocumentToggleButton: React.FC = () => {
                     transition-opacity duration-200
                     pointer-events-none
                     shadow-lg
-                `}>
+                `}
+                >
                     {t('widgets.documents.tooltip', 'Documents')}
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
                 </div>

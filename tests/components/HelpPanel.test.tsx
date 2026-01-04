@@ -4,8 +4,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HelpPanel } from '../../../components/HelpPanel';
-import { useHelp } from '../../../contexts/HelpContext';
+import { HelpPanel } from '../../components/HelpPanel';
+import { useHelp } from '../../contexts/HelpContext';
 
 vi.mock('../../../contexts/HelpContext', () => ({
     useHelp: vi.fn()
@@ -72,6 +72,7 @@ describe('HelpPanel Component', () => {
         expect(screen.getByRole('status')).toBeInTheDocument();
     });
 });
+
 
 
 

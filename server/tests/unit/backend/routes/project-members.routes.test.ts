@@ -1,12 +1,12 @@
 /**
  * ProjectMembers Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for project-members routes - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ProjectMembers Routes', () => {
     let mockReq: Partial<Request>;

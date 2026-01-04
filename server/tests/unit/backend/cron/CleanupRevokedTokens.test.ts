@@ -3,12 +3,13 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-    startCleanupJob,
-    stopCleanupJob,
     cleanupRevokedTokens,
     getCleanupRevokedTokensCron,
+    startCleanupJob,
+    stopCleanupJob,
 } from '../../../../src/cron/CleanupRevokedTokens.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
@@ -56,7 +57,7 @@ describe('CleanupRevokedTokensCron', () => {
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('DELETE FROM revoked_tokens'),
                 [],
-                expect.any(Function)
+                expect.any(Function),
             );
         });
 
@@ -70,15 +71,17 @@ describe('CleanupRevokedTokensCron', () => {
                 cleanupRevokedTokens({
                     db: mockDb,
                     config: mockConfig as never,
-                })
+                }),
             ).rejects.toThrow('Database error');
         });
 
         it('should return 0 when no tokens deleted', async () => {
-            mockDb.run = vi.fn((sql: string, params: unknown[], callback: (err: Error | null, changes?: number) => void) => {
-                callback(null, 0);
-                return mockDb;
-            }) as unknown as IDatabase['run'];
+            mockDb.run = vi.fn(
+                (sql: string, params: unknown[], callback: (err: Error | null, changes?: number) => void) => {
+                    callback(null, 0);
+                    return mockDb;
+                },
+            ) as unknown as IDatabase['run'];
 
             const deleted = await cleanupRevokedTokens({
                 db: mockDb,
@@ -137,7 +140,4 @@ describe('CleanupRevokedTokensCron', () => {
         });
     });
 });
-
-
-
 

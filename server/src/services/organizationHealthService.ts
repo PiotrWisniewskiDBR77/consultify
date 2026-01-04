@@ -1,14 +1,12 @@
 /**
  * Organizationhealth Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadOrganizationhealthservice = createCachedLazyService('../../services/organizationHealthService.js');
+import service from '../../services/organizationHealthService.js';
 
 // Export default instance (for backward compatibility)
-export default loadOrganizationhealthservice();
+export default service;

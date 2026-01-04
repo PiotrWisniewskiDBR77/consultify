@@ -1,6 +1,6 @@
 /**
  * PermissionRequestSection - Request permissions/limit changes
- * 
+ *
  * Features:
  * - Request form for different permission types
  * - History of past requests
@@ -8,55 +8,56 @@
  * - Cancel pending requests
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Send, 
-    Clock, 
-    CheckCircle, 
-    XCircle, 
+import {
     AlertCircle,
-    Loader2,
-    FileText,
-    Shield,
-    Database,
-    Zap,
+    CheckCircle,
     ChevronDown,
+    Clock,
+    Database,
+    FileText,
+    Loader2,
+    RefreshCw,
+    Send,
+    Shield,
     X,
-    RefreshCw
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
-import { User, PermissionRequest, PermissionRequestType, PermissionRequestPriority } from '../../types';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { PermissionRequest, PermissionRequestPriority, PermissionRequestType, User } from '../../types';
 
 interface PermissionRequestSectionProps {
     currentUser: User;
 }
 
 const REQUEST_TYPES: { value: PermissionRequestType; label: string; icon: React.ElementType; description: string }[] = [
-    { 
-        value: 'ROLE_CHANGE', 
-        label: 'Role Change', 
+    {
+        value: 'ROLE_CHANGE',
+        label: 'Role Change',
         icon: Shield,
-        description: 'Request upgrade from User to Admin role'
+        description: 'Request upgrade from User to Admin role',
     },
-    { 
-        value: 'TOKEN_LIMIT', 
-        label: 'AI Token Limit', 
+    {
+        value: 'TOKEN_LIMIT',
+        label: 'AI Token Limit',
         icon: Zap,
-        description: 'Request increase in AI token allocation'
+        description: 'Request increase in AI token allocation',
     },
-    { 
-        value: 'STORAGE_LIMIT', 
-        label: 'Storage Limit', 
+    {
+        value: 'STORAGE_LIMIT',
+        label: 'Storage Limit',
         icon: Database,
-        description: 'Request additional storage space'
+        description: 'Request additional storage space',
     },
-    { 
-        value: 'FEATURE_ACCESS', 
-        label: 'Feature Access', 
+    {
+        value: 'FEATURE_ACCESS',
+        label: 'Feature Access',
         icon: FileText,
-        description: 'Request access to premium features'
+        description: 'Request access to premium features',
     },
 ];
 
@@ -80,14 +81,14 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    
+
     // Form state
     const [formData, setFormData] = useState({
         requestType: '' as PermissionRequestType | '',
         currentValue: '',
         requestedValue: '',
         justification: '',
-        priority: 'NORMAL' as PermissionRequestPriority
+        priority: 'NORMAL' as PermissionRequestPriority,
     });
 
     // Fetch user's requests
@@ -111,7 +112,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!formData.requestType) {
             toast.error(t('settings.permissions.selectType', 'Please select a request type'));
             return;
@@ -129,7 +130,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                 currentValue: formData.currentValue || getCurrentValue(formData.requestType),
                 requestedValue: formData.requestedValue,
                 justification: formData.justification,
-                priority: formData.priority
+                priority: formData.priority,
             });
 
             toast.success(t('settings.permissions.submitted', 'Request submitted successfully'));
@@ -139,7 +140,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                 currentValue: '',
                 requestedValue: '',
                 justification: '',
-                priority: 'NORMAL'
+                priority: 'NORMAL',
             });
             fetchRequests();
         } catch (error: any) {
@@ -177,7 +178,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
     };
 
     // Get pending request count
-    const pendingCount = requests.filter(r => r.status === 'PENDING').length;
+    const pendingCount = requests.filter((r) => r.status === 'PENDING').length;
 
     return (
         <div className="space-y-6">
@@ -240,25 +241,35 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                         <button
                                             key={type.value}
                                             type="button"
-                                            onClick={() => setFormData({ 
-                                                ...formData, 
-                                                requestType: type.value,
-                                                currentValue: getCurrentValue(type.value)
-                                            })}
+                                            onClick={() =>
+                                                setFormData({
+                                                    ...formData,
+                                                    requestType: type.value,
+                                                    currentValue: getCurrentValue(type.value),
+                                                })
+                                            }
                                             className={`
                                                 p-4 rounded-lg border-2 text-left transition-all
-                                                ${isSelected 
-                                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10' 
-                                                    : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+                                                ${
+                                                    isSelected
+                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
                                                 }
                                             `}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${isSelected ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}>
-                                                    <Icon size={18} className={isSelected ? 'text-purple-600' : 'text-slate-500'} />
+                                                <div
+                                                    className={`p-2 rounded-lg ${isSelected ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+                                                >
+                                                    <Icon
+                                                        size={18}
+                                                        className={isSelected ? 'text-purple-600' : 'text-slate-500'}
+                                                    />
                                                 </div>
                                                 <div>
-                                                    <p className={`font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                    <p
+                                                        className={`font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-200'}`}
+                                                    >
                                                         {type.label}
                                                     </p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -294,7 +305,9 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                         type="text"
                                         value={formData.requestedValue}
                                         onChange={(e) => setFormData({ ...formData, requestedValue: e.target.value })}
-                                        placeholder={formData.requestType === 'ROLE_CHANGE' ? 'ADMIN' : 'Enter value...'}
+                                        placeholder={
+                                            formData.requestType === 'ROLE_CHANGE' ? 'ADMIN' : 'Enter value...'
+                                        }
                                         className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
                                     />
                                 </div>
@@ -314,9 +327,10 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                         onClick={() => setFormData({ ...formData, priority: option.value })}
                                         className={`
                                             px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                                            ${formData.priority === option.value 
-                                                ? `${option.color} bg-current/10 ring-2 ring-current/30` 
-                                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10'
+                                            ${
+                                                formData.priority === option.value
+                                                    ? `${option.color} bg-current/10 ring-2 ring-current/30`
+                                                    : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10'
                                             }
                                         `}
                                     >
@@ -334,7 +348,10 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                             <textarea
                                 value={formData.justification}
                                 onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
-                                placeholder={t('settings.permissions.justificationPlaceholder', 'Explain why you need this change...')}
+                                placeholder={t(
+                                    'settings.permissions.justificationPlaceholder',
+                                    'Explain why you need this change...',
+                                )}
                                 rows={4}
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
                             />
@@ -354,11 +371,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                 disabled={submitting || !formData.requestType}
                                 className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {submitting ? (
-                                    <Loader2 size={16} className="animate-spin" />
-                                ) : (
-                                    <Send size={16} />
-                                )}
+                                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                                 {t('settings.permissions.submit', 'Submit Request')}
                             </button>
                         </div>
@@ -399,11 +412,14 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                         {requests.map((request) => {
                             const status = STATUS_CONFIG[request.status] || STATUS_CONFIG.PENDING;
                             const StatusIcon = status.icon;
-                            const typeConfig = REQUEST_TYPES.find(t => t.value === request.requestType);
+                            const typeConfig = REQUEST_TYPES.find((t) => t.value === request.requestType);
                             const TypeIcon = typeConfig?.icon || FileText;
 
                             return (
-                                <div key={request.id} className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                <div
+                                    key={request.id}
+                                    className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-start gap-4">
                                             <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/10">
@@ -414,7 +430,9 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                                     <p className="font-medium text-slate-900 dark:text-white">
                                                         {typeConfig?.label || request.requestType}
                                                     </p>
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                                                    <span
+                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
+                                                    >
                                                         <StatusIcon size={12} />
                                                         {status.label}
                                                     </span>
@@ -429,11 +447,13 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                                 )}
                                                 {request.adminNotes && request.status !== 'PENDING' && (
                                                     <div className="mt-2 p-2 bg-slate-50 dark:bg-white/5 rounded text-sm text-slate-600 dark:text-slate-400">
-                                                        <span className="font-medium">Admin notes:</span> {request.adminNotes}
+                                                        <span className="font-medium">Admin notes:</span>{' '}
+                                                        {request.adminNotes}
                                                     </div>
                                                 )}
                                                 <p className="text-xs text-slate-400 mt-2">
-                                                    {new Date(request.createdAt).toLocaleDateString()} at {new Date(request.createdAt).toLocaleTimeString()}
+                                                    {new Date(request.createdAt).toLocaleDateString()} at{' '}
+                                                    {new Date(request.createdAt).toLocaleTimeString()}
                                                 </p>
                                             </div>
                                         </div>
@@ -461,8 +481,9 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                     <div className="text-sm text-blue-700 dark:text-blue-300">
                         <p className="font-medium mb-1">{t('settings.permissions.infoTitle', 'How does this work?')}</p>
                         <p className="text-blue-600 dark:text-blue-400">
-                            {t('settings.permissions.infoText', 
-                                'Your request will be reviewed by an administrator. You will receive a notification once a decision is made. Typical review time is 1-2 business days.'
+                            {t(
+                                'settings.permissions.infoText',
+                                'Your request will be reviewed by an administrator. You will receive a notification once a decision is made. Typical review time is 1-2 business days.',
                             )}
                         </p>
                     </div>
@@ -473,11 +494,4 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
 };
 
 export default PermissionRequestSection;
-
-
-
-
-
-
-
 

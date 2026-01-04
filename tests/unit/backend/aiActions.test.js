@@ -3,13 +3,31 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock database
+// Hoisted mock - defined inline since imports aren't available yet
+const mockDb = vi.hoisted(() => ({
+    get: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, null));
+    }),
+    all: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, []));
+    }),
+    run: vi.fn(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
+    }),
+    exec: vi.fn((sql, callback) => {
+        if (callback) process.nextTick(() => callback(null));
+    }),
+    serialize: vi.fn((cb) => { if (cb) cb(); }),
+    prepare: vi.fn(),
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    initPromise: Promise.resolve()
+}));
+
 vi.mock('../../../server/database', () => ({
-    default: {
-        get: vi.fn((sql, params, callback) => callback(null, null)),
-        run: vi.fn((sql, params, callback) => callback && callback.call({ changes: 1 }, null)),
-        all: vi.fn((sql, params, callback) => callback(null, []))
-    }
+    default: mockDb
 }));
 
 describe('AIActionExecutor', () => {
@@ -17,7 +35,14 @@ describe('AIActionExecutor', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        AIActionExecutor = (await import('../../../server/services/aiActionExecutor.js')).default;
+        const module = await import('../../../server/services/aiActionExecutor.js');
+        AIActionExecutor = module.default;
+        
+        // Inject mock dependencies
+        AIActionExecutor.setDependencies({
+            db: mockDb,
+            uuidv4: () => 'mock-uuid-action'
+        });
     });
 
     describe('ACTION_TYPES', () => {

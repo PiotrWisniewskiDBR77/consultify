@@ -1,6 +1,6 @@
 /**
  * EnterpriseAnalyticsPanel - System Analytics & Reporting
- * 
+ *
  * Features:
  * - Real-time system metrics dashboards
  * - Custom report builder
@@ -9,37 +9,38 @@
  * - Trend analysis
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
+    Activity,
+    ArrowDownRight,
+    ArrowUpRight,
     BarChart3,
-    LineChart,
-    PieChart,
-    TrendingUp,
-    TrendingDown,
-    Download,
-    RefreshCw,
     Calendar,
-    Filter,
-    Plus,
-    Settings,
-    Clock,
-    FileText,
-    Mail,
-    Loader2,
     ChevronDown,
     ChevronRight,
-    Activity,
-    Users,
-    Database,
+    Clock,
     Cpu,
-    Zap,
+    Database,
+    Download,
+    FileText,
+    Filter,
     Globe,
-    ArrowUpRight,
-    ArrowDownRight,
-    X
+    LineChart,
+    Loader2,
+    Mail,
+    PieChart,
+    Plus,
+    RefreshCw,
+    Settings,
+    TrendingDown,
+    TrendingUp,
+    Users,
+    X,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface MetricCard {
     id: string;
@@ -163,10 +164,42 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         } catch (error) {
             // Mock data
             setMetrics([
-                { id: 'api_requests', title: 'API Requests', value: '125,847', change: 12.5, changeLabel: 'vs last period', icon: Globe, color: 'cyan' },
-                { id: 'ai_requests', title: 'AI Requests', value: '8,432', change: 8.3, changeLabel: 'vs last period', icon: Zap, color: 'purple' },
-                { id: 'active_users', title: 'Active Users', value: '342', change: -2.1, changeLabel: 'vs last period', icon: Users, color: 'emerald' },
-                { id: 'db_queries', title: 'DB Queries', value: '1.2M', change: 5.7, changeLabel: 'vs last period', icon: Database, color: 'amber' },
+                {
+                    id: 'api_requests',
+                    title: 'API Requests',
+                    value: '125,847',
+                    change: 12.5,
+                    changeLabel: 'vs last period',
+                    icon: Globe,
+                    color: 'cyan',
+                },
+                {
+                    id: 'ai_requests',
+                    title: 'AI Requests',
+                    value: '8,432',
+                    change: 8.3,
+                    changeLabel: 'vs last period',
+                    icon: Zap,
+                    color: 'purple',
+                },
+                {
+                    id: 'active_users',
+                    title: 'Active Users',
+                    value: '342',
+                    change: -2.1,
+                    changeLabel: 'vs last period',
+                    icon: Users,
+                    color: 'emerald',
+                },
+                {
+                    id: 'db_queries',
+                    title: 'DB Queries',
+                    value: '1.2M',
+                    change: 5.7,
+                    changeLabel: 'vs last period',
+                    icon: Database,
+                    color: 'amber',
+                },
             ]);
 
             const labels = generateTimeLabels(timeRange);
@@ -280,9 +313,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white">Analytics & Reporting</h2>
-                    <p className="text-slate-400 text-sm">
-                        Monitor system performance and generate insights
-                    </p>
+                    <p className="text-slate-400 text-sm">Monitor system performance and generate insights</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -299,8 +330,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             onChange={(e) => setTimeRange(e.target.value)}
                             className="appearance-none pl-3 pr-8 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                         >
-                            {TIME_RANGES.map(r => (
-                                <option key={r.id} value={r.id}>{r.label}</option>
+                            {TIME_RANGES.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                    {r.label}
+                                </option>
                             ))}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -318,10 +351,11 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
-                            ? 'bg-white/10 text-white border-b-2 border-cyan-500'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
+                            activeTab === id
+                                ? 'bg-white/10 text-white border-b-2 border-cyan-500'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -350,8 +384,14 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <Icon className={`w-5 h-5 text-${metric.color}-400`} />
-                                                <div className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                    {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                                                <div
+                                                    className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}
+                                                >
+                                                    {isPositive ? (
+                                                        <ArrowUpRight className="w-3 h-3" />
+                                                    ) : (
+                                                        <ArrowDownRight className="w-3 h-3" />
+                                                    )}
                                                     {Math.abs(metric.change)}%
                                                 </div>
                                             </div>
@@ -379,9 +419,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                             Export
                                         </button>
                                     </div>
-                                    {apiChartData && (
-                                        <SimpleBarChart data={apiChartData} />
-                                    )}
+                                    {apiChartData && <SimpleBarChart data={apiChartData} />}
                                 </div>
 
                                 {/* AI Chart */}
@@ -399,9 +437,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                             Export
                                         </button>
                                     </div>
-                                    {aiChartData && (
-                                        <SimpleBarChart data={aiChartData} />
-                                    )}
+                                    {aiChartData && <SimpleBarChart data={aiChartData} />}
                                 </div>
                             </div>
 
@@ -423,9 +459,14 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                                 <div key={item.label} className="flex items-center gap-2">
                                                     <span className="text-xs text-slate-500 w-20">{item.label}</span>
                                                     <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                                        <div className={`h-full ${item.color}`} style={{ width: `${item.value}%` }} />
+                                                        <div
+                                                            className={`h-full ${item.color}`}
+                                                            style={{ width: `${item.value}%` }}
+                                                        />
                                                     </div>
-                                                    <span className="text-xs text-white w-10 text-right">{item.value}%</span>
+                                                    <span className="text-xs text-white w-10 text-right">
+                                                        {item.value}%
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -439,9 +480,14 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                                 { endpoint: '/api/initiatives', calls: 6721 },
                                                 { endpoint: '/api/ai/analyze', calls: 4512 },
                                             ].map((item) => (
-                                                <div key={item.endpoint} className="flex items-center justify-between text-sm">
+                                                <div
+                                                    key={item.endpoint}
+                                                    className="flex items-center justify-between text-sm"
+                                                >
                                                     <code className="text-cyan-400 text-xs">{item.endpoint}</code>
-                                                    <span className="text-slate-400">{item.calls.toLocaleString()}</span>
+                                                    <span className="text-slate-400">
+                                                        {item.calls.toLocaleString()}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -454,7 +500,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                                 { type: '5xx Server', count: 12, color: 'text-red-400' },
                                                 { type: 'Timeout', count: 8, color: 'text-orange-400' },
                                             ].map((item) => (
-                                                <div key={item.type} className="flex items-center justify-between text-sm">
+                                                <div
+                                                    key={item.type}
+                                                    className="flex items-center justify-between text-sm"
+                                                >
                                                     <span className={item.color}>{item.type}</span>
                                                     <span className="text-slate-400">{item.count}</span>
                                                 </div>
@@ -485,7 +534,8 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                                 <h3 className="font-medium text-white">{report.label}</h3>
                                             </div>
                                             <p className="text-sm text-slate-400 mb-4">
-                                                Generate a comprehensive {report.label.toLowerCase()} report for the selected time period.
+                                                Generate a comprehensive {report.label.toLowerCase()} report for the
+                                                selected time period.
                                             </p>
                                             <div className="flex items-center gap-2">
                                                 <button className="px-3 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg">
@@ -534,22 +584,27 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                 <div className="text-center py-12 text-slate-400">
                                     <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                     <p>No scheduled reports</p>
-                                    <p className="text-sm mt-1">Create a scheduled report to receive automated insights</p>
+                                    <p className="text-sm mt-1">
+                                        Create a scheduled report to receive automated insights
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {scheduledReports.map((report) => (
                                         <div
                                             key={report.id}
-                                            className={`p-4 rounded-xl border transition-colors ${report.is_active
-                                                ? 'bg-white/5 border-white/10 hover:border-white/20'
-                                                : 'bg-slate-800/30 border-slate-700/50'
-                                                }`}
+                                            className={`p-4 rounded-xl border transition-colors ${
+                                                report.is_active
+                                                    ? 'bg-white/5 border-white/10 hover:border-white/20'
+                                                    : 'bg-slate-800/30 border-slate-700/50'
+                                            }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`font-medium ${report.is_active ? 'text-white' : 'text-slate-500'}`}>
+                                                        <span
+                                                            className={`font-medium ${report.is_active ? 'text-white' : 'text-slate-500'}`}
+                                                        >
                                                             {report.name}
                                                         </span>
                                                         {!report.is_active && (
@@ -565,7 +620,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                                                         {report.next_run && (
                                                             <>
                                                                 <span>•</span>
-                                                                <span>Next: {new Date(report.next_run).toLocaleDateString()}</span>
+                                                                <span>
+                                                                    Next:{' '}
+                                                                    {new Date(report.next_run).toLocaleDateString()}
+                                                                </span>
                                                             </>
                                                         )}
                                                     </div>
@@ -606,7 +664,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
 // Simple Bar Chart Component
 const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
-    const maxValue = Math.max(...data.datasets.flatMap(d => d.data));
+    const maxValue = Math.max(...data.datasets.flatMap((d) => d.data));
 
     return (
         <div>
@@ -637,9 +695,7 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
                                 />
                             ))}
                         </div>
-                        <span className="text-[10px] text-slate-500 mt-1 truncate w-full text-center">
-                            {label}
-                        </span>
+                        <span className="text-[10px] text-slate-500 mt-1 truncate w-full text-center">{label}</span>
                     </div>
                 ))}
             </div>
@@ -665,7 +721,7 @@ const CreateScheduledReportModal: React.FC<{
         e.preventDefault();
         setSaving(true);
         // Simulate API call
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, 500));
         onSave();
     };
 
@@ -700,8 +756,10 @@ const CreateScheduledReportModal: React.FC<{
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             >
-                                {reportTypes.map(t => (
-                                    <option key={t.id} value={t.id}>{t.label}</option>
+                                {reportTypes.map((t) => (
+                                    <option key={t.id} value={t.id}>
+                                        {t.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -720,7 +778,9 @@ const CreateScheduledReportModal: React.FC<{
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Recipients (comma-separated emails)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                            Recipients (comma-separated emails)
+                        </label>
                         <input
                             type="text"
                             required
@@ -751,10 +811,4 @@ const CreateScheduledReportModal: React.FC<{
 };
 
 export default EnterpriseAnalyticsPanel;
-
-
-
-
-
-
 

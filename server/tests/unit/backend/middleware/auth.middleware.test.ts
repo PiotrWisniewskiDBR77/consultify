@@ -4,19 +4,20 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-    verifyToken,
+    type AuthRequest,
     optionalAuth,
-    requireRole,
-    requireSuperAdmin,
     requireOrganization,
     requirePermission,
+    requireRole,
+    requireSuperAdmin,
     setDependencies,
-    type AuthRequest
+    verifyToken,
 } from '../../../../src/middleware/auth.middleware.js';
-import jwt from 'jsonwebtoken';
 
 describe('Auth Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -384,7 +385,4 @@ describe('Auth Middleware', () => {
         });
     });
 });
-
-
-
 

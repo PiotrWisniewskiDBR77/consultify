@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MaturityMatrix } from '../../../components/MaturityMatrix';
+import { MaturityMatrix } from '../../components/MaturityMatrix';
 
 const mockData = {
     axes: [
@@ -27,6 +27,7 @@ describe('MaturityMatrix Component', () => {
         expect(screen.getByText(/Processes/i) || screen.getByText(/Digital/i)).toBeInTheDocument();
     });
 });
+
 
 
 

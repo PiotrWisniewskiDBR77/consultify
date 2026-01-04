@@ -1,18 +1,32 @@
 /**
  * AIIntegrationsSettings - AI Provider Integration Management
- * 
+ *
  * Manages integrations with AI providers: Google AI Studio, OpenAI, Anthropic, etc.
  * Features: API key management, token usage tracking, cost monitoring, rate limits
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Brain, Plus, Key, Trash2, Eye, EyeOff, Copy, TrendingUp, 
-    DollarSign, Zap, AlertCircle, CheckCircle, Loader2, RefreshCw,
-    BarChart3, Settings, ExternalLink
+import {
+    AlertCircle,
+    BarChart3,
+    Brain,
+    CheckCircle,
+    Copy,
+    DollarSign,
+    ExternalLink,
+    Eye,
+    EyeOff,
+    Key,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Settings,
+    Trash2,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface AIProvider {
     id: string;
@@ -46,29 +60,29 @@ const AI_PROVIDERS: Omit<AIProvider, 'apiKey' | 'isConnected' | 'usage' | 'limit
         name: 'Google AI Studio',
         icon: '🤖',
         description: 'Access Gemini models, custom models, and AI capabilities',
-        website: 'https://aistudio.google.com'
+        website: 'https://aistudio.google.com',
     },
     {
         id: 'openai',
         name: 'OpenAI',
         icon: '🧠',
         description: 'GPT-4, GPT-3.5, embeddings, and fine-tuning',
-        website: 'https://platform.openai.com'
+        website: 'https://platform.openai.com',
     },
     {
         id: 'anthropic',
         name: 'Anthropic Claude',
         icon: '💡',
         description: 'Claude API with long context and advanced reasoning',
-        website: 'https://www.anthropic.com'
+        website: 'https://www.anthropic.com',
     },
     {
         id: 'custom',
         name: 'Custom AI Endpoint',
         icon: '⚙️',
         description: 'Connect to your own AI model endpoint',
-        website: ''
-    }
+        website: '',
+    },
 ];
 
 export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ className = '', currentUser }) => {
@@ -87,11 +101,11 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
         try {
             setLoading(true);
             // Mock data - replace with actual API call
-            const mockProviders: AIProvider[] = AI_PROVIDERS.map(p => ({
+            const mockProviders: AIProvider[] = AI_PROVIDERS.map((p) => ({
                 ...p,
                 isConnected: false,
                 usage: undefined,
-                limits: undefined
+                limits: undefined,
             }));
             setProviders(mockProviders);
         } catch (error) {
@@ -115,11 +129,9 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
 
         try {
             // Mock save - replace with actual API call
-            setProviders(prev => prev.map(p => 
-                p.id === providerId 
-                    ? { ...p, apiKey: newApiKey, isConnected: true }
-                    : p
-            ));
+            setProviders((prev) =>
+                prev.map((p) => (p.id === providerId ? { ...p, apiKey: newApiKey, isConnected: true } : p)),
+            );
             toast.success(t('settings.ai.integrations.connected', 'AI provider connected successfully'));
             setShowKeyModal(null);
             setNewApiKey('');
@@ -134,11 +146,13 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
         }
 
         try {
-            setProviders(prev => prev.map(p => 
-                p.id === providerId 
-                    ? { ...p, apiKey: undefined, isConnected: false, usage: undefined, limits: undefined }
-                    : p
-            ));
+            setProviders((prev) =>
+                prev.map((p) =>
+                    p.id === providerId
+                        ? { ...p, apiKey: undefined, isConnected: false, usage: undefined, limits: undefined }
+                        : p,
+                ),
+            );
             toast.success(t('settings.ai.integrations.disconnected', 'AI provider disconnected'));
         } catch (error) {
             toast.error(t('settings.ai.integrations.disconnectError', 'Failed to disconnect'));
@@ -155,7 +169,7 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
         return {
             tokens: usage.tokens.toLocaleString(),
             requests: usage.requests.toLocaleString(),
-            cost: `$${usage.cost.toFixed(2)}`
+            cost: `$${usage.cost.toFixed(2)}`,
         };
     };
 
@@ -177,7 +191,10 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                         {t('settings.ai.integrations.title', 'AI Integrations')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('settings.ai.integrations.description', 'Connect AI providers to enhance your workflows with advanced AI capabilities')}
+                        {t(
+                            'settings.ai.integrations.description',
+                            'Connect AI providers to enhance your workflows with advanced AI capabilities',
+                        )}
                     </p>
                 </div>
                 <button
@@ -198,7 +215,10 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                             {t('settings.ai.integrations.infoTitle', 'Secure API Key Storage')}
                         </p>
                         <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
-                            {t('settings.ai.integrations.infoDesc', 'Your API keys are encrypted and stored securely. We never expose your keys in logs or error messages.')}
+                            {t(
+                                'settings.ai.integrations.infoDesc',
+                                'Your API keys are encrypted and stored securely. We never expose your keys in logs or error messages.',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -214,8 +234,8 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                         <div
                             key={provider.id}
                             className={`p-6 rounded-xl border transition-all ${
-                                isConnected 
-                                    ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30' 
+                                isConnected
+                                    ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                                     : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-white/10'
                             }`}
                         >
@@ -247,22 +267,35 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                                 <div className="mb-4 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-white/10">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                            {t('settings.ai.integrations.usage', 'Usage')} ({provider.usage?.period || 'This month'})
+                                            {t('settings.ai.integrations.usage', 'Usage')} (
+                                            {provider.usage?.period || 'This month'})
                                         </span>
                                         <BarChart3 size={14} className="text-slate-400" />
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         <div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">{t('settings.ai.integrations.tokens', 'Tokens')}</p>
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{usage.tokens}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                {t('settings.ai.integrations.tokens', 'Tokens')}
+                                            </p>
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                {usage.tokens}
+                                            </p>
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">{t('settings.ai.integrations.requests', 'Requests')}</p>
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{usage.requests}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                {t('settings.ai.integrations.requests', 'Requests')}
+                                            </p>
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                {usage.requests}
+                                            </p>
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">{t('settings.ai.integrations.cost', 'Cost')}</p>
-                                            <p className="text-sm font-semibold text-green-600 dark:text-green-400">{usage.cost}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                {t('settings.ai.integrations.cost', 'Cost')}
+                                            </p>
+                                            <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                                                {usage.cost}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -277,8 +310,8 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                                                 {t('settings.ai.integrations.apiKey', 'API Key')}
                                             </p>
                                             <code className="text-xs font-mono text-slate-700 dark:text-slate-300">
-                                                {showKey === provider.id 
-                                                    ? provider.apiKey 
+                                                {showKey === provider.id
+                                                    ? provider.apiKey
                                                     : `${provider.apiKey.substring(0, 8)}${'•'.repeat(20)}`}
                                             </code>
                                         </div>
@@ -311,16 +344,28 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-xs">
-                                            <span className="text-slate-500 dark:text-slate-400">{t('settings.ai.integrations.rateLimit', 'Rate Limit')}</span>
-                                            <span className="text-slate-700 dark:text-slate-300 font-medium">{provider.limits.rateLimit}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">
+                                                {t('settings.ai.integrations.rateLimit', 'Rate Limit')}
+                                            </span>
+                                            <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                {provider.limits.rateLimit}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between text-xs">
-                                            <span className="text-slate-500 dark:text-slate-400">{t('settings.ai.integrations.quota', 'Quota')}</span>
-                                            <span className="text-slate-700 dark:text-slate-300 font-medium">{provider.limits.quota}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">
+                                                {t('settings.ai.integrations.quota', 'Quota')}
+                                            </span>
+                                            <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                {provider.limits.quota}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between text-xs">
-                                            <span className="text-slate-500 dark:text-slate-400">{t('settings.ai.integrations.remaining', 'Remaining')}</span>
-                                            <span className="text-green-600 dark:text-green-400 font-medium">{provider.limits.remaining}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">
+                                                {t('settings.ai.integrations.remaining', 'Remaining')}
+                                            </span>
+                                            <span className="text-green-600 dark:text-green-400 font-medium">
+                                                {provider.limits.remaining}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -342,7 +387,9 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                                 {isConnected ? (
                                     <>
                                         <button
-                                            onClick={() => {/* Open settings */}}
+                                            onClick={() => {
+                                                /* Open settings */
+                                            }}
                                             className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-brand border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                                         >
                                             <Settings size={12} />
@@ -376,8 +423,8 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
                         <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
-                            {t('settings.ai.integrations.connectProvider', 'Connect {{provider}}', { 
-                                provider: providers.find(p => p.id === showKeyModal)?.name 
+                            {t('settings.ai.integrations.connectProvider', 'Connect {{provider}}', {
+                                provider: providers.find((p) => p.id === showKeyModal)?.name,
                             })}
                         </h3>
                         <div className="space-y-4">
@@ -393,12 +440,18 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand text-slate-900 dark:text-white"
                                 />
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                    {t('settings.ai.integrations.keyHint', 'Your API key will be encrypted and stored securely')}
+                                    {t(
+                                        'settings.ai.integrations.keyHint',
+                                        'Your API key will be encrypted and stored securely',
+                                    )}
                                 </p>
                             </div>
                             <div className="flex gap-3 justify-end pt-4">
                                 <button
-                                    onClick={() => { setShowKeyModal(null); setNewApiKey(''); }}
+                                    onClick={() => {
+                                        setShowKeyModal(null);
+                                        setNewApiKey('');
+                                    }}
                                     className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
                                 >
                                     {t('common.cancel', 'Cancel')}
@@ -420,4 +473,3 @@ export const AIIntegrationsSettings: React.FC<AIIntegrationsSettingsProps> = ({ 
 };
 
 export default AIIntegrationsSettings;
-

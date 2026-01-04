@@ -1,6 +1,6 @@
 /**
  * LoginAttemptsPanel - Login Attempts History & Analysis
- * 
+ *
  * Features:
  * - Tabela login attempts z filtrami
  * - Failed vs success ratio
@@ -8,28 +8,29 @@
  * - Unlock account button
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Key,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
-    Globe,
-    Clock,
-    Search,
-    Filter,
-    RefreshCw,
-    Unlock,
     Building2,
-    User,
-    Shield,
-    TrendingUp,
-    TrendingDown,
+    CheckCircle2,
+    Clock,
+    Filter,
+    Globe,
+    Key,
     Loader2,
-    MapPin
+    MapPin,
+    RefreshCw,
+    Search,
+    Shield,
+    TrendingDown,
+    TrendingUp,
+    Unlock,
+    User,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface LoginAttempt {
     id: string;
@@ -94,7 +95,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         try {
             const [statsResult, lockoutsResult] = await Promise.all([
                 Api.get('/security-policies/stats?days=7'),
-                Api.get('/security-policies/lockouts/all?active=true')
+                Api.get('/security-policies/lockouts/all?active=true'),
             ]);
             setStats(statsResult);
             setLockouts(lockoutsResult.lockouts || []);
@@ -104,7 +105,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                 // For SuperAdmin, we need to fetch from multiple orgs or a combined endpoint
                 const orgs = await Api.getOrganizations();
                 setOrganizations(orgs);
-                
+
                 // Fetch from first few orgs for now
                 const allAttempts: LoginAttempt[] = [];
                 for (const org of orgs.slice(0, 5)) {
@@ -115,9 +116,11 @@ export const LoginAttemptsPanel: React.FC = () => {
                         // Skip failed orgs
                     }
                 }
-                setAttempts(allAttempts.sort((a, b) => 
-                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                ).slice(0, 100));
+                setAttempts(
+                    allAttempts
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                        .slice(0, 100),
+                );
             } else {
                 const result = await Api.get(`/security-policies/${selectedOrgId}/login-attempts?limit=100`);
                 setAttempts(result.attempts || []);
@@ -134,15 +137,15 @@ export const LoginAttemptsPanel: React.FC = () => {
     }, [fetchData]);
 
     const handleUnlockAccount = async (email: string) => {
-        setUnlockingIds(prev => new Set(prev).add(email));
+        setUnlockingIds((prev) => new Set(prev).add(email));
         try {
             await Api.post('/security-policies/unlock-account', { email });
             toast.success(`Account ${email} unlocked`);
-            setLockouts(prev => prev.filter(l => l.user_email !== email));
+            setLockouts((prev) => prev.filter((l) => l.user_email !== email));
         } catch (error: any) {
             toast.error(error.message || 'Failed to unlock account');
         } finally {
-            setUnlockingIds(prev => {
+            setUnlockingIds((prev) => {
                 const next = new Set(prev);
                 next.delete(email);
                 return next;
@@ -154,11 +157,10 @@ export const LoginAttemptsPanel: React.FC = () => {
         return new Date(date).toLocaleString();
     };
 
-    const filteredAttempts = attempts.filter(attempt => {
+    const filteredAttempts = attempts.filter((attempt) => {
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            if (!attempt.user_email?.toLowerCase().includes(query) &&
-                !attempt.ip_address?.includes(query)) {
+            if (!attempt.user_email?.toLowerCase().includes(query) && !attempt.ip_address?.includes(query)) {
                 return false;
             }
         }
@@ -226,10 +228,13 @@ export const LoginAttemptsPanel: React.FC = () => {
                     <h3 className="font-semibold text-white">Active Account Lockouts</h3>
                     <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-sm">{lockouts.length}</span>
                 </div>
-                
+
                 <div className="space-y-3">
-                    {lockouts.map(lockout => (
-                        <div key={lockout.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                    {lockouts.map((lockout) => (
+                        <div
+                            key={lockout.id}
+                            className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
+                        >
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
                                     <User size={18} className="text-red-400" />
@@ -291,9 +296,9 @@ export const LoginAttemptsPanel: React.FC = () => {
                             className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none w-64"
                         />
                     </div>
-                    
+
                     <div className="flex bg-slate-800 rounded-lg p-1">
-                        {(['all', 'success', 'failed'] as const).map(status => (
+                        {(['all', 'success', 'failed'] as const).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
@@ -308,7 +313,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                         ))}
                     </div>
                 </div>
-                
+
                 <button
                     onClick={fetchData}
                     className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
@@ -342,7 +347,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredAttempts.map(attempt => (
+                            {filteredAttempts.map((attempt) => (
                                 <tr key={attempt.id} className="border-b border-white/[0.04] hover:bg-slate-800/50">
                                     <td className="p-4">
                                         {attempt.success ? (
@@ -357,7 +362,9 @@ export const LoginAttemptsPanel: React.FC = () => {
                                                     <span className="text-sm">Failed</span>
                                                 </div>
                                                 {attempt.failure_reason && (
-                                                    <span className="text-xs text-slate-500">{attempt.failure_reason}</span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {attempt.failure_reason}
+                                                    </span>
                                                 )}
                                             </div>
                                         )}
@@ -401,10 +408,4 @@ export const LoginAttemptsPanel: React.FC = () => {
 };
 
 export default LoginAttemptsPanel;
-
-
-
-
-
-
 

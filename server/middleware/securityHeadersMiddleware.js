@@ -48,49 +48,56 @@ const securityHeaders = (req, res, next) => {
 
 /**
  * Rate limiter factory for sensitive endpoints
- * Uses in-memory store (consider Redis for production clustering)
+ * Uses Redis-backed store with in-memory fallback (suitable for production clustering)
  * @param {Object} options - Rate limit options
  * @param {number} options.windowMs - Time window in milliseconds
  * @param {number} options.max - Max requests per window
  * @param {string} [options.message] - Error message
  */
-const rateLimitStore = new Map();
+import RedisStore from '../src/utils/RedisStore.js';
+
+const rateLimitStore = new RedisStore('rl:security:');
 
 const createRateLimiter = ({ windowMs = 60000, max = 100, message = 'Too many requests' }) => {
-    return (req, res, next) => {
+    const windowSeconds = Math.ceil(windowMs / 1000);
+
+    return async (req, res, next) => {
         const key = `${req.ip}-${req.path}`;
-        const now = Date.now();
-        const windowStart = now - windowMs;
 
-        // Get existing requests for this key
-        let requests = rateLimitStore.get(key) || [];
+        try {
+            // Get current count
+            const countStr = await rateLimitStore.get(key);
+            const count = countStr ? parseInt(countStr, 10) : 0;
 
-        // Filter to only requests within the window
-        requests = requests.filter(timestamp => timestamp > windowStart);
+            if (count >= max) {
+                // Rate limit exceeded
+                const retryAfter = windowSeconds;
+                res.setHeader('Retry-After', retryAfter);
+                res.setHeader('X-RateLimit-Limit', max);
+                res.setHeader('X-RateLimit-Remaining', 0);
+                res.setHeader('X-RateLimit-Reset', new Date(Date.now() + windowMs).toISOString());
 
-        if (requests.length >= max) {
-            const retryAfter = Math.ceil((requests[0] + windowMs - now) / 1000);
-            res.setHeader('Retry-After', retryAfter);
+                return res.status(429).json({
+                    error: message,
+                    retryAfter,
+                    code: 'RATE_LIMITED'
+                });
+            }
+
+            // Increment count
+            const newCount = await rateLimitStore.increment(key, windowSeconds);
+
+            // Set rate limit headers
             res.setHeader('X-RateLimit-Limit', max);
-            res.setHeader('X-RateLimit-Remaining', 0);
-            res.setHeader('X-RateLimit-Reset', new Date(requests[0] + windowMs).toISOString());
+            res.setHeader('X-RateLimit-Remaining', Math.max(0, max - newCount));
+            res.setHeader('X-RateLimit-Reset', new Date(Date.now() + windowMs).toISOString());
 
-            return res.status(429).json({
-                error: message,
-                retryAfter,
-                code: 'RATE_LIMITED'
-            });
+            next();
+        } catch (error) {
+            // On error, fail open (allow request)
+            console.error('[SecurityHeadersRateLimiter] Error:', error);
+            next();
         }
-
-        // Add current request
-        requests.push(now);
-        rateLimitStore.set(key, requests);
-
-        // Set rate limit headers
-        res.setHeader('X-RateLimit-Limit', max);
-        res.setHeader('X-RateLimit-Remaining', max - requests.length);
-
-        next();
     };
 };
 
@@ -194,20 +201,8 @@ const validateRequest = (schema) => {
     };
 };
 
-// Periodic cleanup of rate limit store (every 5 minutes)
-setInterval(() => {
-    const now = Date.now();
-    const maxAge = 3600000; // 1 hour
-
-    for (const [key, requests] of rateLimitStore.entries()) {
-        const filtered = requests.filter(timestamp => timestamp > now - maxAge);
-        if (filtered.length === 0) {
-            rateLimitStore.delete(key);
-        } else {
-            rateLimitStore.set(key, filtered);
-        }
-    }
-}, 300000);
+// Cleanup is handled by Redis TTL or RedisStore's internal cleanup interval
+// No manual cleanup needed
 
 export {
 securityHeaders,

@@ -1,8 +1,9 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Bot, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { getQuestionsForAxis } from '../services/drdStructure';
 import { AxisId } from '../types';
-import { ArrowRight, CheckCircle2, ChevronRight, Sparkles, Bot } from 'lucide-react';
 
 interface MaturityMatrixProps {
     axisId: number;
@@ -10,7 +11,7 @@ interface MaturityMatrixProps {
     currentScores: { [areaId: string]: number[] | number }; // Allow legacy number
     onScoreSelect: (areaId: string, level: number) => void;
     onComplete: () => void;
-    onDiagnose?: (areaId: string, input: string) => Promise<{ level: number, justification: string }>;
+    onDiagnose?: (areaId: string, input: string) => Promise<{ level: number; justification: string }>;
 }
 
 export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
@@ -20,7 +21,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
     currentScores,
     onScoreSelect,
     onComplete,
-    onDiagnose
+    onDiagnose,
 }) => {
     const areas = getQuestionsForAxis(axisId);
     // Default select first area
@@ -46,7 +47,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
             const result = await onDiagnose(selectedAreaId, aiInput);
             setAiResult(result);
         } catch (e) {
-            console.error("AI Error", e);
+            console.error('AI Error', e);
         } finally {
             setAiLoading(false);
         }
@@ -60,27 +61,26 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
         return [];
     };
 
-    const isComplete = areas.every(area => getScoreArray(area.id).length > 0);
+    const isComplete = areas.every((area) => getScoreArray(area.id).length > 0);
     const progressPercent = (Object.keys(currentScores).length / areas.length) * 100;
 
-    const currentArea = areas.find(a => a.id === selectedAreaId);
+    const currentArea = areas.find((a) => a.id === selectedAreaId);
     const currentAreaScores = selectedAreaId ? getScoreArray(selectedAreaId) : [];
 
     // Auto-advance logic (optional, but premium feel)
     const handleScore = (areaId: string, level: number) => {
         onScoreSelect(areaId, level);
         // Find next area index
-        const idx = areas.findIndex(a => a.id === areaId);
+        const idx = areas.findIndex((a) => a.id === areaId);
         if (idx < areas.length - 1) {
             // Small delay for user to register the click
-            // setTimeout(() => setSelectedAreaId(areas[idx + 1].id), 400); 
+            // setTimeout(() => setSelectedAreaId(areas[idx + 1].id), 400);
             // Actually, auto-advance can be annoying if they want to read. Let's keep manual but highlight next.
         }
     };
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-slate-100 font-sans selection:bg-blue-500/30 transition-colors duration-300">
-
             {/* 1. Top Bar: Progress & Context */}
             <div className="shrink-0 h-14 border-b border-slate-200 dark:border-white/5 flex items-center px-6 justify-between bg-white dark:bg-navy-950 transition-colors duration-300">
                 <div className="flex items-center gap-4">
@@ -110,7 +110,6 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
 
             {/* 2. Main Content: Split Layout */}
             <div className="flex-1 flex overflow-hidden">
-
                 {/* LEFT: Agenda / Areas Navigation */}
                 <div className="w-64 border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-navy-900 overflow-y-auto custom-scrollbar transition-colors duration-300">
                     <div className="p-4">
@@ -127,18 +126,22 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                     <button
                                         key={area.id}
                                         onClick={() => setSelectedAreaId(area.id)}
-                                        className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between transition-all duration-200 group ${isSelected
-                                            ? 'bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-white shadow-sm ring-1 ring-blue-500/20'
-                                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-slate-200'
-                                            }`}
+                                        className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between transition-all duration-200 group ${
+                                            isSelected
+                                                ? 'bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-white shadow-sm ring-1 ring-blue-500/20'
+                                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-slate-200'
+                                        }`}
                                     >
                                         <div className="flex items-center gap-2.5">
-                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border transition-colors ${isScored
-                                                ? 'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-400'
-                                                : isSelected
-                                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                                    : 'border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-600'
-                                                }`}>
+                                            <div
+                                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border transition-colors ${
+                                                    isScored
+                                                        ? 'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-400'
+                                                        : isSelected
+                                                          ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                                          : 'border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-600'
+                                                }`}
+                                            >
                                                 {isScored ? <CheckCircle2 size={10} /> : idx + 1}
                                             </div>
                                             <span className="text-xs font-medium truncate w-36">{area.name}</span>
@@ -172,7 +175,8 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                         {currentArea.name}
                                     </h2>
                                     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl">
-                                        Assess your organization's capability in this specific domain by selecting all levels that apply to your current reality.
+                                        Assess your organization's capability in this specific domain by selecting all
+                                        levels that apply to your current reality.
                                     </p>
 
                                     {/* AI DIAGNOSIS CHECKPOINTS */}
@@ -201,7 +205,8 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                                         {!aiResult ? (
                                                             <>
                                                                 <p className="text-[10px] text-purple-600/70 dark:text-purple-200/70 mb-2">
-                                                                    Describe your current processes, tools, and challenges regarding {currentArea.name}.
+                                                                    Describe your current processes, tools, and
+                                                                    challenges regarding {currentArea.name}.
                                                                 </p>
                                                                 <textarea
                                                                     value={aiInput}
@@ -214,7 +219,11 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                                                     disabled={aiLoading || !aiInput.trim()}
                                                                     className="px-3 py-1.5 bg-purple-600 text-white text-[10px] font-bold rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors flex items-center gap-1.5"
                                                                 >
-                                                                    {aiLoading ? <span className="animate-spin">⌛</span> : <Sparkles size={12} />}
+                                                                    {aiLoading ? (
+                                                                        <span className="animate-spin">⌛</span>
+                                                                    ) : (
+                                                                        <Sparkles size={12} />
+                                                                    )}
                                                                     Diagnose Level
                                                                 </button>
                                                             </>
@@ -271,37 +280,58 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                                 onClick={() => handleScore(currentArea.id, level.level)}
                                                 whileHover={{ scale: 1.002 }}
                                                 whileTap={{ scale: 0.998 }}
-                                                className={`group relative text-left p-4 rounded-xl border transition-all duration-300 w-full ${isSelected
-                                                    ? 'bg-blue-50 dark:bg-blue-600/10 border-blue-500 shadow-md shadow-blue-500/10 z-10'
-                                                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/5 hover:border-blue-400/30 hover:bg-slate-50 dark:hover:bg-navy-800'
-                                                    }`}
+                                                className={`group relative text-left p-4 rounded-xl border transition-all duration-300 w-full ${
+                                                    isSelected
+                                                        ? 'bg-blue-50 dark:bg-blue-600/10 border-blue-500 shadow-md shadow-blue-500/10 z-10'
+                                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/5 hover:border-blue-400/30 hover:bg-slate-50 dark:hover:bg-navy-800'
+                                                }`}
                                             >
                                                 <div className="flex items-start gap-4">
                                                     {/* Level Indicator */}
-                                                    <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold transition-colors duration-300 ${isSelected
-                                                        ? 'bg-blue-500 text-white shadow-lg'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-600 dark:group-hover:text-slate-300'
-                                                        }`}>
+                                                    <div
+                                                        className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold transition-colors duration-300 ${
+                                                            isSelected
+                                                                ? 'bg-blue-500 text-white shadow-lg'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                                                        }`}
+                                                    >
                                                         {level.level}
                                                     </div>
 
                                                     {/* Text Content */}
                                                     <div className="flex-1">
-                                                        <h4 className={`text-sm font-bold mb-1 transition-colors ${isSelected ? 'text-blue-700 dark:text-blue-100' : 'text-navy-900 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-white'
-                                                            }`}>
+                                                        <h4
+                                                            className={`text-sm font-bold mb-1 transition-colors ${
+                                                                isSelected
+                                                                    ? 'text-blue-700 dark:text-blue-100'
+                                                                    : 'text-navy-900 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-white'
+                                                            }`}
+                                                        >
                                                             {level.title}
                                                         </h4>
-                                                        <p className={`text-xs leading-relaxed transition-colors ${isSelected ? 'text-blue-600/80 dark:text-blue-200/80' : 'text-slate-500 dark:text-slate-400 group-hover:text-navy-700 dark:group-hover:text-slate-300'
-                                                            }`}>
+                                                        <p
+                                                            className={`text-xs leading-relaxed transition-colors ${
+                                                                isSelected
+                                                                    ? 'text-blue-600/80 dark:text-blue-200/80'
+                                                                    : 'text-slate-500 dark:text-slate-400 group-hover:text-navy-700 dark:group-hover:text-slate-300'
+                                                            }`}
+                                                        >
                                                             {level.description}
                                                         </p>
                                                     </div>
 
                                                     {/* Radio Check Visualization */}
                                                     <div className="mt-1 shrink-0">
-                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300 dark:border-slate-600 group-hover:border-slate-400 dark:group-hover:border-slate-500'
-                                                            }`}>
-                                                            {isSelected && <CheckCircle2 size={12} className="text-white" />}
+                                                        <div
+                                                            className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
+                                                                isSelected
+                                                                    ? 'border-blue-500 bg-blue-500'
+                                                                    : 'border-slate-300 dark:border-slate-600 group-hover:border-slate-400 dark:group-hover:border-slate-500'
+                                                            }`}
+                                                        >
+                                                            {isSelected && (
+                                                                <CheckCircle2 size={12} className="text-white" />
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -309,7 +339,6 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                         );
                                     })}
                                 </div>
-
                             </motion.div>
                         ) : (
                             <div className="flex h-full items-center justify-center text-slate-500">

@@ -1,12 +1,12 @@
 /**
  * Initiatives Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for initiatives routes - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Initiatives Routes', () => {
     let mockReq: Partial<Request>;
@@ -53,9 +53,11 @@ describe('Initiatives Routes', () => {
                 organization_id: 'org-123',
             };
 
-            mockInitiativeController.getInitiatives.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.([{ id: 'initiative-1', title: 'Initiative 1' }]);
-            });
+            mockInitiativeController.getInitiatives.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.([{ id: 'initiative-1', title: 'Initiative 1' }]);
+                },
+            );
 
             expect(mockInitiativeController.getInitiatives).toBeDefined();
         });
@@ -98,9 +100,11 @@ describe('Initiatives Routes', () => {
                 organization_id: 'org-123',
             };
 
-            mockInitiativeController.createInitiative.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.status?.(201).json?.({ id: 'initiative-123', title: 'New Initiative' });
-            });
+            mockInitiativeController.createInitiative.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.status?.(201).json?.({ id: 'initiative-123', title: 'New Initiative' });
+                },
+            );
 
             expect(mockInitiativeController.createInitiative).toBeDefined();
         });
@@ -126,9 +130,11 @@ describe('Initiatives Routes', () => {
         it('should return initiative by ID', () => {
             mockReq.params = { id: 'initiative-123' };
 
-            mockInitiativeController.getInitiativeById.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ id: 'initiative-123', title: 'Initiative 1' });
-            });
+            mockInitiativeController.getInitiativeById.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.({ id: 'initiative-123', title: 'Initiative 1' });
+                },
+            );
 
             expect(mockInitiativeController.getInitiativeById).toBeDefined();
         });
@@ -148,9 +154,11 @@ describe('Initiatives Routes', () => {
                 description: 'Updated description',
             };
 
-            mockInitiativeController.updateInitiative.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ id: 'initiative-123', title: 'Updated Initiative' });
-            });
+            mockInitiativeController.updateInitiative.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.({ id: 'initiative-123', title: 'Updated Initiative' });
+                },
+            );
 
             expect(mockInitiativeController.updateInitiative).toBeDefined();
         });
@@ -172,9 +180,11 @@ describe('Initiatives Routes', () => {
                 status: 'completed',
             };
 
-            mockInitiativeController.updateInitiativeStatus.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ id: 'initiative-123', status: 'completed' });
-            });
+            mockInitiativeController.updateInitiativeStatus.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.({ id: 'initiative-123', status: 'completed' });
+                },
+            );
 
             expect(mockInitiativeController.updateInitiativeStatus).toBeDefined();
         });
@@ -205,4 +215,3 @@ describe('Initiatives Routes', () => {
         });
     });
 });
-

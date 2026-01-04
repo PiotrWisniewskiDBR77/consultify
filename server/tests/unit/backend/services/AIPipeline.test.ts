@@ -1,13 +1,14 @@
 /**
  * AIPipeline Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for AIPipeline - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import AIPipeline from '../../../../services/ai/aiPipeline.js';
+import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('AIPipeline', () => {
     let mockDb: IDatabase;
@@ -48,9 +49,11 @@ describe('AIPipeline', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

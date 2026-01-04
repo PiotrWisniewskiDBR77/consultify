@@ -1,13 +1,14 @@
+import { FileText, Layout, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Layout, RefreshCw } from 'lucide-react';
-import { CompanyProfileModule } from './modules/CompanyProfileModule';
-import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
-import { ChallengeMapModule } from './modules/ChallengeMapModule';
-import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
-import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
+
 import { SplitLayout } from '../../components/SplitLayout';
 import { useContextBuilderStore } from '../../store/useContextBuilderStore';
+import { ChallengeMapModule } from './modules/ChallengeMapModule';
+import { CompanyProfileModule } from './modules/CompanyProfileModule';
+import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
+import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
+import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
 
 interface ContextBuilderProps {
     initialTab?: number;
@@ -21,8 +22,8 @@ const RefreshAnalysisButton = () => {
             disabled={isGenerating}
             className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors disabled:opacity-50"
         >
-            <RefreshCw size={14} className={isGenerating ? "animate-spin" : ""} />
-            {isGenerating ? "Analyzing..." : "Refresh Analysis"}
+            <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} />
+            {isGenerating ? 'Analyzing...' : 'Refresh Analysis'}
         </button>
     );
 };
@@ -39,18 +40,26 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
 
     const renderActiveModule = () => {
         switch (activeModule) {
-            case 1: return <CompanyProfileModule />;
-            case 2: return <GoalsExpectationsModule />;
-            case 3: return <ChallengeMapModule />;
-            case 4: return <MegatrendScannerModule />;
-            case 5: return <StrategicSynthesisModule />;
-            default: return (
-                <div className="mt-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center">
-                    <Layout className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-navy-900 dark:text-white">Module {activeModule} Under Construction</h3>
-                    <p className="text-slate-500 text-sm mt-1">This module is part of the planned roadmap.</p>
-                </div>
-            );
+            case 1:
+                return <CompanyProfileModule />;
+            case 2:
+                return <GoalsExpectationsModule />;
+            case 3:
+                return <ChallengeMapModule />;
+            case 4:
+                return <MegatrendScannerModule />;
+            case 5:
+                return <StrategicSynthesisModule />;
+            default:
+                return (
+                    <div className="mt-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center">
+                        <Layout className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-navy-900 dark:text-white">
+                            Module {activeModule} Under Construction
+                        </h3>
+                        <p className="text-slate-500 text-sm mt-1">This module is part of the planned roadmap.</p>
+                    </div>
+                );
         }
     };
 
@@ -79,9 +88,7 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
                             </div>
 
                             {/* Conditional Header Actions */}
-                            {activeModule === 5 && (
-                                <RefreshAnalysisButton />
-                            )}
+                            {activeModule === 5 && <RefreshAnalysisButton />}
                         </div>
 
                         {renderActiveModule()}
@@ -89,14 +96,19 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
                 </div>
 
                 {/* Document Hub Toggle / Drawer */}
-                <div className={`absolute top-0 right-0 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-xl transition-all duration-300 z-20 ${isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 translate-x-full'}`}>
+                <div
+                    className={`absolute top-0 right-0 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-xl transition-all duration-300 z-20 ${isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 translate-x-full'}`}
+                >
                     <div className="h-full flex flex-col">
                         <div className="h-14 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4">
                             <div className="flex items-center gap-2 font-semibold text-sm text-navy-900 dark:text-white">
                                 <FileText size={16} className="text-blue-500" />
                                 Document Hub
                             </div>
-                            <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-navy-900">
+                            <button
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="text-slate-400 hover:text-navy-900"
+                            >
                                 {/* Close Icon */}
                                 <span className="text-xl">&times;</span>
                             </button>
@@ -107,12 +119,18 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
                             </div>
 
                             <div className="mt-6">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Processed Files</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                    Processed Files
+                                </h4>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-100 dark:border-white/5">
-                                        <div className="w-8 h-8 rounded bg-red-100 flex items-center justify-center text-red-500 text-xs font-bold">PDF</div>
+                                        <div className="w-8 h-8 rounded bg-red-100 flex items-center justify-center text-red-500 text-xs font-bold">
+                                            PDF
+                                        </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="text-sm font-medium text-navy-900 dark:text-white truncate">Annual Report 2024.pdf</div>
+                                            <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                                                Annual Report 2024.pdf
+                                            </div>
                                             <div className="text-[10px] text-green-600">Processed • 12 key facts</div>
                                         </div>
                                     </div>

@@ -1,7 +1,7 @@
 /**
  * PdfImport Routes
  * API endpoints for pdf-import
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof pdf_importRoutesJS === 'function' || (pdf_importRoutesJS && typeof pdf_importRoutesJS.handle === 'function')) {
+if (
+    typeof pdf_importRoutesJS === 'function' ||
+    (pdf_importRoutesJS && typeof pdf_importRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(pdf_importRoutesJS);
 } else {

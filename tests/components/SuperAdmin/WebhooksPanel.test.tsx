@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { WebhooksPanel } from '../../../components/SuperAdmin/integrations/WebhooksPanel';
+import { WebhooksPanel } from '../../components/SuperAdmin/integrations/WebhooksPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -191,6 +191,7 @@ describe('WebhooksPanel', () => {
         });
     });
 });
+
 
 
 

@@ -5,38 +5,26 @@
  * - Token validation: 20 requests per 10 minutes per IP
  * - Acceptance: 5 failed attempts per 15 minutes per IP → temporary block
  * 
- * Uses in-memory storage (suitable for single-instance deployments)
- * For production clusters, consider Redis-backed rate limiting
+ * Uses Redis-backed storage with in-memory fallback
+ * Suitable for production clusters with horizontal scaling
  */
 
-// In-memory rate limit stores
-const validateRateLimits = new Map(); // IP -> { count, resetAt }
-const acceptFailures = new Map(); // IP -> { count, blockedUntil }
+import RedisStore from '../src/utils/RedisStore.js';
+
+// Redis-backed rate limit stores with in-memory fallback
+const validateRateLimitsStore = new RedisStore('inv:validate:');
+const acceptFailuresStore = new RedisStore('inv:accept:');
 
 // Configuration
 const VALIDATE_LIMIT = 20; // requests
 const VALIDATE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const VALIDATE_WINDOW_SECONDS = Math.ceil(VALIDATE_WINDOW_MS / 1000);
 
 const ACCEPT_FAIL_LIMIT = 5; // failed attempts
 const ACCEPT_FAIL_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const ACCEPT_FAIL_WINDOW_SECONDS = Math.ceil(ACCEPT_FAIL_WINDOW_MS / 1000);
 const ACCEPT_BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes block
-
-// Cleanup stale entries periodically (every 5 minutes)
-setInterval(() => {
-    const now = Date.now();
-
-    for (const [ip, data] of validateRateLimits.entries()) {
-        if (data.resetAt < now) {
-            validateRateLimits.delete(ip);
-        }
-    }
-
-    for (const [ip, data] of acceptFailures.entries()) {
-        if (data.blockedUntil && data.blockedUntil < now) {
-            acceptFailures.delete(ip);
-        }
-    }
-}, 5 * 60 * 1000);
+const ACCEPT_BLOCK_DURATION_SECONDS = Math.ceil(ACCEPT_BLOCK_DURATION_MS / 1000);
 
 /**
  * Get client IP from request
@@ -52,102 +40,133 @@ function getClientIP(req) {
  * Rate limiter for token validation endpoint
  * Allows VALIDATE_LIMIT requests per VALIDATE_WINDOW_MS per IP
  */
-function validateRateLimiter(req, res, next) {
+async function validateRateLimiter(req, res, next) {
     const ip = getClientIP(req);
     const now = Date.now();
 
-    let rateData = validateRateLimits.get(ip);
+    try {
+        // Get current count from Redis/in-memory
+        const countStr = await validateRateLimitsStore.get(ip);
+        const count = countStr ? parseInt(countStr, 10) : 0;
 
-    if (!rateData || rateData.resetAt < now) {
-        // Reset or initialize
-        rateData = { count: 1, resetAt: now + VALIDATE_WINDOW_MS };
-        validateRateLimits.set(ip, rateData);
-        return next();
+        if (count === 0) {
+            // First request in window - initialize
+            await validateRateLimitsStore.set(ip, '1', VALIDATE_WINDOW_SECONDS);
+            return next();
+        }
+
+        // Increment count
+        const newCount = await validateRateLimitsStore.increment(ip, VALIDATE_WINDOW_SECONDS);
+
+        if (newCount > VALIDATE_LIMIT) {
+            // Calculate retry after (approximate, based on TTL)
+            const retryAfter = VALIDATE_WINDOW_SECONDS;
+            res.set('Retry-After', retryAfter.toString());
+            return res.status(429).json({
+                error: 'Too many requests. Please try again later.',
+                retryAfterSeconds: retryAfter
+            });
+        }
+
+        next();
+    } catch (error) {
+        // On error, fail open (allow request)
+        console.error('[InvitationRateLimiter] Error in validateRateLimiter:', error);
+        next();
     }
-
-    rateData.count++;
-
-    if (rateData.count > VALIDATE_LIMIT) {
-        const retryAfter = Math.ceil((rateData.resetAt - now) / 1000);
-        res.set('Retry-After', retryAfter.toString());
-        return res.status(429).json({
-            error: 'Too many requests. Please try again later.',
-            retryAfterSeconds: retryAfter
-        });
-    }
-
-    next();
 }
 
 /**
  * Rate limiter for acceptance endpoint
  * Blocks IP after ACCEPT_FAIL_LIMIT failed attempts
  */
-function acceptRateLimiter(req, res, next) {
+async function acceptRateLimiter(req, res, next) {
     const ip = getClientIP(req);
-    const now = Date.now();
 
-    const failData = acceptFailures.get(ip);
+    try {
+        // Check if IP is blocked
+        const blockedUntilStr = await acceptFailuresStore.get(`${ip}:blockedUntil`);
+        if (blockedUntilStr) {
+            const blockedUntil = parseInt(blockedUntilStr, 10);
+            const now = Date.now();
 
-    if (failData?.blockedUntil && failData.blockedUntil > now) {
-        const retryAfter = Math.ceil((failData.blockedUntil - now) / 1000);
-        res.set('Retry-After', retryAfter.toString());
-        return res.status(429).json({
-            error: 'Too many failed attempts. Please try again later.',
-            retryAfterSeconds: retryAfter
-        });
+            if (blockedUntil > now) {
+                const retryAfter = Math.ceil((blockedUntil - now) / 1000);
+                res.set('Retry-After', retryAfter.toString());
+                return res.status(429).json({
+                    error: 'Too many failed attempts. Please try again later.',
+                    retryAfterSeconds: retryAfter
+                });
+            }
+        }
+
+        next();
+    } catch (error) {
+        // On error, fail open (allow request)
+        console.error('[InvitationRateLimiter] Error in acceptRateLimiter:', error);
+        next();
     }
-
-    next();
 }
 
 /**
  * Record a failed acceptance attempt
  * Call this when acceptance fails due to invalid token/email
  */
-function recordAcceptFailure(req) {
+async function recordAcceptFailure(req) {
     const ip = getClientIP(req);
     const now = Date.now();
 
-    let failData = acceptFailures.get(ip);
+    try {
+        // Get current failure count
+        const countStr = await acceptFailuresStore.get(`${ip}:count`);
+        const count = countStr ? parseInt(countStr, 10) : 0;
 
-    if (!failData || (failData.resetAt && failData.resetAt < now)) {
-        failData = { count: 1, resetAt: now + ACCEPT_FAIL_WINDOW_MS };
-    } else {
-        failData.count++;
+        if (count === 0) {
+            // First failure in window
+            await acceptFailuresStore.set(`${ip}:count`, '1', ACCEPT_FAIL_WINDOW_SECONDS);
+        } else {
+            // Increment failure count
+            const newCount = await acceptFailuresStore.increment(`${ip}:count`, ACCEPT_FAIL_WINDOW_SECONDS);
+
+            if (newCount >= ACCEPT_FAIL_LIMIT) {
+                // Block IP
+                const blockedUntil = now + ACCEPT_BLOCK_DURATION_MS;
+                await acceptFailuresStore.set(`${ip}:blockedUntil`, String(blockedUntil), ACCEPT_BLOCK_DURATION_SECONDS);
+            }
+        }
+    } catch (error) {
+        console.error('[InvitationRateLimiter] Error recording accept failure:', error);
+        // Fail silently - don't block user if we can't record failure
     }
-
-    if (failData.count >= ACCEPT_FAIL_LIMIT) {
-        failData.blockedUntil = now + ACCEPT_BLOCK_DURATION_MS;
-    }
-
-    acceptFailures.set(ip, failData);
 }
 
 /**
  * Clear failure record on successful acceptance
  */
-function clearAcceptFailure(req) {
+async function clearAcceptFailure(req) {
     const ip = getClientIP(req);
-    acceptFailures.delete(ip);
+
+    try {
+        await acceptFailuresStore.delete(`${ip}:count`);
+        await acceptFailuresStore.delete(`${ip}:blockedUntil`);
+    } catch (error) {
+        console.error('[InvitationRateLimiter] Error clearing accept failure:', error);
+        // Fail silently
+    }
 }
 
 export {
-validateRateLimiter,
-    acceptRateLimiter,
-    recordAcceptFailure,
-    clearAcceptFailure,
-    // Expose for testing
-    _validateRateLimits: validateRateLimits,
-    _acceptFailures: acceptFailures
-};
-
-export default {
     validateRateLimiter,
     acceptRateLimiter,
     recordAcceptFailure,
-    clearAcceptFailure,
-    // Expose for testing
-    _validateRateLimits: validateRateLimits,
-    _acceptFailures: acceptFailures
+    clearAcceptFailure
 };
+
+const rateLimiterModule = {
+    validateRateLimiter,
+    acceptRateLimiter,
+    recordAcceptFailure,
+    clearAcceptFailure
+};
+
+export default rateLimiterModule;

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { trialEntryGuard, isTrialEntryUser, _setDb } from '../../../../server/middleware/trialEntryGuard';
+import trialEntryGuardModule from '../../../../server/middleware/trialEntryGuard';
+const { trialEntryGuard, isTrialEntryUser, _setDb } = trialEntryGuardModule;
 
 describe('Trial Entry Guard Middleware', () => {
     let req;

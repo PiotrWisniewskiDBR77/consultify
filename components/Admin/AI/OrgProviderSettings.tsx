@@ -1,28 +1,28 @@
 /**
  * OrgProviderSettings - Organization Admin UI for Provider Selection
- * 
+ *
  * Features:
  * - Enable/disable LLM providers for the organization
  * - View available models per tier
  * - Preview which models users can access
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    Server,
-    CheckCircle,
-    XCircle,
     AlertTriangle,
-    RefreshCw,
+    Brain,
+    CheckCircle,
+    Crown,
     Eye,
     EyeOff,
-    Zap,
-    Crown,
-    Brain,
+    Info,
+    RefreshCw,
+    Server,
     ToggleLeft,
     ToggleRight,
-    Info
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 interface Provider {
@@ -52,29 +52,29 @@ const TIER_CONFIG = {
         color: 'emerald',
         description: 'Cost-effective, fast responses',
         bgClass: 'bg-emerald-500/10',
-        textClass: 'text-emerald-400'
+        textClass: 'text-emerald-400',
     },
     STANDARD: {
         icon: Server,
         color: 'blue',
         description: 'Balanced performance',
         bgClass: 'bg-blue-500/10',
-        textClass: 'text-blue-400'
+        textClass: 'text-blue-400',
     },
     PREMIUM: {
         icon: Crown,
         color: 'violet',
         description: 'High-quality output',
         bgClass: 'bg-violet-500/10',
-        textClass: 'text-violet-400'
+        textClass: 'text-violet-400',
     },
     REASONING: {
         icon: Brain,
         color: 'amber',
         description: 'Deep analysis',
         bgClass: 'bg-amber-500/10',
-        textClass: 'text-amber-400'
-    }
+        textClass: 'text-amber-400',
+    },
 };
 
 interface OrgProviderSettingsProps {
@@ -99,11 +99,11 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
         try {
             const [providersRes, modelsRes] = await Promise.all([
                 fetch(`/api/llm/org/${organizationId}/providers`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 }),
                 fetch(`/api/llm/org/${organizationId}/available-models`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                })
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }),
             ]);
 
             if (providersRes.ok) {
@@ -125,10 +125,10 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
 
     const toggleProvider = async (providerId: string, currentEnabled: boolean) => {
         setSavingProvider(providerId);
-        
+
         // Optimistic update
-        setProviders(prev => 
-            prev.map(p => p.id === providerId ? { ...p, is_enabled_for_org: !currentEnabled } : p)
+        setProviders((prev) =>
+            prev.map((p) => (p.id === providerId ? { ...p, is_enabled_for_org: !currentEnabled } : p)),
         );
 
         try {
@@ -136,16 +136,16 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ isEnabled: !currentEnabled })
+                body: JSON.stringify({ isEnabled: !currentEnabled }),
             });
 
             if (!res.ok) throw new Error('Failed to update');
-            
+
             // Reload available models after change
             const modelsRes = await fetch(`/api/llm/org/${organizationId}/available-models`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (modelsRes.ok) {
                 const data = await modelsRes.json();
@@ -155,8 +155,8 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
             toast.success(`Provider ${!currentEnabled ? 'enabled' : 'disabled'}`);
         } catch (err) {
             // Revert on error
-            setProviders(prev => 
-                prev.map(p => p.id === providerId ? { ...p, is_enabled_for_org: currentEnabled } : p)
+            setProviders((prev) =>
+                prev.map((p) => (p.id === providerId ? { ...p, is_enabled_for_org: currentEnabled } : p)),
             );
             toast.error('Failed to update provider');
         } finally {
@@ -166,10 +166,14 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
 
     const getHealthIcon = (status: string) => {
         switch (status) {
-            case 'healthy': return <CheckCircle size={14} className="text-emerald-400" />;
-            case 'degraded': return <AlertTriangle size={14} className="text-amber-400" />;
-            case 'unhealthy': return <XCircle size={14} className="text-red-400" />;
-            default: return <Server size={14} className="text-slate-400" />;
+            case 'healthy':
+                return <CheckCircle size={14} className="text-emerald-400" />;
+            case 'degraded':
+                return <AlertTriangle size={14} className="text-amber-400" />;
+            case 'unhealthy':
+                return <XCircle size={14} className="text-red-400" />;
+            default:
+                return <Server size={14} className="text-slate-400" />;
         }
     };
 
@@ -181,8 +185,8 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
         );
     }
 
-    const enabledProviders = providers.filter(p => p.is_enabled_for_org);
-    const disabledProviders = providers.filter(p => !p.is_enabled_for_org);
+    const enabledProviders = providers.filter((p) => p.is_enabled_for_org);
+    const disabledProviders = providers.filter((p) => !p.is_enabled_for_org);
 
     return (
         <div className="space-y-6">
@@ -191,8 +195,8 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 <div>
                     <h3 className="text-lg font-semibold text-white">LLM Provider Settings</h3>
                     <p className="text-sm text-slate-400">
-                        Enable or disable AI providers for your organization. 
-                        Only enabled providers will be available to users.
+                        Enable or disable AI providers for your organization. Only enabled providers will be available
+                        to users.
                     </p>
                 </div>
                 <button
@@ -211,8 +215,8 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                     <div>
                         <h4 className="text-blue-300 font-medium">How Provider Selection Works</h4>
                         <p className="text-sm text-slate-400 mt-1">
-                            When you disable a provider, its models will no longer be available in any tier.
-                            The system will automatically use remaining enabled providers with round-robin selection.
+                            When you disable a provider, its models will no longer be available in any tier. The system
+                            will automatically use remaining enabled providers with round-robin selection.
                         </p>
                     </div>
                 </div>
@@ -227,8 +231,8 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
 
                 {enabledProviders.length > 0 ? (
                     <div className="space-y-2">
-                        {enabledProviders.map(provider => (
-                            <div 
+                        {enabledProviders.map((provider) => (
+                            <div
                                 key={provider.id}
                                 className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl"
                             >
@@ -273,15 +277,13 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                         {showDisabled ? <Eye size={18} /> : <EyeOff size={18} />}
                         Disabled Providers ({disabledProviders.length})
                     </h4>
-                    <span className="text-slate-400 text-sm">
-                        {showDisabled ? 'Hide' : 'Show'}
-                    </span>
+                    <span className="text-slate-400 text-sm">{showDisabled ? 'Hide' : 'Show'}</span>
                 </button>
 
                 {showDisabled && disabledProviders.length > 0 && (
                     <div className="space-y-2 mt-4">
-                        {disabledProviders.map(provider => (
-                            <div 
+                        {disabledProviders.map((provider) => (
+                            <div
                                 key={provider.id}
                                 className="flex items-center justify-between p-4 bg-slate-500/5 border border-slate-500/20 rounded-xl"
                             >
@@ -325,34 +327,24 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                         const models = availableModels[tier] || [];
 
                         return (
-                            <div 
-                                key={tier}
-                                className={`${config.bgClass} border border-white/10 rounded-xl p-4`}
-                            >
+                            <div key={tier} className={`${config.bgClass} border border-white/10 rounded-xl p-4`}>
                                 <div className="flex items-center gap-2 mb-3">
                                     <TierIcon size={18} className={config.textClass} />
                                     <span className={`font-medium ${config.textClass}`}>{tier}</span>
-                                    <span className="text-xs text-slate-500">
-                                        ({models.length} models)
-                                    </span>
+                                    <span className="text-xs text-slate-500">({models.length} models)</span>
                                 </div>
 
                                 {models.length > 0 ? (
                                     <div className="space-y-1">
                                         {models.map((model, idx) => (
-                                            <div 
-                                                key={idx}
-                                                className="flex items-center gap-2 text-sm"
-                                            >
+                                            <div key={idx} className="flex items-center gap-2 text-sm">
                                                 {getHealthIcon(model.health_status)}
                                                 <span className="text-slate-300">{model.name}</span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-sm text-slate-500">
-                                        No models available
-                                    </div>
+                                    <div className="text-sm text-slate-500">No models available</div>
                                 )}
                             </div>
                         );
@@ -364,10 +356,4 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
 };
 
 export default OrgProviderSettings;
-
-
-
-
-
-
 

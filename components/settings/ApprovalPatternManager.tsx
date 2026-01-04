@@ -1,34 +1,35 @@
 /**
  * ApprovalPatternManager Component
- * 
+ *
  * Settings panel for managing learned AI approval patterns.
  * Allows users to:
  * - View all learned patterns
  * - Toggle auto-apply per pattern
  * - Delete patterns to "forget" them
  * - View pattern statistics
- * 
+ *
  * @version 1.0.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Brain, 
-    ToggleLeft, 
-    ToggleRight, 
-    Trash2, 
-    RefreshCw, 
-    Check, 
-    X,
+import {
+    Brain,
+    Check,
     ChevronDown,
     ChevronUp,
-    Info,
-    TrendingUp,
     Clock,
-    Shield
+    Info,
+    RefreshCw,
+    Shield,
+    ToggleLeft,
+    ToggleRight,
+    Trash2,
+    TrendingUp,
+    X,
 } from 'lucide-react';
-import api from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import api from '../../services/api';
 
 // ============================================================================
 // Types
@@ -61,7 +62,7 @@ interface PatternStats {
 export const ApprovalPatternManager: React.FC = () => {
     const { t, i18n } = useTranslation();
     const language = i18n.language?.startsWith('pl') ? 'pl' : 'en';
-    
+
     const [patterns, setPatterns] = useState<ApprovalPattern[]>([]);
     const [stats, setStats] = useState<PatternStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -73,11 +74,8 @@ export const ApprovalPatternManager: React.FC = () => {
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [patternsRes, statsRes] = await Promise.all([
-                api.get('/ai/patterns'),
-                api.get('/ai/patterns/stats')
-            ]);
-            
+            const [patternsRes, statsRes] = await Promise.all([api.get('/ai/patterns'), api.get('/ai/patterns/stats')]);
+
             setPatterns(patternsRes.data?.patterns || []);
             setStats(statsRes.data || null);
         } catch (error) {
@@ -93,27 +91,29 @@ export const ApprovalPatternManager: React.FC = () => {
 
     // Toggle auto-apply
     const handleToggleAutoApply = async (patternId: string, currentValue: boolean) => {
-        setUpdatingPatterns(prev => new Set(prev).add(patternId));
-        
+        setUpdatingPatterns((prev) => new Set(prev).add(patternId));
+
         try {
             await api.patch(`/ai/patterns/${patternId}/auto-apply`, {
-                enabled: !currentValue
+                enabled: !currentValue,
             });
-            
+
             // Update local state
-            setPatterns(prev => prev.map(p => 
-                p.id === patternId ? { ...p, auto_apply: !currentValue } : p
-            ));
-            
+            setPatterns((prev) => prev.map((p) => (p.id === patternId ? { ...p, auto_apply: !currentValue } : p)));
+
             // Update stats
-            setStats(prev => prev ? {
-                ...prev,
-                autoEnabled: prev.autoEnabled + (currentValue ? -1 : 1)
-            } : null);
+            setStats((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          autoEnabled: prev.autoEnabled + (currentValue ? -1 : 1),
+                      }
+                    : null,
+            );
         } catch (error) {
             console.error('[ApprovalPatternManager] Failed to toggle auto-apply:', error);
         } finally {
-            setUpdatingPatterns(prev => {
+            setUpdatingPatterns((prev) => {
                 const next = new Set(prev);
                 next.delete(patternId);
                 return next;
@@ -123,30 +123,37 @@ export const ApprovalPatternManager: React.FC = () => {
 
     // Delete pattern
     const handleDeletePattern = async (patternId: string) => {
-        if (!confirm(language === 'pl' 
-            ? 'Czy na pewno chcesz usunąć ten wzorzec? AI nie będzie już pamiętać tej decyzji.'
-            : 'Are you sure you want to delete this pattern? AI will no longer remember this decision.'
-        )) {
+        if (
+            !confirm(
+                language === 'pl'
+                    ? 'Czy na pewno chcesz usunąć ten wzorzec? AI nie będzie już pamiętać tej decyzji.'
+                    : 'Are you sure you want to delete this pattern? AI will no longer remember this decision.',
+            )
+        ) {
             return;
         }
 
-        setDeletingPatterns(prev => new Set(prev).add(patternId));
-        
+        setDeletingPatterns((prev) => new Set(prev).add(patternId));
+
         try {
             await api.delete(`/ai/patterns/${patternId}`);
-            
+
             // Remove from local state
-            setPatterns(prev => prev.filter(p => p.id !== patternId));
-            
+            setPatterns((prev) => prev.filter((p) => p.id !== patternId));
+
             // Update stats
-            setStats(prev => prev ? {
-                ...prev,
-                totalPatterns: prev.totalPatterns - 1
-            } : null);
+            setStats((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          totalPatterns: prev.totalPatterns - 1,
+                      }
+                    : null,
+            );
         } catch (error) {
             console.error('[ApprovalPatternManager] Failed to delete pattern:', error);
         } finally {
-            setDeletingPatterns(prev => {
+            setDeletingPatterns((prev) => {
                 const next = new Set(prev);
                 next.delete(patternId);
                 return next;
@@ -156,7 +163,7 @@ export const ApprovalPatternManager: React.FC = () => {
 
     // Toggle expanded
     const toggleExpanded = (patternId: string) => {
-        setExpandedPatterns(prev => {
+        setExpandedPatterns((prev) => {
             const next = new Set(prev);
             if (next.has(patternId)) {
                 next.delete(patternId);
@@ -178,7 +185,7 @@ export const ApprovalPatternManager: React.FC = () => {
         return date.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
@@ -187,10 +194,12 @@ export const ApprovalPatternManager: React.FC = () => {
         const colors = {
             LOW: 'bg-emerald-100 text-emerald-700 border-emerald-200',
             MEDIUM: 'bg-amber-100 text-amber-700 border-amber-200',
-            HIGH: 'bg-red-100 text-red-700 border-red-200'
+            HIGH: 'bg-red-100 text-red-700 border-red-200',
         };
         return (
-            <span className={`px-2 py-0.5 text-[10px] font-bold rounded border ${colors[level as keyof typeof colors] || colors.LOW}`}>
+            <span
+                className={`px-2 py-0.5 text-[10px] font-bold rounded border ${colors[level as keyof typeof colors] || colors.LOW}`}
+            >
                 {level}
             </span>
         );
@@ -200,16 +209,13 @@ export const ApprovalPatternManager: React.FC = () => {
     const DecisionBadge: React.FC<{ decision: string }> = ({ decision }) => {
         const isApproved = decision === 'APPROVED';
         return (
-            <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded ${
-                isApproved 
-                    ? 'bg-emerald-50 text-emerald-700' 
-                    : 'bg-red-50 text-red-700'
-            }`}>
+            <span
+                className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded ${
+                    isApproved ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                }`}
+            >
                 {isApproved ? <Check size={12} /> : <X size={12} />}
-                {isApproved 
-                    ? (language === 'pl' ? 'Akceptuj' : 'Approve')
-                    : (language === 'pl' ? 'Odrzuć' : 'Reject')
-                }
+                {isApproved ? (language === 'pl' ? 'Akceptuj' : 'Approve') : language === 'pl' ? 'Odrzuć' : 'Reject'}
             </span>
         );
     };
@@ -227,13 +233,13 @@ export const ApprovalPatternManager: React.FC = () => {
                             {language === 'pl' ? 'Wzorce Zatwierdzania AI' : 'AI Approval Patterns'}
                         </h2>
                         <p className="text-sm text-slate-500">
-                            {language === 'pl' 
+                            {language === 'pl'
                                 ? 'Zarządzaj nauczonymi wzorcami decyzji'
                                 : 'Manage learned decision patterns'}
                         </p>
                     </div>
                 </div>
-                
+
                 <button
                     onClick={fetchData}
                     disabled={isLoading}
@@ -247,15 +253,13 @@ export const ApprovalPatternManager: React.FC = () => {
             {stats && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-white/5">
-                        <div className="text-2xl font-bold text-slate-800 dark:text-white">
-                            {stats.totalPatterns}
-                        </div>
+                        <div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.totalPatterns}</div>
                         <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
                             <Brain size={12} />
                             {language === 'pl' ? 'Wzorców' : 'Patterns'}
                         </div>
                     </div>
-                    
+
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20">
                         <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
                             {stats.autoEnabled}
@@ -265,7 +269,7 @@ export const ApprovalPatternManager: React.FC = () => {
                             {language === 'pl' ? 'Automatycznych' : 'Auto-enabled'}
                         </div>
                     </div>
-                    
+
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-500/20">
                         <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
                             {stats.totalApprovals}
@@ -275,11 +279,9 @@ export const ApprovalPatternManager: React.FC = () => {
                             {language === 'pl' ? 'Akceptacji' : 'Approvals'}
                         </div>
                     </div>
-                    
+
                     <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-500/20">
-                        <div className="text-2xl font-bold text-red-700 dark:text-red-400">
-                            {stats.totalRejections}
-                        </div>
+                        <div className="text-2xl font-bold text-red-700 dark:text-red-400">{stats.totalRejections}</div>
                         <div className="text-xs text-red-600 dark:text-red-500 flex items-center gap-1 mt-1">
                             <X size={12} />
                             {language === 'pl' ? 'Odrzuceń' : 'Rejections'}
@@ -294,9 +296,7 @@ export const ApprovalPatternManager: React.FC = () => {
                     <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-indigo-700 dark:text-indigo-300">
                         <p className="font-medium mb-1">
-                            {language === 'pl' 
-                                ? 'Jak działają wzorce?'
-                                : 'How do patterns work?'}
+                            {language === 'pl' ? 'Jak działają wzorce?' : 'How do patterns work?'}
                         </p>
                         <p className="text-indigo-600 dark:text-indigo-400">
                             {language === 'pl'
@@ -312,7 +312,7 @@ export const ApprovalPatternManager: React.FC = () => {
                 <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                     {language === 'pl' ? 'Nauczone Wzorce' : 'Learned Patterns'}
                 </h3>
-                
+
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <RefreshCw size={24} className="animate-spin text-slate-400" />
@@ -321,20 +321,20 @@ export const ApprovalPatternManager: React.FC = () => {
                     <div className="text-center py-12 bg-slate-50 dark:bg-navy-900/30 rounded-xl border border-dashed border-slate-200 dark:border-white/10">
                         <Brain size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
                         <p className="text-slate-500">
-                            {language === 'pl' 
+                            {language === 'pl'
                                 ? 'Brak nauczonych wzorców. Zatwierdzaj lub odrzucaj propozycje AI, aby system się uczył.'
                                 : 'No learned patterns yet. Approve or reject AI proposals to teach the system.'}
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {patterns.map(pattern => (
-                            <div 
+                        {patterns.map((pattern) => (
+                            <div
                                 key={pattern.id}
                                 className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
                             >
                                 {/* Pattern Header */}
-                                <div 
+                                <div
                                     className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                     onClick={() => toggleExpanded(pattern.id)}
                                 >
@@ -349,7 +349,7 @@ export const ApprovalPatternManager: React.FC = () => {
                                             {pattern.decision_count}x
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-3">
                                         {/* Auto-apply toggle */}
                                         <button
@@ -371,11 +371,15 @@ export const ApprovalPatternManager: React.FC = () => {
                                             ) : (
                                                 <ToggleLeft size={14} />
                                             )}
-                                            {pattern.auto_apply 
-                                                ? (language === 'pl' ? 'Auto' : 'Auto')
-                                                : (language === 'pl' ? 'Ręcznie' : 'Manual')}
+                                            {pattern.auto_apply
+                                                ? language === 'pl'
+                                                    ? 'Auto'
+                                                    : 'Auto'
+                                                : language === 'pl'
+                                                  ? 'Ręcznie'
+                                                  : 'Manual'}
                                         </button>
-                                        
+
                                         {/* Delete button */}
                                         <button
                                             onClick={(e) => {
@@ -391,7 +395,7 @@ export const ApprovalPatternManager: React.FC = () => {
                                                 <Trash2 size={16} />
                                             )}
                                         </button>
-                                        
+
                                         {/* Expand/collapse */}
                                         {expandedPatterns.has(pattern.id) ? (
                                             <ChevronUp size={18} className="text-slate-400" />
@@ -400,7 +404,7 @@ export const ApprovalPatternManager: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-                                
+
                                 {/* Expanded Details */}
                                 {expandedPatterns.has(pattern.id) && (
                                     <div className="px-4 pb-4 border-t border-slate-100 dark:border-white/5 pt-3">
@@ -438,7 +442,7 @@ export const ApprovalPatternManager: React.FC = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
                                         {pattern.auto_apply && (
                                             <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                                                 <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
@@ -468,12 +472,4 @@ export const ApprovalPatternManager: React.FC = () => {
 };
 
 export default ApprovalPatternManager;
-
-
-
-
-
-
-
-
 

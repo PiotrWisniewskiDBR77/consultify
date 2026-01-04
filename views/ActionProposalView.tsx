@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../store/useAppStore';
-import { ActionProposalList, ActionProposal } from '../components/ai/ActionProposalList';
-import { ActionProposalDetail } from '../components/ai/ActionProposalDetail';
-import { ActionDecisionDialog } from '../components/ai/ActionDecisionDialog';
-import { ActionAuditTrail, AuditRecord } from '../components/ai/ActionAuditTrail';
-import { History, Brain, Zap, ShieldCheck } from 'lucide-react';
+import { Brain, History, ShieldCheck, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { ActionAuditTrail, AuditRecord } from '../components/ai/ActionAuditTrail';
+import { ActionDecisionDialog } from '../components/ai/ActionDecisionDialog';
+import { ActionProposalDetail } from '../components/ai/ActionProposalDetail';
+import { ActionProposal, ActionProposalList } from '../components/ai/ActionProposalList';
 import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 
 export const ActionProposalView: React.FC = () => {
-    const currentUser = useAppStore(state => state.currentUser);
+    const currentUser = useAppStore((state) => state.currentUser);
     const [proposals, setProposals] = useState<ActionProposal[]>([]);
     const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
     const [selectedProposal, setSelectedProposal] = useState<ActionProposal | null>(null);
@@ -23,10 +24,7 @@ export const ActionProposalView: React.FC = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [propRes, auditRes] = await Promise.all([
-                Api.getAIActionProposals(),
-                Api.getAIActionAudit()
-            ]);
+            const [propRes, auditRes] = await Promise.all([Api.getAIActionProposals(), Api.getAIActionAudit()]);
 
             setProposals(propRes || []);
             setAuditRecords(auditRes || []);
@@ -62,11 +60,13 @@ export const ActionProposalView: React.FC = () => {
             await Api.recordAIActionDecision({
                 proposal_id: selectedProposal.proposal_id,
                 decision: decisionType === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-                reason
+                reason,
             });
 
             toast.dismiss(loadingToast);
-            toast.success(`Proposal ${decisionType === 'APPROVE' ? 'approved and executed' : 'rejected'} successfully.`);
+            toast.success(
+                `Proposal ${decisionType === 'APPROVE' ? 'approved and executed' : 'rejected'} successfully.`,
+            );
 
             // Refresh data
             loadData();
@@ -82,7 +82,7 @@ export const ActionProposalView: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/ai/actions/audit/export?format=${format}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!response.ok) throw new Error('Export failed');
@@ -126,15 +126,23 @@ export const ActionProposalView: React.FC = () => {
                         <Brain size={28} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-navy-900 dark:text-white tracking-tight">AI Advisor Action Center</h1>
-                        <p className="text-slate-500 text-sm font-medium">Algorithmic intelligence governing organizational friction.</p>
+                        <h1 className="text-2xl font-black text-navy-900 dark:text-white tracking-tight">
+                            AI Advisor Action Center
+                        </h1>
+                        <p className="text-slate-500 text-sm font-medium">
+                            Algorithmic intelligence governing organizational friction.
+                        </p>
                     </div>
                 </div>
 
                 <div className="flex gap-4">
                     <div className="px-5 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
-                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-0.5">Pending Proposals</div>
-                        <div className="text-2xl font-black text-indigo-700 dark:text-indigo-400">{proposals.length}</div>
+                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-0.5">
+                            Pending Proposals
+                        </div>
+                        <div className="text-2xl font-black text-indigo-700 dark:text-indigo-400">
+                            {proposals.length}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,16 +152,22 @@ export const ActionProposalView: React.FC = () => {
                 <div className="flex gap-1 p-1 bg-slate-200/50 dark:bg-navy-900/50 rounded-xl w-fit border border-slate-200 dark:border-white/5">
                     <button
                         onClick={() => setActiveTab('PENDING')}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'PENDING' ? 'bg-white dark:bg-navy-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
-                            }`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                            activeTab === 'PENDING'
+                                ? 'bg-white dark:bg-navy-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
+                        }`}
                     >
                         <Zap size={16} />
                         Pending Approvals
                     </button>
                     <button
                         onClick={() => setActiveTab('AUDIT')}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'AUDIT' ? 'bg-white dark:bg-navy-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
-                            }`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                            activeTab === 'AUDIT'
+                                ? 'bg-white dark:bg-navy-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
+                        }`}
                     >
                         <History size={16} />
                         Audit Trail
@@ -169,7 +183,9 @@ export const ActionProposalView: React.FC = () => {
                         <div className="w-1/3 flex flex-col min-h-0">
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center justify-between">
                                 AI Proposals Queue
-                                <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full text-[10px]">{proposals.length}</span>
+                                <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full text-[10px]">
+                                    {proposals.length}
+                                </span>
                             </h3>
                             <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
                                 <ActionProposalList
@@ -193,12 +209,18 @@ export const ActionProposalView: React.FC = () => {
                     <div className="w-full flex flex-col min-h-0 max-w-4xl mx-auto">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-xl font-bold text-navy-900 dark:text-white">Immutable Action Audit</h3>
-                                <p className="text-sm text-slate-500">Every AI intervention is logged with human accountability.</p>
+                                <h3 className="text-xl font-bold text-navy-900 dark:text-white">
+                                    Immutable Action Audit
+                                </h3>
+                                <p className="text-sm text-slate-500">
+                                    Every AI intervention is logged with human accountability.
+                                </p>
                             </div>
                             <div className="p-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-2xl flex items-center gap-3">
                                 <ShieldCheck className="text-emerald-500" size={20} />
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Governed Environment</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                    Governed Environment
+                                </span>
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DemoModeModal } from '../../../components/Landing/DemoModeModal';
+import { DemoModeModal } from '../../components/Landing/DemoModeModal';
 
 describe('DemoModeModal Component', () => {
     const user = userEvent.setup();
@@ -30,6 +30,7 @@ describe('DemoModeModal Component', () => {
         expect(onClose).toHaveBeenCalled();
     });
 });
+
 
 
 

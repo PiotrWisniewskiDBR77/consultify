@@ -14,8 +14,8 @@ const router = express.Router();
 import * as BudgetServiceModule from '../services/budgetService.js';
 const BudgetService = BudgetServiceModule.default || BudgetServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-import { asyncHandler  } from '../src/utils/asyncHandler.js';
-import * as queryHelpers from '../src/utils/queryHelpers.js';
+import { asyncHandler  } from '../dist/utils/asyncHandler.js';
+import * as queryHelpers from '../dist/utils/queryHelpers.js';
 
 router.use(verifyToken);
 
@@ -104,8 +104,8 @@ router.put('/:budgetId', asyncHandler(async (req, res) => {
     params.push(budgetId);
     params.push(orgId);
 
-    const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+    const { getDatabase } = await import('../src/database/index.js');
+
     await new Promise((resolve, reject) => {
         db.run(
             `UPDATE initiative_budgets SET ${setClauses.join(', ')} 
@@ -171,8 +171,8 @@ router.put('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
     params.push(itemId);
     params.push(budgetId);
 
-    const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+    const { getDatabase } = await import('../src/database/index.js');
+
     await new Promise((resolve, reject) => {
         db.run(
             `UPDATE budget_line_items SET ${setClauses.join(', ')} 
@@ -191,8 +191,8 @@ const db = getDatabase();
 router.delete('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
     const { budgetId, itemId } = req.params;
 
-    const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+    const { getDatabase } = await import('../src/database/index.js');
+
     await new Promise((resolve, reject) => {
         db.run(
             `DELETE FROM budget_line_items WHERE id = ? AND budget_id = ?`,
@@ -421,6 +421,7 @@ router.get('/metadata/categories', asyncHandler(async (req, res) => {
 }));
 
 export default router;
+
 
 
 

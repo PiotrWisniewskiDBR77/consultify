@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Check, Copy, Key, Loader2, Shield, Smartphone } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Smartphone, Key, Copy, Check, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface MFASetupProps {
     onComplete: () => void;
@@ -32,9 +32,9 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
             const response = await fetch('/api/mfa/setup', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
@@ -61,10 +61,10 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
             const response = await fetch('/api/mfa/verify-setup', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ token: verificationCode })
+                body: JSON.stringify({ token: verificationCode }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
@@ -130,13 +130,19 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                     {step === 'intro' && (
                         <div className="space-y-4">
                             <p className="text-gray-600 dark:text-gray-300">
-                                {t('mfa.setup.intro', 'Two-factor authentication adds an extra layer of security to your account. You\'ll need your phone to sign in.')}
+                                {t(
+                                    'mfa.setup.intro',
+                                    "Two-factor authentication adds an extra layer of security to your account. You'll need your phone to sign in.",
+                                )}
                             </p>
                             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 space-y-3">
                                 <div className="flex items-center gap-3">
                                     <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                                        {t('mfa.setup.step1', '1. Download an authenticator app (Google Authenticator, Authy, etc.)')}
+                                        {t(
+                                            'mfa.setup.step1',
+                                            '1. Download an authenticator app (Google Authenticator, Authy, etc.)',
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -181,11 +187,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                             {/* QR Code */}
                             <div className="flex justify-center">
                                 <div className="bg-white p-4 rounded-lg shadow-inner">
-                                    <img
-                                        src={setupData.qrCode}
-                                        alt="MFA QR Code"
-                                        className="w-48 h-48"
-                                    />
+                                    <img src={setupData.qrCode} alt="MFA QR Code" className="w-48 h-48" />
                                 </div>
                             </div>
 
@@ -203,7 +205,11 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                                         className="p-2 text-gray-500 hover:text-blue-600 transition"
                                         title="Copy"
                                     >
-                                        {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                                        {copied ? (
+                                            <Check className="w-5 h-5 text-green-500" />
+                                        ) : (
+                                            <Copy className="w-5 h-5" />
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -212,7 +218,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                                 onClick={() => setStep('verify')}
                                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                             >
-                                {t('mfa.setup.next', 'I\'ve scanned the code')}
+                                {t('mfa.setup.next', "I've scanned the code")}
                             </button>
                         </div>
                     )}
@@ -276,7 +282,10 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                                             {t('mfa.setup.saveBackupCodes', 'Save your backup codes!')}
                                         </p>
                                         <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                                            {t('mfa.setup.backupCodesWarning', 'These codes can be used to access your account if you lose your authenticator. Each code can only be used once.')}
+                                            {t(
+                                                'mfa.setup.backupCodesWarning',
+                                                'These codes can be used to access your account if you lose your authenticator. Each code can only be used once.',
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -286,7 +295,10 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                                 <div className="grid grid-cols-2 gap-2">
                                     {backupCodes.map((code, index) => (
-                                        <code key={index} className="text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border dark:border-gray-600 font-mono text-center">
+                                        <code
+                                            key={index}
+                                            className="text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border dark:border-gray-600 font-mono text-center"
+                                        >
                                             {code}
                                         </code>
                                     ))}
@@ -296,7 +308,9 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                                     className="mt-3 w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition"
                                 >
                                     {backupCodesCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                    {backupCodesCopied ? t('common.copied', 'Copied!') : t('mfa.setup.copyAll', 'Copy all codes')}
+                                    {backupCodesCopied
+                                        ? t('common.copied', 'Copied!')
+                                        : t('mfa.setup.copyAll', 'Copy all codes')}
                                 </button>
                             </div>
 
@@ -304,7 +318,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                                 onClick={onComplete}
                                 className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                             >
-                                {t('mfa.setup.done', 'I\'ve saved my backup codes')}
+                                {t('mfa.setup.done', "I've saved my backup codes")}
                             </button>
                         </div>
                     )}

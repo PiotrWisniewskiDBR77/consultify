@@ -1,6 +1,6 @@
 /**
  * Framework Registry
- * 
+ *
  * Centralny rejestr wszystkich frameworków oceny dojrzałości cyfrowej.
  * Każdy framework ma unikalne wymiary, skalę i konfigurację UI.
  */
@@ -67,7 +67,7 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
         legalNoticeType: 'proprietary',
         dimensions: [], // Loaded from drdStructure.ts
     },
-    
+
     SIRI: {
         id: 'SIRI',
         name: 'SIRI',
@@ -80,16 +80,32 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
         scaleMax: 5,
         supportsImport: true,
         supportsManualEntry: true,
-        legalNotice: 'SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.',
+        legalNotice:
+            'SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.',
         legalNoticeType: 'educational',
         dimensions: [], // Loaded from siriStructure.ts
         categories: [
-            { id: 'PROCESS', name: 'Process', description: 'How operations are designed, managed and optimized', dimensionIds: [] },
-            { id: 'TECHNOLOGY', name: 'Technology', description: 'How technology enables smart manufacturing', dimensionIds: [] },
-            { id: 'ORGANIZATION', name: 'Organization', description: 'How people and structure support transformation', dimensionIds: [] },
+            {
+                id: 'PROCESS',
+                name: 'Process',
+                description: 'How operations are designed, managed and optimized',
+                dimensionIds: [],
+            },
+            {
+                id: 'TECHNOLOGY',
+                name: 'Technology',
+                description: 'How technology enables smart manufacturing',
+                dimensionIds: [],
+            },
+            {
+                id: 'ORGANIZATION',
+                name: 'Organization',
+                description: 'How people and structure support transformation',
+                dimensionIds: [],
+            },
         ],
     },
-    
+
     ADMA: {
         id: 'ADMA',
         name: 'ADMA',
@@ -102,7 +118,8 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
         scaleMax: 5,
         supportsImport: true,
         supportsManualEntry: true,
-        legalNotice: 'ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.',
+        legalNotice:
+            'ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.',
         legalNoticeType: 'educational',
         dimensions: [], // Loaded from admaStructure.ts
         categories: [
@@ -113,7 +130,7 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
             { id: 'data_driven', name: 'Data-Driven Services', dimensionIds: [] },
         ],
     },
-    
+
     CMMI: {
         id: 'CMMI',
         name: 'CMMI',
@@ -126,16 +143,27 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
         scaleMax: 5,
         supportsImport: true,
         supportsManualEntry: true,
-        legalNotice: 'CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultify służy celom edukacyjnym.',
+        legalNotice:
+            'CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultify służy celom edukacyjnym.',
         legalNoticeType: 'educational',
         dimensions: [], // Loaded from cmmiStructure.ts
         categories: [
-            { id: 'DOING', name: 'Doing', description: 'Deliver value through development practices', dimensionIds: [] },
-            { id: 'MANAGING', name: 'Managing', description: 'Manage work and resources effectively', dimensionIds: [] },
+            {
+                id: 'DOING',
+                name: 'Doing',
+                description: 'Deliver value through development practices',
+                dimensionIds: [],
+            },
+            {
+                id: 'MANAGING',
+                name: 'Managing',
+                description: 'Manage work and resources effectively',
+                dimensionIds: [],
+            },
             { id: 'ENABLING', name: 'Enabling', description: 'Enable capability and infrastructure', dimensionIds: [] },
         ],
     },
-    
+
     LEAN: {
         id: 'LEAN',
         name: 'Lean 4.0',
@@ -148,13 +176,29 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
         scaleMax: 5,
         supportsImport: false,
         supportsManualEntry: true,
-        legalNotice: 'Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.',
+        legalNotice:
+            'Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.',
         legalNoticeType: 'proprietary',
         dimensions: [], // Loaded from dbr77LeanStructure.ts
         categories: [
-            { id: 'MEASURE', name: 'Pomierz', description: 'Analiza stanu obecnego - procesy i stanowiska', dimensionIds: [] },
-            { id: 'OPTIMIZE', name: 'Zoptymalizuj', description: 'Klasyczne metody Lean - eliminacja marnotrawstwa', dimensionIds: [] },
-            { id: 'AUTOMATE', name: 'Automatyzuj', description: 'Audyt możliwości automatyzacji i AI', dimensionIds: [] },
+            {
+                id: 'MEASURE',
+                name: 'Pomierz',
+                description: 'Analiza stanu obecnego - procesy i stanowiska',
+                dimensionIds: [],
+            },
+            {
+                id: 'OPTIMIZE',
+                name: 'Zoptymalizuj',
+                description: 'Klasyczne metody Lean - eliminacja marnotrawstwa',
+                dimensionIds: [],
+            },
+            {
+                id: 'AUTOMATE',
+                name: 'Automatyzuj',
+                description: 'Audyt możliwości automatyzacji i AI',
+                dimensionIds: [],
+            },
         ],
     },
 };
@@ -181,7 +225,7 @@ export function getAllFrameworks(): FrameworkConfig[] {
  * Get frameworks that support PDF import
  */
 export function getImportableFrameworks(): FrameworkConfig[] {
-    return Object.values(FRAMEWORK_CONFIGS).filter(f => f.supportsImport);
+    return Object.values(FRAMEWORK_CONFIGS).filter((f) => f.supportsImport);
 }
 
 /**
@@ -213,13 +257,7 @@ export function getFrameworkColorClasses(id: FrameworkId): {
 /**
  * Normalize score from one scale to another
  */
-export function normalizeScore(
-    score: number,
-    fromMin: number,
-    fromMax: number,
-    toMin: number,
-    toMax: number
-): number {
+export function normalizeScore(score: number, fromMin: number, fromMax: number, toMin: number, toMax: number): number {
     if (fromMax === fromMin) return toMin;
     const normalized = ((score - fromMin) / (fromMax - fromMin)) * (toMax - toMin) + toMin;
     return Math.round(normalized * 10) / 10; // Round to 1 decimal
@@ -243,13 +281,10 @@ export function calculateGap(current: number, target: number): number {
 /**
  * Calculate overall maturity from dimension scores
  */
-export function calculateOverallMaturity(
-    scores: Record<string, number>,
-    weights?: Record<string, number>
-): number {
+export function calculateOverallMaturity(scores: Record<string, number>, weights?: Record<string, number>): number {
     const entries = Object.entries(scores);
     if (entries.length === 0) return 0;
-    
+
     if (weights) {
         let weightedSum = 0;
         let totalWeight = 0;
@@ -260,18 +295,10 @@ export function calculateOverallMaturity(
         });
         return totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 10) / 10 : 0;
     }
-    
+
     const sum = entries.reduce((acc, [, score]) => acc + score, 0);
     return Math.round((sum / entries.length) * 10) / 10;
 }
 
 export default FRAMEWORK_CONFIGS;
-
-
-
-
-
-
-
-
 

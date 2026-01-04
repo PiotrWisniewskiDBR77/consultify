@@ -1,22 +1,23 @@
 /**
  * AI Cost Dashboard Component
- * 
+ *
  * Admin dashboard for monitoring AI usage, costs, and performance.
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-    DollarSign, 
-    TrendingUp, 
-    Zap, 
-    Users, 
+import {
+    Activity,
     AlertTriangle,
-    RefreshCw,
-    Clock,
     BarChart3,
+    Clock,
+    DollarSign,
     PieChart,
-    Activity
+    RefreshCw,
+    TrendingUp,
+    Users,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import api from '../../services/api';
 
 interface CostData {
@@ -78,7 +79,7 @@ export function AICostDashboard() {
             const [costsRes, usageRes, quotasRes] = await Promise.all([
                 api.get(`/ai-analytics/costs?period=${period}&groupBy=capability`),
                 api.get(`/ai-analytics/usage?period=${period}`),
-                api.get('/ai-analytics/quotas')
+                api.get('/ai-analytics/quotas'),
             ]);
 
             if (costsRes.data.success) setCostData(costsRes.data);
@@ -99,7 +100,7 @@ export function AICostDashboard() {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
-            minimumFractionDigits: 2
+            minimumFractionDigits: 2,
         }).format(amount || 0);
     };
 
@@ -129,12 +130,8 @@ export function AICostDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        AI Cost Dashboard
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Monitor AI usage, costs, and performance
-                    </p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Cost Dashboard</h2>
+                    <p className="text-sm text-gray-500">Monitor AI usage, costs, and performance</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <select
@@ -146,10 +143,7 @@ export function AICostDashboard() {
                         <option value="30d">Last 30 days</option>
                         <option value="90d">Last 90 days</option>
                     </select>
-                    <button
-                        onClick={fetchData}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                    >
+                    <button onClick={fetchData} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                         <RefreshCw className="w-5 h-5" />
                     </button>
                 </div>
@@ -175,7 +169,7 @@ export function AICostDashboard() {
                                 <span>{costData.budget.utilization}%</span>
                             </div>
                             <div className="w-full h-2 bg-blue-400 rounded-full">
-                                <div 
+                                <div
                                     className="h-full bg-white rounded-full"
                                     style={{ width: `${Math.min(parseFloat(costData.budget.utilization), 100)}%` }}
                                 />
@@ -215,9 +209,7 @@ export function AICostDashboard() {
                             <Clock className="w-6 h-6 text-green-600" />
                         </div>
                     </div>
-                    <p className="text-sm text-gray-500 mt-3">
-                        {costData?.totals?.successRate}% success rate
-                    </p>
+                    <p className="text-sm text-gray-500 mt-3">{costData?.totals?.successRate}% success rate</p>
                 </div>
 
                 {/* Active Users */}
@@ -233,9 +225,7 @@ export function AICostDashboard() {
                             <Users className="w-6 h-6 text-orange-600" />
                         </div>
                     </div>
-                    <p className="text-sm text-gray-500 mt-3">
-                        using AI features
-                    </p>
+                    <p className="text-sm text-gray-500 mt-3">using AI features</p>
                 </div>
             </div>
 
@@ -254,16 +244,14 @@ export function AICostDashboard() {
                                     {cap.capability || 'other'}
                                 </div>
                                 <div className="flex-1 h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                         className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-                                        style={{ 
-                                            width: `${(cap.count / (usageData?.capabilityDistribution?.[0]?.count || 1)) * 100}%`
+                                        style={{
+                                            width: `${(cap.count / (usageData?.capabilityDistribution?.[0]?.count || 1)) * 100}%`,
                                         }}
                                     />
                                 </div>
-                                <div className="w-16 text-right text-sm font-medium">
-                                    {formatNumber(cap.count)}
-                                </div>
+                                <div className="w-16 text-right text-sm font-medium">{formatNumber(cap.count)}</div>
                             </div>
                         ))}
                     </div>
@@ -285,9 +273,7 @@ export function AICostDashboard() {
                                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                         {user.user_name || user.email || 'Unknown'}
                                     </p>
-                                    <p className="text-xs text-gray-500">
-                                        {formatNumber(user.request_count)} requests
-                                    </p>
+                                    <p className="text-xs text-gray-500">{formatNumber(user.request_count)} requests</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm font-medium">{formatCurrency(user.total_cost)}</p>
@@ -310,31 +296,52 @@ export function AICostDashboard() {
                         {/* User Quota */}
                         {quotaData.userQuota && (
                             <div>
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Your Quota
-                                </p>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Quota</p>
                                 <div className="space-y-2">
                                     <div>
                                         <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                            <span>Daily ({formatNumber(quotaData.userQuota.dailyUsed)} / {formatNumber(quotaData.userQuota.dailyLimit)})</span>
-                                            <span>{Math.round((quotaData.userQuota.dailyUsed / quotaData.userQuota.dailyLimit) * 100)}%</span>
+                                            <span>
+                                                Daily ({formatNumber(quotaData.userQuota.dailyUsed)} /{' '}
+                                                {formatNumber(quotaData.userQuota.dailyLimit)})
+                                            </span>
+                                            <span>
+                                                {Math.round(
+                                                    (quotaData.userQuota.dailyUsed / quotaData.userQuota.dailyLimit) *
+                                                        100,
+                                                )}
+                                                %
+                                            </span>
                                         </div>
                                         <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                            <div 
+                                            <div
                                                 className="h-full bg-blue-500 rounded-full transition-all"
-                                                style={{ width: `${Math.min((quotaData.userQuota.dailyUsed / quotaData.userQuota.dailyLimit) * 100, 100)}%` }}
+                                                style={{
+                                                    width: `${Math.min((quotaData.userQuota.dailyUsed / quotaData.userQuota.dailyLimit) * 100, 100)}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                            <span>Monthly ({formatNumber(quotaData.userQuota.monthlyUsed)} / {formatNumber(quotaData.userQuota.monthlyLimit)})</span>
-                                            <span>{Math.round((quotaData.userQuota.monthlyUsed / quotaData.userQuota.monthlyLimit) * 100)}%</span>
+                                            <span>
+                                                Monthly ({formatNumber(quotaData.userQuota.monthlyUsed)} /{' '}
+                                                {formatNumber(quotaData.userQuota.monthlyLimit)})
+                                            </span>
+                                            <span>
+                                                {Math.round(
+                                                    (quotaData.userQuota.monthlyUsed /
+                                                        quotaData.userQuota.monthlyLimit) *
+                                                        100,
+                                                )}
+                                                %
+                                            </span>
                                         </div>
                                         <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                            <div 
+                                            <div
                                                 className="h-full bg-purple-500 rounded-full transition-all"
-                                                style={{ width: `${Math.min((quotaData.userQuota.monthlyUsed / quotaData.userQuota.monthlyLimit) * 100, 100)}%` }}
+                                                style={{
+                                                    width: `${Math.min((quotaData.userQuota.monthlyUsed / quotaData.userQuota.monthlyLimit) * 100, 100)}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -351,25 +358,49 @@ export function AICostDashboard() {
                                 <div className="space-y-2">
                                     <div>
                                         <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                            <span>Daily ({formatNumber(quotaData.organizationQuota.dailyUsed)} / {formatNumber(quotaData.organizationQuota.dailyLimit)})</span>
-                                            <span>{Math.round((quotaData.organizationQuota.dailyUsed / quotaData.organizationQuota.dailyLimit) * 100)}%</span>
+                                            <span>
+                                                Daily ({formatNumber(quotaData.organizationQuota.dailyUsed)} /{' '}
+                                                {formatNumber(quotaData.organizationQuota.dailyLimit)})
+                                            </span>
+                                            <span>
+                                                {Math.round(
+                                                    (quotaData.organizationQuota.dailyUsed /
+                                                        quotaData.organizationQuota.dailyLimit) *
+                                                        100,
+                                                )}
+                                                %
+                                            </span>
                                         </div>
                                         <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                            <div 
+                                            <div
                                                 className="h-full bg-green-500 rounded-full transition-all"
-                                                style={{ width: `${Math.min((quotaData.organizationQuota.dailyUsed / quotaData.organizationQuota.dailyLimit) * 100, 100)}%` }}
+                                                style={{
+                                                    width: `${Math.min((quotaData.organizationQuota.dailyUsed / quotaData.organizationQuota.dailyLimit) * 100, 100)}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                            <span>Monthly ({formatNumber(quotaData.organizationQuota.monthlyUsed)} / {formatNumber(quotaData.organizationQuota.monthlyLimit)})</span>
-                                            <span>{Math.round((quotaData.organizationQuota.monthlyUsed / quotaData.organizationQuota.monthlyLimit) * 100)}%</span>
+                                            <span>
+                                                Monthly ({formatNumber(quotaData.organizationQuota.monthlyUsed)} /{' '}
+                                                {formatNumber(quotaData.organizationQuota.monthlyLimit)})
+                                            </span>
+                                            <span>
+                                                {Math.round(
+                                                    (quotaData.organizationQuota.monthlyUsed /
+                                                        quotaData.organizationQuota.monthlyLimit) *
+                                                        100,
+                                                )}
+                                                %
+                                            </span>
                                         </div>
                                         <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                            <div 
+                                            <div
                                                 className="h-full bg-orange-500 rounded-full transition-all"
-                                                style={{ width: `${Math.min((quotaData.organizationQuota.monthlyUsed / quotaData.organizationQuota.monthlyLimit) * 100, 100)}%` }}
+                                                style={{
+                                                    width: `${Math.min((quotaData.organizationQuota.monthlyUsed / quotaData.organizationQuota.monthlyLimit) * 100, 100)}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -385,12 +416,10 @@ export function AICostDashboard() {
                 <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                        <p className="font-medium text-amber-800 dark:text-amber-200">
-                            Budget Alert
-                        </p>
+                        <p className="font-medium text-amber-800 dark:text-amber-200">Budget Alert</p>
                         <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                            You've used {costData.budget.utilization}% of your monthly AI budget 
-                            ({formatCurrency(costData.budget.used)} of {formatCurrency(costData.budget.monthly)}).
+                            You've used {costData.budget.utilization}% of your monthly AI budget (
+                            {formatCurrency(costData.budget.used)} of {formatCurrency(costData.budget.monthly)}).
                             Consider optimizing usage or upgrading your plan.
                         </p>
                     </div>
@@ -401,12 +430,4 @@ export function AICostDashboard() {
 }
 
 export default AICostDashboard;
-
-
-
-
-
-
-
-
 

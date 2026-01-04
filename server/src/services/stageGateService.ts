@@ -1,14 +1,15 @@
 /**
  * Stage Gate Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/stageGateService.js (CommonJS) to TypeScript (ES Modules)
  * Phase transition control - Step 3: PMO Objects, Statuses & Stage Gates
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -16,18 +17,18 @@ import * as DbPromise from '../utils/DbPromise.js';
 // ==========================================
 
 export const GATE_TYPES = {
-    READINESS_GATE: 'READINESS_GATE',     // Context → Assessment
-    DESIGN_GATE: 'DESIGN_GATE',           // Assessment → Initiatives
-    PLANNING_GATE: 'PLANNING_GATE',       // Initiatives → Roadmap
-    EXECUTION_GATE: 'EXECUTION_GATE',     // Roadmap → Execution
-    CLOSURE_GATE: 'CLOSURE_GATE'          // Execution → Stabilization
+    READINESS_GATE: 'READINESS_GATE', // Context → Assessment
+    DESIGN_GATE: 'DESIGN_GATE', // Assessment → Initiatives
+    PLANNING_GATE: 'PLANNING_GATE', // Initiatives → Roadmap
+    EXECUTION_GATE: 'EXECUTION_GATE', // Roadmap → Execution
+    CLOSURE_GATE: 'CLOSURE_GATE', // Execution → Stabilization
 } as const;
 
-export type GateType = typeof GATE_TYPES[keyof typeof GATE_TYPES];
+export type GateType = (typeof GATE_TYPES)[keyof typeof GATE_TYPES];
 
 export const PHASE_ORDER = ['Context', 'Assessment', 'Initiatives', 'Roadmap', 'Execution', 'Stabilization'] as const;
 
-export type Phase = typeof PHASE_ORDER[number];
+export type Phase = (typeof PHASE_ORDER)[number];
 
 interface GateCriteria {
     criterion: string;
@@ -67,11 +68,11 @@ interface Project {
 // ==========================================
 
 const GATE_MAP: Record<string, GateType> = {
-    'Context_Assessment': GATE_TYPES.READINESS_GATE,
-    'Assessment_Initiatives': GATE_TYPES.DESIGN_GATE,
-    'Initiatives_Roadmap': GATE_TYPES.PLANNING_GATE,
-    'Roadmap_Execution': GATE_TYPES.EXECUTION_GATE,
-    'Execution_Stabilization': GATE_TYPES.CLOSURE_GATE
+    Context_Assessment: GATE_TYPES.READINESS_GATE,
+    Assessment_Initiatives: GATE_TYPES.DESIGN_GATE,
+    Initiatives_Roadmap: GATE_TYPES.PLANNING_GATE,
+    Roadmap_Execution: GATE_TYPES.EXECUTION_GATE,
+    Execution_Stabilization: GATE_TYPES.CLOSURE_GATE,
 };
 
 const GATE_CRITERIA: Record<GateType, GateCriteria[]> = {
@@ -79,27 +80,27 @@ const GATE_CRITERIA: Record<GateType, GateCriteria[]> = {
         { criterion: 'Strategic goals defined', field: 'hasStrategicGoals' },
         { criterion: 'Challenges documented', field: 'hasChallenges' },
         { criterion: 'Constraints identified', field: 'hasConstraints' },
-        { criterion: 'Context readiness score >= 80%', field: 'contextReadinessOk' }
+        { criterion: 'Context readiness score >= 80%', field: 'contextReadinessOk' },
     ],
     [GATE_TYPES.DESIGN_GATE]: [
         { criterion: 'All axes assessed', field: 'assessmentComplete' },
-        { criterion: 'Gap analysis reviewed', field: 'gapAnalysisReviewed' }
+        { criterion: 'Gap analysis reviewed', field: 'gapAnalysisReviewed' },
     ],
     [GATE_TYPES.PLANNING_GATE]: [
         { criterion: 'At least one initiative defined', field: 'hasInitiatives' },
         { criterion: 'All initiatives have owners', field: 'allInitiativesOwned' },
-        { criterion: 'Initiative priorities set', field: 'prioritiesSet' }
+        { criterion: 'Initiative priorities set', field: 'prioritiesSet' },
     ],
     [GATE_TYPES.EXECUTION_GATE]: [
         { criterion: 'Roadmap baselined', field: 'roadmapBaselined' },
         { criterion: 'All initiatives assigned to waves', field: 'allAssignedToWaves' },
-        { criterion: 'No dependency conflicts', field: 'noDependencyConflicts' }
+        { criterion: 'No dependency conflicts', field: 'noDependencyConflicts' },
     ],
     [GATE_TYPES.CLOSURE_GATE]: [
         { criterion: 'All initiatives completed or cancelled', field: 'allInitiativesClosed' },
         { criterion: 'No blocking decisions pending', field: 'noBlockingDecisions' },
-        { criterion: 'KPIs measured', field: 'kpisMeasured' }
-    ]
+        { criterion: 'KPIs measured', field: 'kpisMeasured' },
+    ],
 };
 
 // ==========================================
@@ -145,18 +146,18 @@ export async function evaluateGate(projectId: string, gateType: GateType): Promi
         results.push({
             criterion: crit.criterion,
             isMet,
-            evidence: isMet ? 'Verified' : 'Not met'
+            evidence: isMet ? 'Verified' : 'Not met',
         });
     }
 
-    const allMet = results.every(r => r.isMet);
+    const allMet = results.every((r) => r.isMet);
 
     return {
         gateType,
         projectId,
         status: allMet ? 'READY' : 'NOT_READY',
         completionCriteria: results,
-        missingElements: results.filter(r => !r.isMet).map(r => r.criterion)
+        missingElements: results.filter((r) => !r.isMet).map((r) => r.criterion),
     };
 }
 
@@ -166,11 +167,23 @@ export async function evaluateGate(projectId: string, gateType: GateType): Promi
 async function evaluateCriterion(projectId: string, field: string): Promise<boolean> {
     switch (field) {
         case 'hasStrategicGoals':
-            return await checkContextField(projectId, 'strategicGoals', arr => arr && Array.isArray(arr) && arr.length > 0);
+            return await checkContextField(
+                projectId,
+                'strategicGoals',
+                (arr) => arr && Array.isArray(arr) && arr.length > 0,
+            );
         case 'hasChallenges':
-            return await checkContextField(projectId, 'challenges', arr => arr && Array.isArray(arr) && arr.length > 0);
+            return await checkContextField(
+                projectId,
+                'challenges',
+                (arr) => arr && Array.isArray(arr) && arr.length > 0,
+            );
         case 'hasConstraints':
-            return await checkContextField(projectId, 'constraints', arr => arr && Array.isArray(arr) && arr.length > 0);
+            return await checkContextField(
+                projectId,
+                'constraints',
+                (arr) => arr && Array.isArray(arr) && arr.length > 0,
+            );
         case 'contextReadinessOk':
             return await checkContextReadiness(projectId);
         case 'assessmentComplete':
@@ -178,7 +191,7 @@ async function evaluateCriterion(projectId: string, field: string): Promise<bool
         case 'gapAnalysisReviewed':
             return true; // Placeholder - would check review flag
         case 'hasInitiatives':
-            return await countInitiatives(projectId) > 0;
+            return (await countInitiatives(projectId)) > 0;
         case 'allInitiativesOwned':
             return await checkAllInitiativesHaveOwners(projectId);
         case 'prioritiesSet':
@@ -194,16 +207,24 @@ async function evaluateCriterion(projectId: string, field: string): Promise<bool
         case 'noBlockingDecisions':
             return await checkNoBlockingDecisions(projectId);
         case 'kpisMeasured':
-            return await countKPIs(projectId) > 0;
+            return (await countKPIs(projectId)) > 0;
         default:
             return false;
     }
 }
 
 // Helper methods
-async function checkContextField(projectId: string, field: string, validator: (value: unknown) => boolean): Promise<boolean> {
+async function checkContextField(
+    projectId: string,
+    field: string,
+    validator: (value: unknown) => boolean,
+): Promise<boolean> {
     try {
-        const row = await DbPromise.get<{ context_data?: string }>(db, `SELECT context_data FROM projects WHERE id = ?`, [projectId]);
+        const row = await DbPromise.get<{ context_data?: string }>(
+            db,
+            `SELECT context_data FROM projects WHERE id = ?`,
+            [projectId],
+        );
         if (!row) return false;
         const ctx = JSON.parse(row.context_data || '{}');
         return !!validator(ctx[field]);
@@ -215,7 +236,11 @@ async function checkContextField(projectId: string, field: string, validator: (v
 async function checkContextReadiness(projectId: string): Promise<boolean> {
     // Simplified check - would use ContextService.calculateReadiness
     try {
-        const row = await DbPromise.get<{ context_data?: string }>(db, `SELECT context_data FROM projects WHERE id = ?`, [projectId]);
+        const row = await DbPromise.get<{ context_data?: string }>(
+            db,
+            `SELECT context_data FROM projects WHERE id = ?`,
+            [projectId],
+        );
         if (!row) return false;
         const ctx = JSON.parse(row.context_data || '{}');
         const hasGoals = ctx.strategicGoals && Array.isArray(ctx.strategicGoals) && ctx.strategicGoals.length > 0;
@@ -228,7 +253,11 @@ async function checkContextReadiness(projectId: string): Promise<boolean> {
 
 async function checkAssessmentComplete(projectId: string): Promise<boolean> {
     try {
-        const row = await DbPromise.get<{ is_complete?: number }>(db, `SELECT is_complete FROM maturity_assessments WHERE project_id = ?`, [projectId]);
+        const row = await DbPromise.get<{ is_complete?: number }>(
+            db,
+            `SELECT is_complete FROM maturity_assessments WHERE project_id = ?`,
+            [projectId],
+        );
         return row ? row.is_complete === 1 : false;
     } catch {
         return false;
@@ -237,7 +266,11 @@ async function checkAssessmentComplete(projectId: string): Promise<boolean> {
 
 async function countInitiatives(projectId: string): Promise<number> {
     try {
-        const row = await DbPromise.get<{ cnt: number }>(db, `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ?`, [projectId]);
+        const row = await DbPromise.get<{ cnt: number }>(
+            db,
+            `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ?`,
+            [projectId],
+        );
         return row ? row.cnt : 0;
     } catch {
         return 0;
@@ -249,7 +282,7 @@ async function checkAllInitiativesHaveOwners(projectId: string): Promise<boolean
         const row = await DbPromise.get<{ cnt: number }>(
             db,
             `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND (owner_business_id IS NULL OR owner_business_id = '')`,
-            [projectId]
+            [projectId],
         );
         return row ? row.cnt === 0 : false;
     } catch {
@@ -262,7 +295,7 @@ async function checkRoadmapBaselined(projectId: string): Promise<boolean> {
         const row = await DbPromise.get<{ cnt: number }>(
             db,
             `SELECT COUNT(*) as cnt FROM roadmap_waves WHERE project_id = ? AND is_baselined = 1`,
-            [projectId]
+            [projectId],
         );
         return row ? row.cnt > 0 : false;
     } catch {
@@ -275,7 +308,7 @@ async function checkAllInWaves(projectId: string): Promise<boolean> {
         const row = await DbPromise.get<{ cnt: number }>(
             db,
             `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND (wave_id IS NULL OR wave_id = '')`,
-            [projectId]
+            [projectId],
         );
         return row ? row.cnt === 0 : false;
     } catch {
@@ -288,7 +321,7 @@ async function checkAllInitiativesClosed(projectId: string): Promise<boolean> {
         const row = await DbPromise.get<{ cnt: number }>(
             db,
             `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('DONE', 'CANCELLED')`,
-            [projectId]
+            [projectId],
         );
         return row ? row.cnt === 0 : false;
     } catch {
@@ -301,7 +334,7 @@ async function checkNoBlockingDecisions(projectId: string): Promise<boolean> {
         const row = await DbPromise.get<{ cnt: number }>(
             db,
             `SELECT COUNT(*) as cnt FROM decisions WHERE project_id = ? AND status = 'PENDING' AND required = 1`,
-            [projectId]
+            [projectId],
         );
         return row ? row.cnt === 0 : true;
     } catch {
@@ -311,7 +344,11 @@ async function checkNoBlockingDecisions(projectId: string): Promise<boolean> {
 
 async function countKPIs(projectId: string): Promise<number> {
     try {
-        const row = await DbPromise.get<{ cnt: number }>(db, `SELECT COUNT(*) as cnt FROM kpi_results WHERE project_id = ?`, [projectId]);
+        const row = await DbPromise.get<{ cnt: number }>(
+            db,
+            `SELECT COUNT(*) as cnt FROM kpi_results WHERE project_id = ?`,
+            [projectId],
+        );
         return row ? row.cnt : 0;
     } catch {
         return 0;
@@ -321,9 +358,14 @@ async function countKPIs(projectId: string): Promise<number> {
 /**
  * Record gate passage
  */
-export async function passGate(projectId: string, gateType: GateType, userId: string, notes?: string): Promise<GatePassageResult> {
+export async function passGate(
+    projectId: string,
+    gateType: GateType,
+    userId: string,
+    notes?: string,
+): Promise<GatePassageResult> {
     const id = uuidv4();
-    const gateKey = Object.keys(GATE_MAP).find(k => GATE_MAP[k] === gateType);
+    const gateKey = Object.keys(GATE_MAP).find((k) => GATE_MAP[k] === gateType);
     const fromPhase = gateKey?.split('_')[0] as Phase | undefined;
     const toPhase = gateKey?.split('_')[1] as Phase | undefined;
 
@@ -341,7 +383,7 @@ export async function passGate(projectId: string, gateType: GateType, userId: st
         id,
         gateType,
         status: 'PASSED',
-        toPhase
+        toPhase,
     };
 }
 
@@ -352,7 +394,7 @@ const StageGateService = {
     getGateType,
     evaluateGate,
     passGate,
-    _setDb: setDb // For testing
+    _setDb: setDb, // For testing
 };
 
 export default StageGateService;

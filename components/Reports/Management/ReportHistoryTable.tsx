@@ -3,22 +3,23 @@
  * Shows archive of generated reports with filters
  */
 
-import React from 'react';
-import { 
-    FileText, 
-    Download, 
-    Eye, 
-    Share2,
+import {
     Calendar,
-    User,
-    Filter,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
-    ChevronsRight
+    ChevronsRight,
+    Download,
+    Eye,
+    FileText,
+    Filter,
+    Share2,
+    User,
 } from 'lucide-react';
-import { ManagementReportType, ManagementReportScope, ManagementReportStatus } from '../../../types';
+import React from 'react';
+
+import { ManagementReportScope, ManagementReportStatus, ManagementReportType } from '../../../types';
 import { ReportHistoryRowSkeleton } from './shared/ReportSkeleton';
 
 interface ReportHistoryItem {
@@ -43,7 +44,11 @@ interface ReportHistoryTableProps {
         scope?: ManagementReportScope;
         status?: ManagementReportStatus;
     };
-    onFilterChange?: (filters: { reportType?: ManagementReportType; scope?: ManagementReportScope; status?: ManagementReportStatus }) => void;
+    onFilterChange?: (filters: {
+        reportType?: ManagementReportType;
+        scope?: ManagementReportScope;
+        status?: ManagementReportStatus;
+    }) => void;
     // Pagination props
     page?: number;
     pageSize?: number;
@@ -59,18 +64,24 @@ interface ReportHistoryTableProps {
 
 const reportTypeLabels = {
     TEAM_MEETING: { label: 'Team Meeting', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-    STEERING_COMMITTEE: { label: 'Steering Committee', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' }
+    STEERING_COMMITTEE: {
+        label: 'Steering Committee',
+        color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+    },
 };
 
 const scopeLabels = {
     PROJECT: { label: 'Project', color: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300' },
-    PORTFOLIO: { label: 'Portfolio', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' }
+    PORTFOLIO: {
+        label: 'Portfolio',
+        color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    },
 };
 
 const statusLabels = {
     DRAFT: { label: 'Draft', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
     FINAL: { label: 'Final', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-    ARCHIVED: { label: 'Archived', color: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' }
+    ARCHIVED: { label: 'Archived', color: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' },
 };
 
 export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
@@ -86,7 +97,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
     onDownloadPDF,
     onDownloadPPTX,
     onShare,
-    className = ''
+    className = '',
 }) => {
     const totalPages = Math.ceil(total / pageSize);
     const canGoPrev = page > 1;
@@ -98,7 +109,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
         }
     };
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}
+        >
             {/* Header with filters */}
             <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5 flex flex-wrap items-center justify-between gap-4">
                 <h3 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
@@ -112,40 +125,61 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 {onFilterChange && (
                     <div className="flex items-center gap-2">
                         <Filter size={14} className="text-slate-400" />
-                        
+
                         {/* Type Filter */}
                         <div className="relative">
                             <select
                                 value={filters.reportType || ''}
-                                onChange={(e) => onFilterChange({ ...filters, reportType: e.target.value as ManagementReportType || undefined })}
+                                onChange={(e) =>
+                                    onFilterChange({
+                                        ...filters,
+                                        reportType: (e.target.value as ManagementReportType) || undefined,
+                                    })
+                                }
                                 className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                             >
                                 <option value="">All Types</option>
                                 <option value="TEAM_MEETING">Team Meeting</option>
                                 <option value="STEERING_COMMITTEE">Steering Committee</option>
                             </select>
-                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <ChevronDown
+                                size={14}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            />
                         </div>
 
                         {/* Scope Filter */}
                         <div className="relative">
                             <select
                                 value={filters.scope || ''}
-                                onChange={(e) => onFilterChange({ ...filters, scope: e.target.value as ManagementReportScope || undefined })}
+                                onChange={(e) =>
+                                    onFilterChange({
+                                        ...filters,
+                                        scope: (e.target.value as ManagementReportScope) || undefined,
+                                    })
+                                }
                                 className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                             >
                                 <option value="">All Scopes</option>
                                 <option value="PROJECT">Project</option>
                                 <option value="PORTFOLIO">Portfolio</option>
                             </select>
-                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <ChevronDown
+                                size={14}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            />
                         </div>
 
                         {/* Status Filter */}
                         <div className="relative">
                             <select
                                 value={filters.status || ''}
-                                onChange={(e) => onFilterChange({ ...filters, status: e.target.value as ManagementReportStatus || undefined })}
+                                onChange={(e) =>
+                                    onFilterChange({
+                                        ...filters,
+                                        status: (e.target.value as ManagementReportStatus) || undefined,
+                                    })
+                                }
                                 className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                             >
                                 <option value="">All Status</option>
@@ -153,7 +187,10 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                                 <option value="FINAL">Final</option>
                                 <option value="ARCHIVED">Archived</option>
                             </select>
-                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <ChevronDown
+                                size={14}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            />
                         </div>
                     </div>
                 )}
@@ -165,12 +202,24 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-navy-800/50">
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Scope</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Generated</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Title
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Scope
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Generated
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -183,23 +232,40 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     <div className="p-8 text-center">
                         <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
                         <p className="text-slate-500 dark:text-slate-400">No reports found.</p>
-                        <p className="text-sm text-slate-400 dark:text-slate-500">Generate your first report to see it here.</p>
+                        <p className="text-sm text-slate-400 dark:text-slate-500">
+                            Generate your first report to see it here.
+                        </p>
                     </div>
                 ) : (
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-navy-800/50">
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Scope</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Generated</th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Title
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Scope
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Generated
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                             {reports.map((report) => (
-                                <tr key={report.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                <tr
+                                    key={report.id}
+                                    className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                >
                                     <td className="px-4 py-3">
                                         <div>
                                             <div className="font-medium text-navy-900 dark:text-white">
@@ -213,17 +279,23 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded ${reportTypeLabels[report.reportType]?.color}`}>
+                                        <span
+                                            className={`px-2 py-1 text-xs font-medium rounded ${reportTypeLabels[report.reportType]?.color}`}
+                                        >
                                             {reportTypeLabels[report.reportType]?.label}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded ${scopeLabels[report.scope]?.color}`}>
+                                        <span
+                                            className={`px-2 py-1 text-xs font-medium rounded ${scopeLabels[report.scope]?.color}`}
+                                        >
                                             {scopeLabels[report.scope]?.label}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded ${statusLabels[report.status]?.color}`}>
+                                        <span
+                                            className={`px-2 py-1 text-xs font-medium rounded ${statusLabels[report.status]?.color}`}
+                                        >
                                             {statusLabels[report.status]?.label}
                                         </span>
                                     </td>
@@ -288,7 +360,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
             {totalPages > 1 && !loading && (
                 <div className="px-4 py-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                     <div className="text-sm text-slate-500 dark:text-slate-400">
-                        Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} reports
+                        Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total} reports
                     </div>
                     <div className="flex items-center gap-1">
                         <button
@@ -307,7 +379,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                         >
                             <ChevronLeft size={16} className="text-slate-500 dark:text-slate-400" />
                         </button>
-                        
+
                         {/* Page numbers */}
                         <div className="flex items-center gap-1 px-2">
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -361,4 +433,3 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
 };
 
 export default ReportHistoryTable;
-

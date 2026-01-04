@@ -1,6 +1,7 @@
-import { getDatabase } from '../database/Database.js';
-import { v4 as uuidv4 } from 'uuid';
 import Stripe from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../../database/Database.js';
 import type { BillingServiceDependencies } from './types.js';
 
 export class BillingDependencyLoader {
@@ -18,7 +19,7 @@ export class BillingDependencyLoader {
             if (process.env.STRIPE_SECRET_KEY) {
                 try {
                     stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-                        apiVersion: '2025-12-15.clover' as any
+                        apiVersion: '2025-12-15.clover' as any,
                     });
                 } catch (error: unknown) {
                     console.warn('[BillingDependencyLoader] Stripe initialization failed:', error);
@@ -28,7 +29,7 @@ export class BillingDependencyLoader {
             this.#deps = {
                 db,
                 uuidv4,
-                stripe
+                stripe,
             };
         })();
 
@@ -39,7 +40,7 @@ export class BillingDependencyLoader {
         if (!this.#deps) throw new Error('Dependencies not initialized');
         this.#deps = {
             ...this.#deps,
-            ...newDeps
+            ...newDeps,
         };
     }
 

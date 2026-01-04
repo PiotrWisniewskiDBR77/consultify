@@ -1,26 +1,27 @@
 /**
  * AuditLogViewer Component
- * 
+ *
  * Table with filters for viewing AI settings changes.
  */
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    History, 
-    Filter, 
-    Search, 
-    ChevronDown, 
-    Clock,
-    User,
-    Settings,
+import { AnimatePresence, motion } from 'framer-motion';
+import {
     ArrowRight,
-    RefreshCw,
+    ChevronDown,
+    Clock,
     Download,
-    X
+    Filter,
+    History,
+    RefreshCw,
+    Search,
+    Settings,
+    User,
+    X,
 } from 'lucide-react';
-import { AISettingsAuditEntry } from '../../types';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
+import { AISettingsAuditEntry } from '../../types';
 
 interface AuditLogViewerProps {
     level?: 'superadmin' | 'admin' | 'user';
@@ -37,12 +38,12 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
     limit = 50,
     showFilters = true,
     showExport = false,
-    className = ''
+    className = '',
 }) => {
     const [entries, setEntries] = useState<AISettingsAuditEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     // Filters
     const [filterLevel, setFilterLevel] = useState<string>(level || '');
     const [filterSearch, setFilterSearch] = useState('');
@@ -56,15 +57,15 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             if (filterLevel) params.append('level', filterLevel);
             if (targetId) params.append('targetId', targetId);
             params.append('limit', limit.toString());
-            
+
             const response = await fetch(`/api/ai-settings/audit?${params}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
-            
+
             if (!response.ok) throw new Error('Failed to fetch audit log');
-            
+
             const data = await response.json();
             setEntries(data);
         } catch (err) {
@@ -78,7 +79,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         fetchAuditLog();
     }, [filterLevel, targetId, limit]);
 
-    const filteredEntries = entries.filter(entry => {
+    const filteredEntries = entries.filter((entry) => {
         if (filterSearch) {
             const search = filterSearch.toLowerCase();
             return (
@@ -96,7 +97,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         }).format(date);
     };
 
@@ -109,25 +110,29 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
     const getLevelColor = (lvl: string) => {
         switch (lvl) {
-            case 'superadmin': return 'text-rose-400 bg-rose-500/10';
-            case 'admin': return 'text-amber-400 bg-amber-500/10';
-            case 'user': return 'text-violet-400 bg-violet-500/10';
-            default: return 'text-slate-400 bg-slate-500/10';
+            case 'superadmin':
+                return 'text-rose-400 bg-rose-500/10';
+            case 'admin':
+                return 'text-amber-400 bg-amber-500/10';
+            case 'user':
+                return 'text-violet-400 bg-violet-500/10';
+            default:
+                return 'text-slate-400 bg-slate-500/10';
         }
     };
 
     const exportToCSV = () => {
         const headers = ['Timestamp', 'Level', 'Actor', 'Setting', 'Old Value', 'New Value'];
-        const rows = filteredEntries.map(e => [
+        const rows = filteredEntries.map((e) => [
             e.timestamp,
             e.level,
             e.actorId,
             e.settingKey,
             formatValue(e.oldValue),
-            formatValue(e.newValue)
+            formatValue(e.newValue),
         ]);
-        
-        const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+
+        const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -144,11 +149,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <div className="flex items-center gap-2">
                     <History className="w-5 h-5 text-violet-400" />
                     <h3 className="font-semibold text-white">Settings Audit Log</h3>
-                    <span className="text-xs text-slate-500">
-                        ({filteredEntries.length} entries)
-                    </span>
+                    <span className="text-xs text-slate-500">({filteredEntries.length} entries)</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     {showExport && (
                         <button
@@ -172,9 +175,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                             onClick={() => setShowFilterPanel(!showFilterPanel)}
                             className={`
                                 p-2 rounded transition-colors
-                                ${showFilterPanel 
-                                    ? 'bg-violet-500/20 text-violet-400' 
-                                    : 'text-slate-400 hover:text-white'
+                                ${
+                                    showFilterPanel
+                                        ? 'bg-violet-500/20 text-violet-400'
+                                        : 'text-slate-400 hover:text-white'
                                 }
                             `}
                         >
@@ -284,17 +288,17 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                             <div className="flex-1 min-w-0">
                                 {/* Top row */}
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className={`
+                                    <span
+                                        className={`
                                         text-xs px-2 py-0.5 rounded-full font-medium
                                         ${getLevelColor(entry.level)}
-                                    `}>
+                                    `}
+                                    >
                                         {entry.level}
                                     </span>
-                                    <span className="text-white font-medium">
-                                        {entry.settingKey}
-                                    </span>
+                                    <span className="text-white font-medium">{entry.settingKey}</span>
                                 </div>
-                                
+
                                 {/* Value change */}
                                 <div className="flex items-center gap-2 text-sm">
                                     <span className="text-slate-500 truncate max-w-[150px]">
@@ -327,4 +331,3 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 };
 
 export default AuditLogViewer;
-

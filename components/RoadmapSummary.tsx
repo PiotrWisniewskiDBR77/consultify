@@ -1,5 +1,5 @@
-import React from 'react';
 import { AlertTriangle, Lightbulb, Map } from 'lucide-react';
+import React from 'react';
 
 interface RoadmapSummaryProps {
     summary: {
@@ -39,7 +39,8 @@ export const RoadmapSummary: React.FC<RoadmapSummaryProps> = ({ summary, isLoadi
                 {/* 1. Logic / Narrative */}
                 <div className="md:col-span-2 space-y-3">
                     <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {summary.summaryText || "No summary available. Add initiatives to generate a strategic outlook."}
+                        {summary.summaryText ||
+                            'No summary available. Add initiatives to generate a strategic outlook.'}
                     </p>
                 </div>
 
@@ -50,9 +51,7 @@ export const RoadmapSummary: React.FC<RoadmapSummaryProps> = ({ summary, isLoadi
                             <span className="text-xs font-bold text-amber-500 uppercase tracking-wide flex items-center gap-1.5 mb-1">
                                 <AlertTriangle size={12} /> Key Risk
                             </span>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {summary.riskText}
-                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{summary.riskText}</p>
                         </div>
                     )}
 
@@ -61,9 +60,7 @@ export const RoadmapSummary: React.FC<RoadmapSummaryProps> = ({ summary, isLoadi
                             <span className="text-xs font-bold text-blue-500 uppercase tracking-wide flex items-center gap-1.5 mb-1">
                                 <Lightbulb size={12} /> Recommendation
                             </span>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {summary.recommendation}
-                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{summary.recommendation}</p>
                         </div>
                     )}
                 </div>

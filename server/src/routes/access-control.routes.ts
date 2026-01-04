@@ -1,18 +1,19 @@
 /**
  * Access Control Routes
  * API endpoints for access requests and access codes
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import bcrypt from 'bcryptjs';
+import { Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
 import { verifyAdmin } from '../middleware/admin.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -32,439 +33,521 @@ function generateAccessCode(): string {
  * POST /api/access-control/requests
  * Submit access request
  */
-router.post('/requests', asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { email, firstName, lastName, phone, organizationName, requestType } = req.body;
+router.post(
+    '/requests',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { email, firstName, lastName, phone, organizationName, requestType } = req.body;
 
-    // Check if request already exists
-    const existing = await dbGet<{ id: string }>('SELECT id FROM access_requests WHERE email = ? AND status = ?',
-        [email, 'pending']);
+        // Check if request already exists
+        const existing = await dbGet<{ id: string }>('SELECT id FROM access_requests WHERE email = ? AND status = ?', [
+            email,
+            'pending',
+        ]);
 
-    if (existing) {
-        return res.status(400).json({ error: 'Access request already pending' });
-    }
+        if (existing) {
+            return res.status(400).json({ error: 'Access request already pending' });
+        }
 
-    const requestId = uuidv4();
-    const metadata = JSON.stringify({ userAgent: req.headers['user-agent'] });
+        const requestId = uuidv4();
+        const metadata = JSON.stringify({ userAgent: req.headers['user-agent'] });
 
-    const runResult = await dbRun(`INSERT INTO access_requests 
+        const runResult = await dbRun(
+            `INSERT INTO access_requests 
         (id, email, first_name, last_name, phone, organization_name, request_type, metadata, requested_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [requestId, email, firstName, lastName, phone, organizationName, requestType || 'new_user', metadata]);
+            [requestId, email, firstName, lastName, phone, organizationName, requestType || 'new_user', metadata],
+        );
 
-    if (!runResult.success) {
-        throw new Error(runResult.error || 'Failed to create access request');
-    }
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to create access request');
+        }
 
-    res.json({
-        success: true,
-        message: 'Access request submitted successfully',
-        requestId
-    });
-}));
+        res.json({
+            success: true,
+            message: 'Access request submitted successfully',
+            requestId,
+        });
+    }),
+);
 
 /**
  * GET /api/access-control/requests
  * Get all access requests (Super Admin only)
  */
-router.get('/requests', verifyToken, requireSuperAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const status = (req.query.status as string) || 'pending';
+router.get(
+    '/requests',
+    verifyToken,
+    requireSuperAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const status = (req.query.status as string) || 'pending';
 
-    const query = status === 'all'
-        ? 'SELECT * FROM access_requests ORDER BY requested_at DESC'
-        : 'SELECT * FROM access_requests WHERE status = ? ORDER BY requested_at DESC';
+        const query =
+            status === 'all'
+                ? 'SELECT * FROM access_requests ORDER BY requested_at DESC'
+                : 'SELECT * FROM access_requests WHERE status = ? ORDER BY requested_at DESC';
 
-    const params = status === 'all' ? [] : [status];
+        const params = status === 'all' ? [] : [status];
 
-    const requests = await dbAll<{
-        id: string;
-        email: string;
-        first_name: string;
-        last_name: string;
-        phone: string | null;
-        organization_name: string | null;
-        request_type: string;
-        status: string;
-        metadata: string | null;
-        requested_at: string;
-        reviewed_by: string | null;
-        reviewed_at: string | null;
-        rejection_reason: string | null;
-        organization_id: string | null;
-    }>(query, params);
+        const requests = await dbAll<{
+            id: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+            phone: string | null;
+            organization_name: string | null;
+            request_type: string;
+            status: string;
+            metadata: string | null;
+            requested_at: string;
+            reviewed_by: string | null;
+            reviewed_at: string | null;
+            rejection_reason: string | null;
+            organization_id: string | null;
+        }>(query, params);
 
-    res.json(requests);
-}));
+        res.json(requests);
+    }),
+);
 
 /**
  * PUT /api/access-control/requests/:id/approve
  * Approve access request (Super Admin only)
  */
-router.put('/requests/:id/approve', verifyToken, requireSuperAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { password, role } = req.body;
-    const userId = req.user?.id;
-    if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+router.put(
+    '/requests/:id/approve',
+    verifyToken,
+    requireSuperAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { id } = req.params;
+        const { password, role } = req.body;
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
-    const request = await dbGet<{
-        id: string;
-        email: string;
-        first_name: string;
-        last_name: string;
-        organization_name: string | null;
-        status: string;
-        requested_role: string | null;
-    }>('SELECT * FROM access_requests WHERE id = ?', [id]);
+        const request = await dbGet<{
+            id: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+            organization_name: string | null;
+            status: string;
+            requested_role: string | null;
+        }>('SELECT * FROM access_requests WHERE id = ?', [id]);
 
-    if (!request) {
-        return res.status(404).json({ error: 'Access request not found' });
-    }
-    if (request.status !== 'pending') {
-        return res.status(400).json({ error: 'Request already processed' });
-    }
+        if (!request) {
+            return res.status(404).json({ error: 'Access request not found' });
+        }
+        if (request.status !== 'pending') {
+            return res.status(400).json({ error: 'Request already processed' });
+        }
 
-    // Create organization and user
-    const orgId = uuidv4();
-    const newUserId = uuidv4();
-    const hashedPassword = bcrypt.hashSync(password || 'temporary123', 8);
+        // Create organization and user
+        const orgId = uuidv4();
+        const newUserId = uuidv4();
+        const hashedPassword = bcrypt.hashSync(password || 'temporary123', 8);
 
-    // Create organization
-    const orgResult = await dbRun(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
-        [orgId, request.organization_name || 'New Organization', 'free', 'active']);
-    if (!orgResult.success) {
-        throw new Error(orgResult.error || 'Failed to create organization');
-    }
+        // Create organization
+        const orgResult = await dbRun(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+            orgId,
+            request.organization_name || 'New Organization',
+            'free',
+            'active',
+        ]);
+        if (!orgResult.success) {
+            throw new Error(orgResult.error || 'Failed to create organization');
+        }
 
-    // Create user
-    const userResult = await dbRun(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
+        // Create user
+        const userResult = await dbRun(
+            `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [newUserId, orgId, request.email, hashedPassword, request.first_name, request.last_name,
-            role || request.requested_role || 'ADMIN', 'active']);
-    if (!userResult.success) {
-        throw new Error(userResult.error || 'Failed to create user');
-    }
+            [
+                newUserId,
+                orgId,
+                request.email,
+                hashedPassword,
+                request.first_name,
+                request.last_name,
+                role || request.requested_role || 'ADMIN',
+                'active',
+            ],
+        );
+        if (!userResult.success) {
+            throw new Error(userResult.error || 'Failed to create user');
+        }
 
-    // Update request status
-    const updateResult = await dbRun(`UPDATE access_requests 
+        // Update request status
+        const updateResult = await dbRun(
+            `UPDATE access_requests 
         SET status = ?, reviewed_by = ?, reviewed_at = datetime('now'), organization_id = ?
         WHERE id = ?`,
-        ['approved', userId, orgId, id]);
-    if (!updateResult.success) {
-        throw new Error(updateResult.error || 'Failed to update request');
-    }
+            ['approved', userId, orgId, id],
+        );
+        if (!updateResult.success) {
+            throw new Error(updateResult.error || 'Failed to update request');
+        }
 
-    res.json({
-        success: true,
-        message: 'Access request approved',
-        organizationId: orgId,
-        userId: newUserId
-    });
-}));
+        res.json({
+            success: true,
+            message: 'Access request approved',
+            organizationId: orgId,
+            userId: newUserId,
+        });
+    }),
+);
 
 /**
  * PUT /api/access-control/requests/:id/reject
  * Reject access request (Super Admin only)
  */
-router.put('/requests/:id/reject', verifyToken, requireSuperAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { reason } = req.body;
-    const userId = req.user?.id;
-    if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+router.put(
+    '/requests/:id/reject',
+    verifyToken,
+    requireSuperAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
-    const request = await dbGet<{
-        id: string;
-        status: string;
-    }>('SELECT * FROM access_requests WHERE id = ?', [id]);
+        const request = await dbGet<{
+            id: string;
+            status: string;
+        }>('SELECT * FROM access_requests WHERE id = ?', [id]);
 
-    if (!request) {
-        return res.status(404).json({ error: 'Access request not found' });
-    }
-    if (request.status !== 'pending') {
-        return res.status(400).json({ error: 'Request already processed' });
-    }
+        if (!request) {
+            return res.status(404).json({ error: 'Access request not found' });
+        }
+        if (request.status !== 'pending') {
+            return res.status(400).json({ error: 'Request already processed' });
+        }
 
-    const runResult = await dbRun(`UPDATE access_requests 
+        const runResult = await dbRun(
+            `UPDATE access_requests 
         SET status = ?, reviewed_by = ?, reviewed_at = datetime('now'), rejection_reason = ?
         WHERE id = ?`,
-        ['rejected', userId, reason || 'No reason provided', id]);
+            ['rejected', userId, reason || 'No reason provided', id],
+        );
 
-    if (!runResult.success) {
-        throw new Error(runResult.error || 'Failed to reject access request');
-    }
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to reject access request');
+        }
 
-    res.json({ success: true, message: 'Access request rejected' });
-}));
+        res.json({ success: true, message: 'Access request rejected' });
+    }),
+);
 
 /**
  * POST /api/access-control/codes
  * Generate access code (Admin only)
  */
-router.post('/codes', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, role, maxUses, expiresInDays } = req.body;
-    const userId = req.user?.id;
-    if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+router.post(
+    '/codes',
+    verifyToken,
+    verifyAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { organizationId, role, maxUses, expiresInDays } = req.body;
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
-    // Verify user has access to this organization
-    if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== organizationId) {
-        return res.status(403).json({ error: 'Access denied' });
-    }
+        // Verify user has access to this organization
+        if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== organizationId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
 
-    const codeId = uuidv4();
-    const code = generateAccessCode();
-    const expiresAt = expiresInDays
-        ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
-        : null;
+        const codeId = uuidv4();
+        const code = generateAccessCode();
+        const expiresAt = expiresInDays
+            ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+            : null;
 
-    const runResult = await dbRun(`INSERT INTO access_codes 
+        const runResult = await dbRun(
+            `INSERT INTO access_codes 
         (id, organization_id, code, created_by, role, max_uses, expires_at, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [codeId, organizationId, code, userId, role || 'USER', maxUses || 1, expiresAt]);
+            [codeId, organizationId, code, userId, role || 'USER', maxUses || 1, expiresAt],
+        );
 
-    if (!runResult.success) {
-        throw new Error(runResult.error || 'Failed to create access code');
-    }
-
-    res.json({
-        success: true,
-        code: {
-            id: codeId,
-            code: code,
-            role: role || 'USER',
-            maxUses: maxUses || 1,
-            expiresAt: expiresAt
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to create access code');
         }
-    });
-}));
+
+        res.json({
+            success: true,
+            code: {
+                id: codeId,
+                code: code,
+                role: role || 'USER',
+                maxUses: maxUses || 1,
+                expiresAt: expiresAt,
+            },
+        });
+    }),
+);
 
 /**
  * GET /api/access-control/codes
  * Get organization's access codes (Admin only)
  */
-router.get('/codes', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = req.query;
+router.get(
+    '/codes',
+    verifyToken,
+    verifyAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { organizationId } = req.query;
 
-    // Verify user has access to this organization
-    if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== organizationId) {
-        return res.status(403).json({ error: 'Access denied' });
-    }
+        // Verify user has access to this organization
+        if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== organizationId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
 
-    const codes = await new Promise<Array<{
-        id: string;
-        organization_id: string;
-        code: string;
-        created_by: string;
-        role: string;
-        max_uses: number;
-        current_uses: number;
-        expires_at: string | null;
-        is_active: number;
-        created_at: string;
-        first_name: string | null;
-        last_name: string | null;
-        created_by_email: string | null;
-    }>>((resolve, reject) => {
-        db.all(`SELECT ac.*, u.first_name, u.last_name, u.email as created_by_email
+        const codes = await new Promise<
+            Array<{
+                id: string;
+                organization_id: string;
+                code: string;
+                created_by: string;
+                role: string;
+                max_uses: number;
+                current_uses: number;
+                expires_at: string | null;
+                is_active: number;
+                created_at: string;
+                first_name: string | null;
+                last_name: string | null;
+                created_by_email: string | null;
+            }>
+        >((resolve, reject) => {
+            db.all(
+                `SELECT ac.*, u.first_name, u.last_name, u.email as created_by_email
             FROM access_codes ac
             LEFT JOIN users u ON ac.created_by = u.id
             WHERE ac.organization_id = ?
             ORDER BY ac.created_at DESC`,
-            [organizationId],
-            (err: Error | null, rows: unknown) => {
-                if (err) reject(err);
-                else resolve((rows || []) as Array<{
-                    id: string;
-                    organization_id: string;
-                    code: string;
-                    created_by: string;
-                    role: string;
-                    max_uses: number;
-                    current_uses: number;
-                    expires_at: string | null;
-                    is_active: number;
-                    created_at: string;
-                    first_name: string | null;
-                    last_name: string | null;
-                    created_by_email: string | null;
-                }>);
-            }
-        );
-    });
+                [organizationId],
+                (err: Error | null, rows: unknown) => {
+                    if (err) reject(err);
+                    else
+                        resolve(
+                            (rows || []) as Array<{
+                                id: string;
+                                organization_id: string;
+                                code: string;
+                                created_by: string;
+                                role: string;
+                                max_uses: number;
+                                current_uses: number;
+                                expires_at: string | null;
+                                is_active: number;
+                                created_at: string;
+                                first_name: string | null;
+                                last_name: string | null;
+                                created_by_email: string | null;
+                            }>,
+                        );
+                },
+            );
+        });
 
-    res.json(codes);
-}));
+        res.json(codes);
+    }),
+);
 
 /**
  * GET /api/access-control/codes/:code/info
  * Get code info (public - for verification)
  */
-router.get('/codes/:code/info', asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { code } = req.params;
+router.get(
+    '/codes/:code/info',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { code } = req.params;
 
-    const codeInfo = await dbGet<{
-        id: string;
-        role: string;
-        max_uses: number;
-        current_uses: number;
-        expires_at: string | null;
-        is_active: number;
-        organization_name: string;
-    }>(`SELECT ac.id, ac.role, ac.max_uses, ac.current_uses, ac.expires_at, ac.is_active, o.name as organization_name
+        const codeInfo = await dbGet<{
+            id: string;
+            role: string;
+            max_uses: number;
+            current_uses: number;
+            expires_at: string | null;
+            is_active: number;
+            organization_name: string;
+        }>(
+            `SELECT ac.id, ac.role, ac.max_uses, ac.current_uses, ac.expires_at, ac.is_active, o.name as organization_name
         FROM access_codes ac
         JOIN organizations o ON ac.organization_id = o.id
         WHERE ac.code = ?`,
-        [code]);
+            [code],
+        );
 
-    if (!codeInfo) {
-        return res.status(404).json({ error: 'Invalid code' });
-    }
+        if (!codeInfo) {
+            return res.status(404).json({ error: 'Invalid code' });
+        }
 
-    // Check if code is expired
-    const isExpired = codeInfo.expires_at && new Date(codeInfo.expires_at) < new Date();
-    const isMaxedOut = codeInfo.max_uses !== -1 && codeInfo.current_uses >= codeInfo.max_uses;
+        // Check if code is expired
+        const isExpired = codeInfo.expires_at && new Date(codeInfo.expires_at) < new Date();
+        const isMaxedOut = codeInfo.max_uses !== -1 && codeInfo.current_uses >= codeInfo.max_uses;
 
-    res.json({
-        valid: codeInfo.is_active !== 0 && !isExpired && !isMaxedOut,
-        organizationName: codeInfo.organization_name,
-        role: codeInfo.role,
-        reason: codeInfo.is_active === 0 ? 'Code deactivated'
-            : isExpired ? 'Code expired'
-                : isMaxedOut ? 'Code usage limit reached'
-                    : null
-    });
-}));
+        res.json({
+            valid: codeInfo.is_active !== 0 && !isExpired && !isMaxedOut,
+            organizationName: codeInfo.organization_name,
+            role: codeInfo.role,
+            reason:
+                codeInfo.is_active === 0
+                    ? 'Code deactivated'
+                    : isExpired
+                      ? 'Code expired'
+                      : isMaxedOut
+                        ? 'Code usage limit reached'
+                        : null,
+        });
+    }),
+);
 
 /**
  * POST /api/access-control/codes/register
  * Verify and register with access code
  */
-router.post('/codes/register', asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { code, email, password, firstName, lastName, phone } = req.body;
+router.post(
+    '/codes/register',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { code, email, password, firstName, lastName, _phone } = req.body;
 
-    const accessCode = await dbGet<{
-        id: string;
-        organization_id: string;
-        role: string;
-        max_uses: number;
-        current_uses: number;
-        expires_at: string | null;
-        is_active: number;
-        org_id: string;
-        org_name: string;
-    }>(`SELECT ac.*, o.id as org_id, o.name as org_name
+        const accessCode = await dbGet<{
+            id: string;
+            organization_id: string;
+            role: string;
+            max_uses: number;
+            current_uses: number;
+            expires_at: string | null;
+            is_active: number;
+            org_id: string;
+            org_name: string;
+        }>(
+            `SELECT ac.*, o.id as org_id, o.name as org_name
         FROM access_codes ac
         JOIN organizations o ON ac.organization_id = o.id
         WHERE ac.code = ?`,
-        [code]);
+            [code],
+        );
 
-    if (!accessCode) {
-        return res.status(404).json({ error: 'Invalid access code' });
-    }
+        if (!accessCode) {
+            return res.status(404).json({ error: 'Invalid access code' });
+        }
 
-    // Validate code
-    const isExpired = accessCode.expires_at && new Date(accessCode.expires_at) < new Date();
-    const isMaxedOut = accessCode.max_uses !== -1 && accessCode.current_uses >= accessCode.max_uses;
+        // Validate code
+        const isExpired = accessCode.expires_at && new Date(accessCode.expires_at) < new Date();
+        const isMaxedOut = accessCode.max_uses !== -1 && accessCode.current_uses >= accessCode.max_uses;
 
-    if (accessCode.is_active === 0) {
-        return res.status(400).json({ error: 'This access code has been deactivated' });
-    }
-    if (isExpired) {
-        return res.status(400).json({ error: 'This access code has expired' });
-    }
-    if (isMaxedOut) {
-        return res.status(400).json({ error: 'This access code has reached its usage limit' });
-    }
+        if (accessCode.is_active === 0) {
+            return res.status(400).json({ error: 'This access code has been deactivated' });
+        }
+        if (isExpired) {
+            return res.status(400).json({ error: 'This access code has expired' });
+        }
+        if (isMaxedOut) {
+            return res.status(400).json({ error: 'This access code has reached its usage limit' });
+        }
 
-    // Check if user already exists
-    const existingUser = await dbGet<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]);
+        // Check if user already exists
+        const existingUser = await dbGet<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]);
 
-    if (existingUser) {
-        return res.status(400).json({ error: 'Email already registered' });
-    }
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
 
-    const newUserId = uuidv4();
-    const hashedPassword = bcrypt.hashSync(password, 8);
+        const newUserId = uuidv4();
+        const hashedPassword = bcrypt.hashSync(password, 8);
 
-    // Create user
-    await new Promise<void>((resolve, reject) => {
-        db.run(`INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
+        // Create user
+        await new Promise<void>((resolve, reject) => {
+            db.run(
+                `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [newUserId, accessCode.org_id, email, hashedPassword, firstName, lastName,
-                accessCode.role, 'active'],
-            (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            }
-        );
-    });
+                [newUserId, accessCode.org_id, email, hashedPassword, firstName, lastName, accessCode.role, 'active'],
+                (err: Error | null) => {
+                    if (err) reject(err);
+                    else resolve();
+                },
+            );
+        });
 
-    // Update code usage
-    await new Promise<void>((resolve, reject) => {
-        db.run(`UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?`,
-            [accessCode.id],
-            (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            }
-        );
-    });
+        // Update code usage
+        await new Promise<void>((resolve, reject) => {
+            db.run(
+                `UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?`,
+                [accessCode.id],
+                (err: Error | null) => {
+                    if (err) reject(err);
+                    else resolve();
+                },
+            );
+        });
 
-    // Track code usage
-    await new Promise<void>((resolve, reject) => {
-        db.run(`INSERT INTO access_code_usage (id, code_id, user_id, used_at)
+        // Track code usage
+        await new Promise<void>((resolve, reject) => {
+            db.run(
+                `INSERT INTO access_code_usage (id, code_id, user_id, used_at)
             VALUES (?, ?, ?, datetime('now'))`,
-            [uuidv4(), accessCode.id, newUserId],
-            (err: Error | null) => {
-                if (err) reject(err);
-                else resolve();
-            }
-        );
-    });
+                [uuidv4(), accessCode.id, newUserId],
+                (err: Error | null) => {
+                    if (err) reject(err);
+                    else resolve();
+                },
+            );
+        });
 
-    res.json({
-        success: true,
-        user: {
-            id: newUserId,
-            email: email,
-            firstName: firstName,
-            lastName: lastName,
-            role: accessCode.role,
-            organizationId: accessCode.org_id,
-            companyName: accessCode.org_name
-        },
-        message: 'Registration successful'
-    });
-}));
+        res.json({
+            success: true,
+            user: {
+                id: newUserId,
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                role: accessCode.role,
+                organizationId: accessCode.org_id,
+                companyName: accessCode.org_name,
+            },
+            message: 'Registration successful',
+        });
+    }),
+);
 
 /**
  * DELETE /api/access-control/codes/:id
  * Deactivate access code (Admin only)
  */
-router.delete('/codes/:id', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+router.delete(
+    '/codes/:id',
+    verifyToken,
+    verifyAdmin,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { id } = req.params;
 
-    const code = await dbGet<{ organization_id: string }>('SELECT organization_id FROM access_codes WHERE id = ?', [id]);
+        const code = await dbGet<{ organization_id: string }>('SELECT organization_id FROM access_codes WHERE id = ?', [
+            id,
+        ]);
 
-    if (!code) {
-        return res.status(404).json({ error: 'Access code not found' });
-    }
+        if (!code) {
+            return res.status(404).json({ error: 'Access code not found' });
+        }
 
-    // Verify user has access to this organization
-    if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== code.organization_id) {
-        return res.status(403).json({ error: 'Access denied' });
-    }
+        // Verify user has access to this organization
+        if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== code.organization_id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
 
-    const runResult = await dbRun('UPDATE access_codes SET is_active = 0 WHERE id = ?', [id]);
+        const runResult = await dbRun('UPDATE access_codes SET is_active = 0 WHERE id = ?', [id]);
 
-    if (!runResult.success) {
-        throw new Error(runResult.error || 'Failed to deactivate access code');
-    }
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to deactivate access code');
+        }
 
-    res.json({ success: true, message: 'Access code deactivated' });
-}));
+        res.json({ success: true, message: 'Access code deactivated' });
+    }),
+);
 
 export default router;

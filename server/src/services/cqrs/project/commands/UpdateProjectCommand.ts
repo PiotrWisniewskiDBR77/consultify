@@ -1,5 +1,5 @@
-import type { IDatabase } from '../../../database/IDatabase.js';
-import { getDatabase } from '../../../database/Database.js';
+import { getDatabase } from '../../../../database/Database.js';
+import type { IDatabase } from '../../../../database/IDatabase.js';
 
 export interface UpdateProjectCommand {
     projectId: string;
@@ -39,15 +39,9 @@ export class UpdateProjectHandler {
 
         values.push(command.projectId);
 
-        await this.db.run(
-            `UPDATE projects SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
+        await this.db.run(`UPDATE projects SET ${fields.join(', ')} WHERE id = ?`, values);
 
-        const updated = await this.db.get(
-            'SELECT * FROM projects WHERE id = ?',
-            [command.projectId]
-        );
+        const updated = await this.db.get('SELECT * FROM projects WHERE id = ?', [command.projectId]);
 
         return updated;
     }

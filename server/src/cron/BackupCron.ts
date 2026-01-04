@@ -1,17 +1,15 @@
 /**
  * Backup Cron Job
- * 
+ *
  * Automated daily backups at 3 AM UTC.
  * Also runs retention policy cleanup.
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
 import * as cron from 'node-cron';
+
 import logger from '../utils/Logger.js';
-
-
-
 
 // ==========================================
 // TYPES
@@ -20,6 +18,13 @@ import logger from '../utils/Logger.js';
 interface BackupService {
     createBackup: (type: 'full' | 'incremental', reason: string) => Promise<{ id: string }>;
     runRetentionPolicy: () => Promise<{ deleted: number }>;
+    getBackupStatus: () => Promise<{
+        total: number;
+        lastBackup: string | null;
+        nextBackup: string | null;
+        failed: number;
+        expired: number;
+    }>;
 }
 
 interface SentryConfig {
@@ -38,6 +43,10 @@ interface Dependencies {
 class BackupCron {
     private deps: Dependencies;
     private job: cron.ScheduledTask | null = null;
+    private successCount = 0;
+    private failureCount = 0;
+    private lastBackupTime: Date | null = null;
+    private lastError: Error | null = null;
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
@@ -48,7 +57,7 @@ class BackupCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.backupService) {
-            this.deps.backupService = await import('../../services/backupService.js').then(m => m.default || m);
+            this.deps.backupService = await import('../../services/backupService.js').then((m) => m.default || m);
         }
         return this.deps as Dependencies;
     }
@@ -63,37 +72,69 @@ class BackupCron {
         }
 
         // Daily at 3 AM UTC
-        this.job = cron.schedule('0 3 * * *', async () => {
-            const deps = await this.ensureDeps();
-            logger.info('[BackupCron] Starting scheduled backup...');
+        this.job = cron.schedule(
+            '0 3 * * *',
+            async () => {
+                const deps = await this.ensureDeps();
+                logger.info('[BackupCron] Starting scheduled backup...');
 
-            try {
-                // Create backup
-                const result = await deps.backupService.createBackup('full', 'scheduled');
-                logger.info(`[BackupCron] Backup completed: ${result.id}`);
+                try {
+                    const startTime = Date.now();
+                    
+                    // Create backup
+                    const result = await deps.backupService.createBackup('full', 'scheduled');
+                    const duration = Date.now() - startTime;
+                    
+                    this.successCount++;
+                    this.lastBackupTime = new Date();
+                    this.lastError = null;
+                    
+                    logger.info(`[BackupCron] Backup completed: ${result.id} (${duration}ms)`);
 
-                // Run retention policy
-                const cleanup = await deps.backupService.runRetentionPolicy();
-                logger.info(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
+                    // Run retention policy
+                    const cleanup = await deps.backupService.runRetentionPolicy();
+                    logger.info(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
 
-            } catch (error: unknown) {
-                const err = error instanceof Error ? error : new Error(String(error));
-                logger.error('[BackupCron] Scheduled backup failed:', err);
+                    // Log metrics
+                    logger.info(`[BackupCron] Metrics: success=${this.successCount}, failures=${this.failureCount}`);
+                } catch (error: unknown) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    this.failureCount++;
+                    this.lastError = err;
+                    
+                    logger.error('[BackupCron] Scheduled backup failed:', err);
 
-                // Report to Sentry if available
-                if (deps.sentry) {
-                    try {
-                        deps.sentry.captureException(err, {
-                            tags: { component: 'backup', job: 'scheduled' },
-                        });
-                    } catch (e: unknown) {
-                        // Sentry not available
+                    // Report to Sentry if available
+                    if (deps.sentry) {
+                        try {
+                            deps.sentry.captureException(err, {
+                                tags: {
+                                    component: 'backup',
+                                    job: 'scheduled',
+                                    failureCount: String(this.failureCount),
+                                },
+                                extra: {
+                                    successCount: this.successCount,
+                                    lastBackupTime: this.lastBackupTime?.toISOString() || null,
+                                },
+                            });
+                        } catch (e: unknown) {
+                            // Sentry not available
+                        }
+                    }
+
+                    // Alert if multiple consecutive failures
+                    if (this.failureCount >= 3) {
+                        logger.error(
+                            `[BackupCron] CRITICAL: ${this.failureCount} consecutive backup failures. Manual intervention required.`,
+                        );
                     }
                 }
-            }
-        }, {
-            timezone: 'UTC',
-        });
+            },
+            {
+                timezone: 'UTC',
+            },
+        );
 
         logger.info('[BackupCron] Scheduled daily backup at 3:00 AM UTC');
     }
@@ -115,7 +156,47 @@ class BackupCron {
     async triggerManualBackup(reason = 'manual'): Promise<{ id: string }> {
         const deps = await this.ensureDeps();
         logger.info(`[BackupCron] Manual backup triggered: ${reason}`);
-        return deps.backupService.createBackup('full', reason);
+        
+        try {
+            const result = await deps.backupService.createBackup('full', reason);
+            this.successCount++;
+            this.lastBackupTime = new Date();
+            return result;
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            this.failureCount++;
+            this.lastError = err;
+            
+            // Report to Sentry
+            if (deps.sentry) {
+                try {
+                    deps.sentry.captureException(err, {
+                        tags: { component: 'backup', job: 'manual', reason },
+                    });
+                } catch (e: unknown) {
+                    // Sentry not available
+                }
+            }
+            
+            throw err;
+        }
+    }
+
+    /**
+     * Get backup metrics
+     */
+    getMetrics(): {
+        successCount: number;
+        failureCount: number;
+        lastBackupTime: Date | null;
+        lastError: string | null;
+    } {
+        return {
+            successCount: this.successCount,
+            failureCount: this.failureCount,
+            lastBackupTime: this.lastBackupTime,
+            lastError: this.lastError?.message || null,
+        };
     }
 }
 
@@ -149,7 +230,4 @@ export const triggerManualBackup = async (reason: string, deps?: Partial<Depende
 };
 
 export default BackupCron;
-
-
-
 

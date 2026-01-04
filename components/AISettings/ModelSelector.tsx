@@ -1,24 +1,13 @@
 /**
  * ModelSelector Component
- * 
+ *
  * Grid selector for AI models with capabilities badges.
  */
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Cpu, 
-    Check, 
-    Star, 
-    Zap, 
-    Eye, 
-    Code, 
-    Brain,
-    Lock,
-    AlertCircle,
-    Wifi,
-    WifiOff
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, Brain, Check, Code, Cpu, Eye, Lock, Star, Wifi, WifiOff, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { LLMProvider } from '../../types';
 
 interface ModelSelectorProps {
@@ -39,7 +28,7 @@ const CAPABILITY_ICONS: Record<string, React.ElementType> = {
     reasoning: Brain,
     coding: Code,
     fast: Zap,
-    streaming: Wifi
+    streaming: Wifi,
 };
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
@@ -51,7 +40,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     showVisibilityToggle = false,
     disabled = false,
     loading = false,
-    className = ''
+    className = '',
 }) => {
     const [models, setModels] = useState<LLMProvider[]>(availableModels);
 
@@ -60,8 +49,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             try {
                 const response = await fetch('/api/ai-settings/available-models', {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -87,33 +76,51 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
     const toggleVisibility = (modelId: string) => {
         if (!onVisibilityChange) return;
-        
+
         const newVisibleIds = isModelVisible(modelId)
-            ? visibleModelIds.filter(id => id !== modelId)
+            ? visibleModelIds.filter((id) => id !== modelId)
             : [...visibleModelIds, modelId];
-        
+
         onVisibilityChange(newVisibleIds);
     };
 
     const getProviderColor = (provider: string) => {
         switch (provider) {
-            case 'openai': return 'from-emerald-500 to-teal-500';
-            case 'anthropic': return 'from-amber-500 to-orange-500';
-            case 'google': return 'from-blue-500 to-cyan-500';
-            case 'ollama': return 'from-violet-500 to-purple-500';
-            case 'deepseek': return 'from-rose-500 to-pink-500';
-            default: return 'from-slate-500 to-slate-600';
+            case 'openai':
+                return 'from-emerald-500 to-teal-500';
+            case 'anthropic':
+                return 'from-amber-500 to-orange-500';
+            case 'google':
+                return 'from-blue-500 to-cyan-500';
+            case 'ollama':
+                return 'from-violet-500 to-purple-500';
+            case 'deepseek':
+                return 'from-rose-500 to-pink-500';
+            default:
+                return 'from-slate-500 to-slate-600';
         }
     };
 
     const getHealthBadge = (status?: string) => {
         switch (status) {
             case 'healthy':
-                return <span className="flex items-center gap-1 text-emerald-400"><Wifi className="w-3 h-3" /> Online</span>;
+                return (
+                    <span className="flex items-center gap-1 text-emerald-400">
+                        <Wifi className="w-3 h-3" /> Online
+                    </span>
+                );
             case 'degraded':
-                return <span className="flex items-center gap-1 text-amber-400"><AlertCircle className="w-3 h-3" /> Degraded</span>;
+                return (
+                    <span className="flex items-center gap-1 text-amber-400">
+                        <AlertCircle className="w-3 h-3" /> Degraded
+                    </span>
+                );
             case 'unhealthy':
-                return <span className="flex items-center gap-1 text-rose-400"><WifiOff className="w-3 h-3" /> Offline</span>;
+                return (
+                    <span className="flex items-center gap-1 text-rose-400">
+                        <WifiOff className="w-3 h-3" /> Offline
+                    </span>
+                );
             default:
                 return null;
         }
@@ -166,9 +173,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                 disabled={disabled}
                                 className={`
                                     w-full p-4 rounded-xl text-left transition-all duration-200
-                                    ${isSelected 
-                                        ? `bg-gradient-to-br ${providerColor} bg-opacity-20 border-2 border-white/30 shadow-lg`
-                                        : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                    ${
+                                        isSelected
+                                            ? `bg-gradient-to-br ${providerColor} bg-opacity-20 border-2 border-white/30 shadow-lg`
+                                            : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
                                     }
                                     ${!isVisible && showVisibilityToggle ? 'opacity-50' : ''}
                                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -189,22 +197,20 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                 </AnimatePresence>
 
                                 {/* Provider badge */}
-                                <div className={`
+                                <div
+                                    className={`
                                     inline-flex px-2 py-0.5 rounded text-xs font-medium mb-2
                                     bg-gradient-to-r ${providerColor} text-white/90
-                                `}>
+                                `}
+                                >
                                     {model.provider}
                                 </div>
 
                                 {/* Model name */}
-                                <h4 className="font-medium text-white truncate mb-1">
-                                    {model.name}
-                                </h4>
+                                <h4 className="font-medium text-white truncate mb-1">{model.name}</h4>
 
                                 {/* Model ID */}
-                                <p className="text-xs text-slate-400 truncate mb-2">
-                                    {model.model_id}
-                                </p>
+                                <p className="text-xs text-slate-400 truncate mb-2">{model.model_id}</p>
 
                                 {/* Capabilities */}
                                 {model.capabilities && model.capabilities.length > 0 && (
@@ -226,9 +232,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
                                 {/* Health status */}
                                 {model.healthStatus && (
-                                    <div className="mt-2 text-xs">
-                                        {getHealthBadge(model.healthStatus)}
-                                    </div>
+                                    <div className="mt-2 text-xs">{getHealthBadge(model.healthStatus)}</div>
                                 )}
                             </button>
 
@@ -241,9 +245,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                     }}
                                     className={`
                                         absolute bottom-2 right-2 p-1.5 rounded-lg transition-colors
-                                        ${isVisible 
-                                            ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' 
-                                            : 'bg-slate-700/50 text-slate-500 hover:text-slate-300'
+                                        ${
+                                            isVisible
+                                                ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
+                                                : 'bg-slate-700/50 text-slate-500 hover:text-slate-300'
                                         }
                                     `}
                                     title={isVisible ? 'Hide model' : 'Show model'}
@@ -261,9 +266,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 <div className="text-center py-8">
                     <Cpu className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400">No models available</p>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Contact your administrator to enable AI models
-                    </p>
+                    <p className="text-sm text-slate-500 mt-1">Contact your administrator to enable AI models</p>
                 </div>
             )}
         </div>
@@ -271,4 +274,3 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 };
 
 export default ModelSelector;
-

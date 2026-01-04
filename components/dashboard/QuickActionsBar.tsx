@@ -3,8 +3,8 @@
  * Umożliwia szybki dostęp do najważniejszych funkcji PMO
  */
 
+import { AlertTriangle, Calendar, Clock, Plus, Target, Zap } from 'lucide-react';
 import React from 'react';
-import { Plus, Calendar, Target, Zap, AlertTriangle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface QuickActionsBarProps {
@@ -20,7 +20,7 @@ export const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
     onViewCalendar,
     onOpenInitiatives,
     overdueCount = 0,
-    urgentCount = 0
+    urgentCount = 0,
 }) => {
     const { t } = useTranslation();
     const totalAttention = overdueCount + urgentCount;
@@ -56,7 +56,7 @@ export const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
                     </div>
                 )}
             </div>
-            
+
             {/* Right Side - Quick Actions */}
             <div className="flex items-center gap-2">
                 {/* New Task Button - Primary */}
@@ -95,12 +95,4 @@ export const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
 };
 
 export default QuickActionsBar;
-
-
-
-
-
-
-
-
 

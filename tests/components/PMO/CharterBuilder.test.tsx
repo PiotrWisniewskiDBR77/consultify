@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CharterBuilder } from '../../../components/PMO/CharterBuilder';
+import { CharterBuilder } from '../../components/PMO/CharterBuilder';
 
 // Mock toast
 vi.mock('react-hot-toast', () => ({
@@ -279,6 +279,7 @@ describe('CharterBuilder Component', () => {
         });
     });
 });
+
 
 
 

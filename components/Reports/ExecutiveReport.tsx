@@ -1,19 +1,20 @@
-import React, { useState, useCallback } from 'react';
 import {
-    FileText,
-    Download,
-    Loader2,
     AlertTriangle,
+    Calendar,
     CheckCircle2,
     Clock,
+    Download,
+    FileText,
+    Loader2,
+    Target,
     TrendingUp,
     Users,
-    Target,
-    Calendar
 } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import toast from 'react-hot-toast';
 
 interface ExecutiveReportProps {
     projectId?: string;
@@ -47,7 +48,7 @@ interface ReportData {
 export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) => {
     const [loading, setLoading] = useState(false);
     const [report, setReport] = useState<ReportData | null>(null);
-    const currentProjectId = useAppStore(state => state.currentProjectId);
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
     const activeProjectId = projectId || currentProjectId;
 
     const generateReport = useCallback(async () => {
@@ -66,8 +67,8 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                 generatedAt: new Date().toISOString(),
                 phase: pmoData.currentPhase || 'Unknown',
                 phaseProgress: pmoData.phaseProgress || 0,
-                overallHealth: pmoData.blockingIssues?.length > 0 ? 'critical'
-                    : pmoData.risks?.length > 0 ? 'warning' : 'healthy',
+                overallHealth:
+                    pmoData.blockingIssues?.length > 0 ? 'critical' : pmoData.risks?.length > 0 ? 'warning' : 'healthy',
                 summary: generateSummary(pmoData),
                 keyMetrics: {
                     initiativesTotal: pmoData.initiativesTotal || 0,
@@ -75,12 +76,12 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                     tasksTotal: pmoData.tasksTotal || 0,
                     tasksDone: pmoData.tasksDone || 0,
                     decisionsApproved: pmoData.decisionsApproved || 0,
-                    decisionsPending: pmoData.pendingDecisions?.length || 0
+                    decisionsPending: pmoData.pendingDecisions?.length || 0,
                 },
                 risks: pmoData.risks || [],
                 blockers: pmoData.blockingIssues || [],
                 decisions: pmoData.pendingDecisions || [],
-                forecast: generateForecast(pmoData)
+                forecast: generateForecast(pmoData),
             };
 
             setReport(reportData);
@@ -122,17 +123,23 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
 
     const getHealthColor = (health: string) => {
         switch (health) {
-            case 'critical': return 'bg-red-500';
-            case 'warning': return 'bg-amber-500';
-            default: return 'bg-green-500';
+            case 'critical':
+                return 'bg-red-500';
+            case 'warning':
+                return 'bg-amber-500';
+            default:
+                return 'bg-green-500';
         }
     };
 
     const getHealthLabel = (health: string) => {
         switch (health) {
-            case 'critical': return 'Critical';
-            case 'warning': return 'At Risk';
-            default: return 'Healthy';
+            case 'critical':
+                return 'Critical';
+            case 'warning':
+                return 'At Risk';
+            default:
+                return 'Healthy';
         }
     };
 
@@ -147,7 +154,9 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-navy-900 dark:text-white">Executive Report</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">AI-generated management summary</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                AI-generated management summary
+                            </p>
                         </div>
                     </div>
                     <button
@@ -168,9 +177,13 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                     <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/5">
                         <div>
                             <h3 className="text-lg font-bold text-navy-900 dark:text-white">{report.projectName}</h3>
-                            <p className="text-xs text-slate-400">Generated: {new Date(report.generatedAt).toLocaleString()}</p>
+                            <p className="text-xs text-slate-400">
+                                Generated: {new Date(report.generatedAt).toLocaleString()}
+                            </p>
                         </div>
-                        <div className={`px-3 py-1.5 rounded-full text-white text-sm font-medium ${getHealthColor(report.overallHealth)}`}>
+                        <div
+                            className={`px-3 py-1.5 rounded-full text-white text-sm font-medium ${getHealthColor(report.overallHealth)}`}
+                        >
                             {getHealthLabel(report.overallHealth)}
                         </div>
                     </div>
@@ -221,8 +234,13 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                             </h4>
                             <div className="space-y-2">
                                 {report.blockers.map((blocker, idx) => (
-                                    <div key={idx} className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-3 rounded-r-lg">
-                                        <div className="text-sm font-medium text-red-800 dark:text-red-300">{blocker.title}</div>
+                                    <div
+                                        key={idx}
+                                        className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-3 rounded-r-lg"
+                                    >
+                                        <div className="text-sm font-medium text-red-800 dark:text-red-300">
+                                            {blocker.title}
+                                        </div>
                                         <div className="text-xs text-red-600 dark:text-red-400">
                                             {blocker.type} • {blocker.daysBlocked || 0} days blocked
                                         </div>
@@ -241,7 +259,10 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                             </h4>
                             <div className="space-y-2">
                                 {report.decisions.slice(0, 5).map((d, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                                    >
                                         <span className="text-sm text-slate-700 dark:text-slate-200">{d.title}</span>
                                         <span className="text-xs text-slate-500">{d.owner || 'Unassigned'}</span>
                                     </div>
@@ -251,10 +272,15 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                     )}
 
                     {/* Forecast */}
-                    <div className={`rounded-xl p-4 ${report.forecast.includes('HIGH') ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30' :
-                            report.forecast.includes('MEDIUM') ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30' :
-                                'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30'
-                        }`}>
+                    <div
+                        className={`rounded-xl p-4 ${
+                            report.forecast.includes('HIGH')
+                                ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30'
+                                : report.forecast.includes('MEDIUM')
+                                  ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30'
+                                  : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30'
+                        }`}
+                    >
                         <h4 className="text-sm font-bold mb-1 flex items-center gap-2">
                             <TrendingUp size={16} />
                             Forecast & Recommendation
@@ -277,7 +303,9 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                 <div className="p-12 text-center">
                     <FileText size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
                     <h3 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-2">No Report Generated</h3>
-                    <p className="text-sm text-slate-400 mb-4">Click "Generate Report" to create an AI-powered executive summary</p>
+                    <p className="text-sm text-slate-400 mb-4">
+                        Click "Generate Report" to create an AI-powered executive summary
+                    </p>
                 </div>
             )}
         </div>

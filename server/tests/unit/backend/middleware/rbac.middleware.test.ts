@@ -4,9 +4,17 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { requireOrgAccess, requireOrgRole, requireConsultantScope, requireOwnerOrSuperadmin, ORG_ROLE_HIERARCHY, type AuthRequest } from '../../../../src/middleware/rbac.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    ORG_ROLE_HIERARCHY,
+    requireConsultantScope,
+    requireOrgAccess,
+    requireOrgRole,
+    requireOwnerOrSuperadmin,
+} from '../../../../src/middleware/rbac.middleware.js';
 
 describe('RBAC Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -39,7 +47,7 @@ describe('RBAC Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     error: 'Missing organization context',
-                })
+                }),
             );
         });
 
@@ -148,7 +156,4 @@ describe('RBAC Middleware', () => {
         });
     });
 });
-
-
-
 

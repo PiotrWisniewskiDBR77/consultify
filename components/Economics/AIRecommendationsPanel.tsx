@@ -1,19 +1,30 @@
 /**
  * AI Recommendations Panel
- * 
+ *
  * Displays AI-generated recommendations for digital maturity improvements.
  * Shows prioritized initiatives with effort/impact analysis.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Sparkles, Zap, Target, ArrowRight,
-    CheckCircle, XCircle, Loader2, RefreshCw,
-    TrendingUp, Clock, Award, Lightbulb,
-    ChevronDown, ChevronUp
+    ArrowRight,
+    Award,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Lightbulb,
+    Loader2,
+    RefreshCw,
+    Sparkles,
+    Target,
+    TrendingUp,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 import { DigitizationAnalysis } from './types';
 
 interface Recommendation {
@@ -44,25 +55,22 @@ const TYPE_CONFIG = {
     training: { icon: Award, color: 'amber', label: 'Szkolenie' },
     strategic: { icon: Target, color: 'emerald', label: 'Strategiczna' },
     quick_win: { icon: Lightbulb, color: 'yellow', label: 'Quick Win' },
-    initiative: { icon: TrendingUp, color: 'teal', label: 'Inicjatywa' }
+    initiative: { icon: TrendingUp, color: 'teal', label: 'Inicjatywa' },
 };
 
 const EFFORT_CONFIG = {
     low: { label: 'Niski', color: 'emerald' },
     medium: { label: 'Średni', color: 'amber' },
-    high: { label: 'Wysoki', color: 'red' }
+    high: { label: 'Wysoki', color: 'red' },
 };
 
 const IMPACT_CONFIG = {
     low: { label: 'Niski', color: 'slate' },
     medium: { label: 'Średni', color: 'blue' },
-    high: { label: 'Wysoki', color: 'emerald' }
+    high: { label: 'Wysoki', color: 'emerald' },
 };
 
-export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
-    analysis,
-    onCreateInitiative
-}) => {
+export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({ analysis, onCreateInitiative }) => {
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -95,33 +103,25 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
     const handleAccept = async (rec: Recommendation) => {
         try {
             await (Api as any).updateRecommendationStatus(rec.id, 'accepted');
-            setRecommendations(prev =>
-                prev.map(r => r.id === rec.id ? { ...r, status: 'accepted' } : r)
-            );
+            setRecommendations((prev) => prev.map((r) => (r.id === rec.id ? { ...r, status: 'accepted' } : r)));
             toast.success('Rekomendacja zaakceptowana');
             onCreateInitiative?.(rec);
         } catch (err) {
             // Update locally anyway
-            setRecommendations(prev =>
-                prev.map(r => r.id === rec.id ? { ...r, status: 'accepted' } : r)
-            );
+            setRecommendations((prev) => prev.map((r) => (r.id === rec.id ? { ...r, status: 'accepted' } : r)));
         }
     };
 
     const handleReject = async (rec: Recommendation) => {
         try {
             await (Api as any).updateRecommendationStatus(rec.id, 'rejected');
-            setRecommendations(prev =>
-                prev.map(r => r.id === rec.id ? { ...r, status: 'rejected' } : r)
-            );
+            setRecommendations((prev) => prev.map((r) => (r.id === rec.id ? { ...r, status: 'rejected' } : r)));
         } catch (err) {
-            setRecommendations(prev =>
-                prev.map(r => r.id === rec.id ? { ...r, status: 'rejected' } : r)
-            );
+            setRecommendations((prev) => prev.map((r) => (r.id === rec.id ? { ...r, status: 'rejected' } : r)));
         }
     };
 
-    const filteredRecommendations = recommendations.filter(rec => {
+    const filteredRecommendations = recommendations.filter((rec) => {
         if (filter === 'quick_wins') {
             return rec.estimatedEffort === 'low' && rec.estimatedImpact !== 'low';
         }
@@ -132,12 +132,10 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
     });
 
     const quickWinCount = recommendations.filter(
-        r => r.estimatedEffort === 'low' && r.estimatedImpact !== 'low'
+        (r) => r.estimatedEffort === 'low' && r.estimatedImpact !== 'low',
     ).length;
 
-    const strategicCount = recommendations.filter(
-        r => r.estimatedImpact === 'high'
-    ).length;
+    const strategicCount = recommendations.filter((r) => r.estimatedImpact === 'high').length;
 
     if (recommendations.length === 0 && !isGenerating) {
         return (
@@ -146,9 +144,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                     <div className="w-16 h-16 mx-auto bg-purple-500/10 rounded-2xl flex items-center justify-center mb-4">
                         <Sparkles className="text-purple-500" size={28} />
                     </div>
-                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-                        Rekomendacje AI
-                    </h3>
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Rekomendacje AI</h3>
                     <p className="text-sm text-slate-500 mb-4 max-w-md mx-auto">
                         Wygeneruj inteligentne rekomendacje na podstawie analizy luk dojrzałości cyfrowej
                     </p>
@@ -157,11 +153,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                         disabled={isGenerating}
                         className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-medium mx-auto"
                     >
-                        {isGenerating ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                            <Sparkles size={18} />
-                        )}
+                        {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
                         {isGenerating ? 'Generowanie...' : 'Wygeneruj rekomendacje'}
                     </button>
                 </div>
@@ -179,9 +171,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                             <Sparkles className="text-white" size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-navy-900 dark:text-white">
-                                Rekomendacje AI
-                            </h3>
+                            <h3 className="font-bold text-navy-900 dark:text-white">Rekomendacje AI</h3>
                             <p className="text-xs text-slate-500">
                                 {recommendations.length} sugestii • {quickWinCount} quick wins
                             </p>
@@ -192,11 +182,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                         disabled={isGenerating}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-500/10 rounded-lg"
                     >
-                        {isGenerating ? (
-                            <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                            <RefreshCw size={14} />
-                        )}
+                        {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                         Odśwież
                     </button>
                 </div>
@@ -205,29 +191,32 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                 <div className="flex gap-2 mt-4">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'all'
-                            ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
-                            : 'text-slate-500 hover:bg-white/50'
-                            }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            filter === 'all'
+                                ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
+                                : 'text-slate-500 hover:bg-white/50'
+                        }`}
                     >
                         Wszystkie ({recommendations.length})
                     </button>
                     <button
                         onClick={() => setFilter('quick_wins')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${filter === 'quick_wins'
-                            ? 'bg-white dark:bg-navy-700 text-amber-600 shadow-sm'
-                            : 'text-slate-500 hover:bg-white/50'
-                            }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                            filter === 'quick_wins'
+                                ? 'bg-white dark:bg-navy-700 text-amber-600 shadow-sm'
+                                : 'text-slate-500 hover:bg-white/50'
+                        }`}
                     >
                         <Lightbulb size={12} />
                         Quick Wins ({quickWinCount})
                     </button>
                     <button
                         onClick={() => setFilter('strategic')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${filter === 'strategic'
-                            ? 'bg-white dark:bg-navy-700 text-emerald-600 shadow-sm'
-                            : 'text-slate-500 hover:bg-white/50'
-                            }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                            filter === 'strategic'
+                                ? 'bg-white dark:bg-navy-700 text-emerald-600 shadow-sm'
+                                : 'text-slate-500 hover:bg-white/50'
+                        }`}
                     >
                         <Target size={12} />
                         Strategiczne ({strategicCount})
@@ -243,27 +232,22 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                     const isExpanded = expandedId === rec.id;
 
                     return (
-                        <div
-                            key={rec.id}
-                            className={`p-4 ${rec.status === 'rejected' ? 'opacity-50' : ''}`}
-                        >
+                        <div key={rec.id} className={`p-4 ${rec.status === 'rejected' ? 'opacity-50' : ''}`}>
                             <div className="flex items-start gap-3">
                                 {/* Priority badge */}
                                 <div className="flex flex-col items-center">
-                                    <div className={`w-8 h-8 rounded-lg bg-${typeConfig.color}-500/10 flex items-center justify-center`}>
+                                    <div
+                                        className={`w-8 h-8 rounded-lg bg-${typeConfig.color}-500/10 flex items-center justify-center`}
+                                    >
                                         <Icon size={16} className={`text-${typeConfig.color}-500`} />
                                     </div>
-                                    <span className="text-xs font-bold text-slate-400 mt-1">
-                                        #{index + 1}
-                                    </span>
+                                    <span className="text-xs font-bold text-slate-400 mt-1">#{index + 1}</span>
                                 </div>
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <h4 className="font-medium text-navy-900 dark:text-white">
-                                            {rec.title}
-                                        </h4>
+                                        <h4 className="font-medium text-navy-900 dark:text-white">{rec.title}</h4>
                                         {rec.status === 'accepted' && (
                                             <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 text-xs rounded-full">
                                                 Zaakceptowana
@@ -276,21 +260,23 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                                         )}
                                     </div>
 
-                                    <p className="text-sm text-slate-500 mt-1">
-                                        {rec.axisName}
-                                    </p>
+                                    <p className="text-sm text-slate-500 mt-1">{rec.axisName}</p>
 
                                     {/* Effort/Impact badges */}
                                     <div className="flex items-center gap-3 mt-2">
                                         <div className="flex items-center gap-1.5">
                                             <Clock size={12} className="text-slate-400" />
-                                            <span className={`text-xs font-medium text-${EFFORT_CONFIG[rec.estimatedEffort].color}-600`}>
+                                            <span
+                                                className={`text-xs font-medium text-${EFFORT_CONFIG[rec.estimatedEffort].color}-600`}
+                                            >
                                                 Nakład: {EFFORT_CONFIG[rec.estimatedEffort].label}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <TrendingUp size={12} className="text-slate-400" />
-                                            <span className={`text-xs font-medium text-${IMPACT_CONFIG[rec.estimatedImpact].color}-600`}>
+                                            <span
+                                                className={`text-xs font-medium text-${IMPACT_CONFIG[rec.estimatedImpact].color}-600`}
+                                            >
                                                 Wpływ: {IMPACT_CONFIG[rec.estimatedImpact].label}
                                             </span>
                                         </div>
@@ -376,24 +362,24 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
     const templates: Record<string, Array<{ title: string; type: string; effort: string; impact: string }>> = {
         digital_processes: [
             { title: 'Automatyzacja procesów produkcyjnych', type: 'technology', effort: 'high', impact: 'high' },
-            { title: 'Digitalizacja dokumentacji', type: 'process_change', effort: 'low', impact: 'medium' }
+            { title: 'Digitalizacja dokumentacji', type: 'process_change', effort: 'low', impact: 'medium' },
         ],
         digital_products: [
             { title: 'Platforma IoT dla produktów', type: 'technology', effort: 'high', impact: 'high' },
-            { title: 'System Track & Trace', type: 'technology', effort: 'medium', impact: 'high' }
+            { title: 'System Track & Trace', type: 'technology', effort: 'medium', impact: 'high' },
         ],
         big_data: [
             { title: 'Dashboard analityczny', type: 'technology', effort: 'medium', impact: 'medium' },
-            { title: 'Szkolenie z analizy danych', type: 'training', effort: 'low', impact: 'medium' }
+            { title: 'Szkolenie z analizy danych', type: 'training', effort: 'low', impact: 'medium' },
         ],
         transformation_culture: [
             { title: 'Program ambasadorów transformacji', type: 'process_change', effort: 'medium', impact: 'high' },
-            { title: 'Hackathon innowacji', type: 'quick_win', effort: 'low', impact: 'medium' }
+            { title: 'Hackathon innowacji', type: 'quick_win', effort: 'low', impact: 'medium' },
         ],
         cybersecurity: [
             { title: 'Audyt bezpieczeństwa', type: 'process_change', effort: 'medium', impact: 'high' },
-            { title: 'Szkolenia z cyberbezpieczeństwa', type: 'training', effort: 'low', impact: 'high' }
-        ]
+            { title: 'Szkolenia z cyberbezpieczeństwa', type: 'training', effort: 'low', impact: 'high' },
+        ],
     };
 
     // Axis names mapping
@@ -403,7 +389,7 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
         digital_business_models: 'Cyfrowe modele biznesowe',
         big_data: 'Big Data i Analityka',
         transformation_culture: 'Kultura transformacji',
-        cybersecurity: 'Cyberbezpieczeństwo'
+        cybersecurity: 'Cyberbezpieczeństwo',
     };
 
     // Find axes with gaps
@@ -414,9 +400,11 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
             const axisTemplates = templates[axisId] || [];
 
             axisTemplates.forEach((template, idx) => {
-                const priorityScore = Math.round(gap * 10 *
-                    (template.effort === 'low' ? 1.5 : template.effort === 'medium' ? 1 : 0.7) *
-                    (template.impact === 'high' ? 1.5 : template.impact === 'medium' ? 1 : 0.5)
+                const priorityScore = Math.round(
+                    gap *
+                        10 *
+                        (template.effort === 'low' ? 1.5 : template.effort === 'medium' ? 1 : 0.7) *
+                        (template.impact === 'high' ? 1.5 : template.impact === 'medium' ? 1 : 0.5),
                 );
 
                 recommendations.push({
@@ -433,7 +421,7 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
                     priorityScore,
                     status: 'suggested',
                     aiConfidence: 0.8,
-                    generatedAt: new Date().toISOString()
+                    generatedAt: new Date().toISOString(),
                 });
             });
         }
@@ -446,12 +434,4 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
 }
 
 export default AIRecommendationsPanel;
-
-
-
-
-
-
-
-
 

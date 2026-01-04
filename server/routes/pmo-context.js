@@ -1,5 +1,6 @@
 import express from 'express';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import verifyToken from '../middleware/authMiddleware.js';
 import StageGateService from '../services/stageGateService.js';
 import ExecutionMonitorService from '../services/executionMonitorService.js';

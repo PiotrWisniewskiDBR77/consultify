@@ -1,14 +1,12 @@
 /**
  * Capacity Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadCapacityservice = createCachedLazyService('../../services/capacityService.js');
+import service from '../../services/capacityService.js';
 
 // Export default instance (for backward compatibility)
-export default loadCapacityservice();
+export default service;

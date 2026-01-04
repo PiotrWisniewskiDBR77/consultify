@@ -1,19 +1,20 @@
 /**
  * useProfileExtended Hook
- * 
+ *
  * React hook for managing extended profile state with auto-save
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { ProfileExtendedApi } from '../services/profileExtendedApi';
-import { 
-    UserProfileExtended, 
-    ProfileVisibility, 
+import {
     EmailPreferences,
-    ExtendedSocialLinks,
     ExtendedContactInfo,
+    ExtendedSocialLinks,
     ProfileCompletion,
-    UserSkill
+    ProfileVisibility,
+    UserProfileExtended,
+    UserSkill,
 } from '../types';
 
 interface UseProfileExtendedOptions {
@@ -28,51 +29,57 @@ interface UseProfileExtendedReturn {
     loading: boolean;
     saving: boolean;
     error: Error | null;
-    
+
     // Bio
-    updateBio: (bio: { shortBio?: string; longBio?: string; skills?: string[]; yearsExperience?: number }) => Promise<void>;
-    
+    updateBio: (bio: {
+        shortBio?: string;
+        longBio?: string;
+        skills?: string[];
+        yearsExperience?: number;
+    }) => Promise<void>;
+
     // Social
     socialLinks: ExtendedSocialLinks | null;
     updateSocialLinks: (links: Partial<ExtendedSocialLinks>) => Promise<void>;
-    
+
     // Contact
     contactInfo: ExtendedContactInfo | null;
     updateContactInfo: (contact: Partial<ExtendedContactInfo>) => Promise<void>;
-    
+
     // Visibility
     visibility: ProfileVisibility | null;
     updateVisibility: (visibility: Partial<ProfileVisibility>) => Promise<void>;
-    
+
     // Email
     emailPreferences: EmailPreferences | null;
     updateEmailPreferences: (prefs: Partial<EmailPreferences>) => Promise<void>;
-    
+
     // Out of Office
-    setOutOfOffice: (settings: { enabled: boolean; message?: string; start?: string; end?: string; autoReply?: boolean }) => Promise<void>;
+    setOutOfOffice: (settings: {
+        enabled: boolean;
+        message?: string;
+        start?: string;
+        end?: string;
+        autoReply?: boolean;
+    }) => Promise<void>;
     clearOutOfOffice: () => Promise<void>;
-    
+
     // Profile Completion
     profileCompletion: ProfileCompletion | null;
     refreshProfileCompletion: () => Promise<void>;
-    
+
     // Skills
     skills: UserSkill[];
     addSkill: (skill: Partial<UserSkill>) => Promise<void>;
     removeSkill: (skillId: string) => Promise<void>;
-    
+
     // Actions
     refresh: () => Promise<void>;
     save: () => Promise<void>;
 }
 
 export function useProfileExtended(options: UseProfileExtendedOptions = {}): UseProfileExtendedReturn {
-    const { 
-        autoSave = false, 
-        autoSaveDelay = 2000, 
-        onSaveSuccess,
-        onSaveError 
-    } = options;
+    const { autoSave = false, autoSaveDelay = 2000, onSaveSuccess, onSaveError } = options;
 
     const [profile, setProfile] = useState<UserProfileExtended | null>(null);
     const [socialLinks, setSocialLinks] = useState<ExtendedSocialLinks | null>(null);
@@ -81,11 +88,11 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
     const [emailPreferences, setEmailPreferences] = useState<EmailPreferences | null>(null);
     const [profileCompletion, setProfileCompletion] = useState<ProfileCompletion | null>(null);
     const [skills, setSkills] = useState<UserSkill[]>([]);
-    
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    
+
     const autoSaveTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
     const pendingChanges = useRef<Partial<UserProfileExtended>>({});
 
@@ -103,23 +110,16 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
         setLoading(true);
         setError(null);
         try {
-            const [
-                profileRes,
-                socialRes,
-                contactRes,
-                visibilityRes,
-                emailRes,
-                completionRes,
-                skillsRes
-            ] = await Promise.all([
-                ProfileExtendedApi.getExtendedProfile(),
-                ProfileExtendedApi.getSocialLinks(),
-                ProfileExtendedApi.getContactInfo(),
-                ProfileExtendedApi.getVisibility(),
-                ProfileExtendedApi.getEmailPreferences(),
-                ProfileExtendedApi.getProfileCompletion(),
-                ProfileExtendedApi.getSkills()
-            ]);
+            const [profileRes, socialRes, contactRes, visibilityRes, emailRes, completionRes, skillsRes] =
+                await Promise.all([
+                    ProfileExtendedApi.getExtendedProfile(),
+                    ProfileExtendedApi.getSocialLinks(),
+                    ProfileExtendedApi.getContactInfo(),
+                    ProfileExtendedApi.getVisibility(),
+                    ProfileExtendedApi.getEmailPreferences(),
+                    ProfileExtendedApi.getProfileCompletion(),
+                    ProfileExtendedApi.getSkills(),
+                ]);
 
             setProfile(profileRes.profile);
             setSocialLinks(socialRes.socialLinks);
@@ -137,11 +137,11 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
 
     const scheduleSave = useCallback(() => {
         if (!autoSave) return;
-        
+
         if (autoSaveTimeout.current) {
             clearTimeout(autoSaveTimeout.current);
         }
-        
+
         autoSaveTimeout.current = setTimeout(async () => {
             if (Object.keys(pendingChanges.current).length > 0) {
                 await save();
@@ -151,7 +151,7 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
 
     const save = async () => {
         if (Object.keys(pendingChanges.current).length === 0) return;
-        
+
         setSaving(true);
         try {
             await ProfileExtendedApi.updateExtendedProfile(pendingChanges.current);
@@ -165,11 +165,16 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
         }
     };
 
-    const updateBio = async (bio: { shortBio?: string; longBio?: string; skills?: string[]; yearsExperience?: number }) => {
+    const updateBio = async (bio: {
+        shortBio?: string;
+        longBio?: string;
+        skills?: string[];
+        yearsExperience?: number;
+    }) => {
         setSaving(true);
         try {
             const response = await ProfileExtendedApi.updateBio(bio);
-            setProfile(prev => prev ? { ...prev, ...bio } : null);
+            setProfile((prev) => (prev ? { ...prev, ...bio } : null));
             onSaveSuccess?.();
         } catch (err) {
             onSaveError?.(err as Error);
@@ -235,7 +240,13 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
         }
     };
 
-    const setOutOfOffice = async (settings: { enabled: boolean; message?: string; start?: string; end?: string; autoReply?: boolean }) => {
+    const setOutOfOffice = async (settings: {
+        enabled: boolean;
+        message?: string;
+        start?: string;
+        end?: string;
+        autoReply?: boolean;
+    }) => {
         setSaving(true);
         try {
             await ProfileExtendedApi.setOutOfOffice(settings);
@@ -280,7 +291,7 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
         setSaving(true);
         try {
             const response = await ProfileExtendedApi.addSkill(skill);
-            setSkills(prev => [...prev, response.skill]);
+            setSkills((prev) => [...prev, response.skill]);
             onSaveSuccess?.();
         } catch (err) {
             onSaveError?.(err as Error);
@@ -294,7 +305,7 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
         setSaving(true);
         try {
             await ProfileExtendedApi.removeSkill(skillId);
-            setSkills(prev => prev.filter(s => s.id !== skillId));
+            setSkills((prev) => prev.filter((s) => s.id !== skillId));
             onSaveSuccess?.();
         } catch (err) {
             onSaveError?.(err as Error);
@@ -309,38 +320,34 @@ export function useProfileExtended(options: UseProfileExtendedOptions = {}): Use
         loading,
         saving,
         error,
-        
+
         updateBio,
-        
+
         socialLinks,
         updateSocialLinks,
-        
+
         contactInfo,
         updateContactInfo,
-        
+
         visibility,
         updateVisibility,
-        
+
         emailPreferences,
         updateEmailPreferences,
-        
+
         setOutOfOffice,
         clearOutOfOffice,
-        
+
         profileCompletion,
         refreshProfileCompletion,
-        
+
         skills,
         addSkill,
         removeSkill,
-        
+
         refresh: loadProfile,
         save,
     };
 }
 
 export default useProfileExtended;
-
-
-
-

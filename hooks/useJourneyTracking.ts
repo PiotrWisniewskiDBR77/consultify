@@ -1,9 +1,10 @@
 import { useCallback, useRef } from 'react';
+
 import { Api } from '../services/api';
 
 /**
  * useJourneyTracking — Frontend hook for journey analytics
- * 
+ *
  * Features:
  * - Tracks milestones, feature usage, tour events
  * - Batches events for performance
@@ -39,13 +40,13 @@ export const useJourneyTracking = () => {
         // Send events in parallel
         try {
             await Promise.all(
-                events.map(event =>
-                    Api.post('/analytics/journey/track', event).catch(err => {
+                events.map((event) =>
+                    Api.post('/analytics/journey/track', event).catch((err) => {
                         console.warn('[JourneyTracking] Failed to track:', err);
                         // Re-queue failed events
                         queueRef.current.push(event);
-                    })
-                )
+                    }),
+                ),
             );
         } catch (error) {
             console.error('[JourneyTracking] Flush error:', error);
@@ -60,69 +61,84 @@ export const useJourneyTracking = () => {
         }, BATCH_INTERVAL);
     }, [flushQueue]);
 
-    const queueEvent = useCallback((event: QueuedEvent) => {
-        queueRef.current.push(event);
+    const queueEvent = useCallback(
+        (event: QueuedEvent) => {
+            queueRef.current.push(event);
 
-        // Flush immediately if queue is full
-        if (queueRef.current.length >= MAX_QUEUE_SIZE) {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-                timerRef.current = null;
+            // Flush immediately if queue is full
+            if (queueRef.current.length >= MAX_QUEUE_SIZE) {
+                if (timerRef.current) {
+                    clearTimeout(timerRef.current);
+                    timerRef.current = null;
+                }
+                flushQueue();
+            } else {
+                scheduleFlush();
             }
-            flushQueue();
-        } else {
-            scheduleFlush();
-        }
-    }, [flushQueue, scheduleFlush]);
+        },
+        [flushQueue, scheduleFlush],
+    );
 
     /**
      * Track phase entry
      */
-    const trackPhaseEntry = useCallback((phase: string, options: TrackOptions = {}) => {
-        queueEvent({
-            eventType: 'phase_entry',
-            eventName: `phase_${phase}_entered`,
-            phase,
-            metadata: options,
-            timestamp: Date.now(),
-        });
-    }, [queueEvent]);
+    const trackPhaseEntry = useCallback(
+        (phase: string, options: TrackOptions = {}) => {
+            queueEvent({
+                eventType: 'phase_entry',
+                eventName: `phase_${phase}_entered`,
+                phase,
+                metadata: options,
+                timestamp: Date.now(),
+            });
+        },
+        [queueEvent],
+    );
 
     /**
      * Track activation milestone
      */
-    const trackMilestone = useCallback((milestone: string, options: TrackOptions = {}) => {
-        queueEvent({
-            eventType: 'milestone',
-            eventName: milestone,
-            metadata: options,
-            timestamp: Date.now(),
-        });
-    }, [queueEvent]);
+    const trackMilestone = useCallback(
+        (milestone: string, options: TrackOptions = {}) => {
+            queueEvent({
+                eventType: 'milestone',
+                eventName: milestone,
+                metadata: options,
+                timestamp: Date.now(),
+            });
+        },
+        [queueEvent],
+    );
 
     /**
      * Track feature usage
      */
-    const trackFeature = useCallback((featureId: string, options: TrackOptions = {}) => {
-        queueEvent({
-            eventType: 'feature_use',
-            eventName: featureId,
-            metadata: options,
-            timestamp: Date.now(),
-        });
-    }, [queueEvent]);
+    const trackFeature = useCallback(
+        (featureId: string, options: TrackOptions = {}) => {
+            queueEvent({
+                eventType: 'feature_use',
+                eventName: featureId,
+                metadata: options,
+                timestamp: Date.now(),
+            });
+        },
+        [queueEvent],
+    );
 
     /**
      * Track tour events
      */
-    const trackTour = useCallback((tourId: string, eventName: string, options: TrackOptions = {}) => {
-        queueEvent({
-            eventType: 'tour_event',
-            eventName: eventName,
-            metadata: { tourId, ...options },
-            timestamp: Date.now(),
-        });
-    }, [queueEvent]);
+    const trackTour = useCallback(
+        (tourId: string, eventName: string, options: TrackOptions = {}) => {
+            queueEvent({
+                eventType: 'tour_event',
+                eventName: eventName,
+                metadata: { tourId, ...options },
+                timestamp: Date.now(),
+            });
+        },
+        [queueEvent],
+    );
 
     /**
      * Force flush (call before navigation)
@@ -154,7 +170,9 @@ if (typeof window !== 'undefined') {
                     eventName: milestone,
                     metadata: options || {},
                 });
-            } catch { /* ignore */ }
+            } catch {
+                /* ignore */
+            }
         },
     };
 }

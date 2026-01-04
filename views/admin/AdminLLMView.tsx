@@ -1,14 +1,39 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import {
+    Activity,
+    AlertTriangle,
+    ArrowRight,
+    Box,
+    Brain,
+    Check,
+    CheckCircle,
+    Clock,
+    Coins,
+    Edit,
+    Edit2,
+    Eye,
+    EyeOff,
+    Globe,
+    Info,
+    Play,
+    Plus,
+    RefreshCw,
+    Save,
+    Server,
+    Settings,
+    Shield,
+    Terminal,
+    Trash2,
+    Wifi,
+    X,
+    XCircle,
+    Zap,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { LLMProvider } from '../../types';
-import { toast } from 'react-hot-toast';
-import {
-    Shield, Server, Activity, AlertTriangle, Check, RefreshCw,
-    Plus, Settings, Save, Brain, Zap, Trash2, Edit2, Play, Box,
-    Terminal, Coins, Globe, CheckCircle, XCircle, Info, X, Edit, Eye, EyeOff,
-    Clock, Wifi, ArrowRight
-} from 'lucide-react';
-import { InfoButton } from '../../components/shared/InfoButton';
 
 // Health Status Types
 interface ProviderStatus {
@@ -69,8 +94,6 @@ export const AdminLLMView: React.FC = () => {
     const [testingProvider, setTestingProvider] = useState<string | null>(null);
     const [refreshingHealth, setRefreshingHealth] = useState(false);
 
-
-
     // Prompts State
     const [activeTab, setActiveTab] = useState<'providers' | 'prompts' | 'health'>('providers');
     const [prompts, setPrompts] = useState<any[]>([]);
@@ -84,7 +107,7 @@ export const AdminLLMView: React.FC = () => {
         model_id: '',
         is_active: true,
         visibility: 'admin',
-        cost_per_1k: 0
+        cost_per_1k: 0,
     });
     const [logs, setLogs] = useState<any[]>([]);
     const [analytics, setAnalytics] = useState<any>(null);
@@ -128,10 +151,7 @@ export const AdminLLMView: React.FC = () => {
 
     const loadAnalytics = useCallback(async () => {
         try {
-            const [stats, recentLogs] = await Promise.all([
-                Api.getLLMAnalytics(7),
-                Api.getLLMLogs(50)
-            ]);
+            const [stats, recentLogs] = await Promise.all([Api.getLLMAnalytics(7), Api.getLLMLogs(50)]);
             setAnalytics(stats);
             setLogs(recentLogs.logs || []);
         } catch (error) {
@@ -205,20 +225,28 @@ export const AdminLLMView: React.FC = () => {
     // Get status icon
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'healthy': return <CheckCircle size={16} className="text-green-400" />;
-            case 'degraded': return <AlertTriangle size={16} className="text-yellow-400" />;
-            case 'unhealthy': return <XCircle size={16} className="text-red-400" />;
-            default: return <Activity size={16} className="text-slate-400" />;
+            case 'healthy':
+                return <CheckCircle size={16} className="text-green-400" />;
+            case 'degraded':
+                return <AlertTriangle size={16} className="text-yellow-400" />;
+            case 'unhealthy':
+                return <XCircle size={16} className="text-red-400" />;
+            default:
+                return <Activity size={16} className="text-slate-400" />;
         }
     };
 
     // Get status color class
     const getStatusClass = (status: string) => {
         switch (status) {
-            case 'healthy': return 'text-green-400 bg-green-500/10 border-green-500/20';
-            case 'degraded': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
-            case 'unhealthy': return 'text-red-400 bg-red-500/10 border-red-500/20';
-            default: return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+            case 'healthy':
+                return 'text-green-400 bg-green-500/10 border-green-500/20';
+            case 'degraded':
+                return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+            case 'unhealthy':
+                return 'text-red-400 bg-red-500/10 border-red-500/20';
+            default:
+                return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
         }
     };
 
@@ -251,7 +279,15 @@ export const AdminLLMView: React.FC = () => {
             }
             setShowModal(false);
             setEditingId(null);
-            setForm({ name: '', provider: 'openai', api_key: '', endpoint: '', model_id: '', is_active: true, visibility: 'admin' });
+            setForm({
+                name: '',
+                provider: 'openai',
+                api_key: '',
+                endpoint: '',
+                model_id: '',
+                is_active: true,
+                visibility: 'admin',
+            });
             loadProviders();
         } catch (err) {
             toast.error('Operation failed');
@@ -266,7 +302,7 @@ export const AdminLLMView: React.FC = () => {
                 content: editingPrompt.content,
                 description: editingPrompt.description,
                 context_config: editingPrompt.context_config as any,
-                updatedBy: 'SuperAdmin' // In real app, use currentUser.email
+                updatedBy: 'SuperAdmin', // In real app, use currentUser.email
             });
             toast.success('System Prompt Updated');
             setEditingPrompt(null);
@@ -311,8 +347,13 @@ export const AdminLLMView: React.FC = () => {
                     <Activity size={14} />
                     Health Dashboard
                     {llmStatus && (
-                        <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${llmStatus.summary.healthy > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                            }`}>
+                        <span
+                            className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                                llmStatus.summary.healthy > 0
+                                    ? 'bg-green-500/20 text-green-400'
+                                    : 'bg-red-500/20 text-red-400'
+                            }`}
+                        >
                             {llmStatus.summary.healthy}/{llmStatus.summary.configured}
                         </span>
                     )}
@@ -350,9 +391,7 @@ export const AdminLLMView: React.FC = () => {
                                 </div>
                                 <span className="text-xs font-mono text-slate-500">AVG LATENCY</span>
                             </div>
-                            <div className="text-2xl font-bold text-white mb-1">
-                                {analytics?.avg_latency || 0}ms
-                            </div>
+                            <div className="text-2xl font-bold text-white mb-1">{analytics?.avg_latency || 0}ms</div>
                             <div className="text-xs text-slate-400">Response Time</div>
                         </div>
 
@@ -371,17 +410,20 @@ export const AdminLLMView: React.FC = () => {
 
                         <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
                             <div className="flex justify-between items-start mb-2">
-                                <div className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'}`}>
-                                    <AlertTriangle size={20} className={analytics?.error_rate > 0.05 ? 'text-red-400' : 'text-purple-400'} />
+                                <div
+                                    className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'}`}
+                                >
+                                    <AlertTriangle
+                                        size={20}
+                                        className={analytics?.error_rate > 0.05 ? 'text-red-400' : 'text-purple-400'}
+                                    />
                                 </div>
                                 <span className="text-xs font-mono text-slate-500">ERROR RATE</span>
                             </div>
                             <div className="text-2xl font-bold text-white mb-1">
                                 {(analytics?.error_rate * 100).toFixed(1)}%
                             </div>
-                            <div className="text-xs text-slate-400">
-                                {analytics?.error_count} Failed Requests
-                            </div>
+                            <div className="text-xs text-slate-400">{analytics?.error_count} Failed Requests</div>
                         </div>
                     </div>
 
@@ -412,10 +454,13 @@ export const AdminLLMView: React.FC = () => {
                                     {logs.map((log: any) => (
                                         <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
                                             <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${log.status === 'success'
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                    }`}>
+                                                <span
+                                                    className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                                                        log.status === 'success'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                    }`}
+                                                >
                                                     {log.status}
                                                 </span>
                                             </td>
@@ -436,7 +481,10 @@ export const AdminLLMView: React.FC = () => {
                                             </td>
                                             <td className="px-4 py-3">
                                                 {log.error_message ? (
-                                                    <span className="text-red-400 text-xs truncate max-w-[200px] block" title={log.error_message}>
+                                                    <span
+                                                        className="text-red-400 text-xs truncate max-w-[200px] block"
+                                                        title={log.error_message}
+                                                    >
                                                         {log.error_message}
                                                     </span>
                                                 ) : (
@@ -487,7 +535,10 @@ export const AdminLLMView: React.FC = () => {
                             <Server size={18} className="text-slate-400" />
                             <span className="text-xs uppercase tracking-wider text-slate-400">Total</span>
                         </div>
-                        <p className="text-3xl font-bold text-white">{llmStatus?.summary.configured || 0}<span className="text-sm text-slate-500">/{llmStatus?.summary.total || 0}</span></p>
+                        <p className="text-3xl font-bold text-white">
+                            {llmStatus?.summary.configured || 0}
+                            <span className="text-sm text-slate-500">/{llmStatus?.summary.total || 0}</span>
+                        </p>
                     </div>
                 </div>
 
@@ -504,8 +555,8 @@ export const AdminLLMView: React.FC = () => {
                         {llmStatus?.startupValidation && (
                             <div className="flex items-center gap-2 text-xs text-slate-400">
                                 <Clock size={12} />
-                                Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}
-                                ({llmStatus.startupValidation.duration}ms)
+                                Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}(
+                                {llmStatus.startupValidation.duration}ms)
                             </div>
                         )}
                     </div>
@@ -520,19 +571,22 @@ export const AdminLLMView: React.FC = () => {
                 </div>
 
                 {/* Critical Errors */}
-                {llmStatus?.startupValidation?.criticalErrors && llmStatus.startupValidation.criticalErrors.length > 0 && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                        <h3 className="text-red-400 font-semibold flex items-center gap-2 mb-2">
-                            <AlertTriangle size={16} />
-                            Critical Errors
-                        </h3>
-                        <ul className="space-y-1">
-                            {llmStatus.startupValidation.criticalErrors.map((err, i) => (
-                                <li key={i} className="text-red-300 text-sm">• {err}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
+                {llmStatus?.startupValidation?.criticalErrors &&
+                    llmStatus.startupValidation.criticalErrors.length > 0 && (
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                            <h3 className="text-red-400 font-semibold flex items-center gap-2 mb-2">
+                                <AlertTriangle size={16} />
+                                Critical Errors
+                            </h3>
+                            <ul className="space-y-1">
+                                {llmStatus.startupValidation.criticalErrors.map((err, i) => (
+                                    <li key={i} className="text-red-300 text-sm">
+                                        • {err}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
 
                 {/* Provider Health Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -553,12 +607,26 @@ export const AdminLLMView: React.FC = () => {
                             </div>
 
                             <div className="flex flex-wrap gap-1 mb-3">
-                                <span className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'}`}>
+                                <span
+                                    className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400'}`}
+                                >
                                     {p.isDefault ? '★ Default' : p.tier}
                                 </span>
-                                {p.supportsVision && <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">Vision</span>}
-                                {p.supportsTools && <span className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-300">Tools</span>}
-                                {!p.isConfigured && <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-300">No API Key</span>}
+                                {p.supportsVision && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">
+                                        Vision
+                                    </span>
+                                )}
+                                {p.supportsTools && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-300">
+                                        Tools
+                                    </span>
+                                )}
+                                {!p.isConfigured && (
+                                    <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-300">
+                                        No API Key
+                                    </span>
+                                )}
                             </div>
 
                             <div className="flex justify-between items-center">
@@ -583,11 +651,16 @@ export const AdminLLMView: React.FC = () => {
                             {llmStatus.circuitBreakers[p.provider] && (
                                 <div className="mt-2 pt-2 border-t border-white/5">
                                     <div className="flex items-center gap-2 text-xs">
-                                        <Zap size={10} className={
-                                            llmStatus.circuitBreakers[p.provider].state === 'CLOSED' ? 'text-green-400' :
-                                                llmStatus.circuitBreakers[p.provider].state === 'OPEN' ? 'text-red-400' :
-                                                    'text-yellow-400'
-                                        } />
+                                        <Zap
+                                            size={10}
+                                            className={
+                                                llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
+                                                    ? 'text-green-400'
+                                                    : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
+                                                      ? 'text-red-400'
+                                                      : 'text-yellow-400'
+                                            }
+                                        />
                                         <span className="text-slate-400">
                                             Circuit: {llmStatus.circuitBreakers[p.provider].state}
                                         </span>
@@ -613,15 +686,21 @@ export const AdminLLMView: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {Object.entries(llmStatus.fallbackChains).map(([tier, chain]) => (
                                 <div key={tier} className="bg-navy-950/50 rounded-lg p-3">
-                                    <span className="text-xs uppercase tracking-wider text-purple-400 mb-2 block">{tier}</span>
+                                    <span className="text-xs uppercase tracking-wider text-purple-400 mb-2 block">
+                                        {tier}
+                                    </span>
                                     <div className="flex flex-wrap items-center gap-2">
                                         {(chain as string[]).map((provider, idx) => (
                                             <React.Fragment key={provider}>
                                                 {idx > 0 && <ArrowRight size={12} className="text-slate-600" />}
-                                                <span className={`text-sm px-2 py-0.5 rounded ${llmStatus.providers.find(p => p.provider === provider)?.healthStatus === 'healthy'
-                                                    ? 'bg-green-500/20 text-green-300'
-                                                    : 'bg-slate-700/50 text-slate-400'
-                                                    }`}>
+                                                <span
+                                                    className={`text-sm px-2 py-0.5 rounded ${
+                                                        llmStatus.providers.find((p) => p.provider === provider)
+                                                            ?.healthStatus === 'healthy'
+                                                            ? 'bg-green-500/20 text-green-300'
+                                                            : 'bg-slate-700/50 text-slate-400'
+                                                    }`}
+                                                >
                                                     {provider}
                                                 </span>
                                             </React.Fragment>

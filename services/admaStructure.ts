@@ -1,9 +1,9 @@
 /**
  * ADMA 2.0 (Advanced Digital Maturity Assessment) Structure
- * 
+ *
  * ADMA jest narzędziem opracowanym przez European Commission w ramach
  * programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.
- * 
+ *
  * Structure:
  * - 5 Pillars (Strategy, Smart Products, Smart Operations, Smart Supply Chain, Data-Driven)
  * - 12 Dimensions across pillars
@@ -79,12 +79,7 @@ export const ADMA_MATURITY_LEVELS: ADMALevel[] = [
         level: 1,
         title: 'Newcomer',
         description: 'No or very limited digital capabilities. Traditional methods dominate.',
-        characteristics: [
-            'No digital strategy',
-            'Manual processes',
-            'No data collection',
-            'Siloed operations',
-        ],
+        characteristics: ['No digital strategy', 'Manual processes', 'No data collection', 'Siloed operations'],
     },
     {
         level: 2,
@@ -219,7 +214,7 @@ export const ADMA_DIMENSIONS: ADMADimension[] = [
         description: 'Organizational readiness, skills, and digital mindset',
         levels: ADMA_MATURITY_LEVELS,
     },
-    
+
     // Smart Products
     {
         id: 'product_features',
@@ -237,7 +232,7 @@ export const ADMA_DIMENSIONS: ADMADimension[] = [
         description: 'Collection and utilization of product usage data',
         levels: ADMA_MATURITY_LEVELS,
     },
-    
+
     // Smart Operations
     {
         id: 'production_tech',
@@ -255,7 +250,7 @@ export const ADMA_DIMENSIONS: ADMADimension[] = [
         description: 'MES, SCADA, and IT/OT integration',
         levels: ADMA_MATURITY_LEVELS,
     },
-    
+
     // Smart Supply Chain
     {
         id: 'supply_integration',
@@ -273,7 +268,7 @@ export const ADMA_DIMENSIONS: ADMADimension[] = [
         description: 'Real-time visibility and traceability',
         levels: ADMA_MATURITY_LEVELS,
     },
-    
+
     // Data-Driven Services
     {
         id: 'data_collection',
@@ -309,14 +304,14 @@ export const ADMA_DIMENSIONS: ADMADimension[] = [
  * Get dimension by ID
  */
 export function getADMADimension(dimensionId: string): ADMADimension | undefined {
-    return ADMA_DIMENSIONS.find(d => d.id === dimensionId);
+    return ADMA_DIMENSIONS.find((d) => d.id === dimensionId);
 }
 
 /**
  * Get dimensions for a pillar
  */
 export function getDimensionsForPillar(pillarId: ADMAPillarId): ADMADimension[] {
-    return ADMA_DIMENSIONS.filter(d => d.pillar === pillarId);
+    return ADMA_DIMENSIONS.filter((d) => d.pillar === pillarId);
 }
 
 /**
@@ -332,9 +327,9 @@ export function getAllPillarIds(): ADMAPillarId[] {
 export function calculatePillarScore(dimensionScores: Record<string, number>, pillarId: ADMAPillarId): number {
     const pillarConfig = ADMA_PILLARS[pillarId];
     const relevantScores = pillarConfig.dimensionIds
-        .map(id => dimensionScores[id])
-        .filter(score => score !== undefined && score !== null && score > 0);
-    
+        .map((id) => dimensionScores[id])
+        .filter((score) => score !== undefined && score !== null && score > 0);
+
     if (relevantScores.length === 0) return 0;
     return Math.round((relevantScores.reduce((a, b) => a + b, 0) / relevantScores.length) * 10) / 10;
 }
@@ -343,7 +338,7 @@ export function calculatePillarScore(dimensionScores: Record<string, number>, pi
  * Calculate overall ADMA maturity score
  */
 export function calculateOverallADMAScore(dimensionScores: Record<string, number>): number {
-    const allScores = Object.values(dimensionScores).filter(s => s !== undefined && s !== null && s > 0);
+    const allScores = Object.values(dimensionScores).filter((s) => s !== undefined && s !== null && s > 0);
     if (allScores.length === 0) return 0;
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
 }
@@ -353,18 +348,18 @@ export function calculateOverallADMAScore(dimensionScores: Record<string, number
  */
 export function mapADMADimensionToDRD(dimensionId: string): string {
     const mapping: Record<string, string> = {
-        'digital_strategy': 'businessModels',
-        'digital_investments': 'businessModels',
-        'digital_culture': 'culture',
-        'product_features': 'digitalProducts',
-        'product_data': 'dataManagement',
-        'production_tech': 'processes',
-        'production_it': 'processes',
-        'supply_integration': 'processes',
-        'supply_visibility': 'dataManagement',
-        'data_collection': 'dataManagement',
-        'data_analytics': 'aiMaturity',
-        'data_services': 'digitalProducts',
+        digital_strategy: 'businessModels',
+        digital_investments: 'businessModels',
+        digital_culture: 'culture',
+        product_features: 'digitalProducts',
+        product_data: 'dataManagement',
+        production_tech: 'processes',
+        production_it: 'processes',
+        supply_integration: 'processes',
+        supply_visibility: 'dataManagement',
+        data_collection: 'dataManagement',
+        data_analytics: 'aiMaturity',
+        data_services: 'digitalProducts',
     };
     return mapping[dimensionId] || 'processes';
 }
@@ -374,15 +369,15 @@ export function mapADMADimensionToDRD(dimensionId: string): string {
  */
 export function createEmptyADMAAssessment(): ADMAAssessmentData {
     const pillars: Record<ADMAPillarId, ADMAPillarScore> = {} as Record<ADMAPillarId, ADMAPillarScore>;
-    getAllPillarIds().forEach(pillarId => {
+    getAllPillarIds().forEach((pillarId) => {
         pillars[pillarId] = { current: 0, target: 0, gap: 0, dimensionScores: {} };
     });
-    
+
     const dimensions: Record<string, ADMADimensionScore> = {};
-    ADMA_DIMENSIONS.forEach(dim => {
+    ADMA_DIMENSIONS.forEach((dim) => {
         dimensions[dim.id] = { current: 0, target: 0, gap: 0 };
     });
-    
+
     return {
         pillars,
         dimensions,
@@ -405,9 +400,9 @@ export function getPillarRadarData(pillarScores: Record<ADMAPillarId, ADMAPillar
 } {
     const pillarIds = getAllPillarIds();
     return {
-        labels: pillarIds.map(id => ADMA_PILLARS[id].namePL),
-        current: pillarIds.map(id => pillarScores[id]?.current || 0),
-        target: pillarIds.map(id => pillarScores[id]?.target || 0),
+        labels: pillarIds.map((id) => ADMA_PILLARS[id].namePL),
+        current: pillarIds.map((id) => pillarScores[id]?.current || 0),
+        target: pillarIds.map((id) => pillarScores[id]?.target || 0),
     };
 }
 
@@ -416,12 +411,4 @@ export default {
     ADMA_DIMENSIONS,
     ADMA_MATURITY_LEVELS,
 };
-
-
-
-
-
-
-
-
 

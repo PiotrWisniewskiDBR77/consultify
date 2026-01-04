@@ -3,16 +3,12 @@
  * Enterprise SaaS Architecture - TypeScript Backend Auth
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { _Request, NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
+
+import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
-
-import {
-    AuthenticatedUser as GlobalUser,
-    AuthenticatedRequest,
-    UserRole
-} from '../types/index.js';
 
 // ==========================================
 // TYPES
@@ -64,9 +60,11 @@ let deps: Dependencies;
 // Lazy initialization to avoid circular dependencies
 const getDeps = async (): Promise<Dependencies> => {
     if (!deps) {
-        const defaultJwt = await import('jsonwebtoken').then(m => m.default || m);
-        const defaultConfig = await import('../../config.js').then(m => m.default || m);
-        const defaultPermissionService = await import('../../services/permissionService.js').then(m => m.default || m);
+        const defaultJwt = await import('jsonwebtoken').then((m) => m.default || m);
+        const defaultConfig = await import('../../config.js').then((m) => m.default || m);
+        const defaultPermissionService = await import('../../services/permissionService.js').then(
+            (m) => m.default || m,
+        );
 
         deps = {
             jwt: defaultJwt,
@@ -113,23 +111,25 @@ const mapRole = (role?: string): UserRole => {
     if (!role) return 'team_member';
     const r = role.toLowerCase();
     switch (r) {
-        case 'admin': return 'administrator';
-        case 'superadmin': return 'owner';
-        case 'user': return 'team_member';
-        case 'client': return 'guest';
-        case 'manager': return 'project_manager';
-        default: return role as UserRole;
+        case 'admin':
+            return 'administrator';
+        case 'superadmin':
+            return 'owner';
+        case 'user':
+            return 'team_member';
+        case 'client':
+            return 'guest';
+        case 'manager':
+            return 'project_manager';
+        default:
+            return role as UserRole;
     }
 };
 
 /**
  * Attach user data to request
  */
-const attachUser = async (
-    decoded: JWTPayload,
-    req: AuthRequest,
-    next: NextFunction
-): Promise<void> => {
+const attachUser = async (decoded: JWTPayload, req: AuthRequest, next: NextFunction): Promise<void> => {
     const { PermissionService } = await getDeps();
 
     req.userId = decoded.id;
@@ -166,7 +166,7 @@ const checkTokenRevocation = async (
     decoded: JWTPayload,
     req: AuthRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
 ): Promise<void> => {
     const { dbGet } = await getDeps();
 
@@ -178,10 +178,9 @@ const checkTokenRevocation = async (
 
     try {
         // Check if specific token is revoked
-        const revokedToken = await dbGet<{ jti: string }>(
-            'SELECT jti FROM revoked_tokens WHERE jti = ?',
-            [decoded.jti]
-        );
+        const revokedToken = await dbGet<{ jti: string }>('SELECT jti FROM revoked_tokens WHERE jti = ?', [
+            decoded.jti,
+        ]);
 
         if (revokedToken) {
             res.status(401).json({ error: 'Token has been revoked' });
@@ -191,7 +190,7 @@ const checkTokenRevocation = async (
         // Check for "revoke-all" marker for this user
         const revokeAllRow = await dbGet<{ jti: string }>(
             "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
-            [decoded.id]
+            [decoded.id],
         );
 
         if (revokeAllRow) {
@@ -201,7 +200,7 @@ const checkTokenRevocation = async (
 
             if (tokenIssuedAt < revokeTime) {
                 res.status(401).json({
-                    error: 'All sessions have been revoked. Please log in again.'
+                    error: 'All sessions have been revoked. Please log in again.',
                 });
                 return;
             }
@@ -223,11 +222,7 @@ const checkTokenRevocation = async (
 /**
  * Verify JWT token and attach user to request
  */
-export const verifyToken = asyncHandler(async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { jwt: jwtLib, config } = await getDeps();
 
     const token = extractToken(req);
@@ -263,6 +258,7 @@ export const verifyToken = asyncHandler(async (
 
         await checkTokenRevocation(decoded, req, res, next);
     } catch (err: any) {
+        console.error('[AuthMiddleware] Verification failed:', err.message);
         if (err.name === 'TokenExpiredError') {
             res.status(401).json({ error: 'Token expired' });
             return;
@@ -275,29 +271,27 @@ export const verifyToken = asyncHandler(async (
 /**
  * Optional auth - attaches user if token present, but doesn't require it
  */
-export const optionalAuth = asyncHandler(async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    const { jwt: jwtLib, config } = await getDeps();
+export const optionalAuth = asyncHandler(
+    async (req: AuthRequest, _res: Response, next: NextFunction): Promise<void> => {
+        const { jwt: jwtLib, config } = await getDeps();
 
-    const token = extractToken(req);
+        const token = extractToken(req);
 
-    if (!token) {
-        return next();
-    }
-
-    jwtLib.verify(token, config.JWT_SECRET, async (err, decoded) => {
-        if (err) {
-            // Invalid token, but optional - continue without user
+        if (!token) {
             return next();
         }
 
-        // Attach user without revocation check for optional auth
-        await attachUser(decoded as JWTPayload, req, next);
-    });
-});
+        jwtLib.verify(token, config.JWT_SECRET, async (err, decoded) => {
+            if (err) {
+                // Invalid token, but optional - continue without user
+                return next();
+            }
+
+            // Attach user without revocation check for optional auth
+            await attachUser(decoded as JWTPayload, req, next);
+        });
+    },
+);
 
 /**
  * Require specific role
@@ -321,11 +315,7 @@ export const requireRole = (...roles: string[]) => {
 /**
  * Require super admin
  */
-export const requireSuperAdmin = (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): void => {
+export const requireSuperAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
         res.status(401).json({ error: 'Authentication required' });
         return;
@@ -342,11 +332,7 @@ export const requireSuperAdmin = (
 /**
  * Require organization context
  */
-export const requireOrganization = (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): void => {
+export const requireOrganization = (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.organizationId) {
         res.status(403).json({ error: 'Organization context required' });
         return;
@@ -393,5 +379,3 @@ export const setDependencies = (newDeps: Partial<Dependencies>): void => {
 // ==========================================
 
 export default verifyToken;
-
-

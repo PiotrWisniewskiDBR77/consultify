@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface VoiceChatState {
     isSpeaking: boolean;
@@ -27,7 +27,7 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
         voiceEnabled: false,
         speechRate: 1.0,
         availableVoices: [],
-        selectedVoiceURI: null
+        selectedVoiceURI: null,
     });
 
     const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -38,7 +38,7 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
     // Initialize Speech Synthesis
     useEffect(() => {
         if (!ttsSupported) return;
-        
+
         synthRef.current = window.speechSynthesis;
 
         // Load voices (may be async on some browsers)
@@ -48,23 +48,23 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
             // Get current language from i18n
             const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
             const langCodeMap: Record<string, string> = {
-                'pl': 'pl',
-                'en': 'en',
-                'de': 'de',
-                'es': 'es',
-                'ja': 'ja',
-                'ar': 'ar'
+                pl: 'pl',
+                en: 'en',
+                de: 'de',
+                es: 'es',
+                ja: 'ja',
+                ar: 'ar',
             };
             const targetLang = langCodeMap[i18nLang] || 'pl';
 
             // Find best voice for target language
-            let targetVoice = voices.find(v => v.lang.startsWith(targetLang) && v.name.includes('Google'));
+            let targetVoice = voices.find((v) => v.lang.startsWith(targetLang) && v.name.includes('Google'));
             if (!targetVoice) {
-                targetVoice = voices.find(v => v.lang.startsWith(targetLang));
+                targetVoice = voices.find((v) => v.lang.startsWith(targetLang));
             }
             // Fallback to Polish
             if (!targetVoice) {
-                targetVoice = voices.find(v => v.lang.startsWith('pl'));
+                targetVoice = voices.find((v) => v.lang.startsWith('pl'));
             }
 
             console.log('[VoiceChat] Available voices:', voices.length);
@@ -73,12 +73,10 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
 
             // Use queueMicrotask to defer the state update
             queueMicrotask(() => {
-                setState(prev => ({
+                setState((prev) => ({
                     ...prev,
                     availableVoices: voices,
-                    selectedVoiceURI: prev.selectedVoiceURI ||
-                        targetVoice?.voiceURI ||
-                        voices[0]?.voiceURI || null
+                    selectedVoiceURI: prev.selectedVoiceURI || targetVoice?.voiceURI || voices[0]?.voiceURI || null,
                 }));
             });
         };
@@ -99,71 +97,74 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
     }, [ttsSupported]);
 
     // Speak text using TTS
-    const speak = useCallback((text: string) => {
-        if (!synthRef.current || !ttsSupported) {
-            console.warn('Speech Synthesis not supported');
-            return;
-        }
-
-        // Cancel any ongoing speech
-        synthRef.current.cancel();
-
-        // Clean text - remove markdown formatting for better speech
-        const cleanText = text
-            .replace(/\*\*(.*?)\*\*/g, '$1') // Bold
-            .replace(/\*(.*?)\*/g, '$1')     // Italic  
-            .replace(/`(.*?)`/g, '$1')       // Code
-            .replace(/#{1,6}\s/g, '')        // Headers
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
-            .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Images
-            .replace(/[-*•]\s/g, '')         // List bullets
-            .replace(/\n{2,}/g, '. ')        // Multiple newlines to pause
-            .replace(/\n/g, ' ')             // Single newlines
-            .trim();
-
-        if (!cleanText) return;
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.rate = state.speechRate;
-        utterance.lang = 'pl-PL'; // Default to Polish
-
-        // Set selected voice
-        if (state.selectedVoiceURI) {
-            const voice = state.availableVoices.find(v => v.voiceURI === state.selectedVoiceURI);
-            if (voice) {
-                utterance.voice = voice;
-                utterance.lang = voice.lang;
+    const speak = useCallback(
+        (text: string) => {
+            if (!synthRef.current || !ttsSupported) {
+                console.warn('Speech Synthesis not supported');
+                return;
             }
-        }
 
-        utterance.onstart = () => {
-            setState(prev => ({ ...prev, isSpeaking: true }));
-        };
+            // Cancel any ongoing speech
+            synthRef.current.cancel();
 
-        utterance.onend = () => {
-            setState(prev => ({ ...prev, isSpeaking: false }));
-        };
+            // Clean text - remove markdown formatting for better speech
+            const cleanText = text
+                .replace(/\*\*(.*?)\*\*/g, '$1') // Bold
+                .replace(/\*(.*?)\*/g, '$1') // Italic
+                .replace(/`(.*?)`/g, '$1') // Code
+                .replace(/#{1,6}\s/g, '') // Headers
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
+                .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Images
+                .replace(/[-*•]\s/g, '') // List bullets
+                .replace(/\n{2,}/g, '. ') // Multiple newlines to pause
+                .replace(/\n/g, ' ') // Single newlines
+                .trim();
 
-        utterance.onerror = (event) => {
-            console.error('Speech synthesis error:', event);
-            setState(prev => ({ ...prev, isSpeaking: false }));
-        };
+            if (!cleanText) return;
 
-        utteranceRef.current = utterance;
-        synthRef.current.speak(utterance);
-    }, [state.speechRate, state.selectedVoiceURI, state.availableVoices, ttsSupported]);
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.rate = state.speechRate;
+            utterance.lang = 'pl-PL'; // Default to Polish
+
+            // Set selected voice
+            if (state.selectedVoiceURI) {
+                const voice = state.availableVoices.find((v) => v.voiceURI === state.selectedVoiceURI);
+                if (voice) {
+                    utterance.voice = voice;
+                    utterance.lang = voice.lang;
+                }
+            }
+
+            utterance.onstart = () => {
+                setState((prev) => ({ ...prev, isSpeaking: true }));
+            };
+
+            utterance.onend = () => {
+                setState((prev) => ({ ...prev, isSpeaking: false }));
+            };
+
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                setState((prev) => ({ ...prev, isSpeaking: false }));
+            };
+
+            utteranceRef.current = utterance;
+            synthRef.current.speak(utterance);
+        },
+        [state.speechRate, state.selectedVoiceURI, state.availableVoices, ttsSupported],
+    );
 
     // Stop current speech
     const stopSpeaking = useCallback(() => {
         if (synthRef.current) {
             synthRef.current.cancel();
-            setState(prev => ({ ...prev, isSpeaking: false }));
+            setState((prev) => ({ ...prev, isSpeaking: false }));
         }
     }, []);
 
     // Toggle voice enabled
     const toggleVoice = useCallback(() => {
-        setState(prev => {
+        setState((prev) => {
             const newEnabled = !prev.voiceEnabled;
             // If disabling, stop any current speech
             if (!newEnabled && synthRef.current) {
@@ -176,12 +177,12 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
     // Set speech rate (0.5 - 2.0)
     const setSpeechRate = useCallback((rate: number) => {
         const clampedRate = Math.min(2.0, Math.max(0.5, rate));
-        setState(prev => ({ ...prev, speechRate: clampedRate }));
+        setState((prev) => ({ ...prev, speechRate: clampedRate }));
     }, []);
 
     // Set selected voice
     const setSelectedVoice = useCallback((voiceURI: string) => {
-        setState(prev => ({ ...prev, selectedVoiceURI: voiceURI }));
+        setState((prev) => ({ ...prev, selectedVoiceURI: voiceURI }));
     }, []);
 
     return {
@@ -191,7 +192,7 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
         toggleVoice,
         setSpeechRate,
         setSelectedVoice,
-        ttsSupported
+        ttsSupported,
     };
 };
 

@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - Strategic Initiative Management
  */
 
-import { API_URL, handleResponse, getHeaders } from './baseClient';
+import { API_URL, getHeaders, handleResponse } from './baseClient';
 
 export interface Initiative {
     id: string;
@@ -37,7 +37,7 @@ export const InitiativeApi = {
     // ==========================================
     // INITIATIVES CRUD
     // ==========================================
-    
+
     getInitiatives: async (projectId?: string): Promise<Initiative[]> => {
         let url = `${API_URL}/initiatives`;
         if (projectId) url += `?projectId=${projectId}`;
@@ -56,7 +56,7 @@ export const InitiativeApi = {
         const res = await fetch(`${API_URL}/initiatives`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(initiative)
+            body: JSON.stringify(initiative),
         });
         return handleResponse(res, 'Failed to create initiative');
     },
@@ -65,7 +65,7 @@ export const InitiativeApi = {
         const res = await fetch(`${API_URL}/initiatives/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update initiative');
     },
@@ -73,7 +73,7 @@ export const InitiativeApi = {
     deleteInitiative: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/initiatives/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete initiative');
     },
@@ -81,11 +81,11 @@ export const InitiativeApi = {
     // ==========================================
     // INITIATIVE VALIDATION & ENRICHMENT
     // ==========================================
-    
+
     validateInitiative: async (id: string): Promise<{ valid: boolean; issues: string[] }> => {
         const response = await fetch(`${API_URL}/initiatives/${id}/validate`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Validation failed');
         return response.json();
@@ -94,11 +94,9 @@ export const InitiativeApi = {
     enrichInitiative: async (id: string): Promise<Initiative> => {
         const response = await fetch(`${API_URL}/initiatives/${id}/enrich`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Enrichment failed');
         return response.json();
-    }
+    },
 };
-
-

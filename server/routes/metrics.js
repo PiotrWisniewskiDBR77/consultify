@@ -24,12 +24,12 @@ import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 import * as seatManagementServiceModule from '../services/seatManagementService.js';
 const seatManagementService = seatManagementServiceModule.default || seatManagementServiceModule;
 import payAsYouGoService from '../services/payAsYouGoService.js';
-import * as budgetManagementServiceModule from '../src/services/budgetManagementService.js';
+import * as budgetManagementServiceModule from '../dist/services/budgetManagementService.js';
 const budgetManagementService = budgetManagementServiceModule.default || budgetManagementServiceModule;
 import * as usageServiceModule from '../services/usageService.js';
 const usageService = usageServiceModule.default || usageServiceModule;
-import { getDatabase } from '../src/database/Database.js';
-import logger from '../utils/logger.js';
+import { getDatabase } from '../src/database/index.js';
+import logger from '../dist/utils/logger.js';
 const db = getDatabase();
 
 // ==========================================

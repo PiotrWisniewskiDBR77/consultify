@@ -1,6 +1,6 @@
 /**
  * PaymentMethodsView - Payment Methods Management
- * 
+ *
  * Features:
  * - Add new payment methods (Stripe Elements)
  * - List saved payment methods
@@ -8,23 +8,14 @@
  * - Delete payment methods
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    CreditCard,
-    Plus,
-    Trash2,
-    Check,
-    Star,
-    RefreshCw,
-    AlertCircle,
-    Building,
-    Shield
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, Building, Check, CreditCard, Plus, RefreshCw, Shield, Star, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
 
 interface PaymentMethod {
     id: string;
@@ -59,7 +50,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/billing/payment-methods`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -73,7 +64,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                     expMonth: pm.exp_month || pm.expMonth,
                     expYear: pm.exp_year || pm.expYear,
                     isDefault: Boolean(pm.is_default || pm.isDefault),
-                    createdAt: pm.created_at || pm.createdAt
+                    createdAt: pm.created_at || pm.createdAt,
                 }));
                 setPaymentMethods(methods);
             } else {
@@ -107,15 +98,15 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     cardNumber,
                     expiryMonth: parseInt(cardExpiry.split('/')[0]),
                     expiryYear: 2000 + parseInt(cardExpiry.split('/')[1]),
                     cvc: cardCvc,
-                    cardholderName: cardName
-                })
+                    cardholderName: cardName,
+                }),
             });
 
             if (res.ok) {
@@ -135,9 +126,9 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                     expMonth: parseInt(cardExpiry.split('/')[0]),
                     expYear: 2000 + parseInt(cardExpiry.split('/')[1]),
                     isDefault: paymentMethods.length === 0,
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
                 };
-                setPaymentMethods(prev => [...prev, newMethod]);
+                setPaymentMethods((prev) => [...prev, newMethod]);
                 toast.success('Payment method added (dev mode)');
                 setShowAddModal(false);
                 resetForm();
@@ -153,14 +144,16 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
         try {
             const res = await fetch(`/api/billing/payment-methods/${methodId}/default`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 toast.success('Default payment method updated');
-                setPaymentMethods(prev => prev.map(pm => ({
-                    ...pm,
-                    isDefault: pm.id === methodId
-                })));
+                setPaymentMethods((prev) =>
+                    prev.map((pm) => ({
+                        ...pm,
+                        isDefault: pm.id === methodId,
+                    })),
+                );
             } else {
                 toast.error('Failed to update default payment method');
             }
@@ -171,7 +164,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
     };
 
     const handleDelete = async (methodId: string) => {
-        const method = paymentMethods.find(pm => pm.id === methodId);
+        const method = paymentMethods.find((pm) => pm.id === methodId);
         if (method?.isDefault) {
             toast.error('Cannot delete default payment method. Set another as default first.');
             return;
@@ -182,11 +175,11 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
         try {
             const res = await fetch(`/api/billing/payment-methods/${methodId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok || res.status === 204) {
                 toast.success('Payment method removed');
-                setPaymentMethods(prev => prev.filter(pm => pm.id !== methodId));
+                setPaymentMethods((prev) => prev.filter((pm) => pm.id !== methodId));
             } else {
                 toast.error('Failed to remove payment method');
             }
@@ -271,7 +264,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                         {t('admin.billing.paymentMethods', 'Payment Methods')}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('admin.billing.paymentMethodsDesc', 'Manage your organization\'s payment methods')}
+                        {t('admin.billing.paymentMethodsDesc', "Manage your organization's payment methods")}
                     </p>
                 </div>
                 <button
@@ -287,11 +280,10 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
             <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-start gap-3">
                 <Shield className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
                 <div>
-                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Secure Payment Processing
-                    </p>
+                    <p className="text-sm font-medium text-green-800 dark:text-green-200">Secure Payment Processing</p>
                     <p className="text-xs text-green-600 dark:text-green-300 mt-1">
-                        All payment information is encrypted and processed securely through Stripe. We never store your full card details.
+                        All payment information is encrypted and processed securely through Stripe. We never store your
+                        full card details.
                     </p>
                 </div>
             </div>
@@ -311,26 +303,33 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {paymentMethods.map(method => (
+                    {paymentMethods.map((method) => (
                         <div
                             key={method.id}
-                            className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${isCardExpired(method)
-                                ? 'border-red-200 dark:border-red-800'
-                                : isCardExpiringSoon(method)
-                                    ? 'border-amber-200 dark:border-amber-800'
-                                    : method.isDefault
+                            className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
+                                isCardExpired(method)
+                                    ? 'border-red-200 dark:border-red-800'
+                                    : isCardExpiringSoon(method)
+                                      ? 'border-amber-200 dark:border-amber-800'
+                                      : method.isDefault
                                         ? 'border-violet-200 dark:border-violet-800'
                                         : 'border-slate-200 dark:border-navy-700'
-                                }`}
+                            }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className={`p-3 rounded-lg ${method.isDefault
-                                        ? 'bg-violet-100 dark:bg-violet-900/30'
-                                        : 'bg-slate-100 dark:bg-navy-700'
-                                        }`}>
-                                        <CreditCard className={`w-6 h-6 ${method.isDefault ? 'text-violet-600' : 'text-slate-500'
-                                            }`} />
+                                    <div
+                                        className={`p-3 rounded-lg ${
+                                            method.isDefault
+                                                ? 'bg-violet-100 dark:bg-violet-900/30'
+                                                : 'bg-slate-100 dark:bg-navy-700'
+                                        }`}
+                                    >
+                                        <CreditCard
+                                            className={`w-6 h-6 ${
+                                                method.isDefault ? 'text-violet-600' : 'text-slate-500'
+                                            }`}
+                                        />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -470,7 +469,10 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
                             </div>
                             <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
                                 <button
-                                    onClick={() => { setShowAddModal(false); resetForm(); }}
+                                    onClick={() => {
+                                        setShowAddModal(false);
+                                        resetForm();
+                                    }}
                                     className="px-4 py-2 text-slate-600 dark:text-slate-400"
                                 >
                                     Cancel
@@ -493,5 +495,3 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
 };
 
 export default PaymentMethodsView;
-
-

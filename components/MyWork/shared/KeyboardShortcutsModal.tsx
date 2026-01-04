@@ -3,10 +3,11 @@
  * Part of My Work Module PMO Upgrade
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { Keyboard, X } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
 import { ShortcutAction } from '../../../types';
 
 interface KeyboardShortcutsModalProps {
@@ -27,22 +28,21 @@ const Key: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 /**
  * KeyboardShortcutsModal Component
  */
-export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
-    isOpen,
-    onClose,
-    shortcuts
-}) => {
+export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen, onClose, shortcuts }) => {
     const { t } = useTranslation();
 
     // Group shortcuts by category
-    const groupedShortcuts = shortcuts.reduce((acc, shortcut) => {
-        const category = shortcut.category || 'Other';
-        if (!acc[category]) {
-            acc[category] = [];
-        }
-        acc[category].push(shortcut);
-        return acc;
-    }, {} as Record<string, ShortcutAction[]>);
+    const groupedShortcuts = shortcuts.reduce(
+        (acc, shortcut) => {
+            const category = shortcut.category || 'Other';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(shortcut);
+            return acc;
+        },
+        {} as Record<string, ShortcutAction[]>,
+    );
 
     // Format key for display
     const formatKey = (shortcut: ShortcutAction): React.ReactNode => {
@@ -54,11 +54,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                 {parts.map((part: any, idx: number) => (
                     <React.Fragment key={idx}>
                         {idx > 0 && part !== 'then' && <span className="text-slate-400">+</span>}
-                        {part === 'then' ? (
-                            <span className="mx-1 text-slate-400">then</span>
-                        ) : (
-                            <Key>{part}</Key>
-                        )}
+                        {part === 'then' ? <span className="mx-1 text-slate-400">then</span> : <Key>{part}</Key>}
                     </React.Fragment>
                 ))}
             </div>
@@ -136,16 +132,4 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 };
 
 export default KeyboardShortcutsModal;
-
-
-
-
-
-
-
-
-
-
-
-
 

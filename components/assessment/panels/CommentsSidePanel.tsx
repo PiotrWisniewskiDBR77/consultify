@@ -1,12 +1,13 @@
 /**
  * CommentsSidePanel
- * 
+ *
  * Slide-in panel wrapper for AxisCommentsPanel.
  * Shows threaded comments for a specific assessment axis.
  */
 
+import { MessageSquare, X } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
-import { X, MessageSquare } from 'lucide-react';
+
 import { AxisCommentsPanel } from '../AxisCommentsPanel';
 
 // DRD Axis labels
@@ -17,7 +18,7 @@ const AXIS_LABELS: Record<string, string> = {
     dataManagement: 'Zarządzanie Danymi',
     culture: 'Kultura',
     cybersecurity: 'Cyberbezpieczeństwo',
-    aiMaturity: 'Dojrzałość AI'
+    aiMaturity: 'Dojrzałość AI',
 };
 
 interface CommentsSidePanelProps {
@@ -35,7 +36,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
     isOpen,
     onClose,
     onCommentCountChange,
-    isReadOnly = false
+    isReadOnly = false,
 }) => {
     const panelRef = useRef<HTMLDivElement>(null);
     const axisLabel = AXIS_LABELS[axisId] || axisId;
@@ -47,7 +48,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
                 onClose();
             }
         };
-        
+
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
     }, [isOpen, onClose]);
@@ -88,7 +89,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
     return (
         <>
             {/* Backdrop */}
-            <div 
+            <div
                 className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"
                 style={{ opacity: isOpen ? 1 : 0 }}
             />
@@ -111,12 +112,8 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
                                 <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-navy-900 dark:text-white">
-                                    Komentarze
-                                </h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {axisLabel}
-                                </p>
+                                <h3 className="font-bold text-navy-900 dark:text-white">Komentarze</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{axisLabel}</p>
                             </div>
                         </div>
                         <button
@@ -143,4 +140,3 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
         </>
     );
 };
-

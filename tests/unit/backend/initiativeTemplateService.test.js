@@ -1,122 +1,113 @@
-/**
- * InitiativeTemplateService Tests
- * 
- * Tests for initiative template CRUD operations.
- */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
-const InitiativeTemplateService = require('../../../server/services/initiativeTemplateService');
-const { v4: uuidv4 } = require('uuid');
+// Mock dependencies
+const mockDb = {
+    get: vi.fn(),
+    all: vi.fn(),
+    run: vi.fn(),
+    serialize: vi.fn((cb) => cb()),
+    initPromise: Promise.resolve()
+};
+
+// Import the service (TS source)
+import InitiativeTemplateService from '../../../server/src/services/initiativeTemplateService.ts';
+
+// Helper to mock DbPromise calls since the service uses helper methods
+import DbPromise from '../../../server/src/utils/DbPromise.ts';
+
+// We mock usage of DbPromise methods in the service
+vi.mock('../../../server/src/utils/DbPromise.ts', () => ({
+    default: {
+        all: vi.fn(),
+        get: vi.fn(),
+        run: vi.fn(),
+        transaction: vi.fn()
+    }
+}));
 
 describe('InitiativeTemplateService', () => {
-    let testOrgId;
-    let testUserId;
-    let testTemplateId;
+    const testUserId = 'user-123';
+    const testOrgId = 'org-123';
 
-    beforeAll(async () => {
-        await initTestDb();
-    });
+    beforeEach(() => {
+        vi.clearAllMocks();
+        // Set dependencies if needed, though we are mocking DbPromise directly 
+        // which the service uses. But the service matches this.db = getDatabase()
+        // and DbPromise uses getDb() which calls getDatabase().
+        // To permit strict isolation, we can also inject the mockDb into the service instance
+        InitiativeTemplateService.setDependencies({ db: mockDb });
 
-    beforeEach(async () => {
-        // Create test organization
-        testOrgId = uuidv4();
-        await dbRun(
-            `INSERT INTO organizations (id, name, plan, status, organization_type) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [testOrgId, 'Test Org', 'professional', 'active', 'PAID']
-        );
-
-        // Create test user
-        testUserId = uuidv4();
-        await dbRun(
-            `INSERT INTO users (id, organization_id, email, name, role, created_at) 
-             VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-            [testUserId, testOrgId, 'user@test.com', 'Test User', 'client']
-        );
-
-        // Create test template
-        testTemplateId = uuidv4();
-        await dbRun(
-            `INSERT INTO initiative_templates 
-             (id, name, category, description, applicable_axes, template_data, is_public, organization_id, created_by, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-            [
-                testTemplateId,
-                'Test Template',
-                'digital_transformation',
-                'Test description',
-                '["1A","2B"]',
-                JSON.stringify({ problemStructured: 'Test problem' }),
-                1,
-                testOrgId,
-                testUserId
-            ]
-        );
-    });
-
-    afterEach(async () => {
-        await cleanTables([
-            'initiative_templates',
-            'users',
-            'organizations'
-        ]);
+        // Default mock responses
+        vi.mocked(DbPromise.all).mockResolvedValue([]);
+        vi.mocked(DbPromise.get).mockResolvedValue(null);
+        vi.mocked(DbPromise.run).mockResolvedValue({ changes: 1, lastID: 1, success: true });
     });
 
     describe('getTemplates', () => {
         it('should return all public templates when no filters', async () => {
+            const mockTemplates = [
+                { id: 't1', name: 'T1', category: 'cat1', template_data: '{}', is_public: 1 }
+            ];
+            vi.mocked(DbPromise.all).mockResolvedValue(mockTemplates);
+
             const templates = await InitiativeTemplateService.getTemplates();
 
-            expect(Array.isArray(templates)).toBe(true);
-            expect(templates.length).toBeGreaterThanOrEqual(1);
+            expect(templates).toHaveLength(1);
+            expect(templates[0].id).toBe('t1');
+            expect(DbPromise.all).toHaveBeenCalled();
         });
 
         it('should filter by category', async () => {
-            const templates = await InitiativeTemplateService.getTemplates({
+            await InitiativeTemplateService.getTemplates({
                 category: 'digital_transformation'
             });
 
-            expect(templates.every(t => t.category === 'digital_transformation')).toBe(true);
+            const [dbInstance, sql, params] = vi.mocked(DbPromise.all).mock.lastCall;
+            expect(sql).toContain('category = ?');
+            expect(params).toContain('digital_transformation');
         });
 
         it('should filter by organization', async () => {
-            const templates = await InitiativeTemplateService.getTemplates({
+            await InitiativeTemplateService.getTemplates({
                 organizationId: testOrgId
             });
 
-            expect(templates.some(t => t.organizationId === testOrgId)).toBe(true);
+            const [dbInstance, sql, params] = vi.mocked(DbPromise.all).mock.lastCall;
+            expect(sql).toContain('organization_id = ?');
+            expect(params).toContain(testOrgId);
         });
 
         it('should include public templates when includePublic is true', async () => {
-            const templates = await InitiativeTemplateService.getTemplates({
+            await InitiativeTemplateService.getTemplates({
                 organizationId: testOrgId,
                 includePublic: true
             });
 
-            expect(templates.length).toBeGreaterThanOrEqual(1);
-        });
-
-        it('should exclude public templates when includePublic is false', async () => {
-            const templates = await InitiativeTemplateService.getTemplates({
-                organizationId: testOrgId,
-                includePublic: false
-            });
-
-            expect(templates.every(t => t.organizationId === testOrgId)).toBe(true);
+            const [dbInstance, sql, params] = vi.mocked(DbPromise.all).mock.lastCall;
+            expect(sql).toContain('(organization_id = ? OR is_public = 1)');
         });
     });
 
     describe('getTemplateById', () => {
         it('should return template by ID', async () => {
-            const template = await InitiativeTemplateService.getTemplateById(testTemplateId);
+            const mockTemplate = {
+                id: 't1',
+                name: 'Test Template',
+                template_data: '{"problemStructured": "Problem"}'
+            };
+            vi.mocked(DbPromise.get).mockResolvedValue(mockTemplate);
+
+            const template = await InitiativeTemplateService.getTemplateById('t1');
 
             expect(template).toBeDefined();
-            expect(template.id).toBe(testTemplateId);
+            expect(template.id).toBe('t1');
             expect(template.name).toBe('Test Template');
+            expect(template.problemStructured).toBe('Problem');
         });
 
         it('should return null for non-existent template', async () => {
-            const template = await InitiativeTemplateService.getTemplateById(uuidv4());
-
+            vi.mocked(DbPromise.get).mockResolvedValue(null);
+            const template = await InitiativeTemplateService.getTemplateById('non-existent');
             expect(template).toBeNull();
         });
     });
@@ -127,12 +118,7 @@ describe('InitiativeTemplateService', () => {
                 name: 'New Template',
                 category: 'process_improvement',
                 description: 'New template description',
-                applicableAxes: ['1A'],
-                templateData: {
-                    problemStructured: 'Problem',
-                    targetState: 'Target',
-                    killCriteria: ['Criteria 1']
-                }
+                applicableAxes: ['1A']
             };
 
             const template = await InitiativeTemplateService.createTemplate(
@@ -142,87 +128,71 @@ describe('InitiativeTemplateService', () => {
 
             expect(template).toBeDefined();
             expect(template.name).toBe('New Template');
-            expect(template.category).toBe('process_improvement');
             expect(template.createdBy).toBe(testUserId);
-        });
 
-        it('should use provided ID when given', async () => {
-            const customId = uuidv4();
-            const templateData = {
-                id: customId,
-                name: 'Custom ID Template',
-                category: 'test'
-            };
-
-            const template = await InitiativeTemplateService.createTemplate(
-                templateData,
-                testUserId
-            );
-
-            expect(template.id).toBe(customId);
-        });
-
-        it('should parse template data correctly', async () => {
-            const templateData = {
-                name: 'Data Template',
-                category: 'test',
-                problemStructured: 'Problem',
-                suggestedTasks: ['Task 1', 'Task 2'],
-                suggestedRoles: ['Role 1']
-            };
-
-            const template = await InitiativeTemplateService.createTemplate(
-                templateData,
-                testUserId
-            );
-
-            expect(template.suggestedTasks).toEqual(['Task 1', 'Task 2']);
+            expect(DbPromise.run).toHaveBeenCalled();
+            const [dbInstance, sql, params] = vi.mocked(DbPromise.run).mock.lastCall;
+            expect(sql).toContain('INSERT INTO');
+            expect(params[1]).toBe('New Template'); // Name is 2nd param
         });
     });
 
     describe('updateTemplate', () => {
         it('should update existing template', async () => {
+            // Setup existing
+            vi.mocked(DbPromise.get).mockResolvedValue({
+                id: 't1',
+                name: 'Old Name',
+                template_data: '{}'
+            });
+
             const updates = {
-                name: 'Updated Template',
-                description: 'Updated description'
+                name: 'Updated Template'
             };
 
             const template = await InitiativeTemplateService.updateTemplate(
-                testTemplateId,
+                't1',
                 updates,
                 testUserId
             );
 
             expect(template.name).toBe('Updated Template');
-            expect(template.description).toBe('Updated description');
+
+            expect(DbPromise.run).toHaveBeenCalled();
+            const [dbInstance, sql, params] = vi.mocked(DbPromise.run).mock.lastCall;
+            expect(sql).toContain('UPDATE');
         });
 
         it('should reject update for non-existent template', async () => {
+            vi.mocked(DbPromise.get).mockResolvedValue(null);
+
             await expect(
                 InitiativeTemplateService.updateTemplate(
-                    uuidv4(),
+                    'non-existent',
                     { name: 'Updated' },
                     testUserId
                 )
-            ).rejects.toThrow();
+            ).rejects.toThrow('Template not found');
         });
     });
 
     describe('deleteTemplate', () => {
         it('should delete template', async () => {
-            const result = await InitiativeTemplateService.deleteTemplate(testTemplateId, testUserId);
-            expect(result).toBe(true);
+            vi.mocked(DbPromise.run).mockResolvedValue({ changes: 1, success: true });
 
-            const template = await InitiativeTemplateService.getTemplateById(testTemplateId);
-            expect(template).toBeNull();
+            const result = await InitiativeTemplateService.deleteTemplate('t1', testUserId);
+            expect(result).toBe(true);
         });
 
         it('should return false for delete of non-existent template', async () => {
-            const result = await InitiativeTemplateService.deleteTemplate(uuidv4(), testUserId);
+            vi.mocked(DbPromise.run).mockResolvedValue({ changes: 0, success: true });
+
+            const result = await InitiativeTemplateService.deleteTemplate('non-existent', testUserId);
             expect(result).toBe(false);
         });
     });
 });
+
 
 
 

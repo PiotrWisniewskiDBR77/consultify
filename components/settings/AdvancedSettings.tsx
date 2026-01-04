@@ -1,6 +1,6 @@
 /**
  * AdvancedSettings Component
- * 
+ *
  * Advanced user settings including:
  * - Personal API keys management
  * - Export format preferences
@@ -9,31 +9,32 @@
  * - Developer options
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Settings,
-    Key,
-    FileDown,
-    Keyboard,
-    Link2,
+import {
+    AlertTriangle,
+    Check,
     Code,
-    Plus,
-    Trash2,
+    Copy,
+    ExternalLink,
     Eye,
     EyeOff,
-    Copy,
+    FileDown,
+    Key,
+    Keyboard,
+    Link2,
+    Loader2,
+    Plus,
     RefreshCw,
     Save,
-    Loader2,
-    Check,
-    AlertTriangle,
-    ExternalLink,
-    Shield
+    Settings,
+    Shield,
+    Trash2,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface AdvancedSettingsProps {
@@ -62,15 +63,15 @@ interface AdvancedPreferences {
     defaultExportFormat: 'pdf' | 'csv' | 'xlsx' | 'json';
     includeAttachments: boolean;
     exportDateRange: 'all' | '30days' | '90days' | '1year';
-    
+
     // Developer Settings
     enableDeveloperMode: boolean;
     showDebugInfo: boolean;
     logAPIRequests: boolean;
-    
+
     // Keyboard Shortcuts
     keyboardShortcutsEnabled: boolean;
-    
+
     // Beta Features
     enableBetaFeatures: boolean;
 }
@@ -83,7 +84,7 @@ const DEFAULT_PREFERENCES: AdvancedPreferences = {
     showDebugInfo: false,
     logAPIRequests: false,
     keyboardShortcutsEnabled: true,
-    enableBetaFeatures: false
+    enableBetaFeatures: false,
 };
 
 // Common keyboard shortcuts
@@ -96,7 +97,7 @@ const KEYBOARD_SHORTCUTS = [
     { action: 'Toggle Dark Mode', shortcut: 'Ctrl/Cmd + D', category: 'General' },
     { action: 'Mark Task Complete', shortcut: 'Ctrl/Cmd + Enter', category: 'Tasks' },
     { action: 'Open AI Assistant', shortcut: 'Ctrl/Cmd + J', category: 'AI' },
-    { action: 'Focus Mode', shortcut: 'Ctrl/Cmd + Shift + F', category: 'Focus' }
+    { action: 'Focus Mode', shortcut: 'Ctrl/Cmd + Shift + F', category: 'Focus' },
 ];
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser, onUpdateUser }) => {
@@ -106,14 +107,14 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
     const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    
+
     // API Key modal state
     const [showNewKeyModal, setShowNewKeyModal] = useState(false);
     const [newKeyName, setNewKeyName] = useState('');
     const [newKeyPermissions, setNewKeyPermissions] = useState<string[]>(['read']);
     const [creatingKey, setCreatingKey] = useState(false);
     const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
-    
+
     // Visibility state for API keys
     const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
@@ -126,9 +127,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
             const [prefsData, keysData, accountsData] = await Promise.all([
                 Api.get('/settings/preferences/advanced'),
                 Api.get('/settings/api-keys'),
-                Api.get('/settings/connected-accounts')
+                Api.get('/settings/connected-accounts'),
             ]);
-            
+
             if (prefsData.preferences) {
                 setPreferences({ ...DEFAULT_PREFERENCES, ...prefsData.preferences });
             }
@@ -158,7 +159,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
     };
 
     const updatePreference = <K extends keyof AdvancedPreferences>(key: K, value: AdvancedPreferences[K]) => {
-        setPreferences(prev => ({ ...prev, [key]: value }));
+        setPreferences((prev) => ({ ...prev, [key]: value }));
     };
 
     const handleCreateAPIKey = async () => {
@@ -171,11 +172,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
         try {
             const result = await Api.post('/settings/api-keys', {
                 name: newKeyName,
-                permissions: newKeyPermissions
+                permissions: newKeyPermissions,
             });
-            
+
             setNewlyCreatedKey(result.key);
-            setApiKeys(prev => [...prev, result.apiKey]);
+            setApiKeys((prev) => [...prev, result.apiKey]);
             toast.success(t('settings.advanced.keyCreated', 'API key created'));
         } catch (error: any) {
             toast.error(error.message || t('settings.advanced.keyCreateError', 'Failed to create API key'));
@@ -191,7 +192,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
 
         try {
             await Api.delete(`/settings/api-keys/${keyId}`);
-            setApiKeys(prev => prev.filter(k => k.id !== keyId));
+            setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
             toast.success(t('settings.advanced.keyDeleted', 'API key deleted'));
         } catch (error) {
             toast.error(t('settings.advanced.keyDeleteError', 'Failed to delete API key'));
@@ -205,7 +206,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
 
         try {
             await Api.delete(`/settings/connected-accounts/${provider}`);
-            setConnectedAccounts(prev => prev.filter(a => a.provider !== provider));
+            setConnectedAccounts((prev) => prev.filter((a) => a.provider !== provider));
             toast.success(t('settings.advanced.accountDisconnected', 'Account disconnected'));
         } catch (error) {
             toast.error(t('settings.advanced.disconnectError', 'Failed to disconnect account'));
@@ -213,7 +214,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
     };
 
     const toggleKeyVisibility = (keyId: string) => {
-        setVisibleKeys(prev => {
+        setVisibleKeys((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(keyId)) {
                 newSet.delete(keyId);
@@ -236,10 +237,14 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
 
     const getProviderIcon = (provider: string) => {
         switch (provider) {
-            case 'google': return '🔵';
-            case 'microsoft': return '🟦';
-            case 'github': return '⚫';
-            default: return '🔗';
+            case 'google':
+                return '🔵';
+            case 'microsoft':
+                return '🟦';
+            case 'github':
+                return '⚫';
+            default:
+                return '🔗';
         }
     };
 
@@ -254,7 +259,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-advanced" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -313,16 +318,21 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {apiKeys.map(apiKey => (
-                            <div 
+                        {apiKeys.map((apiKey) => (
+                            <div
                                 key={apiKey.id}
                                 className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
                             >
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-medium text-slate-900 dark:text-white">{apiKey.name}</span>
-                                        {apiKey.permissions.map(perm => (
-                                            <span key={perm} className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">
+                                        <span className="font-medium text-slate-900 dark:text-white">
+                                            {apiKey.name}
+                                        </span>
+                                        {apiKey.permissions.map((perm) => (
+                                            <span
+                                                key={perm}
+                                                className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded"
+                                            >
                                                 {perm}
                                             </span>
                                         ))}
@@ -345,8 +355,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                         </button>
                                     </div>
                                     <p className="text-xs text-slate-400 mt-1">
-                                        {t('settings.advanced.created', 'Created')}: {new Date(apiKey.createdAt).toLocaleDateString()}
-                                        {apiKey.lastUsed && ` • ${t('settings.advanced.lastUsed', 'Last used')}: ${new Date(apiKey.lastUsed).toLocaleDateString()}`}
+                                        {t('settings.advanced.created', 'Created')}:{' '}
+                                        {new Date(apiKey.createdAt).toLocaleDateString()}
+                                        {apiKey.lastUsed &&
+                                            ` • ${t('settings.advanced.lastUsed', 'Last used')}: ${new Date(apiKey.lastUsed).toLocaleDateString()}`}
                                     </p>
                                 </div>
                                 <button
@@ -367,7 +379,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                     <FileDown size={20} className="text-cyan-500" />
                     {t('settings.advanced.exportPreferences', 'Export Preferences')}
                 </h3>
-                
+
                 <div className="space-y-4">
                     {/* Default Format */}
                     <div className="flex items-center justify-between">
@@ -381,7 +393,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                         </div>
                         <select
                             value={preferences.defaultExportFormat}
-                            onChange={(e) => updatePreference('defaultExportFormat', e.target.value as AdvancedPreferences['defaultExportFormat'])}
+                            onChange={(e) =>
+                                updatePreference(
+                                    'defaultExportFormat',
+                                    e.target.value as AdvancedPreferences['defaultExportFormat'],
+                                )
+                            }
                             className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                         >
                             <option value="pdf">PDF</option>
@@ -407,7 +424,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                 preferences.includeAttachments ? 'bg-cyan-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.includeAttachments ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.includeAttachments ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -423,7 +442,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                         </div>
                         <select
                             value={preferences.exportDateRange}
-                            onChange={(e) => updatePreference('exportDateRange', e.target.value as AdvancedPreferences['exportDateRange'])}
+                            onChange={(e) =>
+                                updatePreference(
+                                    'exportDateRange',
+                                    e.target.value as AdvancedPreferences['exportDateRange'],
+                                )
+                            }
                             className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                         >
                             <option value="all">{t('settings.advanced.allTime', 'All Time')}</option>
@@ -447,29 +471,38 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                 {t('settings.advanced.keyboardShortcuts', 'Keyboard Shortcuts')}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.advanced.keyboardShortcutsDescription', 'Quick actions using your keyboard')}
+                                {t(
+                                    'settings.advanced.keyboardShortcutsDescription',
+                                    'Quick actions using your keyboard',
+                                )}
                             </p>
                         </div>
                     </div>
                     <button
-                        onClick={() => updatePreference('keyboardShortcutsEnabled', !preferences.keyboardShortcutsEnabled)}
+                        onClick={() =>
+                            updatePreference('keyboardShortcutsEnabled', !preferences.keyboardShortcutsEnabled)
+                        }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                             preferences.keyboardShortcutsEnabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
                         }`}
                     >
-                        <span className={`${preferences.keyboardShortcutsEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                        <span
+                            className={`${preferences.keyboardShortcutsEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
                     </button>
                 </div>
 
                 {preferences.keyboardShortcutsEnabled && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {KEYBOARD_SHORTCUTS.map((shortcut, index) => (
-                            <div 
+                            <div
                                 key={index}
                                 className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
                             >
                                 <div>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">{shortcut.action}</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                        {shortcut.action}
+                                    </span>
                                     <span className="text-xs text-slate-400 ml-2">{shortcut.category}</span>
                                 </div>
                                 <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-sm font-mono text-slate-600 dark:text-slate-400">
@@ -507,7 +540,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                     <Code size={20} className="text-green-500" />
                     {t('settings.advanced.developerOptions', 'Developer Options')}
                 </h3>
-                
+
                 <div className="space-y-4">
                     {/* Developer Mode */}
                     <div className="flex items-center justify-between">
@@ -525,7 +558,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                 preferences.enableDeveloperMode ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.enableDeveloperMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.enableDeveloperMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -538,7 +573,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                         {t('settings.advanced.showDebugInfo', 'Show Debug Info')}
                                     </label>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        {t('settings.advanced.showDebugInfoDescription', 'Display technical information in UI')}
+                                        {t(
+                                            'settings.advanced.showDebugInfoDescription',
+                                            'Display technical information in UI',
+                                        )}
                                     </p>
                                 </div>
                                 <button
@@ -547,7 +585,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                         preferences.showDebugInfo ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
                                     }`}
                                 >
-                                    <span className={`${preferences.showDebugInfo ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                    <span
+                                        className={`${preferences.showDebugInfo ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                                    />
                                 </button>
                             </div>
 
@@ -558,7 +598,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                         {t('settings.advanced.logAPIRequests', 'Log API Requests')}
                                     </label>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        {t('settings.advanced.logAPIRequestsDescription', 'Log all API calls to console')}
+                                        {t(
+                                            'settings.advanced.logAPIRequestsDescription',
+                                            'Log all API calls to console',
+                                        )}
                                     </p>
                                 </div>
                                 <button
@@ -567,7 +610,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                         preferences.logAPIRequests ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
                                     }`}
                                 >
-                                    <span className={`${preferences.logAPIRequests ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                    <span
+                                        className={`${preferences.logAPIRequests ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                                    />
                                 </button>
                             </div>
                         </>
@@ -590,7 +635,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                 preferences.enableBetaFeatures ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.enableBetaFeatures ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.enableBetaFeatures ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -611,7 +658,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                             {t('settings.advanced.keyCreatedTitle', 'API Key Created')}
                                         </h3>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            {t('settings.advanced.keyCreatedMessage', 'Save this key - it won\'t be shown again')}
+                                            {t(
+                                                'settings.advanced.keyCreatedMessage',
+                                                "Save this key - it won't be shown again",
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -620,7 +670,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                     <div className="flex items-start gap-2">
                                         <AlertTriangle size={16} className="text-amber-600 mt-0.5" />
                                         <p className="text-sm text-amber-700 dark:text-amber-300">
-                                            {t('settings.advanced.keyWarning', 'Make sure to copy your API key now. You won\'t be able to see it again!')}
+                                            {t(
+                                                'settings.advanced.keyWarning',
+                                                "Make sure to copy your API key now. You won't be able to see it again!",
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -665,7 +718,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                             type="text"
                                             value={newKeyName}
                                             onChange={(e) => setNewKeyName(e.target.value)}
-                                            placeholder={t('settings.advanced.keyNamePlaceholder', 'e.g. My Integration')}
+                                            placeholder={t(
+                                                'settings.advanced.keyNamePlaceholder',
+                                                'e.g. My Integration',
+                                            )}
                                             className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                                         />
                                     </div>
@@ -675,21 +731,25 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                             {t('settings.advanced.permissions', 'Permissions')}
                                         </label>
                                         <div className="space-y-2">
-                                            {['read', 'write', 'delete'].map(perm => (
+                                            {['read', 'write', 'delete'].map((perm) => (
                                                 <label key={perm} className="flex items-center gap-2">
                                                     <input
                                                         type="checkbox"
                                                         checked={newKeyPermissions.includes(perm)}
                                                         onChange={(e) => {
                                                             if (e.target.checked) {
-                                                                setNewKeyPermissions(prev => [...prev, perm]);
+                                                                setNewKeyPermissions((prev) => [...prev, perm]);
                                                             } else {
-                                                                setNewKeyPermissions(prev => prev.filter(p => p !== perm));
+                                                                setNewKeyPermissions((prev) =>
+                                                                    prev.filter((p) => p !== perm),
+                                                                );
                                                             }
                                                         }}
                                                         className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                                                     />
-                                                    <span className="text-sm text-slate-700 dark:text-slate-300 capitalize">{perm}</span>
+                                                    <span className="text-sm text-slate-700 dark:text-slate-300 capitalize">
+                                                        {perm}
+                                                    </span>
                                                 </label>
                                             ))}
                                         </div>
@@ -709,7 +769,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                                         className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 disabled:opacity-50 flex items-center gap-2"
                                     >
                                         {creatingKey && <Loader2 size={16} className="animate-spin" />}
-                                        {creatingKey ? t('settings.advanced.creating', 'Creating...') : t('settings.advanced.create', 'Create Key')}
+                                        {creatingKey
+                                            ? t('settings.advanced.creating', 'Creating...')
+                                            : t('settings.advanced.create', 'Create Key')}
                                     </button>
                                 </div>
                             </>
@@ -721,7 +783,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
     );
 
     function renderAccountConnection(provider: string, name: string, accounts: ConnectedAccount[]) {
-        const account = accounts.find(a => a.provider === provider);
+        const account = accounts.find((a) => a.provider === provider);
         const isConnected = !!account;
 
         return (
@@ -730,9 +792,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                     <span className="text-2xl">{getProviderIcon(provider)}</span>
                     <div>
                         <span className="font-medium text-slate-700 dark:text-slate-300">{name}</span>
-                        {isConnected && (
-                            <p className="text-xs text-slate-500">{account.email}</p>
-                        )}
+                        {isConnected && <p className="text-xs text-slate-500">{account.email}</p>}
                     </div>
                 </div>
                 {isConnected ? (
@@ -748,9 +808,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
                         </button>
                     </div>
                 ) : (
-                    <button
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
-                    >
+                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
                         <Link2 size={16} />
                         {t('settings.advanced.connect', 'Connect')}
                     </button>
@@ -761,11 +819,4 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ currentUser,
 };
 
 export default AdvancedSettings;
-
-
-
-
-
-
-
 

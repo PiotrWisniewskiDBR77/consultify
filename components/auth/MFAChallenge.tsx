@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { AlertTriangle, Key, Loader2, Shield } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Key, Loader2, AlertTriangle } from 'lucide-react';
 
 interface MFAChallengeProps {
     onVerify: (success: boolean) => void;
@@ -8,11 +8,7 @@ interface MFAChallengeProps {
     trustDeviceOption?: boolean;
 }
 
-const MFAChallenge: React.FC<MFAChallengeProps> = ({
-    onVerify,
-    onCancel,
-    trustDeviceOption = true
-}) => {
+const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerify, onCancel, trustDeviceOption = true }) => {
     const { t } = useTranslation();
     const [mode, setMode] = useState<'totp' | 'backup'>('totp');
     const [code, setCode] = useState('');
@@ -71,14 +67,14 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
             navigator.language,
             screen.width,
             screen.height,
-            new Date().getTimezoneOffset()
+            new Date().getTimezoneOffset(),
         ].join('|');
 
         // Simple hash
         let hash = 0;
         for (let i = 0; i < data.length; i++) {
             const char = data.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
+            hash = (hash << 5) - hash + char;
             hash = hash & hash;
         }
         return Math.abs(hash).toString(16);
@@ -99,14 +95,14 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
             const response = await fetch('/api/mfa/challenge', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     token: code,
                     trustDevice: trustDevice,
-                    deviceFingerprint: trustDevice ? getDeviceFingerprint() : undefined
-                })
+                    deviceFingerprint: trustDevice ? getDeviceFingerprint() : undefined,
+                }),
             });
 
             const data = await response.json();
@@ -145,10 +141,10 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
             const response = await fetch('/api/mfa/backup-code', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ code: backupCode.trim() })
+                body: JSON.stringify({ code: backupCode.trim() }),
             });
 
             const data = await response.json();
@@ -211,7 +207,9 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                                 {[0, 1, 2, 3, 4, 5].map((index) => (
                                     <input
                                         key={index}
-                                        ref={(el) => { inputRefs.current[index] = el; }}
+                                        ref={(el) => {
+                                            inputRefs.current[index] = el;
+                                        }}
                                         type="text"
                                         inputMode="numeric"
                                         maxLength={1}

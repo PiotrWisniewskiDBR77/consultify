@@ -1,27 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '../../../components/ui/BaseCard';
 import {
+    Activity,
+    BarChart2,
+    Check,
+    Clock,
+    Copy,
+    DollarSign,
+    Edit,
+    Eye,
+    Grid,
+    Layout,
+    Move,
+    PieChart,
     Plus,
     Save,
-    Trash2,
-    Edit,
+    Settings,
     Share2,
-    Layout,
-    BarChart2,
-    PieChart,
+    Trash2,
     TrendingUp,
     Users,
-    DollarSign,
-    Activity,
-    Clock,
-    Grid,
-    Move,
     X,
-    Check,
-    Copy,
-    Eye,
-    Settings
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { Card } from '../../../components/ui/BaseCard';
 import Api from '../../../services/api';
 
 interface Widget {
@@ -76,7 +77,7 @@ const DashboardBuilderView: React.FC = () => {
         title: '',
         dataSource: 'users',
         config: {},
-        position: { x: 0, y: 0, w: 2, h: 2 }
+        position: { x: 0, y: 0, w: 2, h: 2 },
     });
     const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
     const [previewData, setPreviewData] = useState<Record<string, any>>({});
@@ -125,7 +126,7 @@ const DashboardBuilderView: React.FC = () => {
                 name: newDashboard.name,
                 description: newDashboard.description,
                 layout: { columns: 4, rowHeight: 100 },
-                widgets: []
+                widgets: [],
             });
 
             setDashboards([...dashboards, response.dashboard]);
@@ -145,7 +146,7 @@ const DashboardBuilderView: React.FC = () => {
                 name: selectedDashboard.name,
                 description: selectedDashboard.description,
                 layout: JSON.parse(selectedDashboard.layout_json || '{}'),
-                widgets: widgets
+                widgets: widgets,
             });
 
             setIsEditing(false);
@@ -160,7 +161,7 @@ const DashboardBuilderView: React.FC = () => {
 
         try {
             await Api.deleteAnalyticsDashboard(dashboardId);
-            setDashboards(dashboards.filter(d => d.id !== dashboardId));
+            setDashboards(dashboards.filter((d) => d.id !== dashboardId));
             if (selectedDashboard?.id === dashboardId) {
                 setSelectedDashboard(null);
                 setWidgets([]);
@@ -192,8 +193,8 @@ const DashboardBuilderView: React.FC = () => {
                 x: (widgets.length % 2) * 2,
                 y: Math.floor(widgets.length / 2) * 2,
                 w: 2,
-                h: 2
-            }
+                h: 2,
+            },
         };
 
         setWidgets([...widgets, widget]);
@@ -203,12 +204,12 @@ const DashboardBuilderView: React.FC = () => {
             title: '',
             dataSource: 'users',
             config: {},
-            position: { x: 0, y: 0, w: 2, h: 2 }
+            position: { x: 0, y: 0, w: 2, h: 2 },
         });
     };
 
     const handleRemoveWidget = (widgetId: string) => {
-        setWidgets(widgets.filter(w => w.id !== widgetId));
+        setWidgets(widgets.filter((w) => w.id !== widgetId));
     };
 
     const handleDragStart = (widgetId: string) => {
@@ -222,7 +223,7 @@ const DashboardBuilderView: React.FC = () => {
     const handleDrop = (targetIndex: number) => {
         if (!draggedWidget) return;
 
-        const draggedIndex = widgets.findIndex(w => w.id === draggedWidget);
+        const draggedIndex = widgets.findIndex((w) => w.id === draggedWidget);
         if (draggedIndex === targetIndex) return;
 
         const newWidgets = [...widgets];
@@ -234,7 +235,7 @@ const DashboardBuilderView: React.FC = () => {
             widget.position = {
                 ...widget.position,
                 x: (index % 2) * 2,
-                y: Math.floor(index / 2) * 2
+                y: Math.floor(index / 2) * 2,
             };
         });
 
@@ -243,7 +244,7 @@ const DashboardBuilderView: React.FC = () => {
     };
 
     const renderWidgetPreview = (widget: Widget) => {
-        const Icon = WIDGET_TYPES.find(wt => wt.type === widget.type)?.icon || Activity;
+        const Icon = WIDGET_TYPES.find((wt) => wt.type === widget.type)?.icon || Activity;
         const data = previewData[widget.dataSource] || { value: 0, trend: 0 };
 
         switch (widget.type) {
@@ -253,7 +254,8 @@ const DashboardBuilderView: React.FC = () => {
                         <Icon className="w-8 h-8 text-blue-500 mb-2" />
                         <div className="text-3xl font-bold text-white">{data.value || '—'}</div>
                         <div className={`text-sm ${data.trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {data.trend >= 0 ? '+' : ''}{data.trend || 0}%
+                            {data.trend >= 0 ? '+' : ''}
+                            {data.trend || 0}%
                         </div>
                     </div>
                 );
@@ -313,14 +315,15 @@ const DashboardBuilderView: React.FC = () => {
                             {dashboards.length === 0 ? (
                                 <p className="text-gray-500 text-sm">No dashboards yet. Create one to get started.</p>
                             ) : (
-                                dashboards.map(dashboard => (
+                                dashboards.map((dashboard) => (
                                     <div
                                         key={dashboard.id}
                                         onClick={() => handleSelectDashboard(dashboard)}
-                                        className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedDashboard?.id === dashboard.id
+                                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                                            selectedDashboard?.id === dashboard.id
                                                 ? 'bg-blue-600/20 border border-blue-500'
                                                 : 'bg-gray-700/50 hover:bg-gray-700'
-                                            }`}
+                                        }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -329,9 +332,7 @@ const DashboardBuilderView: React.FC = () => {
                                                     {dashboard.name}
                                                 </span>
                                             </div>
-                                            {dashboard.is_shared && (
-                                                <Share2 className="w-3 h-3 text-green-400" />
-                                            )}
+                                            {dashboard.is_shared && <Share2 className="w-3 h-3 text-green-400" />}
                                         </div>
                                         {dashboard.description && (
                                             <p className="text-gray-400 text-xs mt-1 truncate">
@@ -352,13 +353,9 @@ const DashboardBuilderView: React.FC = () => {
                             {/* Dashboard Header */}
                             <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-700">
                                 <div>
-                                    <h3 className="text-xl font-bold text-white">
-                                        {selectedDashboard.name}
-                                    </h3>
+                                    <h3 className="text-xl font-bold text-white">{selectedDashboard.name}</h3>
                                     {selectedDashboard.description && (
-                                        <p className="text-gray-400 text-sm mt-1">
-                                            {selectedDashboard.description}
-                                        </p>
+                                        <p className="text-gray-400 text-sm mt-1">{selectedDashboard.description}</p>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -438,11 +435,12 @@ const DashboardBuilderView: React.FC = () => {
                                             onDragEnd={handleDragEnd}
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={() => handleDrop(index)}
-                                            className={`col-span-${widget.position.w} bg-gray-700/50 rounded-lg p-4 relative ${isEditing ? 'cursor-move' : ''
-                                                } ${draggedWidget === widget.id ? 'opacity-50' : ''}`}
+                                            className={`col-span-${widget.position.w} bg-gray-700/50 rounded-lg p-4 relative ${
+                                                isEditing ? 'cursor-move' : ''
+                                            } ${draggedWidget === widget.id ? 'opacity-50' : ''}`}
                                             style={{
                                                 gridColumn: `span ${widget.position.w}`,
-                                                minHeight: `${widget.position.h * 100}px`
+                                                minHeight: `${widget.position.h * 100}px`,
                                             }}
                                         >
                                             {isEditing && (
@@ -458,9 +456,7 @@ const DashboardBuilderView: React.FC = () => {
                                                     </button>
                                                 </div>
                                             )}
-                                            <h4 className="text-sm font-medium text-gray-300 mb-2">
-                                                {widget.title}
-                                            </h4>
+                                            <h4 className="text-sm font-medium text-gray-300 mb-2">{widget.title}</h4>
                                             {renderWidgetPreview(widget)}
                                         </div>
                                     ))
@@ -471,9 +467,7 @@ const DashboardBuilderView: React.FC = () => {
                         <Card className="bg-gray-800 p-8">
                             <div className="flex flex-col items-center justify-center h-64">
                                 <Layout className="w-16 h-16 text-gray-600 mb-4" />
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Select a Dashboard
-                                </h3>
+                                <h3 className="text-xl font-semibold text-white mb-2">Select a Dashboard</h3>
                                 <p className="text-gray-400 text-center">
                                     Choose a dashboard from the list or create a new one to get started
                                 </p>
@@ -490,9 +484,7 @@ const DashboardBuilderView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Create New Dashboard</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Dashboard Name
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Dashboard Name</label>
                                 <input
                                     type="text"
                                     value={newDashboard.name}
@@ -541,18 +533,19 @@ const DashboardBuilderView: React.FC = () => {
                         <div className="grid grid-cols-2 gap-6">
                             {/* Widget Type Selection */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Widget Type
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Widget Type</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {WIDGET_TYPES.map((wt) => (
                                         <button
                                             key={wt.type}
-                                            onClick={() => setNewWidget({ ...newWidget, type: wt.type as Widget['type'] })}
-                                            className={`p-3 rounded-lg text-left transition-colors ${newWidget.type === wt.type
+                                            onClick={() =>
+                                                setNewWidget({ ...newWidget, type: wt.type as Widget['type'] })
+                                            }
+                                            className={`p-3 rounded-lg text-left transition-colors ${
+                                                newWidget.type === wt.type
                                                     ? 'bg-blue-600/20 border border-blue-500'
                                                     : 'bg-gray-700 hover:bg-gray-600'
-                                                }`}
+                                            }`}
                                         >
                                             <wt.icon className="w-5 h-5 text-blue-400 mb-1" />
                                             <div className="text-sm font-medium text-white">{wt.label}</div>
@@ -565,9 +558,7 @@ const DashboardBuilderView: React.FC = () => {
                             {/* Widget Configuration */}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                                        Widget Title
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Widget Title</label>
                                     <input
                                         type="text"
                                         value={newWidget.title || ''}
@@ -577,18 +568,17 @@ const DashboardBuilderView: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                                        Data Source
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Data Source</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {DATA_SOURCES.map((ds) => (
                                             <button
                                                 key={ds.id}
                                                 onClick={() => setNewWidget({ ...newWidget, dataSource: ds.id })}
-                                                className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${newWidget.dataSource === ds.id
+                                                className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${
+                                                    newWidget.dataSource === ds.id
                                                         ? 'bg-blue-600/20 border border-blue-500'
                                                         : 'bg-gray-700 hover:bg-gray-600'
-                                                    }`}
+                                                }`}
                                             >
                                                 <ds.icon className="w-4 h-4 text-gray-400" />
                                                 <span className="text-sm text-white">{ds.label}</span>
@@ -597,16 +587,16 @@ const DashboardBuilderView: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                                        Size
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Size</label>
                                     <div className="flex gap-2">
                                         <select
                                             value={newWidget.position?.w || 2}
-                                            onChange={(e) => setNewWidget({
-                                                ...newWidget,
-                                                position: { ...newWidget.position!, w: parseInt(e.target.value) }
-                                            })}
+                                            onChange={(e) =>
+                                                setNewWidget({
+                                                    ...newWidget,
+                                                    position: { ...newWidget.position!, w: parseInt(e.target.value) },
+                                                })
+                                            }
                                             className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                         >
                                             <option value="1">1 col</option>
@@ -616,10 +606,12 @@ const DashboardBuilderView: React.FC = () => {
                                         </select>
                                         <select
                                             value={newWidget.position?.h || 2}
-                                            onChange={(e) => setNewWidget({
-                                                ...newWidget,
-                                                position: { ...newWidget.position!, h: parseInt(e.target.value) }
-                                            })}
+                                            onChange={(e) =>
+                                                setNewWidget({
+                                                    ...newWidget,
+                                                    position: { ...newWidget.position!, h: parseInt(e.target.value) },
+                                                })
+                                            }
                                             className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                         >
                                             <option value="1">1 row</option>
@@ -653,10 +645,4 @@ const DashboardBuilderView: React.FC = () => {
 };
 
 export default DashboardBuilderView;
-
-
-
-
-
-
 

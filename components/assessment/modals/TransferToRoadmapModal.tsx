@@ -1,6 +1,6 @@
 /**
  * TransferToRoadmapModal
- * 
+ *
  * Modal for transferring an approved initiative to the roadmap.
  * Allows selection of:
  * - Target quarter (Q1-Q4 for current and next year)
@@ -8,17 +8,8 @@
  * - Additional notes
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-    X,
-    MapPin,
-    Calendar,
-    AlertTriangle,
-    Loader2,
-    CheckCircle2,
-    Target,
-    Flag
-} from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle2, Flag, Loader2, MapPin, Target, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface TransferToRoadmapModalProps {
     initiativeId: string;
@@ -31,42 +22,46 @@ interface TransferToRoadmapModalProps {
 const generateQuarters = () => {
     const currentYear = new Date().getFullYear();
     const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
-    
+
     const quarters: { value: string; label: string; isPast: boolean }[] = [];
-    
+
     // Current year quarters
     for (let q = 1; q <= 4; q++) {
         quarters.push({
             value: `${currentYear}-Q${q}`,
             label: `Q${q} ${currentYear}`,
-            isPast: q < currentQuarter
+            isPast: q < currentQuarter,
         });
     }
-    
+
     // Next year quarters
     for (let q = 1; q <= 4; q++) {
         quarters.push({
             value: `${currentYear + 1}-Q${q}`,
             label: `Q${q} ${currentYear + 1}`,
-            isPast: false
+            isPast: false,
         });
     }
-    
+
     return quarters;
 };
 
 const PRIORITY_OPTIONS = [
     { value: 'LOW', label: 'Niski', color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
     { value: 'MEDIUM', label: 'Średni', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-    { value: 'HIGH', label: 'Wysoki', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-    { value: 'CRITICAL', label: 'Krytyczny', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }
+    {
+        value: 'HIGH',
+        label: 'Wysoki',
+        color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    },
+    { value: 'CRITICAL', label: 'Krytyczny', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
 ];
 
 export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
     initiativeId,
     initiativeName,
     onClose,
-    onTransferred
+    onTransferred,
 }) => {
     const [quarters] = useState(generateQuarters);
     const [selectedQuarter, setSelectedQuarter] = useState<string>('');
@@ -78,7 +73,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
 
     // Set default quarter to current + 1 (or first non-past quarter)
     useEffect(() => {
-        const firstFuture = quarters.find(q => !q.isPast);
+        const firstFuture = quarters.find((q) => !q.isPast);
         if (firstFuture) {
             setSelectedQuarter(firstFuture.value);
         }
@@ -99,14 +94,14 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
             const response = await fetch(`/api/initiatives/${initiativeId}/transfer-to-roadmap`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     quarter: selectedQuarter,
                     priority,
-                    notes: notes.trim()
-                })
+                    notes: notes.trim(),
+                }),
             });
 
             if (response.ok) {
@@ -138,9 +133,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                 <MapPin className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Dodaj do Roadmapy
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Dodaj do Roadmapy</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
                                     {initiativeName}
                                 </p>
@@ -162,9 +155,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
                                 <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                             </div>
-                            <p className="text-lg font-medium text-navy-900 dark:text-white">
-                                Dodano do Roadmapy!
-                            </p>
+                            <p className="text-lg font-medium text-navy-900 dark:text-white">Dodano do Roadmapy!</p>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Inicjatywa została zaplanowana
                             </p>
@@ -185,11 +176,12 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                             disabled={quarter.isPast}
                                             className={`
                                                 px-3 py-2 rounded-lg text-sm font-medium transition-all border-2
-                                                ${quarter.isPast
-                                                    ? 'bg-slate-50 dark:bg-navy-950 text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed'
-                                                    : selectedQuarter === quarter.value
-                                                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-500'
-                                                        : 'bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
+                                                ${
+                                                    quarter.isPast
+                                                        ? 'bg-slate-50 dark:bg-navy-950 text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed'
+                                                        : selectedQuarter === quarter.value
+                                                          ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-500'
+                                                          : 'bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/30'
                                                 }
                                             `}
                                         >
@@ -212,9 +204,10 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                             onClick={() => setPriority(opt.value)}
                                             className={`
                                                 px-3 py-2 rounded-lg text-xs font-medium transition-all border-2
-                                                ${priority === opt.value
-                                                    ? `${opt.color} border-current`
-                                                    : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                                ${
+                                                    priority === opt.value
+                                                        ? `${opt.color} border-current`
+                                                        : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                                 }
                                             `}
                                         >
@@ -264,9 +257,10 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                 disabled={!selectedQuarter || submitting}
                                 className={`
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
-                                    ${selectedQuarter && !submitting
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                    ${
+                                        selectedQuarter && !submitting
+                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                     }
                                 `}
                             >
@@ -289,4 +283,3 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
         </div>
     );
 };
-

@@ -4,10 +4,11 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { validateBody, validateQuery, validateParams } from '../../../../src/middleware/validation.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+
+import { validateBody, validateParams, validateQuery } from '../../../../src/middleware/validation.middleware.js';
 
 describe('Validation Middleware', () => {
     let mockReq: Partial<Request>;
@@ -90,7 +91,7 @@ describe('Validation Middleware', () => {
                     expect.objectContaining({
                         field: 'user.email',
                     }),
-                ])
+                ]),
             );
         });
 

@@ -4,9 +4,17 @@
  * ETAP 10.4: Testy dla Middleware - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
-import { validateInitiative, validateTask, validateInitiativeStatus, validateTaskStatus, setDependencies, type AuthRequest } from '../../../../src/middleware/pmoValidation.middleware.js';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    type AuthRequest,
+    setDependencies,
+    validateInitiative,
+    validateInitiativeStatus,
+    validateTask,
+    validateTaskStatus,
+} from '../../../../src/middleware/pmoValidation.middleware.js';
 
 describe('PMO Validation Middleware', () => {
     let mockReq: Partial<AuthRequest>;
@@ -17,8 +25,16 @@ describe('PMO Validation Middleware', () => {
         run: (sql: string, params: unknown[], callback?: (err: Error | null) => void) => void;
     };
     let mockStatusMachine: {
-        validateInitiativeTransition: (current: string, newStatus: string, options?: unknown) => { valid: boolean; reason?: string };
-        validateTaskTransition: (current: string, newStatus: string, options?: unknown) => { valid: boolean; reason?: string };
+        validateInitiativeTransition: (
+            current: string,
+            newStatus: string,
+            options?: unknown,
+        ) => { valid: boolean; reason?: string };
+        validateTaskTransition: (
+            current: string,
+            newStatus: string,
+            options?: unknown,
+        ) => { valid: boolean; reason?: string };
     };
 
     beforeEach(() => {
@@ -73,7 +89,7 @@ describe('PMO Validation Middleware', () => {
                 expect.objectContaining({
                     error: 'Initiative must have an owner',
                     rule: 'INITIATIVE_OWNER_REQUIRED',
-                })
+                }),
             );
         });
     });
@@ -167,7 +183,4 @@ describe('PMO Validation Middleware', () => {
         });
     });
 });
-
-
-
 

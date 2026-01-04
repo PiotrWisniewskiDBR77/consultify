@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../services/api';
+import React, { useEffect, useState } from 'react';
 
+import { Api } from '../services/api';
 
 export const SystemHealth = () => {
     const [status, setStatus] = useState<'online' | 'offline' | 'loading'>('loading');
@@ -31,16 +31,19 @@ export const SystemHealth = () => {
     if (status === 'loading') return null;
 
     return (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 shadow-sm dark:shadow-none" title={error || `System Online - DB Latency: ${latency}ms`}>
-            <div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+        <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 shadow-sm dark:shadow-none"
+            title={error || `System Online - DB Latency: ${latency}ms`}
+        >
+            <div
+                className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+            />
             <div className="flex flex-col leading-none">
                 <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
                     {status === 'online' ? 'System Online' : 'System Offline'}
                 </span>
                 {status === 'online' && (
-                    <span className="text-[9px] text-slate-500 dark:text-slate-400">
-                        {latency}ms latency
-                    </span>
+                    <span className="text-[9px] text-slate-500 dark:text-slate-400">{latency}ms latency</span>
                 )}
             </div>
         </div>

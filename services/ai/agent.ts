@@ -1,5 +1,5 @@
-import { sendMessageToAI, AIMessageHistory } from './gemini';
-import { FullInitiative, CompanyProfile, FullSession } from '../../types';
+import { CompanyProfile, FullInitiative, FullSession } from '../../types';
+import { AIMessageHistory, sendMessageToAI } from './gemini';
 
 /**
  * AI Agent Service
@@ -7,7 +7,6 @@ import { FullInitiative, CompanyProfile, FullSession } from '../../types';
  */
 
 export const Agent = {
-
     /**
      * Enriches a skeletal initiative with a professional business case, risks, and milestones.
      * This corresponds to the work a Senior Consultant would do.
@@ -16,16 +15,15 @@ export const Agent = {
         initiative: FullInitiative,
         profile: Partial<CompanyProfile>,
         fullSessionResponse: FullSession,
-        language: string = 'en'
+        language: string = 'en',
     ): Promise<Partial<FullInitiative>> => {
-
         // Construct the "Senior Consultant" prompt
         const context = `
       CONTEXT:
       ACT AS: Expert Digital Transformation Architect.
       LANGUAGE: ${language.toUpperCase()}. You MUST respond in ${language.toUpperCase()}.
       
-      You are working for ${profile.name || "a Client"}, a ${profile.industry || "Company"} in ${profile.country || "the Global Market"}.
+      You are working for ${profile.name || 'a Client'}, a ${profile.industry || 'Company'} in ${profile.country || 'the Global Market'}.
       
       TASK:
       The client has identified a high-level initiative: "${initiative.name}".
@@ -52,21 +50,23 @@ export const Agent = {
     `;
 
         try {
-            // We send this as a "User" message to trigger the specific response. 
+            // We send this as a "User" message to trigger the specific response.
             // In a real agent system, we might have a dedicated system prompt for "Generator".
             const history: AIMessageHistory[] = []; // Stateless call for this specific task
 
             const responseText = await sendMessageToAI(history, context);
 
             // Sanitization: Remove markdown code blocks if the model adds them
-            const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const cleanJson = responseText
+                .replace(/```json/g, '')
+                .replace(/```/g, '')
+                .trim();
 
             const generatedData = JSON.parse(cleanJson);
 
             return generatedData;
-
         } catch (error) {
-            console.error("AI Agent failed to enrich initiative:", error);
+            console.error('AI Agent failed to enrich initiative:', error);
             // Fallback: Return empty or partial to avoid breaking the UI
             return {};
         }
@@ -79,9 +79,8 @@ export const Agent = {
     analyzeSessionForInsights: async (
         session: FullSession,
         companyName: string,
-        language: string = 'en'
-    ): Promise<{ type: 'risk' | 'opportunity' | 'anomaly', text: string, impact: string }[]> => {
-
+        language: string = 'en',
+    ): Promise<{ type: 'risk' | 'opportunity' | 'anomaly'; text: string; impact: string }[]> => {
         const context = `
             ACT AS: Chief Strategy Officer (Artificial Intelligence).
             LANGUAGE: ${language.toUpperCase()}. You MUST respond in ${language.toUpperCase()}.
@@ -110,10 +109,13 @@ export const Agent = {
         try {
             const history: AIMessageHistory[] = [];
             const responseText = await sendMessageToAI(history, context);
-            const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const cleanJson = responseText
+                .replace(/```json/g, '')
+                .replace(/```/g, '')
+                .trim();
             return JSON.parse(cleanJson);
         } catch (e) {
-            console.error("AI Insight Analysis failed", e);
+            console.error('AI Insight Analysis failed', e);
             return [];
         }
     },
@@ -124,14 +126,13 @@ export const Agent = {
      */
     conductAssessmentInterview: async (
         axis: string,
-        chatHistory: { role: 'user' | 'model', text: string }[],
-        language: string = 'en'
+        chatHistory: { role: 'user' | 'model'; text: string }[],
+        language: string = 'en',
     ): Promise<{
         nextQuestion?: string;
         conclusion?: { score: number; reasoning: string };
         isFinished: boolean;
     }> => {
-
         const context = `
             ACT AS: specialized Auditor for Digital Maturity in "${axis}".
             LANGUAGE: ${language === 'pl' ? 'Polish' : 'English'}.
@@ -144,7 +145,7 @@ export const Agent = {
             3. After 3-4 exchanges, CONCLUDE.
             
             HISTORY:
-            ${chatHistory.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n')}
+            ${chatHistory.map((m) => `${m.role.toUpperCase()}: ${m.text}`).join('\n')}
             
             INSTRUCTION:
             If you have enough info, return a JSON with "conclusion".
@@ -158,15 +159,18 @@ export const Agent = {
         `;
 
         try {
-            // We pass empty history to sending function because we injected history into the prompt context manually 
+            // We pass empty history to sending function because we injected history into the prompt context manually
             // to have tighter control over the "system" instructions.
             const responseText = await sendMessageToAI([], context);
-            const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const cleanJson = responseText
+                .replace(/```json/g, '')
+                .replace(/```/g, '')
+                .trim();
             return JSON.parse(cleanJson);
         } catch (e) {
-            console.error("AI Interview failed", e);
+            console.error('AI Interview failed', e);
             // Fallback
-            return { isFinished: false, nextQuestion: "Could you elaborate on your current processes?" };
+            return { isFinished: false, nextQuestion: 'Could you elaborate on your current processes?' };
         }
-    }
+    },
 };

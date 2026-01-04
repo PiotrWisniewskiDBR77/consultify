@@ -1,23 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Create mock usageService - must be defined before vi.mock
-const mockUsageService = {
-    checkQuota: vi.fn(),
-    recordTokenUsage: vi.fn(),
-    recordStorageUsage: vi.fn()
-};
+const { mockUsageService } = vi.hoisted(() => ({
+    mockUsageService: {
+        checkQuota: vi.fn(),
+        recordTokenUsage: vi.fn(),
+        recordStorageUsage: vi.fn(),
+        getCurrentUsage: vi.fn(),
+        getUsageHistory: vi.fn()
+    }
+}));
 
 // Mock usageService - CommonJS module.exports returns the object directly
-vi.mock('../../../../server/services/usageService.js', () => {
-    return mockUsageService;
-});
+vi.mock('../../../../server/services/usageService.js', () => ({
+    default: mockUsageService
+}));
 
 vi.mock('../../../../server/database', () => ({
-    default: { 
-        run: vi.fn(), 
-        get: vi.fn(), 
+    default: {
+        run: vi.fn(),
+        get: vi.fn(),
         all: vi.fn(),
-        initPromise: Promise.resolve() 
+        initPromise: Promise.resolve()
     }
 }));
 
@@ -29,7 +33,7 @@ describe('Quota Middleware (Integration)', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        
+
         // Inject mock dependencies into middleware
         if (quotaMiddleware.setDependencies) {
             quotaMiddleware.setDependencies({

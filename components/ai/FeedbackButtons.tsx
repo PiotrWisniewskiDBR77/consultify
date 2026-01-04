@@ -1,12 +1,13 @@
 /**
  * AI Feedback Buttons Component
- * 
+ *
  * Allows users to provide feedback on AI responses.
  * Supports thumbs up/down and optional detailed feedback.
  */
 
+import { Check, MessageSquare, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, MessageSquare, X, Check } from 'lucide-react';
+
 import api from '../../services/api';
 
 interface FeedbackButtonsProps {
@@ -30,7 +31,7 @@ export function FeedbackButtons({
     capability,
     modelUsed,
     onFeedbackSubmitted,
-    compact = false
+    compact = false,
 }: FeedbackButtonsProps) {
     const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null);
     const [showCommentForm, setShowCommentForm] = useState(false);
@@ -44,7 +45,7 @@ export function FeedbackButtons({
         try {
             const feedbackData: FeedbackData = {
                 type,
-                ...additionalData
+                ...additionalData,
             };
 
             await api.post('/ai-feedback', {
@@ -54,12 +55,12 @@ export function FeedbackButtons({
                 rating: additionalData?.rating,
                 comment: additionalData?.comment,
                 capability,
-                modelUsed
+                modelUsed,
             });
 
             setFeedbackGiven(type);
             setShowCommentForm(false);
-            
+
             if (onFeedbackSubmitted) {
                 onFeedbackSubmitted(feedbackData);
             }
@@ -96,7 +97,7 @@ export function FeedbackButtons({
             <div className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Co można poprawić?</span>
-                    <button 
+                    <button
                         onClick={() => setShowCommentForm(false)}
                         className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                     >
@@ -173,7 +174,7 @@ export function FeedbackButtons({
 export function StarRating({
     value,
     onChange,
-    size = 'md'
+    size = 'md',
 }: {
     value: number;
     onChange: (rating: number) => void;
@@ -184,7 +185,7 @@ export function StarRating({
     const sizeClasses = {
         sm: 'w-4 h-4',
         md: 'w-6 h-6',
-        lg: 'w-8 h-8'
+        lg: 'w-8 h-8',
     };
 
     return (
@@ -199,9 +200,7 @@ export function StarRating({
                 >
                     <svg
                         className={`${sizeClasses[size]} ${
-                            star <= (hover || value)
-                                ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-gray-300'
+                            star <= (hover || value) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
                         } transition-colors`}
                         viewBox="0 0 24 24"
                         fill="none"
@@ -217,12 +216,4 @@ export function StarRating({
 }
 
 export default FeedbackButtons;
-
-
-
-
-
-
-
-
 

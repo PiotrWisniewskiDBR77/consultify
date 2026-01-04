@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { Award, Briefcase, CheckCircle, FileText, GraduationCap, Info, Loader2, Plus, Save, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-    FileText, Plus, X, Award, Briefcase, GraduationCap,
-    Save, Loader2, CheckCircle, Info
-} from 'lucide-react';
+
 import { Api } from '../../services/api';
-import { User, UserSkill, Certification } from '../../types';
+import { Certification, User, UserSkill } from '../../types';
 
 interface BioAboutSectionProps {
     currentUser: User;
@@ -21,17 +19,29 @@ interface BioFormState {
 
 // Common skill suggestions
 const SKILL_SUGGESTIONS = [
-    'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication',
-    'Strategic Planning', 'Data Analysis', 'Problem Solving', 'Team Building',
-    'Risk Management', 'Stakeholder Management', 'Budgeting', 'Negotiation',
-    'Process Improvement', 'Change Management', 'Software Development',
-    'UX Design', 'Product Management', 'Marketing', 'Sales'
+    'Project Management',
+    'Agile',
+    'Scrum',
+    'Leadership',
+    'Communication',
+    'Strategic Planning',
+    'Data Analysis',
+    'Problem Solving',
+    'Team Building',
+    'Risk Management',
+    'Stakeholder Management',
+    'Budgeting',
+    'Negotiation',
+    'Process Improvement',
+    'Change Management',
+    'Software Development',
+    'UX Design',
+    'Product Management',
+    'Marketing',
+    'Sales',
 ];
 
-export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -42,7 +52,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
         shortBio: '',
         longBio: '',
         skills: [],
-        yearsExperience: ''
+        yearsExperience: '',
     });
 
     // Load bio data on mount
@@ -58,7 +68,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                     shortBio: response.bio.shortBio || '',
                     longBio: response.bio.longBio || '',
                     skills: response.bio.skills || [],
-                    yearsExperience: response.bio.yearsExperience || ''
+                    yearsExperience: response.bio.yearsExperience || '',
                 });
             }
         } catch (error) {
@@ -73,7 +83,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                 shortBio: formState.shortBio,
                 longBio: formState.longBio,
                 skills: formState.skills,
-                yearsExperience: formState.yearsExperience || null
+                yearsExperience: formState.yearsExperience || null,
             });
             setSaveStatus('success');
             onUpdate?.();
@@ -89,9 +99,9 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
     const addSkill = (skill: string) => {
         const trimmedSkill = skill.trim();
         if (trimmedSkill && !formState.skills.includes(trimmedSkill)) {
-            setFormState(prev => ({
+            setFormState((prev) => ({
                 ...prev,
-                skills: [...prev.skills, trimmedSkill]
+                skills: [...prev.skills, trimmedSkill],
             }));
         }
         setNewSkill('');
@@ -99,22 +109,23 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
     };
 
     const removeSkill = (skillToRemove: string) => {
-        setFormState(prev => ({
+        setFormState((prev) => ({
             ...prev,
-            skills: prev.skills.filter(s => s !== skillToRemove)
+            skills: prev.skills.filter((s) => s !== skillToRemove),
         }));
     };
 
     const filteredSuggestions = SKILL_SUGGESTIONS.filter(
-        s => s.toLowerCase().includes(newSkill.toLowerCase()) && 
-             !formState.skills.includes(s)
+        (s) => s.toLowerCase().includes(newSkill.toLowerCase()) && !formState.skills.includes(s),
     );
 
     // Styling classes
-    const inputClass = "w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const labelClass = "text-xs font-medium text-slate-500 dark:text-slate-400";
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
+    const inputClass =
+        'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -147,8 +158,11 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                 <div className="space-y-2">
                     <input
                         value={formState.shortBio}
-                        onChange={e => setFormState(prev => ({ ...prev, shortBio: e.target.value }))}
-                        placeholder={t('settings.profile.bioAbout.shortBioPlaceholder', 'A brief one-liner about yourself...')}
+                        onChange={(e) => setFormState((prev) => ({ ...prev, shortBio: e.target.value }))}
+                        placeholder={t(
+                            'settings.profile.bioAbout.shortBioPlaceholder',
+                            'A brief one-liner about yourself...',
+                        )}
                         maxLength={150}
                         className={inputClass}
                     />
@@ -168,11 +182,14 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                 <div className="space-y-2">
                     <textarea
                         value={formState.longBio}
-                        onChange={e => setFormState(prev => ({ ...prev, longBio: e.target.value }))}
-                        placeholder={t('settings.profile.bioAbout.longBioPlaceholder', 'Tell your story, share your background, interests, and what drives you...')}
+                        onChange={(e) => setFormState((prev) => ({ ...prev, longBio: e.target.value }))}
+                        placeholder={t(
+                            'settings.profile.bioAbout.longBioPlaceholder',
+                            'Tell your story, share your background, interests, and what drives you...',
+                        )}
                         maxLength={2000}
                         rows={6}
-                        className={inputClass + " resize-none"}
+                        className={inputClass + ' resize-none'}
                     />
                     <div className="flex justify-between text-xs text-slate-400">
                         <span>{t('settings.profile.bioAbout.longBioHint', 'Markdown formatting supported')}</span>
@@ -187,10 +204,10 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                     <Award size={16} className="text-purple-500" />
                     {t('settings.profile.bioAbout.skills', 'Skills & Expertise')}
                 </h4>
-                
+
                 {/* Skill Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                    {formState.skills.map(skill => (
+                    {formState.skills.map((skill) => (
                         <span
                             key={skill}
                             className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full text-sm"
@@ -217,10 +234,10 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                         <div className="relative flex-1">
                             <input
                                 value={newSkill}
-                                onChange={e => setNewSkill(e.target.value)}
+                                onChange={(e) => setNewSkill(e.target.value)}
                                 onFocus={() => setShowSkillSuggestions(true)}
                                 onBlur={() => setTimeout(() => setShowSkillSuggestions(false), 200)}
-                                onKeyDown={e => {
+                                onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
                                         addSkill(newSkill);
@@ -229,11 +246,11 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                                 placeholder={t('settings.profile.bioAbout.addSkill', 'Add a skill...')}
                                 className={inputClass}
                             />
-                            
+
                             {/* Suggestions dropdown */}
                             {showSkillSuggestions && filteredSuggestions.length > 0 && (
                                 <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-lg">
-                                    {filteredSuggestions.slice(0, 8).map(skill => (
+                                    {filteredSuggestions.slice(0, 8).map((skill) => (
                                         <button
                                             key={skill}
                                             type="button"
@@ -273,10 +290,12 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                             min={0}
                             max={50}
                             value={formState.yearsExperience}
-                            onChange={e => setFormState(prev => ({ 
-                                ...prev, 
-                                yearsExperience: e.target.value ? parseInt(e.target.value) : '' 
-                            }))}
+                            onChange={(e) =>
+                                setFormState((prev) => ({
+                                    ...prev,
+                                    yearsExperience: e.target.value ? parseInt(e.target.value) : '',
+                                }))
+                            }
                             placeholder="e.g. 5"
                             className={inputClass}
                         />
@@ -293,7 +312,10 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
                             {t('settings.profile.bioAbout.tip', 'Profile Tip')}
                         </h4>
                         <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                            {t('settings.profile.bioAbout.tipText', 'A complete profile helps your team members understand your background and expertise. It also helps AI provide more personalized assistance.')}
+                            {t(
+                                'settings.profile.bioAbout.tipText',
+                                'A complete profile helps your team members understand your background and expertise. It also helps AI provide more personalized assistance.',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -311,10 +333,4 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({
 };
 
 export default BioAboutSection;
-
-
-
-
-
-
 

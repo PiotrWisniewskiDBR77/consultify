@@ -1,14 +1,15 @@
 /**
  * ContentModule - Content Management
- * 
+ *
  * Tabs: Playbooks | Email Templates
  */
 
-import React, { useState } from 'react';
 import { Layers, Mail } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
+import React, { useState } from 'react';
+
 import { EmailTemplatesPanel } from '../../components/SuperAdmin/EmailTemplatesPanel';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
 
 interface ContentModuleProps {
     initialTab?: string;
@@ -47,12 +48,4 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
 };
 
 export default ContentModule;
-
-
-
-
-
-
-
-
 

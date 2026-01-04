@@ -1,6 +1,6 @@
 /**
  * HeatmapMatrix
- * 
+ *
  * Visual gap priority matrix:
  * - 7 axes x priority categories
  * - Color-coded cells (Red/Yellow/Green)
@@ -8,10 +8,10 @@
  * - Clear legend and tooltips
  */
 
-import React, { useState, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, CheckCircle, Clock, Minus, TrendingDown, TrendingUp, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
 // DRD 7 Axes
 const DRD_AXES = {
@@ -21,7 +21,7 @@ const DRD_AXES = {
     dataManagement: { namePl: 'Zarządzanie Danymi', nameEn: 'Data Management', icon: '📊' },
     culture: { namePl: 'Kultura Transformacji', nameEn: 'Transformation Culture', icon: '🎯' },
     cybersecurity: { namePl: 'Cyberbezpieczeństwo', nameEn: 'Cybersecurity', icon: '🔒' },
-    aiMaturity: { namePl: 'Dojrzałość AI', nameEn: 'AI Maturity', icon: '🤖' }
+    aiMaturity: { namePl: 'Dojrzałość AI', nameEn: 'AI Maturity', icon: '🤖' },
 };
 
 interface AxisData {
@@ -38,64 +38,60 @@ interface HeatmapMatrixProps {
 
 // Priority configuration
 const PRIORITIES = [
-    { 
-        id: 'critical', 
-        labelPl: 'Krytyczny', 
+    {
+        id: 'critical',
+        labelPl: 'Krytyczny',
         labelEn: 'Critical',
         description: 'Luka ≥3 poziomów',
         color: '#ef4444',
         bgColor: '#fef2f2',
         darkBgColor: 'rgba(239, 68, 68, 0.15)',
-        icon: AlertTriangle
+        icon: AlertTriangle,
     },
-    { 
-        id: 'high', 
-        labelPl: 'Wysoki', 
+    {
+        id: 'high',
+        labelPl: 'Wysoki',
         labelEn: 'High',
         description: 'Luka 2 poziomów',
         color: '#f59e0b',
         bgColor: '#fef3c7',
         darkBgColor: 'rgba(245, 158, 11, 0.15)',
-        icon: TrendingUp
+        icon: TrendingUp,
     },
-    { 
-        id: 'medium', 
-        labelPl: 'Średni', 
+    {
+        id: 'medium',
+        labelPl: 'Średni',
         labelEn: 'Medium',
         description: 'Luka 1 poziomu',
         color: '#3b82f6',
         bgColor: '#dbeafe',
         darkBgColor: 'rgba(59, 130, 246, 0.15)',
-        icon: Minus
+        icon: Minus,
     },
-    { 
-        id: 'low', 
-        labelPl: 'Niski', 
+    {
+        id: 'low',
+        labelPl: 'Niski',
         labelEn: 'Low',
         description: 'Luka <1 lub cel osiągnięty',
         color: '#10b981',
         bgColor: '#d1fae5',
         darkBgColor: 'rgba(16, 185, 129, 0.15)',
-        icon: CheckCircle
-    }
+        icon: CheckCircle,
+    },
 ];
 
 // Helper to calculate priority from gap
-const getPriorityFromGap = (gap: number): typeof PRIORITIES[0] => {
+const getPriorityFromGap = (gap: number): (typeof PRIORITIES)[0] => {
     if (gap >= 3) return PRIORITIES[0]; // Critical
     if (gap >= 2) return PRIORITIES[1]; // High
     if (gap >= 1) return PRIORITIES[2]; // Medium
     return PRIORITIES[3]; // Low
 };
 
-export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
-    axisData,
-    onCellClick,
-    className = ''
-}) => {
+export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({ axisData, onCellClick, className = '' }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
-    
+
     const [selectedCell, setSelectedCell] = useState<{ axisId: string; priority: string } | null>(null);
     const [hoveredCell, setHoveredCell] = useState<string | null>(null);
 
@@ -114,7 +110,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                 target: data.target || 0,
                 gap,
                 priority,
-                justification: data.justification
+                justification: data.justification,
             };
         });
     }, [axisData, isPolish]);
@@ -122,10 +118,10 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
     // Summary stats
     const stats = useMemo(() => {
         const counts = {
-            critical: processedData.filter(d => d.priority.id === 'critical').length,
-            high: processedData.filter(d => d.priority.id === 'high').length,
-            medium: processedData.filter(d => d.priority.id === 'medium').length,
-            low: processedData.filter(d => d.priority.id === 'low').length
+            critical: processedData.filter((d) => d.priority.id === 'critical').length,
+            high: processedData.filter((d) => d.priority.id === 'high').length,
+            medium: processedData.filter((d) => d.priority.id === 'medium').length,
+            low: processedData.filter((d) => d.priority.id === 'low').length,
         };
         const totalGap = processedData.reduce((sum, d) => sum + d.gap, 0);
         const avgGap = totalGap / processedData.length;
@@ -151,9 +147,9 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                         <div
                             key={priority.id}
                             className="p-4 rounded-xl border transition-all hover:shadow-md"
-                            style={{ 
+                            style={{
                                 backgroundColor: priority.bgColor,
-                                borderColor: priority.color + '40'
+                                borderColor: priority.color + '40',
                             }}
                         >
                             <div className="flex items-center gap-2 mb-2">
@@ -162,11 +158,9 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                                     {isPolish ? priority.labelPl : priority.labelEn}
                                 </span>
                             </div>
-                            <div className="text-3xl font-bold text-navy-900 dark:text-white">
-                                {count}
-                            </div>
+                            <div className="text-3xl font-bold text-navy-900 dark:text-white">{count}</div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {count === 1 ? (isPolish ? 'oś' : 'axis') : (isPolish ? 'osi' : 'axes')}
+                                {count === 1 ? (isPolish ? 'oś' : 'axis') : isPolish ? 'osi' : 'axes'}
                             </div>
                         </div>
                     );
@@ -266,20 +260,21 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
 
                                 {/* Gap */}
                                 <div className="px-4 py-3 flex items-center justify-center">
-                                    <span 
+                                    <span
                                         className="px-2 py-1 rounded-lg text-sm font-bold"
-                                        style={{ 
+                                        style={{
                                             backgroundColor: axis.priority.bgColor,
-                                            color: axis.priority.color
+                                            color: axis.priority.color,
                                         }}
                                     >
-                                        {axis.gap > 0 ? '+' : ''}{axis.gap.toFixed(1)}
+                                        {axis.gap > 0 ? '+' : ''}
+                                        {axis.gap.toFixed(1)}
                                     </span>
                                 </div>
 
                                 {/* Priority badge */}
                                 <div className="px-4 py-3 flex items-center justify-center">
-                                    <span 
+                                    <span
                                         className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-white"
                                         style={{ backgroundColor: axis.priority.color }}
                                     >
@@ -296,16 +291,11 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
             <div className="flex items-center justify-center gap-6 text-sm">
                 {PRIORITIES.map((priority) => (
                     <div key={priority.id} className="flex items-center gap-2">
-                        <div 
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: priority.color }}
-                        />
+                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: priority.color }} />
                         <span className="text-slate-600 dark:text-slate-400">
                             {isPolish ? priority.labelPl : priority.labelEn}
                         </span>
-                        <span className="text-slate-400 dark:text-slate-500 text-xs">
-                            ({priority.description})
-                        </span>
+                        <span className="text-slate-400 dark:text-slate-500 text-xs">({priority.description})</span>
                     </div>
                 ))}
             </div>
@@ -328,7 +318,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                             onClick={(e) => e.stopPropagation()}
                         >
                             {(() => {
-                                const axis = processedData.find(d => d.axisId === selectedCell.axisId);
+                                const axis = processedData.find((d) => d.axisId === selectedCell.axisId);
                                 if (!axis) return null;
 
                                 return (
@@ -350,38 +340,52 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
 
                                         <div className="grid grid-cols-3 gap-4 mb-6">
                                             <div className="text-center p-4 bg-blue-50 dark:bg-blue-500/10 rounded-xl">
-                                                <div className="text-2xl font-bold text-blue-600">{axis.actual.toFixed(1)}</div>
-                                                <div className="text-xs text-slate-500">{isPolish ? 'Aktualny' : 'Actual'}</div>
+                                                <div className="text-2xl font-bold text-blue-600">
+                                                    {axis.actual.toFixed(1)}
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {isPolish ? 'Aktualny' : 'Actual'}
+                                                </div>
                                             </div>
                                             <div className="text-center p-4 bg-green-50 dark:bg-green-500/10 rounded-xl">
-                                                <div className="text-2xl font-bold text-green-600">{axis.target.toFixed(1)}</div>
-                                                <div className="text-xs text-slate-500">{isPolish ? 'Docelowy' : 'Target'}</div>
+                                                <div className="text-2xl font-bold text-green-600">
+                                                    {axis.target.toFixed(1)}
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {isPolish ? 'Docelowy' : 'Target'}
+                                                </div>
                                             </div>
-                                            <div 
+                                            <div
                                                 className="text-center p-4 rounded-xl"
                                                 style={{ backgroundColor: axis.priority.bgColor }}
                                             >
-                                                <div className="text-2xl font-bold" style={{ color: axis.priority.color }}>
+                                                <div
+                                                    className="text-2xl font-bold"
+                                                    style={{ color: axis.priority.color }}
+                                                >
                                                     +{axis.gap.toFixed(1)}
                                                 </div>
-                                                <div className="text-xs text-slate-500">{isPolish ? 'Luka' : 'Gap'}</div>
+                                                <div className="text-xs text-slate-500">
+                                                    {isPolish ? 'Luka' : 'Gap'}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div 
+                                        <div
                                             className="p-4 rounded-xl mb-4"
-                                            style={{ 
+                                            style={{
                                                 backgroundColor: axis.priority.bgColor,
-                                                borderLeft: `4px solid ${axis.priority.color}`
+                                                borderLeft: `4px solid ${axis.priority.color}`,
                                             }}
                                         >
                                             <div className="flex items-center gap-2 mb-2">
-                                                {React.createElement(axis.priority.icon, { 
+                                                {React.createElement(axis.priority.icon, {
                                                     className: 'w-5 h-5',
-                                                    style: { color: axis.priority.color }
+                                                    style: { color: axis.priority.color },
                                                 })}
                                                 <span className="font-semibold" style={{ color: axis.priority.color }}>
-                                                    {isPolish ? 'Priorytet' : 'Priority'}: {isPolish ? axis.priority.labelPl : axis.priority.labelEn}
+                                                    {isPolish ? 'Priorytet' : 'Priority'}:{' '}
+                                                    {isPolish ? axis.priority.labelPl : axis.priority.labelEn}
                                                 </span>
                                             </div>
                                             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -411,4 +415,3 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
 };
 
 export default HeatmapMatrix;
-

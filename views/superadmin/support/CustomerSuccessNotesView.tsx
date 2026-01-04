@@ -2,10 +2,11 @@
  * Customer Success Notes View
  */
 
-import React, { useState, useEffect } from 'react';
-import { Plus, FileText } from 'lucide-react';
-import { Api } from '../../../services/api';
+import { FileText, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 export const CustomerSuccessNotesView: React.FC = () => {
     const [selectedOrgId, setSelectedOrgId] = useState<string>('');
@@ -61,8 +62,10 @@ export const CustomerSuccessNotesView: React.FC = () => {
                     className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
                 >
                     <option value="">Select Organization</option>
-                    {organizations.map(org => (
-                        <option key={org.id} value={org.id}>{org.name}</option>
+                    {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                            {org.name}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -94,10 +97,4 @@ export const CustomerSuccessNotesView: React.FC = () => {
         </div>
     );
 };
-
-
-
-
-
-
 

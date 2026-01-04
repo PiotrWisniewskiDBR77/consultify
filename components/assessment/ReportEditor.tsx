@@ -1,32 +1,32 @@
 /**
  * ReportEditor
- * 
+ *
  * Full report editor for assessment reports.
  * Allows editing:
  * - Executive Summary
  * - Key Findings
  * - Recommendations
  * - Notes
- * 
+ *
  * Shows assessment data as reference (read-only).
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
+    AlertCircle,
     ArrowLeft,
-    Save,
     CheckCircle2,
-    Loader2,
     FileText,
     Lightbulb,
-    AlertCircle,
+    Loader2,
     Plus,
-    Trash2,
+    Save,
+    Sparkles,
     Target,
+    Trash2,
     TrendingUp,
     X,
-    Sparkles
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface ReportContent {
     executiveSummary: string;
@@ -69,15 +69,10 @@ const AXIS_LABELS: Record<string, string> = {
     dataManagement: 'Zarządzanie Danymi',
     culture: 'Kultura',
     cybersecurity: 'Cyberbezpieczeństwo',
-    aiMaturity: 'Dojrzałość AI'
+    aiMaturity: 'Dojrzałość AI',
 };
 
-export const ReportEditor: React.FC<ReportEditorProps> = ({
-    reportId,
-    onClose,
-    onSaved,
-    onFinalized
-}) => {
+export const ReportEditor: React.FC<ReportEditorProps> = ({ reportId, onClose, onSaved, onFinalized }) => {
     // State
     const [report, setReport] = useState<Report | null>(null);
     const [loading, setLoading] = useState(true);
@@ -106,7 +101,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`/api/assessment-reports/${reportId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (response.ok) {
@@ -134,7 +129,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     // Track changes
     useEffect(() => {
         if (report) {
-            const changed = 
+            const changed =
                 name !== report.name ||
                 executiveSummary !== (report.content.executiveSummary || '') ||
                 JSON.stringify(keyFindings) !== JSON.stringify(report.content.keyFindings || []) ||
@@ -156,8 +151,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             const response = await fetch(`/api/assessment-reports/${reportId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     name,
@@ -165,20 +160,24 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                         executiveSummary,
                         keyFindings,
                         recommendations,
-                        notes
-                    }
-                })
+                        notes,
+                    },
+                }),
             });
 
             if (response.ok) {
                 setLastSaved(new Date());
                 setHasChanges(false);
                 // Update local report state
-                setReport(prev => prev ? {
-                    ...prev,
-                    name,
-                    content: { executiveSummary, keyFindings, recommendations, notes }
-                } : null);
+                setReport((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              name,
+                              content: { executiveSummary, keyFindings, recommendations, notes },
+                          }
+                        : null,
+                );
                 onSaved();
             } else {
                 const data = await response.json();
@@ -209,7 +208,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/assessment-reports/${reportId}/finalize`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -256,7 +255,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     // Calculate gap summary
     const getGapSummary = () => {
         if (!report?.axisData) return [];
-        
+
         return Object.entries(report.axisData)
             .filter(([_, data]) => data.actual && data.target)
             .map(([axis, data]) => ({
@@ -264,7 +263,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 label: AXIS_LABELS[axis] || axis,
                 actual: data.actual || 0,
                 target: data.target || 0,
-                gap: (data.target || 0) - (data.actual || 0)
+                gap: (data.target || 0) - (data.actual || 0),
             }))
             .sort((a, b) => b.gap - a.gap);
     };
@@ -315,11 +314,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                                     disabled={isReadOnly}
                                     className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-purple-500 rounded px-1 -ml-1"
                                 />
-                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                    report.status === 'FINAL'
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                }`}>
+                                <span
+                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                        report.status === 'FINAL'
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    }`}
+                                >
                                     {report.status}
                                 </span>
                             </div>
@@ -342,9 +343,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                                 Zapisano {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         )}
-                        {error && (
-                            <span className="text-xs text-red-500">{error}</span>
-                        )}
+                        {error && <span className="text-xs text-red-500">{error}</span>}
 
                         {!isReadOnly && (
                             <>
@@ -365,7 +364,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                                     disabled={finalizing}
                                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium text-sm transition-colors"
                                 >
-                                    {finalizing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                                    {finalizing ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                        <CheckCircle2 size={16} />
+                                    )}
                                     Finalizuj
                                 </button>
                             </>
@@ -385,13 +388,20 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                                 Podsumowanie Gap Analysis
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {gapSummary.slice(0, 4).map(item => (
-                                    <div key={item.axis} className="bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-white/10">
+                                {gapSummary.slice(0, 4).map((item) => (
+                                    <div
+                                        key={item.axis}
+                                        className="bg-white dark:bg-navy-900 rounded-lg p-4 border border-slate-200 dark:border-white/10"
+                                    >
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{item.label}</p>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-2xl font-bold text-navy-900 dark:text-white">{item.actual}</span>
+                                            <span className="text-2xl font-bold text-navy-900 dark:text-white">
+                                                {item.actual}
+                                            </span>
                                             <TrendingUp size={16} className="text-purple-500" />
-                                            <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{item.target}</span>
+                                            <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                                {item.target}
+                                            </span>
                                         </div>
                                         <p className="text-xs text-slate-400 mt-1">Gap: {item.gap} poziomów</p>
                                     </div>
@@ -424,7 +434,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                         </label>
                         <div className="space-y-2 mb-3">
                             {keyFindings.map((finding, index) => (
-                                <div key={index} className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/20">
+                                <div
+                                    key={index}
+                                    className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-500/20"
+                                >
                                     <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
                                         {index + 1}
                                     </span>
@@ -470,7 +483,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                         </label>
                         <div className="space-y-2 mb-3">
                             {recommendations.map((rec, index) => (
-                                <div key={index} className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-500/20">
+                                <div
+                                    key={index}
+                                    className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-500/20"
+                                >
                                     <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
                                         {index + 1}
                                     </span>
@@ -527,4 +543,3 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </div>
     );
 };
-

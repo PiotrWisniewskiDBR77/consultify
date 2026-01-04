@@ -1,14 +1,15 @@
 /**
  * Plan Limits Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enforces subscription plan limits (projects, storage, members, etc.)
  */
 
-import { Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware.js';
-import { get as dbGet } from '../utils/DbPromise.js';
+import { NextFunction, Response } from 'express';
+
 import { getDatabase } from '../database/Database.js';
+import { get as dbGet } from '../utils/DbPromise.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -50,20 +51,20 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
         max_projects: 1,
         max_storage_mb: 100,
         can_use_advanced_models: 0, // 0 = false
-        max_members: 1
+        max_members: 1,
     },
     pro: {
         max_projects: 10,
         max_storage_mb: 5000,
         can_use_advanced_models: 1,
-        max_members: 5
+        max_members: 5,
     },
     enterprise: {
         max_projects: 9999,
         max_storage_mb: 100000,
         can_use_advanced_models: 1,
-        max_members: 9999
-    }
+        max_members: 9999,
+    },
 };
 
 // ==========================================
@@ -71,7 +72,7 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
 // ==========================================
 
 let deps: Dependencies = {
-    db: getDatabase() as unknown as Database
+    db: getDatabase() as unknown as Database,
 };
 
 // ==========================================
@@ -81,7 +82,7 @@ let deps: Dependencies = {
 /**
  * Middleware to check plan limits
  * Usage: router.post('/projects', checkPlanLimit('max_projects'), createProject);
- * 
+ *
  * @param limitKey - Key to check in PLAN_LIMITS (e.g., 'max_projects')
  */
 export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
@@ -102,7 +103,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             }
 
             // Allow trial as pro
-            const plan = (org.status === 'trial') ? 'pro' : (org.plan || 'free');
+            const plan = org.status === 'trial' ? 'pro' : org.plan || 'free';
             const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
             const limitValue = limits[limitKey];
 
@@ -117,10 +118,15 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             let currentCount = 0;
 
             if (limitKey === 'max_projects') {
-                const result = await dbGet<CountRow>('SELECT COUNT(*) as count FROM projects WHERE organization_id = ? AND status != "archived"', [orgId]);
+                const result = await dbGet<CountRow>(
+                    'SELECT COUNT(*) as count FROM projects WHERE organization_id = ? AND status != "archived"',
+                    [orgId],
+                );
                 currentCount = result?.count || 0;
             } else if (limitKey === 'max_members') {
-                const result = await dbGet<CountRow>('SELECT COUNT(*) as count FROM users WHERE organization_id = ?', [orgId]);
+                const result = await dbGet<CountRow>('SELECT COUNT(*) as count FROM users WHERE organization_id = ?', [
+                    orgId,
+                ]);
                 currentCount = result?.count || 0;
             }
             // Add other checks (storage, models) here as needed
@@ -128,7 +134,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             // 3. Enforce
             if (currentCount >= (limitValue as number)) {
                 res.status(403).json({
-                    error: `Plan limit reached: ${limitKey}. Current: ${currentCount}, Limit: ${limitValue}. Upgrade to Pro/Enterprise for more.`
+                    error: `Plan limit reached: ${limitKey}. Current: ${currentCount}, Limit: ${limitValue}. Upgrade to Pro/Enterprise for more.`,
                 });
                 return;
             }
@@ -148,4 +154,3 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-

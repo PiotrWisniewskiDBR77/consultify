@@ -1,6 +1,6 @@
 /**
  * Trial/Demo Cron Jobs
- * 
+ *
  * Scheduled tasks for:
  * - Demo organization cleanup (24h expiry)
  * - Trial warning notifications (T-7 days)
@@ -8,9 +8,9 @@
  * - Daily usage counter resets
  */
 
+import { getDatabase } from '../src/database/Database.ts';
 import DemoService from '../src/services/demoService.ts';
 import TrialService from '../src/services/trialService.ts';
-import { getDatabase } from '../src/database/Database.ts';
 
 /**
  * Run all trial/demo scheduled tasks
@@ -37,7 +37,7 @@ const runDailyTrialTasks = async () => {
         return {
             demosCleanedUp,
             warningsSent,
-            trialsLocked
+            trialsLocked,
         };
     } catch (error) {
         console.error('[TrialCron] Error running daily trial tasks:', error);
@@ -54,21 +54,17 @@ const cleanupOldUsageCounters = async () => {
     const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     return new Promise((resolve, reject) => {
-        db.run(
-            `DELETE FROM usage_counters WHERE counter_date < ?`,
-            [cutoffDate],
-            function (err: any) {
-                if (err) return reject(err);
-                // @ts-ignore
-                console.log(`[TrialCron] Cleaned up ${this.changes} old usage counter record(s)`);
-                // @ts-ignore
-                resolve(this.changes);
-            }
-        );
+        db.run(`DELETE FROM usage_counters WHERE counter_date < ?`, [cutoffDate], function (err: any) {
+            if (err) return reject(err);
+            // @ts-ignore
+            console.log(`[TrialCron] Cleaned up ${this.changes} old usage counter record(s)`);
+            // @ts-ignore
+            resolve(this.changes);
+        });
     });
 };
 
 export default {
     runDailyTrialTasks,
-    cleanupOldUsageCounters
+    cleanupOldUsageCounters,
 };

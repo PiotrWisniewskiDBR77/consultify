@@ -1,6 +1,6 @@
 /**
  * StickyNavigation
- * 
+ *
  * Scroll-aware header for the Report Builder:
  * - Fixed position on scroll (after 100px)
  * - Reading progress bar (0-100%)
@@ -9,26 +9,26 @@
  * - Keyboard navigation support (J/K for prev/next)
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    ChevronDown,
-    ChevronUp,
-    ChevronLeft,
-    ChevronRight,
-    List,
-    FileText,
     BarChart3,
     BookOpen,
-    Target,
-    Map,
-    Layers,
     Briefcase,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronUp,
     Eye,
     EyeOff,
-    Keyboard
+    FileText,
+    Keyboard,
+    Layers,
+    List,
+    Map,
+    Target,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SectionInfo {
     id: string;
@@ -56,7 +56,7 @@ const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>>
     gap_analysis: Target,
     initiatives: Briefcase,
     roadmap: Map,
-    appendix: FileText
+    appendix: FileText,
 };
 
 export const StickyNavigation: React.FC<StickyNavigationProps> = ({
@@ -65,7 +65,7 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
     reportTitle,
     isReadingMode,
     onSectionClick,
-    onToggleReadingMode
+    onToggleReadingMode,
 }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -75,12 +75,12 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
     const [scrollProgress, setScrollProgress] = useState(0);
     const [showJumpMenu, setShowJumpMenu] = useState(false);
     const [showKeyboardHint, setShowKeyboardHint] = useState(false);
-    
+
     const jumpMenuRef = useRef<HTMLDivElement>(null);
 
     // Get current section info
-    const currentSectionInfo = sections.find(s => s.id === currentSection);
-    const currentIndex = currentSectionInfo ? sections.findIndex(s => s.id === currentSection) : -1;
+    const currentSectionInfo = sections.find((s) => s.id === currentSection);
+    const currentIndex = currentSectionInfo ? sections.findIndex((s) => s.id === currentSection) : -1;
 
     // Calculate scroll progress
     useEffect(() => {
@@ -88,7 +88,7 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
             const scrollTop = window.scrollY;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
             const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-            
+
             setScrollProgress(Math.min(100, Math.max(0, progress)));
             setIsVisible(scrollTop > 100);
         };
@@ -103,9 +103,11 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Skip if user is typing in an input
-            if (e.target instanceof HTMLInputElement || 
+            if (
+                e.target instanceof HTMLInputElement ||
                 e.target instanceof HTMLTextAreaElement ||
-                (e.target as HTMLElement).isContentEditable) {
+                (e.target as HTMLElement).isContentEditable
+            ) {
                 return;
             }
 
@@ -131,27 +133,30 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
     }, [currentIndex, sections, onToggleReadingMode]);
 
     // Navigate to prev/next section
-    const navigateSection = useCallback((direction: 'prev' | 'next') => {
-        if (sections.length === 0) return;
+    const navigateSection = useCallback(
+        (direction: 'prev' | 'next') => {
+            if (sections.length === 0) return;
 
-        let newIndex: number;
-        if (direction === 'prev') {
-            newIndex = currentIndex > 0 ? currentIndex - 1 : sections.length - 1;
-        } else {
-            newIndex = currentIndex < sections.length - 1 ? currentIndex + 1 : 0;
-        }
-
-        const targetSection = sections[newIndex];
-        if (targetSection) {
-            onSectionClick(targetSection.id);
-            
-            // Scroll to section
-            const element = document.querySelector(`[data-section-id="${targetSection.id}"]`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            let newIndex: number;
+            if (direction === 'prev') {
+                newIndex = currentIndex > 0 ? currentIndex - 1 : sections.length - 1;
+            } else {
+                newIndex = currentIndex < sections.length - 1 ? currentIndex + 1 : 0;
             }
-        }
-    }, [currentIndex, sections, onSectionClick]);
+
+            const targetSection = sections[newIndex];
+            if (targetSection) {
+                onSectionClick(targetSection.id);
+
+                // Scroll to section
+                const element = document.querySelector(`[data-section-id="${targetSection.id}"]`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        },
+        [currentIndex, sections, onSectionClick],
+    );
 
     // Close jump menu on outside click
     useEffect(() => {
@@ -225,7 +230,7 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                                         {currentSectionInfo && (
                                             <>
                                                 {React.createElement(getIcon(currentSectionInfo.sectionType), {
-                                                    className: 'w-4 h-4 text-blue-500 flex-shrink-0'
+                                                    className: 'w-4 h-4 text-blue-500 flex-shrink-0',
                                                 })}
                                                 <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
                                                     {currentSectionInfo.title}
@@ -240,7 +245,9 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                                                 {reportTitle}
                                             </span>
                                         )}
-                                        <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${showJumpMenu ? 'rotate-180' : ''}`} />
+                                        <ChevronDown
+                                            className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${showJumpMenu ? 'rotate-180' : ''}`}
+                                        />
                                     </button>
 
                                     {/* Jump menu dropdown */}
@@ -268,29 +275,40 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                                                             onClick={() => {
                                                                 onSectionClick(section.id);
                                                                 setShowJumpMenu(false);
-                                                                const element = document.querySelector(`[data-section-id="${section.id}"]`);
+                                                                const element = document.querySelector(
+                                                                    `[data-section-id="${section.id}"]`,
+                                                                );
                                                                 if (element) {
-                                                                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                                    element.scrollIntoView({
+                                                                        behavior: 'smooth',
+                                                                        block: 'start',
+                                                                    });
                                                                 }
                                                             }}
                                                             className={`
                                                                 w-full flex items-center gap-3 px-3 py-2 text-left transition-colors
-                                                                ${isActive 
-                                                                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300' 
-                                                                    : 'hover:bg-slate-50 dark:hover:bg-white/5 text-navy-900 dark:text-white'
+                                                                ${
+                                                                    isActive
+                                                                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                                                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 text-navy-900 dark:text-white'
                                                                 }
                                                             `}
                                                         >
-                                                            <span className={`
+                                                            <span
+                                                                className={`
                                                                 flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-medium rounded
-                                                                ${isActive 
-                                                                    ? 'bg-blue-500 text-white' 
-                                                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                                                                ${
+                                                                    isActive
+                                                                        ? 'bg-blue-500 text-white'
+                                                                        : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                                                                 }
-                                                            `}>
+                                                            `}
+                                                            >
                                                                 {index + 1}
                                                             </span>
-                                                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-slate-400'}`} />
+                                                            <Icon
+                                                                className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}
+                                                            />
                                                             <span className="text-sm truncate">{section.title}</span>
                                                         </button>
                                                     );
@@ -313,9 +331,10 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                                     onClick={onToggleReadingMode}
                                     className={`
                                         p-2 rounded-lg transition-colors
-                                        ${isReadingMode 
-                                            ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
-                                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                        ${
+                                            isReadingMode
+                                                ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                         }
                                     `}
                                     title={`${isPolish ? 'Tryb czytania' : 'Reading mode'} (R)`}
@@ -349,25 +368,33 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
                                                         <span className="text-slate-600 dark:text-slate-400">
                                                             {isPolish ? 'Następna sekcja' : 'Next section'}
                                                         </span>
-                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">J</kbd>
+                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">
+                                                            J
+                                                        </kbd>
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-slate-600 dark:text-slate-400">
                                                             {isPolish ? 'Poprzednia sekcja' : 'Previous section'}
                                                         </span>
-                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">K</kbd>
+                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">
+                                                            K
+                                                        </kbd>
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-slate-600 dark:text-slate-400">
                                                             {isPolish ? 'Przejdź do...' : 'Go to...'}
                                                         </span>
-                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">G</kbd>
+                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">
+                                                            G
+                                                        </kbd>
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-slate-600 dark:text-slate-400">
                                                             {isPolish ? 'Tryb czytania' : 'Reading mode'}
                                                         </span>
-                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">R</kbd>
+                                                        <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-xs font-mono">
+                                                            R
+                                                        </kbd>
                                                     </div>
                                                 </div>
                                             </motion.div>
@@ -384,4 +411,3 @@ export const StickyNavigation: React.FC<StickyNavigationProps> = ({
 };
 
 export default StickyNavigation;
-

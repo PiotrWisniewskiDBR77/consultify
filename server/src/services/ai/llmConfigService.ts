@@ -5,8 +5,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { aiLogger } from './logger.js';
+
 import * as DbPromise from '../../utils/DbPromise.js';
+import { aiLogger } from './logger.js';
 
 type ProviderDefinition = {
     id: string;
@@ -68,7 +69,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: true,
         supportsTools: true,
-        tier: 'BUDGET'
+        tier: 'BUDGET',
     },
     google: {
         id: 'google',
@@ -81,7 +82,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: true,
         supportsTools: true,
-        tier: 'BUDGET'
+        tier: 'BUDGET',
     },
     deepseek: {
         id: 'deepseek',
@@ -93,7 +94,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: false,
         supportsTools: true,
-        tier: 'BUDGET'
+        tier: 'BUDGET',
     },
     anthropic: {
         id: 'anthropic',
@@ -105,7 +106,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: true,
         supportsTools: true,
-        tier: 'PREMIUM'
+        tier: 'PREMIUM',
     },
     nvidia: {
         id: 'nvidia',
@@ -117,7 +118,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: false,
         supportsTools: false,
-        tier: 'STANDARD'
+        tier: 'STANDARD',
     },
     cohere: {
         id: 'cohere',
@@ -129,7 +130,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: false,
         supportsTools: true,
-        tier: 'STANDARD'
+        tier: 'STANDARD',
     },
     qwen: {
         id: 'qwen',
@@ -142,7 +143,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsStreaming: true,
         supportsVision: true,
         supportsTools: true,
-        tier: 'BUDGET'
+        tier: 'BUDGET',
     },
     zai: {
         id: 'zai',
@@ -155,7 +156,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsVision: true,
         supportsTools: true,
         tier: 'STANDARD',
-        requiresJWT: true
+        requiresJWT: true,
     },
     ollama: {
         id: 'ollama',
@@ -168,8 +169,8 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
         supportsVision: false,
         supportsTools: false,
         tier: 'FREE',
-        isLocal: true
-    }
+        isLocal: true,
+    },
 };
 
 const TIER_PRIORITY: Record<string, number> = {
@@ -177,7 +178,7 @@ const TIER_PRIORITY: Record<string, number> = {
     PREMIUM: 4,
     STANDARD: 3,
     BUDGET: 2,
-    FREE: 1
+    FREE: 1,
 };
 
 export const DEFAULT_FALLBACK_CHAIN = ['openai', 'deepseek', 'google', 'anthropic', 'qwen', 'cohere', 'nvidia'];
@@ -288,10 +289,10 @@ export class LLMConfigService {
         const migrations = [
             'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0',
             'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
-            'ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT \'unknown\'',
+            "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'",
             'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT',
             'ALTER TABLE llm_providers ADD COLUMN description TEXT',
-            'ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT \'STANDARD\''
+            "ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'",
         ];
 
         for (const sql of migrations) {
@@ -321,7 +322,7 @@ export class LLMConfigService {
                 if (apiKey && apiKey.trim()) {
                     aiLogger.warn(
                         'LLMConfigService',
-                        `Using deprecated env var ${alias} for ${providerId}. Please use ${definition.envKey}`
+                        `Using deprecated env var ${alias} for ${providerId}. Please use ${definition.envKey}`,
                     );
                     return apiKey.trim();
                 }
@@ -345,7 +346,7 @@ export class LLMConfigService {
                 model_id: definition.defaultModel,
                 cost_per_1k: definition.costPer1k,
                 priority: TIER_PRIORITY[definition.tier] || 1,
-                tier: definition.tier
+                tier: definition.tier,
             };
 
             const existingProvider = await this.getProviderFromDb(providerId);
@@ -367,7 +368,7 @@ export class LLMConfigService {
                     api_key: apiKey || null,
                     is_active: apiKey ? 1 : 0,
                     is_default: definition.id === 'google' ? 1 : 0,
-                    ...changes
+                    ...changes,
                 });
                 aiLogger.info('LLMConfigService', `Created provider ${providerId} (Active: ${!!apiKey})`);
             }
@@ -422,7 +423,7 @@ export class LLMConfigService {
 
         const result = await this.runAsync(
             `UPDATE llm_providers SET ${setClauses.join(', ')} WHERE provider = ?`,
-            values
+            values,
         );
         return result.changes || 0;
     }
@@ -443,39 +444,43 @@ export class LLMConfigService {
                 provider.is_active ?? 1,
                 provider.is_default ?? 0,
                 provider.priority ?? 0,
-                provider.tier || 'STANDARD'
-            ]
+                provider.tier || 'STANDARD',
+            ],
         );
         return result.lastID;
     }
 
-    async getOrganizationProviders(organizationId?: string): Promise<Array<ProviderConfig & { is_enabled_for_org?: boolean }>> {
+    async getOrganizationProviders(
+        organizationId?: string,
+    ): Promise<Array<ProviderConfig & { is_enabled_for_org?: boolean }>> {
         const providers = await this.getAllProviders();
         if (!organizationId) return providers;
 
         try {
             const rows = await this.allAsync<{ provider_id: string; is_enabled: number }>(
                 'SELECT provider_id, is_enabled FROM organization_llm_settings WHERE organization_id = ?',
-                [organizationId]
+                [organizationId],
             );
 
             const settingsMap = new Map<string, boolean>();
-            rows.forEach(row => settingsMap.set(row.provider_id, row.is_enabled === 1));
+            rows.forEach((row) => settingsMap.set(row.provider_id, row.is_enabled === 1));
 
-            return providers.map(provider => ({
+            return providers.map((provider) => ({
                 ...provider,
-                is_enabled_for_org: settingsMap.has(provider.id)
-                    ? settingsMap.get(provider.id)
-                    : true
+                is_enabled_for_org: settingsMap.has(provider.id) ? settingsMap.get(provider.id) : true,
             }));
         } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('LLMConfigService', `Failed to get org settings: ${err.message}`);
-            return providers.map(provider => ({ ...provider, is_enabled_for_org: true }));
+            return providers.map((provider) => ({ ...provider, is_enabled_for_org: true }));
         }
     }
 
-    async toggleOrganizationProvider(organizationId: string, providerId: string, isEnabled: boolean): Promise<{ success: true }> {
+    async toggleOrganizationProvider(
+        organizationId: string,
+        providerId: string,
+        isEnabled: boolean,
+    ): Promise<{ success: true }> {
         const sql = `
             INSERT INTO organization_llm_settings (organization_id, provider_id, is_enabled, created_at)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
@@ -489,14 +494,14 @@ export class LLMConfigService {
 
     async getAllProviders(useCache = true): Promise<ProviderConfig[]> {
         if (useCache && this.cacheExpiry > Date.now()) {
-            return Array.from(this.providerCache.values()).map(provider => ({
+            return Array.from(this.providerCache.values()).map((provider) => ({
                 ...provider,
-                healthStatus: this.healthStatus.get(provider.provider) || provider.healthStatus || 'unknown'
+                healthStatus: this.healthStatus.get(provider.provider) || provider.healthStatus || 'unknown',
             }));
         }
 
         const rows = await this.allAsync<ProviderRow>(
-            'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC, is_default DESC'
+            'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC, is_default DESC',
         );
 
         this.providerCache.clear();
@@ -529,7 +534,7 @@ export class LLMConfigService {
                 api_key: apiKey,
                 endpoint: definition.defaultEndpoint,
                 model_id: definition.defaultModel,
-                cost_per_1k: definition.costPer1k
+                cost_per_1k: definition.costPer1k,
             });
         }
 
@@ -538,11 +543,11 @@ export class LLMConfigService {
 
     async getDefaultProvider(): Promise<ProviderConfig | null> {
         let row = await this.getAsync<ProviderRow>(
-            'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1'
+            'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1',
         );
         if (!row) {
             row = await this.getAsync<ProviderRow>(
-                'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC LIMIT 1'
+                'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC LIMIT 1',
             );
         }
         return row ? this.enrichProviderConfig(row) : null;
@@ -561,13 +566,13 @@ export class LLMConfigService {
             requiresJWT: definition.requiresJWT || false,
             isLocal: definition.isLocal || false,
             isConfigured: !!dbRow.api_key,
-            healthStatus: this.healthStatus.get(dbRow.provider) || 'unknown'
+            healthStatus: this.healthStatus.get(dbRow.provider) || 'unknown',
         };
     }
 
     async getFallbackChain(tier = 'STANDARD'): Promise<string[]> {
         const providers = await this.getAllProviders();
-        const configured = providers.filter(provider => provider.isConfigured && provider.is_active);
+        const configured = providers.filter((provider) => provider.isConfigured && provider.is_active);
 
         return configured
             .sort((a, b) => {
@@ -575,7 +580,7 @@ export class LLMConfigService {
                     healthy: 3,
                     degraded: 2,
                     unknown: 1,
-                    unhealthy: 0
+                    unhealthy: 0,
                 };
                 const healthDiff = (healthScore[b.healthStatus] || 1) - (healthScore[a.healthStatus] || 1);
                 if (healthDiff !== 0) return healthDiff;
@@ -585,7 +590,7 @@ export class LLMConfigService {
 
                 return (b.priority || 0) - (a.priority || 0);
             })
-            .map(provider => provider.provider);
+            .map((provider) => provider.provider);
     }
 
     async getNextFallback(excludeProviders: string[] = [], tier = 'STANDARD'): Promise<ProviderConfig | null> {

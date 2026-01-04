@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LowBalanceModal } from '../../../components/Modals/LowBalanceModal';
+import { LowBalanceModal } from '../../components/Modals/LowBalanceModal';
 
 describe('LowBalanceModal Component', () => {
     const user = userEvent.setup();
@@ -31,6 +31,7 @@ describe('LowBalanceModal Component', () => {
         expect(onClose).toHaveBeenCalled();
     });
 });
+
 
 
 

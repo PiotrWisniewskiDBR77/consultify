@@ -1,37 +1,34 @@
 /**
  * AccessLimitsTab - AI Access & Limits
- * 
+ *
  * Tab 4 of the reorganized AI & Intelligence section
  * Includes: User Tier Management, Usage Limits, Budget Control, Rate Limiting, Cost Dashboard
- * 
+ *
  * NEW FEATURES: User tiers, cost attribution per user/project
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Users,
-    DollarSign,
     AlertTriangle,
-    Save,
-    RefreshCw,
-    Crown,
-    Star,
-    Zap,
-    TrendingUp,
-    Clock,
     BarChart2,
+    Clock,
+    Crown,
+    DollarSign,
+    Percent,
+    RefreshCw,
+    Save,
+    Star,
+    TrendingUp,
     UserCheck,
-    Percent
+    Users,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
-import {
-    SettingsCard,
-    SettingsToggle,
-    SettingsSlider
-} from '../../AISettings';
+import { SettingsCard, SettingsSlider, SettingsToggle } from '../../AISettings';
 
 // User tier definitions
 const USER_TIERS = [
@@ -41,7 +38,7 @@ const USER_TIERS = [
         description: 'Access to budget-friendly models only (GPT-4o-mini, DeepSeek)',
         icon: Zap,
         color: 'text-emerald-400',
-        models: ['gpt-4o-mini', 'deepseek-chat', 'qwen-turbo']
+        models: ['gpt-4o-mini', 'deepseek-chat', 'qwen-turbo'],
     },
     {
         id: 'STANDARD',
@@ -49,7 +46,7 @@ const USER_TIERS = [
         description: 'Access to standard + budget models (GPT-4o, Claude 3.5 Sonnet)',
         icon: Star,
         color: 'text-blue-400',
-        models: ['gpt-4o', 'claude-3.5-sonnet', 'gpt-4o-mini', 'deepseek-chat']
+        models: ['gpt-4o', 'claude-3.5-sonnet', 'gpt-4o-mini', 'deepseek-chat'],
     },
     {
         id: 'PREMIUM',
@@ -57,8 +54,8 @@ const USER_TIERS = [
         description: 'Full access to all models including reasoning (o1, Claude 3 Opus)',
         icon: Crown,
         color: 'text-amber-400',
-        models: ['o1-mini', 'o1-preview', 'claude-3-opus', 'gpt-4o', 'claude-3.5-sonnet']
-    }
+        models: ['o1-mini', 'o1-preview', 'claude-3-opus', 'gpt-4o', 'claude-3.5-sonnet'],
+    },
 ];
 
 interface UserTierAssignment {
@@ -87,7 +84,7 @@ export const AccessLimitsTab: React.FC = () => {
     const [settings, setSettings] = useState<OrgAISettings | null>(null);
     const [hasChanges, setHasChanges] = useState(false);
     const [activeSubTab, setActiveSubTab] = useState<'tiers' | 'limits' | 'costs'>('limits');
-    
+
     // Mock data for user tiers (would come from API)
     const [userTiers, setUserTiers] = useState<UserTierAssignment[]>([]);
     const [costAttribution, setCostAttribution] = useState<CostAttribution[]>([]);
@@ -105,7 +102,7 @@ export const AccessLimitsTab: React.FC = () => {
         setLoading(true);
         try {
             const settingsRes = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (settingsRes.ok) {
                 const data = await settingsRes.json();
@@ -121,7 +118,7 @@ export const AccessLimitsTab: React.FC = () => {
         if (!currentOrganization?.id) return;
         try {
             const response = await fetch(`/api/admin-data/user-tiers/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -136,7 +133,7 @@ export const AccessLimitsTab: React.FC = () => {
         if (!currentOrganization?.id) return;
         try {
             const response = await fetch(`/api/admin-data/cost-attribution/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (response.ok) {
                 const data = await response.json();
@@ -155,9 +152,9 @@ export const AccessLimitsTab: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
             if (res.ok) {
                 const updated = await res.json();
@@ -174,7 +171,7 @@ export const AccessLimitsTab: React.FC = () => {
     };
 
     const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
-        setSettings(prev => prev ? { ...prev, [key]: value } : null);
+        setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
         setHasChanges(true);
     };
 
@@ -229,8 +226,8 @@ export const AccessLimitsTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('limits')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'limits' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'limits'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -240,8 +237,8 @@ export const AccessLimitsTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('tiers')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'tiers' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'tiers'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -251,8 +248,8 @@ export const AccessLimitsTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('costs')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'costs' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'costs'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -305,17 +302,23 @@ export const AccessLimitsTab: React.FC = () => {
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Monthly Budget (USD)</label>
+                                    <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                        Monthly Budget (USD)
+                                    </label>
                                     <input
                                         type="number"
                                         value={settings.monthlyBudgetUSD}
-                                        onChange={(e) => updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)}
+                                        onChange={(e) =>
+                                            updateSetting('monthlyBudgetUSD', parseFloat(e.target.value) || 0)
+                                        }
                                         className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-navy-900 dark:text-white focus:border-primary-500 outline-none"
                                         placeholder="0 = unlimited"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Hard Limit (USD)</label>
+                                    <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                        Hard Limit (USD)
+                                    </label>
                                     <input
                                         type="number"
                                         value={settings.hardLimitUSD}
@@ -349,14 +352,18 @@ export const AccessLimitsTab: React.FC = () => {
                                 {[
                                     { threshold: 70, label: 'Warning Alert', color: 'warning' },
                                     { threshold: 85, label: 'Critical Alert', color: 'warning' },
-                                    { threshold: 95, label: 'Emergency Alert', color: 'danger' }
-                                ].map(alert => (
-                                    <div 
+                                    { threshold: 95, label: 'Emergency Alert', color: 'danger' },
+                                ].map((alert) => (
+                                    <div
                                         key={alert.threshold}
                                         className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-sm dark:shadow-none"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className={`text-${alert.color}-600 dark:text-${alert.color}-400 font-medium`}>{alert.threshold}%</span>
+                                            <span
+                                                className={`text-${alert.color}-600 dark:text-${alert.color}-400 font-medium`}
+                                            >
+                                                {alert.threshold}%
+                                            </span>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input type="checkbox" defaultChecked className="sr-only peer" />
                                                 <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
@@ -370,9 +377,9 @@ export const AccessLimitsTab: React.FC = () => {
                                 ))}
                             </div>
                             <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-white/5">
-                                <input 
-                                    type="email" 
-                                    placeholder="Alert email (optional)" 
+                                <input
+                                    type="email"
+                                    placeholder="Alert email (optional)"
                                     className="flex-1 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-navy-900 dark:text-white text-sm"
                                 />
                                 <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg">
@@ -398,7 +405,9 @@ export const AccessLimitsTab: React.FC = () => {
                                 <span className="admin-metric-label">Token Usage</span>
                             </div>
                             <p className="admin-metric-value">125k</p>
-                            <p className="admin-metric-subtitle">of {(settings.maxTokensPerMonth / 1000).toFixed(0)}k limit</p>
+                            <p className="admin-metric-subtitle">
+                                of {(settings.maxTokensPerMonth / 1000).toFixed(0)}k limit
+                            </p>
                         </div>
                         <div className="admin-metric">
                             <div className="flex items-center gap-2">
@@ -417,7 +426,7 @@ export const AccessLimitsTab: React.FC = () => {
                 <div className="space-y-6">
                     {/* Tier Definitions - Clean minimal */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {USER_TIERS.map(tier => {
+                        {USER_TIERS.map((tier) => {
                             const Icon = tier.icon;
                             return (
                                 <div key={tier.id} className="admin-card p-4">
@@ -431,8 +440,11 @@ export const AccessLimitsTab: React.FC = () => {
                                     <div className="mt-3 pt-3 border-t border-white/5">
                                         <p className="text-xs text-slate-600 mb-2">Available models:</p>
                                         <div className="flex flex-wrap gap-1">
-                                            {tier.models.slice(0, 3).map(m => (
-                                                <span key={m} className="px-2 py-0.5 bg-white/5 text-slate-400 text-xs rounded">
+                                            {tier.models.slice(0, 3).map((m) => (
+                                                <span
+                                                    key={m}
+                                                    className="px-2 py-0.5 bg-white/5 text-slate-400 text-xs rounded"
+                                                >
                                                     {m}
                                                 </span>
                                             ))}
@@ -457,7 +469,7 @@ export const AccessLimitsTab: React.FC = () => {
                         <p className="text-sm text-slate-400 mb-4">
                             Automatically promote or demote users based on their monthly token usage
                         </p>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <SettingsToggle
@@ -468,7 +480,7 @@ export const AccessLimitsTab: React.FC = () => {
                                     icon={TrendingUp}
                                     iconColor="text-emerald-400"
                                 />
-                                
+
                                 <div>
                                     <label className="block text-sm text-slate-400 mb-2">Assignment Direction</label>
                                     <select
@@ -483,7 +495,9 @@ export const AccessLimitsTab: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-2">Maximum Auto-Assign Tier</label>
+                                    <label className="block text-sm text-slate-400 mb-2">
+                                        Maximum Auto-Assign Tier
+                                    </label>
                                     <select
                                         value={(settings as any)?.autoTierMaxTier || 'PREMIUM'}
                                         onChange={(e) => updateSetting('autoTierMaxTier' as any, e.target.value)}
@@ -559,7 +573,7 @@ export const AccessLimitsTab: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {userTiers.map(user => (
+                                    {userTiers.map((user) => (
                                         <tr key={user.userId} className="hover:bg-white/5">
                                             <td className="px-6 py-4">
                                                 <div>
@@ -573,17 +587,17 @@ export const AccessLimitsTab: React.FC = () => {
                                                     onChange={() => {}}
                                                     className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-sm"
                                                 >
-                                                    {USER_TIERS.map(t => (
-                                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                                    {USER_TIERS.map((t) => (
+                                                        <option key={t.id} value={t.id}>
+                                                            {t.name}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </td>
                                             <td className="px-6 py-4 text-slate-300">
                                                 {user.usage.toLocaleString()} requests
                                             </td>
-                                            <td className="px-6 py-4 text-slate-300">
-                                                ${user.cost.toFixed(2)}
-                                            </td>
+                                            <td className="px-6 py-4 text-slate-300">${user.cost.toFixed(2)}</td>
                                             <td className="px-6 py-4">
                                                 <button className="text-violet-400 hover:text-violet-300 text-sm">
                                                     View Details
@@ -628,7 +642,9 @@ export const AccessLimitsTab: React.FC = () => {
                                 <Percent size={14} className="text-slate-500" />
                                 Cost Attribution
                             </h3>
-                            <p className="text-xs text-slate-500 mt-1">See which users and projects generate the most AI costs</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                                See which users and projects generate the most AI costs
+                            </p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -647,22 +663,28 @@ export const AccessLimitsTab: React.FC = () => {
                                         <tr key={idx} className="hover:bg-white/5">
                                             <td className="px-6 py-4 font-medium text-white">{item.entityName}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2 py-0.5 rounded text-xs ${
-                                                    item.entityType === 'user' 
-                                                        ? 'bg-blue-500/20 text-blue-300' 
-                                                        : 'bg-violet-500/20 text-violet-300'
-                                                }`}>
+                                                <span
+                                                    className={`px-2 py-0.5 rounded text-xs ${
+                                                        item.entityType === 'user'
+                                                            ? 'bg-blue-500/20 text-blue-300'
+                                                            : 'bg-violet-500/20 text-violet-300'
+                                                    }`}
+                                                >
                                                     {item.entityType}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-300">{item.requests.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-slate-300">{(item.tokens / 1000).toFixed(1)}k</td>
+                                            <td className="px-6 py-4 text-slate-300">
+                                                {item.requests.toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-300">
+                                                {(item.tokens / 1000).toFixed(1)}k
+                                            </td>
                                             <td className="px-6 py-4 text-slate-300">${item.cost.toFixed(2)}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full bg-violet-500 rounded-full" 
+                                                        <div
+                                                            className="h-full bg-violet-500 rounded-full"
                                                             style={{ width: `${item.percentage}%` }}
                                                         />
                                                     </div>
@@ -682,4 +704,3 @@ export const AccessLimitsTab: React.FC = () => {
 };
 
 export default AccessLimitsTab;
-

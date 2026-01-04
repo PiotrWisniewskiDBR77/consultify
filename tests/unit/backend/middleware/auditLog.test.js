@@ -2,19 +2,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import auditLogMiddleware from '../../../../server/middleware/auditLog';
 
-// Mock Service
-const mockActivityService = {
-    log: vi.fn(),
+const mockAuditLogService = {
+    createLog: vi.fn(),
 };
 
-// Mock Express
+// ... (retain mockReq, mockRes, mockNext definitions) ...
+
 const mockReq = {
     method: 'GET',
     originalUrl: '/api/projects',
     body: {},
     ip: '127.0.0.1',
     get: vi.fn().mockReturnValue('TestAgent'),
-    user: { id: 1, organizationId: 10 }
+    user: { id: 1, email: 'test@example.com', organizationId: 10 }
 };
 
 const mockRes = {
@@ -28,12 +28,12 @@ describe('AuditLog Middleware', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         auditLogMiddleware.setDependencies({
-            ActivityService: mockActivityService
+            AuditLogService: mockAuditLogService
         });
 
         // Reset mocks
         mockReq.method = 'GET';
-        mockReq.user = { id: 1, organizationId: 10 };
+        mockReq.user = { id: 1, email: 'test@example.com', organizationId: 10 };
         mockReq.body = {};
         mockReq.originalUrl = '/api/projects';
         mockRes.statusCode = 200;
@@ -44,7 +44,7 @@ describe('AuditLog Middleware', () => {
         mockReq.method = 'GET';
         auditLogMiddleware(mockReq, mockRes, mockNext);
         expect(mockNext).toHaveBeenCalled();
-        expect(mockActivityService.log).not.toHaveBeenCalled();
+        expect(mockAuditLogService.createLog).not.toHaveBeenCalled();
     });
 
     it('should log POST requests on success', () => {
@@ -60,11 +60,11 @@ describe('AuditLog Middleware', () => {
         mockRes.statusCode = 201;
         mockRes.end('response chunk');
 
-        expect(mockActivityService.log).toHaveBeenCalledWith(expect.objectContaining({
-            action: 'created',
-            entityType: 'project',
-            userId: 1,
-            organizationId: 10
+        expect(mockAuditLogService.createLog).toHaveBeenCalledWith(expect.objectContaining({
+            action_type: 'created',
+            resource_type: 'project',
+            user_id: 1,
+            organization_id: 10
         }));
     });
 
@@ -77,9 +77,9 @@ describe('AuditLog Middleware', () => {
         mockRes.statusCode = 200;
         mockRes.end();
 
-        expect(mockActivityService.log).toHaveBeenCalledWith(expect.objectContaining({
-            action: 'deleted',
-            entityId: '123'
+        expect(mockAuditLogService.createLog).toHaveBeenCalledWith(expect.objectContaining({
+            action_type: 'deleted',
+            resource_id: '123'
         }));
     });
 
@@ -90,11 +90,12 @@ describe('AuditLog Middleware', () => {
         mockRes.statusCode = 400; // Bad Request
         mockRes.end();
 
-        expect(mockActivityService.log).not.toHaveBeenCalled();
+        expect(mockAuditLogService.createLog).not.toHaveBeenCalled();
     });
+
     it('should update dependencies via setDependencies', () => {
-        const newMock = { log: vi.fn() };
-        auditLogMiddleware.setDependencies({ ActivityService: newMock });
+        const newMock = { createLog: vi.fn() };
+        auditLogMiddleware.setDependencies({ AuditLogService: newMock });
 
         mockReq.method = 'POST';
         mockReq.originalUrl = '/api/projects';
@@ -103,7 +104,7 @@ describe('AuditLog Middleware', () => {
         auditLogMiddleware(mockReq, mockRes, mockNext);
         mockRes.end();
 
-        expect(newMock.log).toHaveBeenCalled();
-        expect(mockActivityService.log).not.toHaveBeenCalled();
+        expect(newMock.createLog).toHaveBeenCalled();
+        expect(mockAuditLogService.createLog).not.toHaveBeenCalled();
     });
 });

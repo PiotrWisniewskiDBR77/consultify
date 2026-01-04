@@ -1,17 +1,18 @@
 /**
  * SCMS Permission Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/permissionService.js (CommonJS) to TypeScript (ES Modules)
  * Step 14: Enhanced with database-backed PBAC (Permission-Based Access Control)
- * 
+ *
  * Maintains backward compatibility with existing role-based checks while
  * adding granular database-backed permission management.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -23,10 +24,10 @@ export const ROLES = {
     ADMIN: 'ADMIN',
     PROJECT_MANAGER: 'PROJECT_MANAGER',
     TEAM_MEMBER: 'TEAM_MEMBER',
-    VIEWER: 'VIEWER'
+    VIEWER: 'VIEWER',
 } as const;
 
-export type Role = typeof ROLES[keyof typeof ROLES];
+export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 // Legacy capability constants (for backward compatibility)
 export const CAPABILITIES = {
@@ -49,10 +50,10 @@ export const CAPABILITIES = {
     UPDATE_TASK_STATUS: 'update_task_status',
     MANAGE_RISKS: 'manage_risks',
     AI_EXECUTE_ACTIONS: 'ai_execute_actions',
-    AI_VIEW_INSIGHTS: 'ai_view_insights'
+    AI_VIEW_INSIGHTS: 'ai_view_insights',
 } as const;
 
-export type Capability = typeof CAPABILITIES[keyof typeof CAPABILITIES];
+export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 
 // Legacy capability matrix (for backward compatibility)
 export const ROLE_CAPABILITIES: Record<Role, Capability[]> = {
@@ -71,15 +72,10 @@ export const ROLE_CAPABILITIES: Record<Role, Capability[]> = {
         CAPABILITIES.ASSIGN_TASKS,
         CAPABILITIES.UPDATE_TASK_STATUS,
         CAPABILITIES.MANAGE_RISKS,
-        CAPABILITIES.AI_VIEW_INSIGHTS
+        CAPABILITIES.AI_VIEW_INSIGHTS,
     ],
-    [ROLES.TEAM_MEMBER]: [
-        CAPABILITIES.UPDATE_TASK_STATUS,
-        CAPABILITIES.AI_VIEW_INSIGHTS
-    ],
-    [ROLES.VIEWER]: [
-        CAPABILITIES.AI_VIEW_INSIGHTS
-    ]
+    [ROLES.TEAM_MEMBER]: [CAPABILITIES.UPDATE_TASK_STATUS, CAPABILITIES.AI_VIEW_INSIGHTS],
+    [ROLES.VIEWER]: [CAPABILITIES.AI_VIEW_INSIGHTS],
 };
 
 interface User {
@@ -270,7 +266,7 @@ export const CONTENT_PERMISSIONS = {
     CONTENT_FAVORITE_ADD: 'CONTENT_FAVORITE_ADD',
     CONTENT_SEARCH: 'CONTENT_SEARCH',
     CONTENT_BULK_ACTIONS: 'CONTENT_BULK_ACTIONS',
-    CONTENT_ANALYTICS_VIEW: 'CONTENT_ANALYTICS_VIEW'
+    CONTENT_ANALYTICS_VIEW: 'CONTENT_ANALYTICS_VIEW',
 } as const;
 
 // ==========================================
@@ -292,7 +288,7 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
  * Legacy: Check if a user has a capability (role-based)
  * Maintained for backward compatibility
  */
-export function can(user: User | null | undefined, capability: Capability, context: PermissionContext = {}): boolean {
+export function can(user: User | null | undefined, capability: Capability, _context: PermissionContext = {}): boolean {
     if (!user || !user.role) return false;
     if (user.role === ROLES.SUPERADMIN) return true;
 
@@ -316,7 +312,12 @@ export function getCapabilitiesForRole(role: Role): Capability[] {
 /**
  * Check if a user has a specific permission (DB-backed PBAC)
  */
-export async function hasPermission(userId: string, orgId: string, permissionKey: string, userRole: Role): Promise<boolean> {
+export async function hasPermission(
+    userId: string,
+    orgId: string,
+    permissionKey: string,
+    userRole: Role,
+): Promise<boolean> {
     if (!userId || !permissionKey) return false;
 
     // SUPERADMIN bypass
@@ -328,7 +329,7 @@ export async function hasPermission(userId: string, orgId: string, permissionKey
             db,
             `SELECT grant_type FROM org_user_permissions 
              WHERE user_id = ? AND organization_id = ? AND permission_key = ?`,
-            [userId, orgId, permissionKey]
+            [userId, orgId, permissionKey],
         );
 
         // If explicit override exists, use it
@@ -341,7 +342,7 @@ export async function hasPermission(userId: string, orgId: string, permissionKey
             db,
             `SELECT 1 FROM role_permissions 
              WHERE role = ? AND permission_key = ?`,
-            [userRole, permissionKey]
+            [userRole, permissionKey],
         );
 
         return !!rolePermission;
@@ -354,15 +355,19 @@ export async function hasPermission(userId: string, orgId: string, permissionKey
 /**
  * Get all permissions for a user in an organization
  */
-export async function getUserPermissions(userId: string, orgId: string, userRole: Role): Promise<UserPermissionsResult> {
+export async function getUserPermissions(
+    userId: string,
+    orgId: string,
+    userRole: Role,
+): Promise<UserPermissionsResult> {
     // Get role-based permissions
     const rolePerms = await DbPromise.all<RolePermissionRow>(
         db,
         `SELECT permission_key FROM role_permissions WHERE role = ?`,
-        [userRole]
+        [userRole],
     );
 
-    const rolePermissions = (rolePerms || []).map(r => r.permission_key);
+    const rolePermissions = (rolePerms || []).map((r) => r.permission_key);
 
     // Get user overrides
     const overrides = await DbPromise.all<OverrideRow & { permission_key: string }>(
@@ -370,33 +375,34 @@ export async function getUserPermissions(userId: string, orgId: string, userRole
         `SELECT permission_key, grant_type 
          FROM org_user_permissions 
          WHERE user_id = ? AND organization_id = ?`,
-        [userId, orgId]
+        [userId, orgId],
     );
 
-    const granted = (overrides || [])
-        .filter(o => o.grant_type === 'GRANT')
-        .map(o => o.permission_key);
-    const revoked = (overrides || [])
-        .filter(o => o.grant_type === 'REVOKE')
-        .map(o => o.permission_key);
+    const granted = (overrides || []).filter((o) => o.grant_type === 'GRANT').map((o) => o.permission_key);
+    const revoked = (overrides || []).filter((o) => o.grant_type === 'REVOKE').map((o) => o.permission_key);
 
     // Calculate effective permissions
     const effective = [
-        ...rolePermissions.filter(p => !revoked.includes(p)),
-        ...granted.filter(p => !rolePermissions.includes(p))
+        ...rolePermissions.filter((p) => !revoked.includes(p)),
+        ...granted.filter((p) => !rolePermissions.includes(p)),
     ];
 
     return {
         rolePermissions,
         overrides: { granted, revoked },
-        effective
+        effective,
     };
 }
 
 /**
  * Grant a permission to a user in an organization
  */
-export async function grantPermission(userId: string, orgId: string, permissionKey: string, grantedBy: string): Promise<GrantPermissionResult> {
+export async function grantPermission(
+    userId: string,
+    orgId: string,
+    permissionKey: string,
+    grantedBy: string,
+): Promise<GrantPermissionResult> {
     // Verify permission exists
     const permExists = await permissionExists(permissionKey);
     if (!permExists) {
@@ -409,7 +415,7 @@ export async function grantPermission(userId: string, orgId: string, permissionK
         `INSERT OR REPLACE INTO org_user_permissions 
          (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
          VALUES (?, ?, ?, ?, 'GRANT', ?, datetime('now'))`,
-        [id, userId, orgId, permissionKey, grantedBy]
+        [id, userId, orgId, permissionKey, grantedBy],
     );
 
     console.log(`[PermissionService] Permission granted: ${permissionKey} to ${userId} by ${grantedBy}`);
@@ -420,14 +426,19 @@ export async function grantPermission(userId: string, orgId: string, permissionK
         organizationId: orgId,
         permissionKey,
         grantType: 'GRANT',
-        grantedBy
+        grantedBy,
     };
 }
 
 /**
  * Revoke a permission from a user in an organization
  */
-export async function revokePermission(userId: string, orgId: string, permissionKey: string, revokedBy: string): Promise<RevokePermissionResult> {
+export async function revokePermission(
+    userId: string,
+    orgId: string,
+    permissionKey: string,
+    revokedBy: string,
+): Promise<RevokePermissionResult> {
     // Verify permission exists
     const permExists = await permissionExists(permissionKey);
     if (!permExists) {
@@ -440,7 +451,7 @@ export async function revokePermission(userId: string, orgId: string, permission
         `INSERT OR REPLACE INTO org_user_permissions 
          (id, user_id, organization_id, permission_key, grant_type, granted_by, created_at)
          VALUES (?, ?, ?, ?, 'REVOKE', ?, datetime('now'))`,
-        [id, userId, orgId, permissionKey, revokedBy]
+        [id, userId, orgId, permissionKey, revokedBy],
     );
 
     console.log(`[PermissionService] Permission revoked: ${permissionKey} from ${userId} by ${revokedBy}`);
@@ -451,26 +462,30 @@ export async function revokePermission(userId: string, orgId: string, permission
         organizationId: orgId,
         permissionKey,
         grantType: 'REVOKE',
-        revokedBy
+        revokedBy,
     };
 }
 
 /**
  * Remove override (revert to role default)
  */
-export async function removeOverride(userId: string, orgId: string, permissionKey: string): Promise<RemoveOverrideResult> {
+export async function removeOverride(
+    userId: string,
+    orgId: string,
+    permissionKey: string,
+): Promise<RemoveOverrideResult> {
     const result = await DbPromise.run(
         db,
         `DELETE FROM org_user_permissions 
          WHERE user_id = ? AND organization_id = ? AND permission_key = ?`,
-        [userId, orgId, permissionKey]
+        [userId, orgId, permissionKey],
     );
 
     return {
         removed: (result.changes || 0) > 0,
         userId,
         organizationId: orgId,
-        permissionKey
+        permissionKey,
     };
 }
 
@@ -481,7 +496,7 @@ export async function getAllPermissions(): Promise<PermissionRow[]> {
     const rows = await DbPromise.all<PermissionRow>(
         db,
         `SELECT key, description, category FROM permissions ORDER BY category, key`,
-        []
+        [],
     );
 
     return rows || [];
@@ -494,7 +509,7 @@ export async function getPermissionsByCategory(category: string): Promise<Permis
     const rows = await DbPromise.all<PermissionRow>(
         db,
         `SELECT key, description, category FROM permissions WHERE category = ?`,
-        [category]
+        [category],
     );
 
     return rows || [];
@@ -525,11 +540,9 @@ export async function getRolePermissions(role: Role | null = null): Promise<Role
  */
 async function permissionExists(permissionKey: string): Promise<boolean> {
     try {
-        const row = await DbPromise.get<{ '1'?: number }>(
-            db,
-            `SELECT 1 FROM permissions WHERE key = ?`,
-            [permissionKey]
-        );
+        const row = await DbPromise.get<{ '1'?: number }>(db, `SELECT 1 FROM permissions WHERE key = ?`, [
+            permissionKey,
+        ]);
         return !!row;
     } catch {
         return false;
@@ -545,7 +558,7 @@ export async function hasContentPermission(
     contentId: string,
     contentType: string,
     permissionKey: string,
-    userRole: Role
+    userRole: Role,
 ): Promise<boolean> {
     if (!userId || !contentId || !permissionKey) return false;
 
@@ -559,7 +572,7 @@ export async function hasContentPermission(
             `SELECT grant_type FROM content_permissions 
              WHERE content_id = ? AND content_type = ? AND user_id = ? AND permission_key = ?
              AND (expires_at IS NULL OR expires_at > datetime('now'))`,
-            [contentId, contentType, userId, permissionKey]
+            [contentId, contentType, userId, permissionKey],
         );
 
         // If explicit content permission exists, use it
@@ -579,7 +592,9 @@ export async function hasContentPermission(
 /**
  * Grant content-specific permission
  */
-export async function grantContentPermission(params: GrantContentPermissionParams): Promise<GrantContentPermissionResult> {
+export async function grantContentPermission(
+    params: GrantContentPermissionParams,
+): Promise<GrantContentPermissionResult> {
     const { contentId, contentType, userId, permissionKey, grantedBy, expiresAt = null } = params;
 
     if (!contentId || !contentType || !userId || !permissionKey) {
@@ -592,10 +607,12 @@ export async function grantContentPermission(params: GrantContentPermissionParam
         `INSERT OR REPLACE INTO content_permissions 
          (id, content_id, content_type, user_id, permission_key, grant_type, granted_by, created_at, expires_at)
          VALUES (?, ?, ?, ?, ?, 'GRANT', ?, datetime('now'), ?)`,
-        [id, contentId, contentType, userId, permissionKey, grantedBy, expiresAt]
+        [id, contentId, contentType, userId, permissionKey, grantedBy, expiresAt],
     );
 
-    console.log(`[PermissionService] Content permission granted: ${permissionKey} on ${contentType}:${contentId} to ${userId}`);
+    console.log(
+        `[PermissionService] Content permission granted: ${permissionKey} on ${contentType}:${contentId} to ${userId}`,
+    );
     return {
         success: true,
         id,
@@ -605,14 +622,16 @@ export async function grantContentPermission(params: GrantContentPermissionParam
         permissionKey,
         grantType: 'GRANT',
         grantedBy,
-        expiresAt
+        expiresAt,
     };
 }
 
 /**
  * Revoke content-specific permission
  */
-export async function revokeContentPermission(params: RevokeContentPermissionParams): Promise<RevokeContentPermissionResult> {
+export async function revokeContentPermission(
+    params: RevokeContentPermissionParams,
+): Promise<RevokeContentPermissionResult> {
     const { contentId, contentType, userId, permissionKey, revokedBy } = params;
 
     if (!contentId || !contentType || !userId || !permissionKey) {
@@ -625,10 +644,12 @@ export async function revokeContentPermission(params: RevokeContentPermissionPar
         `INSERT OR REPLACE INTO content_permissions 
          (id, content_id, content_type, user_id, permission_key, grant_type, granted_by, created_at)
          VALUES (?, ?, ?, ?, ?, 'REVOKE', ?, datetime('now'))`,
-        [id, contentId, contentType, userId, permissionKey, revokedBy]
+        [id, contentId, contentType, userId, permissionKey, revokedBy],
     );
 
-    console.log(`[PermissionService] Content permission revoked: ${permissionKey} on ${contentType}:${contentId} from ${userId}`);
+    console.log(
+        `[PermissionService] Content permission revoked: ${permissionKey} on ${contentType}:${contentId} from ${userId}`,
+    );
     return {
         success: true,
         id,
@@ -637,7 +658,7 @@ export async function revokeContentPermission(params: RevokeContentPermissionPar
         userId,
         permissionKey,
         grantType: 'REVOKE',
-        revokedBy
+        revokedBy,
     };
 }
 
@@ -648,13 +669,13 @@ export async function removeContentPermission(
     contentId: string,
     contentType: string,
     userId: string,
-    permissionKey: string
+    permissionKey: string,
 ): Promise<RemoveContentPermissionResult> {
     const result = await DbPromise.run(
         db,
         `DELETE FROM content_permissions 
          WHERE content_id = ? AND content_type = ? AND user_id = ? AND permission_key = ?`,
-        [contentId, contentType, userId, permissionKey]
+        [contentId, contentType, userId, permissionKey],
     );
 
     return {
@@ -662,7 +683,7 @@ export async function removeContentPermission(
         contentId,
         contentType,
         userId,
-        permissionKey
+        permissionKey,
     };
 }
 
@@ -678,10 +699,10 @@ export async function getContentPermissions(contentId: string, contentType: stri
          WHERE cp.content_id = ? AND cp.content_type = ?
          AND (cp.expires_at IS NULL OR cp.expires_at > datetime('now'))
          ORDER BY cp.created_at DESC`,
-        [contentId, contentType]
+        [contentId, contentType],
     );
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         id: row.id,
         contentId: row.content_id,
         contentType: row.content_type,
@@ -691,12 +712,14 @@ export async function getContentPermissions(contentId: string, contentType: stri
         grantedBy: row.granted_by,
         createdAt: row.created_at,
         expiresAt: row.expires_at,
-        user: row.first_name ? {
-            id: row.user_id,
-            firstName: row.first_name,
-            lastName: row.last_name,
-            email: row.email
-        } : null
+        user: row.first_name
+            ? {
+                  id: row.user_id,
+                  firstName: row.first_name,
+                  lastName: row.last_name,
+                  email: row.email,
+              }
+            : null,
     })) as unknown as ContentPermissionRow[];
 }
 
@@ -707,7 +730,7 @@ export async function hasPermissions(
     userId: string,
     orgId: string,
     permissionKeys: string[],
-    userRole: Role
+    userRole: Role,
 ): Promise<Record<string, boolean>> {
     if (!userId || !permissionKeys || permissionKeys.length === 0) {
         return {};
@@ -743,7 +766,7 @@ export async function validateContentAction(params: ValidateContentActionParams)
         RESTORE: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_RESTORE' : 'PLAYBOOK_TEMPLATE_RESTORE',
         ANALYTICS: contentType === 'EMAIL_TEMPLATE' ? 'EMAIL_TEMPLATE_ANALYTICS' : 'PLAYBOOK_TEMPLATE_ANALYTICS',
         PREVIEW: 'EMAIL_TEMPLATE_PREVIEW',
-        TEST_SEND: 'EMAIL_TEMPLATE_TEST_SEND'
+        TEST_SEND: 'EMAIL_TEMPLATE_TEST_SEND',
     };
 
     const permissionKey = actionPermissionMap[action];
@@ -786,7 +809,7 @@ const PermissionService = {
     removeContentPermission,
     getContentPermissions,
     hasPermissions,
-    validateContentAction
+    validateContentAction,
 };
 
 export default PermissionService;

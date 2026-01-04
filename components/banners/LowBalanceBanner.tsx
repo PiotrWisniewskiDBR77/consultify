@@ -1,21 +1,19 @@
+import { AlertTriangle, Coins, CreditCard, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { AlertTriangle, X, CreditCard, Coins } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
 import { useTokenBalance } from '../../hooks/useTokenBalance';
-import { LowBalanceModal } from '../modals/LowBalanceModal';
-import { AppView } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
+import { LowBalanceModal } from '../modals/LowBalanceModal';
 
 interface LowBalanceBannerProps {
     className?: string;
     showOnlyWhenLow?: boolean;
 }
 
-export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
-    className = '',
-    showOnlyWhenLow = true
-}) => {
+export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({ className = '', showOnlyWhenLow = true }) => {
     const { t } = useTranslation();
     const { setCurrentView } = useAppStore();
     const { balance, isLowBalance, isZeroBalance, isLoading, ZERO_BALANCE_THRESHOLD } = useTokenBalance();
@@ -31,13 +29,11 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
         setCurrentView(AppView.SETTINGS_BILLING);
     };
 
-    const bannerColor = isZeroBalance 
+    const bannerColor = isZeroBalance
         ? 'from-red-500 to-orange-500 border-red-400/50'
         : 'from-amber-500 to-orange-500 border-amber-400/50';
 
-    const iconBg = isZeroBalance 
-        ? 'bg-red-600/20'
-        : 'bg-amber-600/20';
+    const iconBg = isZeroBalance ? 'bg-red-600/20' : 'bg-amber-600/20';
 
     return (
         <>
@@ -54,16 +50,14 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
                         </div>
                         <div>
                             <p className="font-medium text-slate-900 dark:text-white">
-                                {isZeroBalance 
+                                {isZeroBalance
                                     ? t('billing.outOfTokens', 'Out of Tokens')
-                                    : t('billing.lowTokenBalance', 'Low Token Balance')
-                                }
+                                    : t('billing.lowTokenBalance', 'Low Token Balance')}
                             </p>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
                                 {isZeroBalance
                                     ? t('billing.purchaseToUseAI', 'Purchase tokens to continue using AI features')
-                                    : t('billing.tokensRemaining', '{{count}} tokens remaining', { count: balance })
-                                }
+                                    : t('billing.tokensRemaining', '{{count}} tokens remaining', { count: balance })}
                             </p>
                         </div>
                     </div>
@@ -99,12 +93,4 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
 };
 
 export default LowBalanceBanner;
-
-
-
-
-
-
-
-
 

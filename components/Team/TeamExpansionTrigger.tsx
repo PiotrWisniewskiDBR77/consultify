@@ -1,16 +1,17 @@
+import { MessageSquare, Sparkles, TrendingUp, UserPlus } from 'lucide-react';
 import React from 'react';
-import { UserPlus, MessageSquare, TrendingUp, Sparkles } from 'lucide-react';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
 /**
  * TeamExpansionTrigger — Phase F Natural Expansion Prompts
- * 
+ *
  * ENTERPRISE SPEC COMPLIANCE:
  * - EPIC-F1: Natural Triggers for Expansion
  * - Shows contextual prompts when team expansion would add value
  * - Non-intrusive, value-focused messaging
- * 
+ *
  * TRIGGER CONDITIONS:
  * 1. Decision requires perspective from absent stakeholder
  * 2. Multiple viewpoints would enrich analysis
@@ -82,25 +83,23 @@ export const TeamExpansionTrigger: React.FC<TeamExpansionTriggerProps> = ({
     };
 
     return (
-        <div className={`
+        <div
+            className={`
             bg-gradient-to-r from-purple-50 to-blue-50 
             dark:from-purple-900/20 dark:to-blue-900/20
             border border-purple-200 dark:border-purple-500/30
             rounded-xl p-4
             ${className}
-        `}>
+        `}
+        >
             <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
                     <Icon className="text-purple-600 dark:text-purple-400" size={20} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-navy-900 dark:text-white text-sm mb-1">
-                        {content.title}
-                    </h4>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-3">
-                        {message}
-                    </p>
+                    <h4 className="font-semibold text-navy-900 dark:text-white text-sm mb-1">{content.title}</h4>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-3">{message}</p>
 
                     <div className="flex items-center gap-3">
                         <button
@@ -150,8 +149,7 @@ export const TeamExpansionBanner: React.FC<{
                 <span className="text-sm font-medium">
                     {memberCount === 1
                         ? 'Pracujesz sam. System daje największą wartość z zespołem.'
-                        : 'Rozważ dodanie kluczowych decydentów do organizacji.'
-                    }
+                        : 'Rozważ dodanie kluczowych decydentów do organizacji.'}
                 </span>
             </div>
 

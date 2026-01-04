@@ -1,7 +1,8 @@
 // Narrative Service - AI-generated briefings
 // Step 6: Stabilization, Reporting & Economics
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 
 

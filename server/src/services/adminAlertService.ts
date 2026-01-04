@@ -1,14 +1,15 @@
 /**
  * Admin Alert Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/adminAlertService.js (CommonJS) to TypeScript (ES Modules)
  * Handles advanced alerting for billing anomalies, cost spikes, and budget issues
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -124,7 +125,8 @@ export async function createAdminAlert(orgId: string, alertConfig: AlertConfig):
             slack_webhook_url, webhook_url, alert_frequency, cooldown_hours, is_active
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-            id, orgId,
+            id,
+            orgId,
             alertConfig.alertType,
             alertConfig.severity || 'medium',
             alertConfig.costThresholdUsd || null,
@@ -138,8 +140,8 @@ export async function createAdminAlert(orgId: string, alertConfig: AlertConfig):
             alertConfig.webhookUrl || null,
             alertConfig.alertFrequency || 'once',
             alertConfig.cooldownHours || 24,
-            alertConfig.isActive !== false ? 1 : 0
-        ]
+            alertConfig.isActive !== false ? 1 : 0,
+        ],
     );
 
     return {
@@ -152,7 +154,7 @@ export async function createAdminAlert(orgId: string, alertConfig: AlertConfig):
         emailEnabled: alertConfig.emailEnabled !== false,
         alertFrequency: alertConfig.alertFrequency || 'once',
         cooldownHours: alertConfig.cooldownHours || 24,
-        isActive: alertConfig.isActive !== false
+        isActive: alertConfig.isActive !== false,
     };
 }
 
@@ -164,7 +166,7 @@ export async function checkAndTriggerAlerts(orgId: string): Promise<TriggerAlert
     const alerts = await DbPromise.all<AdminAlert>(
         db,
         `SELECT * FROM admin_billing_alerts WHERE organization_id = ? AND is_active = 1`,
-        [orgId]
+        [orgId],
     );
 
     const triggeredAlerts: AdminAlert[] = [];
@@ -176,12 +178,12 @@ export async function checkAndTriggerAlerts(orgId: string): Promise<TriggerAlert
                 await triggerAlert(alert.id);
                 triggeredAlerts.push(alert);
             }
-        })
+        }),
     );
 
     return {
         triggeredCount: triggeredAlerts.length,
-        alerts: triggeredAlerts
+        alerts: triggeredAlerts,
     };
 }
 
@@ -194,7 +196,7 @@ async function checkAlert(alert: AdminAlert): Promise<boolean> {
     const cooldownMs = (alert.cooldownHours || 24) * 60 * 60 * 1000;
 
     // Check cooldown
-    if (lastTriggered && (now.getTime() - lastTriggered.getTime()) < cooldownMs) {
+    if (lastTriggered && now.getTime() - lastTriggered.getTime() < cooldownMs) {
         return false;
     }
 
@@ -232,7 +234,7 @@ async function checkCostSpike(alert: AdminAlert): Promise<boolean> {
          WHERE organization_id = ?
            AND billing_period_start >= ?
            AND invoiced = 0`,
-        [alert.organization_id, periodStart.toISOString()]
+        [alert.organization_id, periodStart.toISOString()],
     );
 
     const currentCost = row?.total_cost || 0;
@@ -260,7 +262,7 @@ async function checkUsageAnomaly(alert: AdminAlert): Promise<boolean> {
              FROM pay_as_you_go_usage
              WHERE organization_id = ?
                AND billing_period_start >= ?`,
-            [alert.organization_id, currentPeriodStart.toISOString()]
+            [alert.organization_id, currentPeriodStart.toISOString()],
         ),
         DbPromise.get<CostRow>(
             db,
@@ -269,8 +271,8 @@ async function checkUsageAnomaly(alert: AdminAlert): Promise<boolean> {
              WHERE organization_id = ?
                AND billing_period_start >= ?
                AND billing_period_end <= ?`,
-            [alert.organization_id, previousPeriodStart.toISOString(), previousPeriodEnd.toISOString()]
-        )
+            [alert.organization_id, previousPeriodStart.toISOString(), previousPeriodEnd.toISOString()],
+        ),
     ]);
 
     const currentCost = currentCostRow?.total_cost || 0;
@@ -292,7 +294,7 @@ async function checkBudgetExceeded(alert: AdminAlert): Promise<boolean> {
     const budget = await DbPromise.get<BudgetRow>(
         db,
         `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
-        [alert.organization_id]
+        [alert.organization_id],
     );
 
     if (!budget || !budget.cost_cap_monthly) {
@@ -309,7 +311,7 @@ async function checkBudgetExceeded(alert: AdminAlert): Promise<boolean> {
          WHERE organization_id = ?
            AND billing_period_start >= ?
            AND invoiced = 0`,
-        [alert.organization_id, periodStart.toISOString()]
+        [alert.organization_id, periodStart.toISOString()],
     );
 
     const currentCost = row?.total_cost || 0;
@@ -327,7 +329,7 @@ async function checkSeatLimit(alert: AdminAlert): Promise<boolean> {
     const row = await DbPromise.get<SeatRow>(
         db,
         `SELECT seats_used, total_seats_available FROM organization_seats WHERE organization_id = ?`,
-        [alert.organization_id]
+        [alert.organization_id],
     );
 
     if (!row || !row.total_seats_available || row.total_seats_available === 0) {
@@ -343,11 +345,7 @@ async function checkSeatLimit(alert: AdminAlert): Promise<boolean> {
  */
 export async function triggerAlert(alertId: string): Promise<TriggerAlertResult> {
     // Get alert details
-    const alert = await DbPromise.get<AdminAlert>(
-        db,
-        `SELECT * FROM admin_billing_alerts WHERE id = ?`,
-        [alertId]
-    );
+    const alert = await DbPromise.get<AdminAlert>(db, `SELECT * FROM admin_billing_alerts WHERE id = ?`, [alertId]);
 
     if (!alert) {
         throw new Error(`Alert ${alertId} not found`);
@@ -361,7 +359,7 @@ export async function triggerAlert(alertId: string): Promise<TriggerAlertResult>
             last_triggered_at = datetime('now'),
             updated_at = datetime('now')
         WHERE id = ?`,
-        [alertId]
+        [alertId],
     );
 
     // Send alert via configured channels
@@ -395,7 +393,7 @@ export async function getAlertHistory(orgId: string, limit: number = 50): Promis
          WHERE organization_id = ?
          ORDER BY last_triggered_at DESC, created_at DESC
          LIMIT ?`,
-        [orgId, limit]
+        [orgId, limit],
     );
 
     return rows || [];
@@ -411,7 +409,7 @@ export async function updateAlertCooldown(alertId: string, cooldownHours: number
             cooldown_hours = ?,
             updated_at = datetime('now')
         WHERE id = ?`,
-        [cooldownHours, alertId]
+        [cooldownHours, alertId],
     );
 
     return { success: true };
@@ -424,7 +422,7 @@ const adminAlertService = {
     checkAndTriggerAlerts,
     sendAlert,
     getAlertHistory,
-    updateAlertCooldown
+    updateAlertCooldown,
 };
 
 export default adminAlertService;

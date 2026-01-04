@@ -1,6 +1,6 @@
 /**
  * Tour Configuration Types
- * 
+ *
  * Type definitions for interactive onboarding tours.
  */
 
@@ -61,12 +61,4 @@ export interface TourProgress {
     completedAt?: string;
     skippedAt?: string;
 }
-
-
-
-
-
-
-
-
 

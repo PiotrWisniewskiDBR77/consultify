@@ -1,6 +1,6 @@
 /**
  * Query Helpers Utility
- * 
+ *
  * Provides Promise-based wrappers and helpers for database queries.
  * Eliminates callback hell and provides consistent error handling.
  */
@@ -10,7 +10,11 @@ import { getDatabase } from '../database/Database.js';
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
     get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    run: (sql: string, params: unknown[], callback: (this: { lastID?: number; changes: number }, err: Error | null) => void) => void;
+    run: (
+        sql: string,
+        params: unknown[],
+        callback: (this: { lastID?: number; changes: number }, err: Error | null) => void,
+    ) => void;
     serialize: (callback: () => void) => void;
 }
 
@@ -69,7 +73,7 @@ export function queryRun(sql: string, params: unknown[] = []): Promise<QueryResu
             } else {
                 resolve({
                     lastID: this.lastID,
-                    changes: this.changes
+                    changes: this.changes,
                 });
             }
         });
@@ -80,7 +84,7 @@ export function queryRun(sql: string, params: unknown[] = []): Promise<QueryResu
  * Execute multiple queries in parallel
  */
 export async function queryParallel(queries: Query[]): Promise<unknown[]> {
-    const promises = queries.map(q => {
+    const promises = queries.map((q) => {
         if (q.type === 'all') {
             return queryAll(q.sql, q.params || []);
         } else if (q.type === 'one') {
@@ -110,7 +114,7 @@ export function buildOrgFilter(tableAlias: string, orgId: string): string {
 /**
  * Build WHERE clause for user filtering (assignee or reporter)
  */
-export function buildUserFilter(tableAlias: string, userId: string): string {
+export function buildUserFilter(tableAlias: string, _userId: string): string {
     return `(${tableAlias}.assignee_id = ? OR ${tableAlias}.reporter_id = ?)`;
 }
 
@@ -129,7 +133,7 @@ export async function transaction<T>(callback: (db: Database) => Promise<T>): Pr
                     .then((result) => {
                         db.run('COMMIT', [], (commitErr: Error | null) => {
                             if (commitErr) {
-                                db.run('ROLLBACK', [], () => { });
+                                db.run('ROLLBACK', [], () => {});
                                 reject(commitErr);
                             } else {
                                 resolve(result);
@@ -137,7 +141,7 @@ export async function transaction<T>(callback: (db: Database) => Promise<T>): Pr
                         });
                     })
                     .catch((error) => {
-                        db.run('ROLLBACK', [], () => { });
+                        db.run('ROLLBACK', [], () => {});
                         reject(error);
                     });
             });
@@ -150,12 +154,12 @@ export async function transaction<T>(callback: (db: Database) => Promise<T>): Pr
  */
 export function parseJsonFields(
     row: Record<string, unknown>,
-    jsonFields: string[] = ['checklist', 'attachments', 'tags', 'data']
+    jsonFields: string[] = ['checklist', 'attachments', 'tags', 'data'],
 ): Record<string, unknown> {
     if (!row) return row;
 
     const parsed = { ...row };
-    jsonFields.forEach(field => {
+    jsonFields.forEach((field) => {
         if (parsed[field] && typeof parsed[field] === 'string') {
             try {
                 parsed[field] = JSON.parse(parsed[field] as string);
@@ -174,12 +178,12 @@ export function parseJsonFields(
  */
 export function transformRow(
     row: Record<string, unknown> | null,
-    fieldMap: Record<string, string> = {}
+    fieldMap: Record<string, string> = {},
 ): Record<string, unknown> | null {
     if (!row) return null;
 
     const transformed: Record<string, unknown> = {};
-    Object.keys(row).forEach(key => {
+    Object.keys(row).forEach((key) => {
         // Use custom mapping if provided
         if (fieldMap[key]) {
             transformed[fieldMap[key]] = row[key];
@@ -192,4 +196,3 @@ export function transformRow(
 
     return transformed;
 }
-

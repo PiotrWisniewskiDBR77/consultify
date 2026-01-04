@@ -1,12 +1,13 @@
 /**
  * ConversationList
- * 
+ *
  * Renders grouped conversations with section headers.
  */
 
+import { Archive, Calendar, CalendarDays, Clock, FolderOpen, Star } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Star, Clock, Calendar, CalendarDays, Archive, FolderOpen } from 'lucide-react';
+
 import { Conversation } from '../../store/useConversationStore';
 import { ConversationItem } from './ConversationItem';
 
@@ -25,21 +26,17 @@ const GROUP_CONFIG: Record<ConversationGroup, { icon: React.ElementType; labelKe
     thisWeek: { icon: CalendarDays, labelKey: 'aiChat.sections.thisWeek', defaultLabel: 'This Week' },
     lastMonth: { icon: CalendarDays, labelKey: 'aiChat.sections.lastMonth', defaultLabel: 'Last 30 Days' },
     older: { icon: FolderOpen, labelKey: 'aiChat.sections.older', defaultLabel: 'Older' },
-    archived: { icon: Archive, labelKey: 'aiChat.sections.archived', defaultLabel: 'Archived' }
+    archived: { icon: Archive, labelKey: 'aiChat.sections.archived', defaultLabel: 'Archived' },
 };
 
 const GROUP_ORDER: ConversationGroup[] = ['pinned', 'today', 'yesterday', 'thisWeek', 'lastMonth', 'older', 'archived'];
 
-export const ConversationList: React.FC<ConversationListProps> = ({
-    groups,
-    activeId,
-    onSelect
-}) => {
+export const ConversationList: React.FC<ConversationListProps> = ({ groups, activeId, onSelect }) => {
     const { t } = useTranslation();
 
     return (
         <div className="space-y-4 py-2">
-            {GROUP_ORDER.map(groupKey => {
+            {GROUP_ORDER.map((groupKey) => {
                 const conversations = groups[groupKey];
                 if (!conversations || conversations.length === 0) return null;
 
@@ -56,7 +53,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
                         {/* Conversations */}
                         <div className="space-y-0.5">
-                            {conversations.map(conv => (
+                            {conversations.map((conv) => (
                                 <ConversationItem
                                     key={conv.id}
                                     conversation={conv}
@@ -73,12 +70,4 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 };
 
 export default ConversationList;
-
-
-
-
-
-
-
-
 

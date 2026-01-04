@@ -1,6 +1,6 @@
 /**
  * AreaDetailCard Component
- * 
+ *
  * Displays detailed analysis of a single business area within a DRD axis.
  * Includes:
  * - Current and target level with gap
@@ -10,12 +10,13 @@
  * - What target level requires
  * - Recommendations for development
  * - Risks and KPIs
- * 
+ *
  * Based on BCG/McKinsey consulting report standards.
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { BUSINESS_AREAS, MATURITY_LEVELS } from './AreaMatrixTable';
 
 // ============================================================================
@@ -87,11 +88,11 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
 }) => {
     const [isExpanded, setIsExpanded] = useState(initiallyExpanded);
     const [activeSection, setActiveSection] = useState<string | null>(null);
-    
+
     const isPolish = language === 'pl';
-    const area = BUSINESS_AREAS.find(a => a.id === data.areaId);
+    const area = BUSINESS_AREAS.find((a) => a.id === data.areaId);
     const gap = data.targetLevel - data.currentLevel;
-    
+
     // Priority based on gap
     const getPriorityInfo = (gap: number) => {
         if (gap >= 3) return { label: isPolish ? 'Krytyczny' : 'Critical', color: '#ef4444', bg: '#fef2f2' };
@@ -99,21 +100,21 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
         if (gap >= 1) return { label: isPolish ? 'Średni' : 'Medium', color: '#eab308', bg: '#fefce8' };
         return { label: isPolish ? 'Niski' : 'Low', color: '#22c55e', bg: '#f0fdf4' };
     };
-    
+
     const priority = getPriorityInfo(gap);
-    const currentLevelMeta = MATURITY_LEVELS.find(l => l.level === data.currentLevel);
-    const targetLevelMeta = MATURITY_LEVELS.find(l => l.level === data.targetLevel);
-    
+    const currentLevelMeta = MATURITY_LEVELS.find((l) => l.level === data.currentLevel);
+    const targetLevelMeta = MATURITY_LEVELS.find((l) => l.level === data.targetLevel);
+
     const cardVariants = {
         collapsed: { height: 'auto' },
         expanded: { height: 'auto' },
     };
-    
+
     const contentVariants = {
         hidden: { opacity: 0, height: 0 },
         visible: { opacity: 1, height: 'auto', transition: { duration: 0.3 } },
     };
-    
+
     return (
         <motion.div
             className="area-detail-card"
@@ -123,10 +124,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
             animate={isExpanded ? 'expanded' : 'collapsed'}
         >
             {/* Header - Always Visible */}
-            <div 
-                className="card-header"
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
+            <div className="card-header" onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="header-left">
                     <span className="area-icon">{area?.icon || '📊'}</span>
                     <div className="header-titles">
@@ -136,7 +134,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                         </span>
                     </div>
                 </div>
-                
+
                 <div className="header-right">
                     {/* Level indicators */}
                     <div className="level-indicators">
@@ -154,22 +152,19 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                             <span className="level-label">{isPolish ? 'Luka' : 'Gap'}</span>
                         </div>
                     </div>
-                    
+
                     {/* Priority badge */}
                     <div className="priority-badge" style={{ background: priority.bg, color: priority.color }}>
                         {priority.label}
                     </div>
-                    
+
                     {/* Expand toggle */}
-                    <motion.span
-                        className="expand-toggle"
-                        animate={{ rotate: isExpanded ? 180 : 0 }}
-                    >
+                    <motion.span className="expand-toggle" animate={{ rotate: isExpanded ? 180 : 0 }}>
                         ▼
                     </motion.span>
                 </div>
             </div>
-            
+
             {/* Expandable Content */}
             <AnimatePresence>
                 {isExpanded && (
@@ -184,7 +179,13 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                         <section className="content-section current-state">
                             <div className="section-header">
                                 <h4>📋 {isPolish ? 'Opis stanu aktualnego' : 'Current State Description'}</h4>
-                                <span className="level-tag" style={{ background: `${currentLevelMeta?.color}20`, color: currentLevelMeta?.color }}>
+                                <span
+                                    className="level-tag"
+                                    style={{
+                                        background: `${currentLevelMeta?.color}20`,
+                                        color: currentLevelMeta?.color,
+                                    }}
+                                >
                                     {isPolish ? 'Poziom' : 'Level'} {data.currentLevel}
                                 </span>
                             </div>
@@ -192,27 +193,34 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                 <p className="description">
                                     {isPolish ? data.currentLevelInfo.descriptionPl : data.currentLevelInfo.description}
                                 </p>
-                                
+
                                 <div className="characteristics">
-                                    <h5>{isPolish ? 'Charakterystyki obecnego poziomu' : 'Characteristics of Current Level'}:</h5>
+                                    <h5>
+                                        {isPolish
+                                            ? 'Charakterystyki obecnego poziomu'
+                                            : 'Characteristics of Current Level'}
+                                        :
+                                    </h5>
                                     <ul>
                                         {data.currentLevelInfo.characteristics.map((char, i) => (
                                             <li key={i}>{char}</li>
                                         ))}
                                     </ul>
                                 </div>
-                                
+
                                 <div className="tools">
                                     <h5>{isPolish ? 'Używane narzędzia' : 'Tools Used'}:</h5>
                                     <div className="tools-list">
                                         {data.currentLevelInfo.tools.map((tool, i) => (
-                                            <span key={i} className="tool-badge">{tool}</span>
+                                            <span key={i} className="tool-badge">
+                                                {tool}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
                             </div>
                         </section>
-                        
+
                         {/* Section 2: Interview Notes (if available) */}
                         {data.interview && (
                             <section className="content-section interview-notes">
@@ -234,17 +242,15 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                             <span className="meta-value">{data.interview.date}</span>
                                         </div>
                                     </div>
-                                    
+
                                     {data.interview.keyQuote && (
-                                        <blockquote className="key-quote">
-                                            "{data.interview.keyQuote}"
-                                        </blockquote>
+                                        <blockquote className="key-quote">"{data.interview.keyQuote}"</blockquote>
                                     )}
-                                    
+
                                     <div className="notes-content">
                                         <p>{data.interview.notes}</p>
                                     </div>
-                                    
+
                                     {data.interview.observations && data.interview.observations.length > 0 && (
                                         <div className="observations">
                                             <h5>{isPolish ? 'Kluczowe obserwacje' : 'Key Observations'}:</h5>
@@ -258,12 +264,18 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Section 3: Target State */}
                         <section className="content-section target-state">
                             <div className="section-header">
-                                <h4>🎯 {isPolish ? 'Aby osiągnąć poziom' : 'To Reach Level'} {data.targetLevel}: {isPolish ? data.targetLevelInfo.namePl : data.targetLevelInfo.name}</h4>
-                                <span className="level-tag" style={{ background: `${targetLevelMeta?.color}20`, color: targetLevelMeta?.color }}>
+                                <h4>
+                                    🎯 {isPolish ? 'Aby osiągnąć poziom' : 'To Reach Level'} {data.targetLevel}:{' '}
+                                    {isPolish ? data.targetLevelInfo.namePl : data.targetLevelInfo.name}
+                                </h4>
+                                <span
+                                    className="level-tag"
+                                    style={{ background: `${targetLevelMeta?.color}20`, color: targetLevelMeta?.color }}
+                                >
                                     {isPolish ? 'Cel' : 'Target'}
                                 </span>
                             </div>
@@ -271,7 +283,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                 <p className="description">
                                     {isPolish ? data.targetLevelInfo.descriptionPl : data.targetLevelInfo.description}
                                 </p>
-                                
+
                                 <div className="characteristics">
                                     <h5>{isPolish ? 'Wymagane charakterystyki' : 'Required Characteristics'}:</h5>
                                     <ul>
@@ -280,18 +292,20 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                         ))}
                                     </ul>
                                 </div>
-                                
+
                                 <div className="tools">
                                     <h5>{isPolish ? 'Przykładowe narzędzia' : 'Example Tools'}:</h5>
                                     <div className="tools-list">
                                         {data.targetLevelInfo.tools.map((tool, i) => (
-                                            <span key={i} className="tool-badge target">{tool}</span>
+                                            <span key={i} className="tool-badge target">
+                                                {tool}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
                             </div>
                         </section>
-                        
+
                         {/* Section 4: Recommendations */}
                         {data.recommendations && data.recommendations.length > 0 && (
                             <section className="content-section recommendations">
@@ -301,16 +315,29 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                 <div className="section-body">
                                     <ol className="recommendations-list">
                                         {data.recommendations.map((rec, i) => (
-                                            <li key={i} className={`recommendation-item priority-${rec.priority.toLowerCase()}`}>
+                                            <li
+                                                key={i}
+                                                className={`recommendation-item priority-${rec.priority.toLowerCase()}`}
+                                            >
                                                 <div className="rec-header">
                                                     <strong>{rec.title}</strong>
                                                     <span className={`rec-priority ${rec.priority.toLowerCase()}`}>
-                                                        {rec.priority === 'HIGH' ? (isPolish ? 'Wysoki' : 'High') :
-                                                         rec.priority === 'MEDIUM' ? (isPolish ? 'Średni' : 'Medium') :
-                                                         (isPolish ? 'Niski' : 'Low')}
+                                                        {rec.priority === 'HIGH'
+                                                            ? isPolish
+                                                                ? 'Wysoki'
+                                                                : 'High'
+                                                            : rec.priority === 'MEDIUM'
+                                                              ? isPolish
+                                                                  ? 'Średni'
+                                                                  : 'Medium'
+                                                              : isPolish
+                                                                ? 'Niski'
+                                                                : 'Low'}
                                                     </span>
                                                 </div>
-                                                {rec.description && <p className="rec-description">{rec.description}</p>}
+                                                {rec.description && (
+                                                    <p className="rec-description">{rec.description}</p>
+                                                )}
                                                 <div className="rec-meta">
                                                     {rec.timeEstimate && (
                                                         <span className="meta-tag">⏱️ {rec.timeEstimate}</span>
@@ -325,7 +352,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Section 5: Risks */}
                         {data.risks && data.risks.length > 0 && (
                             <section className="content-section risks">
@@ -335,13 +362,15 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                 <div className="section-body">
                                     <ul className="risks-list">
                                         {data.risks.map((risk, i) => (
-                                            <li key={i} className="risk-item">{risk}</li>
+                                            <li key={i} className="risk-item">
+                                                {risk}
+                                            </li>
                                         ))}
                                     </ul>
                                 </div>
                             </section>
                         )}
-                        
+
                         {/* Section 6: KPIs */}
                         {data.kpis && data.kpis.length > 0 && (
                             <section className="content-section kpis">
@@ -355,11 +384,15 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                                 <div className="kpi-name">{kpi.name}</div>
                                                 {kpi.currentValue !== undefined && (
                                                     <div className="kpi-values">
-                                                        <span className="current">{kpi.currentValue} {kpi.unit}</span>
+                                                        <span className="current">
+                                                            {kpi.currentValue} {kpi.unit}
+                                                        </span>
                                                         {kpi.targetValue !== undefined && (
                                                             <>
                                                                 <span className="arrow">→</span>
-                                                                <span className="target">{kpi.targetValue} {kpi.unit}</span>
+                                                                <span className="target">
+                                                                    {kpi.targetValue} {kpi.unit}
+                                                                </span>
                                                             </>
                                                         )}
                                                     </div>
@@ -367,8 +400,14 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                                                 {kpi.benchmark && (
                                                     <div className="kpi-benchmark">
                                                         <span className="benchmark-label">Benchmark:</span>
-                                                        <span className="benchmark-low">Low: {kpi.benchmark.low}{kpi.unit}</span>
-                                                        <span className="benchmark-high">Best: {kpi.benchmark.high}{kpi.unit}</span>
+                                                        <span className="benchmark-low">
+                                                            Low: {kpi.benchmark.low}
+                                                            {kpi.unit}
+                                                        </span>
+                                                        <span className="benchmark-high">
+                                                            Best: {kpi.benchmark.high}
+                                                            {kpi.unit}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
@@ -380,7 +419,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             <style>{`
                 .area-detail-card {
                     background: white;
@@ -796,4 +835,3 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
 };
 
 export default AreaDetailCard;
-

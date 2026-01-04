@@ -1,7 +1,7 @@
 /**
  * Decision Validators
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Zod schemas for decision-related API endpoints
  */
 
@@ -70,4 +70,3 @@ export type CreateDecisionRequest = z.infer<typeof CreateDecisionSchema>;
 export type DecideRequest = z.infer<typeof DecideSchema>;
 export type EscalateDecisionRequest = z.infer<typeof EscalateDecisionSchema>;
 export type GetDecisionsQuery = z.infer<typeof GetDecisionsQuerySchema>;
-

@@ -1,14 +1,12 @@
 /**
  * Narrative Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadNarrativeservice = createCachedLazyService('../../services/narrativeService.js');
+import service from '../../services/narrativeService.js';
 
 // Export default instance (for backward compatibility)
-export default loadNarrativeservice();
+export default service;

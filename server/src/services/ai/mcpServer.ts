@@ -4,11 +4,12 @@
  */
 
 import { z } from 'zod';
+
 import { aiLogger } from './logger.js';
 
 export const TOOL_TYPE = {
     READ: 'READ',
-    MUTATION: 'MUTATION'
+    MUTATION: 'MUTATION',
 } as const;
 
 type ToolType = (typeof TOOL_TYPE)[keyof typeof TOOL_TYPE];
@@ -30,7 +31,7 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         description: 'Retrieve full project details including status, team, timeline, and metrics',
         type: TOOL_TYPE.READ,
         parameters: z.object({
-            projectId: z.string().describe('The UUID of the project to retrieve')
+            projectId: z.string().describe('The UUID of the project to retrieve'),
         }),
         returns: z.object({
             id: z.string(),
@@ -38,8 +39,8 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
             status: z.string(),
             progress: z.number(),
             team: z.array(z.object({ name: z.string(), role: z.string() })).optional(),
-            metrics: z.object({}).passthrough().optional()
-        })
+            metrics: z.object({}).passthrough().optional(),
+        }),
     },
     search_knowledge_base: {
         name: 'search_knowledge_base',
@@ -47,16 +48,18 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         type: TOOL_TYPE.READ,
         parameters: z.object({
             query: z.string().describe('The search query for the knowledge base'),
-            maxResults: z.number().optional().default(5).describe('Maximum number of results to return')
+            maxResults: z.number().optional().default(5).describe('Maximum number of results to return'),
         }),
         returns: z.object({
-            results: z.array(z.object({
-                content: z.string(),
-                source: z.string().optional(),
-                relevance: z.number().optional()
-            })),
-            totalFound: z.number()
-        })
+            results: z.array(
+                z.object({
+                    content: z.string(),
+                    source: z.string().optional(),
+                    relevance: z.number().optional(),
+                }),
+            ),
+            totalFound: z.number(),
+        }),
     },
     calculate_roi_draft: {
         name: 'calculate_roi_draft',
@@ -66,18 +69,20 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
             initialInvestment: z.number().describe('Initial investment cost'),
             annualBenefit: z.number().describe('Expected annual benefit/savings'),
             years: z.number().default(5).describe('Analysis period in years'),
-            discountRate: z.number().default(0.1).describe('Discount rate for NPV calculation')
+            discountRate: z.number().default(0.1).describe('Discount rate for NPV calculation'),
         }),
         returns: z.object({
             roi: z.number().describe('Return on Investment percentage'),
             npv: z.number().describe('Net Present Value'),
             paybackYears: z.number().describe('Payback period in years'),
-            breakdown: z.array(z.object({
-                year: z.number(),
-                cashFlow: z.number(),
-                discountedCashFlow: z.number()
-            }))
-        })
+            breakdown: z.array(
+                z.object({
+                    year: z.number(),
+                    cashFlow: z.number(),
+                    discountedCashFlow: z.number(),
+                }),
+            ),
+        }),
     },
     create_initiative: {
         name: 'create_initiative',
@@ -88,13 +93,13 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
             title: z.string().describe('Title of the initiative'),
             description: z.string().describe('Detailed description'),
             priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).describe('Priority level'),
-            estimatedEffort: z.string().optional().describe('Estimated effort (e.g., "2 weeks")')
+            estimatedEffort: z.string().optional().describe('Estimated effort (e.g., "2 weeks")'),
         }),
         returns: z.object({
             id: z.string(),
             status: z.string(),
-            message: z.string()
-        })
+            message: z.string(),
+        }),
     },
     update_assessment_score: {
         name: 'update_assessment_score',
@@ -103,13 +108,13 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
         parameters: z.object({
             assessmentId: z.string().describe('Assessment ID'),
             axisId: z.string().describe('Axis/Dimension ID'),
-            score: z.number().min(1).max(5).describe('New maturity score (1-5)')
+            score: z.number().min(1).max(5).describe('New maturity score (1-5)'),
         }),
         returns: z.object({
             success: z.boolean(),
-            message: z.string()
-        })
-    }
+            message: z.string(),
+        }),
+    },
 };
 
 export class MCPServer {
@@ -124,7 +129,7 @@ export class MCPServer {
         Object.entries(ToolSchemas).forEach(([name, schema]) => {
             this.tools.set(name, {
                 ...schema,
-                handler: null
+                handler: null,
             });
         });
     }
@@ -150,7 +155,7 @@ export class MCPServer {
             definitions.push({
                 name: toolEntry.name,
                 description: toolEntry.description,
-                parameters: this.zodToJsonSchema(toolEntry.parameters)
+                parameters: this.zodToJsonSchema(toolEntry.parameters),
             });
         }
 
@@ -184,7 +189,7 @@ export class MCPServer {
 
             properties[key] = {
                 type,
-                description: (value as { description?: string }).description || ''
+                description: (value as { description?: string }).description || '',
             };
 
             const isOptional = (value as { isOptional?: () => boolean }).isOptional?.() || def?.isOptional;
@@ -197,11 +202,15 @@ export class MCPServer {
             type: 'object',
             properties,
             required,
-            additionalProperties: false
+            additionalProperties: false,
         };
     }
 
-    async execute(toolName: string, params: unknown, context: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
+    async execute(
+        toolName: string,
+        params: unknown,
+        context: Record<string, unknown> = {},
+    ): Promise<Record<string, unknown>> {
         const toolEntry = this.tools.get(toolName);
 
         if (!toolEntry) {
@@ -218,7 +227,7 @@ export class MCPServer {
                     status: 'REQUIRES_APPROVAL',
                     toolName,
                     params: validated,
-                    message: 'This action requires your approval before execution.'
+                    message: 'This action requires your approval before execution.',
                 };
             }
 
@@ -233,14 +242,14 @@ export class MCPServer {
 
             return {
                 status: 'SUCCESS',
-                data: result
+                data: result,
             };
         } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('MCP', `Execution failed for ${toolName}`, err);
             return {
                 status: 'ERROR',
-                error: err.message
+                error: err.message,
             };
         }
     }

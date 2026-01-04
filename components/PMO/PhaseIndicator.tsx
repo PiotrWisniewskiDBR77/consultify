@@ -1,6 +1,7 @@
-import React from 'react';
-import { usePMOStore } from '../../store/usePMOStore';
 import { AlertTriangle, CheckCircle2, Target } from 'lucide-react';
+import React from 'react';
+
+import { usePMOStore } from '../../store/usePMOStore';
 
 /**
  * PMO Phase Indicator - Shows current project phase in sidebar/header
@@ -72,9 +73,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
                 className={`flex items-center justify-center w-8 h-8 rounded-lg ${getBgColor()} border`}
                 title={`Phase ${phaseNumber}/${totalPhases}: ${currentPhase}`}
             >
-                <span className={`text-xs font-bold ${getPhaseColor()}`}>
-                    {phaseNumber}
-                </span>
+                <span className={`text-xs font-bold ${getPhaseColor()}`}>{phaseNumber}</span>
             </div>
         );
     }
@@ -86,21 +85,20 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
                 <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium">
                     Phase {phaseNumber}/{totalPhases}
                 </span>
-                <span className={`text-sm font-semibold ${getPhaseColor()} truncate`}>
-                    {currentPhase}
-                </span>
+                <span className={`text-sm font-semibold ${getPhaseColor()} truncate`}>{currentPhase}</span>
             </div>
             {/* Progress dots */}
             <div className="hidden sm:flex items-center gap-0.5 ml-auto">
                 {phases.map((_, i) => (
                     <div
                         key={i}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ${i < phaseIndex
-                            ? 'bg-green-500'
-                            : i === phaseIndex
-                                ? 'bg-purple-500 ring-2 ring-purple-500/30'
-                                : 'bg-slate-300 dark:bg-slate-600'
-                            }`}
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                            i < phaseIndex
+                                ? 'bg-green-500'
+                                : i === phaseIndex
+                                  ? 'bg-purple-500 ring-2 ring-purple-500/30'
+                                  : 'bg-slate-300 dark:bg-slate-600'
+                        }`}
                     />
                 ))}
             </div>

@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ThinkingBlock } from '../../../components/AIChat/Messages/ThinkingBlock';
+import { ThinkingBlock } from '../../components/AIChat/Messages/ThinkingBlock';
 import { ThinkingStep } from '../../../types';
 
 // Mock react-i18next

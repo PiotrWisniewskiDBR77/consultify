@@ -1,12 +1,13 @@
 /**
  * Mock Database Helper
  * Enterprise SaaS Architecture - TypeScript Backend Tests
- * 
+ *
  * Advanced database mocking utilities
  */
 
-import type { IDatabase } from '../../src/database/IDatabase.js';
 import { vi } from 'vitest';
+
+import type { IDatabase } from '../../src/database/IDatabase.js';
 
 /**
  * Database query result type
@@ -26,7 +27,7 @@ export function createMockDatabaseWithResults(results: Record<string, QueryResul
         get: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null, row: unknown) => void) => {
             const key = sql.trim().toLowerCase();
             const result = results[key] || results['*'] || { row: null };
-            
+
             if (callback) {
                 callback(null, result.row || null);
             }
@@ -35,7 +36,7 @@ export function createMockDatabaseWithResults(results: Record<string, QueryResul
         all: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null, rows: unknown[]) => void) => {
             const key = sql.trim().toLowerCase();
             const result = results[key] || results['*'] || { rows: [] };
-            
+
             if (callback) {
                 callback(null, result.rows || []);
             }
@@ -44,7 +45,7 @@ export function createMockDatabaseWithResults(results: Record<string, QueryResul
         run: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null) => void) => {
             const key = sql.trim().toLowerCase();
             const result = results[key] || results['*'] || { changes: 1 };
-            
+
             if (callback) {
                 callback(null);
             }
@@ -75,7 +76,7 @@ export function createMockDatabaseWithResults(results: Record<string, QueryResul
  */
 export function createMockDatabaseWithErrors(errorMessage: string = 'Database error'): IDatabase {
     const error = new Error(errorMessage);
-    
+
     const mockDb: IDatabase = {
         get: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null, row: unknown) => void) => {
             if (callback) {
@@ -114,7 +115,4 @@ export function createMockDatabaseWithErrors(errorMessage: string = 'Database er
 
     return mockDb;
 }
-
-
-
 

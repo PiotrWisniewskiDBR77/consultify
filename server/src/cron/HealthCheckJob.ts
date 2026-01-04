@@ -1,18 +1,16 @@
 /**
  * Health Check Cron Job
  * Monitors database connectivity and sends alerts on failure.
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
 import * as cron from 'node-cron';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
-
-
-
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -50,7 +48,7 @@ class HealthCheckJob {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.emailService) {
-            this.deps.emailService = await import('../../services/emailService.js').then(m => m.default || m);
+            this.deps.emailService = await import('../../services/emailService.js').then((m) => m.default || m);
         }
         return this.deps as Dependencies;
     }
@@ -79,7 +77,7 @@ class HealthCheckJob {
                         <h1>System Recovered</h1>
                         <p>The Consultify database is back online.</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-                        `
+                        `,
                     );
                     this.isSystemHealthy = true;
                     this.consecutiveFailures = 0;
@@ -102,7 +100,7 @@ class HealthCheckJob {
                         <p><strong>Error:</strong> ${error.message}</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
                         <p>Please investigate immediately.</p>
-                        `
+                        `,
                     );
                 }
             }
@@ -145,4 +143,3 @@ export const startHealthCheck = (deps?: Partial<Dependencies>): void => {
 };
 
 export default HealthCheckJob;
-

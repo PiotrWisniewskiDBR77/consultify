@@ -3,8 +3,8 @@
  * Shows "Your score vs. industry average"
  */
 
+import { Award, TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
-import { TrendingUp, TrendingDown, Award } from 'lucide-react';
 
 interface BenchmarkComparisonProps {
     score: number;
@@ -17,7 +17,7 @@ export const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({
     score,
     benchmarkScore,
     dimension = 'Overall',
-    percentile
+    percentile,
 }) => {
     const delta = score - benchmarkScore;
     const deltaPercentage = ((delta / benchmarkScore) * 100).toFixed(1);
@@ -28,15 +28,26 @@ export const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({
             <div className="flex items-center justify-between mb-3">
                 <h4 className="font-semibold text-gray-700 dark:text-gray-300">{dimension}</h4>
                 {percentile && (
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${percentile >= 75 ? 'bg-green-100 text-green-700' :
-                            percentile >= 50 ? 'bg-blue-100 text-blue-700' :
-                                percentile >= 25 ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-red-100 text-red-700'
-                        }`}>
-                        {percentile >= 90 ? 'Top 10%' :
-                            percentile >= 75 ? 'Top 25%' :
-                                percentile >= 50 ? 'Above Avg' :
-                                    percentile >= 25 ? 'Below Avg' : 'Bottom 25%'}
+                    <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            percentile >= 75
+                                ? 'bg-green-100 text-green-700'
+                                : percentile >= 50
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : percentile >= 25
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-red-100 text-red-700'
+                        }`}
+                    >
+                        {percentile >= 90
+                            ? 'Top 10%'
+                            : percentile >= 75
+                              ? 'Top 25%'
+                              : percentile >= 50
+                                ? 'Above Avg'
+                                : percentile >= 25
+                                  ? 'Below Avg'
+                                  : 'Bottom 25%'}
                     </span>
                 )}
             </div>
@@ -59,7 +70,8 @@ export const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({
                     <TrendingDown className="w-5 h-5 text-red-500" />
                 )}
                 <span className={`text-sm font-medium ${isAbove ? 'text-green-600' : 'text-red-600'}`}>
-                    {isAbove ? '+' : ''}{deltaPercentage}% vs. benchmark
+                    {isAbove ? '+' : ''}
+                    {deltaPercentage}% vs. benchmark
                 </span>
             </div>
 

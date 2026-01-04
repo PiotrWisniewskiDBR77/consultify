@@ -1,14 +1,15 @@
 /**
  * Initiatives Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * All initiative-related API endpoints with Zod validation
  */
 
 import { Router } from 'express';
+
+import InitiativeController from '../controllers/InitiativeController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import InitiativeController from '../controllers/InitiativeController.js';
 import {
     CreateInitiativeSchema,
     UpdateInitiativeSchema,
@@ -34,11 +35,7 @@ router.get('/', InitiativeController.getInitiatives);
  * POST /api/initiatives
  * Create a new initiative
  */
-router.post(
-    '/',
-    validateBody(CreateInitiativeSchema),
-    InitiativeController.createInitiative
-);
+router.post('/', validateBody(CreateInitiativeSchema), InitiativeController.createInitiative);
 
 /**
  * GET /api/initiatives/:id
@@ -50,20 +47,12 @@ router.get('/:id', InitiativeController.getInitiativeById);
  * PUT /api/initiatives/:id
  * Update initiative
  */
-router.put(
-    '/:id',
-    validateBody(UpdateInitiativeSchema),
-    InitiativeController.updateInitiative
-);
+router.put('/:id', validateBody(UpdateInitiativeSchema), InitiativeController.updateInitiative);
 
 /**
  * PATCH /api/initiatives/:id/status
  * Update initiative status
  */
-router.patch(
-    '/:id/status',
-    validateBody(UpdateInitiativeStatusSchema),
-    InitiativeController.updateInitiativeStatus
-);
+router.patch('/:id/status', validateBody(UpdateInitiativeStatusSchema), InitiativeController.updateInitiativeStatus);
 
 export default router;

@@ -3,10 +3,11 @@
  * Part of My Work Module PMO Upgrade
  */
 
-import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Users } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import type { TeamWorkload, UserWorkload, WorkloadHeatmapProps } from '../../../types/myWork';
 
 interface ExtendedWorkloadHeatmapProps extends Partial<WorkloadHeatmapProps> {
@@ -51,28 +52,22 @@ const UserWorkloadRow: React.FC<{
             {/* Avatar */}
             <div className="shrink-0">
                 {user.avatarUrl ? (
-                    <img 
-                        src={user.avatarUrl} 
-                        alt={user.userName}
-                        className="w-8 h-8 rounded-full object-cover"
-                    />
+                    <img src={user.avatarUrl} alt={user.userName} className="w-8 h-8 rounded-full object-cover" />
                 ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center text-white text-sm font-medium">
                         {user.userName.charAt(0)}
                     </div>
                 )}
             </div>
-            
+
             {/* Name & Status */}
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
-                    {user.userName}
-                </p>
+                <p className="text-sm font-medium text-navy-900 dark:text-white truncate">{user.userName}</p>
                 <p className="text-xs text-slate-500">
                     {user.taskCount} tasks • {user.hoursAllocated}h / {user.hoursCapacity}h
                 </p>
             </div>
-            
+
             {/* Daily heatmap cells */}
             <div className="flex gap-1">
                 {user.dailyBreakdown?.slice(0, 7).map((day, idx) => (
@@ -87,19 +82,19 @@ const UserWorkloadRow: React.FC<{
                     </div>
                 ))}
             </div>
-            
+
             {/* Overall allocation */}
-            <div className={`
+            <div
+                className={`
                 shrink-0 w-16 text-right
                 ${getAllocationTextColor(user.allocation)}
-            `}>
+            `}
+            >
                 <span className="text-sm font-semibold">{user.allocation}%</span>
             </div>
-            
+
             {/* Status indicator */}
-            {user.status === 'overloaded' && (
-                <AlertTriangle size={16} className="text-red-500 shrink-0" />
-            )}
+            {user.status === 'overloaded' && <AlertTriangle size={16} className="text-red-500 shrink-0" />}
         </motion.div>
     );
 };
@@ -111,22 +106,22 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
     workload,
     onUserClick,
     showLegend = true,
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
-    
+
     // Mock data for demo purposes if no workload provided
     const displayWorkload: TeamWorkload = workload || {
         period: {
             start: new Date().toISOString().split('T')[0],
-            end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         },
         members: [],
         teamAverage: 0,
         overloadedCount: 0,
-        underutilizedCount: 0
+        underutilizedCount: 0,
     };
-    
+
     // Calculate day labels
     const dayLabels = useMemo(() => {
         const labels = [];
@@ -137,28 +132,34 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
         }
         return labels;
     }, []);
-    
+
     if (!displayWorkload.members || displayWorkload.members.length === 0) {
         return (
-            <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 ${className}`}>
+            <div
+                className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 ${className}`}
+            >
                 <div className="flex items-center gap-2 mb-4">
                     <Users size={18} className="text-slate-400" />
                     <h3 className="font-semibold text-navy-900 dark:text-white">
                         {t('myWork.dashboard.teamWorkload', 'Team Workload')}
                     </h3>
                 </div>
-                
+
                 <div className="text-center py-8 text-slate-400">
                     <Users size={32} className="mx-auto mb-2 opacity-50" />
                     <p className="text-sm">{t('myWork.dashboard.noWorkloadData', 'No workload data available')}</p>
-                    <p className="text-xs mt-1">{t('myWork.dashboard.addTeamMembers', 'Add team members to see workload')}</p>
+                    <p className="text-xs mt-1">
+                        {t('myWork.dashboard.addTeamMembers', 'Add team members to see workload')}
+                    </p>
                 </div>
             </div>
         );
     }
-    
+
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 ${className}`}
+        >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-2">
@@ -167,7 +168,7 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
                         {t('myWork.dashboard.teamWorkload', 'Team Workload')}
                     </h3>
                 </div>
-                
+
                 {/* Summary stats */}
                 <div className="flex items-center gap-4 text-xs">
                     {displayWorkload.overloadedCount > 0 && (
@@ -176,12 +177,10 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
                             {displayWorkload.overloadedCount} overloaded
                         </span>
                     )}
-                    <span className="text-slate-500">
-                        Avg: {displayWorkload.teamAverage}%
-                    </span>
+                    <span className="text-slate-500">Avg: {displayWorkload.teamAverage}%</span>
                 </div>
             </div>
-            
+
             {/* Day headers */}
             <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-100 dark:border-white/5">
                 <div className="w-8" /> {/* Avatar spacer */}
@@ -198,18 +197,14 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
                 </div>
                 <div className="w-4" /> {/* Status icon spacer */}
             </div>
-            
+
             {/* User rows */}
             <div className="p-2 max-h-[300px] overflow-y-auto mywork-scrollbar">
                 {displayWorkload.members.map((user) => (
-                    <UserWorkloadRow
-                        key={user.userId}
-                        user={user}
-                        onClick={() => onUserClick?.(user.userId)}
-                    />
+                    <UserWorkloadRow key={user.userId} user={user} onClick={() => onUserClick?.(user.userId)} />
                 ))}
             </div>
-            
+
             {/* Legend */}
             {showLegend && (
                 <div className="flex items-center justify-center gap-4 px-4 py-3 border-t border-slate-100 dark:border-white/5">
@@ -236,10 +231,3 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
 };
 
 export default WorkloadHeatmap;
-
-
-
-
-
-
-

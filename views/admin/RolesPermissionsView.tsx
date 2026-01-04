@@ -1,40 +1,41 @@
 /**
  * RolesPermissionsView - Account Types & Project Roles Management
- * 
+ *
  * Structure:
  * 1. Account Types (Organization Level) - OWNER, ADMIN, USER - System defined, not editable
  * 2. Project Roles (Project Level) - PM, Team Lead, Member, Consultant, Viewer - Editable permissions
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Key,
-    Shield,
-    Plus,
-    Edit,
-    Trash2,
+    AlertTriangle,
+    Briefcase,
+    Building2,
     Check,
-    X,
-    RefreshCw,
     ChevronDown,
     ChevronRight,
-    Lock,
     Crown,
-    Users,
+    Edit,
     Eye,
-    Briefcase,
-    UserCog,
-    Building2,
     FolderKanban,
-    AlertTriangle,
-    Info
+    Info,
+    Key,
+    Lock,
+    Plus,
+    RefreshCw,
+    Shield,
+    Trash2,
+    UserCog,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
-import { CustomRole, UserRole, RolePermission } from '../../types';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
+import { CustomRole, RolePermission, UserRole } from '../../types';
 
 // ============================================
 // ACCOUNT TYPES (Organization Level)
@@ -52,8 +53,8 @@ const ACCOUNT_TYPES = [
             'Manage billing and subscription',
             'Transfer organization ownership',
             'Delete organization',
-            'Access all projects'
-        ]
+            'Access all projects',
+        ],
     },
     {
         id: 'ADMIN',
@@ -66,8 +67,8 @@ const ACCOUNT_TYPES = [
             'Create and manage all projects',
             'Configure organization settings',
             'Manage AI settings and policies',
-            'Cannot access billing or transfer ownership'
-        ]
+            'Cannot access billing or transfer ownership',
+        ],
     },
     {
         id: 'USER',
@@ -80,9 +81,9 @@ const ACCOUNT_TYPES = [
             'Work on tasks and initiatives',
             'Use AI features (per project settings)',
             'Cannot manage organization settings',
-            'Cannot invite other users'
-        ]
-    }
+            'Cannot invite other users',
+        ],
+    },
 ];
 
 // ============================================
@@ -98,7 +99,13 @@ const PROJECT_ROLES = [
         icon: Crown,
         color: 'amber',
         isSystem: true,
-        defaultPermissions: ['approve_budget', 'approve_gates', 'strategic_decisions', 'view_all', 'escalation_authority']
+        defaultPermissions: [
+            'approve_budget',
+            'approve_gates',
+            'strategic_decisions',
+            'view_all',
+            'escalation_authority',
+        ],
     },
     {
         id: 'PROJECT_MANAGER',
@@ -108,7 +115,15 @@ const PROJECT_ROLES = [
         icon: Briefcase,
         color: 'blue',
         isSystem: true,
-        defaultPermissions: ['manage_tasks', 'assign_work', 'manage_team', 'approve_changes', 'view_all', 'use_ai', 'manage_risks']
+        defaultPermissions: [
+            'manage_tasks',
+            'assign_work',
+            'manage_team',
+            'approve_changes',
+            'view_all',
+            'use_ai',
+            'manage_risks',
+        ],
     },
     {
         id: 'TEAM_LEAD',
@@ -118,7 +133,7 @@ const PROJECT_ROLES = [
         icon: UserCog,
         color: 'indigo',
         isSystem: true,
-        defaultPermissions: ['manage_tasks', 'assign_work', 'view_all', 'use_ai', 'technical_decisions']
+        defaultPermissions: ['manage_tasks', 'assign_work', 'view_all', 'use_ai', 'technical_decisions'],
     },
     {
         id: 'TEAM_MEMBER',
@@ -128,7 +143,7 @@ const PROJECT_ROLES = [
         icon: Users,
         color: 'green',
         isSystem: true,
-        defaultPermissions: ['view_assigned', 'update_own_tasks', 'add_comments', 'use_ai']
+        defaultPermissions: ['view_assigned', 'update_own_tasks', 'add_comments', 'use_ai'],
     },
     {
         id: 'CONSULTANT',
@@ -138,7 +153,7 @@ const PROJECT_ROLES = [
         icon: UserCog,
         color: 'purple',
         isSystem: true,
-        defaultPermissions: [] // Initially no permissions - configured per invite
+        defaultPermissions: [], // Initially no permissions - configured per invite
     },
     {
         id: 'STAKEHOLDER',
@@ -148,8 +163,8 @@ const PROJECT_ROLES = [
         icon: Eye,
         color: 'slate',
         isSystem: true,
-        defaultPermissions: ['view_summary', 'add_comments']
-    }
+        defaultPermissions: ['view_summary', 'add_comments'],
+    },
 ];
 
 // Project-level permission definitions
@@ -159,16 +174,16 @@ const PROJECT_PERMISSIONS = [
         permissions: [
             { id: 'view_all', label: 'View All', description: 'See all project data' },
             { id: 'view_assigned', label: 'View Assigned', description: 'See only assigned items' },
-            { id: 'view_summary', label: 'View Summary', description: 'See high-level status only' }
-        ]
+            { id: 'view_summary', label: 'View Summary', description: 'See high-level status only' },
+        ],
     },
     {
         category: 'Tasks & Work',
         permissions: [
             { id: 'manage_tasks', label: 'Manage Tasks', description: 'Create, edit, delete tasks' },
             { id: 'assign_work', label: 'Assign Work', description: 'Assign tasks to team members' },
-            { id: 'update_own_tasks', label: 'Update Own Tasks', description: 'Update assigned task status' }
-        ]
+            { id: 'update_own_tasks', label: 'Update Own Tasks', description: 'Update assigned task status' },
+        ],
     },
     {
         category: 'Approvals & Decisions',
@@ -176,25 +191,33 @@ const PROJECT_PERMISSIONS = [
             { id: 'approve_gates', label: 'Approve Stage Gates', description: 'Approve phase transitions' },
             { id: 'approve_changes', label: 'Approve Changes', description: 'Approve change requests' },
             { id: 'approve_budget', label: 'Approve Budget', description: 'Approve budget changes' },
-            { id: 'strategic_decisions', label: 'Strategic Decisions', description: 'Make strategic project decisions' },
-            { id: 'technical_decisions', label: 'Technical Decisions', description: 'Make technical decisions' }
-        ]
+            {
+                id: 'strategic_decisions',
+                label: 'Strategic Decisions',
+                description: 'Make strategic project decisions',
+            },
+            { id: 'technical_decisions', label: 'Technical Decisions', description: 'Make technical decisions' },
+        ],
     },
     {
         category: 'Team & Collaboration',
         permissions: [
             { id: 'manage_team', label: 'Manage Team', description: 'Add/remove project team members' },
             { id: 'add_comments', label: 'Add Comments', description: 'Comment on tasks and items' },
-            { id: 'escalation_authority', label: 'Escalation Authority', description: 'Receive and handle escalations' }
-        ]
+            {
+                id: 'escalation_authority',
+                label: 'Escalation Authority',
+                description: 'Receive and handle escalations',
+            },
+        ],
     },
     {
         category: 'Risk & AI',
         permissions: [
             { id: 'manage_risks', label: 'Manage Risks', description: 'Create and manage risk register' },
-            { id: 'use_ai', label: 'Use AI Features', description: 'Access AI assistant for project' }
-        ]
-    }
+            { id: 'use_ai', label: 'Use AI Features', description: 'Access AI assistant for project' },
+        ],
+    },
 ];
 
 interface RolesPermissionsViewProps {
@@ -218,7 +241,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         name: '',
         description: '',
         level: 3,
-        permissions: [] as string[]
+        permissions: [] as string[],
     });
 
     const [saving, setSaving] = useState(false);
@@ -235,7 +258,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             name: '',
             description: '',
             level: 3,
-            permissions: []
+            permissions: [],
         });
         setShowCreateModal(true);
     };
@@ -246,7 +269,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             name: role.name,
             description: role.description || '',
             level: role.level || 3,
-            permissions: role.defaultPermissions || []
+            permissions: role.defaultPermissions || [],
         });
         setShowCreateModal(true);
     };
@@ -271,15 +294,15 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     level: formData.level,
                     defaultPermissions: formData.permissions,
                     isSystem: false,
-                    color: 'cyan'
+                    color: 'cyan',
                 };
-                setCustomProjectRoles(prev => [...prev, newRole]);
+                setCustomProjectRoles((prev) => [...prev, newRole]);
             } else {
-                setCustomProjectRoles(prev => prev.map(r => 
-                    r.id === editingRole.id 
-                        ? { ...r, ...formData, defaultPermissions: formData.permissions }
-                        : r
-                ));
+                setCustomProjectRoles((prev) =>
+                    prev.map((r) =>
+                        r.id === editingRole.id ? { ...r, ...formData, defaultPermissions: formData.permissions } : r,
+                    ),
+                );
             }
         } catch (error) {
             toast.error('Failed to save role');
@@ -289,24 +312,22 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
     const handleDeleteRole = (roleId: string) => {
         if (!confirm('Are you sure you want to delete this custom role?')) return;
-        setCustomProjectRoles(prev => prev.filter(r => r.id !== roleId));
+        setCustomProjectRoles((prev) => prev.filter((r) => r.id !== roleId));
         toast.success('Role deleted');
     };
 
     const togglePermission = (permId: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             permissions: prev.permissions.includes(permId)
-                ? prev.permissions.filter(p => p !== permId)
-                : [...prev.permissions, permId]
+                ? prev.permissions.filter((p) => p !== permId)
+                : [...prev.permissions, permId],
         }));
     };
 
     const toggleCategory = (category: string) => {
-        setExpandedCategories(prev =>
-            prev.includes(category)
-                ? prev.filter(c => c !== category)
-                : [...prev, category]
+        setExpandedCategories((prev) =>
+            prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
         );
     };
 
@@ -319,7 +340,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             green: { bg: 'bg-green-500', text: 'text-green-500', light: 'bg-green-100 dark:bg-green-900/30' },
             purple: { bg: 'bg-purple-500', text: 'text-purple-500', light: 'bg-purple-100 dark:bg-purple-900/30' },
             slate: { bg: 'bg-slate-500', text: 'text-slate-500', light: 'bg-slate-100 dark:bg-slate-900/30' },
-            cyan: { bg: 'bg-cyan-500', text: 'text-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/30' }
+            cyan: { bg: 'bg-cyan-500', text: 'text-cyan-500', light: 'bg-cyan-100 dark:bg-cyan-900/30' },
         };
         return colors[color] || colors.slate;
     };
@@ -330,7 +351,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             1: 'Manager',
             2: 'Lead',
             3: 'Member',
-            4: 'Observer'
+            4: 'Observer',
         };
         return labels[level] || 'Custom';
     };
@@ -401,15 +422,16 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                         <div className="text-sm text-blue-800 dark:text-blue-300">
                             <p className="font-medium">Account Types are organization-level permissions</p>
                             <p className="mt-1 text-blue-600 dark:text-blue-400">
-                                These determine what users can do across the entire organization. Account types are system-defined and cannot be modified.
-                                You can assign account types to users in the "Users" tab.
+                                These determine what users can do across the entire organization. Account types are
+                                system-defined and cannot be modified. You can assign account types to users in the
+                                "Users" tab.
                             </p>
                         </div>
                     </div>
 
                     {/* Account Types Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {ACCOUNT_TYPES.map(type => {
+                        {ACCOUNT_TYPES.map((type) => {
                             const Icon = type.icon;
                             const colors = getColorClasses(type.color);
 
@@ -424,7 +446,9 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h4 className="font-semibold text-slate-900 dark:text-white">{type.name}</h4>
+                                                <h4 className="font-semibold text-slate-900 dark:text-white">
+                                                    {type.name}
+                                                </h4>
                                                 <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 text-[10px] rounded">
                                                     SYSTEM
                                                 </span>
@@ -433,10 +457,15 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Capabilities</p>
+                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                            Capabilities
+                                        </p>
                                         <ul className="space-y-1.5">
                                             {type.capabilities.map((cap, i) => (
-                                                <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                                <li
+                                                    key={i}
+                                                    className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400"
+                                                >
                                                     <Check size={12} className="text-green-500 mt-0.5 flex-shrink-0" />
                                                     {cap}
                                                 </li>
@@ -460,7 +489,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                             <div className="text-sm text-purple-800 dark:text-purple-300">
                                 <p className="font-medium">Project Roles define permissions within specific projects</p>
                                 <p className="mt-1 text-purple-600 dark:text-purple-400">
-                                    Based on PRINCE2 & PMBOK standards. You can customize permissions for each role or create custom roles.
+                                    Based on PRINCE2 & PMBOK standards. You can customize permissions for each role or
+                                    create custom roles.
                                 </p>
                             </div>
                         </div>
@@ -474,8 +504,8 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     </div>
 
                     {/* Project Roles by Level */}
-                    {[0, 1, 2, 3, 4].map(level => {
-                        const rolesAtLevel = allProjectRoles.filter(r => r.level === level);
+                    {[0, 1, 2, 3, 4].map((level) => {
+                        const rolesAtLevel = allProjectRoles.filter((r) => r.level === level);
                         if (rolesAtLevel.length === 0) return null;
 
                         return (
@@ -487,7 +517,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                     Level {level} - {getLevelLabel(level)}
                                 </h3>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                    {rolesAtLevel.map(role => {
+                                    {rolesAtLevel.map((role) => {
                                         const Icon = role.icon || UserCog;
                                         const colors = getColorClasses(role.color);
                                         const isSelected = selectedRole === role.id;
@@ -522,7 +552,9 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-xs text-slate-500 mt-0.5">{role.description}</p>
+                                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                                {role.description}
+                                                            </p>
                                                             <div className="flex items-center gap-2 mt-2">
                                                                 <span className="text-[10px] text-slate-400">
                                                                     {role.defaultPermissions?.length || 0} permissions
@@ -533,13 +565,19 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                                     {!role.isSystem && (
                                                         <div className="flex items-center gap-1">
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); openEditModal(role); }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    openEditModal(role);
+                                                                }}
                                                                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-400 hover:text-slate-600"
                                                             >
                                                                 <Edit size={14} />
                                                             </button>
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRole(role.id); }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteRole(role.id);
+                                                                }}
                                                                 className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-slate-400 hover:text-red-600"
                                                             >
                                                                 <Trash2 size={14} />
@@ -560,11 +598,13 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                         <div className="p-5 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                                    {allProjectRoles.find(r => r.id === selectedRole)?.name} - Permissions
+                                    {allProjectRoles.find((r) => r.id === selectedRole)?.name} - Permissions
                                 </h3>
-                                {!allProjectRoles.find(r => r.id === selectedRole)?.isSystem && (
+                                {!allProjectRoles.find((r) => r.id === selectedRole)?.isSystem && (
                                     <button
-                                        onClick={() => openEditModal(allProjectRoles.find(r => r.id === selectedRole))}
+                                        onClick={() =>
+                                            openEditModal(allProjectRoles.find((r) => r.id === selectedRole))
+                                        }
                                         className="text-xs text-violet-600 hover:text-violet-500 font-medium"
                                     >
                                         Edit Permissions
@@ -572,28 +612,33 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                 )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {PROJECT_PERMISSIONS.map(category => (
+                                {PROJECT_PERMISSIONS.map((category) => (
                                     <div key={category.category}>
                                         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                                             {category.category}
                                         </p>
                                         <div className="space-y-1.5">
-                                            {category.permissions.map(perm => {
-                                                const role = allProjectRoles.find(r => r.id === selectedRole);
+                                            {category.permissions.map((perm) => {
+                                                const role = allProjectRoles.find((r) => r.id === selectedRole);
                                                 const hasPermission = role?.defaultPermissions?.includes(perm.id);
                                                 return (
-                                                    <div
-                                                        key={perm.id}
-                                                        className="flex items-center gap-2 text-sm"
-                                                    >
-                                                        <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                                                            hasPermission
-                                                                ? 'bg-green-500 text-white'
-                                                                : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
-                                                        }`}>
+                                                    <div key={perm.id} className="flex items-center gap-2 text-sm">
+                                                        <div
+                                                            className={`w-5 h-5 rounded flex items-center justify-center ${
+                                                                hasPermission
+                                                                    ? 'bg-green-500 text-white'
+                                                                    : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
+                                                            }`}
+                                                        >
                                                             {hasPermission ? <Check size={12} /> : <X size={12} />}
                                                         </div>
-                                                        <span className={hasPermission ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
+                                                        <span
+                                                            className={
+                                                                hasPermission
+                                                                    ? 'text-slate-900 dark:text-white'
+                                                                    : 'text-slate-400'
+                                                            }
+                                                        >
                                                             {perm.label}
                                                         </span>
                                                     </div>
@@ -651,7 +696,9 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                         </label>
                                         <select
                                             value={formData.level}
-                                            onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, level: parseInt(e.target.value) })
+                                            }
                                             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                         >
                                             <option value={1}>Level 1 - Manager</option>
@@ -680,13 +727,13 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                         Permissions
                                     </label>
                                     <div className="space-y-4 max-h-64 overflow-y-auto p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
-                                        {PROJECT_PERMISSIONS.map(category => (
+                                        {PROJECT_PERMISSIONS.map((category) => (
                                             <div key={category.category}>
                                                 <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
                                                     {category.category}
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {category.permissions.map(perm => (
+                                                    {category.permissions.map((perm) => (
                                                         <button
                                                             key={perm.id}
                                                             type="button"

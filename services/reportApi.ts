@@ -1,4 +1,4 @@
-import { Report, ReportBlock, BlockType } from '../types';
+import { BlockType, Report, ReportBlock } from '../types';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 const API_URL = '/api';
@@ -6,7 +6,7 @@ const getHeaders = () => {
     const token = localStorage.getItem('token');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        Authorization: token ? `Bearer ${token}` : '',
     };
 };
 export const reportApi = {
@@ -26,17 +26,27 @@ export const reportApi = {
         const res = await fetch(`${API_URL}/reports/draft`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ projectId, title, sources })
+            body: JSON.stringify({ projectId, title, sources }),
         });
         if (!res.ok) throw new Error('Failed to create draft');
         return res.json();
     },
     // Add Block
-    addBlock: async (reportId: string, block: { type: BlockType; title?: string; module?: string; content?: unknown; position: number; meta?: unknown }): Promise<{ id: string }> => {
+    addBlock: async (
+        reportId: string,
+        block: {
+            type: BlockType;
+            title?: string;
+            module?: string;
+            content?: unknown;
+            position: number;
+            meta?: unknown;
+        },
+    ): Promise<{ id: string }> => {
         const res = await fetch(`${API_URL}/reports/${reportId}/blocks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(block)
+            body: JSON.stringify(block),
         });
         if (!res.ok) throw new Error('Failed to add block');
         return res.json();
@@ -46,7 +56,7 @@ export const reportApi = {
         const res = await fetch(`${API_URL}/reports/${reportId}/blocks/${blockId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update block');
     },
@@ -55,7 +65,7 @@ export const reportApi = {
         const res = await fetch(`${API_URL}/reports/${reportId}/reorder`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ blockOrder })
+            body: JSON.stringify({ blockOrder }),
         });
         if (!res.ok) throw new Error('Failed to reorder blocks');
     },
@@ -64,7 +74,7 @@ export const reportApi = {
         const res = await fetch(`${API_URL}/reports/${reportId}/blocks/${blockId}/regenerate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ instructions })
+            body: JSON.stringify({ instructions }),
         });
         if (!res.ok) throw new Error('Failed to regenerate block');
         return res.json();
@@ -75,8 +85,8 @@ export const reportApi = {
         const res = await fetch(`${API_URL}/reports/${reportId}/generate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ instructions })
+            body: JSON.stringify({ instructions }),
         });
         if (!res.ok) throw new Error('Failed to generate report');
-    }
+    },
 };

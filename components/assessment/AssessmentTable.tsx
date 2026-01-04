@@ -1,6 +1,6 @@
 /**
  * AssessmentTable
- * 
+ *
  * Table view for assessments with status filtering:
  * - Draft (in progress)
  * - In Review
@@ -8,23 +8,24 @@
  * - All
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Plus,
-    Search,
-    Filter,
+    AlertCircle,
+    CheckCircle2,
+    ChevronDown,
+    Clock,
     Edit,
     Eye,
     FileOutput,
-    Clock,
-    CheckCircle2,
-    AlertCircle,
-    MoreVertical,
-    RefreshCw,
+    Filter,
     Loader2,
-    ChevronDown,
-    Map
+    Map,
+    MoreVertical,
+    Plus,
+    RefreshCw,
+    Search,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { WorkflowState } from '../../types';
 
 interface Assessment {
@@ -51,53 +52,53 @@ interface AssessmentTableProps {
 }
 
 const STATUS_CONFIG: Record<WorkflowState, { label: string; color: string; icon: React.ReactNode }> = {
-    'DRAFT': {
+    DRAFT: {
         label: 'Draft',
         color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-        icon: <Edit size={14} />
+        icon: <Edit size={14} />,
     },
-    'IN_REVIEW': {
+    IN_REVIEW: {
         label: 'In Review',
         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-        icon: <Clock size={14} />
+        icon: <Clock size={14} />,
     },
-    'AWAITING_APPROVAL': {
+    AWAITING_APPROVAL: {
         label: 'Awaiting Approval',
         color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-        icon: <AlertCircle size={14} />
+        icon: <AlertCircle size={14} />,
     },
-    'APPROVED': {
+    APPROVED: {
         label: 'Approved',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 size={14} />
+        icon: <CheckCircle2 size={14} />,
     },
-    'REJECTED': {
+    REJECTED: {
         label: 'Rejected',
         color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-        icon: <AlertCircle size={14} />
+        icon: <AlertCircle size={14} />,
     },
-    'ARCHIVED': {
+    ARCHIVED: {
         label: 'Archived',
         color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
-        icon: <Clock size={14} />
+        icon: <Clock size={14} />,
     },
-    'IN_PROGRESS': {
+    IN_PROGRESS: {
         label: 'In Progress',
         color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-        icon: <Edit size={14} />
+        icon: <Edit size={14} />,
     },
-    'COMPLETED': {
+    COMPLETED: {
         label: 'Completed',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 size={14} />
-    }
+        icon: <CheckCircle2 size={14} />,
+    },
 };
 
 export const AssessmentTable: React.FC<AssessmentTableProps> = ({
     projectId,
     onOpenInMap,
     onNewAssessment,
-    onCreateReport
+    onCreateReport,
 }) => {
     // State
     const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -113,11 +114,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         try {
             const token = localStorage.getItem('token');
             // Build URL with optional projectId filter
-            const url = projectId
-                ? `/api/assessments?projectId=${projectId}`
-                : '/api/assessments';
+            const url = projectId ? `/api/assessments?projectId=${projectId}` : '/api/assessments';
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
@@ -137,11 +136,12 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
     }, [fetchAssessments]);
 
     // Filter assessments
-    const filteredAssessments = assessments.filter(assessment => {
+    const filteredAssessments = assessments.filter((assessment) => {
         // Status filter
         if (filterStatus !== 'all') {
             if (filterStatus === 'draft' && assessment.status !== 'DRAFT') return false;
-            if (filterStatus === 'in_review' && !['IN_REVIEW', 'AWAITING_APPROVAL'].includes(assessment.status)) return false;
+            if (filterStatus === 'in_review' && !['IN_REVIEW', 'AWAITING_APPROVAL'].includes(assessment.status))
+                return false;
             if (filterStatus === 'approved' && assessment.status !== 'APPROVED') return false;
         }
 
@@ -150,10 +150,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             const query = searchQuery.toLowerCase();
             const name = assessment.name || '';
             const projectName = assessment.projectName || '';
-            return (
-                name.toLowerCase().includes(query) ||
-                projectName.toLowerCase().includes(query)
-            );
+            return name.toLowerCase().includes(query) || projectName.toLowerCase().includes(query);
         }
 
         return true;
@@ -165,16 +162,16 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
     // Stats
     const stats = {
         total: assessments.length,
-        draft: assessments.filter(a => a.status === 'DRAFT').length,
-        inReview: assessments.filter(a => ['IN_REVIEW', 'AWAITING_APPROVAL'].includes(a.status)).length,
-        approved: assessments.filter(a => a.status === 'APPROVED').length
+        draft: assessments.filter((a) => a.status === 'DRAFT').length,
+        inReview: assessments.filter((a) => ['IN_REVIEW', 'AWAITING_APPROVAL'].includes(a.status)).length,
+        approved: assessments.filter((a) => a.status === 'APPROVED').length,
     };
 
     return (
@@ -183,9 +180,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-                            Assessments
-                        </h2>
+                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">Assessments</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Manage your digital maturity assessments
                         </p>
@@ -311,7 +306,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
+                                            >
                                                 {statusConfig.icon}
                                                 {statusConfig.label}
                                             </span>
@@ -362,7 +359,11 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                                                 {/* More menu */}
                                                 <div className="relative">
                                                     <button
-                                                        onClick={() => setActiveRowMenu(activeRowMenu === assessment.id ? null : assessment.id)}
+                                                        onClick={() =>
+                                                            setActiveRowMenu(
+                                                                activeRowMenu === assessment.id ? null : assessment.id,
+                                                            )
+                                                        }
                                                         className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                                     >
                                                         <MoreVertical size={16} />
@@ -400,4 +401,3 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         </div>
     );
 };
-

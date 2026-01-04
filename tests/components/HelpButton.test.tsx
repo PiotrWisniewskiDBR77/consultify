@@ -4,8 +4,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import HelpButton from '../../../components/HelpButton';
-import { useHelp } from '../../../contexts/HelpContext';
+import HelpButton from '../../components/HelpButton';
+import { useHelp } from '../../contexts/HelpContext';
 
 vi.mock('../../../contexts/HelpContext', () => ({
     useHelp: vi.fn()
@@ -103,6 +103,7 @@ describe('HelpButton Component', () => {
         expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
     });
 });
+
 
 
 

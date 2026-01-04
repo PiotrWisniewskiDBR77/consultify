@@ -1,6 +1,6 @@
 /**
  * PrivacyDataSettings Component
- * 
+ *
  * Privacy and data management settings with GDPR compliance:
  * - Activity status visibility
  * - Profile visibility
@@ -11,29 +11,30 @@
  * - Analytics sharing
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Shield, 
-    Eye, 
-    EyeOff, 
-    Download, 
-    Trash2, 
-    UserCircle,
+import {
     Activity,
-    Globe,
-    Mail,
-    BarChart3,
-    Save,
-    Loader2,
     AlertTriangle,
+    BarChart3,
     Check,
+    Clock,
+    Download,
+    Eye,
+    EyeOff,
     FileDown,
-    Clock
+    Globe,
+    Loader2,
+    Mail,
+    Save,
+    Shield,
+    Trash2,
+    UserCircle,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface PrivacyDataSettingsProps {
@@ -47,17 +48,17 @@ interface PrivacyPreferences {
     showOnlineStatus: boolean;
     showActivityStatus: boolean;
     showLastSeen: boolean;
-    
+
     // Data Sharing
     shareAnalytics: boolean;
     shareUsageData: boolean;
     improveAI: boolean;
-    
+
     // Marketing
     marketingEmails: boolean;
     productUpdates: boolean;
     newsletterSubscribed: boolean;
-    
+
     // Third Party
     allowThirdPartyIntegrations: boolean;
 }
@@ -73,7 +74,7 @@ const DEFAULT_PREFERENCES: PrivacyPreferences = {
     marketingEmails: false,
     productUpdates: true,
     newsletterSubscribed: false,
-    allowThirdPartyIntegrations: true
+    allowThirdPartyIntegrations: true,
 };
 
 export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ currentUser, onUpdateUser }) => {
@@ -120,20 +121,22 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
     };
 
     const updatePreference = <K extends keyof PrivacyPreferences>(key: K, value: PrivacyPreferences[K]) => {
-        setPreferences(prev => ({ ...prev, [key]: value }));
+        setPreferences((prev) => ({ ...prev, [key]: value }));
     };
 
     const handleExportData = async () => {
         setExportingData(true);
         try {
             const response = await Api.post('/settings/export-data', {});
-            
+
             // Trigger download if blob is returned
             if (response.downloadUrl) {
                 window.open(response.downloadUrl, '_blank');
             }
-            
-            toast.success(t('settings.privacy.exportStarted', 'Data export started. You will receive an email when ready.'));
+
+            toast.success(
+                t('settings.privacy.exportStarted', 'Data export started. You will receive an email when ready.'),
+            );
             setLastExportDate(new Date().toISOString());
         } catch (error: any) {
             toast.error(error.message || t('settings.privacy.exportError', 'Failed to export data'));
@@ -150,11 +153,16 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
 
         setDeletingAccount(true);
         try {
-            await Api.post('/settings/request-deletion', { 
+            await Api.post('/settings/request-deletion', {
                 email: currentUser.email,
-                reason: 'user_requested' 
+                reason: 'user_requested',
             });
-            toast.success(t('settings.privacy.deletionRequested', 'Account deletion request submitted. You will receive a confirmation email.'));
+            toast.success(
+                t(
+                    'settings.privacy.deletionRequested',
+                    'Account deletion request submitted. You will receive a confirmation email.',
+                ),
+            );
             setShowDeleteModal(false);
         } catch (error: any) {
             toast.error(error.message || t('settings.privacy.deletionError', 'Failed to submit deletion request'));
@@ -172,27 +180,27 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
     }
 
     const visibilityOptions = [
-        { 
-            value: 'public', 
+        {
+            value: 'public',
             label: t('settings.privacy.visibility.public', 'Public'),
-            description: t('settings.privacy.visibility.publicDesc', 'Anyone can view your profile')
+            description: t('settings.privacy.visibility.publicDesc', 'Anyone can view your profile'),
         },
-        { 
-            value: 'organization', 
+        {
+            value: 'organization',
             label: t('settings.privacy.visibility.organization', 'Organization Only'),
-            description: t('settings.privacy.visibility.organizationDesc', 'Only members of your organization')
+            description: t('settings.privacy.visibility.organizationDesc', 'Only members of your organization'),
         },
-        { 
-            value: 'private', 
+        {
+            value: 'private',
             label: t('settings.privacy.visibility.private', 'Private'),
-            description: t('settings.privacy.visibility.privateDesc', 'Only you can see your profile')
-        }
+            description: t('settings.privacy.visibility.privateDesc', 'Only you can see your profile'),
+        },
     ];
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-privacy" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -223,9 +231,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.privacy.profileVisibilityDescription', 'Control who can see your profile information')}
                 </p>
-                
+
                 <div className="space-y-3">
-                    {visibilityOptions.map(option => {
+                    {visibilityOptions.map((option) => {
                         const isSelected = preferences.profileVisibility === option.value;
                         return (
                             <label
@@ -242,16 +250,27 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                         name="profileVisibility"
                                         value={option.value}
                                         checked={isSelected}
-                                        onChange={() => updatePreference('profileVisibility', option.value as PrivacyPreferences['profileVisibility'])}
+                                        onChange={() =>
+                                            updatePreference(
+                                                'profileVisibility',
+                                                option.value as PrivacyPreferences['profileVisibility'],
+                                            )
+                                        }
                                         className="sr-only"
                                     />
-                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                        isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300 dark:border-slate-600'
-                                    }`}>
+                                    <div
+                                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                            isSelected
+                                                ? 'border-blue-500 bg-blue-500'
+                                                : 'border-slate-300 dark:border-slate-600'
+                                        }`}
+                                    >
                                         {isSelected && <Check size={12} className="text-white" />}
                                     </div>
                                     <div>
-                                        <span className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                        <span
+                                            className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}
+                                        >
                                             {option.label}
                                         </span>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -259,7 +278,11 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                         </p>
                                     </div>
                                 </div>
-                                {isSelected ? <Eye size={18} className="text-blue-500" /> : <EyeOff size={18} className="text-slate-400" />}
+                                {isSelected ? (
+                                    <Eye size={18} className="text-blue-500" />
+                                ) : (
+                                    <EyeOff size={18} className="text-slate-400" />
+                                )}
                             </label>
                         );
                     })}
@@ -272,7 +295,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                     <Activity size={20} className="text-green-500" />
                     {t('settings.privacy.activityStatus', 'Activity & Status')}
                 </h3>
-                
+
                 <div className="space-y-4">
                     {/* Online Status */}
                     <div className="flex items-center justify-between py-3">
@@ -282,7 +305,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.showOnlineStatus', 'Show Online Status')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.showOnlineStatusDescription', 'Let others see when you are online')}
+                                {t(
+                                    'settings.privacy.showOnlineStatusDescription',
+                                    'Let others see when you are online',
+                                )}
                             </p>
                         </div>
                         <button
@@ -291,7 +317,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.showOnlineStatus ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -302,7 +330,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.showActivityStatus', 'Show Activity Status')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.showActivityStatusDescription', 'Show what you are currently working on')}
+                                {t(
+                                    'settings.privacy.showActivityStatusDescription',
+                                    'Show what you are currently working on',
+                                )}
                             </p>
                         </div>
                         <button
@@ -311,7 +342,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.showActivityStatus ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.showActivityStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.showActivityStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -332,7 +365,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.showLastSeen ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.showLastSeen ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.showLastSeen ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -344,7 +379,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                     <BarChart3 size={20} className="text-purple-500" />
                     {t('settings.privacy.dataSharing', 'Data Sharing')}
                 </h3>
-                
+
                 <div className="space-y-4">
                     {/* Analytics */}
                     <div className="flex items-center justify-between py-3">
@@ -353,7 +388,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.shareAnalytics', 'Share Analytics Data')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.shareAnalyticsDescription', 'Help us improve with anonymous usage statistics')}
+                                {t(
+                                    'settings.privacy.shareAnalyticsDescription',
+                                    'Help us improve with anonymous usage statistics',
+                                )}
                             </p>
                         </div>
                         <button
@@ -362,7 +400,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.shareAnalytics ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.shareAnalytics ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.shareAnalytics ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -373,7 +413,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.improveAI', 'Help Improve AI')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.improveAIDescription', 'Allow anonymized data to improve AI responses')}
+                                {t(
+                                    'settings.privacy.improveAIDescription',
+                                    'Allow anonymized data to improve AI responses',
+                                )}
                             </p>
                         </div>
                         <button
@@ -382,7 +425,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.improveAI ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.improveAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.improveAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -394,16 +439,28 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.thirdParty', 'Third-Party Integrations')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.thirdPartyDescription', 'Allow connected apps to access your data')}
+                                {t(
+                                    'settings.privacy.thirdPartyDescription',
+                                    'Allow connected apps to access your data',
+                                )}
                             </p>
                         </div>
                         <button
-                            onClick={() => updatePreference('allowThirdPartyIntegrations', !preferences.allowThirdPartyIntegrations)}
+                            onClick={() =>
+                                updatePreference(
+                                    'allowThirdPartyIntegrations',
+                                    !preferences.allowThirdPartyIntegrations,
+                                )
+                            }
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                preferences.allowThirdPartyIntegrations ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                                preferences.allowThirdPartyIntegrations
+                                    ? 'bg-purple-600'
+                                    : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.allowThirdPartyIntegrations ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.allowThirdPartyIntegrations ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -415,7 +472,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                     <Mail size={20} className="text-amber-500" />
                     {t('settings.privacy.marketing', 'Communication Preferences')}
                 </h3>
-                
+
                 <div className="space-y-4">
                     {/* Product Updates */}
                     <div className="flex items-center justify-between py-3">
@@ -424,7 +481,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.productUpdates', 'Product Updates')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.productUpdatesDescription', 'Receive emails about new features and improvements')}
+                                {t(
+                                    'settings.privacy.productUpdatesDescription',
+                                    'Receive emails about new features and improvements',
+                                )}
                             </p>
                         </div>
                         <button
@@ -433,7 +493,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.productUpdates ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.productUpdates ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.productUpdates ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -444,7 +506,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 {t('settings.privacy.marketingEmails', 'Marketing Emails')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.privacy.marketingEmailsDescription', 'Receive promotional offers and marketing content')}
+                                {t(
+                                    'settings.privacy.marketingEmailsDescription',
+                                    'Receive promotional offers and marketing content',
+                                )}
                             </p>
                         </div>
                         <button
@@ -453,7 +518,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.marketingEmails ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.marketingEmails ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.marketingEmails ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -473,7 +540,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 preferences.newsletterSubscribed ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.newsletterSubscribed ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.newsletterSubscribed ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
                 </div>
@@ -486,9 +555,12 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                     {t('settings.privacy.dataManagement', 'Data Management')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    {t('settings.privacy.dataManagementDescription', 'Export or delete your personal data in compliance with GDPR')}
+                    {t(
+                        'settings.privacy.dataManagementDescription',
+                        'Export or delete your personal data in compliance with GDPR',
+                    )}
                 </p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Export Data */}
                     <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-white/5">
@@ -501,13 +573,17 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                     {t('settings.privacy.exportData', 'Export Your Data')}
                                 </h4>
                                 <p className="text-xs text-slate-500">
-                                    {t('settings.privacy.exportDataDescription', 'Download all your data in JSON format')}
+                                    {t(
+                                        'settings.privacy.exportDataDescription',
+                                        'Download all your data in JSON format',
+                                    )}
                                 </p>
                             </div>
                         </div>
                         {lastExportDate && (
                             <p className="text-xs text-slate-500 mb-3">
-                                {t('settings.privacy.lastExport', 'Last export:')} {new Date(lastExportDate).toLocaleDateString()}
+                                {t('settings.privacy.lastExport', 'Last export:')}{' '}
+                                {new Date(lastExportDate).toLocaleDateString()}
                             </p>
                         )}
                         <button
@@ -516,7 +592,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors disabled:opacity-50"
                         >
                             {exportingData ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                            {exportingData ? t('settings.privacy.exporting', 'Exporting...') : t('settings.privacy.requestExport', 'Request Export')}
+                            {exportingData
+                                ? t('settings.privacy.exporting', 'Exporting...')
+                                : t('settings.privacy.requestExport', 'Request Export')}
                         </button>
                     </div>
 
@@ -559,14 +637,20 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                     {t('settings.privacy.confirmDeletion', 'Confirm Account Deletion')}
                                 </h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {t('settings.privacy.deletionWarningDetail', 'This will permanently delete all your data')}
+                                    {t(
+                                        'settings.privacy.deletionWarningDetail',
+                                        'This will permanently delete all your data',
+                                    )}
                                 </p>
                             </div>
                         </div>
 
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-4 mb-4">
                             <p className="text-sm text-red-700 dark:text-red-300">
-                                {t('settings.privacy.deletionConsequences', 'You will lose access to all your projects, tasks, and data. This action cannot be undone.')}
+                                {t(
+                                    'settings.privacy.deletionConsequences',
+                                    'You will lose access to all your projects, tasks, and data. This action cannot be undone.',
+                                )}
                             </p>
                         </div>
 
@@ -599,7 +683,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-50 font-medium flex items-center gap-2"
                             >
                                 {deletingAccount && <Loader2 size={16} className="animate-spin" />}
-                                {deletingAccount ? t('settings.privacy.deleting', 'Deleting...') : t('settings.privacy.permanentlyDelete', 'Permanently Delete')}
+                                {deletingAccount
+                                    ? t('settings.privacy.deleting', 'Deleting...')
+                                    : t('settings.privacy.permanentlyDelete', 'Permanently Delete')}
                             </button>
                         </div>
                     </div>
@@ -610,11 +696,4 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({ curren
 };
 
 export default PrivacyDataSettings;
-
-
-
-
-
-
-
 

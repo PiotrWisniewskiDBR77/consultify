@@ -13,7 +13,7 @@ import { proactiveNudges  } from '../services/ai/proactiveNudges.js';
 router.use(verifyToken);
 
 /**
- * GET /api/ai/nudges/pending
+ * GET /a../services/ai/nudges/pending
  * Get pending nudges for the current user
  */
 router.get('/pending', async (req, res) => {
@@ -37,7 +37,7 @@ router.get('/pending', async (req, res) => {
 });
 
 /**
- * POST /api/ai/nudges/track
+ * POST /a../services/ai/nudges/track
  * Track user activity for nudge generation
  */
 router.post('/track', async (req, res) => {
@@ -71,7 +71,7 @@ router.post('/track', async (req, res) => {
 });
 
 /**
- * POST /api/ai/nudges/dismiss
+ * POST /a../services/ai/nudges/dismiss
  * Dismiss a nudge (user clicked "Not now")
  */
 router.post('/dismiss', async (req, res) => {
@@ -101,7 +101,7 @@ router.post('/dismiss', async (req, res) => {
 });
 
 /**
- * POST /api/ai/nudges/acted
+ * POST /a../services/ai/nudges/acted
  * Mark nudge as acted upon (user clicked "Yes, help")
  */
 router.post('/acted', async (req, res) => {
@@ -131,7 +131,7 @@ router.post('/acted', async (req, res) => {
 });
 
 /**
- * POST /api/ai/nudges/suppress
+ * POST /a../services/ai/nudges/suppress
  * Suppress a type of nudge permanently (user clicked "Don't show again")
  */
 router.post('/suppress', async (req, res) => {
@@ -161,6 +161,7 @@ router.post('/suppress', async (req, res) => {
 });
 
 export default router;
+
 
 
 

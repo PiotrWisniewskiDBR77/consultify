@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../../../store/useAppStore';
-import { AppView } from '../../../types';
-import { Api } from '../../../services/api';
-import { ArrowLeft, Copy, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, Copy, Send } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../../services/api';
+import { useAppStore } from '../../../store/useAppStore';
+import { AppView } from '../../../types';
 
 interface Invite {
     id: string;
@@ -88,7 +89,9 @@ export const ConsultantInviteView = () => {
                     {t('consultant.invites.backToPanel')}
                 </button>
 
-                <h1 className="text-2xl font-bold text-navy-900 dark:text-white">{t('consultant.invites.generateInvites')}</h1>
+                <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
+                    {t('consultant.invites.generateInvites')}
+                </h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Access Generation Form */}
@@ -100,9 +103,12 @@ export const ConsultantInviteView = () => {
 
                         <form onSubmit={handleCreateInvite} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('consultant.invites.inviteType')}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    {t('consultant.invites.inviteType')}
+                                </label>
                                 <select
-                                    value={type} onChange={(e) => setType(e.target.value)}
+                                    value={type}
+                                    onChange={(e) => setType(e.target.value)}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:border-purple-500"
                                 >
                                     <option value="TRIAL_ORG">{t('consultant.invites.typeTrialOrg')}</option>
@@ -112,7 +118,9 @@ export const ConsultantInviteView = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('consultant.invites.companyName')}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    {t('consultant.invites.companyName')}
+                                </label>
                                 <input
                                     type="text"
                                     value={targetCompany}
@@ -123,7 +131,9 @@ export const ConsultantInviteView = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('consultant.invites.targetEmail')}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    {t('consultant.invites.targetEmail')}
+                                </label>
                                 <input
                                     type="email"
                                     value={targetEmail}
@@ -154,36 +164,51 @@ export const ConsultantInviteView = () => {
                             {isLoading ? (
                                 <div className="p-4 text-center text-slate-400">{t('consultant.panel.loading')}</div>
                             ) : invites.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400 text-sm">{t('consultant.invites.noInvites')}</div>
+                                <div className="p-8 text-center text-slate-400 text-sm">
+                                    {t('consultant.invites.noInvites')}
+                                </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {invites.map(invite => (
-                                        <div key={invite.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                                    {invites.map((invite) => (
+                                        <div
+                                            key={invite.id}
+                                            className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5"
+                                        >
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="font-mono font-bold text-lg tracking-wider text-purple-600 dark:text-purple-400">
                                                     {invite.invite_code}
                                                 </div>
-                                                <button onClick={() => copyToClipboard(invite.invite_code)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-500">
+                                                <button
+                                                    onClick={() => copyToClipboard(invite.invite_code)}
+                                                    className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-500"
+                                                >
                                                     <Copy size={14} />
                                                 </button>
                                             </div>
                                             <div className="text-xs text-slate-500 space-y-1">
                                                 <div className="flex justify-between">
                                                     <span>{t('consultant.invites.labelType')}</span>
-                                                    <span className="font-medium text-slate-700 dark:text-slate-300">{invite.invite_type}</span>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                        {invite.invite_type}
+                                                    </span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span>{t('consultant.invites.labelUses')}</span>
-                                                    <span>{invite.uses_count} / {invite.max_uses}</span>
+                                                    <span>
+                                                        {invite.uses_count} / {invite.max_uses}
+                                                    </span>
                                                 </div>
                                                 {invite.target_email && (
                                                     <div className="flex justify-between">
                                                         <span>{t('consultant.invites.labelTo')}</span>
-                                                        <span className="truncate max-w-[120px]">{invite.target_email}</span>
+                                                        <span className="truncate max-w-[120px]">
+                                                            {invite.target_email}
+                                                        </span>
                                                     </div>
                                                 )}
                                                 <div className="pt-1 border-t border-slate-200 dark:border-white/10 mt-1 opacity-70">
-                                                    {t('consultant.invites.labelExp')} {new Date(invite.expires_at).toLocaleDateString()}
+                                                    {t('consultant.invites.labelExp')}{' '}
+                                                    {new Date(invite.expires_at).toLocaleDateString()}
                                                 </div>
                                             </div>
                                         </div>

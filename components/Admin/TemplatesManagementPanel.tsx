@@ -1,6 +1,6 @@
 /**
  * TemplatesManagementPanel - Project & Task Templates Management
- * 
+ *
  * Features:
  * - Project templates list
  * - Task templates
@@ -8,37 +8,38 @@
  * - Import/Export templates
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Layout,
-    Plus,
-    Edit,
-    Trash2,
-    Copy,
-    Download,
-    Upload,
-    Search,
-    X,
-    Check,
-    RefreshCw,
-    FolderOpen,
-    ListTodo,
+    Archive,
     Calendar,
-    Users,
-    Tags,
+    Check,
     ChevronDown,
     ChevronRight,
-    FileText,
-    Star,
+    Copy,
+    Download,
+    Edit,
     Eye,
-    Archive,
-    MoreHorizontal
+    FileText,
+    FolderOpen,
+    Layout,
+    ListTodo,
+    MoreHorizontal,
+    Plus,
+    RefreshCw,
+    Search,
+    Star,
+    Tags,
+    Trash2,
+    Upload,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../shared/InfoButton';
 
 // Template types
@@ -83,7 +84,7 @@ const TEMPLATE_CATEGORIES = [
     { id: 'all', label: 'All Templates', icon: Layout },
     { id: 'project', label: 'Project Templates', icon: FolderOpen },
     { id: 'task', label: 'Task Templates', icon: ListTodo },
-    { id: 'milestone', label: 'Milestone Templates', icon: Calendar }
+    { id: 'milestone', label: 'Milestone Templates', icon: Calendar },
 ];
 
 // Sample templates
@@ -107,9 +108,9 @@ const SAMPLE_TEMPLATES: ProjectTemplate[] = [
                 { id: 'plan', name: 'Planning', order: 2, tasks: [] },
                 { id: 'exec', name: 'Execution', order: 3, tasks: [] },
                 { id: 'monitor', name: 'Monitoring', order: 4, tasks: [] },
-                { id: 'close', name: 'Closing', order: 5, tasks: [] }
-            ]
-        }
+                { id: 'close', name: 'Closing', order: 5, tasks: [] },
+            ],
+        },
     },
     {
         id: 'agile-sprint',
@@ -128,9 +129,9 @@ const SAMPLE_TEMPLATES: ProjectTemplate[] = [
             phases: [
                 { id: 'planning', name: 'Sprint Planning', order: 1, tasks: [] },
                 { id: 'dev', name: 'Development', order: 2, tasks: [] },
-                { id: 'review', name: 'Sprint Review', order: 3, tasks: [] }
-            ]
-        }
+                { id: 'review', name: 'Sprint Review', order: 3, tasks: [] },
+            ],
+        },
     },
     {
         id: 'prince2-standard',
@@ -153,9 +154,9 @@ const SAMPLE_TEMPLATES: ProjectTemplate[] = [
                 { id: 'controlling', name: 'Controlling a Stage', order: 4, tasks: [] },
                 { id: 'managing', name: 'Managing Delivery', order: 5, tasks: [] },
                 { id: 'boundary', name: 'Managing Stage Boundaries', order: 6, tasks: [] },
-                { id: 'closing', name: 'Closing', order: 7, tasks: [] }
-            ]
-        }
+                { id: 'closing', name: 'Closing', order: 7, tasks: [] },
+            ],
+        },
     },
     {
         id: 'kanban-flow',
@@ -176,10 +177,10 @@ const SAMPLE_TEMPLATES: ProjectTemplate[] = [
                 { id: 'todo', name: 'To Do', order: 2, tasks: [] },
                 { id: 'progress', name: 'In Progress', order: 3, tasks: [] },
                 { id: 'review', name: 'Review', order: 4, tasks: [] },
-                { id: 'done', name: 'Done', order: 5, tasks: [] }
-            ]
-        }
-    }
+                { id: 'done', name: 'Done', order: 5, tasks: [] },
+            ],
+        },
+    },
 ];
 
 interface TemplatesManagementPanelProps {
@@ -207,8 +208,8 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
         estimatedDuration: '',
         tags: [] as string[],
         structure: {
-            phases: [] as PhaseTemplate[]
-        }
+            phases: [] as PhaseTemplate[],
+        },
     });
 
     // Load templates
@@ -218,7 +219,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             // In a real implementation, fetch from API
             // const data = await Api.getTemplates(currentOrganization?.id);
             // setTemplates(data);
-            
+
             // Using sample data for now
             setTemplates(SAMPLE_TEMPLATES);
         } catch (error) {
@@ -234,13 +235,14 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
     }, [loadTemplates]);
 
     // Filter templates
-    const filteredTemplates = templates.filter(template => {
-        const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const filteredTemplates = templates.filter((template) => {
+        const matchesSearch =
+            template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            template.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-        
+            template.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
         const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-        
+
         return matchesSearch && matchesCategory;
     });
 
@@ -254,10 +256,8 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             estimatedDuration: '',
             tags: [],
             structure: {
-                phases: [
-                    { id: `phase_${Date.now()}`, name: 'Phase 1', order: 1, tasks: [] }
-                ]
-            }
+                phases: [{ id: `phase_${Date.now()}`, name: 'Phase 1', order: 1, tasks: [] }],
+            },
         });
         setIsCreating(true);
         setIsEditing(false);
@@ -272,7 +272,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             category: template.category,
             estimatedDuration: template.estimatedDuration,
             tags: template.tags,
-            structure: template.structure
+            structure: template.structure,
         });
         setIsEditing(true);
         setIsCreating(false);
@@ -287,9 +287,9 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             isDefault: false,
             usageCount: 0,
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
         };
-        setTemplates(prev => [...prev, newTemplate]);
+        setTemplates((prev) => [...prev, newTemplate]);
         toast.success(t('admin.templates.duplicated', 'Template duplicated'));
     };
 
@@ -299,8 +299,8 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             toast.error(t('admin.templates.cannotDeleteDefault', 'Cannot delete default templates'));
             return;
         }
-        
-        setTemplates(prev => prev.filter(t => t.id !== template.id));
+
+        setTemplates((prev) => prev.filter((t) => t.id !== template.id));
         toast.success(t('admin.templates.deleted', 'Template deleted'));
     };
 
@@ -325,24 +325,26 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                 updatedAt: new Date().toISOString(),
                 usageCount: 0,
                 tags: formData.tags,
-                structure: formData.structure
+                structure: formData.structure,
             };
-            setTemplates(prev => [...prev, newTemplate]);
+            setTemplates((prev) => [...prev, newTemplate]);
             toast.success(t('admin.templates.created', 'Template created'));
         } else if (selectedTemplate) {
-            setTemplates(prev => prev.map(t =>
-                t.id === selectedTemplate.id
-                    ? {
-                        ...t,
-                        name: formData.name,
-                        description: formData.description,
-                        estimatedDuration: formData.estimatedDuration,
-                        tags: formData.tags,
-                        structure: formData.structure,
-                        updatedAt: new Date().toISOString()
-                    }
-                    : t
-            ));
+            setTemplates((prev) =>
+                prev.map((t) =>
+                    t.id === selectedTemplate.id
+                        ? {
+                              ...t,
+                              name: formData.name,
+                              description: formData.description,
+                              estimatedDuration: formData.estimatedDuration,
+                              tags: formData.tags,
+                              structure: formData.structure,
+                              updatedAt: new Date().toISOString(),
+                          }
+                        : t,
+                ),
+            );
             toast.success(t('admin.templates.updated', 'Template updated'));
         }
 
@@ -364,47 +366,43 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             id: `phase_${Date.now()}`,
             name: `Phase ${formData.structure.phases.length + 1}`,
             order: formData.structure.phases.length + 1,
-            tasks: []
+            tasks: [],
         };
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             structure: {
                 ...prev.structure,
-                phases: [...prev.structure.phases, newPhase]
-            }
+                phases: [...prev.structure.phases, newPhase],
+            },
         }));
     };
 
     // Remove phase
     const removePhase = (phaseId: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             structure: {
                 ...prev.structure,
-                phases: prev.structure.phases.filter(p => p.id !== phaseId)
-            }
+                phases: prev.structure.phases.filter((p) => p.id !== phaseId),
+            },
         }));
     };
 
     // Update phase name
     const updatePhaseName = (phaseId: string, name: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             structure: {
                 ...prev.structure,
-                phases: prev.structure.phases.map(p =>
-                    p.id === phaseId ? { ...p, name } : p
-                )
-            }
+                phases: prev.structure.phases.map((p) => (p.id === phaseId ? { ...p, name } : p)),
+            },
         }));
     };
 
     // Toggle phase expansion
     const togglePhase = (phaseId: string) => {
-        setExpandedPhases(prev =>
-            prev.includes(phaseId)
-                ? prev.filter(id => id !== phaseId)
-                : [...prev, phaseId]
+        setExpandedPhases((prev) =>
+            prev.includes(phaseId) ? prev.filter((id) => id !== phaseId) : [...prev, phaseId],
         );
     };
 
@@ -440,9 +438,9 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                         isDefault: false,
                         usageCount: 0,
                         createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
+                        updatedAt: new Date().toISOString(),
                     };
-                    setTemplates(prev => [...prev, importedTemplate]);
+                    setTemplates((prev) => [...prev, importedTemplate]);
                     toast.success(t('admin.templates.imported', 'Template imported'));
                 } catch {
                     toast.error(t('admin.templates.importError', 'Invalid template file'));
@@ -469,9 +467,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-slate-900 dark:text-white">
-                                    {template.name}
-                                </h3>
+                                <h3 className="font-semibold text-slate-900 dark:text-white">{template.name}</h3>
                                 {template.isDefault && (
                                     <Star className="text-amber-400" size={14} fill="currentColor" />
                                 )}
@@ -494,7 +490,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                                 </span>
                             </div>
                             <div className="flex flex-wrap gap-1 mt-2">
-                                {template.tags.slice(0, 3).map(tag => (
+                                {template.tags.slice(0, 3).map((tag) => (
                                     <span
                                         key={tag}
                                         className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 rounded-full"
@@ -555,7 +551,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                         <input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             placeholder={t('admin.templates.namePlaceholder', 'Enter template name')}
                         />
@@ -567,7 +563,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                         <input
                             type="text"
                             value={formData.estimatedDuration}
-                            onChange={(e) => setFormData(prev => ({ ...prev, estimatedDuration: e.target.value }))}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, estimatedDuration: e.target.value }))}
                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                             placeholder={t('admin.templates.durationPlaceholder', 'e.g., 3 months')}
                         />
@@ -580,7 +576,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                     </label>
                     <textarea
                         value={formData.description}
-                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                         className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white resize-none"
                         rows={3}
                         placeholder={t('admin.templates.descriptionPlaceholder', 'Describe this template')}
@@ -612,10 +608,11 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                                         onClick={() => togglePhase(phase.id)}
                                         className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                                     >
-                                        {expandedPhases.includes(phase.id)
-                                            ? <ChevronDown size={16} />
-                                            : <ChevronRight size={16} />
-                                        }
+                                        {expandedPhases.includes(phase.id) ? (
+                                            <ChevronDown size={16} />
+                                        ) : (
+                                            <ChevronRight size={16} />
+                                        )}
                                     </button>
                                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                         {index + 1}.
@@ -634,7 +631,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                                         <X size={16} />
                                     </button>
                                 </div>
-                                
+
                                 <AnimatePresence>
                                     {expandedPhases.includes(phase.id) && (
                                         <motion.div
@@ -645,7 +642,10 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                                         >
                                             <div className="p-4 bg-white dark:bg-navy-800 border-t border-slate-200 dark:border-navy-700">
                                                 <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-                                                    {t('admin.templates.noTasks', 'No tasks in this phase yet. Tasks can be added when creating a project from this template.')}
+                                                    {t(
+                                                        'admin.templates.noTasks',
+                                                        'No tasks in this phase yet. Tasks can be added when creating a project from this template.',
+                                                    )}
                                                 </p>
                                             </div>
                                         </motion.div>
@@ -717,7 +717,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                             />
                         </div>
                         <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-800 rounded-lg p-1">
-                            {TEMPLATE_CATEGORIES.map(cat => {
+                            {TEMPLATE_CATEGORIES.map((cat) => {
                                 const Icon = cat.icon;
                                 return (
                                     <button
@@ -757,14 +757,13 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
 
                 {/* Editor Panel */}
                 <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-                    {(isEditing || isCreating) ? (
+                    {isEditing || isCreating ? (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                                     {isCreating
                                         ? t('admin.templates.createNew', 'Create Template')
-                                        : t('admin.templates.editTemplate', 'Edit Template')
-                                    }
+                                        : t('admin.templates.editTemplate', 'Edit Template')}
                                 </h3>
                                 <button
                                     onClick={cancelEditing}
@@ -799,7 +798,10 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                                 {t('admin.templates.selectToEdit', 'Select a Template')}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                {t('admin.templates.selectToEditDesc', 'Select a template from the list to edit or create a new one')}
+                                {t(
+                                    'admin.templates.selectToEditDesc',
+                                    'Select a template from the list to edit or create a new one',
+                                )}
                             </p>
                             <button
                                 onClick={startCreating}
@@ -817,4 +819,3 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
 };
 
 export default TemplatesManagementPanel;
-

@@ -3,16 +3,12 @@
  * Part of My Work Module PMO Upgrade
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { Api } from '../services/api';
-import type {
-    InboxItem,
-    InboxSummary,
-    TriageAction,
-    TriageParams
-} from '../types/myWork';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '../services/api';
+import type { InboxItem, InboxSummary, TriageAction, TriageParams } from '../types/myWork';
 
 interface UseInboxOptions {
     autoLoad?: boolean;
@@ -80,7 +76,7 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
                     total: SAMPLE_COUNTS.total,
                     critical: SAMPLE_COUNTS.critical,
                     newToday: 3,
-                    groups: {} as any
+                    groups: {} as any,
                 });
             }
         } catch (err) {
@@ -92,7 +88,7 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
                 total: SAMPLE_COUNTS.total,
                 critical: SAMPLE_COUNTS.critical,
                 newToday: 3,
-                groups: {} as any
+                groups: {} as any,
             });
         } finally {
             setLoading(false);
@@ -107,63 +103,62 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
     }, [loadInbox, autoLoad]);
 
     // Triage single item
-    const triageItem = useCallback(async (
-        itemId: string,
-        action: TriageAction,
-        params?: TriageParams[TriageAction]
-    ) => {
-        try {
-            // Optimistic update
-            setItems(prev => prev.filter(item => item.id !== itemId));
-            setSelectedIds(prev => {
-                const next = new Set(prev);
-                next.delete(itemId);
-                return next;
-            });
+    const triageItem = useCallback(
+        async (itemId: string, action: TriageAction, params?: TriageParams[TriageAction]) => {
+            try {
+                // Optimistic update
+                setItems((prev) => prev.filter((item) => item.id !== itemId));
+                setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(itemId);
+                    return next;
+                });
 
-            await (Api as any).post(`/my-work/inbox/${itemId}/triage`, { action, params });
+                await (Api as any).post(`/my-work/inbox/${itemId}/triage`, { action, params });
 
-            toast.success(t('myWork.inbox.triaged', 'Item processed'));
-        } catch (err) {
-            console.error('Triage error:', err);
-            loadInbox(); // Revert
-            toast.error(t('myWork.inbox.error', 'Failed to process'));
-            throw err;
-        }
-    }, [loadInbox, t]);
+                toast.success(t('myWork.inbox.triaged', 'Item processed'));
+            } catch (err) {
+                console.error('Triage error:', err);
+                loadInbox(); // Revert
+                toast.error(t('myWork.inbox.error', 'Failed to process'));
+                throw err;
+            }
+        },
+        [loadInbox, t],
+    );
 
     // Bulk triage
-    const bulkTriage = useCallback(async (
-        action: TriageAction,
-        params?: TriageParams[TriageAction]
-    ) => {
-        if (selectedIds.size === 0) return;
+    const bulkTriage = useCallback(
+        async (action: TriageAction, params?: TriageParams[TriageAction]) => {
+            if (selectedIds.size === 0) return;
 
-        const ids = Array.from(selectedIds);
+            const ids = Array.from(selectedIds);
 
-        try {
-            // Optimistic update
-            setItems(prev => prev.filter(item => !selectedIds.has(item.id)));
-            setSelectedIds(new Set());
+            try {
+                // Optimistic update
+                setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
+                setSelectedIds(new Set());
 
-            await (Api as any).post('/my-work/inbox/bulk-triage', {
-                itemIds: ids,
-                action,
-                params
-            });
+                await (Api as any).post('/my-work/inbox/bulk-triage', {
+                    itemIds: ids,
+                    action,
+                    params,
+                });
 
-            toast.success(t('myWork.inbox.bulkTriaged', `${ids.length} items processed`));
-        } catch (err) {
-            console.error('Bulk triage error:', err);
-            loadInbox(); // Revert
-            toast.error(t('myWork.inbox.error', 'Failed to process'));
-            throw err;
-        }
-    }, [selectedIds, loadInbox, t]);
+                toast.success(t('myWork.inbox.bulkTriaged', `${ids.length} items processed`));
+            } catch (err) {
+                console.error('Bulk triage error:', err);
+                loadInbox(); // Revert
+                toast.error(t('myWork.inbox.error', 'Failed to process'));
+                throw err;
+            }
+        },
+        [selectedIds, loadInbox, t],
+    );
 
     // Selection management
     const selectItem = useCallback((itemId: string) => {
-        setSelectedIds(prev => {
+        setSelectedIds((prev) => {
             const next = new Set(prev);
             next.add(itemId);
             return next;
@@ -171,7 +166,7 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
     }, []);
 
     const selectAll = useCallback(() => {
-        setSelectedIds(new Set(items.map(i => i.id)));
+        setSelectedIds(new Set(items.map((i) => i.id)));
     }, [items]);
 
     const clearSelection = useCallback(() => {
@@ -179,7 +174,7 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
     }, []);
 
     const toggleSelection = useCallback((itemId: string) => {
-        setSelectedIds(prev => {
+        setSelectedIds((prev) => {
             const next = new Set(prev);
             if (next.has(itemId)) {
                 next.delete(itemId);
@@ -191,10 +186,10 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
     }, []);
 
     // Computed values
-    const untriagedItems = items.filter(i => !i.triaged);
+    const untriagedItems = items.filter((i) => !i.triaged);
     // Use summary counts when available (includes sample counts), fallback to item counts
     const totalCount = summary?.total ?? untriagedItems.length;
-    const criticalCount = summary?.critical ?? untriagedItems.filter(i => i.urgency === 'critical').length;
+    const criticalCount = summary?.critical ?? untriagedItems.filter((i) => i.urgency === 'critical').length;
     const hasSelection = selectedIds.size > 0;
 
     return {
@@ -217,13 +212,8 @@ export function useInbox(options: UseInboxOptions = {}): UseInboxReturn {
         selectItem,
         selectAll,
         clearSelection,
-        toggleSelection
+        toggleSelection,
     };
 }
 
 export default useInbox;
-
-
-
-
-

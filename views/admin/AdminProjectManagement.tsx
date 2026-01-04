@@ -1,15 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Api } from '../../services/api';
-import { useUserCan } from '../../hooks/useUserCan';
-import { Project } from '../../types';
 import {
-    Plus, Trash2, Layers, Settings, X, LayoutGrid, List,
-    Users, Target, FileText, PieChart, Info, Search, ChevronRight
+    ChevronRight,
+    FileText,
+    Info,
+    Layers,
+    LayoutGrid,
+    List,
+    PieChart,
+    Plus,
+    Search,
+    Settings,
+    Target,
+    Trash2,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { ProjectGovernance } from '../../components/Admin/ProjectGovernance';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useUserCan } from '../../hooks/useUserCan';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { Project } from '../../types';
 import { AppView } from '../../types';
 
 interface AdminProjectManagementProps {
@@ -29,7 +42,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        goal: ''
+        goal: '',
     });
 
     const loadProjects = useCallback(async () => {
@@ -81,13 +94,17 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
         }
     };
 
-    const filteredProjects = projects.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredProjects = projects.filter(
+        (p) =>
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.description || '').toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
-    const StatBadge = ({ icon: Icon, count, label, color = "indigo" }: any) => (
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-${color}-500/5 border border-${color}-500/10 text-xs text-slate-500 dark:text-slate-400`} title={label}>
+    const StatBadge = ({ icon: Icon, count, label, color = 'indigo' }: any) => (
+        <div
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-md bg-${color}-500/5 border border-${color}-500/10 text-xs text-slate-500 dark:text-slate-400`}
+            title={label}
+        >
             <Icon size={12} className={`text-${color}-600 dark:text-${color}-400`} />
             <span className="font-medium text-slate-700 dark:text-slate-300">{count || 0}</span>
         </div>
@@ -100,7 +117,9 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                 <div>
                     <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">Project Command Center</h2>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Manage transformation projects, teams, and knowledge assets.</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Manage transformation projects, teams, and knowledge assets.
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -153,7 +172,9 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                     </div>
                     <div>
                         <h3 className="text-navy-900 dark:text-white font-medium">No projects found</h3>
-                        <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">Start by creating a new project to organize your transformation assets.</p>
+                        <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">
+                            Start by creating a new project to organize your transformation assets.
+                        </p>
                     </div>
                     <button
                         onClick={() => setShowAddProjectModal(true)}
@@ -165,7 +186,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
             ) : viewMode === 'grid' ? (
                 /* Grid View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredProjects.map(p => (
+                    {filteredProjects.map((p) => (
                         <div
                             key={p.id}
                             onClick={() => {
@@ -199,7 +220,9 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                 </div>
                             </div>
 
-                            <h3 className="font-bold text-navy-900 dark:text-white text-lg mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">{p.name}</h3>
+                            <h3 className="font-bold text-navy-900 dark:text-white text-lg mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                                {p.name}
+                            </h3>
 
                             {p.description && (
                                 <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 h-10">
@@ -208,13 +231,20 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                             )}
 
                             {!p.description && (
-                                <p className="text-sm text-slate-400 dark:text-slate-600 italic mb-4 h-10">No description provided.</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-600 italic mb-4 h-10">
+                                    No description provided.
+                                </p>
                             )}
 
                             <div className="flex flex-wrap gap-2 mb-6">
                                 <StatBadge icon={Users} count={p.memberCount} label="Team Members" color="blue" />
                                 <StatBadge icon={Target} count={p.initiativeCount} label="Initiatives" color="green" />
-                                <StatBadge icon={PieChart} count={p.assessmentCount} label="Assessments" color="amber" />
+                                <StatBadge
+                                    icon={PieChart}
+                                    count={p.assessmentCount}
+                                    label="Assessments"
+                                    color="amber"
+                                />
                                 <StatBadge icon={FileText} count={p.documentCount} label="Documents" color="slate" />
                             </div>
 
@@ -223,9 +253,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                     <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-[10px] text-navy-900 dark:text-white">
                                         {p.owner?.firstName?.[0] || (p as any).owner_first_name?.[0] || 'U'}
                                     </div>
-                                    <span className="text-slate-600 dark:text-slate-400 capitalize">
-                                        {p.status}
-                                    </span>
+                                    <span className="text-slate-600 dark:text-slate-400 capitalize">{p.status}</span>
                                 </div>
                                 <span className="text-slate-400 dark:text-slate-600">
                                     {new Date(p.createdAt || (p as any).created_at).toLocaleDateString()}
@@ -249,7 +277,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                            {filteredProjects.map(p => (
+                            {filteredProjects.map((p) => (
                                 <tr
                                     key={p.id}
                                     onClick={() => {
@@ -264,8 +292,12 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                                 <Layers size={18} />
                                             </div>
                                             <div>
-                                                <div className="text-navy-900 dark:text-white font-medium group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{p.name}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1 max-w-[200px]">{p.description || 'No description'}</div>
+                                                <div className="text-navy-900 dark:text-white font-medium group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                                    {p.name}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1 max-w-[200px]">
+                                                    {p.description || 'No description'}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -277,15 +309,24 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300" title="Initiatives">
+                                            <div
+                                                className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                                                title="Initiatives"
+                                            >
                                                 <Target size={14} className="text-green-600 dark:text-green-400" />
                                                 <span className="text-xs">{p.initiativeCount || 0}</span>
                                             </div>
-                                            <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300" title="Assessments">
+                                            <div
+                                                className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                                                title="Assessments"
+                                            >
                                                 <PieChart size={14} className="text-amber-600 dark:text-amber-400" />
                                                 <span className="text-xs">{p.assessmentCount || 0}</span>
                                             </div>
-                                            <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300" title="Documents">
+                                            <div
+                                                className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                                                title="Documents"
+                                            >
                                                 <FileText size={14} className="text-slate-400 dark:text-slate-400" />
                                                 <span className="text-xs">{p.documentCount || 0}</span>
                                             </div>
@@ -346,7 +387,10 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                 </div>
                                 <h2 className="text-xl font-bold text-navy-900 dark:text-white">Launch New Project</h2>
                             </div>
-                            <button onClick={() => setShowAddProjectModal(false)} className="p-2 text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                            <button
+                                onClick={() => setShowAddProjectModal(false)}
+                                className="p-2 text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
@@ -359,7 +403,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                 <input
                                     required
                                     value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                                     placeholder="e.g. Intelligent Factory Optimization"
                                 />
@@ -371,7 +415,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                 </label>
                                 <textarea
                                     value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all h-24 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
                                     placeholder="Briefly describe the project transformation scope..."
                                 />
@@ -384,7 +428,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                 </label>
                                 <input
                                     value={formData.goal}
-                                    onChange={e => setFormData({ ...formData, goal: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
                                     className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                                     placeholder="e.g. Reduce operational waste by 25% by Q4"
                                 />
@@ -419,7 +463,10 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({ 
                                 <Settings size={22} className="text-purple-600 dark:text-purple-400" />
                                 Governance: {selectedProjectForGovernance.name}
                             </h2>
-                            <button onClick={() => setSelectedProjectForGovernance(null)} className="p-2 text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                            <button
+                                onClick={() => setSelectedProjectForGovernance(null)}
+                                className="p-2 text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                            >
                                 <X size={20} />
                             </button>
                         </div>

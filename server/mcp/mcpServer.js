@@ -11,7 +11,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 // MCP Protocol Version
 const MCP_VERSION = '2024-11-05';

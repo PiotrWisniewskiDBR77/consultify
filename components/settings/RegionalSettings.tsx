@@ -1,6 +1,6 @@
 /**
  * RegionalSettings - Comprehensive regional and locale preferences
- * 
+ *
  * Features:
  * - Timezone selection
  * - Measurement system (metric/imperial)
@@ -10,22 +10,13 @@
  * - Time format (12h/24h)
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Globe, 
-    Save, 
-    Ruler, 
-    DollarSign, 
-    Hash, 
-    Calendar, 
-    Clock,
-    Loader2,
-    Check
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { Calendar, Check, Clock, DollarSign, Globe, Hash, Loader2, Ruler, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface RegionalSettingsProps {
@@ -50,7 +41,7 @@ const DEFAULT_PREFERENCES: RegionalPreferences = {
     numberFormat: 'en-US',
     dateFormat: 'DD/MM/YYYY',
     timeFormat: '24h',
-    firstDayOfWeek: 'monday'
+    firstDayOfWeek: 'monday',
 };
 
 // Currency options with symbols
@@ -132,9 +123,9 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
         try {
             await Api.put('/settings/preferences/regional', { preferences });
             // Also update user object for backwards compatibility
-            await onUpdateUser({ 
-                timezone: preferences.timezone, 
-                units: preferences.units 
+            await onUpdateUser({
+                timezone: preferences.timezone,
+                units: preferences.units,
             });
             toast.success(t('settings.regional.saved', 'Regional preferences saved'));
         } catch (error) {
@@ -145,7 +136,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
     };
 
     const updatePreference = <K extends keyof RegionalPreferences>(key: K, value: RegionalPreferences[K]) => {
-        setPreferences(prev => ({ ...prev, [key]: value }));
+        setPreferences((prev) => ({ ...prev, [key]: value }));
     };
 
     // Format example number based on selected format
@@ -162,9 +153,9 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
     const formatExampleCurrency = () => {
         const num = 1234.56;
         try {
-            return new Intl.NumberFormat(preferences.numberFormat, { 
-                style: 'currency', 
-                currency: preferences.currency 
+            return new Intl.NumberFormat(preferences.numberFormat, {
+                style: 'currency',
+                currency: preferences.currency,
             }).format(num);
         } catch {
             return '$1,234.56';
@@ -178,7 +169,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                 timeZone: preferences.timezone,
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: preferences.timeFormat === '12h'
+                hour12: preferences.timeFormat === '12h',
             };
             return new Date().toLocaleTimeString('en-US', options);
         } catch {
@@ -197,7 +188,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-regional" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -226,9 +217,12 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                     {t('settings.regional.timezone', 'Timezone')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    {t('settings.regional.timezoneDescription', 'Set your local timezone for accurate dates and times across the platform.')}
+                    {t(
+                        'settings.regional.timezoneDescription',
+                        'Set your local timezone for accurate dates and times across the platform.',
+                    )}
                 </p>
-                
+
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                     <select
                         value={preferences.timezone}
@@ -255,7 +249,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                     <Calendar size={20} className="text-purple-500" />
                     {t('settings.regional.dateTimeTitle', 'Date & Time Format')}
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Date Format */}
                     <div>
@@ -263,7 +257,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                             {t('settings.regional.dateFormat', 'Date Format')}
                         </label>
                         <div className="space-y-2">
-                            {DATE_FORMATS.map(format => {
+                            {DATE_FORMATS.map((format) => {
                                 const isSelected = preferences.dateFormat === format.code;
                                 return (
                                     <label
@@ -280,19 +274,32 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                                                 name="dateFormat"
                                                 value={format.code}
                                                 checked={isSelected}
-                                                onChange={() => updatePreference('dateFormat', format.code as RegionalPreferences['dateFormat'])}
+                                                onChange={() =>
+                                                    updatePreference(
+                                                        'dateFormat',
+                                                        format.code as RegionalPreferences['dateFormat'],
+                                                    )
+                                                }
                                                 className="sr-only"
                                             />
-                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                                isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-300 dark:border-slate-600'
-                                            }`}>
+                                            <div
+                                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                                    isSelected
+                                                        ? 'border-purple-500 bg-purple-500'
+                                                        : 'border-slate-300 dark:border-slate-600'
+                                                }`}
+                                            >
                                                 {isSelected && <Check size={10} className="text-white" />}
                                             </div>
-                                            <span className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                            <span
+                                                className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+                                            >
                                                 {format.label}
                                             </span>
                                         </div>
-                                        <span className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                                        <span
+                                            className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}
+                                        >
                                             {format.example}
                                         </span>
                                     </label>
@@ -307,7 +314,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                             {t('settings.regional.timeFormat', 'Time Format')}
                         </label>
                         <div className="space-y-2">
-                            {TIME_FORMATS.map(format => {
+                            {TIME_FORMATS.map((format) => {
                                 const isSelected = preferences.timeFormat === format.code;
                                 return (
                                     <label
@@ -324,22 +331,38 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                                                 name="timeFormat"
                                                 value={format.code}
                                                 checked={isSelected}
-                                                onChange={() => updatePreference('timeFormat', format.code as RegionalPreferences['timeFormat'])}
+                                                onChange={() =>
+                                                    updatePreference(
+                                                        'timeFormat',
+                                                        format.code as RegionalPreferences['timeFormat'],
+                                                    )
+                                                }
                                                 className="sr-only"
                                             />
-                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                                isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-300 dark:border-slate-600'
-                                            }`}>
+                                            <div
+                                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                                    isSelected
+                                                        ? 'border-purple-500 bg-purple-500'
+                                                        : 'border-slate-300 dark:border-slate-600'
+                                                }`}
+                                            >
                                                 {isSelected && <Check size={10} className="text-white" />}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Clock size={16} className={isSelected ? 'text-purple-500' : 'text-slate-400'} />
-                                                <span className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                <Clock
+                                                    size={16}
+                                                    className={isSelected ? 'text-purple-500' : 'text-slate-400'}
+                                                />
+                                                <span
+                                                    className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+                                                >
                                                     {format.label}
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                                        <span
+                                            className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}
+                                        >
                                             {format.example}
                                         </span>
                                     </label>
@@ -385,7 +408,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                     <DollarSign size={20} className="text-green-500" />
                     {t('settings.regional.currencyTitle', 'Currency & Numbers')}
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Currency */}
                     <div>
@@ -397,7 +420,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                             onChange={(e) => updatePreference('currency', e.target.value)}
                             className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white"
                         >
-                            {CURRENCIES.map(currency => (
+                            {CURRENCIES.map((currency) => (
                                 <option key={currency.code} value={currency.code}>
                                     {currency.symbol} - {currency.name} ({currency.code})
                                 </option>
@@ -415,17 +438,20 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                         </label>
                         <select
                             value={preferences.numberFormat}
-                            onChange={(e) => updatePreference('numberFormat', e.target.value as RegionalPreferences['numberFormat'])}
+                            onChange={(e) =>
+                                updatePreference('numberFormat', e.target.value as RegionalPreferences['numberFormat'])
+                            }
                             className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white"
                         >
-                            {NUMBER_FORMATS.map(format => (
+                            {NUMBER_FORMATS.map((format) => (
                                 <option key={format.code} value={format.code}>
                                     {format.label} ({format.example})
                                 </option>
                             ))}
                         </select>
                         <p className="mt-2 text-xs text-slate-500">
-                            {t('settings.regional.numberExample', 'Large number example:')} {formatExampleNumber(preferences.numberFormat)}
+                            {t('settings.regional.numberExample', 'Large number example:')}{' '}
+                            {formatExampleNumber(preferences.numberFormat)}
                         </p>
                     </div>
                 </div>
@@ -438,22 +464,25 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                     {t('settings.regional.measurementTitle', 'Measurement System')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    {t('settings.regional.measurementDescription', 'Choose your preferred system for weights, distances, and temperatures.')}
+                    {t(
+                        'settings.regional.measurementDescription',
+                        'Choose your preferred system for weights, distances, and temperatures.',
+                    )}
                 </p>
-                
+
                 <div className="grid grid-cols-2 gap-4 max-w-md">
                     {[
-                        { 
-                            value: 'metric' as const, 
+                        {
+                            value: 'metric' as const,
                             label: t('settings.regional.metric', 'Metric'),
-                            details: 'meters, kilograms, °C'
+                            details: 'meters, kilograms, °C',
                         },
-                        { 
-                            value: 'imperial' as const, 
+                        {
+                            value: 'imperial' as const,
                             label: t('settings.regional.imperial', 'Imperial'),
-                            details: 'feet, pounds, °F'
-                        }
-                    ].map(option => {
+                            details: 'feet, pounds, °F',
+                        },
+                    ].map((option) => {
                         const isSelected = preferences.units === option.value;
                         return (
                             <button
@@ -465,10 +494,14 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                                         : 'border-slate-200 dark:border-white/10 hover:border-amber-300'
                                 }`}
                             >
-                                <div className={`text-lg font-semibold mb-1 ${isSelected ? 'text-amber-700 dark:text-amber-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                <div
+                                    className={`text-lg font-semibold mb-1 ${isSelected ? 'text-amber-700 dark:text-amber-300' : 'text-slate-700 dark:text-slate-300'}`}
+                                >
                                     {option.label}
                                 </div>
-                                <div className={`text-xs ${isSelected ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}>
+                                <div
+                                    className={`text-xs ${isSelected ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}
+                                >
                                     {option.details}
                                 </div>
                             </button>
@@ -484,30 +517,44 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({ currentUser,
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.dateLabel', 'Date')}</span>
+                        <span className="text-slate-500 dark:text-slate-400 block">
+                            {t('settings.regional.dateLabel', 'Date')}
+                        </span>
                         <span className="font-mono text-slate-900 dark:text-white">
                             {(() => {
                                 const d = new Date();
                                 switch (preferences.dateFormat) {
-                                    case 'MM/DD/YYYY': return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
-                                    case 'YYYY-MM-DD': return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                                    case 'DD.MM.YYYY': return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-                                    default: return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                                    case 'MM/DD/YYYY':
+                                        return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+                                    case 'YYYY-MM-DD':
+                                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                    case 'DD.MM.YYYY':
+                                        return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+                                    default:
+                                        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
                                 }
                             })()}
                         </span>
                     </div>
                     <div>
-                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.timeLabel', 'Time')}</span>
+                        <span className="text-slate-500 dark:text-slate-400 block">
+                            {t('settings.regional.timeLabel', 'Time')}
+                        </span>
                         <span className="font-mono text-slate-900 dark:text-white">{getCurrentTime()}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.currencyLabel', 'Currency')}</span>
+                        <span className="text-slate-500 dark:text-slate-400 block">
+                            {t('settings.regional.currencyLabel', 'Currency')}
+                        </span>
                         <span className="font-mono text-slate-900 dark:text-white">{formatExampleCurrency()}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500 dark:text-slate-400 block">{t('settings.regional.numberLabel', 'Number')}</span>
-                        <span className="font-mono text-slate-900 dark:text-white">{formatExampleNumber(preferences.numberFormat)}</span>
+                        <span className="text-slate-500 dark:text-slate-400 block">
+                            {t('settings.regional.numberLabel', 'Number')}
+                        </span>
+                        <span className="font-mono text-slate-900 dark:text-white">
+                            {formatExampleNumber(preferences.numberFormat)}
+                        </span>
                     </div>
                 </div>
             </div>

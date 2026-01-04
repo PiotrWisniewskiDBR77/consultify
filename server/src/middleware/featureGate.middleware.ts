@@ -1,14 +1,15 @@
 /**
  * Feature Gate Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Implements feature gating based on Phase, UserState, and Role.
  * Every feature must declare required Phase, UserState, and Role.
  * If any is missing, feature must not ship.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware';
+import { NextFunction, Request, Response } from 'express';
+
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
@@ -42,83 +43,83 @@ interface FeatureContext {
  */
 export const FEATURE_REQUIREMENTS: Record<string, FeatureRequirements> = {
     // Phase G features
-    'benchmark_access': {
+    benchmark_access: {
         phase: ['G'],
         state: ['ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'CONSULTANT']
+        role: ['ADMIN', 'CONSULTANT'],
     },
-    'referral_create': {
+    referral_create: {
         phase: ['G'],
         state: ['ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'OWNER']
+        role: ['ADMIN', 'OWNER'],
     },
-    'consultant_mode': {
+    consultant_mode: {
         phase: ['G'],
         state: ['ECOSYSTEM_NODE'],
-        role: ['CONSULTANT']
+        role: ['CONSULTANT'],
     },
 
     // Phase F features
-    'team_invite': {
+    team_invite: {
         phase: ['F', 'G'],
         state: ['TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'OWNER', 'FACILITATOR']
+        role: ['ADMIN', 'OWNER', 'FACILITATOR'],
     },
-    'team_comments': {
+    team_comments: {
         phase: ['F', 'G'],
         state: ['TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'OWNER', 'FACILITATOR', 'CONTRIBUTOR', 'VIEWER']
+        role: ['ADMIN', 'OWNER', 'FACILITATOR', 'CONTRIBUTOR', 'VIEWER'],
     },
 
     // Phase E features
-    'drd_create': {
+    drd_create: {
         phase: ['E', 'F', 'G'],
         state: ['ORG_MEMBER', 'TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'OWNER', 'FACILITATOR', 'CONTRIBUTOR']
+        role: ['ADMIN', 'OWNER', 'FACILITATOR', 'CONTRIBUTOR'],
     },
-    'initiative_create': {
+    initiative_create: {
         phase: ['E', 'F', 'G'],
         state: ['ORG_MEMBER', 'TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'OWNER', 'FACILITATOR']
+        role: ['ADMIN', 'OWNER', 'FACILITATOR'],
     },
 
     // Phase D features
-    'org_create': {
+    org_create: {
         phase: ['D'],
         state: ['ORG_CREATOR'],
-        role: [] // No role yet - creating org
+        role: [], // No role yet - creating org
     },
 
     // Phase C features
-    'trial_chat': {
+    trial_chat: {
         phase: ['C', 'D', 'E', 'F', 'G'],
         state: ['TRIAL_TRUSTED', 'ORG_CREATOR', 'ORG_MEMBER', 'TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: []
+        role: [],
     },
 
     // Phase B features
-    'demo_view': {
+    demo_view: {
         phase: ['B', 'C', 'D', 'E', 'F', 'G'],
         state: ['DEMO_SESSION', 'TRIAL_TRUSTED', 'ORG_CREATOR', 'ORG_MEMBER', 'TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: []
+        role: [],
     },
 
     // AI features per phase
-    'ai_recommend': {
+    ai_recommend: {
         phase: ['E', 'F', 'G'],
         state: ['ORG_MEMBER', 'TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: []
+        role: [],
     },
-    'ai_analyze': {
+    ai_analyze: {
         phase: ['E', 'F', 'G'],
         state: ['ORG_MEMBER', 'TEAM_COLLAB', 'ECOSYSTEM_NODE'],
-        role: []
+        role: [],
     },
-    'ai_benchmark': {
+    ai_benchmark: {
         phase: ['G'],
         state: ['ECOSYSTEM_NODE'],
-        role: ['ADMIN', 'CONSULTANT']
-    }
+        role: ['ADMIN', 'CONSULTANT'],
+    },
 };
 
 // ==========================================
@@ -135,11 +136,11 @@ export function requireFeature(featureId: string) {
 
     if (!requirements) {
         // Feature not registered - block by default (fail closed)
-        return (req: Request, res: Response, next: NextFunction): void => {
+        return (_req: Request, res: Response, _next: NextFunction): void => {
             console.error(`Feature '${featureId}' not registered in FEATURE_REQUIREMENTS`);
             res.status(500).json({
                 error: 'FEATURE_NOT_REGISTERED',
-                message: `Feature '${featureId}' is not properly configured. Contact support.`
+                message: `Feature '${featureId}' is not properly configured. Contact support.`,
             });
         };
     }
@@ -156,7 +157,7 @@ export function requireFeature(featureId: string) {
             errors.push({
                 type: 'PHASE',
                 required: requirements.phase,
-                current: currentPhase
+                current: currentPhase,
             });
         }
 
@@ -165,7 +166,7 @@ export function requireFeature(featureId: string) {
             errors.push({
                 type: 'STATE',
                 required: requirements.state,
-                current: currentState
+                current: currentState,
             });
         }
 
@@ -175,7 +176,7 @@ export function requireFeature(featureId: string) {
                 errors.push({
                     type: 'ROLE',
                     required: requirements.role,
-                    current: currentRole
+                    current: currentRole,
                 });
             }
         }
@@ -188,14 +189,14 @@ export function requireFeature(featureId: string) {
                 requirements: {
                     phase: requirements.phase,
                     state: requirements.state,
-                    role: requirements.role
+                    role: requirements.role,
                 },
                 current: {
                     phase: currentPhase,
                     state: currentState,
-                    role: currentRole
+                    role: currentRole,
                 },
-                violations: errors
+                violations: errors,
             });
             return;
         }
@@ -220,7 +221,7 @@ export function requireAccess(requirements: FeatureRequirements) {
             res.status(403).json({
                 error: 'PHASE_REQUIRED',
                 required: requirements.phase,
-                current: currentPhase
+                current: currentPhase,
             });
             return;
         }
@@ -230,7 +231,7 @@ export function requireAccess(requirements: FeatureRequirements) {
             res.status(403).json({
                 error: 'STATE_REQUIRED',
                 required: requirements.state,
-                current: currentState
+                current: currentState,
             });
             return;
         }
@@ -240,7 +241,7 @@ export function requireAccess(requirements: FeatureRequirements) {
             res.status(403).json({
                 error: 'ROLE_REQUIRED',
                 required: requirements.role,
-                current: currentRole
+                current: currentRole,
             });
             return;
         }
@@ -282,11 +283,6 @@ export function isFeatureAccessible(featureId: string, context: FeatureContext):
  * @returns List of accessible feature IDs
  */
 export function getAccessibleFeatures(context: FeatureContext): string[] {
-    return Object.keys(FEATURE_REQUIREMENTS).filter(featureId =>
-        isFeatureAccessible(featureId, context)
-    );
+    return Object.keys(FEATURE_REQUIREMENTS).filter((featureId) => isFeatureAccessible(featureId, context));
 }
-
-
-
 

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { DataExportPanel } from '../../../components/SuperAdmin/data/DataExportPanel';
+import { DataExportPanel } from '../../components/SuperAdmin/data/DataExportPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -340,6 +340,7 @@ describe('DataExportPanel', () => {
         });
     });
 });
+
 
 
 

@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Keyboard, Settings, RotateCcw, Search, Edit2, Check, X,
-    Save, Loader2, CheckCircle, Info, Command
+import {
+    Check,
+    CheckCircle,
+    Command,
+    Edit2,
+    Info,
+    Keyboard,
+    Loader2,
+    RotateCcw,
+    Save,
+    Search,
+    Settings,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
-import { User, KeyboardShortcuts, ShortcutPreset, ShortcutAction, ShortcutCategory } from '../../types';
+import { KeyboardShortcuts, ShortcutAction, ShortcutCategory, ShortcutPreset, User } from '../../types';
 
 interface KeyboardShortcutsSettingsProps {
     currentUser: User;
@@ -15,34 +26,118 @@ interface KeyboardShortcutsSettingsProps {
 // Default keyboard shortcuts
 const DEFAULT_SHORTCUTS: ShortcutAction[] = [
     // Navigation
-    { id: 'go_home', name: 'Go to Home', description: 'Navigate to dashboard', category: 'navigation', defaultKey: 'g h' },
-    { id: 'go_tasks', name: 'Go to Tasks', description: 'Navigate to my tasks', category: 'navigation', defaultKey: 'g t' },
-    { id: 'go_inbox', name: 'Go to Inbox', description: 'Navigate to inbox', category: 'navigation', defaultKey: 'g i' },
-    { id: 'go_settings', name: 'Go to Settings', description: 'Navigate to settings', category: 'navigation', defaultKey: 'g s' },
-    
+    {
+        id: 'go_home',
+        name: 'Go to Home',
+        description: 'Navigate to dashboard',
+        category: 'navigation',
+        defaultKey: 'g h',
+    },
+    {
+        id: 'go_tasks',
+        name: 'Go to Tasks',
+        description: 'Navigate to my tasks',
+        category: 'navigation',
+        defaultKey: 'g t',
+    },
+    {
+        id: 'go_inbox',
+        name: 'Go to Inbox',
+        description: 'Navigate to inbox',
+        category: 'navigation',
+        defaultKey: 'g i',
+    },
+    {
+        id: 'go_settings',
+        name: 'Go to Settings',
+        description: 'Navigate to settings',
+        category: 'navigation',
+        defaultKey: 'g s',
+    },
+
     // Search
-    { id: 'search_global', name: 'Global Search', description: 'Open global search', category: 'search', defaultKey: 'Cmd+K' },
-    { id: 'search_tasks', name: 'Search Tasks', description: 'Search in tasks', category: 'search', defaultKey: 'Cmd+Shift+T' },
-    
+    {
+        id: 'search_global',
+        name: 'Global Search',
+        description: 'Open global search',
+        category: 'search',
+        defaultKey: 'Cmd+K',
+    },
+    {
+        id: 'search_tasks',
+        name: 'Search Tasks',
+        description: 'Search in tasks',
+        category: 'search',
+        defaultKey: 'Cmd+Shift+T',
+    },
+
     // Task Management
-    { id: 'new_task', name: 'New Task', description: 'Create a new task', category: 'task_management', defaultKey: 'n t' },
-    { id: 'complete_task', name: 'Complete Task', description: 'Mark selected task as done', category: 'task_management', defaultKey: 'c' },
-    { id: 'edit_task', name: 'Edit Task', description: 'Edit selected task', category: 'task_management', defaultKey: 'e' },
-    { id: 'delete_task', name: 'Delete Task', description: 'Delete selected task', category: 'task_management', defaultKey: 'Backspace' },
-    { id: 'assign_task', name: 'Assign Task', description: 'Assign selected task', category: 'task_management', defaultKey: 'a' },
-    
+    {
+        id: 'new_task',
+        name: 'New Task',
+        description: 'Create a new task',
+        category: 'task_management',
+        defaultKey: 'n t',
+    },
+    {
+        id: 'complete_task',
+        name: 'Complete Task',
+        description: 'Mark selected task as done',
+        category: 'task_management',
+        defaultKey: 'c',
+    },
+    {
+        id: 'edit_task',
+        name: 'Edit Task',
+        description: 'Edit selected task',
+        category: 'task_management',
+        defaultKey: 'e',
+    },
+    {
+        id: 'delete_task',
+        name: 'Delete Task',
+        description: 'Delete selected task',
+        category: 'task_management',
+        defaultKey: 'Backspace',
+    },
+    {
+        id: 'assign_task',
+        name: 'Assign Task',
+        description: 'Assign selected task',
+        category: 'task_management',
+        defaultKey: 'a',
+    },
+
     // Editing
     { id: 'save', name: 'Save', description: 'Save current changes', category: 'editing', defaultKey: 'Cmd+S' },
     { id: 'undo', name: 'Undo', description: 'Undo last action', category: 'editing', defaultKey: 'Cmd+Z' },
     { id: 'redo', name: 'Redo', description: 'Redo last action', category: 'editing', defaultKey: 'Cmd+Shift+Z' },
-    
+
     // AI
     { id: 'ai_assist', name: 'AI Assistant', description: 'Open AI assistant', category: 'ai', defaultKey: 'Cmd+J' },
-    { id: 'ai_summarize', name: 'AI Summarize', description: 'Summarize selected text', category: 'ai', defaultKey: 'Cmd+Shift+S' },
-    
+    {
+        id: 'ai_summarize',
+        name: 'AI Summarize',
+        description: 'Summarize selected text',
+        category: 'ai',
+        defaultKey: 'Cmd+Shift+S',
+    },
+
     // General
-    { id: 'toggle_sidebar', name: 'Toggle Sidebar', description: 'Show/hide sidebar', category: 'general', defaultKey: 'Cmd+\\' },
-    { id: 'notifications', name: 'Notifications', description: 'Open notifications', category: 'general', defaultKey: 'n n' },
+    {
+        id: 'toggle_sidebar',
+        name: 'Toggle Sidebar',
+        description: 'Show/hide sidebar',
+        category: 'general',
+        defaultKey: 'Cmd+\\',
+    },
+    {
+        id: 'notifications',
+        name: 'Notifications',
+        description: 'Open notifications',
+        category: 'general',
+        defaultKey: 'n n',
+    },
     { id: 'help', name: 'Help', description: 'Show keyboard shortcuts', category: 'general', defaultKey: '?' },
 ];
 
@@ -63,23 +158,20 @@ const CATEGORY_LABELS: Record<ShortcutCategory, string> = {
     general: 'General',
 };
 
-export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [searchQuery, setSearchQuery] = useState('');
     const [editingShortcut, setEditingShortcut] = useState<string | null>(null);
     const [newKeyBinding, setNewKeyBinding] = useState('');
-    
+
     const [shortcuts, setShortcuts] = useState<KeyboardShortcuts>({
         preset: 'default',
         enabled: true,
         showHints: true,
         customShortcuts: {},
-        disabledShortcuts: []
+        disabledShortcuts: [],
     });
 
     // Load preferences
@@ -119,22 +211,22 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
             enabled: true,
             showHints: true,
             customShortcuts: {},
-            disabledShortcuts: []
+            disabledShortcuts: [],
         });
     };
 
     const handleKeyCapture = (e: React.KeyboardEvent) => {
         e.preventDefault();
         const parts: string[] = [];
-        
+
         if (e.metaKey || e.ctrlKey) parts.push('Cmd');
         if (e.shiftKey) parts.push('Shift');
         if (e.altKey) parts.push('Alt');
-        
+
         if (e.key && !['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
             parts.push(e.key.length === 1 ? e.key.toUpperCase() : e.key);
         }
-        
+
         if (parts.length > 0) {
             setNewKeyBinding(parts.join('+'));
         }
@@ -142,13 +234,13 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
 
     const saveCustomShortcut = (shortcutId: string) => {
         if (newKeyBinding) {
-            setShortcuts(prev => ({
+            setShortcuts((prev) => ({
                 ...prev,
                 preset: 'custom',
                 customShortcuts: {
                     ...prev.customShortcuts,
-                    [shortcutId]: newKeyBinding
-                }
+                    [shortcutId]: newKeyBinding,
+                },
             }));
         }
         setEditingShortcut(null);
@@ -156,13 +248,13 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
     };
 
     const toggleShortcut = (shortcutId: string) => {
-        setShortcuts(prev => {
+        setShortcuts((prev) => {
             const isDisabled = prev.disabledShortcuts?.includes(shortcutId);
             return {
                 ...prev,
                 disabledShortcuts: isDisabled
-                    ? prev.disabledShortcuts?.filter(id => id !== shortcutId) || []
-                    : [...(prev.disabledShortcuts || []), shortcutId]
+                    ? prev.disabledShortcuts?.filter((id) => id !== shortcutId) || []
+                    : [...(prev.disabledShortcuts || []), shortcutId],
             };
         });
     };
@@ -171,26 +263,31 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
         return shortcuts.customShortcuts?.[shortcut.id] || shortcut.defaultKey;
     };
 
-    const filteredShortcuts = DEFAULT_SHORTCUTS.filter(s =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredShortcuts = DEFAULT_SHORTCUTS.filter(
+        (s) =>
+            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.description.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    const groupedShortcuts = filteredShortcuts.reduce((acc, shortcut) => {
-        if (!acc[shortcut.category]) acc[shortcut.category] = [];
-        acc[shortcut.category].push(shortcut);
-        return acc;
-    }, {} as Record<ShortcutCategory, ShortcutAction[]>);
+    const groupedShortcuts = filteredShortcuts.reduce(
+        (acc, shortcut) => {
+            if (!acc[shortcut.category]) acc[shortcut.category] = [];
+            acc[shortcut.category].push(shortcut);
+            return acc;
+        },
+        {} as Record<ShortcutCategory, ShortcutAction[]>,
+    );
 
     // Styling
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
-    const toggleClass = (enabled: boolean) => `relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-    }`;
-    const toggleKnobClass = (enabled: boolean) => `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-        enabled ? 'left-7' : 'left-1'
-    }`;
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    const toggleClass = (enabled: boolean) =>
+        `relative w-12 h-6 rounded-full transition-colors ${
+            enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+        }`;
+    const toggleKnobClass = (enabled: boolean) =>
+        `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
     const KeyBadge = ({ keys }: { keys: string }) => (
         <div className="flex items-center gap-1">
@@ -240,8 +337,15 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
             <div className={cardClass}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${shortcuts.enabled ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}>
-                            <Keyboard size={20} className={shortcuts.enabled ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'} />
+                        <div
+                            className={`p-2 rounded-lg ${shortcuts.enabled ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+                        >
+                            <Keyboard
+                                size={20}
+                                className={
+                                    shortcuts.enabled ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'
+                                }
+                            />
                         </div>
                         <div>
                             <p className="font-medium text-navy-900 dark:text-white">
@@ -253,7 +357,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         </div>
                     </div>
                     <button
-                        onClick={() => setShortcuts(prev => ({ ...prev, enabled: !prev.enabled }))}
+                        onClick={() => setShortcuts((prev) => ({ ...prev, enabled: !prev.enabled }))}
                         className={toggleClass(shortcuts.enabled)}
                     >
                         <span className={toggleKnobClass(shortcuts.enabled)} />
@@ -272,7 +376,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 </p>
                             </div>
                             <button
-                                onClick={() => setShortcuts(prev => ({ ...prev, showHints: !prev.showHints }))}
+                                onClick={() => setShortcuts((prev) => ({ ...prev, showHints: !prev.showHints }))}
                                 className={toggleClass(shortcuts.showHints)}
                             >
                                 <span className={toggleKnobClass(shortcuts.showHints)} />
@@ -290,23 +394,25 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                             <Settings size={16} className="text-purple-500" />
                             {t('settings.shortcuts.preset', 'Shortcut Preset')}
                         </h4>
-                        
+
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                            {PRESET_OPTIONS.map(preset => (
+                            {PRESET_OPTIONS.map((preset) => (
                                 <button
                                     key={preset.value}
-                                    onClick={() => setShortcuts(prev => ({ ...prev, preset: preset.value }))}
+                                    onClick={() => setShortcuts((prev) => ({ ...prev, preset: preset.value }))}
                                     className={`p-3 rounded-lg border-2 text-left transition-all ${
                                         shortcuts.preset === preset.value
                                             ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                             : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
                                     }`}
                                 >
-                                    <p className={`text-sm font-medium ${
-                                        shortcuts.preset === preset.value
-                                            ? 'text-purple-700 dark:text-purple-300'
-                                            : 'text-navy-900 dark:text-white'
-                                    }`}>
+                                    <p
+                                        className={`text-sm font-medium ${
+                                            shortcuts.preset === preset.value
+                                                ? 'text-purple-700 dark:text-purple-300'
+                                                : 'text-navy-900 dark:text-white'
+                                        }`}
+                                    >
                                         {preset.label}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-0.5">{preset.description}</p>
@@ -320,7 +426,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
                             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
                         />
@@ -329,21 +435,19 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                     {/* Shortcuts List */}
                     {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
                         <div key={category} className={cardClass}>
-                            <h4 className={sectionTitleClass}>
-                                {CATEGORY_LABELS[category as ShortcutCategory]}
-                            </h4>
-                            
+                            <h4 className={sectionTitleClass}>{CATEGORY_LABELS[category as ShortcutCategory]}</h4>
+
                             <div className="space-y-2">
-                                {categoryShortcuts.map(shortcut => {
+                                {categoryShortcuts.map((shortcut) => {
                                     const isDisabled = shortcuts.disabledShortcuts?.includes(shortcut.id);
                                     const isEditing = editingShortcut === shortcut.id;
-                                    
+
                                     return (
-                                        <div 
+                                        <div
                                             key={shortcut.id}
                                             className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-                                                isDisabled 
-                                                    ? 'bg-slate-50/50 dark:bg-navy-950/25 opacity-50' 
+                                                isDisabled
+                                                    ? 'bg-slate-50/50 dark:bg-navy-950/25 opacity-50'
                                                     : 'bg-slate-50 dark:bg-navy-950/50 hover:bg-slate-100 dark:hover:bg-navy-950'
                                             }`}
                                         >
@@ -353,7 +457,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                                 </p>
                                                 <p className="text-xs text-slate-500">{shortcut.description}</p>
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-3">
                                                 {isEditing ? (
                                                     <div className="flex items-center gap-2">
@@ -372,7 +476,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                                             <Check size={16} />
                                                         </button>
                                                         <button
-                                                            onClick={() => { setEditingShortcut(null); setNewKeyBinding(''); }}
+                                                            onClick={() => {
+                                                                setEditingShortcut(null);
+                                                                setNewKeyBinding('');
+                                                            }}
                                                             className="p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                                         >
                                                             <X size={16} />
@@ -393,9 +500,11 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                                                 isDisabled ? 'bg-slate-300' : 'bg-purple-500'
                                                             }`}
                                                         >
-                                                            <span className={`block w-3 h-3 rounded-full bg-white shadow transition-all ${
-                                                                isDisabled ? 'ml-1' : 'ml-4'
-                                                            }`} />
+                                                            <span
+                                                                className={`block w-3 h-3 rounded-full bg-white shadow transition-all ${
+                                                                    isDisabled ? 'ml-1' : 'ml-4'
+                                                                }`}
+                                                            />
                                                         </button>
                                                     </>
                                                 )}
@@ -416,7 +525,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                     {t('settings.shortcuts.tip', 'Tip')}
                                 </h4>
                                 <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                                    {t('settings.shortcuts.tipText', 'Press "?" anywhere in the app to see available shortcuts. Sequences like "g h" mean press g, release, then press h.')}
+                                    {t(
+                                        'settings.shortcuts.tipText',
+                                        'Press "?" anywhere in the app to see available shortcuts. Sequences like "g h" mean press g, release, then press h.',
+                                    )}
                                 </p>
                             </div>
                         </div>

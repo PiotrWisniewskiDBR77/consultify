@@ -3,16 +3,10 @@
  * ClickUp-style design with hover actions
  */
 
-import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-    Circle,
-    CheckCircle2,
-    Pin,
-    Trash2,
-    Calendar,
-    User
-} from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, Pin, Trash2, User } from 'lucide-react';
+import React, { useState } from 'react';
+
 import { Task } from '../../types';
 
 interface TaskRowProps {
@@ -55,7 +49,7 @@ const formatDueDate = (dueDate?: string | Date): string => {
     if (dateOnly.getTime() === tomorrow.getTime()) {
         return 'Tomorrow';
     }
-    
+
     // Format as "Jan 15" or "Dec 3"
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
@@ -74,13 +68,11 @@ export const TaskRow: React.FC<TaskRowProps> = ({
     onToggleComplete,
     onTogglePin,
     onDelete,
-    onClick
+    onClick,
 }) => {
     const [isHovered, setIsHovered] = useState(false);
-    
-    const isCompleted = ['done', 'completed', 'validated'].includes(
-        task.status?.toLowerCase() || ''
-    );
+
+    const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
     const overdue = !isCompleted && isOverdue(task.dueDate);
     const dueDateFormatted = formatDueDate(task.dueDate);
     const assigneeName = task.assignee?.lastName || task.assignee?.firstName || '';
@@ -98,9 +90,10 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                 group h-12 flex items-center gap-3 px-3 cursor-pointer
                 border-b border-slate-100 dark:border-white/5
                 transition-colors duration-150
-                ${isCompleted 
-                    ? 'bg-slate-50/50 dark:bg-white/[0.02]' 
-                    : 'bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                ${
+                    isCompleted
+                        ? 'bg-slate-50/50 dark:bg-white/[0.02]'
+                        : 'bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
                 }
             `}
         >
@@ -113,9 +106,10 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                 className={`
                     shrink-0 w-5 h-5 rounded-full flex items-center justify-center
                     transition-all duration-150
-                    ${isCompleted
-                        ? 'bg-green-500 text-white'
-                        : 'border-2 border-slate-300 dark:border-slate-600 hover:border-green-500 dark:hover:border-green-500'
+                    ${
+                        isCompleted
+                            ? 'bg-green-500 text-white'
+                            : 'border-2 border-slate-300 dark:border-slate-600 hover:border-green-500 dark:hover:border-green-500'
                     }
                 `}
             >
@@ -137,15 +131,16 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                 <span
                     className={`
                         text-sm truncate
-                        ${isCompleted
-                            ? 'text-slate-400 dark:text-slate-500 line-through'
-                            : 'text-slate-800 dark:text-white'
+                        ${
+                            isCompleted
+                                ? 'text-slate-400 dark:text-slate-500 line-through'
+                                : 'text-slate-800 dark:text-white'
                         }
                     `}
                 >
                     {task.title}
                 </span>
-                
+
                 {/* Initiative tag (small) */}
                 {task.initiativeName && (
                     <span className="shrink-0 hidden sm:inline-flex text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 max-w-[100px] truncate">
@@ -167,9 +162,10 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                                 }}
                                 className={`
                                     p-1.5 rounded transition-colors
-                                    ${isPinned
-                                        ? 'text-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                                        : 'text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                                    ${
+                                        isPinned
+                                            ? 'text-purple-500 bg-purple-50 dark:bg-purple-900/30'
+                                            : 'text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                                     }
                                 `}
                                 title={isPinned ? 'Unpin' : 'Pin to top'}
@@ -197,10 +193,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                             <div
                                 className={`
                                     flex items-center gap-1 text-xs
-                                    ${overdue
-                                        ? 'text-red-500 font-medium'
-                                        : 'text-slate-400 dark:text-slate-500'
-                                    }
+                                    ${overdue ? 'text-red-500 font-medium' : 'text-slate-400 dark:text-slate-500'}
                                 `}
                             >
                                 <Calendar size={12} />
@@ -225,12 +218,4 @@ export const TaskRow: React.FC<TaskRowProps> = ({
 };
 
 export default TaskRow;
-
-
-
-
-
-
-
-
 

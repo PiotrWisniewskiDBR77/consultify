@@ -1,7 +1,7 @@
 /**
  * AiExplain Routes
  * API endpoints for aiExplain
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

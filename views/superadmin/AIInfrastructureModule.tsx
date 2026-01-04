@@ -1,9 +1,9 @@
 /**
  * AIInfrastructureModule - AI Infrastructure & Configuration
- * 
+ *
  * Module 1 of 3: Infrastructure management
  * Tabs: LLM Config | Tier Assignments | Global Settings | Health Monitoring
- * 
+ *
  * Responsibilities:
  * - LLM provider configuration (API keys, endpoints)
  * - Model tier assignments (speed, balanced, quality)
@@ -11,13 +11,14 @@
  * - Health monitoring and alerts
  */
 
+import { Cpu, HeartPulse, Layers, Settings } from 'lucide-react';
 import React, { useState } from 'react';
-import { Cpu, Layers, Settings, HeartPulse } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { LLMManagementView } from './LLMManagementView';
+
+import { LLMHealthPanel } from '../../components/Admin/LLMHealthPanel';
 import { ModelTierAssignments } from '../../components/SuperAdmin/ModelTierAssignments';
 import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISettings';
-import { LLMHealthPanel } from '../../components/Admin/LLMHealthPanel';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { LLMManagementView } from './LLMManagementView';
 
 interface AIInfrastructureModuleProps {
     initialTab?: string;
@@ -27,29 +28,29 @@ export const AIInfrastructureModule: React.FC<AIInfrastructureModuleProps> = ({ 
     const [activeTab, setActiveTab] = useState(initialTab || 'llm-config');
 
     const tabs: Tab[] = [
-        { 
-            id: 'llm-config', 
-            label: 'LLM Providers', 
+        {
+            id: 'llm-config',
+            label: 'LLM Providers',
             icon: <Cpu size={16} />,
-            description: 'Configure LLM providers and API keys'
+            description: 'Configure LLM providers and API keys',
         },
-        { 
-            id: 'tier-assignments', 
-            label: 'Model Tiers', 
+        {
+            id: 'tier-assignments',
+            label: 'Model Tiers',
             icon: <Layers size={16} />,
-            description: 'Assign models to performance tiers'
+            description: 'Assign models to performance tiers',
         },
-        { 
-            id: 'settings', 
-            label: 'Global Settings', 
+        {
+            id: 'settings',
+            label: 'Global Settings',
             icon: <Settings size={16} />,
-            description: 'System-wide AI configuration'
+            description: 'System-wide AI configuration',
         },
-        { 
-            id: 'health', 
-            label: 'Health Monitoring', 
+        {
+            id: 'health',
+            label: 'Health Monitoring',
             icon: <HeartPulse size={16} />,
-            description: 'Monitor provider health and alerts'
+            description: 'Monitor provider health and alerts',
         },
     ];
 

@@ -1,9 +1,9 @@
 /**
  * Organization Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/organizationService.js (CommonJS) to TypeScript (ES Modules)
- * 
+ *
  * Handles core organization logic:
  * - Member management (RBAC source of truth)
  * - Billing status & Token balance management
@@ -11,8 +11,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -23,10 +24,10 @@ export const ROLES = {
     OWNER: 'OWNER',
     ADMIN: 'ADMIN',
     MEMBER: 'MEMBER',
-    CONSULTANT: 'CONSULTANT'
+    CONSULTANT: 'CONSULTANT',
 } as const;
 
-export type OrganizationRole = typeof ROLES[keyof typeof ROLES];
+export type OrganizationRole = (typeof ROLES)[keyof typeof ROLES];
 
 interface CreateOrganizationParams {
     userId: string;
@@ -149,13 +150,13 @@ export async function createOrganization(params: CreateOrganizationParams): Prom
                 ai_assertiveness_level, ai_autonomy_level, attribution_data
             )
              VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?)`,
-            params: [orgId, name, userId, now, attributionJson]
+            params: [orgId, name, userId, now, attributionJson],
         },
         {
             sql: `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
                  VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
-            params: [memberId, orgId, userId, 'OWNER', now]
-        }
+            params: [memberId, orgId, userId, 'OWNER', now],
+        },
     ]);
 
     if (!result.success) {
@@ -172,7 +173,7 @@ export async function getOrganization(orgId: string): Promise<Organization> {
     const row = await DbPromise.get<Organization>(
         `SELECT id, name, status, billing_status, token_balance, created_at 
          FROM organizations WHERE id = ?`,
-        [orgId]
+        [orgId],
     );
 
     if (!row) {
@@ -195,11 +196,11 @@ export async function addMember(params: AddMemberParams): Promise<AddMemberResul
     const id = uuidv4();
 
     try {
-        const result = await DbPromise.run(
+        const _result = await DbPromise.run(
             `INSERT INTO organization_members (id, organization_id, user_id, role, status, invited_by_user_id)
              VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
             [id, organizationId, userId, role, invitedBy || null],
-            { fallback: false }
+            { fallback: false },
         );
 
         return { id, organizationId, userId, role };
@@ -223,7 +224,7 @@ export async function getMembers(orgId: string): Promise<Member[]> {
          FROM organization_members m
          JOIN users u ON m.user_id = u.id
          WHERE m.organization_id = ?`,
-        [orgId]
+        [orgId],
     );
 
     return rows || [];
@@ -239,7 +240,7 @@ export async function getUserOrganizations(userId: string): Promise<UserOrganiza
          FROM organizations o
          JOIN organization_members m ON o.id = m.organization_id
          WHERE m.user_id = ?`,
-        [userId]
+        [userId],
     );
 
     return rows || [];
@@ -260,13 +261,13 @@ export async function activateBilling(orgId: string): Promise<ActivateBillingRes
                      status = 'active',
                      token_balance = IFNULL(token_balance, 0) + ? 
                  WHERE id = ?`,
-            params: [INITIAL_TOKENS, orgId]
+            params: [INITIAL_TOKENS, orgId],
         },
         {
             sql: `INSERT OR REPLACE INTO organization_billing (organization_id, status, updated_at)
                  VALUES (?, 'ACTIVE', CURRENT_TIMESTAMP)`,
-            params: [orgId]
-        }
+            params: [orgId],
+        },
     ]);
 
     if (!result.success) {
@@ -284,14 +285,14 @@ export async function activateBilling(orgId: string): Promise<ActivateBillingRes
         await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
     } catch (e: unknown) {
         // Event logging failed, but billing is active. Acceptable.
-        console.error("Post-billing activation error", e);
+        console.error('Post-billing activation error', e);
     }
 
     return {
         success: true,
         billingStatus: 'ACTIVE',
         organizationType: 'PAID',
-        tokensAdded: INITIAL_TOKENS
+        tokensAdded: INITIAL_TOKENS,
     };
 }
 
@@ -315,11 +316,7 @@ export async function updateAISettings(orgId: string, settings: UpdateAISettings
 
     params.push(orgId);
 
-    await DbPromise.run(
-        db,
-        `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`,
-        params
-    );
+    await DbPromise.run(db, `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`, params);
 }
 
 /**
@@ -330,13 +327,15 @@ export async function getAISettings(orgId: string): Promise<AISettings> {
         db,
         `SELECT ai_assertiveness_level, ai_autonomy_level 
         FROM organizations WHERE id = ?`,
-        [orgId]
+        [orgId],
     );
 
-    return row || {
-        ai_assertiveness_level: 'MEDIUM',
-        ai_autonomy_level: 'SUGGEST_ONLY'
-    };
+    return (
+        row || {
+            ai_assertiveness_level: 'MEDIUM',
+            ai_autonomy_level: 'SUGGEST_ONLY',
+        }
+    );
 }
 
 /**
@@ -349,7 +348,7 @@ export async function removeMember(params: RemoveMemberParams): Promise<void> {
         db,
         `DELETE FROM organization_members 
          WHERE organization_id = ? AND user_id = ?`,
-        [organizationId, userId]
+        [organizationId, userId],
     );
 
     if ((result.changes || 0) === 0) {
@@ -372,7 +371,7 @@ export async function updateMemberRole(params: UpdateMemberRoleParams): Promise<
         `UPDATE organization_members 
          SET role = ? 
          WHERE organization_id = ? AND user_id = ?`,
-        [role, organizationId, userId]
+        [role, organizationId, userId],
     );
 
     if ((result.changes || 0) === 0) {
@@ -390,7 +389,7 @@ export async function getMemberRole(organizationId: string, userId: string): Pro
         db,
         `SELECT role FROM organization_members 
          WHERE organization_id = ? AND user_id = ?`,
-        [organizationId, userId]
+        [organizationId, userId],
     );
 
     return row ? row.role : null;
@@ -410,7 +409,7 @@ const OrganizationService = {
     getAISettings,
     removeMember,
     updateMemberRole,
-    getMemberRole
+    getMemberRole,
 };
 
 export default OrganizationService;

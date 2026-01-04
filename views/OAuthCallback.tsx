@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import { useAppStore } from '../store/useAppStore';
 import { AppView, UserRole } from '../types';
 
@@ -58,7 +59,7 @@ const OAuthCallback: React.FC = () => {
                     // Add isAuthenticated flag
                     const authenticatedUser = {
                         ...user,
-                        isAuthenticated: true
+                        isAuthenticated: true,
                     };
                     setCurrentUser(authenticatedUser);
 
@@ -77,7 +78,7 @@ const OAuthCallback: React.FC = () => {
                         if (userData && userData.user) {
                             const authenticatedUser = {
                                 ...userData.user,
-                                isAuthenticated: true
+                                isAuthenticated: true,
                             };
                             setCurrentUser(authenticatedUser);
 

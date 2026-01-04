@@ -1,16 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Filter,
-    X,
-    ChevronDown,
-    ChevronUp,
-    Calendar,
-    Tag,
-    FolderOpen,
-    User,
-    Check,
-    RefreshCw
-} from 'lucide-react';
+import { Calendar, Check, ChevronDown, ChevronUp, Filter, FolderOpen, RefreshCw, Tag, User, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import type { ContentCategory, ContentTag } from '../../types';
 
 export interface ContentFiltersState {
@@ -45,7 +35,7 @@ interface ContentFiltersProps {
 const STATUS_OPTIONS = [
     { value: 'DRAFT', label: 'Draft', color: 'bg-amber-500/20 text-amber-400' },
     { value: 'PUBLISHED', label: 'Published', color: 'bg-emerald-500/20 text-emerald-400' },
-    { value: 'DEPRECATED', label: 'Deprecated', color: 'bg-slate-500/20 text-slate-400' }
+    { value: 'DEPRECATED', label: 'Deprecated', color: 'bg-slate-500/20 text-slate-400' },
 ];
 
 const DEFAULT_LANGUAGES = [
@@ -53,7 +43,7 @@ const DEFAULT_LANGUAGES = [
     { code: 'pl', name: 'Polish' },
     { code: 'de', name: 'German' },
     { code: 'fr', name: 'French' },
-    { code: 'es', name: 'Spanish' }
+    { code: 'es', name: 'Spanish' },
 ];
 
 export const ContentFilters: React.FC<ContentFiltersProps> = ({
@@ -69,11 +59,9 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
     showCreatedBy = false,
     showLanguage = true,
     languages = DEFAULT_LANGUAGES,
-    compact = false
+    compact = false,
 }) => {
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(
-        new Set(['status', 'contentType'])
-    );
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['status', 'contentType']));
     const [isExpanded, setIsExpanded] = useState(!compact);
 
     const toggleSection = (section: string) => {
@@ -124,7 +112,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             tagIds: [],
             createdBy: [],
             dateRange: { from: '', to: '' },
-            language: ''
+            language: '',
         });
     };
 
@@ -182,10 +170,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                         </button>
                     )}
                     {compact && (
-                        <button
-                            onClick={() => setIsExpanded(false)}
-                            className="p-1 text-slate-500 hover:text-white"
-                        >
+                        <button onClick={() => setIsExpanded(false)} className="p-1 text-slate-500 hover:text-white">
                             <X size={16} />
                         </button>
                     )}
@@ -208,7 +193,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                                     onClick={() =>
                                         onChange({
                                             ...filters,
-                                            contentType: type as ContentFiltersState['contentType']
+                                            contentType: type as ContentFiltersState['contentType'],
                                         })
                                     }
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -301,7 +286,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                                         backgroundColor: `${tag.color}20`,
                                         color: tag.color,
                                         borderColor: `${tag.color}40`,
-                                        borderWidth: '1px'
+                                        borderWidth: '1px',
                                     }}
                                 >
                                     <Tag size={10} />
@@ -330,7 +315,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                                     onChange={(e) =>
                                         onChange({
                                             ...filters,
-                                            dateRange: { ...filters.dateRange, from: e.target.value }
+                                            dateRange: { ...filters.dateRange, from: e.target.value },
                                         })
                                     }
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
@@ -344,7 +329,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                                     onChange={(e) =>
                                         onChange({
                                             ...filters,
-                                            dateRange: { ...filters.dateRange, to: e.target.value }
+                                            dateRange: { ...filters.dateRange, to: e.target.value },
                                         })
                                     }
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
@@ -421,20 +406,10 @@ interface FilterSectionProps {
     children: React.ReactNode;
 }
 
-const FilterSection: React.FC<FilterSectionProps> = ({
-    title,
-    icon,
-    expanded,
-    onToggle,
-    count = 0,
-    children
-}) => {
+const FilterSection: React.FC<FilterSectionProps> = ({ title, icon, expanded, onToggle, count = 0, children }) => {
     return (
         <div className="border-b border-slate-700/30 last:border-0 pb-4 last:pb-0">
-            <button
-                onClick={onToggle}
-                className="flex items-center justify-between w-full text-left mb-2"
-            >
+            <button onClick={onToggle} className="flex items-center justify-between w-full text-left mb-2">
                 <div className="flex items-center gap-2">
                     <span className="text-slate-500">{icon}</span>
                     <span className="text-sm font-medium text-slate-300">{title}</span>
@@ -456,10 +431,4 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 };
 
 export default ContentFilters;
-
-
-
-
-
-
 

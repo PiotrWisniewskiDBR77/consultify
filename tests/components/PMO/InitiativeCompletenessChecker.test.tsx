@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { InitiativeCompletenessChecker } from '../../../components/PMO/InitiativeCompletenessChecker';
+import { InitiativeCompletenessChecker } from '../../components/PMO/InitiativeCompletenessChecker';
 
 const mockInitiative = {
     name: 'Test Initiative',
@@ -221,6 +221,7 @@ describe('InitiativeCompletenessChecker Component', () => {
         });
     });
 });
+
 
 
 

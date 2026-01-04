@@ -1,7 +1,8 @@
 import express from 'express';
 import StageGateService from '../services/stageGateService.js';
 import verifyToken from '../middleware/authMiddleware.js';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 const router = express.Router();
 

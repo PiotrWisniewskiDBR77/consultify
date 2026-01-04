@@ -9,7 +9,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { aiLogger } from './logger.js';
 

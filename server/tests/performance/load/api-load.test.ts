@@ -1,23 +1,23 @@
 /**
  * API Load Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Load tests for API endpoints - 95%+ coverage target
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('API Load Tests', () => {
     describe('Concurrent Requests', () => {
         it('should handle 100+ concurrent requests to /api/projects', async () => {
-            const requests = Array.from({ length: 100 }, (_, i) => 
+            const requests = Array.from({ length: 100 }, (_, i) =>
                 fetch('http://localhost:3005/api/projects', {
-                    headers: { Authorization: `Bearer test-token-${i}` }
-                })
+                    headers: { Authorization: `Bearer test-token-${i}` },
+                }),
             );
 
             const responses = await Promise.all(requests);
-            const successCount = responses.filter(r => r.ok).length;
+            const successCount = responses.filter((r) => r.ok).length;
 
             expect(successCount).toBeGreaterThan(95); // 95%+ success rate
         });
@@ -47,4 +47,3 @@ describe('API Load Tests', () => {
         });
     });
 });
-

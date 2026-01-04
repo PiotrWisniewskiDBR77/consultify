@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { attachUserState, requireState, _setDb } from '../../../../server/middleware/userStateGuard';
+import userStateGuard from '../../../../server/middleware/userStateGuard';
 import db from '../../../../server/db/sqliteAsync';
+
+const { attachUserState, requireState, _setDb } = userStateGuard;
 
 // Mock DB with proper hoisting handling
 vi.mock('../../../../server/db/sqliteAsync', () => {

@@ -1,7 +1,8 @@
-import React from 'react';
-import { useAIContext } from '../../contexts/AIContext';
 import { MessageCircle, Shield } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useAIContext } from '../../contexts/AIContext';
 import { AIRoleBadge } from './AIRoleBadge';
 
 // CSS for the chat button animation (matching other widgets)
@@ -32,12 +33,12 @@ export const ChatToggleButton: React.FC = () => {
     const { i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
-    // We assume regulatory mode is handled by context or we fetch specific to this component if needed. 
+    // We assume regulatory mode is handled by context or we fetch specific to this component if needed.
     // For simplicity, we'll keep the context badge.
 
-    // Note: Regulatory mode state was local in ChatOverlay. 
-    // Ideally it should be moved to AIContext, but for now we'll stick to the main badge 
-    // or we'd need to duplicate the fetch logic. 
+    // Note: Regulatory mode state was local in ChatOverlay.
+    // Ideally it should be moved to AIContext, but for now we'll stick to the main badge
+    // or we'd need to duplicate the fetch logic.
     // Let's implement the refined style first.
 
     return (
@@ -64,7 +65,8 @@ export const ChatToggleButton: React.FC = () => {
                     )}
 
                     {/* Tooltip */}
-                    <div className={`
+                    <div
+                        className={`
                         absolute right-full mr-3 
                         px-3 py-1.5 
                         bg-slate-900 dark:bg-slate-800 
@@ -75,7 +77,8 @@ export const ChatToggleButton: React.FC = () => {
                         transition-opacity duration-200
                         pointer-events-none
                         shadow-lg
-                    `}>
+                    `}
+                    >
                         {lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
                         <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
                     </div>

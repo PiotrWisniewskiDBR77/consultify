@@ -1,34 +1,26 @@
 /**
  * AIAutoCompleteSettings - Auto-complete configuration
- * 
+ *
  * Features:
  * - Enable/disable auto-complete
  * - Sensitivity slider
  * - Suggestions in comments toggle
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    Zap,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Loader2, Save, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface AIAutoCompleteSettingsProps {
     currentUser: User;
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
-export const AIAutoCompleteSettings: React.FC<AIAutoCompleteSettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const AIAutoCompleteSettings: React.FC<AIAutoCompleteSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [autoSuggestions, setAutoSuggestions] = useState(true);
     const [sensitivity, setSensitivity] = useState(0.5);
@@ -55,21 +47,23 @@ export const AIAutoCompleteSettings: React.FC<AIAutoCompleteSettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/ai/autocomplete', {
                 enabled: autoSuggestions,
                 sensitivity,
-                suggestionsInComments
+                suggestionsInComments,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.ai.autocomplete.saved', 'Auto-complete preferences saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
-            toast.error(error.message || t('settings.ai.autocomplete.error', 'Failed to save auto-complete preferences'));
+            toast.error(
+                error.message || t('settings.ai.autocomplete.error', 'Failed to save auto-complete preferences'),
+            );
         } finally {
             setIsSaving(false);
         }
@@ -147,7 +141,10 @@ export const AIAutoCompleteSettings: React.FC<AIAutoCompleteSettingsProps> = ({
                                 {t('settings.ai.autocomplete.comments', 'Suggestions in Comments')}
                             </label>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {t('settings.ai.autocomplete.commentsDesc', 'Show AI suggestions when writing comments')}
+                                {t(
+                                    'settings.ai.autocomplete.commentsDesc',
+                                    'Show AI suggestions when writing comments',
+                                )}
                             </p>
                         </div>
                         <button
@@ -205,10 +202,4 @@ export const AIAutoCompleteSettings: React.FC<AIAutoCompleteSettingsProps> = ({
 };
 
 export default AIAutoCompleteSettings;
-
-
-
-
-
-
 

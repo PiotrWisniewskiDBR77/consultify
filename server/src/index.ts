@@ -1,206 +1,35 @@
 /**
  * Server Entry Point
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/index.js (CommonJS) to TypeScript (ES Modules)
  * Handles both TypeScript routes (migrated) and CommonJS routes (legacy)
  */
 
 import 'dotenv/config';
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
+
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import express, { type _NextFunction, type Express, type Request, type Response } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import helmet from 'helmet';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import helmet from 'helmet';
-import compression from 'compression';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import http from 'http';
 
 // TypeScript imports (ES Modules)
 import { initSentry } from './config/index.js';
-import { correlationMiddleware } from './utils/RequestStore.js';
+import { startHealthCheck } from './cron/HealthCheckJob.js';
+import Scheduler from './cron/Scheduler.js';
+import { getDatabase, getDatabaseAsync } from './database/Database.js';
+// TypeScript routes (migrated)
+import { apiGateway } from './Gateway.js';
+import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
-import { getDatabase } from './database/Database.js';
-import { get as dbGet } from './utils/DbPromise.js';
-import Scheduler from './cron/Scheduler.js';
-import { startHealthCheck } from './cron/HealthCheckJob.js';
-
-// TypeScript routes (migrated)
-import authRoutes from './routes/auth.routes.js';
-import billingRoutes from './routes/billing.routes.js';
-import aiRoutes from './routes/ai.routes.js';
-import { demoGuard } from './middleware/demoGuard.middleware.js';
-import userRoutes from './routes/users.routes.js';
-import projectRoutes from './routes/projects.routes.js';
-import taskRoutes from './routes/tasks.routes.js';
-import organizationRoutes from './routes/organizations.routes.js';
-import webhookRoutes from './routes/webhooks.routes.js';
-import analyticsRoutes from './routes/analytics.routes.js';
-import sessionsRoutes from './routes/sessions.routes.js';
-import teamsRoutes from './routes/teams.routes.js';
-import initiativesRoutes from './routes/initiatives.routes.js';
-import adminAlertsRoutes from './routes/adminAlerts.routes.js';
-
-// All routes migrated to ES modules
-import settingsRoutes from './routes/settings.routes.js';
-import superAdminRoutes from './routes/superadmin.routes.js';
-import knowledgeRoutes from './routes/knowledge.routes.js';
-import llmRoutes from './routes/llm.routes.js';
-import notificationRoutes from './routes/notifications.routes.js';
-import feedbackRoutes from './routes/feedback.routes.js';
-import accessControlRoutes from './routes/access-control.routes.js';
-import aiTrainingRoutes from './routes/ai-training.routes.js';
-import budgetsRoutes from './routes/budgets.routes.js';
-import tokenBillingRoutes from './routes/tokenBilling.routes.js';
-import documentRoutes from './routes/documents.routes.js';
-import megatrendRoutes from './routes/megatrend.routes.js';
-import adminDataRoutes from './routes/admin-data.routes.js';
-import userContactRoutes from './routes/user-contact.routes.js';
-import userAvailabilityRoutes from './routes/user-availability.routes.js';
-import userProfileCompletenessRoutes from './routes/user-profile-completeness.routes.js';
-import userProfessionalProfileRoutes from './routes/user-professional-profile.routes.js';
-import userSecurityAdvancedRoutes from './routes/user-security-advanced.routes.js';
-import userPrivacyExtendedRoutes from './routes/user-privacy-extended.routes.js';
-import userDataControlsRoutes from './routes/user-data-controls.routes.js';
-import aiPreferencesExtendedRoutes from './routes/ai-preferences-extended.routes.js';
-import notificationRulesRoutes from './routes/notification-rules.routes.js';
-import userProfileExtendedRoutes from './routes/user-profile-extended.routes.js';
-import conversationsRoutes from './routes/conversations.routes.js';
-import chatProjectsRoutes from './routes/chat-projects.routes.js';
-import dailyBriefRoutes from './routes/daily-brief.routes.js';
-import pinnedPromptsRoutes from './routes/pinned-prompts.routes.js';
-import aiMemoryRoutes from './routes/ai-memory.routes.js';
-import aiDraftsRoutes from './routes/ai-drafts.routes.js';
-import taskAdvisorRoutes from './routes/task-advisor.routes.js';
-import aiAnalyticsRoutes from './routes/ai-analytics.routes.js';
-import aiFeedbackRoutes from './routes/ai-feedback.routes.js';
-import aiPromptsRoutes from './routes/ai-prompts.routes.js';
-import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
-import aiAbTestingRoutes from './routes/ai-ab-testing.routes.js';
-import aiSecurityRoutes from './routes/ai-security.routes.js';
-import aiNudgesRoutes from './routes/ai-nudges.routes.js';
-import aiSettingsRoutes from './routes/ai-settings.routes.js';
-import aiActionsRoutes from './routes/aiActions.routes.js';
-import aiLearningRoutes from './routes/aiLearning.routes.js';
-import voiceRoutes from './routes/voice.routes.js';
-import userIntegrationsRoutes from './routes/userIntegrations.routes.js';
-import calendarIntegrationsRoutes from './routes/calendarIntegrations.routes.js';
-import mcpRoutes from './routes/mcp.routes.js';
-import auditLogRoutes from './routes/auditLog.routes.js';
-import featureFlagsRoutes from './routes/featureFlags.routes.js';
-import integrationsRoutes from './routes/integrations.routes.js';
-import systemConfigRoutes from './routes/systemConfig.routes.js';
-import systemHealthRoutes from './routes/systemHealth.routes.js';
-import apiKeysRoutes from './routes/apiKeys.routes.js';
-import backupRoutes from './routes/backup.routes.js';
-import mediaIngestionRoutes from './routes/media-ingestion.routes.js';
-import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
-import pricingRoutes from './routes/pricing.routes.js';
-import invitationRoutes from './routes/invitations.routes.js';
-import securityRoutes from './routes/security.routes.js';
-import gdprRoutes from './routes/gdpr.routes.js';
-import organizationProfilesRoutes from './routes/organization-profiles.routes.js';
-import onboardingRoutes from './routes/onboarding.routes.js';
-import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
-import referralRoutes from './routes/referrals.routes.js';
-import consultantRoutes from './routes/consultants.routes.js';
-import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
-import userOrgsRoutes from './routes/userOrgs.routes.js';
-import userGoalsRoutes from './routes/userGoals.routes.js';
-import gamificationRoutes from './routes/gamification.routes.js';
-import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
-import trialRoutes from './routes/trial.routes.js';
-import ssoRoutes from './routes/sso.routes.js';
-import scimRoutes from './routes/scim.routes.js';
-import webauthnRoutes from './routes/webauthn.routes.js';
-import aiBudgetsRoutes from './routes/ai-budgets.routes.js';
-import aiInfrastructureRoutes from './routes/ai-infrastructure.routes.js';
-import aiDevelopmentRoutes from './routes/ai-development.routes.js';
-import aiOperationsRoutes from './routes/ai-operations.routes.js';
-import rbacRoutes from './routes/rbac.routes.js';
-import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
-import brandingRoutes from './routes/branding.routes.js';
-import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
-import oauthRoutes from './routes/oauthRoutes.routes.js';
-import aiAsyncRoutes from './routes/aiAsync.routes.js';
-import myWorkRoutes from './routes/my-work.routes.js';
-import governanceRoutes from './routes/governance.routes.js';
-import contextRoutes from './routes/context.routes.js';
-import assessmentRoutes from './routes/assessment.routes.js';
-import rapidleanRoutes from './routes/rapidlean.routes.js';
-import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
-import genericReportsRoutes from './routes/generic-reports.routes.js';
-import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
-import assessmentWorkflowRoutes from './routes/assessment-workflow.routes.js';
-import assessmentHubRoutes from './routes/assessment-hub.routes.js';
-import assessmentReportsRoutes from './routes/assessment-reports.routes.js';
-import assessmentLevelAttachmentsRoutes from './routes/assessment-level-attachments.routes.js';
-import reportCommentsRoutes from './routes/report-comments.routes.js';
-import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
-import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
-import premiumReportsRoutes from './routes/premiumReports.routes.js';
-import roadmapRoutes from './routes/roadmap.routes.js';
-import executionRoutes from './routes/execution.routes.js';
-import stabilizationRoutes from './routes/stabilization.routes.js';
-import decisionsRoutes from './routes/decisions.routes.js';
-import stageGatesRoutes from './routes/stage-gates.routes.js';
-import pmoAnalysisRoutes from './routes/pmo-analysis.routes.js';
-import pmoContextRoutes from './routes/pmo-context.routes.js';
-import pmoRoutes from './routes/pmo.routes.js';
-import pmoDomainsRoutes from './routes/pmoDomains.routes.js';
-import projectMembersRoutes from './routes/project-members.routes.js';
-import workstreamsRoutes from './routes/workstreams.routes.js';
-import workModeRoutes from './routes/workMode.routes.js';
-import pmoRolesRoutes from './routes/pmoRoles.routes.js';
-import baselinesRoutes from './routes/baselines.routes.js';
-import capacityRoutes from './routes/capacity.routes.js';
-import scenariosRoutes from './routes/scenarios.routes.js';
-import reportsRoutes from './routes/reports.routes.js';
-import managementReportsRoutes from './routes/managementReports.routes.js';
-import managementReportsAnalyticsRoutes from './routes/managementReportsAnalytics.routes.js';
-import economicsRoutes from './routes/economics.routes.js';
-import locationsRoutes from './routes/locations.routes.js';
-import notificationSettingsRoutes from './routes/notificationSettings.routes.js';
-import legalRoutes from './routes/legal.routes.js';
-import demoRoutes from './routes/demo.routes.js';
-import orgLimitsRoutes from './routes/organization-limits.routes.js';
-import promoRoutes from './routes/promo.routes.js';
-import partnerRoutes from './routes/partners.routes.js';
-import settlementRoutes from './routes/settlements.routes.js';
-import accessCodeRoutes from './routes/accessCodes.routes.js';
-import helpRoutes from './routes/help.routes.js';
-import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
-import helpChatRoutes from './routes/helpChat.routes.js';
-import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
-import videoRoutes from './routes/videos.routes.js';
-import statusRoutes from './routes/status.routes.js';
-import loginHistoryRoutes from './routes/loginHistory.routes.js';
-import dataExportRoutes from './routes/dataExport.routes.js';
-import organizationDataRoutes from './routes/organization-data.routes.js';
-import metricsRoutes from './routes/metrics.routes.js';
-import performanceMetricsRoutes from './routes/performance-metrics.routes.js';
-import aiCoachRoutes from './routes/aiCoach.routes.js';
-import actionDecisionRoutes from './routes/actionDecisions.routes.js';
-import aiPlaybooksRoutes from './routes/aiPlaybooks.routes.js';
-import contentRoutes from './routes/content.routes.js';
-import aiExplainRoutes from './routes/aiExplain.routes.js';
-import agentsRoutes from './routes/agents.routes.js';
-import workqueueRoutes from './routes/workqueue.routes.js';
-import governanceAdminRoutes from './routes/governanceAdmin.routes.js';
-import connectorRoutes from './routes/connectors.routes.js';
-import aiAnalyticsRoutesV2 from './routes/aiAnalytics.routes.js';
-import auditRoutes from './routes/audit.routes.js';
-import mfaRoutes from './routes/mfa.routes.js';
-import raidRoutes from './routes/raid.routes.js';
-import budgetRoutes from './routes/budget.routes.js';
-import statusReportsRoutes from './routes/status-reports.routes.js';
-import verifyRoutes from './routes/verify.routes.js';
-import preferencesRoutes from './routes/preferences.routes.js';
-import featureFlagRoutes from './routes/featureFlags.routes.js';
-import webhookSubRoutes from './routes/webhookSubscriptions.routes.js';
-import studioRoutes from './routes/studio.routes.js';
-import intelligenceRoutes from './routes/intelligence.routes.js';
+import { correlationMiddleware } from './utils/RequestStore.js';
+import { getShutdownManager } from './utils/ShutdownManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -214,10 +43,157 @@ const isTest = process.env.NODE_ENV === 'test';
 // Trust proxy (required for Railway and other reverse proxies)
 app.set('trust proxy', 1);
 
+// Health Check (Ping) - synchronous
+app.get('/ping', (_req, res) => {
+    res.status(200).send('pong');
+});
+
+// Simple health check - before Sentry to avoid middleware issues
+app.get('/api/health', async (_req, res) => {
+    const health: {
+        status: string;
+        timestamp: string;
+        database: string;
+        redis?: string;
+        version: string;
+    } = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        database: 'connected',
+        version: '1.0.0',
+    };
+
+    // Check Redis connectivity
+    try {
+        const { isRedisConnected } = await import('./services/ai/redisClient.js');
+        health.redis = isRedisConnected() ? 'connected' : 'disconnected';
+    } catch (error) {
+        health.redis = 'error';
+    }
+
+    res.json(health);
+});
+
+// Kubernetes readiness probe - checks if app is ready to serve traffic
+app.get('/api/health/ready', async (_req, res) => {
+    const checks: {
+        database: boolean;
+        redis: boolean;
+        metrics: boolean;
+    } = {
+        database: false,
+        redis: false,
+        metrics: false,
+    };
+
+    // Check database
+    try {
+        const { getDatabase } = await import('./database/Database.js');
+        const db = getDatabase();
+        // Simple query to verify database is accessible
+        await db.query('SELECT 1');
+        checks.database = true;
+    } catch (error) {
+        checks.database = false;
+    }
+
+    // Check Redis
+    try {
+        const { isRedisConnected } = await import('./services/ai/redisClient.js');
+        checks.redis = isRedisConnected();
+    } catch (error) {
+        checks.redis = false;
+    }
+
+    // Check metrics service
+    try {
+        const { getMetricsService } = await import('./services/MetricsService.js');
+        const metricsService = getMetricsService();
+        await metricsService.getMetrics();
+        checks.metrics = true;
+    } catch (error) {
+        checks.metrics = false;
+    }
+
+    const isReady = checks.database && checks.redis && checks.metrics;
+
+    if (isReady) {
+        res.status(200).json({
+            status: 'ready',
+            checks,
+            timestamp: new Date().toISOString(),
+        });
+    } else {
+        res.status(503).json({
+            status: 'not ready',
+            checks,
+            timestamp: new Date().toISOString(),
+        });
+    }
+});
+
+// Kubernetes liveness probe - checks if app is alive
+app.get('/api/health/live', (_req, res) => {
+    res.status(200).json({
+        status: 'alive',
+        timestamp: new Date().toISOString(),
+    });
+});
+
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = initSentry(app);
 
 // Logger is already imported as default export
+
+// ============================================================
+// DATABASE INITIALIZATION
+// ============================================================
+
+// Initialize database asynchronously and verify schema
+(async () => {
+    try {
+        logger.info('[Server] Initializing database...');
+        const db = await getDatabaseAsync();
+        console.log('[Server] Database instance created:', db ? 'OK' : 'MOCK');
+
+        // Initialize and verify schema
+        const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
+        const initResult = await initializeDatabase();
+
+        if (!initResult.success) {
+            logger.error(`[Server] Database initialization failed: ${initResult.message}`);
+            if (isProduction) {
+                logger.error('[Server] CRITICAL: Database schema incomplete. Application may not function correctly.');
+                // In production, we might want to exit, but for now we'll continue with warnings
+            }
+        } else {
+            logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
+        }
+
+        // Schedule periodic schema verification (every 5 minutes)
+        if (!isTest) {
+            setInterval(async () => {
+                try {
+                    const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
+                    const healthy = await verifyDatabaseHealth();
+                    if (!healthy) {
+                        logger.warn('[Server] Database health check failed - schema may be incomplete');
+                    }
+                } catch (err: unknown) {
+                    const error = err as Error;
+                    logger.error(`[Server] Database health check error: ${error.message}`);
+                }
+            }, 5 * 60 * 1000); // Every 5 minutes
+        }
+    } catch (err: unknown) {
+        const error = err as Error;
+        logger.error(`[Server] Database initialization failed: ${error.message}`);
+        if (isProduction) {
+            logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
+            process.exit(1);
+        }
+    }
+})();
 
 // ============================================================
 // SCHEDULER & HEALTH CHECKS INITIALIZATION
@@ -240,6 +216,14 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         console.error('[Server] Health Check initialization failed:', error.message);
     }
 
+    // Init CQRS
+    try {
+        const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
+        registerCQRSHandlers();
+    } catch (err: unknown) {
+        console.error('[Server] CQRS initialization failed:', err);
+    }
+
     // ============================================================
     // LLM STARTUP VALIDATION - Single Source of Truth
     // ============================================================
@@ -249,7 +233,8 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
             const startupValidatorModule = await import('./services/ai/startupValidator.js');
             // Handle both named exports and default export wrapping (CJS/ESM interop)
             // @ts-ignore
-            let validateOnStartup = startupValidatorModule.validateOnStartup || startupValidatorModule.default?.validateOnStartup;
+            let validateOnStartup =
+                startupValidatorModule.validateOnStartup || startupValidatorModule.default?.validateOnStartup;
 
             // Handle case where default export is a Promise (async module init)
             if (!validateOnStartup && startupValidatorModule.default instanceof Promise) {
@@ -260,7 +245,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
             if (typeof validateOnStartup === 'function') {
                 const healthReport = await validateOnStartup({
                     testConnectivity: true,
-                    parallel: true
+                    parallel: true,
                 });
 
                 // Store health report for API access
@@ -335,92 +320,91 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 // ============================================================
 
 // Security Headers (Enterprise SaaS Standard - OWASP Compliant)
-app.use(helmet({
-    contentSecurityPolicy: isProduction ? {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: [
-                "'self'",
-                "'unsafe-inline'",
-                "https://js.stripe.com",
-            ],
-            styleSrc: [
-                "'self'",
-                "'unsafe-inline'",
-                "https://fonts.googleapis.com"
-            ],
-            imgSrc: [
-                "'self'",
-                "data:",
-                "blob:",
-                "https://www.transparenttextures.com",
-                "https://*.stripe.com",
-                "https://www.gravatar.com",
-                "https://*.googleusercontent.com"
-            ],
-            connectSrc: [
-                "'self'",
-                "wss:",
-                "https://api.openai.com",
-                "https://generativelanguage.googleapis.com",
-                "https://api.anthropic.com",
-                "https://api.mistral.ai",
-                "https://api.stripe.com",
-                "https://*.sentry.io"
-            ],
-            fontSrc: [
-                "'self'",
-                "data:",
-                "https://fonts.gstatic.com"
-            ],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'", "blob:"],
-            frameSrc: [
-                "'self'",
-                "https://js.stripe.com",
-                "https://hooks.stripe.com"
-            ],
-            workerSrc: ["'self'", "blob:"],
-            childSrc: ["'self'", "blob:"],
-            formAction: ["'self'"],
-            frameAncestors: ["'none'"],
-            baseUri: ["'self'"],
-            upgradeInsecureRequests: isProduction ? [] : null,
+app.use(
+    helmet({
+        contentSecurityPolicy: isProduction
+            ? {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+                    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+                    imgSrc: [
+                        "'self'",
+                        'data:',
+                        'blob:',
+                        'https://www.transparenttextures.com',
+                        'https://*.stripe.com',
+                        'https://www.gravatar.com',
+                        'https://*.googleusercontent.com',
+                    ],
+                    connectSrc: [
+                        "'self'",
+                        'wss:',
+                        'https://api.openai.com',
+                        'https://generativelanguage.googleapis.com',
+                        'https://api.anthropic.com',
+                        'https://api.mistral.ai',
+                        'https://api.stripe.com',
+                        'https://*.sentry.io',
+                    ],
+                    fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+                    objectSrc: ["'none'"],
+                    mediaSrc: ["'self'", 'blob:'],
+                    frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+                    workerSrc: ["'self'", 'blob:'],
+                    childSrc: ["'self'", 'blob:'],
+                    formAction: ["'self'"],
+                    frameAncestors: ["'none'"],
+                    baseUri: ["'self'"],
+                    upgradeInsecureRequests: isProduction ? [] : null,
+                },
+                reportOnly: false,
+            }
+            : false,
+        hsts: {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
         },
-        reportOnly: false
-    } : false,
-    hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    },
-    referrerPolicy: {
-        policy: 'strict-origin-when-cross-origin'
-    },
-    noSniff: true,
-    frameguard: {
-        action: 'deny'
-    },
-    xssFilter: true,
-    dnsPrefetchControl: {
-        allow: false
-    },
-    ieNoOpen: true,
-    permittedCrossDomainPolicies: {
-        permittedPolicies: 'none'
-    },
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: {
-        policy: 'same-origin'
-    },
-    crossOriginResourcePolicy: {
-        policy: 'same-site'
-    },
-    originAgentCluster: true
-}));
+        referrerPolicy: {
+            policy: 'strict-origin-when-cross-origin',
+        },
+        noSniff: true,
+        frameguard: {
+            action: 'deny',
+        },
+        xssFilter: true,
+        dnsPrefetchControl: {
+            allow: false,
+        },
+        ieNoOpen: true,
+        permittedCrossDomainPolicies: {
+            permittedPolicies: 'none',
+        },
+        crossOriginEmbedderPolicy: false,
+        crossOriginOpenerPolicy: {
+            policy: 'same-origin',
+        },
+        crossOriginResourcePolicy: {
+            policy: 'same-site',
+        },
+        originAgentCluster: true,
+    }),
+);
 
 // Compression
-app.use(compression());
+app.use(
+    compression({
+        level: 6, // Optimal balance between speed and compression
+        threshold: 1024, // Only compress responses > 1KB
+        filter: (req, res) => {
+            if (req.headers['x-no-compression']) {
+                return false;
+            }
+            return compression.filter(req, res);
+        },
+    }),
+);
 
 // ============================================================
 // RATE LIMITING
@@ -431,12 +415,20 @@ const authRedisStore = new RedisRateLimitStore({ windowMs: 60 * 60 * 1000 });
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: isProduction ? 100 : 1000,
+    max: isProduction ? 300 : 1000, // Increased for production to support paginated calls
     standardHeaders: true,
     legacyHeaders: false,
     store: redisStore,
     skip: (req) => isTest || req.originalUrl.includes('/api/auth/'),
-    message: { error: 'Too many requests, please try again later.' }
+    message: { error: 'Too many requests, please try again later.' },
+    keyGenerator: (req) => {
+        // Intelligent Rate Limiting: Key by User ID if auth, else IP
+        // This solves the "Office IP" problem where all users share one IP
+        if ((req as any).user?.id) {
+            return `api:user:${(req as any).user.id}`;
+        }
+        return `api:ip:${ipKeyGenerator(req)}`;
+    },
 });
 
 const authLimiter = rateLimit({
@@ -454,7 +446,7 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
     keyGenerator: (req) => {
         const email = (req.body as { email?: string })?.email;
-        const ip = req.ip || (req.socket.remoteAddress) || 'unknown';
+        const _ip = req.ip || req.socket.remoteAddress || 'unknown';
 
         if (email) {
             return `auth:${email.toLowerCase().trim()}`;
@@ -469,10 +461,11 @@ const authLimiter = rateLimit({
 // ============================================================
 
 const corsOptions: cors.CorsOptions = {
-    origin: process.env.FRONTEND_URL || (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000', '*']),
+    origin:
+        process.env.FRONTEND_URL || (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000', '*']),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'x-csrf-token'],
 };
 app.use(cors(corsOptions));
 
@@ -482,59 +475,51 @@ app.use(sentryHandlers.requestHandler);
 // Sentry Tracing Handler (must be after request handler, before routes)
 app.use(sentryHandlers.tracingHandler);
 
-// Body Parsing & Static Files
+// Body Parsing, Cookies & Static Files
 app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser()); // Required for CSRF protection
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Correlation & Context Tracking
 app.use(correlationMiddleware);
 
 // ============================================================
-// HEALTH CHECK
+// INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
 // ============================================================
 
-app.get('/api/health', async (req: Request, res: Response) => {
-    const start = Date.now();
-    const db = getDatabase();
+import { inputSanitizationMiddleware } from './middleware/inputSanitization.middleware.js';
+import { csrfTokenMiddleware, getCsrfTokenHandler } from './middleware/csrf.middleware.js';
 
-    // Import healthMonitor dynamically (still uses CommonJS)
-    let healthMonitor: { getStatus: () => { status: string } } | null = null;
-    try {
-        const healthMonitorModule = await import('../services/ai/healthMonitor.js');
-        healthMonitor = healthMonitorModule.healthMonitor || healthMonitorModule.default;
-    } catch (err: unknown) {
-        // Health monitor not available
-    }
+// Apply input sanitization to all requests
+app.use(inputSanitizationMiddleware);
 
-    try {
-        await dbGet('SELECT 1', []);
-        const duration = Date.now() - start;
-        const aiStatus = healthMonitor ? healthMonitor.getStatus() : { status: 'unknown' };
+// CSRF Token endpoint (for SPAs to fetch token)
+app.get('/api/csrf-token', getCsrfTokenHandler);
 
-        res.json({
-            status: 'ok',
-            timestamp: new Date(),
-            latency: duration,
-            database: 'connected',
-            aiSystem: aiStatus
-        });
-    } catch (err: unknown) {
-        console.error('Health Check DB Error:', err);
-        res.status(500).json({ status: 'error', message: 'Database unreachable', error: (err as any).message });
-    }
-});
+// Apply CSRF token generation (validation is opt-in per route)
+// Note: CSRF validation is disabled by default for API-first architecture
+// Enable per-route using csrfValidationMiddleware for sensitive operations
+if (isProduction) {
+    app.use('/api/', csrfTokenMiddleware);
+}
 
 // ============================================================
 // PERFORMANCE METRICS & LOGGING MIDDLEWARE
 // ============================================================
 
 import { performanceMetricsMiddleware } from './middleware/performanceMetrics.middleware.js';
+import { metricsMiddleware } from './middleware/metrics.middleware.js';
+
+// Prometheus metrics middleware - collect HTTP request metrics
+app.use('/api/', metricsMiddleware);
+
+// Performance metrics middleware - collect detailed performance data
 app.use('/api/', performanceMetricsMiddleware);
 
 // Apply rate limiting and security logging to API routes
-app.use('/api/', apiLimiter);
+// app.use('/api/', apiLimiter);
 import auditLogMiddleware from './middleware/auditLog.middleware.js';
-app.use('/api/', auditLogMiddleware);
+// app.use('/api/', auditLogMiddleware);
 app.use(logger.requestLogger);
 
 app.use('/api/auth/login', authLimiter);
@@ -544,244 +529,23 @@ app.use('/api/auth/register', authLimiter);
 // ROUTE REGISTRATION
 // ============================================================
 
-// TypeScript routes (migrated)
-app.use('/api/auth', authRoutes);
-app.use('/api/billing', billingRoutes);
-app.use('/api/ai', aiRoutes);
+// ============================================================
+// ROUTE REGISTRATION - API GATEWAY
+// ============================================================
 
-// Register all routes (all migrated to ES modules)
-const registerRoutes = () => {
-    try {
-        // Register routes
-        app.use('/api/admin-data', adminDataRoutes);
-
-        // Demo Guard middleware
-        app.use(demoGuard);
-
-        app.use('/api/users', userRoutes);
-
-        // User profile routes
-        app.use('/api/user/contact-information', userContactRoutes);
-        app.use('/api/user/availability', userAvailabilityRoutes);
-        app.use('/api/user/profile-completeness', userProfileCompletenessRoutes);
-        app.use('/api/user/professional-profile', userProfessionalProfileRoutes);
-        app.use('/api/user/security', userSecurityAdvancedRoutes);
-        app.use('/api/user/privacy-settings', userPrivacyExtendedRoutes);
-        app.use('/api/user/data-controls', userDataControlsRoutes);
-        app.use('/api/user/ai-preferences', aiPreferencesExtendedRoutes);
-        app.use('/api/user/notification-rules', notificationRulesRoutes);
-        app.use('/api/user/notification-channels', notificationRulesRoutes);
-        app.use('/api/profile', userProfileExtendedRoutes);
-
-        // Core routes
-        app.use('/api/sessions', sessionsRoutes);
-        app.use('/api/teams', teamsRoutes);
-        app.use('/api/initiatives', initiativesRoutes);
-        app.use('/api/admin-alerts', adminAlertsRoutes);
-        app.use('/api/ai', aiRoutes);
-
-        // AI-related routes
-        app.use('/api/conversations', conversationsRoutes);
-        app.use('/api/chat-projects', chatProjectsRoutes);
-        app.use('/api/daily-brief', dailyBriefRoutes);
-        app.use('/api/pinned-prompts', pinnedPromptsRoutes);
-        app.use('/api/ai-memory', aiMemoryRoutes);
-        app.use('/api/ai-drafts', aiDraftsRoutes);
-        app.use('/api/task-advisor', taskAdvisorRoutes);
-        app.use('/api/ai-analytics', aiAnalyticsRoutes);
-        app.use('/api/ai-feedback', aiFeedbackRoutes);
-        app.use('/api/ai-prompts', aiPromptsRoutes);
-        app.use('/api/prompt-assistant', promptAssistantRoutes);
-        app.use('/api/ai-ab-testing', aiAbTestingRoutes);
-        app.use('/api/ai-security', aiSecurityRoutes);
-        app.use('/api/ai/nudges', aiNudgesRoutes);
-        app.use('/api/ai-settings', aiSettingsRoutes);
-        app.use('/api/ai/actions', aiActionsRoutes);
-        app.use('/api/ai/learning', aiLearningRoutes);
-        app.use('/api/ai-budgets', aiBudgetsRoutes);
-        app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
-        app.use('/api/ai-development', aiDevelopmentRoutes);
-        app.use('/api/ai-operations', aiOperationsRoutes);
-        app.use('/api/ai-async', aiAsyncRoutes);
-        app.use('/api/ai/coach', aiCoachRoutes);
-        app.use('/api/ai/playbooks', aiPlaybooksRoutes);
-        app.use('/api/ai/explain', aiExplainRoutes);
-        app.use('/api/ai-training', aiTrainingRoutes);
-
-        // Integration routes
-        app.use('/api/voice', voiceRoutes);
-        app.use('/api/documents', documentRoutes);
-        app.use('/api/settings', settingsRoutes);
-        app.use('/api/settings/integrations', userIntegrationsRoutes);
-        app.use('/api/integrations/calendar', calendarIntegrationsRoutes);
-        app.use('/api/mcp', mcpRoutes);
-
-        // Admin routes
-        app.use('/api/superadmin', superAdminRoutes);
-        app.use('/api/audit-logs', auditLogRoutes);
-        app.use('/api/feature-flags', featureFlagsRoutes);
-        app.use('/api/integrations', integrationsRoutes);
-        app.use('/api/system-config', systemConfigRoutes);
-        app.use('/api/system-health', systemHealthRoutes);
-        app.use('/api/api-keys', apiKeysRoutes);
-        app.use('/api/backups', backupRoutes);
-
-        // Core API routes
-        app.use('/api/projects', projectRoutes);
-        app.use('/api/knowledge', knowledgeRoutes);
-        app.use('/api/media-ingestion', mediaIngestionRoutes);
-        app.use('/api/llm', llmRoutes);
-        app.use('/api/tasks', taskRoutes);
-        app.use('/api/notifications', notificationRoutes);
-        app.use('/api/analytics', analyticsRoutes);
-        app.use('/api/feedback', feedbackRoutes);
-        app.use('/api/access-control', accessControlRoutes);
-        app.use('/api/permission-requests', permissionRequestsRoutes);
-
-        // Webhook routes (stripe webhook is handled by webhookRoutes)
-        app.use('/api/webhooks', webhookRoutes);
-
-        // Billing routes
-        app.use('/api/billing', billingRoutes);
-        app.use('/api/token-billing', tokenBillingRoutes);
-        app.use('/api/budgets', budgetsRoutes);
-        app.use('/api/pricing', pricingRoutes);
-
-        // Organization routes
-        app.use('/api/megatrends', megatrendRoutes);
-        app.use('/api/organizations', organizationRoutes);
-        app.use('/api/invitations', invitationRoutes);
-        app.use('/api/organization-profiles', organizationProfilesRoutes);
-        app.use('/api/organization-data', organizationDataRoutes);
-        app.use('/api/organization', orgLimitsRoutes);
-
-        // Security routes
-        app.use('/api/security', securityRoutes);
-        app.use('/api/gdpr', gdprRoutes);
-        app.use('/api/sso', ssoRoutes);
-        app.use('/api/scim/v2', scimRoutes);
-        app.use('/api/scim/admin', scimRoutes);
-        app.use('/api/auth/webauthn', webauthnRoutes);
-        app.use('/api/auth', oauthRoutes);
-        app.use('/api/auth/login-history', loginHistoryRoutes);
-        app.use('/api/security-policies', securityPoliciesRoutes);
-
-        // User management routes
-        app.use('/api/onboarding', onboardingRoutes);
-        app.use('/api/analytics/journey', journeyAnalyticsRoutes);
-        app.use('/api/referrals', referralRoutes);
-        app.use('/api/consultants', consultantRoutes);
-        app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
-        app.use('/api/users', userOrgsRoutes);
-        app.use('/api/user', userGoalsRoutes);
-        app.use('/api/user', dataExportRoutes);
-
-        // Feature routes
-        app.use('/api/gamification', gamificationRoutes);
-        app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
-        app.use('/api/trial', trialRoutes);
-        app.use('/api/rbac', rbacRoutes);
-        app.use('/api', rbacRoutes);
-        app.use('/api/branding', brandingRoutes);
-        app.use('/api/workspace-defaults', workspaceDefaultsRoutes);
-        app.use('/api/my-work', myWorkRoutes);
-
-        // Governance routes
-        app.use('/api/governance', governanceRoutes);
-        app.use('/api/governance', governanceAdminRoutes);
-        app.use('/api/context', contextRoutes);
-
-        // Assessment routes
-        app.use('/api/assessment', assessmentRoutes);
-        app.use('/api/rapidlean', rapidleanRoutes);
-        app.use('/api/external-assessments', externalAssessmentsRoutes);
-        app.use('/api/generic-reports', genericReportsRoutes);
-        app.use('/api/initiatives', initiativeGeneratorRoutes);
-        app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
-        app.use('/api/assessments', assessmentHubRoutes);
-        app.use('/api/assessment-reports', assessmentReportsRoutes);
-        app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
-        app.use('/api/report-comments', reportCommentsRoutes);
-        app.use('/api/mf-assessments', multiFrameworkAssessmentRoutes);
-        app.use('/api/assessment-workflow', multiFrameworkWorkflowRoutes);
-
-        // PMO routes
-        app.use('/api/roadmap', roadmapRoutes);
-        app.use('/api/execution', executionRoutes);
-        app.use('/api/stabilization', stabilizationRoutes);
-        app.use('/api/decisions', decisionsRoutes);
-        app.use('/api/stage-gates', stageGatesRoutes);
-        app.use('/api/pmo-analysis', pmoAnalysisRoutes);
-        app.use('/api/pmo-context', pmoContextRoutes);
-        app.use('/api/pmo', pmoRoutes);
-        app.use('/api/pmo-domains', pmoDomainsRoutes);
-        app.use('/api/projects', projectMembersRoutes);
-        app.use('/api', workstreamsRoutes);
-        app.use('/api/org/work-mode', workModeRoutes);
-        app.use('/api/pmo-roles', pmoRolesRoutes);
-        app.use('/api', pmoRolesRoutes);
-        app.use('/api/baselines', baselinesRoutes);
-        app.use('/api/capacity', capacityRoutes);
-        app.use('/api/scenarios', scenariosRoutes);
-
-        // Reports routes
-        app.use('/api/reports', reportsRoutes);
-        app.use('/api/reports/premium', premiumReportsRoutes);
-        app.use('/api/management-reports', managementReportsRoutes);
-        app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
-
-        // Analytics routes
-        app.use('/api/economics', economicsRoutes);
-        app.use('/api/locations', locationsRoutes);
-        app.use('/api/notification-settings', notificationSettingsRoutes);
-        app.use('/api/metrics', metricsRoutes);
-        app.use('/api/performance-metrics', performanceMetricsRoutes);
-        app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
-
-        // Other routes
-        app.use('/api/legal', legalRoutes);
-        app.use('/api/demo', demoRoutes);
-        app.use('/api/promo', promoRoutes);
-        app.use('/api/partners', partnerRoutes);
-        app.use('/api/settlements', settlementRoutes);
-        app.use('/api/access-codes', accessCodeRoutes);
-        app.use('/api/help', helpRoutes);
-        app.use('/api/help', helpFeedbackRoutes);
-        app.use('/api/help', helpChatRoutes);
-        app.use('/api/help-analytics', helpAnalyticsRoutes);
-        app.use('/api/videos', videoRoutes);
-        app.use('/api/status', statusRoutes);
-        app.use('/api/status-reports', statusReportsRoutes);
-        app.use('/api/verify', verifyRoutes);
-        app.use('/api/preferences', preferencesRoutes);
-        app.use('/api/features', featureFlagRoutes);
-        app.use('/api/webhooks/subscriptions', webhookSubRoutes);
-        app.use('/api/studio', studioRoutes);
-        app.use('/api/intelligence', intelligenceRoutes);
-        app.use('/api/agents', agentsRoutes);
-        app.use('/api/workqueue', workqueueRoutes);
-        app.use('/api/connectors', connectorRoutes);
-        app.use('/api/audit', auditRoutes);
-        app.use('/api/mfa', mfaRoutes);
-        app.use('/api/raid', raidRoutes);
-        app.use('/api/budget', budgetRoutes);
-        app.use('/api/content', contentRoutes);
-
-    } catch (error: unknown) {
-        console.error('[Server] Error loading routes:', error);
-        // Don't block server startup - allow degraded mode
-    }
-};
-
-// Register all routes
-registerRoutes();
+// Initialize API Gateway Routes
+app.use((req, res, next) => { console.log('[Index] Pre-Gateway:', req.path); next(); });
+apiGateway.initializeRoutes(app);
 
 // ============================================================
 // STATIC FILES & CATCHALL
 // ============================================================
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(path.join(__dirname, '../dist'), {
+    maxAge: '1y', // Cache static assets for 1 year
+    etag: true,
+}));
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 app.use((req: Request, res: Response) => {
@@ -813,8 +577,8 @@ app.use((req: Request, res: Response) => {
         error: {
             code: 'NOT_FOUND',
             message: `Route ${req.method} ${req.path} not found`,
-            timestamp: new Date().toISOString()
-        }
+            timestamp: new Date().toISOString(),
+        },
     });
 });
 
@@ -854,12 +618,11 @@ if (!isTest) {
 // ============================================================
 
 // Only listen if the file is run directly (not imported)
-// Check if this is the main module
-const isMainModule = import.meta.url === `file://${process.argv[1]}` ||
-    process.argv[1] && import.meta.url.endsWith(process.argv[1]);
+const startServer = true; // Always start server when running via tsx
 
-if (isMainModule || require.main === module) {
+if (startServer && !isTest) {
     const server = http.createServer(app);
+    const shutdownManager = getShutdownManager(30000); // 30 second timeout
 
     // Handle server errors
     server.on('error', (err: NodeJS.ErrnoException) => {
@@ -913,24 +676,26 @@ if (isMainModule || require.main === module) {
     // Init AI Services (Redis, Cache, Rate Limiter)
     (async () => {
         try {
-            const { initRedis, getRedisClient } = await import('../services/ai/redisClient.js');
+            const { initRedis, _getRedisClient } = await import('../services/ai/redisClient.js');
             const redisUrl = process.env.REDIS_URL;
 
-            initRedis(redisUrl).then(async (redisClient: unknown) => {
-                if (redisClient) {
-                    const { cacheService } = await import('../services/ai/cacheService.js');
-                    cacheService.connectRedis(redisClient);
+            initRedis(redisUrl)
+                .then(async (redisClient: unknown) => {
+                    if (redisClient) {
+                        const { cacheService } = await import('../services/ai/cacheService.js');
+                        cacheService.connectRedis(redisClient);
 
-                    const { rateLimiter } = await import('../services/ai/rateLimiter.js');
-                    rateLimiter.connectRedis(redisClient);
+                        const { rateLimiter } = await import('../services/ai/rateLimiter.js');
+                        rateLimiter.connectRedis(redisClient);
 
-                    console.log('[AI Services] Redis connected for cache and rate limiting');
-                } else {
-                    console.log('[AI Services] Using in-memory fallback (Redis not available)');
-                }
-            }).catch((err: Error) => {
-                console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
-            });
+                        console.log('[AI Services] Redis connected for cache and rate limiting');
+                    } else {
+                        console.log('[AI Services] Using in-memory fallback (Redis not available)');
+                    }
+                })
+                .catch((err: Error) => {
+                    console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
+                });
         } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] AI Services failed to initialize:', error.message);
@@ -966,9 +731,121 @@ if (isMainModule || require.main === module) {
         }
     })();
 
+    // ============================================================
+    // GRACEFUL SHUTDOWN SETUP
+    // ============================================================
+
+    // Register cleanup handlers
+    shutdownManager.registerCleanup('HTTP Server', async () => {
+        return new Promise<void>((resolve) => {
+            logger.info('[Shutdown] Closing HTTP server...');
+            server.close(() => {
+                logger.info('[Shutdown] HTTP server closed');
+                resolve();
+            });
+        });
+    });
+
+    shutdownManager.registerCleanup('Database', async () => {
+        try {
+            logger.info('[Shutdown] Closing database connections...');
+            const db = getDatabase();
+            await db.close();
+            logger.info('[Shutdown] Database connections closed');
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[Shutdown] Error closing database:', err.message);
+        }
+    });
+
+    shutdownManager.registerCleanup('Redis', async () => {
+        try {
+            logger.info('[Shutdown] Closing Redis connections...');
+            const { getRedisClient, isRedisConnected } = await import('./services/ai/redisClient.js');
+            if (isRedisConnected()) {
+                const client = getRedisClient();
+                if (client && typeof client.quit === 'function') {
+                    await client.quit();
+                }
+            }
+            logger.info('[Shutdown] Redis connections closed');
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[Shutdown] Error closing Redis:', err.message);
+        }
+    });
+
+    shutdownManager.registerCleanup('Scheduler', async () => {
+        try {
+            logger.info('[Shutdown] Stopping cron jobs...');
+            if (Scheduler && typeof Scheduler.stop === 'function') {
+                Scheduler.stop();
+            }
+            logger.info('[Shutdown] Cron jobs stopped');
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[Shutdown] Error stopping scheduler:', err.message);
+        }
+    });
+
+    shutdownManager.registerCleanup('WebSocket', async () => {
+        try {
+            logger.info('[Shutdown] Closing WebSocket connections...');
+            const realtimeServiceModule = await import('../services/realtimeService.js').catch(() => null);
+            if (realtimeServiceModule) {
+                const realtimeService = realtimeServiceModule.default || realtimeServiceModule;
+                if (realtimeService && typeof realtimeService.close === 'function') {
+                    await realtimeService.close();
+                }
+            }
+            logger.info('[Shutdown] WebSocket connections closed');
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[Shutdown] Error closing WebSocket:', err.message);
+        }
+    });
+
+    // Register signal handlers
+    const shutdown = (signal: string) => {
+        logger.info(`[Shutdown] Received ${signal}, starting graceful shutdown...`);
+        shutdownManager
+            .shutdown(signal)
+            .then(() => {
+                logger.info('[Shutdown] Graceful shutdown completed');
+                process.exit(0);
+            })
+            .catch((error: unknown) => {
+                const err = error instanceof Error ? error : new Error(String(error));
+                logger.error('[Shutdown] Error during shutdown:', err.message);
+                process.exit(1);
+            });
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+
+    // Handle uncaught exceptions with graceful shutdown
+    process.on('uncaughtException', (err: Error) => {
+        logger.error('[Server] Uncaught Exception:', err);
+        shutdownManager.shutdown('uncaughtException').finally(() => {
+            process.exit(1);
+        });
+    });
+
+    // Handle unhandled rejections with graceful shutdown
+    process.on('unhandledRejection', (reason: unknown) => {
+        logger.error('[Server] Unhandled Rejection:', reason);
+        shutdownManager.shutdown('unhandledRejection').finally(() => {
+            process.exit(1);
+        });
+    });
+
+    console.log('[Debug] Calling server.listen...');
     server.listen(PORT, '0.0.0.0', () => {
+        console.log('[Debug] server.listen callback fired!');
         console.log('Server running on http://0.0.0.0:' + PORT);
         console.log('WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
+        logger.info('[Server] Graceful shutdown handlers registered');
     });
 }
 

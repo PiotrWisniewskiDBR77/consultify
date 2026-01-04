@@ -1,6 +1,6 @@
 /**
  * EnterpriseHealthMonitor - Comprehensive System Health Monitoring
- * 
+ *
  * Features:
  * - Real-time service status with dependency visualization
  * - Performance metrics with historical trends
@@ -10,33 +10,34 @@
  * - AI service health and token usage
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
     Activity,
-    Server,
-    Database,
-    Brain,
-    HardDrive,
-    Cpu,
-    MemoryStick,
-    Clock,
     AlertTriangle,
-    CheckCircle,
-    XCircle,
-    RefreshCw,
-    TrendingUp,
-    TrendingDown,
+    BarChart3,
     Bell,
-    Settings,
+    Brain,
+    CheckCircle,
     ChevronRight,
-    Loader2,
-    Zap,
+    Clock,
+    Cpu,
+    Database,
     Globe,
+    HardDrive,
+    Loader2,
+    MemoryStick,
+    RefreshCw,
+    Server,
+    Settings,
     Shield,
-    BarChart3
+    TrendingDown,
+    TrendingUp,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface ServiceHealth {
     name: string;
@@ -113,7 +114,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     latency: data.api?.responseTime || 0,
                     lastCheck: data.timestamp,
                     dependencies: ['Database', 'Cache'],
-                    metrics: { avgResponseTime: data.api?.responseTime }
+                    metrics: { avgResponseTime: data.api?.responseTime },
                 },
                 {
                     name: 'Database',
@@ -121,15 +122,16 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     latency: data.database?.responseTime || 0,
                     lastCheck: data.timestamp,
                     dependencies: [],
-                    metrics: { avgResponseTime: data.database?.responseTime }
+                    metrics: { avgResponseTime: data.database?.responseTime },
                 },
                 {
                     name: 'AI Services',
-                    status: data.ai?.status === 'online' ? 'healthy' : data.ai?.status === 'no_keys' ? 'degraded' : 'down',
+                    status:
+                        data.ai?.status === 'online' ? 'healthy' : data.ai?.status === 'no_keys' ? 'degraded' : 'down',
                     latency: 0,
                     lastCheck: data.timestamp,
                     dependencies: ['API Server'],
-                }
+                },
             ];
             setServices(serviceList);
 
@@ -140,10 +142,11 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     memory: {
                         used: data.system.memory.used,
                         total: data.system.memory.total,
-                        percent: data.system.memory.percent || (data.system.memory.used / data.system.memory.total) * 100
+                        percent:
+                            data.system.memory.percent || (data.system.memory.used / data.system.memory.total) * 100,
                     },
                     disk: { used: 0, total: 0, percent: 0 },
-                    network: { bytesIn: 0, bytesOut: 0 }
+                    network: { bytesIn: 0, bytesOut: 0 },
                 });
             }
         } catch (error) {
@@ -181,8 +184,8 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
     const getOverallStatus = (): 'healthy' | 'degraded' | 'down' => {
         if (!services.length) return 'unknown' as any;
-        if (services.some(s => s.status === 'down')) return 'down';
-        if (services.some(s => s.status === 'degraded')) return 'degraded';
+        if (services.some((s) => s.status === 'down')) return 'down';
+        if (services.some((s) => s.status === 'degraded')) return 'degraded';
         return 'healthy';
     };
 
@@ -268,9 +271,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                                 <Server className="w-5 h-5 text-emerald-400" />
                                 <span className="text-sm font-medium text-slate-300">API Server</span>
                             </div>
-                            <div className="text-2xl font-bold text-white">
-                                {health?.api?.responseTime || 0}ms
-                            </div>
+                            <div className="text-2xl font-bold text-white">{health?.api?.responseTime || 0}ms</div>
                             <div className="text-xs text-emerald-400 mt-1">Response time</div>
                         </div>
 
@@ -279,9 +280,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                                 <Database className="w-5 h-5 text-blue-400" />
                                 <span className="text-sm font-medium text-slate-300">Database</span>
                             </div>
-                            <div className="text-2xl font-bold text-white">
-                                {health?.database?.responseTime || 0}ms
-                            </div>
+                            <div className="text-2xl font-bold text-white">{health?.database?.responseTime || 0}ms</div>
                             <div className="text-xs text-blue-400 mt-1">{health?.database?.type || 'SQLite'}</div>
                         </div>
 
@@ -387,7 +386,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className={`font-medium ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                                            <span
+                                                className={`font-medium ${isActive ? 'text-white' : 'text-slate-500'}`}
+                                            >
                                                 {name}
                                             </span>
                                             {isActive ? (
@@ -396,7 +397,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                                                 <XCircle className="w-4 h-4 text-slate-600" />
                                             )}
                                         </div>
-                                        <div className={`text-xs mt-1 ${isActive ? `text-${color}-400` : 'text-slate-600'}`}>
+                                        <div
+                                            className={`text-xs mt-1 ${isActive ? `text-${color}-400` : 'text-slate-600'}`}
+                                        >
                                             {isActive ? 'Connected' : 'Not configured'}
                                         </div>
                                     </div>
@@ -428,12 +431,16 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                                             <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                                                 <span>Latency: {service.latency}ms</span>
                                                 <span>•</span>
-                                                <span>Last check: {new Date(service.lastCheck).toLocaleTimeString()}</span>
+                                                <span>
+                                                    Last check: {new Date(service.lastCheck).toLocaleTimeString()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusConfig.color}/20 ${statusConfig.text}`}>
+                                        <span
+                                            className={`px-3 py-1 text-xs font-medium rounded-full ${statusConfig.color}/20 ${statusConfig.text}`}
+                                        >
                                             {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
                                         </span>
                                         <ChevronRight className="w-4 h-4 text-slate-600" />
@@ -444,7 +451,8 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                                         <span className="text-xs text-slate-500">Dependencies: </span>
                                         {service.dependencies.map((dep, i) => (
                                             <span key={dep} className="text-xs text-slate-400">
-                                                {dep}{i < service.dependencies.length - 1 ? ', ' : ''}
+                                                {dep}
+                                                {i < service.dependencies.length - 1 ? ', ' : ''}
                                             </span>
                                         ))}
                                     </div>
@@ -461,7 +469,12 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
                             { label: 'Requests/min', value: '~120', trend: 'up', icon: Zap },
-                            { label: 'Avg Response', value: `${health?.api?.responseTime || 0}ms`, trend: 'stable', icon: Clock },
+                            {
+                                label: 'Avg Response',
+                                value: `${health?.api?.responseTime || 0}ms`,
+                                trend: 'stable',
+                                icon: Clock,
+                            },
                             { label: 'Error Rate', value: '0.01%', trend: 'down', icon: AlertTriangle },
                             { label: 'Active Sessions', value: '42', trend: 'up', icon: Globe },
                         ].map(({ label, value, trend, icon: Icon }) => (
@@ -516,20 +529,23 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                         </div>
                     ) : (
                         alerts.map((alert) => (
-                            <div
-                                key={alert.id}
-                                className="p-4 bg-white/5 rounded-xl border border-white/10"
-                            >
+                            <div key={alert.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h4 className="font-medium text-white">{alert.name}</h4>
                                         <p className="text-sm text-slate-400 mt-1">
-                                            {alert.metric} {alert.operator === 'gt' ? '>' : alert.operator === 'lt' ? '<' : '='} {alert.threshold}
+                                            {alert.metric}{' '}
+                                            {alert.operator === 'gt' ? '>' : alert.operator === 'lt' ? '<' : '='}{' '}
+                                            {alert.threshold}
                                         </p>
                                     </div>
-                                    <div className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                        alert.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                                    }`}>
+                                    <div
+                                        className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                            alert.enabled
+                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                : 'bg-slate-700 text-slate-400'
+                                        }`}
+                                    >
                                         {alert.enabled ? 'Active' : 'Disabled'}
                                     </div>
                                 </div>
@@ -543,7 +559,8 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                             <div>
                                 <h4 className="font-medium text-amber-400">Alert Channels</h4>
                                 <p className="text-sm text-slate-400 mt-1">
-                                    Configure notification channels (Email, Slack, PagerDuty) in the Organization settings to receive alerts.
+                                    Configure notification channels (Email, Slack, PagerDuty) in the Organization
+                                    settings to receive alerts.
                                 </p>
                             </div>
                         </div>
@@ -561,10 +578,4 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 };
 
 export default EnterpriseHealthMonitor;
-
-
-
-
-
-
 

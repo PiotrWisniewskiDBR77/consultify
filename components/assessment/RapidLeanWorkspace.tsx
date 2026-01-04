@@ -3,25 +3,46 @@
  * Production floor observation-based assessment
  * Follows DRD principles: diagnosis, not questionnaire
  * Maps to DRD Axes 1 (Processes) and 5 (Culture)
- * 
+ *
  * Sprint 4 Enhancements:
  * - Assessment history dashboard with trend analysis
  * - Quick actions (Start New, Continue, View Reports)
  * - Comparison with previous assessments
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import {
-    TrendingUp, CheckCircle, Camera, MapPin, Clock,
-    FileText, Download, Save, Play, BarChart3, Target, Award, AlertCircle,
-    History, RefreshCw, ChevronRight, ArrowUpRight, ArrowDownRight, Minus,
-    Calendar, User, Zap, ClipboardList, ArrowLeft
+    AlertCircle,
+    ArrowDownRight,
+    ArrowLeft,
+    ArrowUpRight,
+    Award,
+    BarChart3,
+    Calendar,
+    Camera,
+    CheckCircle,
+    ChevronRight,
+    ClipboardList,
+    Clock,
+    Download,
+    FileText,
+    History,
+    MapPin,
+    Minus,
+    Play,
+    RefreshCw,
+    Save,
+    Target,
+    TrendingUp,
+    User,
+    Zap,
 } from 'lucide-react';
-import { RAPID_LEAN_OBSERVATION_TEMPLATES, ObservationTemplate } from '../../data/rapidLeanObservationTemplates';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { ObservationTemplate, RAPID_LEAN_OBSERVATION_TEMPLATES } from '../../data/rapidLeanObservationTemplates';
 import { RapidLeanObservationForm } from './RapidLeanObservationForm';
 import { RapidLeanResultsCard } from './RapidLeanResultsCard';
-import axios from 'axios';
 
 interface RapidLeanWorkspaceProps {
     projectId?: string;
@@ -38,10 +59,7 @@ interface AssessmentHistoryItem {
 
 type WorkspaceView = 'overview' | 'observation' | 'results' | 'report' | 'history';
 
-export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
-    projectId,
-    organizationId
-}) => {
+export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({ projectId, organizationId }) => {
     const { t } = useTranslation();
     const [currentView, setCurrentView] = useState<WorkspaceView>('overview');
     const [currentTemplateIndex, setCurrentTemplateIndex] = useState(0);
@@ -137,13 +155,13 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
     };
 
     const handleObservationComplete = async (observationData: any) => {
-        setObservations(prev => [...prev, observationData]);
+        setObservations((prev) => [...prev, observationData]);
 
         // If all templates completed, generate assessment
         if (currentTemplateIndex === RAPID_LEAN_OBSERVATION_TEMPLATES.length - 1) {
             await generateAssessment();
         } else {
-            setCurrentTemplateIndex(prev => prev + 1);
+            setCurrentTemplateIndex((prev) => prev + 1);
         }
     };
 
@@ -161,8 +179,8 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                     // Convert data URL to blob if needed
                     if (photo.startsWith('data:')) {
                         fetch(photo)
-                            .then(res => res.blob())
-                            .then(blob => {
+                            .then((res) => res.blob())
+                            .then((blob) => {
                                 formData.append('photos', blob, `obs_${obsIndex}_photo_${photoIndex}.jpg`);
                             });
                     }
@@ -174,7 +192,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
             formData.append('observations', JSON.stringify(observations));
 
             const response = await axios.post('/api/rapidlean/observations', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
 
             setAssessment(response.data.assessment);
@@ -196,7 +214,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
             const response = await axios.post(`/api/rapidlean/${assessment.id}/report`, {
                 format: 'pdf',
                 template: 'detailed',
-                includeCharts: true
+                includeCharts: true,
             });
 
             setReport(response.data);
@@ -213,9 +231,10 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
     if (currentView === 'overview') {
         const latestAssessment = assessmentHistory[0];
         const previousAssessment = assessmentHistory[1];
-        const trend = latestAssessment && previousAssessment
-            ? getTrend(latestAssessment.overall_score, previousAssessment.overall_score)
-            : null;
+        const trend =
+            latestAssessment && previousAssessment
+                ? getTrend(latestAssessment.overall_score, previousAssessment.overall_score)
+                : null;
 
         return (
             <div className="p-6 max-w-7xl mx-auto">
@@ -350,15 +369,22 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                             </div>
                             {/* Trend Indicator */}
                             {trend && (
-                                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${trend.direction === 'up' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                                    trend.direction === 'down' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
-                                        'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                                    }`}>
+                                <div
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                                        trend.direction === 'up'
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                            : trend.direction === 'down'
+                                              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                    }`}
+                                >
                                     {trend.direction === 'up' && <ArrowUpRight className="w-5 h-5" />}
                                     {trend.direction === 'down' && <ArrowDownRight className="w-5 h-5" />}
                                     {trend.direction === 'stable' && <Minus className="w-5 h-5" />}
                                     <span className="font-medium">
-                                        {trend.direction === 'stable' ? 'Stable' : `${trend.value.toFixed(1)} ${trend.direction === 'up' ? 'improvement' : 'regression'}`}
+                                        {trend.direction === 'stable'
+                                            ? 'Stable'
+                                            : `${trend.value.toFixed(1)} ${trend.direction === 'up' ? 'improvement' : 'regression'}`}
                                     </span>
                                 </div>
                             )}
@@ -449,17 +475,29 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-900">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trend</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Type
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Score
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Trend
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {assessmentHistory.map((item, index) => {
                                     const prevItem = assessmentHistory[index + 1];
-                                    const itemTrend = prevItem ? getTrend(item.overall_score, prevItem.overall_score) : null;
+                                    const itemTrend = prevItem
+                                        ? getTrend(item.overall_score, prevItem.overall_score)
+                                        : null;
 
                                     return (
                                         <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
@@ -472,10 +510,13 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-1 text-xs rounded-full ${item.assessment_type === 'quick'
-                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                                    : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                    }`}>
+                                                <span
+                                                    className={`px-2 py-1 text-xs rounded-full ${
+                                                        item.assessment_type === 'quick'
+                                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                    }`}
+                                                >
                                                     {item.assessment_type === 'quick' ? 'Quick' : 'Full'}
                                                 </span>
                                             </td>
@@ -487,14 +528,27 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {itemTrend ? (
-                                                    <span className={`flex items-center gap-1 text-sm ${itemTrend.direction === 'up' ? 'text-green-600' :
-                                                        itemTrend.direction === 'down' ? 'text-red-600' :
-                                                            'text-gray-500'
-                                                        }`}>
-                                                        {itemTrend.direction === 'up' && <ArrowUpRight className="w-4 h-4" />}
-                                                        {itemTrend.direction === 'down' && <ArrowDownRight className="w-4 h-4" />}
-                                                        {itemTrend.direction === 'stable' && <Minus className="w-4 h-4" />}
-                                                        {itemTrend.value > 0 ? `+${itemTrend.value.toFixed(1)}` : itemTrend.value.toFixed(1)}
+                                                    <span
+                                                        className={`flex items-center gap-1 text-sm ${
+                                                            itemTrend.direction === 'up'
+                                                                ? 'text-green-600'
+                                                                : itemTrend.direction === 'down'
+                                                                  ? 'text-red-600'
+                                                                  : 'text-gray-500'
+                                                        }`}
+                                                    >
+                                                        {itemTrend.direction === 'up' && (
+                                                            <ArrowUpRight className="w-4 h-4" />
+                                                        )}
+                                                        {itemTrend.direction === 'down' && (
+                                                            <ArrowDownRight className="w-4 h-4" />
+                                                        )}
+                                                        {itemTrend.direction === 'stable' && (
+                                                            <Minus className="w-4 h-4" />
+                                                        )}
+                                                        {itemTrend.value > 0
+                                                            ? `+${itemTrend.value.toFixed(1)}`
+                                                            : itemTrend.value.toFixed(1)}
                                                     </span>
                                                 ) : (
                                                     <span className="text-sm text-gray-400">—</span>
@@ -574,7 +628,8 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                                 <div key={axis} className="border-l-4 border-blue-500 pl-4">
                                     <div className="flex items-center justify-between">
                                         <span className="font-medium capitalize">
-                                            DRD Axis {axis === 'processes' ? '1' : axis === 'culture' ? '5' : axis}: {axis}
+                                            DRD Axis {axis === 'processes' ? '1' : axis === 'culture' ? '5' : axis}:{' '}
+                                            {axis}
                                         </span>
                                         <span className="text-2xl font-bold text-blue-600">
                                             {level.toFixed(1)} / 7.0
@@ -601,14 +656,21 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
                                 <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="font-semibold capitalize">{rec.dimension}</span>
-                                        <span className={`px-2 py-1 text-xs rounded ${rec.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                                            }`}>
+                                        <span
+                                            className={`px-2 py-1 text-xs rounded ${
+                                                rec.priority === 'HIGH'
+                                                    ? 'bg-red-100 text-red-700'
+                                                    : 'bg-yellow-100 text-yellow-700'
+                                            }`}
+                                        >
                                             {rec.priority} Priority
                                         </span>
                                     </div>
                                     <p className="text-sm text-gray-700 dark:text-gray-300">{rec.recommendation}</p>
                                     {rec.expectedImpact && (
-                                        <p className="text-xs text-gray-500 mt-1">Expected Impact: {rec.expectedImpact}</p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Expected Impact: {rec.expectedImpact}
+                                        </p>
                                     )}
                                 </div>
                             ))}
@@ -643,4 +705,3 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
 
     return null;
 };
-

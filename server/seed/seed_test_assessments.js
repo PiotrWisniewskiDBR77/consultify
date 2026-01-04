@@ -6,7 +6,7 @@
  * - 1 Approved assessment (can create report)
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

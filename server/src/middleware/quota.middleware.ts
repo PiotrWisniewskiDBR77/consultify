@@ -1,27 +1,42 @@
 /**
  * Quota Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Enforces token and storage quotas before allowing API requests
  */
 
-import { Request, Response, NextFunction } from 'express';
-import type { AuthRequest } from './auth.middleware.js';
+import { NextFunction, Request, Response } from 'express';
+
 import usageService from '../../services/usageService.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
 interface UsageService {
-    checkQuota: (orgId: string, type: 'token' | 'storage') => Promise<{
+    checkQuota: (
+        orgId: string,
+        type: 'token' | 'storage',
+    ) => Promise<{
         allowed: boolean;
         used: number;
         limit: number;
         percentage: number;
     }>;
-    recordTokenUsage: (orgId: string, userId: string | undefined, tokens: number, action: string, metadata: Record<string, unknown>) => Promise<void>;
-    recordStorageUsage: (orgId: string, bytes: number, action: string, metadata: Record<string, unknown>) => Promise<void>;
+    recordTokenUsage: (
+        orgId: string,
+        userId: string | undefined,
+        tokens: number,
+        action: string,
+        metadata: Record<string, unknown>,
+    ) => Promise<void>;
+    recordStorageUsage: (
+        orgId: string,
+        bytes: number,
+        action: string,
+        metadata: Record<string, unknown>,
+    ) => Promise<void>;
 }
 
 interface QuotaInfo {
@@ -53,11 +68,7 @@ let deps: Dependencies = { usageService };
 /**
  * Middleware to enforce token quota on AI endpoints
  */
-export async function enforceTokenQuota(
-    req: QuotaRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> {
+export async function enforceTokenQuota(req: QuotaRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const { usageService } = deps;
 
@@ -80,10 +91,11 @@ export async function enforceTokenQuota(
                 usage: {
                     used: quota.used,
                     limit: quota.limit,
-                    percentage: quota.percentage
+                    percentage: quota.percentage,
                 },
-                message: 'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
-                upgradeUrl: '/settings?tab=billing'
+                message:
+                    'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
+                upgradeUrl: '/settings?tab=billing',
             });
             return;
         }
@@ -105,11 +117,7 @@ export async function enforceTokenQuota(
 /**
  * Middleware to enforce storage quota on upload endpoints
  */
-export async function enforceStorageQuota(
-    req: QuotaRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> {
+export async function enforceStorageQuota(req: QuotaRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const { usageService } = deps;
 
@@ -131,10 +139,11 @@ export async function enforceStorageQuota(
                 usage: {
                     usedGB: (quota.used / (1024 * 1024 * 1024)).toFixed(2),
                     limitGB: (quota.limit / (1024 * 1024 * 1024)).toFixed(2),
-                    percentage: quota.percentage
+                    percentage: quota.percentage,
                 },
-                message: 'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
-                upgradeUrl: '/settings?tab=billing'
+                message:
+                    'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
+                upgradeUrl: '/settings?tab=billing',
             });
             return;
         }
@@ -154,7 +163,7 @@ export async function recordTokenUsageAfterResponse(
     req: QuotaRequest,
     res: Response,
     tokens: number,
-    action: string
+    action: string,
 ): Promise<void> {
     try {
         const { usageService } = deps;
@@ -165,7 +174,7 @@ export async function recordTokenUsageAfterResponse(
         if (orgId && tokens > 0) {
             await usageService.recordTokenUsage(orgId, userId, tokens, action, {
                 endpoint: req.path,
-                model: (req.body as { model?: string })?.model || 'default'
+                model: (req.body as { model?: string })?.model || 'default',
             });
         }
     } catch (error: unknown) {
@@ -179,7 +188,7 @@ export async function recordTokenUsageAfterResponse(
 export async function recordStorageAfterUpload(
     req: Request & { file?: { originalname?: string } },
     bytes: number,
-    action = 'upload'
+    action = 'upload',
 ): Promise<void> {
     try {
         const { usageService } = deps;
@@ -189,7 +198,7 @@ export async function recordStorageAfterUpload(
         if (orgId && bytes > 0) {
             await usageService.recordStorageUsage(orgId, bytes, action, {
                 endpoint: req.path,
-                filename: req.file?.originalname
+                filename: req.file?.originalname,
             });
         }
     } catch (error: unknown) {
@@ -204,4 +213,3 @@ export async function recordStorageAfterUpload(
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-

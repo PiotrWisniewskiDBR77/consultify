@@ -5,7 +5,8 @@
  * for the status page.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
 
 
@@ -292,6 +293,7 @@ export default {
     checkStorageHealth,
     checkEmailHealth
 };
+
 
 
 

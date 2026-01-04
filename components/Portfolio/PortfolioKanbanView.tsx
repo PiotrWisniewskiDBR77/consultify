@@ -1,38 +1,28 @@
 /**
  * Portfolio Kanban View
- * 
+ *
  * Drag-and-drop kanban board organized by status columns.
  */
 
-import React, { useState, useMemo } from 'react';
 import {
-    DndContext,
-    DragOverlay,
     closestCorners,
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    DragStartEvent,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
-    DragStartEvent,
-    DragEndEvent
 } from '@dnd-kit/core';
-import {
-    SortableContext,
-    verticalListSortingStrategy,
-    useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import {
-    GripVertical,
-    User,
-    Calendar,
-    DollarSign,
-    AlertTriangle,
-    TrendingUp
-} from 'lucide-react';
-import { PortfolioInitiative, InitiativeStatus } from '../../types';
-import { getStatusColors, getPriorityColors, KANBAN_COLUMN_COLORS, getAxisColor } from '../../config/portfolioColors';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { AlertTriangle, Calendar, DollarSign, GripVertical, TrendingUp, User } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
+import { getAxisColor, getPriorityColors, getStatusColors, KANBAN_COLUMN_COLORS } from '../../config/portfolioColors';
+import { InitiativeStatus, PortfolioInitiative } from '../../types';
 
 interface PortfolioKanbanViewProps {
     initiatives: PortfolioInitiative[];
@@ -46,7 +36,7 @@ const KANBAN_COLUMNS: { id: InitiativeStatus; label: string }[] = [
     { id: 'PLANNING' as InitiativeStatus, label: 'Planning' },
     { id: 'REVIEW' as InitiativeStatus, label: 'Review' },
     { id: 'APPROVED' as InitiativeStatus, label: 'Approved' },
-    { id: 'EXECUTING' as InitiativeStatus, label: 'Executing' }
+    { id: 'EXECUTING' as InitiativeStatus, label: 'Executing' },
 ];
 
 // ============================================
@@ -98,7 +88,9 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
 
             {/* Priority badge */}
             <div className="flex items-center gap-2 mb-3">
-                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}>
+                <span
+                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}
+                >
                     {initiative.priority}
                 </span>
                 {initiative.isCriticalPath && (
@@ -113,7 +105,11 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, is
                 <div className="flex items-center gap-2 mb-3">
                     <div className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-[10px] font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
                         {initiative.ownerBusiness.avatarUrl ? (
-                            <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            <img
+                                src={initiative.ownerBusiness.avatarUrl}
+                                alt=""
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
                             `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
                         )}
@@ -173,28 +169,17 @@ interface SortableCardProps {
 }
 
 const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: initiative.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: initiative.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1
+        opacity: isDragging ? 0.5 : 1,
     };
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <InitiativeCard
-                initiative={initiative}
-                onClick={onClick}
-                isDragging={isDragging}
-            />
+            <InitiativeCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
         </div>
     );
 };
@@ -237,11 +222,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, initiatives, onI
 
             {/* Column Content */}
             <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-320px)]">
-                <SortableContext
-                    items={initiatives.map(i => i.id)}
-                    strategy={verticalListSortingStrategy}
-                >
-                    {initiatives.map(initiative => (
+                <SortableContext items={initiatives.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                    {initiatives.map((initiative) => (
                         <SortableCard
                             key={initiative.id}
                             initiative={initiative}
@@ -267,27 +249,27 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, initiatives, onI
 export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
     initiatives,
     onInitiativeClick,
-    onStatusChange
+    onStatusChange,
 }) => {
     const [activeId, setActiveId] = useState<string | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 8
-            }
+                distance: 8,
+            },
         }),
-        useSensor(KeyboardSensor)
+        useSensor(KeyboardSensor),
     );
 
     // Group initiatives by status
     const columnData = useMemo(() => {
         const grouped: Record<string, PortfolioInitiative[]> = {};
-        KANBAN_COLUMNS.forEach(col => {
+        KANBAN_COLUMNS.forEach((col) => {
             grouped[col.id] = [];
         });
 
-        initiatives.forEach(initiative => {
+        initiatives.forEach((initiative) => {
             if (grouped[initiative.status]) {
                 grouped[initiative.status].push(initiative);
             }
@@ -298,7 +280,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
 
     const activeInitiative = useMemo(() => {
         if (!activeId) return null;
-        return initiatives.find(i => i.id === activeId) || null;
+        return initiatives.find((i) => i.id === activeId) || null;
     }, [activeId, initiatives]);
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -311,11 +293,11 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
 
         if (!over) return;
 
-        const activeInitiative = initiatives.find(i => i.id === active.id);
+        const activeInitiative = initiatives.find((i) => i.id === active.id);
         if (!activeInitiative) return;
 
         // Check if dropped on a column
-        const newStatus = KANBAN_COLUMNS.find(col => col.id === over.id)?.id;
+        const newStatus = KANBAN_COLUMNS.find((col) => col.id === over.id)?.id;
         if (newStatus && newStatus !== activeInitiative.status) {
             onStatusChange(active.id as string, newStatus);
         }
@@ -330,7 +312,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
         >
             <div className="h-full overflow-x-auto p-4">
                 <div className="flex gap-4 h-full">
-                    {KANBAN_COLUMNS.map(column => (
+                    {KANBAN_COLUMNS.map((column) => (
                         <KanbanColumn
                             key={column.id}
                             id={column.id}
@@ -343,25 +325,11 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
             </div>
 
             <DragOverlay>
-                {activeInitiative && (
-                    <InitiativeCard
-                        initiative={activeInitiative}
-                        onClick={() => { }}
-                        isDragging
-                    />
-                )}
+                {activeInitiative && <InitiativeCard initiative={activeInitiative} onClick={() => {}} isDragging />}
             </DragOverlay>
         </DndContext>
     );
 };
 
 export default PortfolioKanbanView;
-
-
-
-
-
-
-
-
 

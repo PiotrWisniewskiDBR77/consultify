@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - Task Management
  */
 
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import type { TaskFilters } from './types';
 
 export interface Task {
@@ -62,7 +62,7 @@ export const TaskApi = {
     // ==========================================
     // TASKS CRUD
     // ==========================================
-    
+
     getTasks: async (filters?: TaskFilters): Promise<Task[]> => {
         let url = `${API_URL}/tasks`;
         if (filters) {
@@ -89,7 +89,7 @@ export const TaskApi = {
         const res = await fetch(`${API_URL}/tasks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(task)
+            body: JSON.stringify(task),
         });
         return handleResponse(res, 'Failed to create task');
     },
@@ -98,7 +98,7 @@ export const TaskApi = {
         const res = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update task');
     },
@@ -106,7 +106,7 @@ export const TaskApi = {
     deleteTask: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete task');
     },
@@ -114,7 +114,7 @@ export const TaskApi = {
     // ==========================================
     // TASK COMMENTS
     // ==========================================
-    
+
     getTaskComments: async (taskId: string): Promise<TaskComment[]> => {
         const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch comments');
@@ -125,7 +125,7 @@ export const TaskApi = {
         const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ content })
+            body: JSON.stringify({ content }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to add comment');
@@ -135,7 +135,7 @@ export const TaskApi = {
     deleteTaskComment: async (taskId: string, commentId: string): Promise<void> => {
         const res = await fetch(`${API_URL}/tasks/${taskId}/comments/${commentId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete comment');
     },
@@ -143,12 +143,12 @@ export const TaskApi = {
     // ==========================================
     // TASK AI SUGGESTIONS
     // ==========================================
-    
+
     suggestTasks: async (initiative: unknown): Promise<Task[]> => {
         const res = await fetch(`${API_URL}/ai/suggest-tasks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ initiative })
+            body: JSON.stringify({ initiative }),
         });
         if (!res.ok) throw new Error('Failed to suggest tasks');
         return res.json();
@@ -158,11 +158,9 @@ export const TaskApi = {
         const res = await fetch(`${API_URL}/ai/task-insight`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ task, initiative })
+            body: JSON.stringify({ task, initiative }),
         });
         if (!res.ok) throw new Error('Failed to generate task insight');
         return res.json();
-    }
+    },
 };
-
-

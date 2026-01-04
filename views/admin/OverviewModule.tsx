@@ -1,17 +1,18 @@
 /**
  * OverviewModule - Admin Overview & Analytics
- * 
+ *
  * Tabs: Dashboard | Metrics | Analytics
  */
 
+import { BarChart3, LayoutDashboard, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
-import { LayoutDashboard, TrendingUp, BarChart3 } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
+import { useTranslation } from 'react-i18next';
+
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { Project, User } from '../../types';
+import { AdminAnalyticsView } from './AdminAnalyticsView';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminMetricsDashboardView } from './AdminMetricsDashboardView';
-import { AdminAnalyticsView } from './AdminAnalyticsView';
-import { useTranslation } from 'react-i18next';
-import { User, Project } from '../../types';
 
 interface OverviewModuleProps {
     initialTab?: string;
@@ -19,29 +20,25 @@ interface OverviewModuleProps {
     projects: Project[];
 }
 
-export const OverviewModule: React.FC<OverviewModuleProps> = ({ 
-    initialTab,
-    users,
-    projects 
-}) => {
+export const OverviewModule: React.FC<OverviewModuleProps> = ({ initialTab, users, projects }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'dashboard');
 
     const tabs: Tab[] = [
-        { 
-            id: 'dashboard', 
-            label: t('admin.tabs.dashboard', 'Dashboard'), 
-            icon: <LayoutDashboard size={16} /> 
+        {
+            id: 'dashboard',
+            label: t('admin.tabs.dashboard', 'Dashboard'),
+            icon: <LayoutDashboard size={16} />,
         },
-        { 
-            id: 'metrics', 
-            label: t('admin.tabs.metrics', 'Metrics'), 
-            icon: <TrendingUp size={16} /> 
+        {
+            id: 'metrics',
+            label: t('admin.tabs.metrics', 'Metrics'),
+            icon: <TrendingUp size={16} />,
         },
-        { 
-            id: 'analytics', 
-            label: t('admin.tabs.analytics', 'Analytics'), 
-            icon: <BarChart3 size={16} /> 
+        {
+            id: 'analytics',
+            label: t('admin.tabs.analytics', 'Analytics'),
+            icon: <BarChart3 size={16} />,
         },
     ];
 
@@ -80,11 +77,4 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({
 };
 
 export default OverviewModule;
-
-
-
-
-
-
-
 

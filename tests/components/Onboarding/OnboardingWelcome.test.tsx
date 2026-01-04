@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OnboardingWelcome } from '../../../components/Onboarding/OnboardingWelcome';
+import { OnboardingWelcome } from '../../components/Onboarding/OnboardingWelcome';
 
 describe('OnboardingWelcome Component', () => {
     const user = userEvent.setup();
@@ -25,6 +25,7 @@ describe('OnboardingWelcome Component', () => {
         expect(onStart).toHaveBeenCalled();
     });
 });
+
 
 
 

@@ -1,7 +1,7 @@
 /**
  * Feature Flags Configuration
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Centralized feature toggles for the application.
  * Can be overridden by environment variables.
  */
@@ -55,7 +55,7 @@ function loadFeatureFlags(): FeatureFlags {
         result.error.issues.forEach((err: Error | null) => {
             console.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
-        
+
         // Use defaults on validation failure
         console.warn('[Feature Flags] Using defaults for invalid values.');
         return FeatureFlagsSchema.parse({});
@@ -70,4 +70,3 @@ function loadFeatureFlags(): FeatureFlags {
 
 export const featureFlags = loadFeatureFlags();
 export default featureFlags;
-

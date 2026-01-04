@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Check, Clock, ExternalLink, Eye, FileText, Scale, Shield, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Check, X, Eye, Clock, Shield, Scale, ExternalLink } from 'lucide-react';
-import { User, LegalDocument, LegalDocType } from '../../types';
+import { Link } from 'react-router-dom';
+
+import { LegalDocType, LegalDocument, User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface LegalSettingsProps {
@@ -21,7 +22,7 @@ const DOC_TYPE_INFO: Record<LegalDocType, { icon: React.ReactNode; color: string
     COOKIES: { icon: <FileText size={18} />, color: 'text-amber-500' },
     AUP: { icon: <FileText size={18} />, color: 'text-purple-500' },
     AI_POLICY: { icon: <FileText size={18} />, color: 'text-indigo-500' },
-    DPA: { icon: <Shield size={18} />, color: 'text-red-500' }
+    DPA: { icon: <Shield size={18} />, color: 'text-red-500' },
 };
 
 export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => {
@@ -42,22 +43,24 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
             const token = localStorage.getItem('token');
             const [docsRes, acceptRes] = await Promise.all([
                 fetch('/api/legal/active', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 }),
                 fetch('/api/legal/my-acceptances', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
+                    headers: { Authorization: `Bearer ${token}` },
+                }),
             ]);
 
             if (docsRes.ok && acceptRes.ok) {
                 const docs = await docsRes.json();
                 const accepts = await acceptRes.json();
                 setDocuments(docs);
-                setAcceptances(accepts.map((a: any) => ({
-                    docType: a.doc_type,
-                    version: a.version,
-                    acceptedAt: a.accepted_at
-                })));
+                setAcceptances(
+                    accepts.map((a: any) => ({
+                        docType: a.doc_type,
+                        version: a.version,
+                        acceptedAt: a.accepted_at,
+                    })),
+                );
             }
         } catch (err) {
             console.error('Failed to fetch legal data:', err);
@@ -72,7 +75,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`/api/legal/active/${doc.docType}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
                 const fullDoc = await res.json();
@@ -86,7 +89,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
     };
 
     const getAcceptanceStatus = (docType: LegalDocType, version: string) => {
-        const acceptance = acceptances.find(a => a.docType === docType && a.version === version);
+        const acceptance = acceptances.find((a) => a.docType === docType && a.version === version);
         return acceptance;
     };
 
@@ -94,7 +97,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
         return new Date(dateStr).toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -117,7 +120,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
             </p>
 
             <div className="space-y-3">
-                {documents.map(doc => {
+                {documents.map((doc) => {
                     const acceptance = getAcceptanceStatus(doc.docType as LegalDocType, doc.version);
                     const info = DOC_TYPE_INFO[doc.docType as LegalDocType] || DOC_TYPE_INFO.TOS;
 
@@ -127,13 +130,9 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
                             className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800 transition-colors"
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`${info.color}`}>
-                                    {info.icon}
-                                </div>
+                                <div className={`${info.color}`}>{info.icon}</div>
                                 <div>
-                                    <h3 className="font-medium text-slate-900 dark:text-white">
-                                        {doc.title}
-                                    </h3>
+                                    <h3 className="font-medium text-slate-900 dark:text-white">{doc.title}</h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
                                         Version {doc.version} • Effective {formatDate(doc.effectiveFrom)}
                                     </p>
@@ -206,9 +205,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                                     {selectedDoc.title}
                                 </h3>
-                                <p className="text-sm text-slate-500">
-                                    Version {selectedDoc.version}
-                                </p>
+                                <p className="text-sm text-slate-500">Version {selectedDoc.version}</p>
                             </div>
                             <button
                                 onClick={() => setSelectedDoc(null)}
@@ -224,9 +221,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
                                 </div>
                             ) : (
                                 <div className="prose dark:prose-invert max-w-none">
-                                    <pre className="whitespace-pre-wrap text-sm font-sans">
-                                        {docContent}
-                                    </pre>
+                                    <pre className="whitespace-pre-wrap text-sm font-sans">{docContent}</pre>
                                 </div>
                             )}
                         </div>

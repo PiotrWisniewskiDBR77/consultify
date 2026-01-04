@@ -1,25 +1,25 @@
 /**
  * LLM Health Panel Component
- * 
+ *
  * Displays detailed health status of all LLM providers with
  * error diagnosis and recommended actions.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    CheckCircle, 
-    XCircle, 
-    AlertTriangle, 
-    RefreshCw, 
+import {
     Activity,
-    Clock,
-    Zap,
     AlertOctagon,
-    Info,
+    AlertTriangle,
+    CheckCircle,
     ChevronDown,
     ChevronRight,
-    ExternalLink
+    Clock,
+    ExternalLink,
+    Info,
+    RefreshCw,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface HealthError {
     title: string;
@@ -81,7 +81,7 @@ interface LLMHealthPanelProps {
 export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
     onProviderAction,
     autoRefresh = true,
-    refreshInterval = 60000 // 1 minute
+    refreshInterval = 60000, // 1 minute
 }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -93,20 +93,20 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 
     const fetchHealthData = useCallback(async (showRefreshing = false) => {
         if (showRefreshing) setRefreshing(true);
-        
+
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/llm/health/detailed', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) throw new Error('Failed to fetch health data');
 
             const data = await response.json();
-            
+
             if (data.success) {
                 setProviders(data.providers || []);
                 setAlerts(data.alerts || []);
@@ -144,19 +144,17 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
             const response = await fetch('/api/llm/health/test-provider', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ providerId })
+                body: JSON.stringify({ providerId }),
             });
 
             const data = await response.json();
-            
+
             // Update provider in list
             if (data.provider) {
-                setProviders(prev => prev.map(p => 
-                    p.id === providerId ? { ...p, ...data.provider } : p
-                ));
+                setProviders((prev) => prev.map((p) => (p.id === providerId ? { ...p, ...data.provider } : p)));
             }
 
             // Refresh full data
@@ -225,11 +223,9 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                         <Activity className="w-4 h-4" />
                         Łącznie
                     </div>
-                    <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                        {summary?.total || 0}
-                    </div>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{summary?.total || 0}</div>
                 </div>
-                
+
                 <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
                         <CheckCircle className="w-4 h-4" />
@@ -239,7 +235,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                         {summary?.healthyCount || 0}
                     </div>
                 </div>
-                
+
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
                     <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 text-sm">
                         <AlertTriangle className="w-4 h-4" />
@@ -249,7 +245,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                         {summary?.degradedCount || 0}
                     </div>
                 </div>
-                
+
                 <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
                     <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
                         <XCircle className="w-4 h-4" />
@@ -272,11 +268,11 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                     </div>
                     <div className="divide-y divide-slate-200 dark:divide-white/10">
                         {alerts.map((alert, index) => (
-                            <div 
+                            <div
                                 key={index}
                                 className={`p-4 ${
-                                    alert.severity === 'error' 
-                                        ? 'bg-red-50 dark:bg-red-900/10' 
+                                    alert.severity === 'error'
+                                        ? 'bg-red-50 dark:bg-red-900/10'
                                         : 'bg-yellow-50 dark:bg-yellow-900/10'
                                 }`}
                             >
@@ -287,11 +283,13 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                                             <span className="font-medium text-slate-900 dark:text-white">
                                                 {alert.provider}
                                             </span>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                                alert.severity === 'error'
-                                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                                    : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                                            }`}>
+                                            <span
+                                                className={`px-2 py-0.5 text-xs rounded-full ${
+                                                    alert.severity === 'error'
+                                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                                                }`}
+                                            >
                                                 {alert.code}
                                             </span>
                                         </div>
@@ -335,11 +333,11 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                 <div className="divide-y divide-slate-200 dark:divide-white/10">
                     {providers.map((provider) => (
                         <div key={provider.id} className="p-4">
-                            <div 
+                            <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => setExpandedProvider(
-                                    expandedProvider === provider.id ? null : provider.id
-                                )}
+                                onClick={() =>
+                                    setExpandedProvider(expandedProvider === provider.id ? null : provider.id)
+                                }
                             >
                                 <div className="flex items-center gap-3">
                                     {getStatusIcon(provider.status)}
@@ -359,13 +357,15 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                                             {provider.responseTime}ms
                                         </span>
                                     )}
-                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                        provider.status === 'healthy' 
-                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                            : provider.status === 'degraded'
-                                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                    }`}>
+                                    <span
+                                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                            provider.status === 'healthy'
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                : provider.status === 'degraded'
+                                                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                                                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                        }`}
+                                    >
                                         {provider.statusLabel.text}
                                     </span>
                                     {expandedProvider === provider.id ? (
@@ -399,7 +399,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                                             )}
                                         </div>
                                     )}
-                                    
+
                                     <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                         <Clock className="w-4 h-4" />
                                         Ostatnie sprawdzenie: {new Date(provider.lastCheck).toLocaleString('pl-PL')}
@@ -441,4 +441,3 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 };
 
 export default LLMHealthPanel;
-

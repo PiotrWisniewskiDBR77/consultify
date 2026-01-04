@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Mail, FileSignature, Calendar, Clock, Plus, X, 
-    Save, Loader2, CheckCircle, Info, AlertCircle
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle,
+    Clock,
+    FileSignature,
+    Info,
+    Loader2,
+    Mail,
+    Plus,
+    Save,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
-import { User, EmailPreferences, OutOfOfficeSettings } from '../../types';
+import { EmailPreferences, OutOfOfficeSettings, User } from '../../types';
 
 interface EmailCommunicationSettingsProps {
     currentUser: User;
@@ -19,14 +29,11 @@ const DIGEST_OPTIONS = [
     { value: 'never', label: 'Never', description: 'No email notifications' },
 ];
 
-export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    
+
     const [emailPrefs, setEmailPrefs] = useState<EmailPreferences>({
         signature: '',
         signatureHtml: '',
@@ -37,11 +44,11 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
             message: '',
             start: '',
             end: '',
-            autoReply: false
+            autoReply: false,
         },
-        digestFrequency: 'daily'
+        digestFrequency: 'daily',
     });
-    
+
     const [newAlias, setNewAlias] = useState('');
 
     // Load data on mount
@@ -63,9 +70,9 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                         message: '',
                         start: '',
                         end: '',
-                        autoReply: false
+                        autoReply: false,
                     },
-                    digestFrequency: response.emailPreferences.digestFrequency || 'daily'
+                    digestFrequency: response.emailPreferences.digestFrequency || 'daily',
                 });
             }
         } catch (error) {
@@ -77,12 +84,12 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
         setIsSaving(true);
         try {
             await Api.put('/profile/email-preferences', emailPrefs);
-            
+
             // Also update out of office if changed
             if (emailPrefs.outOfOffice) {
                 await Api.put('/profile/out-of-office', emailPrefs.outOfOffice);
             }
-            
+
             setSaveStatus('success');
             onUpdate?.();
             setTimeout(() => setSaveStatus('idle'), 2000);
@@ -96,32 +103,34 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
 
     const addAlias = () => {
         if (newAlias && !emailPrefs.aliases?.includes(newAlias)) {
-            setEmailPrefs(prev => ({
+            setEmailPrefs((prev) => ({
                 ...prev,
-                aliases: [...(prev.aliases || []), newAlias]
+                aliases: [...(prev.aliases || []), newAlias],
             }));
             setNewAlias('');
         }
     };
 
     const removeAlias = (alias: string) => {
-        setEmailPrefs(prev => ({
+        setEmailPrefs((prev) => ({
             ...prev,
-            aliases: prev.aliases?.filter(a => a !== alias) || []
+            aliases: prev.aliases?.filter((a) => a !== alias) || [],
         }));
     };
 
     // Styling classes
-    const inputClass = "w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all";
-    const labelClass = "text-xs font-medium text-slate-500 dark:text-slate-400";
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
-    const toggleClass = (enabled: boolean) => `relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-    }`;
-    const toggleKnobClass = (enabled: boolean) => `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-        enabled ? 'left-7' : 'left-1'
-    }`;
+    const inputClass =
+        'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    const toggleClass = (enabled: boolean) =>
+        `relative w-12 h-6 rounded-full transition-colors ${
+            enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+        }`;
+    const toggleKnobClass = (enabled: boolean) =>
+        `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -132,7 +141,10 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                         {t('settings.profile.email.title', 'Email & Communication')}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        {t('settings.profile.email.description', 'Manage your email signature, aliases, and notification preferences')}
+                        {t(
+                            'settings.profile.email.description',
+                            'Manage your email signature, aliases, and notification preferences',
+                        )}
                     </p>
                 </div>
                 <button
@@ -151,7 +163,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                     <FileSignature size={16} className="text-purple-500" />
                     {t('settings.profile.email.signature', 'Email Signature')}
                 </h4>
-                
+
                 <div className="space-y-4">
                     <div>
                         <label className={labelClass}>
@@ -159,13 +171,19 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                         </label>
                         <textarea
                             value={emailPrefs.signature}
-                            onChange={e => setEmailPrefs(prev => ({ ...prev, signature: e.target.value }))}
-                            placeholder={t('settings.profile.email.signaturePlaceholder', 'Best regards,\nYour Name\nTitle | Company')}
+                            onChange={(e) => setEmailPrefs((prev) => ({ ...prev, signature: e.target.value }))}
+                            placeholder={t(
+                                'settings.profile.email.signaturePlaceholder',
+                                'Best regards,\nYour Name\nTitle | Company',
+                            )}
                             rows={4}
-                            className={inputClass + " resize-none mt-1.5"}
+                            className={inputClass + ' resize-none mt-1.5'}
                         />
                         <p className="text-xs text-slate-400 mt-1">
-                            {t('settings.profile.email.signatureHint', 'This signature will be added to your outgoing emails')}
+                            {t(
+                                'settings.profile.email.signatureHint',
+                                'This signature will be added to your outgoing emails',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -177,7 +195,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                     <Mail size={16} className="text-purple-500" />
                     {t('settings.profile.email.aliases', 'Email Aliases')}
                 </h4>
-                
+
                 {/* Primary email */}
                 <div className="mb-4 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -192,8 +210,8 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                 {/* Alias list */}
                 {emailPrefs.aliases && emailPrefs.aliases.length > 0 && (
                     <div className="space-y-2 mb-4">
-                        {emailPrefs.aliases.map(alias => (
-                            <div 
+                        {emailPrefs.aliases.map((alias) => (
+                            <div
                                 key={alias}
                                 className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg"
                             >
@@ -215,7 +233,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                     <input
                         type="email"
                         value={newAlias}
-                        onChange={e => setNewAlias(e.target.value)}
+                        onChange={(e) => setNewAlias(e.target.value)}
                         placeholder={t('settings.profile.email.addAlias', 'Add email alias...')}
                         className={inputClass}
                     />
@@ -235,28 +253,28 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                     <Clock size={16} className="text-purple-500" />
                     {t('settings.profile.email.digest', 'Email Digest Frequency')}
                 </h4>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {DIGEST_OPTIONS.map(option => (
+                    {DIGEST_OPTIONS.map((option) => (
                         <button
                             key={option.value}
-                            onClick={() => setEmailPrefs(prev => ({ ...prev, digestFrequency: option.value as any }))}
+                            onClick={() => setEmailPrefs((prev) => ({ ...prev, digestFrequency: option.value as any }))}
                             className={`p-4 rounded-lg border-2 text-left transition-all ${
                                 emailPrefs.digestFrequency === option.value
                                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                     : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                             }`}
                         >
-                            <p className={`font-medium ${
-                                emailPrefs.digestFrequency === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p
+                                className={`font-medium ${
+                                    emailPrefs.digestFrequency === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {option.label}
                             </p>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                {option.description}
-                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">{option.description}</p>
                         </button>
                     ))}
                 </div>
@@ -268,7 +286,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                     <Calendar size={16} className="text-purple-500" />
                     {t('settings.profile.email.outOfOffice', 'Out of Office')}
                 </h4>
-                
+
                 {/* Toggle */}
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -280,10 +298,12 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                         </p>
                     </div>
                     <button
-                        onClick={() => setEmailPrefs(prev => ({
-                            ...prev,
-                            outOfOffice: { ...prev.outOfOffice!, enabled: !prev.outOfOffice?.enabled }
-                        }))}
+                        onClick={() =>
+                            setEmailPrefs((prev) => ({
+                                ...prev,
+                                outOfOffice: { ...prev.outOfOffice!, enabled: !prev.outOfOffice?.enabled },
+                            }))
+                        }
                         className={toggleClass(emailPrefs.outOfOffice?.enabled || false)}
                     >
                         <span className={toggleKnobClass(emailPrefs.outOfOffice?.enabled || false)} />
@@ -301,27 +321,29 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                                 <input
                                     type="date"
                                     value={emailPrefs.outOfOffice?.start || ''}
-                                    onChange={e => setEmailPrefs(prev => ({
-                                        ...prev,
-                                        outOfOffice: { ...prev.outOfOffice!, start: e.target.value }
-                                    }))}
+                                    onChange={(e) =>
+                                        setEmailPrefs((prev) => ({
+                                            ...prev,
+                                            outOfOffice: { ...prev.outOfOffice!, start: e.target.value },
+                                        }))
+                                    }
                                     min={new Date().toISOString().split('T')[0]}
-                                    className={inputClass + " mt-1.5"}
+                                    className={inputClass + ' mt-1.5'}
                                 />
                             </div>
                             <div>
-                                <label className={labelClass}>
-                                    {t('settings.profile.email.endDate', 'End Date')}
-                                </label>
+                                <label className={labelClass}>{t('settings.profile.email.endDate', 'End Date')}</label>
                                 <input
                                     type="date"
                                     value={emailPrefs.outOfOffice?.end || ''}
-                                    onChange={e => setEmailPrefs(prev => ({
-                                        ...prev,
-                                        outOfOffice: { ...prev.outOfOffice!, end: e.target.value }
-                                    }))}
+                                    onChange={(e) =>
+                                        setEmailPrefs((prev) => ({
+                                            ...prev,
+                                            outOfOffice: { ...prev.outOfOffice!, end: e.target.value },
+                                        }))
+                                    }
                                     min={emailPrefs.outOfOffice?.start || new Date().toISOString().split('T')[0]}
-                                    className={inputClass + " mt-1.5"}
+                                    className={inputClass + ' mt-1.5'}
                                 />
                             </div>
                         </div>
@@ -333,13 +355,18 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                             </label>
                             <textarea
                                 value={emailPrefs.outOfOffice?.message || ''}
-                                onChange={e => setEmailPrefs(prev => ({
-                                    ...prev,
-                                    outOfOffice: { ...prev.outOfOffice!, message: e.target.value }
-                                }))}
-                                placeholder={t('settings.profile.email.oooPlaceholder', "I'm currently out of office and will respond when I return...")}
+                                onChange={(e) =>
+                                    setEmailPrefs((prev) => ({
+                                        ...prev,
+                                        outOfOffice: { ...prev.outOfOffice!, message: e.target.value },
+                                    }))
+                                }
+                                placeholder={t(
+                                    'settings.profile.email.oooPlaceholder',
+                                    "I'm currently out of office and will respond when I return...",
+                                )}
                                 rows={4}
-                                className={inputClass + " resize-none mt-1.5"}
+                                className={inputClass + ' resize-none mt-1.5'}
                             />
                         </div>
 
@@ -350,14 +377,19 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                                     {t('settings.profile.email.autoReply', 'Send auto-reply')}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {t('settings.profile.email.autoReplyDesc', 'Automatically send the message above to people who email you')}
+                                    {t(
+                                        'settings.profile.email.autoReplyDesc',
+                                        'Automatically send the message above to people who email you',
+                                    )}
                                 </p>
                             </div>
                             <button
-                                onClick={() => setEmailPrefs(prev => ({
-                                    ...prev,
-                                    outOfOffice: { ...prev.outOfOffice!, autoReply: !prev.outOfOffice?.autoReply }
-                                }))}
+                                onClick={() =>
+                                    setEmailPrefs((prev) => ({
+                                        ...prev,
+                                        outOfOffice: { ...prev.outOfOffice!, autoReply: !prev.outOfOffice?.autoReply },
+                                    }))
+                                }
                                 className={toggleClass(emailPrefs.outOfOffice?.autoReply || false)}
                             >
                                 <span className={toggleKnobClass(emailPrefs.outOfOffice?.autoReply || false)} />
@@ -371,7 +403,10 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                         <div className="flex items-start gap-2">
                             <AlertCircle size={16} className="text-amber-500 mt-0.5" />
                             <p className="text-xs text-amber-700 dark:text-amber-300">
-                                {t('settings.profile.email.oooNote', 'Your status will be shown as "Out of Office" to other team members during this period.')}
+                                {t(
+                                    'settings.profile.email.oooNote',
+                                    'Your status will be shown as "Out of Office" to other team members during this period.',
+                                )}
                             </p>
                         </div>
                     </div>
@@ -390,10 +425,4 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
 };
 
 export default EmailCommunicationSettings;
-
-
-
-
-
-
 

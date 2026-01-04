@@ -3,12 +3,12 @@
  * BCG/McKinsey style: Radar/spider chart for multi-factor analysis
  */
 
-import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
 
 interface RiskDimension {
     label: string;
-    value: number;      // 0-100
+    value: number; // 0-100
     benchmark?: number; // Optional benchmark for comparison
 }
 
@@ -33,10 +33,10 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
     animate = true,
     color = '#8B5CF6',
     benchmarkColor = '#94A3B8',
-    className = ''
+    className = '',
 }) => {
     const center = size / 2;
-    const maxRadius = (size / 2) - 40; // Leave room for labels
+    const maxRadius = size / 2 - 40; // Leave room for labels
     const levels = 4; // Number of concentric circles
 
     // Calculate polygon points
@@ -50,7 +50,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
             return {
                 x: center + radius * Math.cos(angle),
                 y: center + radius * Math.sin(angle),
-                value: dim.value
+                value: dim.value,
             };
         });
 
@@ -59,7 +59,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
             const radius = ((dim.benchmark || 0) / 100) * maxRadius;
             return {
                 x: center + radius * Math.cos(angle),
-                y: center + radius * Math.sin(angle)
+                y: center + radius * Math.sin(angle),
             };
         });
 
@@ -67,7 +67,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
             const angle = startAngle + i * angleStep;
             return {
                 x: center + maxRadius * Math.cos(angle),
-                y: center + maxRadius * Math.sin(angle)
+                y: center + maxRadius * Math.sin(angle),
             };
         });
 
@@ -76,7 +76,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
             const labelRadius = maxRadius + 20;
             const x = center + labelRadius * Math.cos(angle);
             const y = center + labelRadius * Math.sin(angle);
-            
+
             // Determine text anchor based on position
             let textAnchor = 'middle';
             if (Math.cos(angle) < -0.3) textAnchor = 'end';
@@ -100,12 +100,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
     const gradientId = useMemo(() => `radar-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
 
     return (
-        <svg 
-            width={size} 
-            height={size} 
-            className={`overflow-visible ${className}`}
-            viewBox={`0 0 ${size} ${size}`}
-        >
+        <svg width={size} height={size} className={`overflow-visible ${className}`} viewBox={`0 0 ${size} ${size}`}>
             <defs>
                 <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor={color} stopOpacity="0.3" />
@@ -145,7 +140,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
             ))}
 
             {/* Benchmark polygon */}
-            {showBenchmark && dimensions.some(d => d.benchmark !== undefined) && (
+            {showBenchmark && dimensions.some((d) => d.benchmark !== undefined) && (
                 <path
                     d={benchmarkPath}
                     fill="none"
@@ -208,40 +203,35 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
             ))}
 
             {/* Labels */}
-            {showLabels && labelPositions.map((pos, i) => (
-                <g key={i}>
-                    <text
-                        x={pos.x}
-                        y={pos.y}
-                        textAnchor={pos.textAnchor as "start" | "middle" | "end" | "inherit" | undefined}
-                        dominantBaseline="middle"
-                        className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400"
-                    >
-                        {pos.label}
-                    </text>
-                    {showValues && (
+            {showLabels &&
+                labelPositions.map((pos, i) => (
+                    <g key={i}>
                         <text
                             x={pos.x}
-                            y={pos.y + 12}
-                            textAnchor={pos.textAnchor as "start" | "middle" | "end" | "inherit" | undefined}
+                            y={pos.y}
+                            textAnchor={pos.textAnchor as 'start' | 'middle' | 'end' | 'inherit' | undefined}
                             dominantBaseline="middle"
-                            className="text-[9px] font-bold"
-                            fill={pos.value >= 70 ? '#10B981' : pos.value >= 40 ? '#F59E0B' : '#F43F5E'}
+                            className="text-[10px] font-medium fill-slate-600 dark:fill-slate-400"
                         >
-                            {pos.value}%
+                            {pos.label}
                         </text>
-                    )}
-                </g>
-            ))}
+                        {showValues && (
+                            <text
+                                x={pos.x}
+                                y={pos.y + 12}
+                                textAnchor={pos.textAnchor as 'start' | 'middle' | 'end' | 'inherit' | undefined}
+                                dominantBaseline="middle"
+                                className="text-[9px] font-bold"
+                                fill={pos.value >= 70 ? '#10B981' : pos.value >= 40 ? '#F59E0B' : '#F43F5E'}
+                            >
+                                {pos.value}%
+                            </text>
+                        )}
+                    </g>
+                ))}
 
             {/* Center point */}
-            <circle
-                cx={center}
-                cy={center}
-                r={3}
-                fill="currentColor"
-                className="text-slate-300 dark:text-white/30"
-            />
+            <circle cx={center} cy={center} r={3} fill="currentColor" className="text-slate-300 dark:text-white/30" />
 
             {/* Level labels */}
             {Array.from({ length: levels }, (_, i) => {
@@ -263,11 +253,3 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
 };
 
 export default RiskRadar;
-
-
-
-
-
-
-
-

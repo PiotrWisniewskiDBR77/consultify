@@ -82,6 +82,9 @@ export class TestDatabaseFactory {
             });
         };
 
+        // Alias query to allAsync for DatabaseInitializer compatibility
+        db.query = db.allAsync;
+
         // Helper to close database cleanly
         db.destroy = () => {
             return new Promise((resolve) => db.close(resolve));

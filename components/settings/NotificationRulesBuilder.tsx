@@ -1,6 +1,6 @@
 /**
  * NotificationRulesBuilder - Advanced notification rules per project
- * 
+ *
  * Features:
  * - Per-project notification rules
  * - @mention preferences
@@ -9,16 +9,28 @@
  * - VIP contacts
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Bell, Filter, Clock, AtSign, Star, Plus, Trash2,
-    FolderOpen, Users, MessageSquare, Loader2, Save,
-    AlertCircle, Check
+    AlertCircle,
+    AtSign,
+    Bell,
+    Check,
+    Clock,
+    Filter,
+    FolderOpen,
+    Loader2,
+    MessageSquare,
+    Plus,
+    Save,
+    Star,
+    Trash2,
+    Users,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { User, Project } from '../../types';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { Project, User } from '../../types';
 
 interface NotificationRule {
     id: string;
@@ -57,7 +69,7 @@ const DEFAULT_RULE: Omit<NotificationRule, 'id'> = {
     notify_comments: true,
     notify_mentions: true,
     notify_deadlines: true,
-    priority_filter: 'all'
+    priority_filter: 'all',
 };
 
 export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> = ({ currentUser }) => {
@@ -70,7 +82,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         enabled: false,
         frequency: 'daily',
         preferred_time: '09:00',
-        preferred_day: 1
+        preferred_day: 1,
     });
     const [vipContacts, setVipContacts] = useState<VIPContact[]>([]);
     const [keywords, setKeywords] = useState<string[]>([]);
@@ -85,17 +97,17 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [projectsData] = await Promise.all([
-                Api.getProjects()
-            ]);
+            const [projectsData] = await Promise.all([Api.getProjects()]);
             setProjects(projectsData as any);
 
             // Initialize with default global rule
-            setRules([{
-                id: 'global',
-                project_name: 'Global (All Projects)',
-                ...DEFAULT_RULE
-            }]);
+            setRules([
+                {
+                    id: 'global',
+                    project_name: 'Global (All Projects)',
+                    ...DEFAULT_RULE,
+                },
+            ]);
         } catch (error) {
             console.error('Failed to fetch notification data:', error);
         } finally {
@@ -106,47 +118,45 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
     const handleAddRule = () => {
         if (!newRuleProjectId) return;
 
-        const project = projects.find(p => p.id === newRuleProjectId);
+        const project = projects.find((p) => p.id === newRuleProjectId);
         if (!project) return;
 
         const newRule: NotificationRule = {
             id: `rule-${Date.now()}`,
             project_name: project.name,
             ...DEFAULT_RULE,
-            project_id: newRuleProjectId
+            project_id: newRuleProjectId,
         };
 
-        setRules(prev => [...prev, newRule]);
+        setRules((prev) => [...prev, newRule]);
         setNewRuleProjectId('');
         setShowAddRule(false);
     };
 
     const handleUpdateRule = (ruleId: string, updates: Partial<NotificationRule>) => {
-        setRules(prev => prev.map(rule =>
-            rule.id === ruleId ? { ...rule, ...updates } : rule
-        ));
+        setRules((prev) => prev.map((rule) => (rule.id === ruleId ? { ...rule, ...updates } : rule)));
     };
 
     const handleDeleteRule = (ruleId: string) => {
         if (ruleId === 'global') return; // Can't delete global rule
-        setRules(prev => prev.filter(rule => rule.id !== ruleId));
+        setRules((prev) => prev.filter((rule) => rule.id !== ruleId));
     };
 
     const handleAddKeyword = () => {
         if (!newKeyword.trim() || keywords.includes(newKeyword.trim().toLowerCase())) return;
-        setKeywords(prev => [...prev, newKeyword.trim().toLowerCase()]);
+        setKeywords((prev) => [...prev, newKeyword.trim().toLowerCase()]);
         setNewKeyword('');
     };
 
     const handleRemoveKeyword = (keyword: string) => {
-        setKeywords(prev => prev.filter(k => k !== keyword));
+        setKeywords((prev) => prev.filter((k) => k !== keyword));
     };
 
     const handleSave = async () => {
         try {
             setSaving(true);
             // API call would go here to save rules, digest settings, keywords
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
             toast.success(t('settings.notifications.rulesSaved', 'Notification rules saved'));
         } catch (error) {
             toast.error(t('settings.notifications.saveError', 'Failed to save rules'));
@@ -172,7 +182,10 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     {t('settings.notifications.rules.title', 'Notification Rules')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t('settings.notifications.rules.description', 'Customize notifications for different projects and scenarios')}
+                    {t(
+                        'settings.notifications.rules.description',
+                        'Customize notifications for different projects and scenarios',
+                    )}
                 </p>
             </div>
 
@@ -192,17 +205,20 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     </button>
                 </div>
 
-                {rules.map(rule => (
+                {rules.map((rule) => (
                     <div
                         key={rule.id}
                         className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${rule.project_id === null
-                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                                        : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
-                                    }`}>
+                                <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        rule.project_id === null
+                                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
+                                    }`}
+                                >
                                     {rule.project_name || 'Unknown Project'}
                                 </span>
                             </div>
@@ -222,14 +238,15 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                                 {t('settings.notifications.rules.ruleType', 'Notification Mode')}
                             </label>
                             <div className="flex flex-wrap gap-2">
-                                {(['all', 'mentions_only', 'custom', 'muted'] as const).map(type => (
+                                {(['all', 'mentions_only', 'custom', 'muted'] as const).map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => handleUpdateRule(rule.id, { rule_type: type })}
-                                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${rule.rule_type === type
+                                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                                            rule.rule_type === type
                                                 ? 'bg-purple-600 text-white'
                                                 : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
-                                            }`}
+                                        }`}
                                     >
                                         {t(`settings.notifications.rules.${type}`, type.replace('_', ' '))}
                                     </button>
@@ -244,17 +261,21 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                                     { key: 'notify_tasks', label: 'Task updates', icon: Check },
                                     { key: 'notify_comments', label: 'Comments', icon: MessageSquare },
                                     { key: 'notify_mentions', label: '@Mentions', icon: AtSign },
-                                    { key: 'notify_deadlines', label: 'Deadlines', icon: Clock }
-                                ].map(option => (
+                                    { key: 'notify_deadlines', label: 'Deadlines', icon: Clock },
+                                ].map((option) => (
                                     <label key={option.key} className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={rule[option.key as keyof NotificationRule] as boolean}
-                                            onChange={(e) => handleUpdateRule(rule.id, { [option.key]: e.target.checked })}
+                                            onChange={(e) =>
+                                                handleUpdateRule(rule.id, { [option.key]: e.target.checked })
+                                            }
                                             className="rounded border-slate-300 dark:border-white/20 text-purple-600 focus:ring-purple-500"
                                         />
                                         <option.icon className="w-4 h-4 text-slate-400" />
-                                        <span className="text-sm text-slate-700 dark:text-slate-300">{option.label}</span>
+                                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                                            {option.label}
+                                        </span>
                                     </label>
                                 ))}
                             </div>
@@ -268,12 +289,20 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                                 </label>
                                 <select
                                     value={rule.priority_filter}
-                                    onChange={(e) => handleUpdateRule(rule.id, { priority_filter: e.target.value as any })}
+                                    onChange={(e) =>
+                                        handleUpdateRule(rule.id, { priority_filter: e.target.value as any })
+                                    }
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500"
                                 >
-                                    <option value="all">{t('settings.notifications.rules.allPriorities', 'All priorities')}</option>
-                                    <option value="high_medium">{t('settings.notifications.rules.highMedium', 'High & Medium only')}</option>
-                                    <option value="high_only">{t('settings.notifications.rules.highOnly', 'High priority only')}</option>
+                                    <option value="all">
+                                        {t('settings.notifications.rules.allPriorities', 'All priorities')}
+                                    </option>
+                                    <option value="high_medium">
+                                        {t('settings.notifications.rules.highMedium', 'High & Medium only')}
+                                    </option>
+                                    <option value="high_only">
+                                        {t('settings.notifications.rules.highOnly', 'High priority only')}
+                                    </option>
                                 </select>
                             </div>
                         )}
@@ -289,10 +318,16 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                                 onChange={(e) => setNewRuleProjectId(e.target.value)}
                                 className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
                             >
-                                <option value="">{t('settings.notifications.rules.selectProject', 'Select a project...')}</option>
-                                {projects.filter(p => !rules.find(r => r.project_id === p.id)).map(project => (
-                                    <option key={project.id} value={project.id}>{project.name}</option>
-                                ))}
+                                <option value="">
+                                    {t('settings.notifications.rules.selectProject', 'Select a project...')}
+                                </option>
+                                {projects
+                                    .filter((p) => !rules.find((r) => r.project_id === p.id))
+                                    .map((project) => (
+                                        <option key={project.id} value={project.id}>
+                                            {project.name}
+                                        </option>
+                                    ))}
                             </select>
                             <button
                                 onClick={handleAddRule}
@@ -324,17 +359,24 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                                 {t('settings.notifications.digest.title', 'Email Digest')}
                             </h4>
                             <p className="text-sm text-slate-500">
-                                {t('settings.notifications.digest.description', 'Bundle notifications into periodic summaries')}
+                                {t(
+                                    'settings.notifications.digest.description',
+                                    'Bundle notifications into periodic summaries',
+                                )}
                             </p>
                         </div>
                     </div>
                     <button
-                        onClick={() => setDigestSettings(prev => ({ ...prev, enabled: !prev.enabled }))}
-                        className={`w-12 h-6 rounded-full transition-colors ${digestSettings.enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
-                            }`}
+                        onClick={() => setDigestSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                        className={`w-12 h-6 rounded-full transition-colors ${
+                            digestSettings.enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                        }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${digestSettings.enabled ? 'translate-x-6' : 'translate-x-0.5'
-                            }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                digestSettings.enabled ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
 
@@ -346,7 +388,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             </label>
                             <select
                                 value={digestSettings.frequency}
-                                onChange={(e) => setDigestSettings(prev => ({ ...prev, frequency: e.target.value as any }))}
+                                onChange={(e) =>
+                                    setDigestSettings((prev) => ({ ...prev, frequency: e.target.value as any }))
+                                }
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
                             >
                                 <option value="instant">Instant (no digest)</option>
@@ -363,7 +407,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                                 <input
                                     type="time"
                                     value={digestSettings.preferred_time}
-                                    onChange={(e) => setDigestSettings(prev => ({ ...prev, preferred_time: e.target.value }))}
+                                    onChange={(e) =>
+                                        setDigestSettings((prev) => ({ ...prev, preferred_time: e.target.value }))
+                                    }
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
                                 />
                             </div>
@@ -383,13 +429,16 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             {t('settings.notifications.keywords.title', 'Priority Keywords')}
                         </h4>
                         <p className="text-sm text-slate-500">
-                            {t('settings.notifications.keywords.description', 'Always notify when these keywords appear')}
+                            {t(
+                                'settings.notifications.keywords.description',
+                                'Always notify when these keywords appear',
+                            )}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                    {keywords.map(keyword => (
+                    {keywords.map((keyword) => (
                         <span
                             key={keyword}
                             className="flex items-center gap-1 px-3 py-1 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-full text-sm"
@@ -434,13 +483,19 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             {t('settings.notifications.vip.title', 'VIP Contacts')}
                         </h4>
                         <p className="text-sm text-slate-500">
-                            {t('settings.notifications.vip.description', 'Always receive notifications from these people')}
+                            {t(
+                                'settings.notifications.vip.description',
+                                'Always receive notifications from these people',
+                            )}
                         </p>
                     </div>
                 </div>
 
                 <p className="text-sm text-slate-400 italic">
-                    {t('settings.notifications.vip.empty', 'No VIP contacts configured. Messages from VIP contacts will always notify you.')}
+                    {t(
+                        'settings.notifications.vip.empty',
+                        'No VIP contacts configured. Messages from VIP contacts will always notify you.',
+                    )}
                 </p>
             </div>
 
@@ -469,11 +524,4 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 };
 
 export default NotificationRulesBuilder;
-
-
-
-
-
-
-
 

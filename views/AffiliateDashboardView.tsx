@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from 'react';
 import {
-    TrendingUp,
-    Link as LinkIcon,
-    Copy,
-    Plus,
-    Users,
-    Target,
-    Zap,
-    Shield,
-    ExternalLink,
     CheckCircle2,
     Clock as ClockIcon,
+    Copy,
+    ExternalLink,
+    LayoutGrid,
+    Link as LinkIcon,
+    Plus,
     Share2,
-    LayoutGrid
+    Shield,
+    Target,
+    TrendingUp,
+    Users,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../services/api';
 
 /**
  * AffiliateDashboardView — Phase G: Ecosystem Participation
- * 
+ *
  * Strategic Intent:
  * - Empower "Ecosystem Nodes" to spread the method.
  * - Value-driven growth tracking.
@@ -27,8 +28,10 @@ import { toast } from 'react-hot-toast';
  */
 
 export const AffiliateDashboardView: React.FC = () => {
-    const [referrals, setReferrals] = useState<{ id: string; code: string; use_count: number; conversions?: number; expires_at?: string; }[]>([]);
-    const [stats, setStats] = useState<{ totalReferrals: number; totalConversions: number; } | null>(null);
+    const [referrals, setReferrals] = useState<
+        { id: string; code: string; use_count: number; conversions?: number; expires_at?: string }[]
+    >([]);
+    const [stats, setStats] = useState<{ totalReferrals: number; totalConversions: number } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -41,7 +44,7 @@ export const AffiliateDashboardView: React.FC = () => {
         try {
             const [referralsRes, statsRes] = await Promise.all([
                 Api.getUserReferrals(),
-                Api.getEcosystemStats() // This might be limited to user's own impact if backend allows
+                Api.getEcosystemStats(), // This might be limited to user's own impact if backend allows
             ]);
 
             if (referralsRes.success) setReferrals(referralsRes.referrals);
@@ -84,7 +87,6 @@ export const AffiliateDashboardView: React.FC = () => {
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50 dark:bg-navy-950 overflow-auto">
-
             {/* Header Section */}
             <div className="px-6 py-8 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -94,7 +96,9 @@ export const AffiliateDashboardView: React.FC = () => {
                             Status: Ecosystem Node
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight">Ecosystem Impact</h1>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1">Gospodarz metody w swojej sieci kontaktów.</p>
+                        <p className="text-slate-500 dark:text-slate-400 mt-1">
+                            Gospodarz metody w swojej sieci kontaktów.
+                        </p>
                     </div>
 
                     <button
@@ -118,13 +122,16 @@ export const AffiliateDashboardView: React.FC = () => {
 
             <div className="px-6 py-8">
                 <div className="max-w-7xl mx-auto space-y-8">
-
                     {/* Metrics Bento Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500"><Share2 size={20} /></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aktywne Kody</span>
+                                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                                    <Share2 size={20} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Aktywne Kody
+                                </span>
                             </div>
                             <div>
                                 <div className="text-3xl font-bold">{referrals.length}</div>
@@ -134,8 +141,12 @@ export const AffiliateDashboardView: React.FC = () => {
 
                         <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-brand-500/10 text-brand-500"><Users size={20} /></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Użycia</span>
+                                <div className="p-2 rounded-lg bg-brand-500/10 text-brand-500">
+                                    <Users size={20} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Użycia
+                                </span>
                             </div>
                             <div>
                                 <div className="text-3xl font-bold">
@@ -147,8 +158,12 @@ export const AffiliateDashboardView: React.FC = () => {
 
                         <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-green-500/10 text-green-500"><CheckCircle2 size={20} /></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Konwersje</span>
+                                <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                                    <CheckCircle2 size={20} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Konwersje
+                                </span>
                             </div>
                             <div>
                                 <div className="text-3xl font-bold">
@@ -159,14 +174,25 @@ export const AffiliateDashboardView: React.FC = () => {
                         </div>
 
                         <div className="glass-card p-6 rounded-2xl flex flex-col justify-between overflow-hidden relative">
-                            <div className="absolute top-0 right-0 p-4 opacity-5"><Zap size={80} /></div>
+                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                <Zap size={80} />
+                            </div>
                             <div className="flex items-center justify-between mb-4 relative">
-                                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500"><TrendingUp size={20} /></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Wskaźnik Wpływu</span>
+                                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                                    <TrendingUp size={20} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Wskaźnik Wpływu
+                                </span>
                             </div>
                             <div className="relative">
                                 <div className="text-3xl font-bold">
-                                    {referrals.length > 0 ? (referrals.reduce((acc, curr) => acc + (curr.conversions || 0), 0) / referrals.length).toFixed(1) : 0}
+                                    {referrals.length > 0
+                                        ? (
+                                              referrals.reduce((acc, curr) => acc + (curr.conversions || 0), 0) /
+                                              referrals.length
+                                          ).toFixed(1)
+                                        : 0}
                                 </div>
                                 <div className="text-xs text-slate-500 mt-1">Wpływ na wzrost metody</div>
                             </div>
@@ -175,7 +201,6 @@ export const AffiliateDashboardView: React.FC = () => {
 
                     {/* Main Content Area */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
                         {/* Referral List */}
                         <div className="lg:col-span-2 space-y-4">
                             <div className="flex items-center justify-between mb-2">
@@ -187,19 +212,33 @@ export const AffiliateDashboardView: React.FC = () => {
 
                             <div className="space-y-3">
                                 {referrals.map((ref) => (
-                                    <div key={ref.id} className="glass-card p-5 rounded-2xl flex items-center justify-between group hover:border-brand-500/30 transition-all border-white/5">
+                                    <div
+                                        key={ref.id}
+                                        className="glass-card p-5 rounded-2xl flex items-center justify-between group hover:border-brand-500/30 transition-all border-white/5"
+                                    >
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 rounded-xl bg-slate-100 dark:bg-white/5 font-mono font-bold text-lg tracking-widest text-brand-600 dark:text-brand-400">
                                                 {ref.code}
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold flex items-center gap-2">
-                                                    Wygasa: {ref.expires_at ? new Date(ref.expires_at).toLocaleDateString() : 'Nigdy'}
-                                                    {ref.expires_at && new Date(ref.expires_at) < new Date() && <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">Wygasł</span>}
+                                                    Wygasa:{' '}
+                                                    {ref.expires_at
+                                                        ? new Date(ref.expires_at).toLocaleDateString()
+                                                        : 'Nigdy'}
+                                                    {ref.expires_at && new Date(ref.expires_at) < new Date() && (
+                                                        <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">
+                                                            Wygasł
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-3 mt-1">
-                                                    <span className="flex items-center gap-1"><Users size={12} /> {ref.use_count} użyć</span>
-                                                    <span className="flex items-center gap-1"><Target size={12} /> {ref.conversions || 0} konwersji</span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Users size={12} /> {ref.use_count} użyć
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Target size={12} /> {ref.conversions || 0} konwersji
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -212,7 +251,10 @@ export const AffiliateDashboardView: React.FC = () => {
                                             >
                                                 <Copy size={18} />
                                             </button>
-                                            <button className="p-2 rounded-lg hover:bg-brand-500/10 text-slate-400 hover:text-brand-500 transition-all" title="Udostępnij">
+                                            <button
+                                                className="p-2 rounded-lg hover:bg-brand-500/10 text-slate-400 hover:text-brand-500 transition-all"
+                                                title="Udostępnij"
+                                            >
                                                 <Share2 size={18} />
                                             </button>
                                         </div>
@@ -225,7 +267,9 @@ export const AffiliateDashboardView: React.FC = () => {
                                             <TrendingUp size={32} className="text-slate-400" />
                                         </div>
                                         <h3 className="font-bold">Brak wygenerowanych kodów</h3>
-                                        <p className="text-sm text-slate-500 mt-1 max-w-xs mx-auto">Zacznij zapraszać liderów strategicznych, aby budować ekosystem.</p>
+                                        <p className="text-sm text-slate-500 mt-1 max-w-xs mx-auto">
+                                            Zacznij zapraszać liderów strategicznych, aby budować ekosystem.
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -241,21 +285,38 @@ export const AffiliateDashboardView: React.FC = () => {
 
                                 <div className="space-y-4">
                                     <div className="p-4 rounded-xl bg-brand-500/5 border border-brand-500/10">
-                                        <div className="text-xs font-bold text-brand-500 uppercase tracking-widest mb-1">Strategia Wzrostu</div>
+                                        <div className="text-xs font-bold text-brand-500 uppercase tracking-widest mb-1">
+                                            Strategia Wzrostu
+                                        </div>
                                         <p className="text-sm leading-relaxed opacity-80">
-                                            Jesteś certyfikowanym Node'em ekosystemu. Twoje polecenia są traktowane jako filtr jakościowy rynku.
+                                            Jesteś certyfikowanym Node'em ekosystemu. Twoje polecenia są traktowane jako
+                                            filtr jakościowy rynku.
                                         </p>
                                     </div>
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-400">
                                             <span>Moc Polecenia</span>
-                                            <span>{referrals.length > 0 ? (referrals.reduce((acc, curr) => acc + (curr.conversions || 0), 0) / referrals.length * 10).toFixed(0) : 0}%</span>
+                                            <span>
+                                                {referrals.length > 0
+                                                    ? (
+                                                          (referrals.reduce(
+                                                              (acc, curr) => acc + (curr.conversions || 0),
+                                                              0,
+                                                          ) /
+                                                              referrals.length) *
+                                                          10
+                                                      ).toFixed(0)
+                                                    : 0}
+                                                %
+                                            </span>
                                         </div>
                                         <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-brand-500 rounded-full transition-all duration-1000"
-                                                style={{ width: `${referrals.length > 0 ? (referrals.reduce((acc, curr) => acc + (curr.conversions || 0), 0) / referrals.length * 100) : 0}%` }}
+                                                style={{
+                                                    width: `${referrals.length > 0 ? (referrals.reduce((acc, curr) => acc + (curr.conversions || 0), 0) / referrals.length) * 100 : 0}%`,
+                                                }}
                                             />
                                         </div>
                                         <p className="text-[10px] text-slate-500 leading-tight">
@@ -267,7 +328,10 @@ export const AffiliateDashboardView: React.FC = () => {
                                 <div className="pt-4 border-t border-white/5">
                                     <button className="w-full flex items-center justify-between text-sm font-bold hover:text-brand-500 transition-colors group">
                                         <span>Zasoby dla Polecających</span>
-                                        <ExternalLink size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        <ExternalLink
+                                            size={16}
+                                            className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                                        />
                                     </button>
                                 </div>
                             </div>
@@ -279,7 +343,8 @@ export const AffiliateDashboardView: React.FC = () => {
                                     Global Network Context
                                 </div>
                                 <p className="text-sm font-light leading-relaxed">
-                                    Metoda DBR77 rośnie w tempie 12% MoM. Największy wzrost odnotowano w sektorze technologicznym i produkcyjnym.
+                                    Metoda DBR77 rośnie w tempie 12% MoM. Największy wzrost odnotowano w sektorze
+                                    technologicznym i produkcyjnym.
                                 </p>
                                 <div className="flex gap-4 pt-2">
                                     <div className="text-xs">
@@ -293,7 +358,6 @@ export const AffiliateDashboardView: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 /**
  * SecurityModule - Security & Compliance
- * 
+ *
  * Enterprise Security Features:
  * - SSO (Google, Azure AD, SAML)
  * - SCIM 2.0 Provisioning
@@ -15,24 +15,40 @@
  * - Data Loss Prevention (DLP)
  */
 
+import {
+    AlertTriangle,
+    DollarSign,
+    FileCheck,
+    GitBranch,
+    History,
+    Key,
+    KeyRound,
+    Link2,
+    Radar,
+    Shield,
+    ShieldAlert,
+    ShieldCheck,
+    UserCog,
+    Users,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { Key, ShieldCheck, KeyRound, FileCheck, Users, DollarSign, Shield, Link2, UserCog, History, GitBranch, AlertTriangle, Radar, ShieldAlert } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { SSOConfigurationView } from './SSOConfigurationView';
-import { SecurityPoliciesView } from './SecurityPoliciesView';
+
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import AIBudgetsView from './AIBudgetsView';
 import { APIManagementView } from './APIManagementView';
 import { ComplianceCenterView } from './ComplianceCenterView';
-import SCIMProvisioningView from './SCIMProvisioningView';
 import CustomRolesBuilder from './CustomRolesBuilder';
-import AIBudgetsView from './AIBudgetsView';
+import AdminAuditLogsView from './iam/AdminAuditLogsView';
 // Advanced IAM Module
 import AdminSessionsView from './iam/AdminSessionsView';
-import AdminAuditLogsView from './iam/AdminAuditLogsView';
-import PermissionsMatrixView from './iam/PermissionsMatrixView';
 import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
+import DLPView from './iam/DLPView';
+import PermissionsMatrixView from './iam/PermissionsMatrixView';
 import SecurityIncidentsView from './iam/SecurityIncidentsView';
 import ThreatIntelligenceView from './iam/ThreatIntelligenceView';
-import DLPView from './iam/DLPView';
+import SCIMProvisioningView from './SCIMProvisioningView';
+import { SecurityPoliciesView } from './SecurityPoliciesView';
+import { SSOConfigurationView } from './SSOConfigurationView';
 
 interface SecurityModuleProps {
     initialTab?: string;
@@ -163,6 +179,3 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
 };
 
 export default SecurityModule;
-
-
-

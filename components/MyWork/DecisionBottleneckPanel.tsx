@@ -3,18 +3,11 @@
  * Shows aging decisions, blocking decisions, and overloaded owners
  */
 
-import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, ChevronDown, ChevronRight, Clock, Lock, RefreshCw, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    AlertTriangle,
-    Clock,
-    Lock,
-    Users,
-    ChevronDown,
-    ChevronRight,
-    RefreshCw
-} from 'lucide-react';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -67,20 +60,20 @@ const AlertSection: React.FC<{
             bg: 'bg-amber-50 dark:bg-amber-900/20',
             border: 'border-amber-200 dark:border-amber-800/50',
             badge: 'bg-amber-100 dark:bg-amber-800/50 text-amber-700 dark:text-amber-300',
-            icon: 'text-amber-500'
+            icon: 'text-amber-500',
         },
         red: {
             bg: 'bg-red-50 dark:bg-red-900/20',
             border: 'border-red-200 dark:border-red-800/50',
             badge: 'bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-300',
-            icon: 'text-red-500'
+            icon: 'text-red-500',
         },
         purple: {
             bg: 'bg-purple-50 dark:bg-purple-900/20',
             border: 'border-purple-200 dark:border-purple-800/50',
             badge: 'bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300',
-            icon: 'text-purple-500'
-        }
+            icon: 'text-purple-500',
+        },
     };
 
     const styles = colorStyles[color];
@@ -95,12 +88,8 @@ const AlertSection: React.FC<{
             >
                 <div className="flex items-center gap-2">
                     <span className={styles.icon}>{icon}</span>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {title}
-                    </span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${styles.badge}`}>
-                        {count}
-                    </span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{title}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${styles.badge}`}>{count}</span>
                 </div>
                 {isOpen ? (
                     <ChevronDown size={16} className="text-slate-400" />
@@ -108,7 +97,7 @@ const AlertSection: React.FC<{
                     <ChevronRight size={16} className="text-slate-400" />
                 )}
             </button>
-            
+
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -118,9 +107,7 @@ const AlertSection: React.FC<{
                         transition={{ duration: 0.15 }}
                         className="overflow-hidden"
                     >
-                        <div className="px-3 pb-3 space-y-2">
-                            {children}
-                        </div>
+                        <div className="px-3 pb-3 space-y-2">{children}</div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -128,15 +115,13 @@ const AlertSection: React.FC<{
     );
 };
 
-export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = ({
-    onDecisionClick
-}) => {
+export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = ({ onDecisionClick }) => {
     const { t } = useTranslation();
     const [data, setData] = useState<BottleneckData | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const currentProjectId = useAppStore(state => state.currentProjectId);
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
 
     // Fetch bottleneck data
     const fetchBottlenecks = async (isRefresh = false) => {
@@ -144,10 +129,10 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
             if (isRefresh) setRefreshing(true);
             else setLoading(true);
 
-            const url = currentProjectId 
+            const url = currentProjectId
                 ? `/decisions/bottlenecks?projectId=${currentProjectId}`
                 : '/decisions/bottlenecks';
-            
+
             const result = await Api.get(url);
             setData(result);
         } catch (error) {
@@ -163,7 +148,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
     }, [currentProjectId]);
 
     // Calculate total issues
-    const totalIssues = data 
+    const totalIssues = data
         ? (data.aging?.length || 0) + (data.blocking?.length || 0) + (data.ownerOverload?.length || 0)
         : 0;
 
@@ -207,7 +192,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                 count={data?.aging?.length || 0}
                 color="amber"
             >
-                {data?.aging?.map(d => (
+                {data?.aging?.map((d) => (
                     <button
                         key={d.id}
                         onClick={() => onDecisionClick?.(d.id)}
@@ -222,9 +207,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                             </span>
                         </div>
                         {d.ownerName && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                                Owner: {d.ownerName}
-                            </span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">Owner: {d.ownerName}</span>
                         )}
                     </button>
                 ))}
@@ -237,7 +220,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                 count={data?.blocking?.length || 0}
                 color="red"
             >
-                {data?.blocking?.map(d => (
+                {data?.blocking?.map((d) => (
                     <button
                         key={d.id}
                         onClick={() => onDecisionClick?.(d.id)}
@@ -252,9 +235,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                             </span>
                         </div>
                         {d.ownerName && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                                Owner: {d.ownerName}
-                            </span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">Owner: {d.ownerName}</span>
                         )}
                     </button>
                 ))}
@@ -268,7 +249,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                 color="purple"
                 defaultOpen={false}
             >
-                {data?.ownerOverload?.map(owner => (
+                {data?.ownerOverload?.map((owner) => (
                     <div
                         key={owner.userId}
                         className="p-2 bg-white dark:bg-navy-900 rounded border border-purple-100 dark:border-purple-800/30"
@@ -281,9 +262,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                                 {owner.pendingCount} pending
                             </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                            {owner.email}
-                        </span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">{owner.email}</span>
                     </div>
                 ))}
             </AlertSection>
@@ -292,12 +271,4 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
 };
 
 export default DecisionBottleneckPanel;
-
-
-
-
-
-
-
-
 

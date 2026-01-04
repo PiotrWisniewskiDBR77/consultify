@@ -3,7 +3,8 @@
  * Responsibility: Merge System Prompt, Context, and User Input
  * Supports Prompt Stacking: GLOBAL + ROLE + VISUAL_CONTEXT
  */
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 
 /**
  * FALLBACK_ROLES - Role Definitions for AI Personas

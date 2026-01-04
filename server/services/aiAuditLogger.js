@@ -29,7 +29,7 @@ const deps = {
 async function initDeps() {
     if (!deps._db) {
         try {
-            const { default: db } = await import('../database.js');
+            const { default: db } = await import('../src/database/index.js');
             deps._db = db;
         } catch (err) {
             console.error('[AIAuditLogger] Failed to load database dependency:', err);

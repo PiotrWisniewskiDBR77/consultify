@@ -1,23 +1,23 @@
 /**
  * VersionHistoryPanel
- * 
+ *
  * Slide-in panel showing version history of an assessment.
  * Allows viewing past versions and restoring them.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    X,
-    History,
-    RotateCcw,
-    User,
-    Clock,
-    Loader2,
     AlertCircle,
     CheckCircle2,
+    ChevronRight,
+    Clock,
     FileText,
-    ChevronRight
+    History,
+    Loader2,
+    RotateCcw,
+    User,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Version {
     version: number;
@@ -41,7 +41,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
     assessmentName,
     isOpen,
     onClose,
-    onRestored
+    onRestored,
 }) => {
     const panelRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +62,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`/api/assessment-workflow/${assessmentId}/versions`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (response.ok) {
@@ -107,38 +107,41 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
     }, [isOpen]);
 
     // Restore version
-    const handleRestore = useCallback(async (version: number) => {
-        if (!confirm(`Czy na pewno chcesz przywrócić wersję ${version}? Obecne dane zostaną nadpisane.`)) {
-            return;
-        }
-
-        setRestoringVersion(version);
-        setError(null);
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/assessment-workflow/${assessmentId}/restore/${version}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                setSuccess(true);
-                setTimeout(() => {
-                    onRestored();
-                    onClose();
-                }, 1500);
-            } else {
-                const data = await response.json();
-                setError(data.error || 'Nie udało się przywrócić wersji');
+    const handleRestore = useCallback(
+        async (version: number) => {
+            if (!confirm(`Czy na pewno chcesz przywrócić wersję ${version}? Obecne dane zostaną nadpisane.`)) {
+                return;
             }
-        } catch (err) {
-            console.error('[VersionHistoryPanel] Restore error:', err);
-            setError('Błąd połączenia');
-        } finally {
-            setRestoringVersion(null);
-        }
-    }, [assessmentId, onRestored, onClose]);
+
+            setRestoringVersion(version);
+            setError(null);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/assessment-workflow/${assessmentId}/restore/${version}`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (response.ok) {
+                    setSuccess(true);
+                    setTimeout(() => {
+                        onRestored();
+                        onClose();
+                    }, 1500);
+                } else {
+                    const data = await response.json();
+                    setError(data.error || 'Nie udało się przywrócić wersji');
+                }
+            } catch (err) {
+                console.error('[VersionHistoryPanel] Restore error:', err);
+                setError('Błąd połączenia');
+            } finally {
+                setRestoringVersion(null);
+            }
+        },
+        [assessmentId, onRestored, onClose],
+    );
 
     // Format date
     const formatDate = (dateStr: string) => {
@@ -148,7 +151,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             month: 'long',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -173,10 +176,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
     return (
         <>
             {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
-                onClick={onClose}
-            />
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />
 
             {/* Panel */}
             <div
@@ -196,9 +196,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                     <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                                        Historia Wersji
-                                    </h2>
+                                    <h2 className="text-lg font-bold text-navy-900 dark:text-white">Historia Wersji</h2>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
                                         {assessmentName}
                                     </p>
@@ -220,9 +218,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                 <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
                                     <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                                 </div>
-                                <p className="text-lg font-medium text-navy-900 dark:text-white">
-                                    Wersja przywrócona!
-                                </p>
+                                <p className="text-lg font-medium text-navy-900 dark:text-white">Wersja przywrócona!</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                     Dane zostały zaktualizowane
                                 </p>
@@ -239,9 +235,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         ) : versions.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12">
                                 <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
-                                <p className="text-slate-500 dark:text-slate-400 font-medium">
-                                    Brak zapisanych wersji
-                                </p>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium">Brak zapisanych wersji</p>
                                 <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
                                     Historia pojawi się po zapisaniu zmian
                                 </p>
@@ -256,30 +250,38 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                     {versions.map((version, index) => (
                                         <div key={version.version} className="relative flex gap-4">
                                             {/* Timeline dot */}
-                                            <div className={`
+                                            <div
+                                                className={`
                                                 shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10
-                                                ${index === 0
-                                                    ? 'bg-purple-100 dark:bg-purple-900/30 ring-4 ring-white dark:ring-navy-900'
-                                                    : 'bg-slate-100 dark:bg-navy-800'
-                                                }
-                                            `}>
-                                                <span className={`text-sm font-bold ${
+                                                ${
                                                     index === 0
-                                                        ? 'text-purple-600 dark:text-purple-400'
-                                                        : 'text-slate-500 dark:text-slate-400'
-                                                }`}>
+                                                        ? 'bg-purple-100 dark:bg-purple-900/30 ring-4 ring-white dark:ring-navy-900'
+                                                        : 'bg-slate-100 dark:bg-navy-800'
+                                                }
+                                            `}
+                                            >
+                                                <span
+                                                    className={`text-sm font-bold ${
+                                                        index === 0
+                                                            ? 'text-purple-600 dark:text-purple-400'
+                                                            : 'text-slate-500 dark:text-slate-400'
+                                                    }`}
+                                                >
                                                     v{version.version}
                                                 </span>
                                             </div>
 
                                             {/* Content */}
-                                            <div className={`
+                                            <div
+                                                className={`
                                                 flex-1 p-4 rounded-xl border transition-all
-                                                ${index === 0
-                                                    ? 'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-500/30'
-                                                    : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                                ${
+                                                    index === 0
+                                                        ? 'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-500/30'
+                                                        : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                                                 }
-                                            `}>
+                                            `}
+                                            >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-2">
@@ -316,9 +318,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                             disabled={restoringVersion !== null}
                                                             className={`
                                                                 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0
-                                                                ${restoringVersion === version.version
-                                                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-wait'
-                                                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
+                                                                ${
+                                                                    restoringVersion === version.version
+                                                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-wait'
+                                                                        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
                                                                 }
                                                             `}
                                                         >
@@ -352,4 +355,3 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
         </>
     );
 };
-

@@ -1,6 +1,6 @@
 /**
  * ReportHeader
- * 
+ *
  * Header component for the Report Builder:
  * - Report title and status badge
  * - Organization and assessment info
@@ -9,27 +9,27 @@
  * - Progress indicator
  */
 
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
     ArrowLeft,
-    Save,
-    CheckCircle,
-    Download,
-    FileText,
-    FileSpreadsheet,
-    RefreshCw,
-    Loader2,
-    MoreVertical,
-    Clock,
-    Calendar,
     Building2,
-    Target,
-    Sparkles,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Download,
+    FileSpreadsheet,
+    FileText,
+    Loader2,
     Lock,
     Maximize2,
-    Minimize2
+    Minimize2,
+    MoreVertical,
+    RefreshCw,
+    Save,
+    Sparkles,
+    Target,
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ReportHeaderProps {
     name: string;
@@ -53,25 +53,28 @@ interface ReportHeaderProps {
 }
 
 // Status badge configuration
-const STATUS_CONFIG: Record<string, { label: string; labelPl: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-    'DRAFT': {
+const STATUS_CONFIG: Record<
+    string,
+    { label: string; labelPl: string; color: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+    DRAFT: {
         label: 'Draft',
         labelPl: 'Szkic',
         color: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
-        icon: Clock
+        icon: Clock,
     },
-    'FINAL': {
+    FINAL: {
         label: 'Final',
         labelPl: 'Finalny',
         color: 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/30',
-        icon: CheckCircle
+        icon: CheckCircle,
     },
-    'ARCHIVED': {
+    ARCHIVED: {
         label: 'Archived',
         labelPl: 'Zarchiwizowany',
         color: 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-500/30',
-        icon: Lock
-    }
+        icon: Lock,
+    },
 };
 
 export const ReportHeader: React.FC<ReportHeaderProps> = ({
@@ -92,7 +95,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
     onRegenerate,
     onExportPdf,
     onExportExcel,
-    onFullscreen
+    onFullscreen,
 }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -109,7 +112,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
         return new Date(dateString).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -133,13 +136,15 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                                 <h1 className="text-xl font-bold text-navy-900 dark:text-white truncate">
                                     {name || t('reports.untitledReport', 'Untitled Report')}
                                 </h1>
-                                
+
                                 {/* Status badge */}
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${statusConfig.color}`}>
+                                <span
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${statusConfig.color}`}
+                                >
                                     <StatusIcon className="w-3.5 h-3.5" />
                                     {isPolish ? statusConfig.labelPl : statusConfig.label}
                                 </span>
-                                
+
                                 {/* Unsaved indicator */}
                                 {hasUnsavedChanges && (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-full">
@@ -148,7 +153,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                                     </span>
                                 )}
                             </div>
-                            
+
                             {/* Subtitle */}
                             <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 {organizationName && (
@@ -180,15 +185,25 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                             <button
                                 onClick={onFullscreen}
                                 className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                                title={isPolish ? (isFullscreen ? 'Zamknij pełny ekran' : 'Pełny ekran') : (isFullscreen ? 'Exit fullscreen' : 'Fullscreen')}
+                                title={
+                                    isPolish
+                                        ? isFullscreen
+                                            ? 'Zamknij pełny ekran'
+                                            : 'Pełny ekran'
+                                        : isFullscreen
+                                          ? 'Exit fullscreen'
+                                          : 'Fullscreen'
+                                }
                             >
-                                {isFullscreen ? (
-                                    <Minimize2 className="w-4 h-4" />
-                                ) : (
-                                    <Maximize2 className="w-4 h-4" />
-                                )}
+                                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                                 <span className="hidden sm:inline">
-                                    {isPolish ? (isFullscreen ? 'Zamknij' : 'Pełny ekran') : (isFullscreen ? 'Exit' : 'Fullscreen')}
+                                    {isPolish
+                                        ? isFullscreen
+                                            ? 'Zamknij'
+                                            : 'Pełny ekran'
+                                        : isFullscreen
+                                          ? 'Exit'
+                                          : 'Fullscreen'}
                                 </span>
                             </button>
                         )}
@@ -202,13 +217,10 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                                 <Download className="w-4 h-4" />
                                 <span className="hidden sm:inline">{t('common.export', 'Export')}</span>
                             </button>
-                            
+
                             {showExportMenu && (
                                 <>
-                                    <div 
-                                        className="fixed inset-0 z-10" 
-                                        onClick={() => setShowExportMenu(false)} 
-                                    />
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
                                     <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 py-1 z-20">
                                         <button
                                             onClick={() => {
@@ -246,17 +258,14 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                                 disabled={!hasUnsavedChanges || isSaving}
                                 className={`
                                     inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all
-                                    ${hasUnsavedChanges 
-                                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                                        : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                    ${
+                                        hasUnsavedChanges
+                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}
                             >
-                                {isSaving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Save className="w-4 h-4" />
-                                )}
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 <span className="hidden sm:inline">{t('common.save', 'Save')}</span>
                             </button>
                         )}
@@ -281,13 +290,10 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                             >
                                 <MoreVertical className="w-5 h-5" />
                             </button>
-                            
+
                             {showMoreMenu && (
                                 <>
-                                    <div 
-                                        className="fixed inset-0 z-10" 
-                                        onClick={() => setShowMoreMenu(false)} 
-                                    />
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowMoreMenu(false)} />
                                     <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 py-1 z-20">
                                         {isEditable && (
                                             <button
@@ -329,7 +335,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
 
             {/* Progress bar */}
             <div className="h-1 bg-slate-100 dark:bg-white/5">
-                <div 
+                <div
                     className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
                     style={{ width: `${progress}%` }}
                 />
@@ -351,4 +357,3 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
 };
 
 export default ReportHeader;
-

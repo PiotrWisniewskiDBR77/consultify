@@ -13,8 +13,9 @@ import { promptAssistant  } from '../services/ai/promptAssistant.js';
 import promptTemplateService from '../services/ai/promptTemplateService.js';
 import { promptBlockLibrary, BLOCK_CATEGORIES  } from '../services/ai/promptBlockLibrary.js';
 import { variableResolver  } from '../services/ai/variableResolver.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 
 // Database helpers
 function dbGet(sql, params = []) {

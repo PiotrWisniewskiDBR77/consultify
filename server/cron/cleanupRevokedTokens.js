@@ -4,11 +4,12 @@
  */
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const config = require('../config');
+// Default interval: 24 hours
+const TOKEN_CLEANUP_INTERVAL = 24 * 60 * 60 * 1000;
 let cleanupInterval = null;
 function cleanupRevokedTokens() {
     console.log('[Cron] Cleaning up expired revoked tokens...');
-    db.run("DELETE FROM revoked_tokens WHERE expires_at < datetime('now')", function (err) {
+    db.run("DELETE FROM revoked_tokens WHERE expires_at < datetime('now')", [], function (err) {
         if (err) {
             console.error('[Cron] Error cleaning up revoked tokens:', err);
         }
@@ -23,8 +24,8 @@ function startCleanupJob() {
         cleanupRevokedTokens();
     }, 5000);
     // Then run periodically
-    cleanupInterval = setInterval(cleanupRevokedTokens, config.TOKEN_CLEANUP_INTERVAL);
-    console.log(`[Cron] Token cleanup job started (interval: ${config.TOKEN_CLEANUP_INTERVAL}ms)`);
+    cleanupInterval = setInterval(cleanupRevokedTokens, TOKEN_CLEANUP_INTERVAL);
+    console.log(`[Cron] Token cleanup job started (interval: ${TOKEN_CLEANUP_INTERVAL}ms)`);
 }
 function stopCleanupJob() {
     if (cleanupInterval) {
@@ -36,6 +37,6 @@ function stopCleanupJob() {
 export default {
     startCleanupJob,
     stopCleanupJob,
-    cleanupRevokedTokens
+    cleanupRevokedTokens,
 };
 //# sourceMappingURL=cleanupRevokedTokens.js.map

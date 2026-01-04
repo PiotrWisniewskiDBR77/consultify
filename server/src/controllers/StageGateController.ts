@@ -1,17 +1,24 @@
 /**
  * Stage Gate Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles all stage gate-related business logic
  */
 
 import type { Response } from 'express';
+
+import _StageGateService, {
+    evaluateGate,
+    GATE_TYPES,
+    getGateType,
+    passGate,
+    PHASE_ORDER,
+} from '../services/stageGateService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import type { PassGateRequest } from '../validators/stageGate.validators.js';
-import StageGateService, { GATE_TYPES, PHASE_ORDER, getGateType, evaluateGate, passGate } from '../services/stageGateService.js';
 
 // ==========================================
 // CONTROLLER METHODS
@@ -23,8 +30,8 @@ export class StageGateController {
      */
     static evaluateGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, gateType } = req.params;
-        
-        const result = await evaluateGate(projectId, gateType as typeof GATE_TYPES[keyof typeof GATE_TYPES]);
+
+        const result = await evaluateGate(projectId, gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]);
 
         res.json(result);
     });
@@ -37,7 +44,7 @@ export class StageGateController {
 
         const project = await DbPromise.get<{ current_phase?: string }>(
             `SELECT current_phase FROM projects WHERE id = ?`,
-            [projectId]
+            [projectId],
         );
 
         if (!project) {
@@ -46,13 +53,13 @@ export class StageGateController {
         }
 
         const currentPhase = project.current_phase || 'Context';
-        const phaseIndex = PHASE_ORDER.indexOf(currentPhase as typeof PHASE_ORDER[number]);
+        const phaseIndex = PHASE_ORDER.indexOf(currentPhase as (typeof PHASE_ORDER)[number]);
 
         if (phaseIndex >= PHASE_ORDER.length - 1) {
             res.json({
                 currentPhase,
                 nextGate: null,
-                message: 'Project is in final phase'
+                message: 'Project is in final phase',
             });
             return;
         }
@@ -71,7 +78,7 @@ export class StageGateController {
             currentPhase,
             nextPhase,
             gateType,
-            ...evaluation
+            ...evaluation,
         });
     });
 
@@ -94,18 +101,23 @@ export class StageGateController {
         }
 
         // First evaluate
-        const evaluation = await evaluateGate(projectId, gateType as typeof GATE_TYPES[keyof typeof GATE_TYPES]);
+        const evaluation = await evaluateGate(projectId, gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]);
 
         if (evaluation.status !== 'READY') {
             res.status(400).json({
                 error: 'Gate not ready',
-                missingElements: evaluation.missingElements
+                missingElements: evaluation.missingElements,
             });
             return;
         }
 
         // Pass the gate
-        const result = await passGate(projectId, gateType as typeof GATE_TYPES[keyof typeof GATE_TYPES], userId, notes);
+        const result = await passGate(
+            projectId,
+            gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
+            userId,
+            notes,
+        );
 
         res.json(result);
     });
@@ -118,7 +130,7 @@ export class StageGateController {
 
         const gates = await queryHelpers.queryAll(
             `SELECT * FROM stage_gates WHERE project_id = ? ORDER BY approved_at DESC`,
-            [projectId]
+            [projectId],
         );
 
         res.json(gates);
@@ -126,4 +138,3 @@ export class StageGateController {
 }
 
 export default StageGateController;
-

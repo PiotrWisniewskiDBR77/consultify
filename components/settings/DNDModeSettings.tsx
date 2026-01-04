@@ -1,26 +1,19 @@
 /**
  * DNDModeSettings - Do Not Disturb mode
- * 
+ *
  * Features:
  * - Enable/disable DND mode
  * - Set DND until time
  * - Quick presets (1h, 2h, 4h, until tomorrow)
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import {
-    Moon,
-    Clock,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle,
-    X
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Clock, Loader2, Moon, Save, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface DNDModeSettingsProps {
     currentUser: User;
@@ -34,10 +27,7 @@ const DND_PRESETS = [
     { label: 'Until tomorrow 9 AM', hours: null, untilTomorrow: true },
 ] as const;
 
-export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
-    currentUser,
-    onUpdateUser
-}) => {
+export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [dndEnabled, setDndEnabled] = useState(false);
     const [dndUntil, setDndUntil] = useState<string>('');
@@ -59,7 +49,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
         loadPreferences();
     }, []);
 
-    const handlePreset = (preset: typeof DND_PRESETS[number]) => {
+    const handlePreset = (preset: (typeof DND_PRESETS)[number]) => {
         const now = new Date();
         let until: Date;
 
@@ -68,7 +58,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
             until.setDate(until.getDate() + 1);
             until.setHours(9, 0, 0, 0);
         } else {
-            until = new Date(now.getTime() + (preset.hours! * 60 * 60 * 1000));
+            until = new Date(now.getTime() + preset.hours! * 60 * 60 * 1000);
         }
 
         setDndUntil(until.toISOString());
@@ -82,7 +72,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
         try {
             await Api.put('/settings/notifications/dnd', {
                 enabled: dndEnabled,
-                until: dndEnabled ? dndUntil : null
+                until: dndEnabled ? dndUntil : null,
             });
 
             setSaveStatus('success');
@@ -222,10 +212,4 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({
 };
 
 export default DNDModeSettings;
-
-
-
-
-
-
 

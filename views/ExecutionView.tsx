@@ -1,29 +1,23 @@
 /**
  * ExecutionView - Full KPI Monitoring & Corrective Actions
- * 
+ *
  * PMO Execution Phase Management
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Performance Monitoring, Benefits Realization
  * - PMI PMBOK 7th Edition - Measure & Control, Earned Value
  * - PRINCE2 - Controlling a Stage, Benefits Reviews
- * 
+ *
  * PMO Domains: PERFORMANCE_MONITORING, BENEFITS_REALIZATION
  */
 
+import { AlertTriangle, BarChart3, CalendarDays, FileText, Target, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    TrendingUp,
-    Target,
-    AlertTriangle,
-    BarChart3,
-    CalendarDays,
-    FileText
-} from 'lucide-react';
-import { KPIDashboard } from '../components/Execution/KPIDashboard';
-import { CorrectiveActions } from '../components/Execution/CorrectiveActions';
+
 import { BenefitsTracker } from '../components/Execution/BenefitsTracker';
+import { CorrectiveActions } from '../components/Execution/CorrectiveActions';
+import { KPIDashboard } from '../components/Execution/KPIDashboard';
 
 type ExecutionTab = 'kpis' | 'actions' | 'benefits' | 'monthly';
 
@@ -214,8 +208,8 @@ export const ExecutionView: React.FC = () => {
                             { id: 'kpis' as ExecutionTab, label: 'KPI Dashboard', icon: BarChart3 },
                             { id: 'actions' as ExecutionTab, label: 'Corrective Actions', icon: AlertTriangle },
                             { id: 'benefits' as ExecutionTab, label: 'Benefits Tracker', icon: TrendingUp },
-                            { id: 'monthly' as ExecutionTab, label: 'Monthly Report', icon: CalendarDays }
-                        ].map(tab => (
+                            { id: 'monthly' as ExecutionTab, label: 'Monthly Report', icon: CalendarDays },
+                        ].map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
@@ -234,20 +228,10 @@ export const ExecutionView: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                {renderContent()}
-            </div>
+            <div className="max-w-7xl mx-auto px-6 py-8">{renderContent()}</div>
         </div>
     );
 };
 
 export default ExecutionView;
-
-
-
-
-
-
-
-
 

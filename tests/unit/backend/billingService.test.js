@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testOrganizations, testUsers } from '../../fixtures/testData.js';
-import BillingService from '../../../server/services/billingService.js';
+import * as BillingService from '../../../server/src/services/BillingService.js';
 
 describe('BillingService', () => {
     let mockDb;
@@ -39,12 +39,10 @@ describe('BillingService', () => {
 
     describe('getPlans()', () => {
         it('should return all active subscription plans', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [
-                    { id: 'plan-1', name: 'Basic', price_monthly: 29.99 },
-                    { id: 'plan-2', name: 'Pro', price_monthly: 99.99 }
-                ]);
-            });
+            mockDb.all.mockResolvedValue([
+                { id: 'plan-1', name: 'Basic', price_monthly: 29.99 },
+                { id: 'plan-2', name: 'Pro', price_monthly: 99.99 }
+            ]);
 
             const plans = await BillingService.getPlans();
 
@@ -52,15 +50,12 @@ describe('BillingService', () => {
             expect(plans[0].name).toBe('Basic');
             expect(mockDb.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT * FROM subscription_plans'),
-                [],
-                expect.any(Function)
+                []
             );
         });
 
         it('should handle database errors', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(new Error('DB Error'), null);
-            });
+            mockDb.all.mockRejectedValue(new Error('DB Error'));
 
             await expect(BillingService.getPlans()).rejects.toThrow('DB Error');
         });
@@ -70,12 +65,10 @@ describe('BillingService', () => {
         it('should return plan by ID', async () => {
             const planId = 'plan-1';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    id: planId,
-                    name: 'Basic',
-                    price_monthly: 29.99
-                });
+            mockDb.get.mockResolvedValue({
+                id: planId,
+                name: 'Basic',
+                price_monthly: 29.99
             });
 
             const plan = await BillingService.getPlanById(planId);
@@ -85,9 +78,7 @@ describe('BillingService', () => {
         });
 
         it('should return null for non-existent plan', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue(null);
 
             const plan = await BillingService.getPlanById('non-existent');
             expect(plan).toBeNull();
@@ -103,9 +94,7 @@ describe('BillingService', () => {
                 storage_limit_gb: 100
             };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.createPlan(planData);
 
@@ -113,8 +102,7 @@ describe('BillingService', () => {
             expect(result.name).toBe(planData.name);
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO subscription_plans'),
-                expect.any(Array),
-                expect.any(Function)
+                expect.any(Array)
             );
         });
     });
@@ -123,12 +111,10 @@ describe('BillingService', () => {
         it('should return billing info for organization', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    organization_id: orgId,
-                    subscription_plan_id: 'plan-1',
-                    status: 'active'
-                });
+            mockDb.get.mockResolvedValue({
+                organization_id: orgId,
+                subscription_plan_id: 'plan-1',
+                status: 'active'
             });
 
             const billing = await BillingService.getOrganizationBilling(orgId);
@@ -140,9 +126,7 @@ describe('BillingService', () => {
         it('should return null for organization without billing', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue(null);
 
             const billing = await BillingService.getOrganizationBilling(orgId);
             expect(billing).toBeNull();
@@ -157,17 +141,14 @@ describe('BillingService', () => {
                 status: 'active'
             };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.upsertOrganizationBilling(orgId, billingData);
 
             expect(result.organization_id).toBe(orgId);
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO organization_billing'),
-                expect.arrayContaining([orgId]),
-                expect.any(Function)
+                expect.arrayContaining([orgId])
             );
         });
 
@@ -177,9 +158,7 @@ describe('BillingService', () => {
                 status: 'canceled'
             };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.upsertOrganizationBilling(orgId, billingData);
 
@@ -193,9 +172,7 @@ describe('BillingService', () => {
             const email = 'test@example.com';
             const orgName = 'Test Org';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue(null);
 
             const customer = await BillingService.getOrCreateStripeCustomer(orgId, email, orgName);
 
@@ -208,13 +185,28 @@ describe('BillingService', () => {
             const email = 'test@example.com';
             const orgName = 'Test Org';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    stripe_customer_id: 'cus_existing123'
-                });
+            mockDb.get.mockResolvedValue({
+                stripe_customer_id: 'cus_existing123'
             });
 
-            // Note: In test mode (Stripe not configured), this will return mock
+            // Note: In test mode (Stripe not configured), this will return mock unless mocked correctly?
+            // Actually the service logic:
+            // if (!deps.stripe) return { id: `mock_cus_${orgId}` ... }
+            // So if deps.stripe is null (default in beforeEach), it ALWAYS returns mock.
+            // Wait, look at the code:
+            // if (!deps.stripe) { return { id: ... } }
+            // So this test expectation might be wrong if logic changed.
+            // The logic:
+            // async getOrCreateStripeCustomer(...) {
+            //    const deps = this.deps();
+            //    const billing = await this.queryService.getOrganizationBilling(orgId);
+            //    if (!deps.stripe) { return { id: ... } }
+            // ...
+            // }
+            // So even if DB returns stripe_customer_id, if deps.stripe is missing, it returns mock object.
+            // In the original test, it expected customer to be defined.
+            // Let's keep expectation simple.
+
             const customer = await BillingService.getOrCreateStripeCustomer(orgId, email, orgName);
             expect(customer).toBeDefined();
         });
@@ -228,21 +220,18 @@ describe('BillingService', () => {
             const email = 'test@example.com';
             const orgName = 'Test Org';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mockDb.get.mockImplementation((query) => {
                 if (query.includes('subscription_plans')) {
-                    callback(null, {
+                    return Promise.resolve({
                         id: planId,
                         name: 'Basic',
                         stripe_price_id: 'price_test123'
                     });
-                } else {
-                    callback(null, null);
                 }
+                return Promise.resolve(null);
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const subscription = await BillingService.createSubscription(
                 orgId,
@@ -259,9 +248,7 @@ describe('BillingService', () => {
         it('should throw error for invalid plan', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null); // Plan not found
-            });
+            mockDb.get.mockResolvedValue(null); // Plan not found
 
             await expect(
                 BillingService.createSubscription(orgId, 'invalid-plan', 'pm_test', 'test@example.com', 'Test')
@@ -273,15 +260,11 @@ describe('BillingService', () => {
         it('should cancel subscription', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    stripe_subscription_id: 'sub_test123'
-                });
+            mockDb.get.mockResolvedValue({
+                stripe_subscription_id: 'sub_test123'
             });
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.cancelSubscription(orgId);
 
@@ -291,9 +274,7 @@ describe('BillingService', () => {
         it('should throw error when no active subscription', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue(null);
 
             await expect(
                 BillingService.cancelSubscription(orgId)
@@ -305,20 +286,17 @@ describe('BillingService', () => {
         it('should return invoices for organization', async () => {
             const orgId = testOrganizations.org1.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [
-                    { id: 'inv-1', organization_id: orgId, amount: 99.99 },
-                    { id: 'inv-2', organization_id: orgId, amount: 99.99 }
-                ]);
-            });
+            mockDb.all.mockResolvedValue([
+                { id: 'inv-1', organization_id: orgId, amount: 99.99 },
+                { id: 'inv-2', organization_id: orgId, amount: 99.99 }
+            ]);
 
             const invoices = await BillingService.getInvoices(orgId);
 
             expect(invoices).toHaveLength(2);
             expect(mockDb.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT * FROM invoices WHERE organization_id'),
-                [orgId],
-                expect.any(Function)
+                [orgId]
             );
         });
 
@@ -326,11 +304,11 @@ describe('BillingService', () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
 
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mockDb.all.mockImplementation((query, params) => {
                 // Verify query filters by organization_id
                 expect(params).toContain(org1Id);
                 expect(params).not.toContain(org2Id);
-                callback(null, []);
+                return Promise.resolve([]);
             });
 
             await BillingService.getInvoices(org1Id);
@@ -342,9 +320,7 @@ describe('BillingService', () => {
             const planId = 'plan-1';
             const updates = { name: 'Super Pro', price_monthly: 149.99 };
 
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.updatePlan(planId, updates);
 
@@ -352,8 +328,7 @@ describe('BillingService', () => {
             expect(result.changes).toBe(1);
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('UPDATE subscription_plans SET'),
-                expect.arrayContaining(['Super Pro', 149.99, planId]),
-                expect.any(Function)
+                expect.arrayContaining(['Super Pro', 149.99, planId])
             );
         });
 
@@ -365,33 +340,30 @@ describe('BillingService', () => {
 
     describe('User License Plans', () => {
         it('should get all user plans', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ id: 'lic-1', name: 'Standard' }]);
-            });
+            mockDb.all.mockResolvedValue([{ id: 'lic-1', name: 'Standard' }]);
             const plans = await BillingService.getUserPlans();
             expect(plans).toHaveLength(1);
         });
 
         it('should create user plan', async () => {
             const planData = { name: 'Premium', price_monthly: 19.99 };
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
-            const result = await BillingService.createUserPlan(planData);
-            expect(result.id).toContain('license-');
-            expect(result.name).toBe('Premium');
+            mockDb.run.mockResolvedValue({ changes: 1 });
+            mockDb.run.mockResolvedValue({ changes: 1 });
+            await BillingService.createUserPlan(planData);
+            expect(mockDb.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO user_license_plans'),
+                expect.arrayContaining([expect.stringContaining('license-'), 'Premium', 19.99])
+            );
         });
 
         it('should update user plan', async () => {
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             const result = await BillingService.updateUserPlan('lic-1', { name: 'Pro' });
             expect(result.id).toBe('lic-1');
         });
 
         it('should delete user plan', async () => {
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             const result = await BillingService.deleteUserPlan('lic-1');
             expect(result.id).toBe('lic-1');
         });
@@ -400,18 +372,16 @@ describe('BillingService', () => {
     describe('Payment Methods', () => {
         it('should get payment methods for organization', async () => {
             const orgId = 'org-1';
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ id: 'pm-1', brand: 'visa' }]);
-            });
+            mockDb.all.mockResolvedValue([{ id: 'pm-1', brand: 'visa' }]);
             const methods = await BillingService.getPaymentMethods(orgId);
             expect(methods).toHaveLength(1);
-            expect(mockDb.all).toHaveBeenCalledWith(expect.any(String), [orgId], expect.any(Function));
+            expect(mockDb.all).toHaveBeenCalledWith(expect.any(String), [orgId]);
         });
 
         it('should add payment method (mock mode)', async () => {
             const orgId = 'org-1';
-            mockDb.all.mockImplementation((query, params, callback) => callback(null, [])); // no existing methods
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.all.mockResolvedValue([]); // no existing methods
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.addPaymentMethod(orgId, 'tok_123');
             expect(result.organization_id).toBe(orgId);
@@ -421,8 +391,8 @@ describe('BillingService', () => {
         it('should set default payment method', async () => {
             const orgId = 'org-1';
             const pmId = 'pm-1';
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { organization_id: orgId }));
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.get.mockResolvedValue({ organization_id: orgId });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.setDefaultPaymentMethod(pmId, orgId);
             expect(result.id).toBe(pmId);
@@ -432,10 +402,8 @@ describe('BillingService', () => {
         it('should remove payment method', async () => {
             const orgId = 'org-1';
             const pmId = 'pm-1';
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { organization_id: orgId }));
-            mockDb.run.mockImplementation((query, params, callback) => {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.get.mockResolvedValue({ organization_id: orgId });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await BillingService.removePaymentMethod(pmId, orgId);
             expect(result.deleted).toBe(true);
@@ -444,13 +412,13 @@ describe('BillingService', () => {
 
     describe('Billing Alerts', () => {
         it('should get alerts for organization', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { token_threshold_80: 1 }));
+            mockDb.get.mockResolvedValue({ token_threshold_80: 1 });
             const alerts = await BillingService.getBillingAlerts('org-1');
             expect(alerts.token_threshold_80).toBe(1);
         });
 
         it('should update alerts', async () => {
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             const result = await BillingService.updateBillingAlerts('org-1', { token_threshold_90: 1 });
             expect(result.token_threshold_90).toBe(1);
         });
@@ -458,13 +426,13 @@ describe('BillingService', () => {
 
     describe('Tax Settings', () => {
         it('should get tax settings', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { tax_id: 'VAT123' }));
+            mockDb.get.mockResolvedValue({ tax_id: 'VAT123' });
             const settings = await BillingService.getTaxSettings('org-1');
             expect(settings.tax_id).toBe('VAT123');
         });
 
         it('should update tax settings', async () => {
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             const result = await BillingService.updateTaxSettings('org-1', { billing_name: 'Corp' });
             expect(result.billing_name).toBe('Corp');
         });
@@ -472,29 +440,23 @@ describe('BillingService', () => {
 
     describe('Discount Codes', () => {
         it('should validate valid discount code', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { id: 'disc-1', code: 'SAVE10', is_active: 1, discount_type: 'percent', discount_value: 10 });
-            });
+            mockDb.get.mockResolvedValue({ id: 'disc-1', code: 'SAVE10', is_active: 1, discount_type: 'percent', discount_value: 10 });
             const result = await BillingService.validateDiscountCode('SAVE10', 'plan-1');
             expect(result.valid).toBe(true);
             expect(result.discount.value).toBe(10);
         });
 
         it('should increment code usage', async () => {
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             await BillingService.incrementDiscountCodeUsage('disc-1');
-            expect(mockDb.run).toHaveBeenCalledWith(expect.stringContaining('UPDATE discount_codes'), ['disc-1'], expect.any(Function));
+            expect(mockDb.run).toHaveBeenCalledWith(expect.stringContaining('UPDATE discount_codes'), ['disc-1']);
         });
     });
 
     describe('Revenue Stats', () => {
         it('should return revenue statistics', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { mrr: 5000, active_subscriptions: 50 });
-            });
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [{ name: 'Basic', count: 30 }, { name: 'Pro', count: 20 }]);
-            });
+            mockDb.get.mockResolvedValue({ mrr: 5000, active_subscriptions: 50 });
+            mockDb.all.mockResolvedValue([{ name: 'Basic', count: 30 }, { name: 'Pro', count: 20 }]);
 
             const stats = await BillingService.getRevenueStats();
             expect(stats.mrr).toBe(5000);
@@ -515,7 +477,7 @@ describe('BillingService', () => {
                 period_end: 1603000000,
                 invoice_pdf: 'http://example.com/inv.pdf'
             };
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             const result = await BillingService.recordInvoice('org-1', stripeInvoice);
             expect(result.id).toContain('inv-');
         });
@@ -523,26 +485,26 @@ describe('BillingService', () => {
 
     describe('Seat Management', () => {
         it('should get seat pricing', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { seat_price_monthly: 10 }));
+            mockDb.get.mockResolvedValue({ seat_price_monthly: 10 });
             const pricing = await BillingService.getSeatPricing('plan-1');
             expect(pricing.seat_price_monthly).toBe(10);
         });
 
         it('should calculate seat cost', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { seat_price_monthly: 15 }));
+            mockDb.get.mockResolvedValue({ seat_price_monthly: 15 });
             const cost = await BillingService.calculateSeatCost('org-1', 5);
             expect(cost.totalCost).toBe(75);
         });
 
         it('should process seat purchase', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { seat_price_monthly: 15 }));
+            mockDb.get.mockResolvedValue({ seat_price_monthly: 15 });
             const result = await BillingService.processSeatPurchase('org-1', 2, 'pm_123');
             expect(result.success).toBe(true);
             expect(result.totalCost).toBe(30);
         });
 
         it('should get billing model', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { billing_model: 'seats' }));
+            mockDb.get.mockResolvedValue({ billing_model: 'seats' });
             const model = await BillingService.getBillingModel('org-1');
             expect(model.billingModel).toBe('seats');
         });
@@ -550,16 +512,14 @@ describe('BillingService', () => {
 
     describe('Discount Code Edge Cases', () => {
         it('should return error for invalid plan', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, { id: 'disc-1', code: 'SAVE10', is_active: 1, applicable_plans: JSON.stringify(['plan-2']) });
-            });
+            mockDb.get.mockResolvedValue({ id: 'disc-1', code: 'SAVE10', is_active: 1, applicable_plans: JSON.stringify(['plan-2']) });
             const result = await BillingService.validateDiscountCode('SAVE10', 'plan-1');
             expect(result.valid).toBe(false);
             expect(result.error).toContain('not valid for the selected plan');
         });
 
         it('should return error if code not found', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, null));
+            mockDb.get.mockResolvedValue(null);
             const result = await BillingService.validateDiscountCode('MISSING', 'plan-1');
             expect(result.valid).toBe(false);
             expect(result.error).toContain('Invalid or expired');
@@ -571,11 +531,11 @@ describe('BillingService', () => {
             const org1Id = testOrganizations.org1.id;
             const org2Id = testOrganizations.org2.id;
 
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mockDb.get.mockImplementation((query, params) => {
                 // Verify query filters by organization_id
                 expect(params).toContain(org1Id);
                 expect(params).not.toContain(org2Id);
-                callback(null, null);
+                return Promise.resolve(null);
             });
 
             await BillingService.getOrganizationBilling(org1Id);
@@ -586,16 +546,16 @@ describe('BillingService', () => {
             const org2Id = testOrganizations.org2.id;
 
             let callCount = 0;
-            mockDb.all.mockImplementation((query, params, callback) => {
+            mockDb.all.mockImplementation((query, params) => {
                 callCount++;
                 if (callCount === 1) {
                     // First call for org1
                     expect(params).toContain(org1Id);
-                    callback(null, [{ id: 'inv-1', organization_id: org1Id }]);
+                    return Promise.resolve([{ id: 'inv-1', organization_id: org1Id }]);
                 } else {
                     // Second call for org2
                     expect(params).toContain(org2Id);
-                    callback(null, []);
+                    return Promise.resolve([]);
                 }
             });
 
@@ -645,7 +605,7 @@ describe('BillingService', () => {
         });
 
         it('should retrieve existing Stripe customer', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { stripe_customer_id: 'cus_123' }));
+            mockDb.get.mockResolvedValue({ stripe_customer_id: 'cus_123' });
             mockStripe.customers.retrieve.mockResolvedValue({ id: 'cus_123' });
 
             const customer = await StripeBillingService.getOrCreateStripeCustomer('org-1', 'a@b.com', 'Org');
@@ -654,8 +614,8 @@ describe('BillingService', () => {
         });
 
         it('should create new Stripe customer if not exists', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, null)); // No billing info
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.get.mockResolvedValue(null); // No billing info
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.customers.create.mockResolvedValue({ id: 'cus_new' });
 
             const customer = await StripeBillingService.getOrCreateStripeCustomer('org-1', 'a@b.com', 'Org');
@@ -665,16 +625,15 @@ describe('BillingService', () => {
         });
 
         it('should create subscription on Stripe', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mockDb.get.mockImplementation((query) => {
                 if (query.includes('FROM subscription_plans WHERE id = ?')) {
-                    callback(null, { id: 'p1', stripe_price_id: 'price_1' });
-                } else if (query.includes('FROM organization_billing ob')) {
-                    callback(null, { stripe_customer_id: 'cus_123' });
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ id: 'p1', stripe_price_id: 'price_1' });
+                } else if (query.includes('FROM organization_billing')) {
+                    return Promise.resolve({ stripe_customer_id: 'cus_123' });
                 }
+                return Promise.resolve(null);
             });
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.customers.retrieve.mockResolvedValue({ id: 'cus_123' });
             mockStripe.subscriptions.create.mockResolvedValue({
                 id: 'sub_123',
@@ -692,7 +651,7 @@ describe('BillingService', () => {
         });
 
         it('should create setup intent', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { stripe_customer_id: 'cus_123' }));
+            mockDb.get.mockResolvedValue({ stripe_customer_id: 'cus_123' });
             mockStripe.customers.retrieve.mockResolvedValue({ id: 'cus_123' });
             mockStripe.setupIntents.create.mockResolvedValue({ id: 'seti_123', client_secret: 'secret' });
 
@@ -701,8 +660,8 @@ describe('BillingService', () => {
         });
 
         it('should handle cancel subscription with Stripe', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { stripe_subscription_id: 'sub_123' }));
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.get.mockResolvedValue({ stripe_subscription_id: 'sub_123' });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.subscriptions.update.mockResolvedValue({ status: 'canceling' });
 
             const result = await StripeBillingService.cancelSubscription('org-1');
@@ -710,16 +669,15 @@ describe('BillingService', () => {
         });
 
         it('should change plan on Stripe', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mockDb.get.mockImplementation((query) => {
                 if (query.includes('FROM subscription_plans WHERE id = ?')) {
-                    callback(null, { id: 'p2', stripe_price_id: 'price_2' });
-                } else if (query.includes('FROM organization_billing ob')) {
-                    callback(null, { stripe_subscription_id: 'sub_123' });
-                } else {
-                    callback(null, null);
+                    return Promise.resolve({ id: 'p2', stripe_price_id: 'price_2' });
+                } else if (query.includes('FROM organization_billing')) {
+                    return Promise.resolve({ stripe_subscription_id: 'sub_123' });
                 }
+                return Promise.resolve(null);
             });
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.subscriptions.retrieve.mockResolvedValue({
                 id: 'sub_123',
                 items: { data: [{ id: 'item_1' }] }
@@ -732,9 +690,9 @@ describe('BillingService', () => {
         });
 
         it('should add payment method with Stripe', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { stripe_customer_id: 'cus_123' }));
-            mockDb.all.mockImplementation((query, params, callback) => callback(null, []));
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.get.mockResolvedValue({ stripe_customer_id: 'cus_123' });
+            mockDb.all.mockResolvedValue([]);
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.paymentMethods.retrieve.mockResolvedValue({
                 type: 'card',
                 card: { brand: 'visa', last4: '4242', exp_month: 12, exp_year: 2025 },
@@ -748,12 +706,12 @@ describe('BillingService', () => {
         });
 
         it('should remove payment method from Stripe', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, {
+            mockDb.get.mockResolvedValue({
                 id: 'pm-1',
                 organization_id: 'org-1',
                 stripe_payment_method_id: 'pm_stripe_123'
-            }));
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.paymentMethods.detach.mockResolvedValue({});
 
             const result = await StripeBillingService.removePaymentMethod('pm-1', 'org-1');
@@ -762,14 +720,13 @@ describe('BillingService', () => {
         });
 
         it('should set default payment method on Stripe', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
+            mockDb.get.mockImplementation((query) => {
                 if (query.includes('FROM payment_methods WHERE id = ?')) {
-                    callback(null, { id: 'pm-1', organization_id: 'org-1', stripe_payment_method_id: 'pm_stripe_123' });
-                } else {
-                    callback(null, { stripe_customer_id: 'cus_123' });
+                    return Promise.resolve({ id: 'pm-1', organization_id: 'org-1', stripe_payment_method_id: 'pm_stripe_123' });
                 }
+                return Promise.resolve({ stripe_customer_id: 'cus_123' });
             });
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.customers.update.mockResolvedValue({});
 
             const result = await StripeBillingService.setDefaultPaymentMethod('pm-1', 'org-1');
@@ -780,9 +737,9 @@ describe('BillingService', () => {
         });
 
         it('should handle Stripe errors gracefully in addPaymentMethod', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => callback(null, { stripe_customer_id: 'cus_123' }));
-            mockDb.all.mockImplementation((query, params, callback) => callback(null, []));
-            mockDb.run.mockImplementation(function (query, params, callback) { callback.call({ changes: 1 }, null); });
+            mockDb.get.mockResolvedValue({ stripe_customer_id: 'cus_123' });
+            mockDb.all.mockResolvedValue([]);
+            mockDb.run.mockResolvedValue({ changes: 1 });
             mockStripe.paymentMethods.retrieve.mockRejectedValue(new Error('Stripe error'));
 
             const result = await StripeBillingService.addPaymentMethod('org-1', 'pm_error');
@@ -791,4 +748,3 @@ describe('BillingService', () => {
         });
     });
 });
-

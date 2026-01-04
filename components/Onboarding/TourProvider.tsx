@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
+
 import { Tooltip } from './Tooltip';
 
 /**
  * TourProvider — Context for managing interactive tours
- * 
+ *
  * Features:
  * - Tour state management
  * - Step navigation
@@ -72,37 +73,45 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Use lazy initialization to load completed tours from localStorage
     const [completedTours, setCompletedTours] = useState<string[]>(() => getCompletedTours());
 
-    const startTour = useCallback((tour: Tour) => {
-        // Don't restart completed tours unless manual
-        if (tour.triggerCondition !== 'manual' && completedTours.includes(tour.id)) {
-            return;
-        }
+    const startTour = useCallback(
+        (tour: Tour) => {
+            // Don't restart completed tours unless manual
+            if (tour.triggerCondition !== 'manual' && completedTours.includes(tour.id)) {
+                return;
+            }
 
-        setActiveTour(tour);
-        setCurrentStepIndex(0);
+            setActiveTour(tour);
+            setCurrentStepIndex(0);
 
-        // Run beforeShow for first step
-        const firstStep = tour.steps[0];
-        if (firstStep?.beforeShow) {
-            firstStep.beforeShow();
-        }
-    }, [completedTours]);
+            // Run beforeShow for first step
+            const firstStep = tour.steps[0];
+            if (firstStep?.beforeShow) {
+                firstStep.beforeShow();
+            }
+        },
+        [completedTours],
+    );
 
-    const endTour = useCallback((completed = false) => {
-        if (activeTour && completed) {
-            saveCompletedTour(activeTour.id);
-            setCompletedTours(prev => [...prev, activeTour.id]);
+    const endTour = useCallback(
+        (completed = false) => {
+            if (activeTour && completed) {
+                saveCompletedTour(activeTour.id);
+                setCompletedTours((prev) => [...prev, activeTour.id]);
 
-            // Track completion event (if analytics available)
-            try {
-                // @ts-expect-error - optional analytics
-                window.journeyAnalytics?.trackMilestone?.('tour_completed', { tourId: activeTour.id });
-            } catch { /* ignore */ }
-        }
+                // Track completion event (if analytics available)
+                try {
+                    // @ts-expect-error - optional analytics
+                    window.journeyAnalytics?.trackMilestone?.('tour_completed', { tourId: activeTour.id });
+                } catch {
+                    /* ignore */
+                }
+            }
 
-        setActiveTour(null);
-        setCurrentStepIndex(0);
-    }, [activeTour]);
+            setActiveTour(null);
+            setCurrentStepIndex(0);
+        },
+        [activeTour],
+    );
 
     const nextStep = useCallback(async () => {
         if (!activeTour) return;
@@ -139,16 +148,21 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // @ts-expect-error - optional analytics
             window.journeyAnalytics?.trackMilestone?.('tour_skipped', {
                 tourId: activeTour?.id,
-                stoppedAt: currentStepIndex
+                stoppedAt: currentStepIndex,
             });
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
 
         endTour(false);
     }, [activeTour, currentStepIndex, endTour]);
 
-    const isTourCompleted = useCallback((tourId: string) => {
-        return completedTours.includes(tourId);
-    }, [completedTours]);
+    const isTourCompleted = useCallback(
+        (tourId: string) => {
+            return completedTours.includes(tourId);
+        },
+        [completedTours],
+    );
 
     const currentStep = activeTour?.steps[currentStepIndex];
 

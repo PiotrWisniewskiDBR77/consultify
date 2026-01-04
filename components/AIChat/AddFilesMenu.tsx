@@ -1,21 +1,12 @@
 /**
  * AddFilesMenu
- * 
+ *
  * Dropdown menu for adding files and importing PMO data.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import { Clipboard, FileText, Lightbulb, Link, Map, Plus, Target, Upload } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    Plus,
-    Upload,
-    Clipboard,
-    Link,
-    Target,
-    Lightbulb,
-    Map,
-    FileText
-} from 'lucide-react';
 
 interface AddFilesMenuProps {
     onFileSelect: (files: File[]) => void;
@@ -29,19 +20,19 @@ const MENU_ITEMS = [
         icon: Upload,
         labelKey: 'aiChat.menu.uploadFile',
         label: 'Upload File',
-        accept: '.pdf,.docx,.xlsx,.csv,.txt,.json'
+        accept: '.pdf,.docx,.xlsx,.csv,.txt,.json',
     },
     {
         id: 'paste',
         icon: Clipboard,
         labelKey: 'aiChat.menu.pasteContent',
-        label: 'Paste Content'
+        label: 'Paste Content',
     },
     {
         id: 'link',
         icon: Link,
         labelKey: 'aiChat.menu.addLink',
-        label: 'Add Link / URL'
+        label: 'Add Link / URL',
     },
     { divider: true },
     {
@@ -49,36 +40,32 @@ const MENU_ITEMS = [
         icon: Target,
         labelKey: 'aiChat.menu.importAssessment',
         label: 'Import Assessment',
-        pmo: true
+        pmo: true,
     },
     {
         id: 'import-initiative',
         icon: Lightbulb,
         labelKey: 'aiChat.menu.importInitiative',
         label: 'Import Initiative',
-        pmo: true
+        pmo: true,
     },
     {
         id: 'import-roadmap',
         icon: Map,
         labelKey: 'aiChat.menu.importRoadmap',
         label: 'Import Roadmap',
-        pmo: true
+        pmo: true,
     },
     {
         id: 'import-report',
         icon: FileText,
         labelKey: 'aiChat.menu.importReport',
         label: 'Import Report',
-        pmo: true
-    }
+        pmo: true,
+    },
 ];
 
-export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
-    onFileSelect,
-    onPmoImport,
-    disabled = false
-}) => {
+export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({ onFileSelect, onPmoImport, disabled = false }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
@@ -104,7 +91,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         };
     }, [isOpen]);
 
-    const handleItemClick = (item: typeof MENU_ITEMS[0]) => {
+    const handleItemClick = (item: (typeof MENU_ITEMS)[0]) => {
         if ('divider' in item) return;
 
         switch (item.id) {
@@ -113,7 +100,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                 setIsOpen(false);
                 break;
             case 'paste':
-                navigator.clipboard.readText().then(text => {
+                navigator.clipboard.readText().then((text) => {
                     if (text) {
                         // Create a pseudo-file from clipboard content
                         const blob = new Blob([text], { type: 'text/plain' });
@@ -189,14 +176,16 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="
+                <div
+                    className="
                     absolute left-0 bottom-full mb-2 z-50
                     w-56 py-1
                     bg-white dark:bg-navy-800
                     border border-slate-200 dark:border-navy-700
                     rounded-xl shadow-xl
                     animate-in fade-in-0 slide-in-from-bottom-2 duration-150
-                ">
+                "
+                >
                     {/* Link Input */}
                     {showLinkInput ? (
                         <div className="p-3">
@@ -274,12 +263,4 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
 };
 
 export default AddFilesMenu;
-
-
-
-
-
-
-
-
 

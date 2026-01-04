@@ -24,7 +24,7 @@ const VALID_ENTITY_TYPES = ['proposal', 'decision', 'execution', 'run_step', 'pl
 // ==========================================
 
 /**
- * @route GET /api/ai/explain/evidences
+ * @route GET /a../services/ai/explain/evidences
  * @desc List all evidence objects for the organization
  * @access Private (ADMIN / SUPERADMIN)
  */
@@ -56,7 +56,7 @@ router.get('/evidences', async (req, res) => {
 // ==========================================
 
 /**
- * @route GET /api/ai/explain/:entityType/:id
+ * @route GET /a../services/ai/explain/:entityType/:id
  * @desc Get explanation for an AI artifact (reasoning + linked evidences)
  * @access Private (ADMIN / SUPERADMIN)
  */
@@ -89,7 +89,7 @@ router.get('/:entityType/:id', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/explain/:entityType/:id/export
+ * @route GET /a../services/ai/explain/:entityType/:id/export
  * @desc Export explanation as JSON (AI Decision Pack)
  * @access Private (ADMIN / SUPERADMIN)
  */
@@ -134,7 +134,7 @@ router.get('/:entityType/:id/export', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/explain/:entityType/:id/export/pdf
+ * @route POST /a../services/ai/explain/:entityType/:id/export/pdf
  * @desc Generate PDF-ready JSON for AI Decision Pack
  * @access Private (ADMIN / SUPERADMIN)
  * @note Actual PDF generation will be in Step 18 or separate implementation
@@ -172,7 +172,7 @@ router.post('/:entityType/:id/export/pdf', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/explain/:entityType/:id/has-evidence
+ * @route GET /a../services/ai/explain/:entityType/:id/has-evidence
  * @desc Check if entity has at least one evidence object
  * @access Private (ADMIN / SUPERADMIN)
  */

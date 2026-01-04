@@ -1,6 +1,7 @@
+import { Briefcase, Mail, Plus, Trash2, UserPlus, Users } from 'lucide-react';
 import React, { useState } from 'react';
+
 import { FullSession } from '../types';
-import { Users, Briefcase, Plus, Trash2, UserPlus, Mail } from 'lucide-react';
 
 interface RolloutTeamsTabProps {
     data: FullSession['rollout'];
@@ -8,13 +9,12 @@ interface RolloutTeamsTabProps {
 }
 
 export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate }) => {
-
     // Default roles if none exist
     const defaultRoles = [
         { role: 'Program Sponsor', responsibilities: 'Budget approval, strategic alignment, conflict resolution.' },
         { role: 'Program Manager', responsibilities: 'Day-to-day execution, risk management, reporting.' },
         { role: 'PMO Lead', responsibilities: 'Standards, tools, reporting, administrative support.' },
-        { role: 'Change Manager', responsibilities: 'Communication, training, stakeholder engagement.' }
+        { role: 'Change Manager', responsibilities: 'Communication, training, stakeholder engagement.' },
     ];
 
     const roles = data?.governance?.roles && data.governance.roles.length > 0 ? data.governance.roles : defaultRoles;
@@ -26,8 +26,8 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
             governance: {
                 ...data?.governance,
                 roles: newRoles,
-                workstreams: data?.governance?.workstreams || []
-            }
+                workstreams: data?.governance?.workstreams || [],
+            },
         });
     };
 
@@ -37,8 +37,8 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
             governance: {
                 ...data?.governance,
                 roles: data?.governance?.roles || defaultRoles,
-                workstreams: newWorkstreams
-            }
+                workstreams: newWorkstreams,
+            },
         });
     };
 
@@ -93,7 +93,9 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
                             <div key={i} className="p-4">
                                 <div className="font-bold text-slate-700 dark:text-slate-200">{item.role}</div>
                                 <div className="text-xs text-slate-400 mt-1 mb-2">{item.responsibilities}</div>
-                                <div className="text-sm text-blue-500 flex items-center gap-1"><UserPlus size={14} /> Unassigned</div>
+                                <div className="text-sm text-blue-500 flex items-center gap-1">
+                                    <UserPlus size={14} /> Unassigned
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -116,7 +118,10 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {workstreams.map((ws, i) => (
-                        <div key={ws.id} className="border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-500/50 transition-colors bg-slate-50 dark:bg-navy-950">
+                        <div
+                            key={ws.id}
+                            className="border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-500/50 transition-colors bg-slate-50 dark:bg-navy-950"
+                        >
                             <div className="flex justify-between items-start mb-3">
                                 <input
                                     value={ws.name}
@@ -128,7 +133,7 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
                                     className="font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none w-full mr-2"
                                 />
                                 <button
-                                    onClick={() => handleUpdateWorkstreams(workstreams.filter(x => x.id !== ws.id))}
+                                    onClick={() => handleUpdateWorkstreams(workstreams.filter((x) => x.id !== ws.id))}
                                     className="text-slate-400 hover:text-red-500"
                                 >
                                     <Trash2 size={16} />

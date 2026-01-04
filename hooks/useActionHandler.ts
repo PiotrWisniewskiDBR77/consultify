@@ -1,15 +1,16 @@
 /**
  * useActionHandler Hook
- * 
+ *
  * Frontend hook for executing AI-initiated actions.
  * Handles navigation, entity creation, form filling, and UI interactions.
- * 
+ *
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { useAppStore } from '../store/useAppStore';
+import { useCallback, useRef, useState } from 'react';
+
 import { api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
 // Action types matching backend
@@ -24,10 +25,10 @@ export const ACTION_TYPES = {
     SHOW_DATA: 'show_data',
     HIGHLIGHT_ELEMENT: 'highlight',
     OPEN_MODAL: 'open_modal',
-    TRIGGER_WORKFLOW: 'trigger_workflow'
+    TRIGGER_WORKFLOW: 'trigger_workflow',
 } as const;
 
-export type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];
+export type ActionType = (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES];
 
 export interface ActionPayload {
     type: ActionType;
@@ -65,17 +66,17 @@ interface UseActionHandlerReturn {
 
 // View mapping for navigation
 const VIEW_MAP: Record<string, AppView> = {
-    'USER_DASHBOARD': AppView.USER_DASHBOARD,
-    'ADMIN_DASHBOARD': AppView.ADMIN_DASHBOARD,
-    'ASSESSMENT_WIZARD': AppView.ASSESSMENT_DRD, // ASSESSMENT_WIZARD doesn't exist, using ASSESSMENT_DRD
-    'INITIATIVES': AppView.FULL_STEP2_INITIATIVES, // Using FULL_STEP2_INITIATIVES
-    'INITIATIVE_DETAIL': AppView.FULL_STEP2_INITIATIVES, // No INITIATIVE_DETAIL, using INITIATIVES
-    'ROADMAP': AppView.FULL_STEP3_ROADMAP, // Using FULL_STEP3_ROADMAP
-    'REPORTS': AppView.FULL_STEP6_REPORTS, // Using FULL_STEP6_REPORTS
-    'REPORT_BUILDER': AppView.DRD_AUDIT_REPORT, // Using DRD_AUDIT_REPORT
-    'SETTINGS': AppView.SETTINGS_PROFILE, // Using SETTINGS_PROFILE
-    'PROJECT_DETAIL': AppView.ADMIN_PROJECTS, // Using ADMIN_PROJECTS
-    'AI_CHAT': AppView.AI_CHAT
+    USER_DASHBOARD: AppView.USER_DASHBOARD,
+    ADMIN_DASHBOARD: AppView.ADMIN_DASHBOARD,
+    ASSESSMENT_WIZARD: AppView.ASSESSMENT_DRD, // ASSESSMENT_WIZARD doesn't exist, using ASSESSMENT_DRD
+    INITIATIVES: AppView.FULL_STEP2_INITIATIVES, // Using FULL_STEP2_INITIATIVES
+    INITIATIVE_DETAIL: AppView.FULL_STEP2_INITIATIVES, // No INITIATIVE_DETAIL, using INITIATIVES
+    ROADMAP: AppView.FULL_STEP3_ROADMAP, // Using FULL_STEP3_ROADMAP
+    REPORTS: AppView.FULL_STEP6_REPORTS, // Using FULL_STEP6_REPORTS
+    REPORT_BUILDER: AppView.DRD_AUDIT_REPORT, // Using DRD_AUDIT_REPORT
+    SETTINGS: AppView.SETTINGS_PROFILE, // Using SETTINGS_PROFILE
+    PROJECT_DETAIL: AppView.ADMIN_PROJECTS, // Using ADMIN_PROJECTS
+    AI_CHAT: AppView.AI_CHAT,
 };
 
 export function useActionHandler(): UseActionHandlerReturn {
@@ -95,35 +96,38 @@ export function useActionHandler(): UseActionHandlerReturn {
     /**
      * Execute navigation action
      */
-    const executeNavigate = useCallback((payload: Record<string, unknown>): ActionResult => {
-        const view = payload.view as string;
-        const params = payload.params as Record<string, unknown> | undefined;
+    const executeNavigate = useCallback(
+        (payload: Record<string, unknown>): ActionResult => {
+            const view = payload.view as string;
+            const params = payload.params as Record<string, unknown> | undefined;
 
-        const mappedView = VIEW_MAP[view];
-        if (!mappedView) {
+            const mappedView = VIEW_MAP[view];
+            if (!mappedView) {
+                return {
+                    status: 'error',
+                    error: `Unknown view: ${view}`,
+                };
+            }
+
+            // Handle navigation parameters
+            if (params?.projectId) {
+                setCurrentProjectId(params.projectId as string);
+            }
+            // if (params?.initiativeId) {
+            //     setSelectedInitiativeId(params.initiativeId as string); // Not in AppState
+            // }
+
+            setCurrentView(mappedView);
+
             return {
-                status: 'error',
-                error: `Unknown view: ${view}`
+                status: 'success',
+                type: ACTION_TYPES.NAVIGATE,
+                result: { view: mappedView, params },
+                message: `Navigated to ${view}`,
             };
-        }
-
-        // Handle navigation parameters
-        if (params?.projectId) {
-            setCurrentProjectId(params.projectId as string);
-        }
-        // if (params?.initiativeId) {
-        //     setSelectedInitiativeId(params.initiativeId as string); // Not in AppState
-        // }
-
-        setCurrentView(mappedView);
-
-        return {
-            status: 'success',
-            type: ACTION_TYPES.NAVIGATE,
-            result: { view: mappedView, params },
-            message: `Navigated to ${view}`
-        };
-    }, [setCurrentView, setCurrentProjectId]);
+        },
+        [setCurrentView, setCurrentProjectId],
+    );
 
     /**
      * Execute form fill action
@@ -132,25 +136,25 @@ export function useActionHandler(): UseActionHandlerReturn {
         const { formId, fieldId, value, explanation } = payload;
 
         // Find the form element
-        const formElement = document.getElementById(formId as string) ||
-            document.querySelector(`[data-form-id="${formId}"]`);
+        const formElement =
+            document.getElementById(formId as string) || document.querySelector(`[data-form-id="${formId}"]`);
 
         if (!formElement) {
             return {
                 status: 'error',
-                error: `Form not found: ${formId}`
+                error: `Form not found: ${formId}`,
             };
         }
 
         // Find the field
         const fieldElement = formElement.querySelector(
-            `[name="${fieldId}"], [data-field-id="${fieldId}"], #${fieldId}`
+            `[name="${fieldId}"], [data-field-id="${fieldId}"], #${fieldId}`,
         ) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
 
         if (!fieldElement) {
             return {
                 status: 'error',
-                error: `Field not found: ${fieldId}`
+                error: `Field not found: ${fieldId}`,
             };
         }
 
@@ -174,9 +178,9 @@ export function useActionHandler(): UseActionHandlerReturn {
                 fieldId,
                 previousValue,
                 newValue: value,
-                explanation
+                explanation,
             },
-            message: `Filled ${fieldId} with AI suggestion`
+            message: `Filled ${fieldId} with AI suggestion`,
         };
     }, []);
 
@@ -191,13 +195,13 @@ export function useActionHandler(): UseActionHandlerReturn {
             clearTimeout(highlightTimerRef.current);
         }
 
-        const element = document.getElementById(elementId as string) ||
-            document.querySelector(`[data-element-id="${elementId}"]`);
+        const element =
+            document.getElementById(elementId as string) || document.querySelector(`[data-element-id="${elementId}"]`);
 
         if (!element) {
             return {
                 status: 'error',
-                error: `Element not found: ${elementId}`
+                error: `Element not found: ${elementId}`,
             };
         }
 
@@ -214,7 +218,7 @@ export function useActionHandler(): UseActionHandlerReturn {
             status: 'success',
             type: ACTION_TYPES.HIGHLIGHT_ELEMENT,
             result: { elementId, duration },
-            message: `Highlighted ${elementId}`
+            message: `Highlighted ${elementId}`,
         };
     }, []);
 
@@ -235,7 +239,7 @@ export function useActionHandler(): UseActionHandlerReturn {
             status: 'success',
             type: ACTION_TYPES.OPEN_MODAL,
             result: { modalId, data },
-            message: `Opened modal ${modalId}`
+            message: `Opened modal ${modalId}`,
         };
     }, []);
 
@@ -246,15 +250,17 @@ export function useActionHandler(): UseActionHandlerReturn {
         const { dataType, data, filters } = payload;
 
         // Dispatch custom event for components to listen to
-        window.dispatchEvent(new CustomEvent('ai:show-data', {
-            detail: { dataType, data, filters }
-        }));
+        window.dispatchEvent(
+            new CustomEvent('ai:show-data', {
+                detail: { dataType, data, filters },
+            }),
+        );
 
         return {
             status: 'success',
             type: ACTION_TYPES.SHOW_DATA,
             result: { dataType, recordCount: Array.isArray(data) ? data.length : 1 },
-            message: `Showing ${dataType} data`
+            message: `Showing ${dataType} data`,
         };
     }, []);
 
@@ -266,7 +272,7 @@ export function useActionHandler(): UseActionHandlerReturn {
             const response = await api.post('/api/ai/actions/execute', {
                 type: action.type,
                 payload: action.payload,
-                confirmed: action.confirmed || false
+                confirmed: action.confirmed || false,
             });
 
             return response.data;
@@ -274,7 +280,7 @@ export function useActionHandler(): UseActionHandlerReturn {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             return {
                 status: 'error',
-                error: errorMessage
+                error: errorMessage,
             };
         }
     }, []);
@@ -282,105 +288,113 @@ export function useActionHandler(): UseActionHandlerReturn {
     /**
      * Main action execution function
      */
-    const executeAction = useCallback(async (action: ActionPayload): Promise<ActionResult> => {
-        setIsExecuting(true);
+    const executeAction = useCallback(
+        async (action: ActionPayload): Promise<ActionResult> => {
+            setIsExecuting(true);
 
-        try {
-            let result: ActionResult;
+            try {
+                let result: ActionResult;
 
-            // Handle frontend-only actions
-            switch (action.type) {
-                case ACTION_TYPES.NAVIGATE:
-                    result = executeNavigate(action.payload);
-                    break;
+                // Handle frontend-only actions
+                switch (action.type) {
+                    case ACTION_TYPES.NAVIGATE:
+                        result = executeNavigate(action.payload);
+                        break;
 
-                case ACTION_TYPES.FILL_FORM:
-                    result = executeFillForm(action.payload);
-                    break;
+                    case ACTION_TYPES.FILL_FORM:
+                        result = executeFillForm(action.payload);
+                        break;
 
-                case ACTION_TYPES.HIGHLIGHT_ELEMENT:
-                    result = executeHighlight(action.payload);
-                    break;
+                    case ACTION_TYPES.HIGHLIGHT_ELEMENT:
+                        result = executeHighlight(action.payload);
+                        break;
 
-                case ACTION_TYPES.OPEN_MODAL:
-                    result = executeOpenModal(action.payload);
-                    break;
+                    case ACTION_TYPES.OPEN_MODAL:
+                        result = executeOpenModal(action.payload);
+                        break;
 
-                case ACTION_TYPES.SHOW_DATA:
-                    result = executeShowData(action.payload);
-                    break;
+                    case ACTION_TYPES.SHOW_DATA:
+                        result = executeShowData(action.payload);
+                        break;
 
-                // Backend actions
-                case ACTION_TYPES.CREATE_PROJECT:
-                case ACTION_TYPES.CREATE_INITIATIVE:
-                case ACTION_TYPES.CREATE_TASK:
-                case ACTION_TYPES.UPDATE_ASSESSMENT:
-                case ACTION_TYPES.GENERATE_CONTENT:
-                case ACTION_TYPES.TRIGGER_WORKFLOW:
-                    result = await executeBackendAction(action);
-                    break;
+                    // Backend actions
+                    case ACTION_TYPES.CREATE_PROJECT:
+                    case ACTION_TYPES.CREATE_INITIATIVE:
+                    case ACTION_TYPES.CREATE_TASK:
+                    case ACTION_TYPES.UPDATE_ASSESSMENT:
+                    case ACTION_TYPES.GENERATE_CONTENT:
+                    case ACTION_TYPES.TRIGGER_WORKFLOW:
+                        result = await executeBackendAction(action);
+                        break;
 
-                default:
-                    result = {
-                        status: 'error',
-                        error: `Unknown action type: ${action.type}`
-                    };
+                    default:
+                        result = {
+                            status: 'error',
+                            error: `Unknown action type: ${action.type}`,
+                        };
+                }
+
+                // Handle pending confirmation
+                if (result.status === 'pending_confirmation' && result.actionId) {
+                    setPendingActions((prev) => [
+                        ...prev,
+                        {
+                            actionId: result.actionId!,
+                            action,
+                            confirmationMessage: result.message || 'Confirm action?',
+                            createdAt: new Date().toISOString(),
+                        },
+                    ]);
+                }
+
+                // Handle follow-up actions
+                if (result.status === 'success' && result.result?.nextAction) {
+                    const nextAction = result.result.nextAction as ActionPayload;
+                    // Execute next action after short delay
+                    setTimeout(() => executeAction(nextAction), 500);
+                }
+
+                setLastResult(result);
+                return result;
+            } finally {
+                setIsExecuting(false);
             }
-
-            // Handle pending confirmation
-            if (result.status === 'pending_confirmation' && result.actionId) {
-                setPendingActions(prev => [...prev, {
-                    actionId: result.actionId!,
-                    action,
-                    confirmationMessage: result.message || 'Confirm action?',
-                    createdAt: new Date().toISOString()
-                }]);
-            }
-
-            // Handle follow-up actions
-            if (result.status === 'success' && result.result?.nextAction) {
-                const nextAction = result.result.nextAction as ActionPayload;
-                // Execute next action after short delay
-                setTimeout(() => executeAction(nextAction), 500);
-            }
-
-            setLastResult(result);
-            return result;
-
-        } finally {
-            setIsExecuting(false);
-        }
-    }, [executeNavigate, executeFillForm, executeHighlight, executeOpenModal, executeShowData, executeBackendAction]);
+        },
+        [executeNavigate, executeFillForm, executeHighlight, executeOpenModal, executeShowData, executeBackendAction],
+    );
 
     /**
      * Confirm or reject a pending action
      */
-    const confirmAction = useCallback(async (actionId: string, confirmed: boolean): Promise<ActionResult> => {
-        const pendingAction = pendingActions.find(p => p.actionId === actionId);
+    const confirmAction = useCallback(
+        async (actionId: string, confirmed: boolean): Promise<ActionResult> => {
+            const pendingAction = pendingActions.find((p) => p.actionId === actionId);
 
-        if (!pendingAction) {
-            return {
-                status: 'error',
-                error: 'Action not found or expired'
-            };
-        }
+            if (!pendingAction) {
+                return {
+                    status: 'error',
+                    error: 'Action not found or expired',
+                };
+            }
 
-        // Remove from pending
-        setPendingActions(prev => prev.filter(p => p.actionId !== actionId));
+            // Remove from pending
+            setPendingActions((prev) => prev.filter((p) => p.actionId !== actionId));
 
-        if (!confirmed) {
-            return {
-                status: 'cancelled',
-                actionId
-            };
-        }
+            if (!confirmed) {
+                return {
+                    status: 'cancelled',
+                    actionId,
+                };
+            }
 
-        // Execute with confirmation
-        return executeAction({
-            ...pendingAction.action,
-            confirmed: true
-        });
-    }, [pendingActions, executeAction]);
+            // Execute with confirmation
+            return executeAction({
+                ...pendingAction.action,
+                confirmed: true,
+            });
+        },
+        [pendingActions, executeAction],
+    );
 
     /**
      * Clear all pending actions
@@ -395,7 +409,7 @@ export function useActionHandler(): UseActionHandlerReturn {
         pendingActions,
         isExecuting,
         lastResult,
-        clearPendingActions
+        clearPendingActions,
     };
 }
 
@@ -432,4 +446,3 @@ if (typeof document !== 'undefined') {
 }
 
 export default useActionHandler;
-

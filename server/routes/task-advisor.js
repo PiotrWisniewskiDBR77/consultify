@@ -13,8 +13,9 @@ const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
 import taskAdvisorService from '../services/ai/taskAdvisorService.js';
 import { aiLogger  } from '../services/ai/logger.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 
 // All routes require authentication
 router.use(verifyToken);
@@ -232,7 +233,7 @@ router.post('/:taskId/apply-subtasks', async (req, res) => {
 
         // If draft provided, approve it
         if (draftId) {
-            const { draftService   } = await import('../ai/draftService.js');
+            const { draftService   } = await import('../services/ai/draftService.js');
             await draftService.approveDraft(draftId, {
                 reviewedBy: req.user.id,
                 notes: `Applied ${createdSubtasks.length} subtasks`

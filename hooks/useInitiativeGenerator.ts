@@ -1,19 +1,20 @@
 /**
  * useInitiativeGenerator Hook
- * 
+ *
  * React hook for managing initiative generation from assessment gaps.
  * Provides state management and API calls for the Initiative Generator wizard.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { 
-    GapForGeneration, 
-    GeneratedInitiative, 
-    InitiativeGeneratorConstraints,
-    DRDAxis,
-    InitiativeTemplate,
+import { useCallback, useEffect, useState } from 'react';
+
+import {
+    AICharterRequest,
     AIGeneratedCharter,
-    AICharterRequest
+    DRDAxis,
+    GapForGeneration,
+    GeneratedInitiative,
+    InitiativeGeneratorConstraints,
+    InitiativeTemplate,
 } from '../types';
 
 interface UseInitiativeGeneratorResult {
@@ -37,9 +38,11 @@ interface UseInitiativeGeneratorResult {
     saveDraft: () => Promise<void>;
     loadDraft: (assessmentId: string) => Promise<void>;
     approveAndTransfer: (projectId: string) => Promise<{ transferred: string[]; failed: string[] }>;
-    validateInitiative: (initiative: GeneratedInitiative) => Promise<{ valid: boolean; errors: string[]; warnings: string[] }>;
+    validateInitiative: (
+        initiative: GeneratedInitiative,
+    ) => Promise<{ valid: boolean; errors: string[]; warnings: string[] }>;
     reset: () => void;
-    
+
     // Charter & Template Actions
     fetchTemplates: (category?: string) => Promise<InitiativeTemplate[]>;
     generateCharter: (request: AICharterRequest) => Promise<AIGeneratedCharter>;
@@ -68,8 +71,8 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
         try {
             const response = await fetch(`/api/initiatives/gaps/${assessmentIdToFetch}`, {
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`
-                }
+                    Authorization: `Bearer ${getToken()}`,
+                },
             });
 
             if (!response.ok) {
@@ -77,7 +80,7 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
             }
 
             const data = await response.json();
-            
+
             // Map to GapForGeneration format with selected = false initially
             const mappedGaps: GapForGeneration[] = data.gaps.map((gap: any) => ({
                 axisId: gap.axisId,
@@ -86,7 +89,7 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
                 targetScore: gap.targetScore,
                 gap: gap.gap,
                 priority: gap.priority,
-                selected: false
+                selected: false,
             }));
 
             setGaps(mappedGaps);
@@ -99,89 +102,91 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
 
     // Select/deselect gap
     const selectGap = useCallback((axisId: DRDAxis, selected: boolean) => {
-        setGaps(prev => prev.map(gap => 
-            gap.axisId === axisId ? { ...gap, selected } : gap
-        ));
+        setGaps((prev) => prev.map((gap) => (gap.axisId === axisId ? { ...gap, selected } : gap)));
     }, []);
 
     // Select/deselect all gaps
     const selectAllGaps = useCallback((selected: boolean) => {
-        setGaps(prev => prev.map(gap => ({ ...gap, selected })));
+        setGaps((prev) => prev.map((gap) => ({ ...gap, selected })));
     }, []);
 
     // Generate initiatives with AI
-    const generateWithAI = useCallback(async (constraints: InitiativeGeneratorConstraints) => {
-        setIsGenerating(true);
-        setError(null);
+    const generateWithAI = useCallback(
+        async (constraints: InitiativeGeneratorConstraints) => {
+            setIsGenerating(true);
+            setError(null);
 
-        try {
-            const selectedGaps = gaps.filter(g => g.selected);
-            
-            if (selectedGaps.length === 0) {
-                throw new Error('Please select at least one gap');
+            try {
+                const selectedGaps = gaps.filter((g) => g.selected);
+
+                if (selectedGaps.length === 0) {
+                    throw new Error('Please select at least one gap');
+                }
+
+                const response = await fetch('/api/initiatives/generate/ai', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        gaps: selectedGaps,
+                        constraints,
+                        context: {
+                            assessmentId,
+                        },
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate initiatives');
+                }
+
+                const data = await response.json();
+                setGeneratedInitiatives(data.initiatives);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Unknown error');
+            } finally {
+                setIsGenerating(false);
             }
-
-            const response = await fetch('/api/initiatives/generate/ai', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${getToken()}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    gaps: selectedGaps,
-                    constraints,
-                    context: {
-                        assessmentId
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to generate initiatives');
-            }
-
-            const data = await response.json();
-            setGeneratedInitiatives(data.initiatives);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unknown error');
-        } finally {
-            setIsGenerating(false);
-        }
-    }, [gaps, assessmentId]);
+        },
+        [gaps, assessmentId],
+    );
 
     // Edit initiative
     const editInitiative = useCallback((id: string, updates: Partial<GeneratedInitiative>) => {
-        setGeneratedInitiatives(prev => prev.map(init =>
-            init.id === id ? { ...init, ...updates } : init
-        ));
+        setGeneratedInitiatives((prev) => prev.map((init) => (init.id === id ? { ...init, ...updates } : init)));
     }, []);
 
     // Remove initiative
     const removeInitiative = useCallback((id: string) => {
-        setGeneratedInitiatives(prev => prev.filter(init => init.id !== id));
+        setGeneratedInitiatives((prev) => prev.filter((init) => init.id !== id));
     }, []);
 
     // Add custom initiative
-    const addCustomInitiative = useCallback((initiative: Partial<GeneratedInitiative>) => {
-        const newInitiative: GeneratedInitiative = {
-            id: `custom-${Date.now()}`,
-            assessmentId: assessmentId || '',
-            sourceAxisId: initiative.sourceAxisId || 'processes',
-            name: initiative.name || 'Custom Initiative',
-            description: initiative.description || '',
-            objectives: initiative.objectives || [],
-            estimatedROI: initiative.estimatedROI || 1.5,
-            estimatedBudget: initiative.estimatedBudget || 100000,
-            timeline: initiative.timeline || '3-6 months',
-            riskLevel: initiative.riskLevel || 'MEDIUM',
-            priority: initiative.priority || 5,
-            status: 'DRAFT',
-            aiGenerated: false,
-            createdAt: new Date()
-        };
+    const addCustomInitiative = useCallback(
+        (initiative: Partial<GeneratedInitiative>) => {
+            const newInitiative: GeneratedInitiative = {
+                id: `custom-${Date.now()}`,
+                assessmentId: assessmentId || '',
+                sourceAxisId: initiative.sourceAxisId || 'processes',
+                name: initiative.name || 'Custom Initiative',
+                description: initiative.description || '',
+                objectives: initiative.objectives || [],
+                estimatedROI: initiative.estimatedROI || 1.5,
+                estimatedBudget: initiative.estimatedBudget || 100000,
+                timeline: initiative.timeline || '3-6 months',
+                riskLevel: initiative.riskLevel || 'MEDIUM',
+                priority: initiative.priority || 5,
+                status: 'DRAFT',
+                aiGenerated: false,
+                createdAt: new Date(),
+            };
 
-        setGeneratedInitiatives(prev => [...prev, newInitiative]);
-    }, [assessmentId]);
+            setGeneratedInitiatives((prev) => [...prev, newInitiative]);
+        },
+        [assessmentId],
+    );
 
     // Save draft
     const saveDraft = useCallback(async () => {
@@ -197,12 +202,12 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
             const response = await fetch(`/api/initiatives/draft/${assessmentId}`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    initiatives: generatedInitiatives
-                })
+                    initiatives: generatedInitiatives,
+                }),
             });
 
             if (!response.ok) {
@@ -225,8 +230,8 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
         try {
             const response = await fetch(`/api/initiatives/draft/${assessmentIdToLoad}`, {
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`
-                }
+                    Authorization: `Bearer ${getToken()}`,
+                },
             });
 
             if (!response.ok) {
@@ -235,7 +240,7 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
 
             const data = await response.json();
             setDraftInitiatives(data.initiatives || []);
-            
+
             // If we have draft initiatives, use them as generated
             if (data.initiatives && data.initiatives.length > 0) {
                 setGeneratedInitiatives(data.initiatives);
@@ -248,46 +253,49 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
     }, []);
 
     // Approve and transfer to Module 3
-    const approveAndTransfer = useCallback(async (projectId: string) => {
-        setIsSaving(true);
-        setError(null);
+    const approveAndTransfer = useCallback(
+        async (projectId: string) => {
+            setIsSaving(true);
+            setError(null);
 
-        try {
-            const response = await fetch('/api/initiatives/approve', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${getToken()}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    initiatives: generatedInitiatives,
-                    projectId
-                })
-            });
+            try {
+                const response = await fetch('/api/initiatives/approve', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        initiatives: generatedInitiatives,
+                        projectId,
+                    }),
+                });
 
-            if (!response.ok) {
-                throw new Error('Failed to approve initiatives');
+                if (!response.ok) {
+                    throw new Error('Failed to approve initiatives');
+                }
+
+                const data = await response.json();
+
+                // Clear generated initiatives on success
+                if (data.transferred && data.transferred.length > 0) {
+                    setGeneratedInitiatives([]);
+                    setDraftInitiatives([]);
+                }
+
+                return {
+                    transferred: data.transferred?.map((t: any) => t.id) || [],
+                    failed: data.failed?.map((f: any) => f.id) || [],
+                };
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Unknown error');
+                return { transferred: [], failed: [] };
+            } finally {
+                setIsSaving(false);
             }
-
-            const data = await response.json();
-            
-            // Clear generated initiatives on success
-            if (data.transferred && data.transferred.length > 0) {
-                setGeneratedInitiatives([]);
-                setDraftInitiatives([]);
-            }
-
-            return {
-                transferred: data.transferred?.map((t: any) => t.id) || [],
-                failed: data.failed?.map((f: any) => f.id) || []
-            };
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unknown error');
-            return { transferred: [], failed: [] };
-        } finally {
-            setIsSaving(false);
-        }
-    }, [generatedInitiatives]);
+        },
+        [generatedInitiatives],
+    );
 
     // Validate initiative
     const validateInitiative = useCallback(async (initiative: GeneratedInitiative) => {
@@ -295,10 +303,10 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
             const response = await fetch('/api/initiatives/validate', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ initiative })
+                body: JSON.stringify({ initiative }),
             });
 
             if (!response.ok) {
@@ -310,7 +318,7 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
             return {
                 valid: false,
                 errors: [err instanceof Error ? err.message : 'Validation error'],
-                warnings: []
+                warnings: [],
             };
         }
     }, []);
@@ -326,14 +334,12 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
     // Fetch available templates
     const fetchTemplates = useCallback(async (category?: string): Promise<InitiativeTemplate[]> => {
         try {
-            const url = category 
-                ? `/api/initiatives/templates?category=${category}`
-                : '/api/initiatives/templates';
-            
+            const url = category ? `/api/initiatives/templates?category=${category}` : '/api/initiatives/templates';
+
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`
-                }
+                    Authorization: `Bearer ${getToken()}`,
+                },
             });
 
             if (!response.ok) {
@@ -353,10 +359,10 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
         const response = await fetch('/api/initiatives/charter/generate', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${getToken()}`,
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(request)
+            body: JSON.stringify(request),
         });
 
         if (!response.ok) {
@@ -374,14 +380,14 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
             const response = await fetch('/api/initiatives/charter/regenerate-section', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getToken()}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     charter: { id: charterId },
                     section,
-                    context
-                })
+                    context,
+                }),
             });
 
             if (!response.ok) {
@@ -397,23 +403,26 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
     }, []);
 
     // Apply template to charter
-    const applyTemplate = useCallback(async (templateId: string, charter: Partial<AIGeneratedCharter>): Promise<AIGeneratedCharter> => {
-        const response = await fetch(`/api/initiatives/templates/${templateId}/apply`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ charter })
-        });
+    const applyTemplate = useCallback(
+        async (templateId: string, charter: Partial<AIGeneratedCharter>): Promise<AIGeneratedCharter> => {
+            const response = await fetch(`/api/initiatives/templates/${templateId}/apply`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ charter }),
+            });
 
-        if (!response.ok) {
-            throw new Error('Failed to apply template');
-        }
+            if (!response.ok) {
+                throw new Error('Failed to apply template');
+            }
 
-        const data = await response.json();
-        return data.charter;
-    }, []);
+            const data = await response.json();
+            return data.charter;
+        },
+        [],
+    );
 
     // Auto-load gaps if assessmentId is provided
     useEffect(() => {
@@ -451,9 +460,8 @@ export function useInitiativeGenerator(assessmentId?: string): UseInitiativeGene
         fetchTemplates,
         generateCharter,
         regenerateSection,
-        applyTemplate
+        applyTemplate,
     };
 }
 
 export default useInitiativeGenerator;
-

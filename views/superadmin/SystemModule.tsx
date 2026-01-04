@@ -1,6 +1,6 @@
 /**
  * SystemModule - Enterprise System Administration
- * 
+ *
  * Full enterprise system administration module with:
  * - Health Monitoring with real-time metrics and alerting
  * - Comprehensive Audit Logging with compliance support
@@ -13,32 +13,31 @@
  * - API Key Management
  */
 
-import React, { useState, useEffect } from 'react';
-import { Activity, Shield, Flag, Webhook, RefreshCw, Loader2, Settings, BarChart3, HardDrive, Key } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { SystemHealth } from '../../components/SystemHealth';
+import { Activity, BarChart3, Flag, HardDrive, Key, Loader2, RefreshCw, Settings, Shield, Webhook } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { AuditLogViewer } from '../../components/Admin/AuditLogViewer';
+import { AnalyticsPanel } from '../../components/SuperAdmin/AnalyticsPanel';
+import { ApiManagementPanel } from '../../components/SuperAdmin/ApiManagementPanel';
+import { BackupPanel } from '../../components/SuperAdmin/BackupPanel';
+import { ConfigurationPanel } from '../../components/SuperAdmin/ConfigurationPanel';
 import { FeatureFlagsPanel } from '../../components/SuperAdmin/FeatureFlagsPanel';
 import { IntegrationsPanel } from '../../components/SuperAdmin/IntegrationsPanel';
 import { SecurityPanel } from '../../components/SuperAdmin/SecurityPanel';
-import { ConfigurationPanel } from '../../components/SuperAdmin/ConfigurationPanel';
-import { AnalyticsPanel } from '../../components/SuperAdmin/AnalyticsPanel';
-import { BackupPanel } from '../../components/SuperAdmin/BackupPanel';
-import { ApiManagementPanel } from '../../components/SuperAdmin/ApiManagementPanel';
-
 // Enterprise System Components
-import { 
-    EnterpriseHealthMonitor,
-    EnterpriseAuditLog,
-    EnterpriseSecurityPanel,
+import {
+    EnterpriseAnalyticsPanel,
     EnterpriseApiManagement,
+    EnterpriseAuditLog,
     EnterpriseBackupPanel,
-    EnterpriseFeatureFlags,
-    EnterpriseIntegrationsHub,
     EnterpriseConfigurationPanel,
-    EnterpriseAnalyticsPanel
+    EnterpriseFeatureFlags,
+    EnterpriseHealthMonitor,
+    EnterpriseIntegrationsHub,
+    EnterpriseSecurityPanel,
 } from '../../components/SuperAdmin/system';
-
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { SystemHealth } from '../../components/SystemHealth';
 import { Api } from '../../services/api';
 
 interface SystemModuleProps {
@@ -49,9 +48,9 @@ interface HealthData {
     api: { status: string; responseTime: number; version: string };
     database: { status: string; responseTime: number; type: string };
     ai: { status: string; providers: { openai: boolean; anthropic: boolean; groq: boolean } };
-    system: { 
-        nodeVersion: string; 
-        environment: string; 
+    system: {
+        nodeVersion: string;
+        environment: string;
         uptime: { seconds: number; formatted: string };
         memory: { used: number; total: number };
     };
@@ -132,7 +131,9 @@ const SystemHealthView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(health?.api?.status || 'unknown')} animate-pulse`} />
+                        <div
+                            className={`w-2 h-2 rounded-full ${getStatusColor(health?.api?.status || 'unknown')} animate-pulse`}
+                        />
                         <span className="text-sm font-medium text-white">API Server</span>
                     </div>
                     <div className={`text-2xl font-bold ${getStatusText(health?.api?.status || 'unknown')}`}>
@@ -145,7 +146,9 @@ const SystemHealthView: React.FC = () => {
 
                 <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(health?.database?.status || 'unknown')} animate-pulse`} />
+                        <div
+                            className={`w-2 h-2 rounded-full ${getStatusColor(health?.database?.status || 'unknown')} animate-pulse`}
+                        />
                         <span className="text-sm font-medium text-white">Database</span>
                     </div>
                     <div className={`text-2xl font-bold ${getStatusText(health?.database?.status || 'unknown')}`}>
@@ -156,20 +159,28 @@ const SystemHealthView: React.FC = () => {
 
                 <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(health?.ai?.status || 'unknown')} animate-pulse`} />
+                        <div
+                            className={`w-2 h-2 rounded-full ${getStatusColor(health?.ai?.status || 'unknown')} animate-pulse`}
+                        />
                         <span className="text-sm font-medium text-white">AI Services</span>
                     </div>
                     <div className={`text-2xl font-bold ${getStatusText(health?.ai?.status || 'unknown')}`}>
-                        {health?.ai?.status === 'online' ? 'Online' : health?.ai?.status === 'no_keys' ? 'No Keys' : health?.ai?.status || 'Unknown'}
+                        {health?.ai?.status === 'online'
+                            ? 'Online'
+                            : health?.ai?.status === 'no_keys'
+                              ? 'No Keys'
+                              : health?.ai?.status || 'Unknown'}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">
-                        {health?.ai?.providers ? 
-                            [
-                                health.ai.providers.openai && 'OpenAI',
-                                health.ai.providers.anthropic && 'Anthropic',
-                                health.ai.providers.groq && 'Groq'
-                            ].filter(Boolean).join(', ') || 'No providers'
-                        : 'Unknown'}
+                        {health?.ai?.providers
+                            ? [
+                                  health.ai.providers.openai && 'OpenAI',
+                                  health.ai.providers.anthropic && 'Anthropic',
+                                  health.ai.providers.groq && 'Groq',
+                              ]
+                                  .filter(Boolean)
+                                  .join(', ') || 'No providers'
+                            : 'Unknown'}
                     </div>
                 </div>
             </div>
@@ -204,9 +215,11 @@ const SystemHealthView: React.FC = () => {
                     <div className="flex items-center gap-4">
                         <div className="flex-1">
                             <div className="h-2 bg-navy-950 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                     className="h-full bg-blue-500 rounded-full transition-all"
-                                    style={{ width: `${Math.min(100, (health.system.memory.used / health.system.memory.total) * 100)}%` }}
+                                    style={{
+                                        width: `${Math.min(100, (health.system.memory.used / health.system.memory.total) * 100)}%`,
+                                    }}
                                 />
                             </div>
                         </div>
@@ -283,5 +296,3 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
 };
 
 export default SystemModule;
-
-

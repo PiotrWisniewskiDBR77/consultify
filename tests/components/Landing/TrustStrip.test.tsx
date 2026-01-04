@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { TrustStrip } from '../../../components/Landing/TrustStrip';
+import { TrustStrip } from '../../components/Landing/TrustStrip';
 
 describe('TrustStrip Component', () => {
     it('renders trust strip', () => {
@@ -19,6 +19,7 @@ describe('TrustStrip Component', () => {
         expect(badges.length).toBeGreaterThan(0);
     });
 });
+
 
 
 

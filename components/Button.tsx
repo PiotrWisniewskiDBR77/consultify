@@ -1,7 +1,10 @@
-import React from 'react';
 import { motion } from 'framer-motion';
+import React from 'react';
 
-interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart'> {
+interface ButtonProps extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart'
+> {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'glass';
     size?: 'sm' | 'md' | 'lg';
     fullWidth?: boolean;
@@ -18,21 +21,21 @@ export const Button: React.FC<ButtonProps> = ({
     ...props
 }) => {
     const variants = {
-        primary: "btn-primary",
-        secondary: "btn-secondary",
-        outline: "btn-outline",
-        ghost: "btn-ghost",
-        danger: "btn-danger",
-        glass: "btn-glass"
+        primary: 'btn-primary',
+        secondary: 'btn-secondary',
+        outline: 'btn-outline',
+        ghost: 'btn-ghost',
+        danger: 'btn-danger',
+        glass: 'btn-glass',
     };
 
     const sizes = {
-        sm: "px-3.5 py-1.5 text-xs",
-        md: "px-5 py-2.5 text-sm",
-        lg: "px-7 py-3.5 text-base"
+        sm: 'px-3.5 py-1.5 text-xs',
+        md: 'px-5 py-2.5 text-sm',
+        lg: 'px-7 py-3.5 text-base',
     };
 
-    const widthClass = fullWidth ? "w-full" : "";
+    const widthClass = fullWidth ? 'w-full' : '';
 
     return (
         <motion.button

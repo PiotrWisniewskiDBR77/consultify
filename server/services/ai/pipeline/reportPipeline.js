@@ -8,7 +8,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import db from '../../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { getAgentsInOrder, getAgentPrompt, validateAgentOutput, getAgent } from './reportAgents.js';
 import IndustryIntelligenceService from '../intelligence/industryIntelligenceService.js';
 import BenchmarkDataService from '../intelligence/benchmarkDataService.js';
@@ -592,6 +593,7 @@ Transform this into a compelling executive report following the output schema.`;
 }
 
 export default ReportPipeline;
+
 
 
 

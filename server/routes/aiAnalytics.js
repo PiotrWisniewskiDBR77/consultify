@@ -29,7 +29,7 @@ router.use(verifyToken);
 // ==========================================
 
 /**
- * GET /api/analytics/ai/dashboard
+ * GET /api/analyti../services/ai/dashboard
  * Get complete dashboard summary for UI
  */
 router.get('/dashboard', async (req, res) => {
@@ -54,7 +54,7 @@ router.get('/dashboard', async (req, res) => {
 // ==========================================
 
 /**
- * GET /api/analytics/ai/actions
+ * GET /api/analyti../services/ai/actions
  * Get action execution statistics
  */
 router.get('/actions', async (req, res) => {
@@ -75,7 +75,7 @@ router.get('/actions', async (req, res) => {
 });
 
 /**
- * GET /api/analytics/ai/approvals
+ * GET /api/analyti../services/ai/approvals
  * Get approval statistics (manual vs auto)
  */
 router.get('/approvals', async (req, res) => {
@@ -100,7 +100,7 @@ router.get('/approvals', async (req, res) => {
 // ==========================================
 
 /**
- * GET /api/analytics/ai/playbooks
+ * GET /api/analyti../services/ai/playbooks
  * Get playbook completion statistics
  */
 router.get('/playbooks', async (req, res) => {
@@ -121,7 +121,7 @@ router.get('/playbooks', async (req, res) => {
 });
 
 /**
- * GET /api/analytics/ai/time-to-resolution
+ * GET /api/analyti../services/ai/time-to-resolution
  * Get time-to-resolution metrics
  */
 router.get('/time-to-resolution', async (req, res) => {
@@ -146,7 +146,7 @@ router.get('/time-to-resolution', async (req, res) => {
 // ==========================================
 
 /**
- * GET /api/analytics/ai/dead-letter
+ * GET /api/analyti../services/ai/dead-letter
  * Get dead-letter job statistics
  */
 router.get('/dead-letter', async (req, res) => {
@@ -324,7 +324,7 @@ router.get('/outcomes/pending', verifyAdmin, async (req, res) => {
 // ==========================================
 
 /**
- * GET /api/analytics/ai/export
+ * GET /api/analyti../services/ai/export
  * Export analytics data as CSV or JSON
  */
 router.get('/export', async (req, res) => {

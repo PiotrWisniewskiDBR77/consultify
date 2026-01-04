@@ -1,12 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import config from '../config.js';
-import ActivityService from '../services/activityService.js';
-import MFAService from '../services/mfaService.js';
-import RefreshTokenService from '../services/refreshTokenService.js';
-import RedisStore from '../utils/redisRateLimitStore.js';
+import ActivityService from '../src/services/ActivityService.js';
+import MFAService from '../src/services/mfaService.js';
+import RefreshTokenService from '../src/services/refreshTokenService.js';
+import RedisStore from '../src/utils/redisRateLimitStore.js';
 
 // Default Dependencies
 const deps = {

@@ -1,9 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-    Shield, Download, Trash2, Eye, Lock, Database,
-    Save, Loader2, CheckCircle, AlertTriangle, Info, FileText
+import {
+    AlertTriangle,
+    CheckCircle,
+    Database,
+    Download,
+    Eye,
+    FileText,
+    Info,
+    Loader2,
+    Lock,
+    Save,
+    Shield,
+    Trash2,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 
@@ -12,17 +23,14 @@ interface DataPrivacySettingsProps {
     onUpdate?: () => void;
 }
 
-export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({ 
-    currentUser, 
-    onUpdate 
-}) => {
+export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({ currentUser, onUpdate }) => {
     const { t } = useTranslation();
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [isExporting, setIsExporting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
-    
+
     const [privacySettings, setPrivacySettings] = useState({
         shareAnalytics: true,
         shareUsageData: false,
@@ -32,7 +40,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         newsletterSubscribed: false,
         allowThirdPartyIntegrations: true,
         dataRetentionPolicy: 'standard' as 'minimal' | 'standard' | 'extended',
-        enablePiiRedaction: false
+        enablePiiRedaction: false,
     });
 
     // Load preferences
@@ -44,7 +52,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         try {
             const response = await Api.get('/settings/preferences/privacy');
             if (response.preferences) {
-                setPrivacySettings(prev => ({ ...prev, ...response.preferences }));
+                setPrivacySettings((prev) => ({ ...prev, ...response.preferences }));
             }
         } catch (error) {
             console.error('Failed to load privacy settings:', error);
@@ -71,7 +79,12 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         try {
             await Api.post('/settings/export-data', {});
             // Show success message
-            alert(t('settings.dataPrivacy.exportRequested', 'Data export requested. You will receive an email when ready.'));
+            alert(
+                t(
+                    'settings.dataPrivacy.exportRequested',
+                    'Data export requested. You will receive an email when ready.',
+                ),
+            );
         } catch (error) {
             console.error('Failed to request data export:', error);
             alert(t('settings.dataPrivacy.exportFailed', 'Failed to request data export. Please try again.'));
@@ -84,13 +97,18 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         if (deleteConfirmEmail !== currentUser.email) {
             return;
         }
-        
+
         try {
-            await Api.post('/settings/request-deletion', { 
+            await Api.post('/settings/request-deletion', {
                 email: deleteConfirmEmail,
-                reason: 'user_requested'
+                reason: 'user_requested',
             });
-            alert(t('settings.dataPrivacy.deleteRequested', 'Account deletion requested. You will receive a confirmation email.'));
+            alert(
+                t(
+                    'settings.dataPrivacy.deleteRequested',
+                    'Account deletion requested. You will receive a confirmation email.',
+                ),
+            );
             setShowDeleteConfirm(false);
         } catch (error) {
             console.error('Failed to request account deletion:', error);
@@ -99,24 +117,25 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
     };
 
     // Styling
-    const cardClass = "bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6";
-    const sectionTitleClass = "text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2";
-    const toggleClass = (enabled: boolean) => `relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-    }`;
-    const toggleKnobClass = (enabled: boolean) => `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-        enabled ? 'left-7' : 'left-1'
-    }`;
+    const cardClass = 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-6';
+    const sectionTitleClass =
+        'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    const toggleClass = (enabled: boolean) =>
+        `relative w-12 h-6 rounded-full transition-colors ${
+            enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+        }`;
+    const toggleKnobClass = (enabled: boolean) =>
+        `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
-    const ToggleSwitch = ({ 
-        enabled, 
-        onChange, 
-        label, 
-        description 
-    }: { 
-        enabled: boolean; 
-        onChange: (value: boolean) => void; 
-        label: string; 
+    const ToggleSwitch = ({
+        enabled,
+        onChange,
+        label,
+        description,
+    }: {
+        enabled: boolean;
+        onChange: (value: boolean) => void;
+        label: string;
         description: string;
     }) => (
         <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5 last:border-0">
@@ -124,10 +143,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                 <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{description}</p>
             </div>
-            <button
-                onClick={() => onChange(!enabled)}
-                className={toggleClass(enabled)}
-            >
+            <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
                 <span className={toggleKnobClass(enabled)} />
             </button>
         </div>
@@ -142,7 +158,10 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                         {t('settings.dataPrivacy.title', 'Data & Privacy')}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        {t('settings.dataPrivacy.description', 'Control how your data is used and manage your privacy settings')}
+                        {t(
+                            'settings.dataPrivacy.description',
+                            'Control how your data is used and manage your privacy settings',
+                        )}
                     </p>
                 </div>
                 <button
@@ -161,25 +180,34 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     <Eye size={16} className="text-purple-500" />
                     {t('settings.dataPrivacy.dataSharing', 'Data Sharing')}
                 </h4>
-                
+
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={privacySettings.shareAnalytics}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, shareAnalytics: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, shareAnalytics: val }))}
                         label={t('settings.dataPrivacy.shareAnalytics', 'Share analytics data')}
-                        description={t('settings.dataPrivacy.shareAnalyticsDesc', 'Help us improve by sharing anonymous usage analytics')}
+                        description={t(
+                            'settings.dataPrivacy.shareAnalyticsDesc',
+                            'Help us improve by sharing anonymous usage analytics',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={privacySettings.shareUsageData}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, shareUsageData: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, shareUsageData: val }))}
                         label={t('settings.dataPrivacy.shareUsageData', 'Share detailed usage data')}
-                        description={t('settings.dataPrivacy.shareUsageDataDesc', 'Include more detailed interaction data for product improvement')}
+                        description={t(
+                            'settings.dataPrivacy.shareUsageDataDesc',
+                            'Include more detailed interaction data for product improvement',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={privacySettings.improveAI}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, improveAI: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, improveAI: val }))}
                         label={t('settings.dataPrivacy.improveAI', 'Help improve AI')}
-                        description={t('settings.dataPrivacy.improveAIDesc', 'Allow your interactions to help train better AI models')}
+                        description={t(
+                            'settings.dataPrivacy.improveAIDesc',
+                            'Allow your interactions to help train better AI models',
+                        )}
                     />
                 </div>
             </div>
@@ -190,25 +218,34 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     <FileText size={16} className="text-purple-500" />
                     {t('settings.dataPrivacy.communications', 'Communication Preferences')}
                 </h4>
-                
+
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={privacySettings.productUpdates}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, productUpdates: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, productUpdates: val }))}
                         label={t('settings.dataPrivacy.productUpdates', 'Product updates')}
-                        description={t('settings.dataPrivacy.productUpdatesDesc', 'Receive emails about new features and improvements')}
+                        description={t(
+                            'settings.dataPrivacy.productUpdatesDesc',
+                            'Receive emails about new features and improvements',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={privacySettings.marketingEmails}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, marketingEmails: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, marketingEmails: val }))}
                         label={t('settings.dataPrivacy.marketingEmails', 'Marketing emails')}
-                        description={t('settings.dataPrivacy.marketingEmailsDesc', 'Receive promotional offers and marketing communications')}
+                        description={t(
+                            'settings.dataPrivacy.marketingEmailsDesc',
+                            'Receive promotional offers and marketing communications',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={privacySettings.newsletterSubscribed}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, newsletterSubscribed: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, newsletterSubscribed: val }))}
                         label={t('settings.dataPrivacy.newsletter', 'Newsletter subscription')}
-                        description={t('settings.dataPrivacy.newsletterDesc', 'Weekly newsletter with tips and best practices')}
+                        description={t(
+                            'settings.dataPrivacy.newsletterDesc',
+                            'Weekly newsletter with tips and best practices',
+                        )}
                     />
                 </div>
             </div>
@@ -219,7 +256,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     <Database size={16} className="text-purple-500" />
                     {t('settings.dataPrivacy.dataRetention', 'Data Retention')}
                 </h4>
-                
+
                 <p className="text-sm text-slate-500 mb-4">
                     {t('settings.dataPrivacy.dataRetentionDesc', 'Choose how long we keep your data')}
                 </p>
@@ -229,21 +266,25 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                         { value: 'minimal', label: 'Minimal', desc: '30 days of history' },
                         { value: 'standard', label: 'Standard', desc: '1 year of history' },
                         { value: 'extended', label: 'Extended', desc: 'Full history kept' },
-                    ].map(option => (
+                    ].map((option) => (
                         <button
                             key={option.value}
-                            onClick={() => setPrivacySettings(prev => ({ ...prev, dataRetentionPolicy: option.value as any }))}
+                            onClick={() =>
+                                setPrivacySettings((prev) => ({ ...prev, dataRetentionPolicy: option.value as any }))
+                            }
                             className={`p-4 rounded-lg border-2 text-left transition-all ${
                                 privacySettings.dataRetentionPolicy === option.value
                                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
                                     : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
                             }`}
                         >
-                            <p className={`font-medium ${
-                                privacySettings.dataRetentionPolicy === option.value
-                                    ? 'text-purple-700 dark:text-purple-300'
-                                    : 'text-navy-900 dark:text-white'
-                            }`}>
+                            <p
+                                className={`font-medium ${
+                                    privacySettings.dataRetentionPolicy === option.value
+                                        ? 'text-purple-700 dark:text-purple-300'
+                                        : 'text-navy-900 dark:text-white'
+                                }`}
+                            >
                                 {option.label}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">{option.desc}</p>
@@ -258,19 +299,27 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     <Shield size={16} className="text-purple-500" />
                     {t('settings.dataPrivacy.security', 'Security')}
                 </h4>
-                
+
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={privacySettings.enablePiiRedaction}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, enablePiiRedaction: val }))}
+                        onChange={(val) => setPrivacySettings((prev) => ({ ...prev, enablePiiRedaction: val }))}
                         label={t('settings.dataPrivacy.piiRedaction', 'Enable PII redaction')}
-                        description={t('settings.dataPrivacy.piiRedactionDesc', 'Automatically redact personally identifiable information in AI interactions')}
+                        description={t(
+                            'settings.dataPrivacy.piiRedactionDesc',
+                            'Automatically redact personally identifiable information in AI interactions',
+                        )}
                     />
                     <ToggleSwitch
                         enabled={privacySettings.allowThirdPartyIntegrations}
-                        onChange={(val) => setPrivacySettings(prev => ({ ...prev, allowThirdPartyIntegrations: val }))}
+                        onChange={(val) =>
+                            setPrivacySettings((prev) => ({ ...prev, allowThirdPartyIntegrations: val }))
+                        }
                         label={t('settings.dataPrivacy.thirdParty', 'Allow third-party integrations')}
-                        description={t('settings.dataPrivacy.thirdPartyDesc', 'Enable connections to external services and apps')}
+                        description={t(
+                            'settings.dataPrivacy.thirdPartyDesc',
+                            'Enable connections to external services and apps',
+                        )}
                     />
                 </div>
             </div>
@@ -281,9 +330,12 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     <Download size={16} className="text-purple-500" />
                     {t('settings.dataPrivacy.exportData', 'Export Your Data')}
                 </h4>
-                
+
                 <p className="text-sm text-slate-500 mb-4">
-                    {t('settings.dataPrivacy.exportDataDesc', 'Download a copy of all your data. This may take some time to prepare.')}
+                    {t(
+                        'settings.dataPrivacy.exportDataDesc',
+                        'Download a copy of all your data. This may take some time to prepare.',
+                    )}
                 </p>
 
                 <button
@@ -292,14 +344,19 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
                 >
                     {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                    {isExporting ? t('settings.dataPrivacy.preparing', 'Preparing...') : t('settings.dataPrivacy.requestExport', 'Request Data Export')}
+                    {isExporting
+                        ? t('settings.dataPrivacy.preparing', 'Preparing...')
+                        : t('settings.dataPrivacy.requestExport', 'Request Data Export')}
                 </button>
 
                 <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
                     <div className="flex items-start gap-2">
                         <Info size={14} className="text-blue-500 mt-0.5" />
                         <p className="text-xs text-blue-700 dark:text-blue-300">
-                            {t('settings.dataPrivacy.exportNote', 'You will receive an email with a download link within 24 hours. The link expires after 7 days.')}
+                            {t(
+                                'settings.dataPrivacy.exportNote',
+                                'You will receive an email with a download link within 24 hours. The link expires after 7 days.',
+                            )}
                         </p>
                     </div>
                 </div>
@@ -311,9 +368,12 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     <Trash2 size={16} />
                     {t('settings.dataPrivacy.dangerZone', 'Danger Zone')}
                 </h4>
-                
+
                 <p className="text-sm text-slate-500 mb-4">
-                    {t('settings.dataPrivacy.deleteDesc', 'Permanently delete your account and all associated data. This action cannot be undone.')}
+                    {t(
+                        'settings.dataPrivacy.deleteDesc',
+                        'Permanently delete your account and all associated data. This action cannot be undone.',
+                    )}
                 </p>
 
                 {!showDeleteConfirm ? (
@@ -333,19 +393,22 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                                     {t('settings.dataPrivacy.confirmDelete', 'Are you sure?')}
                                 </p>
                                 <p className="text-xs text-red-500 mt-1">
-                                    {t('settings.dataPrivacy.confirmDeleteDesc', 'Type your email address to confirm account deletion.')}
+                                    {t(
+                                        'settings.dataPrivacy.confirmDeleteDesc',
+                                        'Type your email address to confirm account deletion.',
+                                    )}
                                 </p>
                             </div>
                         </div>
-                        
+
                         <input
                             type="email"
                             value={deleteConfirmEmail}
-                            onChange={e => setDeleteConfirmEmail(e.target.value)}
+                            onChange={(e) => setDeleteConfirmEmail(e.target.value)}
                             placeholder={currentUser.email}
                             className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-red-200 dark:border-red-500/30 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-red-500/50 outline-none"
                         />
-                        
+
                         <div className="flex gap-2">
                             <button
                                 onClick={handleDeleteAccount}
@@ -356,7 +419,10 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                                 {t('settings.dataPrivacy.confirmDeleteButton', 'Delete My Account')}
                             </button>
                             <button
-                                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmEmail(''); }}
+                                onClick={() => {
+                                    setShowDeleteConfirm(false);
+                                    setDeleteConfirmEmail('');
+                                }}
                                 className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors hover:bg-slate-300 dark:hover:bg-navy-700"
                             >
                                 {t('common.cancel', 'Cancel')}
@@ -378,10 +444,4 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
 };
 
 export default DataPrivacySettings;
-
-
-
-
-
-
 

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, ChevronUp, Loader2, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../../services/api';
 import { usePMOStore } from '../../store/usePMOStore';
-import { CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronUp, ArrowRight, Loader2 } from 'lucide-react';
 
 /**
  * PMO Gate Status - Shows why user can't proceed to next phase
@@ -51,8 +52,8 @@ export const GateStatus: React.FC<GateStatusProps> = ({ projectId, compact = fal
         try {
             const res = await fetch(`/api/stage-gates/${projectId}/current`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             if (!res.ok) throw new Error('Failed to fetch gate status');
@@ -80,8 +81,8 @@ export const GateStatus: React.FC<GateStatusProps> = ({ projectId, compact = fal
     }
 
     const isReady = evaluation.status === 'READY';
-    const metCriteria = evaluation.completionCriteria?.filter(c => c.isMet) || [];
-    const unmetCriteria = evaluation.completionCriteria?.filter(c => !c.isMet) || [];
+    const metCriteria = evaluation.completionCriteria?.filter((c) => c.isMet) || [];
+    const unmetCriteria = evaluation.completionCriteria?.filter((c) => !c.isMet) || [];
     const progress = evaluation.completionCriteria?.length
         ? Math.round((metCriteria.length / evaluation.completionCriteria.length) * 100)
         : 0;
@@ -89,10 +90,11 @@ export const GateStatus: React.FC<GateStatusProps> = ({ projectId, compact = fal
     if (compact) {
         return (
             <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${isReady
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all ${
+                    isReady
                         ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30'
                         : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                    }`}
+                }`}
                 onClick={() => setIsExpanded(!isExpanded)}
                 title={isReady ? 'Ready to proceed' : `${unmetCriteria.length} items missing`}
             >
@@ -112,12 +114,12 @@ export const GateStatus: React.FC<GateStatusProps> = ({ projectId, compact = fal
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isReady ? 'bg-green-500/10' : 'bg-amber-500/10'
-                        }`}>
-                        {isReady
-                            ? <CheckCircle2 size={20} className="text-green-500" />
-                            : <AlertTriangle size={20} className="text-amber-500" />
-                        }
+                    <div className={`p-2 rounded-lg ${isReady ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+                        {isReady ? (
+                            <CheckCircle2 size={20} className="text-green-500" />
+                        ) : (
+                            <AlertTriangle size={20} className="text-amber-500" />
+                        )}
                     </div>
                     <div className="text-left">
                         <div className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -138,9 +140,7 @@ export const GateStatus: React.FC<GateStatusProps> = ({ projectId, compact = fal
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            {progress}%
-                        </span>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{progress}%</span>
                     </div>
 
                     {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

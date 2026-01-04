@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 
@@ -22,17 +23,17 @@ export const useTokenBalance = () => {
         error: null,
         isLowBalance: false,
         isZeroBalance: false,
-        lastUpdated: null
+        lastUpdated: null,
     });
 
     const fetchBalance = useCallback(async () => {
         if (!currentUser?.organizationId) {
-            setState(prev => ({ ...prev, isLoading: false }));
+            setState((prev) => ({ ...prev, isLoading: false }));
             return;
         }
 
         try {
-            setState(prev => ({ ...prev, isLoading: true, error: null }));
+            setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
             const billing = await (Api as any).getOrganizationBillingDetails(currentUser.organizationId);
             const balance = billing.tokenBalance || 0;
@@ -43,14 +44,14 @@ export const useTokenBalance = () => {
                 error: null,
                 isLowBalance: balance < LOW_BALANCE_THRESHOLD && balance >= ZERO_BALANCE_THRESHOLD,
                 isZeroBalance: balance < ZERO_BALANCE_THRESHOLD,
-                lastUpdated: new Date()
+                lastUpdated: new Date(),
             });
         } catch (error: any) {
             console.error('[useTokenBalance] Failed to fetch balance:', error);
-            setState(prev => ({
+            setState((prev) => ({
                 ...prev,
                 isLoading: false,
-                error: error.message || 'Failed to fetch token balance'
+                error: error.message || 'Failed to fetch token balance',
             }));
         }
     }, [currentUser?.organizationId]);
@@ -77,17 +78,9 @@ export const useTokenBalance = () => {
         shouldShowWarning,
         shouldBlockAI,
         LOW_BALANCE_THRESHOLD,
-        ZERO_BALANCE_THRESHOLD
+        ZERO_BALANCE_THRESHOLD,
     };
 };
 
 export default useTokenBalance;
-
-
-
-
-
-
-
-
 

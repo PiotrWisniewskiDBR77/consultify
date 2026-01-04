@@ -1,16 +1,17 @@
+import { motion } from 'framer-motion';
+import { Building, CheckCircle, Globe, Linkedin, Loader2, Mail, MessageSquare, Send } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Mail, Send, MessageSquare, Building, Loader2, CheckCircle, Linkedin, Globe } from 'lucide-react';
-import { EntryTopBar } from '../../components/Landing/EntryTopBar';
-import { EntryFooter } from '../../components/Landing/EntryFooter';
+
 import { DemoButton } from '../../components/Landing/DemoButton';
+import { EntryFooter } from '../../components/Landing/EntryFooter';
+import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 
 // WhatsApp icon component
 const WhatsAppIcon: React.FC<{ size?: number; className?: string }> = ({ size = 20, className }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
     </svg>
 );
 
@@ -40,7 +41,7 @@ interface FormData {
 export const ContactView: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    
+
     const [formData, setFormData] = useState<FormData>({
         name: '',
         email: '',
@@ -61,7 +62,7 @@ export const ContactView: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
         setError(null);
     };
 
@@ -73,11 +74,11 @@ export const ContactView: React.FC = () => {
         try {
             // TODO: Implement actual form submission to backend
             // For now, simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
             // In production, this would be:
             // await Api.submitContactForm(formData);
-            
+
             setIsSubmitted(true);
         } catch (err) {
             setError('Failed to send message. Please try again or email us directly.');
@@ -105,8 +106,10 @@ export const ContactView: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
-                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6">
+                        <span
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
+                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6"
+                        >
                             <Mail size={16} />
                             Contact Us
                         </span>
@@ -119,8 +122,7 @@ export const ContactView: React.FC = () => {
                         </h1>
 
                         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                            Have questions about Consultinity? Want to schedule a demo? 
-                            We'd love to hear from you.
+                            Have questions about Consultinity? Want to schedule a demo? We'd love to hear from you.
                         </p>
                     </motion.div>
                 </div>
@@ -136,15 +138,19 @@ export const ContactView: React.FC = () => {
                                 <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-6">
                                     Contact Information
                                 </h2>
-                                
+
                                 <div className="space-y-6">
                                     <div className="flex items-start gap-4">
                                         <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
                                             <Building size={20} className="text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-navy-950 dark:text-white">{COMPANY.name}</h3>
-                                            <p className="text-slate-600 dark:text-slate-400 text-sm">{COMPANY.address}</p>
+                                            <h3 className="font-semibold text-navy-950 dark:text-white">
+                                                {COMPANY.name}
+                                            </h3>
+                                            <p className="text-slate-600 dark:text-slate-400 text-sm">
+                                                {COMPANY.address}
+                                            </p>
                                             <p className="text-slate-600 dark:text-slate-400 text-sm">{COMPANY.city}</p>
                                         </div>
                                     </div>
@@ -156,13 +162,31 @@ export const ContactView: React.FC = () => {
                                         <div>
                                             <h3 className="font-semibold text-navy-950 dark:text-white">Email</h3>
                                             <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                                General: <a href={`mailto:${COMPANY.email}`} className="text-purple-600 hover:underline">{COMPANY.email}</a>
+                                                General:{' '}
+                                                <a
+                                                    href={`mailto:${COMPANY.email}`}
+                                                    className="text-purple-600 hover:underline"
+                                                >
+                                                    {COMPANY.email}
+                                                </a>
                                             </p>
                                             <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                                Sales: <a href={`mailto:${COMPANY.salesEmail}`} className="text-purple-600 hover:underline">{COMPANY.salesEmail}</a>
+                                                Sales:{' '}
+                                                <a
+                                                    href={`mailto:${COMPANY.salesEmail}`}
+                                                    className="text-purple-600 hover:underline"
+                                                >
+                                                    {COMPANY.salesEmail}
+                                                </a>
                                             </p>
                                             <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                                Support: <a href={`mailto:${COMPANY.supportEmail}`} className="text-purple-600 hover:underline">{COMPANY.supportEmail}</a>
+                                                Support:{' '}
+                                                <a
+                                                    href={`mailto:${COMPANY.supportEmail}`}
+                                                    className="text-purple-600 hover:underline"
+                                                >
+                                                    {COMPANY.supportEmail}
+                                                </a>
                                             </p>
                                         </div>
                                     </div>
@@ -173,7 +197,7 @@ export const ContactView: React.FC = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-navy-950 dark:text-white">WhatsApp</h3>
-                                            <a 
+                                            <a
                                                 href={`https://wa.me/${COMPANY.whatsapp.replace(/\s+/g, '')}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -191,7 +215,14 @@ export const ContactView: React.FC = () => {
                                         <div>
                                             <h3 className="font-semibold text-navy-950 dark:text-white">Web</h3>
                                             <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                                <a href={COMPANY.website} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">dbr77.com</a>
+                                                <a
+                                                    href={COMPANY.website}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-purple-600 hover:underline"
+                                                >
+                                                    dbr77.com
+                                                </a>
                                             </p>
                                         </div>
                                     </div>
@@ -203,7 +234,12 @@ export const ContactView: React.FC = () => {
                                         <div>
                                             <h3 className="font-semibold text-navy-950 dark:text-white">Founder</h3>
                                             <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                                <a href={COMPANY.founderLinkedIn} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
+                                                <a
+                                                    href={COMPANY.founderLinkedIn}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-purple-600 hover:underline"
+                                                >
                                                     Piotr Wiśniewski Ph.D.
                                                 </a>
                                             </p>
@@ -217,12 +253,10 @@ export const ContactView: React.FC = () => {
 
                             {/* Response Time */}
                             <div className="p-6 bg-slate-50 dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10">
-                                <h3 className="font-semibold text-navy-950 dark:text-white mb-2">
-                                    Response Time
-                                </h3>
+                                <h3 className="font-semibold text-navy-950 dark:text-white mb-2">Response Time</h3>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                    We typically respond to all inquiries within 24 business hours. 
-                                    For urgent support issues, please use the chat widget or call us directly.
+                                    We typically respond to all inquiries within 24 business hours. For urgent support
+                                    issues, please use the chat widget or call us directly.
                                 </p>
                             </div>
                         </div>
@@ -247,7 +281,13 @@ export const ContactView: React.FC = () => {
                                     <button
                                         onClick={() => {
                                             setIsSubmitted(false);
-                                            setFormData({ name: '', email: '', company: '', type: 'general', message: '' });
+                                            setFormData({
+                                                name: '',
+                                                email: '',
+                                                company: '',
+                                                type: 'general',
+                                                message: '',
+                                            });
                                         }}
                                         className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors"
                                     >
@@ -255,7 +295,10 @@ export const ContactView: React.FC = () => {
                                     </button>
                                 </motion.div>
                             ) : (
-                                <form onSubmit={handleSubmit} className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 p-8">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 p-8"
+                                >
                                     <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-6">
                                         Send us a Message
                                     </h2>
@@ -323,8 +366,10 @@ export const ContactView: React.FC = () => {
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
                                             >
-                                                {contactTypes.map(type => (
-                                                    <option key={type.value} value={type.value}>{type.label}</option>
+                                                {contactTypes.map((type) => (
+                                                    <option key={type.value} value={type.value}>
+                                                        {type.label}
+                                                    </option>
                                                 ))}
                                             </select>
                                         </div>

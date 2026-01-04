@@ -12,8 +12,9 @@ import * as RapidLeanReportServiceModule from '../services/rapidLeanReportServic
 const RapidLeanReportService = RapidLeanReportServiceModule.default || RapidLeanReportServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 import { rapidLeanPhotoUpload  } from '../middleware/rapidLeanUploadMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import templateData from '../data/rapidLeanObservationTemplates.js';

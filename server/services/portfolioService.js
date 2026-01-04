@@ -5,8 +5,9 @@
  * Provides aggregated data, stats, and bulk operations.
  */
 
-import db from '../database.js';
-import * as queryHelpers from '../src/utils/queryHelpers.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
+import * as queryHelpers from '../dist/utils/queryHelpers.js';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -416,6 +417,7 @@ export default {
     getInitiativeDependencies,
     getRoadmapWaves
 };
+
 
 
 

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InitiativeDetailModal } from '../../../components/InitiativeDetailModal';
+import { InitiativeDetailModal } from '../../components/InitiativeDetailModal';
 
 const mockInitiative = {
     id: 'init-1',
@@ -73,6 +73,7 @@ describe('InitiativeDetailModal Component', () => {
         expect(onSave).toHaveBeenCalled();
     });
 });
+
 
 
 

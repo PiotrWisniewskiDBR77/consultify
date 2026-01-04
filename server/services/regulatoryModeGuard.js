@@ -31,7 +31,7 @@ async function initDeps() {
             { default: db },
             { default: aiAuditLogger }
         ] = await Promise.all([
-            import('../database.js'),
+            import('../src/database/index.js'),
             import('./aiAuditLogger.js')
         ]);
         deps._db = db;

@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from 'react';
 import {
-    Target, CheckCircle2, AlertTriangle, Clock,
-    Users, Calendar, Download, Share2, Loader2,
-    ChevronDown, ChevronUp
+    AlertTriangle,
+    Calendar,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Download,
+    Loader2,
+    Share2,
+    Target,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface Task {
@@ -64,10 +72,10 @@ interface InitiativeExecutionReportProps {
 }
 
 const statusColors: Record<string, string> = {
-    'todo': 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-    'in_progress': 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-    'done': 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-    'blocked': 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+    todo: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+    in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    done: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    blocked: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
 };
 
 export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps> = ({
@@ -75,7 +83,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
     onExportPDF,
     onShare,
     isPublic = false,
-    snapshotData
+    snapshotData,
 }) => {
     const { t } = useTranslation();
     const [report, setReport] = useState<InitiativeReport | null>(snapshotData || null);
@@ -90,7 +98,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`/api/reports/initiative/${initiativeId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
                 if (!response.ok) throw new Error('Failed to load report');
                 const data = await response.json();
@@ -131,9 +139,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                 <div>
                     <div className="flex items-center gap-3 mb-2">
                         <Target className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {report.initiative.title}
-                        </h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{report.initiative.title}</h1>
                     </div>
                     {report.initiative.description && (
                         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mb-2">
@@ -174,16 +180,22 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                 {report.initiative.owner && (
                     <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        <span>{t('reports.owner')}: {report.initiative.owner}</span>
+                        <span>
+                            {t('reports.owner')}: {report.initiative.owner}
+                        </span>
                     </div>
                 )}
                 {report.initiative.dueDate && (
                     <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{t('reports.dueDate')}: {new Date(report.initiative.dueDate).toLocaleDateString()}</span>
+                        <span>
+                            {t('reports.dueDate')}: {new Date(report.initiative.dueDate).toLocaleDateString()}
+                        </span>
                     </div>
                 )}
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[report.initiative.status] || statusColors.todo}`}>
+                <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[report.initiative.status] || statusColors.todo}`}
+                >
                     {report.initiative.status}
                 </span>
             </div>
@@ -234,13 +246,9 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                             <div key={idx} className="flex items-start gap-3">
                                 <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <div className="font-medium text-gray-900 dark:text-white">
-                                        {blocker.task}
-                                    </div>
+                                    <div className="font-medium text-gray-900 dark:text-white">{blocker.task}</div>
                                     {blocker.reason && (
-                                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                                            {blocker.reason}
-                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">{blocker.reason}</div>
                                     )}
                                 </div>
                             </div>
@@ -264,9 +272,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                             >
                                 <div className="flex items-center gap-3">
                                     <Clock className="w-4 h-4 text-orange-500" />
-                                    <span className="font-medium text-gray-900 dark:text-white">
-                                        {deadline.task}
-                                    </span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{deadline.task}</span>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                     {deadline.assignee && <span>{deadline.assignee}</span>}
@@ -293,14 +299,21 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                             className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`w-3 h-3 rounded-full ${task.status === 'done' ? 'bg-green-500' :
-                                    task.status === 'in_progress' ? 'bg-blue-500' :
-                                        task.status === 'blocked' ? 'bg-red-500' : 'bg-gray-400'
-                                    }`} />
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                    {task.title}
-                                </span>
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[task.status] || statusColors.todo}`}>
+                                <div
+                                    className={`w-3 h-3 rounded-full ${
+                                        task.status === 'done'
+                                            ? 'bg-green-500'
+                                            : task.status === 'in_progress'
+                                              ? 'bg-blue-500'
+                                              : task.status === 'blocked'
+                                                ? 'bg-red-500'
+                                                : 'bg-gray-400'
+                                    }`}
+                                />
+                                <span className="font-medium text-gray-900 dark:text-white">{task.title}</span>
+                                <span
+                                    className={`px-2 py-0.5 text-xs rounded-full ${statusColors[task.status] || statusColors.todo}`}
+                                >
                                     {task.status}
                                 </span>
                             </div>

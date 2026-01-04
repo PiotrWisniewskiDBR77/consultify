@@ -1,6 +1,6 @@
 /**
  * Economics View (Enterprise Edition)
- * 
+ *
  * Main view for digitization maturity assessment management.
  * Features:
  * - Analysis Catalog with grid/table view
@@ -10,7 +10,7 @@
  * - Version history
  * - PDF/Excel export
  * - AI recommendations
- * 
+ *
  * Keyboard Shortcuts:
  * - Ctrl+N: New analysis
  * - Ctrl+S: Save current analysis
@@ -20,27 +20,38 @@
  * - Escape: Close modals / Back to catalog
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { SplitLayout } from '../components/SplitLayout';
-import { 
-    FolderOpen, Wrench, BarChart3, GitCompare, Plus, 
-    Upload, ArrowLeft, Calculator, FileText, History,
-    Sparkles, Download, Keyboard
+import {
+    ArrowLeft,
+    BarChart3,
+    Calculator,
+    Download,
+    FileText,
+    FolderOpen,
+    GitCompare,
+    History,
+    Keyboard,
+    Plus,
+    Sparkles,
+    Upload,
+    Wrench,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { AIRecommendationsPanel } from '../components/Economics/AIRecommendationsPanel';
 import { AnalysisCatalog } from '../components/Economics/AnalysisCatalog';
-import { DigitizationToolTab } from '../components/Economics/DigitizationToolTab';
-import { AnalysisResultsPanel } from '../components/Economics/AnalysisResultsPanel';
 import { AnalysisCompareView } from '../components/Economics/AnalysisCompareView';
 import { AnalysisCreateModal } from '../components/Economics/AnalysisCreateModal';
+import { AnalysisResultsPanel } from '../components/Economics/AnalysisResultsPanel';
+import { DigitizationToolTab } from '../components/Economics/DigitizationToolTab';
 import { ExcelImportWizard } from '../components/Economics/ExcelImportWizard';
-import { PDFExportModal } from '../components/Economics/PDFExportModal';
-import { VersionHistoryPanel } from '../components/Economics/VersionHistoryPanel';
-import { AIRecommendationsPanel } from '../components/Economics/AIRecommendationsPanel';
 import { FinancialAnalysisPanel } from '../components/Economics/FinancialAnalysisPanel';
+import { PDFExportModal } from '../components/Economics/PDFExportModal';
 import { DigitizationAnalysis } from '../components/Economics/types';
+import { VersionHistoryPanel } from '../components/Economics/VersionHistoryPanel';
+import { SplitLayout } from '../components/SplitLayout';
 import { Api } from '../services/api';
-import { toast } from 'react-hot-toast';
 
 type EconomicsTab = 'catalog' | 'tool' | 'results' | 'financial' | 'compare';
 
@@ -113,9 +124,27 @@ export const EconomicsView: React.FC = () => {
 
     const tabs = [
         { id: 'catalog' as const, label: 'Katalog analiz', labelEn: 'Analysis Catalog', icon: FolderOpen },
-        { id: 'tool' as const, label: 'Narzędzie oceny', labelEn: 'Evaluation Tool', icon: Wrench, disabled: !selectedAnalysis },
-        { id: 'results' as const, label: 'Wyniki', labelEn: 'Results & Insights', icon: BarChart3, disabled: !selectedAnalysis },
-        { id: 'financial' as const, label: 'Analiza finansowa', labelEn: 'Financial Analysis', icon: Calculator, disabled: !selectedAnalysis },
+        {
+            id: 'tool' as const,
+            label: 'Narzędzie oceny',
+            labelEn: 'Evaluation Tool',
+            icon: Wrench,
+            disabled: !selectedAnalysis,
+        },
+        {
+            id: 'results' as const,
+            label: 'Wyniki',
+            labelEn: 'Results & Insights',
+            icon: BarChart3,
+            disabled: !selectedAnalysis,
+        },
+        {
+            id: 'financial' as const,
+            label: 'Analiza finansowa',
+            labelEn: 'Financial Analysis',
+            icon: Calculator,
+            disabled: !selectedAnalysis,
+        },
         { id: 'compare' as const, label: 'Porównaj', labelEn: 'Compare', icon: GitCompare },
     ];
 
@@ -128,19 +157,19 @@ export const EconomicsView: React.FC = () => {
         setSelectedAnalysis(newAnalysis);
         setShowCreateModal(false);
         setActiveTab('tool');
-        setRefreshKey(k => k + 1);
+        setRefreshKey((k) => k + 1);
     }, []);
 
     const handleImportComplete = useCallback((analysis: DigitizationAnalysis) => {
         setSelectedAnalysis(analysis);
         setShowImportWizard(false);
         setActiveTab('tool');
-        setRefreshKey(k => k + 1);
+        setRefreshKey((k) => k + 1);
     }, []);
 
     const handleAnalysisUpdate = useCallback((updated: DigitizationAnalysis) => {
         setSelectedAnalysis(updated);
-        setRefreshKey(k => k + 1);
+        setRefreshKey((k) => k + 1);
     }, []);
 
     const handleBackToCatalog = useCallback(() => {
@@ -149,10 +178,7 @@ export const EconomicsView: React.FC = () => {
     }, []);
 
     return (
-        <SplitLayout 
-            title="Economics & Value Realization"
-            subtitle="Ocena dojrzałości cyfrowej i analiza wartości"
-        >
+        <SplitLayout title="Economics & Value Realization" subtitle="Ocena dojrzałości cyfrowej i analiza wartości">
             <div className="flex flex-col h-full">
                 {/* Selected Analysis Context Bar */}
                 {selectedAnalysis && (
@@ -164,15 +190,27 @@ export const EconomicsView: React.FC = () => {
                             <div>
                                 <h3 className="text-sm font-semibold text-white">{selectedAnalysis.name}</h3>
                                 <p className="text-xs text-slate-400">
-                                    {selectedAnalysis.projectName ? `Projekt: ${selectedAnalysis.projectName}` : 'Bez projektu'} • 
-                                    Status: <span className={`capitalize ${
-                                        selectedAnalysis.status === 'completed' ? 'text-green-400' :
-                                        selectedAnalysis.status === 'in_progress' ? 'text-yellow-400' : 'text-slate-400'
-                                    }`}>
-                                        {selectedAnalysis.status === 'completed' ? 'Zakończona' :
-                                         selectedAnalysis.status === 'in_progress' ? 'W trakcie' : 'Szkic'}
-                                    </span> •
-                                    Wynik: <span className="text-emerald-400 font-medium">
+                                    {selectedAnalysis.projectName
+                                        ? `Projekt: ${selectedAnalysis.projectName}`
+                                        : 'Bez projektu'}{' '}
+                                    • Status:{' '}
+                                    <span
+                                        className={`capitalize ${
+                                            selectedAnalysis.status === 'completed'
+                                                ? 'text-green-400'
+                                                : selectedAnalysis.status === 'in_progress'
+                                                  ? 'text-yellow-400'
+                                                  : 'text-slate-400'
+                                        }`}
+                                    >
+                                        {selectedAnalysis.status === 'completed'
+                                            ? 'Zakończona'
+                                            : selectedAnalysis.status === 'in_progress'
+                                              ? 'W trakcie'
+                                              : 'Szkic'}
+                                    </span>{' '}
+                                    • Wynik:{' '}
+                                    <span className="text-emerald-400 font-medium">
                                         {selectedAnalysis.overallScore?.toFixed(1) || '0'}/7
                                     </span>
                                 </p>
@@ -217,24 +255,25 @@ export const EconomicsView: React.FC = () => {
 
                 {/* Tab Navigation */}
                 <div className="flex items-center px-6 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 shrink-0">
-                    {tabs.map(tab => (
+                    {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => !tab.disabled && setActiveTab(tab.id)}
                             disabled={tab.disabled}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all
-                                ${activeTab === tab.id
-                                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                                    : tab.disabled 
-                                        ? 'border-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                        : 'border-transparent text-slate-500 hover:text-navy-900 dark:hover:text-white hover:border-slate-300'
+                                ${
+                                    activeTab === tab.id
+                                        ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                                        : tab.disabled
+                                          ? 'border-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                          : 'border-transparent text-slate-500 hover:text-navy-900 dark:hover:text-white hover:border-slate-300'
                                 }`}
                         >
                             <tab.icon size={16} />
                             {tab.label}
                         </button>
                     ))}
-                    
+
                     {/* Action Buttons */}
                     <div className="ml-auto flex items-center gap-2 py-2">
                         <button
@@ -267,15 +306,12 @@ export const EconomicsView: React.FC = () => {
                         />
                     )}
                     {activeTab === 'tool' && selectedAnalysis && (
-                        <DigitizationToolTab 
-                            analysis={selectedAnalysis}
-                            onUpdate={handleAnalysisUpdate}
-                        />
+                        <DigitizationToolTab analysis={selectedAnalysis} onUpdate={handleAnalysisUpdate} />
                     )}
                     {activeTab === 'results' && selectedAnalysis && (
                         <div className="p-6 space-y-6">
                             <AnalysisResultsPanel analysis={selectedAnalysis} />
-                            <AIRecommendationsPanel 
+                            <AIRecommendationsPanel
                                 analysis={selectedAnalysis}
                                 onCreateInitiative={(rec) => {
                                     toast.success(`Rekomendacja "${rec.title}" zaakceptowana`);
@@ -284,39 +320,25 @@ export const EconomicsView: React.FC = () => {
                         </div>
                     )}
                     {activeTab === 'financial' && selectedAnalysis && (
-                        <FinancialAnalysisPanel 
-                            analysis={selectedAnalysis}
-                            onUpdate={handleAnalysisUpdate}
-                        />
+                        <FinancialAnalysisPanel analysis={selectedAnalysis} onUpdate={handleAnalysisUpdate} />
                     )}
-                    {activeTab === 'compare' && (
-                        <AnalysisCompareView />
-                    )}
+                    {activeTab === 'compare' && <AnalysisCompareView />}
                 </div>
             </div>
 
             {/* Create Modal */}
             {showCreateModal && (
-                <AnalysisCreateModal
-                    onClose={() => setShowCreateModal(false)}
-                    onCreate={handleCreateAnalysis}
-                />
+                <AnalysisCreateModal onClose={() => setShowCreateModal(false)} onCreate={handleCreateAnalysis} />
             )}
 
             {/* Import Wizard */}
             {showImportWizard && (
-                <ExcelImportWizard
-                    onClose={() => setShowImportWizard(false)}
-                    onImportComplete={handleImportComplete}
-                />
+                <ExcelImportWizard onClose={() => setShowImportWizard(false)} onImportComplete={handleImportComplete} />
             )}
 
             {/* PDF Export Modal */}
             {showPDFExport && selectedAnalysis && (
-                <PDFExportModal
-                    analysis={selectedAnalysis}
-                    onClose={() => setShowPDFExport(false)}
-                />
+                <PDFExportModal analysis={selectedAnalysis} onClose={() => setShowPDFExport(false)} />
             )}
 
             {/* Version History Panel */}
@@ -326,9 +348,9 @@ export const EconomicsView: React.FC = () => {
                     onClose={() => setShowVersionHistory(false)}
                     onRestore={() => {
                         // Refresh analysis after restore
-                        Api.getDigitizationAnalysis(selectedAnalysis.id).then(updated => {
+                        Api.getDigitizationAnalysis(selectedAnalysis.id).then((updated) => {
                             setSelectedAnalysis(updated);
-                            setRefreshKey(k => k + 1);
+                            setRefreshKey((k) => k + 1);
                         });
                     }}
                 />
@@ -338,4 +360,3 @@ export const EconomicsView: React.FC = () => {
 };
 
 export default EconomicsView;
-

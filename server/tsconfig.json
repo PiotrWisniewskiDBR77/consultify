@@ -19,9 +19,9 @@
     "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
     
-    // Code quality (unused vars disabled to reduce noise - use ESLint instead)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    // Code quality (strict mode - re-enabled after migration)
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
@@ -30,7 +30,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "allowJs": true,
+    "allowJs": false,
     
     // Output settings
     "declaration": true,
@@ -49,7 +49,8 @@
     "emitDecoratorMetadata": true,
     
     // Types
-    "types": ["node", "vitest/globals"],
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     
     // Paths
     "baseUrl": ".",

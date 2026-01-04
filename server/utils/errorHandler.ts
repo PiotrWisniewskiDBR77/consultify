@@ -1,14 +1,12 @@
 /**
  * Error Handler Utility
- * 
+ *
  * Centralized error handling and response formatting.
  * Provides consistent error responses across the API.
  */
 
-/* eslint-disable @typescript-eslint/no-require-imports */
 const express = require('express');
 const logger = require('./logger');
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
  * Error types/codes
@@ -21,7 +19,7 @@ const ERROR_CODES = {
     DATABASE_ERROR: 'DATABASE_ERROR',
     INTERNAL_ERROR: 'INTERNAL_ERROR',
     RATE_LIMIT: 'RATE_LIMIT',
-    BAD_REQUEST: 'BAD_REQUEST'
+    BAD_REQUEST: 'BAD_REQUEST',
 };
 
 /**
@@ -33,8 +31,8 @@ function createError(code, message, details = {}) {
             code,
             message,
             ...details,
-            timestamp: new Date().toISOString()
-        }
+            timestamp: new Date().toISOString(),
+        },
     };
 }
 
@@ -49,9 +47,7 @@ function validationError(message = 'Validation failed', fields = {}) {
  * Handle not found errors
  */
 function notFoundError(resource = 'Resource', id = null) {
-    const message = id 
-        ? `${resource} with ID ${id} not found`
-        : `${resource} not found`;
+    const message = id ? `${resource} with ID ${id} not found` : `${resource} not found`;
     return createError(ERROR_CODES.NOT_FOUND, message);
 }
 
@@ -74,16 +70,15 @@ function forbiddenError(message = 'Access forbidden') {
  */
 function databaseError(error, operation = 'Database operation') {
     logger.error(`[ErrorHandler] ${operation} failed:`, error);
-    
+
     // Don't expose internal database errors to client
-    const message = process.env.NODE_ENV === 'production'
-        ? `${operation} failed. Please try again later.`
-        : error.message;
-    
+    const message =
+        process.env.NODE_ENV === 'production' ? `${operation} failed. Please try again later.` : error.message;
+
     return createError(ERROR_CODES.DATABASE_ERROR, message, {
         operation,
         // Include stack trace only in development
-        ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })
+        ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
     });
 }
 
@@ -92,14 +87,13 @@ function databaseError(error, operation = 'Database operation') {
  */
 function internalError(error, context = 'Internal server error') {
     logger.error(`[ErrorHandler] ${context}:`, error);
-    
-    const message = process.env.NODE_ENV === 'production'
-        ? 'An internal error occurred. Please try again later.'
-        : error.message;
-    
+
+    const message =
+        process.env.NODE_ENV === 'production' ? 'An internal error occurred. Please try again later.' : error.message;
+
     return createError(ERROR_CODES.INTERNAL_ERROR, message, {
         context,
-        ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })
+        ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
     });
 }
 
@@ -112,7 +106,7 @@ function errorHandlerMiddleware(err, req, res, next) {
         stack: err.stack,
         path: req.path,
         method: req.method,
-        userId: req.user?.id
+        userId: req.user?.id,
     });
 
     // Default to internal error
@@ -159,5 +153,5 @@ module.exports = {
     databaseError,
     internalError,
     errorHandlerMiddleware,
-    asyncHandler
+    asyncHandler,
 };

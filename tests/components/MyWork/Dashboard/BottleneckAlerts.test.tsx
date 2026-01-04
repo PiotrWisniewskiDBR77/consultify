@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { BottleneckAlerts } from '../../../components/MyWork/Dashboard/BottleneckAlerts';
+import { BottleneckAlerts } from '../../components/MyWork/Dashboard/BottleneckAlerts';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -38,6 +38,7 @@ describe('BottleneckAlerts Component', () => {
         });
     });
 });
+
 
 
 

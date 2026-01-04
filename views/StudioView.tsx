@@ -1,36 +1,36 @@
 /**
  * StudioView - Main View for Consultify Studio
- * 
+ *
  * Split-panel layout with AI chat and React Flow canvas.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Node, Edge, ReactFlowProvider } from 'reactflow';
-import { 
-    PanelLeft, 
-    PanelLeftClose,
-    Save,
-    FileText,
-    Link2,
-    Download,
-    Settings,
-    History,
-    Loader2,
-    Plus,
-    FolderOpen,
+import {
     ChevronDown,
-    X
+    Download,
+    FileText,
+    FolderOpen,
+    History,
+    Link2,
+    Loader2,
+    PanelLeft,
+    PanelLeftClose,
+    Plus,
+    Save,
+    Settings,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { Edge, Node, ReactFlowProvider } from 'reactflow';
 
+import { useStudioAI } from '../components/Studio/hooks/useStudioAI';
+import { useStudioDocument } from '../components/Studio/hooks/useStudioDocument';
 import { StudioCanvas } from '../components/Studio/StudioCanvas';
 import { StudioChat } from '../components/Studio/StudioChat';
-import { useStudioDocument } from '../components/Studio/hooks/useStudioDocument';
-import { useStudioAI } from '../components/Studio/hooks/useStudioAI';
-import { StudioToolbar } from '../components/Studio/StudioToolbar';
-import { StudioSidebar } from '../components/Studio/StudioSidebar';
 import { StudioExportModal } from '../components/Studio/StudioExportModal';
 import { StudioLinkModal } from '../components/Studio/StudioLinkModal';
+import { StudioSidebar } from '../components/Studio/StudioSidebar';
+import { StudioToolbar } from '../components/Studio/StudioToolbar';
 
 interface StudioViewProps {
     documentId?: string | null;
@@ -45,7 +45,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
     linkedTaskId,
     linkedProjectId,
     linkedInitiativeId,
-    onClose
+    onClose,
 }) => {
     // UI State
     const [showChat, setShowChat] = useState(true);
@@ -69,20 +69,14 @@ export const StudioView: React.FC<StudioViewProps> = ({
         replaceAll,
         saveDocument,
         createDocument,
-        updateMetadata
-    } = useStudioDocument({ 
+        updateMetadata,
+    } = useStudioDocument({
         documentId: initialDocumentId,
-        autoSave: true 
+        autoSave: true,
     });
 
     // AI hook
-    const {
-        messages,
-        isProcessing,
-        sendMessage,
-        clearMessages,
-        getSuggestions
-    } = useStudioAI({
+    const { messages, isProcessing, sendMessage, clearMessages, getSuggestions } = useStudioAI({
         documentId: document?.id,
         onDiagramUpdate: (newNodes, newEdges, action) => {
             if (action === 'replace') {
@@ -90,7 +84,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
             } else {
                 replaceAll(newNodes, newEdges);
             }
-        }
+        },
     });
 
     // Create new document if none provided
@@ -101,15 +95,18 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 type: 'process_flow',
                 linkedTaskId,
                 linkedProjectId,
-                linkedInitiativeId
+                linkedInitiativeId,
             });
         }
     }, [initialDocumentId, document, loading, createDocument, linkedTaskId, linkedProjectId, linkedInitiativeId]);
 
     // Handle chat message
-    const handleSendMessage = useCallback(async (message: string) => {
-        await sendMessage(message, { nodes, edges });
-    }, [sendMessage, nodes, edges]);
+    const handleSendMessage = useCallback(
+        async (message: string) => {
+            await sendMessage(message, { nodes, edges });
+        },
+        [sendMessage, nodes, edges],
+    );
 
     // Handle node click
     const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
@@ -184,7 +181,8 @@ export const StudioView: React.FC<StudioViewProps> = ({
                         {/* Save Status */}
                         {lastSaved && (
                             <span className="text-xs text-slate-500">
-                                Saved {new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                Saved{' '}
+                                {new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         )}
 
@@ -194,11 +192,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                             disabled={saving}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-lg transition-colors text-sm"
                         >
-                            {saving ? (
-                                <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                                <Save size={14} />
-                            )}
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                             Save
                         </button>
 
@@ -224,8 +218,8 @@ export const StudioView: React.FC<StudioViewProps> = ({
                         <button
                             onClick={() => setShowChat(!showChat)}
                             className={`p-2 rounded-lg transition-colors ${
-                                showChat 
-                                    ? 'bg-blue-500/20 text-blue-400' 
+                                showChat
+                                    ? 'bg-blue-500/20 text-blue-400'
                                     : 'text-slate-400 hover:text-white hover:bg-white/10'
                             }`}
                             title={showChat ? 'Hide AI Chat' : 'Show AI Chat'}
@@ -313,7 +307,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                         currentLinks={{
                             taskId: document?.linkedTaskId,
                             projectId: document?.linkedProjectId,
-                            initiativeId: document?.linkedInitiativeId
+                            initiativeId: document?.linkedInitiativeId,
                         }}
                         onLink={(links) => {
                             updateMetadata(links);
@@ -329,12 +323,4 @@ export const StudioView: React.FC<StudioViewProps> = ({
 };
 
 export default StudioView;
-
-
-
-
-
-
-
-
 

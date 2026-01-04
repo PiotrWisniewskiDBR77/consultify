@@ -6,7 +6,8 @@
  * All external queries are logged for audit.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import WebSearchService from './webSearchService.js';
 import { v4 as uuidv4 } from 'uuid';
 

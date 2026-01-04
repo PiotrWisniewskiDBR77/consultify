@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    History,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
-    RotateCcw,
+    Clock,
+    Edit,
     Eye,
-    User,
     FileText,
     GitCommit,
+    History,
     RefreshCw,
-    Clock,
-    CheckCircle2,
-    Edit,
-    Upload
+    RotateCcw,
+    Upload,
+    User,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import type { PlaybookTemplateVersionHistory as VersionType } from '../../types';
 
 interface PlaybookTemplateVersionHistoryProps {
@@ -25,7 +26,7 @@ interface PlaybookTemplateVersionHistoryProps {
 export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHistoryProps> = ({
     templateId,
     currentVersion,
-    onRestore
+    onRestore,
 }) => {
     const token = localStorage.getItem('token');
 
@@ -37,7 +38,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
     const loadVersions = useCallback(async () => {
         try {
             const res = await fetch(`/api/content/playbooks/templates/${templateId}/versions`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -62,13 +63,10 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
         setRestoring(version);
         try {
-            const res = await fetch(
-                `/api/content/playbooks/templates/${templateId}/versions/${version}/restore`,
-                {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await fetch(`/api/content/playbooks/templates/${templateId}/versions/${version}/restore`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (res.ok) {
                 await loadVersions();
@@ -101,11 +99,13 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
             CREATE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
             UPDATE: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
             PUBLISH: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
-            RESTORE: 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+            RESTORE: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
         };
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border ${styles[type] || 'bg-slate-500/10 text-slate-400 border-slate-500/30'}`}>
+            <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border ${styles[type] || 'bg-slate-500/10 text-slate-400 border-slate-500/30'}`}
+            >
                 {getChangeTypeIcon(type)}
                 {type}
             </span>
@@ -150,17 +150,19 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                             return (
                                 <div key={version.id} className="relative pl-10">
                                     {/* Timeline dot */}
-                                    <div className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
-                                        isCurrent
-                                            ? 'bg-violet-500 border-violet-400'
-                                            : 'bg-slate-800 border-slate-600'
-                                    }`} />
+                                    <div
+                                        className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
+                                            isCurrent
+                                                ? 'bg-violet-500 border-violet-400'
+                                                : 'bg-slate-800 border-slate-600'
+                                        }`}
+                                    />
 
-                                    <div className={`bg-slate-800/50 border rounded-lg overflow-hidden ${
-                                        isCurrent
-                                            ? 'border-violet-500/30'
-                                            : 'border-slate-700/50'
-                                    }`}>
+                                    <div
+                                        className={`bg-slate-800/50 border rounded-lg overflow-hidden ${
+                                            isCurrent ? 'border-violet-500/30' : 'border-slate-700/50'
+                                        }`}
+                                    >
                                         {/* Header */}
                                         <button
                                             onClick={() => setExpandedVersion(isExpanded ? null : version.version)}
@@ -168,9 +170,11 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`font-mono font-semibold ${
-                                                        isCurrent ? 'text-violet-400' : 'text-white'
-                                                    }`}>
+                                                    <span
+                                                        className={`font-mono font-semibold ${
+                                                            isCurrent ? 'text-violet-400' : 'text-white'
+                                                        }`}
+                                                    >
                                                         v{version.version}
                                                     </span>
                                                     {isCurrent && (
@@ -297,10 +301,4 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 };
 
 export default PlaybookTemplateVersionHistory;
-
-
-
-
-
-
 

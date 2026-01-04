@@ -1,6 +1,6 @@
 /**
  * RACICell - RACI Matrix cell
- * 
+ *
  * Cell node for RACI (Responsible, Accountable, Consulted, Informed) matrices.
  */
 
@@ -15,26 +15,23 @@ interface RACICellData {
     headerType?: 'task' | 'role';
 }
 
-export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
-    data,
-    selected
-}: any) => {
+export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ data, selected }: any) => {
     const { value, task, role, isHeader = false, headerType } = data;
 
     const valueColors = {
-        'R': 'bg-blue-500/30 text-blue-400 border-blue-500/50',
-        'A': 'bg-red-500/30 text-red-400 border-red-500/50',
-        'C': 'bg-amber-500/30 text-amber-400 border-amber-500/50',
-        'I': 'bg-green-500/30 text-green-400 border-green-500/50',
-        '': 'bg-slate-800/50 text-slate-500 border-slate-600/50'
+        R: 'bg-blue-500/30 text-blue-400 border-blue-500/50',
+        A: 'bg-red-500/30 text-red-400 border-red-500/50',
+        C: 'bg-amber-500/30 text-amber-400 border-amber-500/50',
+        I: 'bg-green-500/30 text-green-400 border-green-500/50',
+        '': 'bg-slate-800/50 text-slate-500 border-slate-600/50',
     };
 
     const valueLabels = {
-        'R': 'Responsible',
-        'A': 'Accountable',
-        'C': 'Consulted',
-        'I': 'Informed',
-        '': '-'
+        R: 'Responsible',
+        A: 'Accountable',
+        C: 'Consulted',
+        I: 'Informed',
+        '': '-',
     };
 
     if (isHeader) {
@@ -42,16 +39,15 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
             <div
                 className={`
                     w-32 h-12 flex items-center justify-center border transition-all duration-200
-                    ${headerType === 'task'
-                        ? 'bg-slate-700 border-slate-600 text-white font-medium'
-                        : 'bg-slate-800 border-slate-700 text-slate-300 font-medium -rotate-45'
+                    ${
+                        headerType === 'task'
+                            ? 'bg-slate-700 border-slate-600 text-white font-medium'
+                            : 'bg-slate-800 border-slate-700 text-slate-300 font-medium -rotate-45'
                     }
                     ${selected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-slate-900' : ''}
                 `}
             >
-                <span className="text-xs truncate px-2">
-                    {headerType === 'task' ? task : role}
-                </span>
+                <span className="text-xs truncate px-2">{headerType === 'task' ? task : role}</span>
             </div>
         );
     }
@@ -65,9 +61,7 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
             `}
             title={(valueLabels as any)[value]}
         >
-            <span className="text-2xl font-bold">
-                {value || '-'}
-            </span>
+            <span className="text-2xl font-bold">{value || '-'}</span>
         </div>
     );
 });
@@ -75,12 +69,4 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({
 RACICell.displayName = 'RACICell';
 
 export default RACICell;
-
-
-
-
-
-
-
-
 

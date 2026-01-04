@@ -1,18 +1,19 @@
 /**
  * InlineResponseFeedback Component
- * 
+ *
  * Non-intrusive inline feedback collector for AI responses.
  * Allows users to rate responses and provide detailed feedback
  * on length, detail level, and format preferences.
- * 
+ *
  * Part of the AI Response Personalization System
- * 
+ *
  * @version 1.0.0
  */
 
+import { Brain, ChevronDown, ChevronUp, MessageSquare, Send, ThumbsDown, ThumbsUp, X, Zap } from 'lucide-react';
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, Zap, MessageSquare, Brain, Send, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
 import { ResponseFeedback } from '../../types';
 
 interface InlineResponseFeedbackProps {
@@ -30,7 +31,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     responseMode,
     responseLength,
     onFeedback,
-    compact = false
+    compact = false,
 }) => {
     const { t } = useTranslation();
     const [expanded, setExpanded] = useState(false);
@@ -40,11 +41,11 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     const handleQuickFeedback = (rating: 'positive' | 'negative') => {
         const completeFeedback: ResponseFeedback = {
             rating,
-            ...feedback
+            ...feedback,
         };
         onFeedback(completeFeedback);
         setSubmitted(true);
-        
+
         // Reset after animation
         setTimeout(() => {
             setSubmitted(false);
@@ -57,19 +58,19 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
         if (!feedback.rating) {
             setFeedback({ ...feedback, rating: 'neutral' });
         }
-        
+
         const completeFeedback: ResponseFeedback = {
             rating: feedback.rating || 'neutral',
             lengthFeedback: feedback.lengthFeedback,
             detailFeedback: feedback.detailFeedback,
             formatFeedback: feedback.formatFeedback,
             wantedMode: feedback.wantedMode,
-            customFeedback: feedback.customFeedback
+            customFeedback: feedback.customFeedback,
         };
-        
+
         onFeedback(completeFeedback);
         setSubmitted(true);
-        
+
         setTimeout(() => {
             setSubmitted(false);
             setFeedback({});
@@ -135,9 +136,9 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                 >
                     <ThumbsDown size={14} />
                 </button>
-                
+
                 <div className="w-px h-4 bg-white/10 mx-1" />
-                
+
                 <button
                     onClick={() => setExpanded(!expanded)}
                     className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-1 rounded hover:bg-white/5"
@@ -172,8 +173,8 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                             {[
                                 { value: 'too_short', label: 'Za krótka', icon: '↓' },
                                 { value: 'just_right', label: 'W sam raz', icon: '✓' },
-                                { value: 'too_long', label: 'Za długa', icon: '↑' }
-                            ].map(opt => (
+                                { value: 'too_long', label: 'Za długa', icon: '↑' },
+                            ].map((opt) => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setFeedback({ ...feedback, lengthFeedback: opt.value as any })}
@@ -196,8 +197,8 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                             {[
                                 { value: 'needs_more_detail', label: 'Potrzebuję więcej' },
                                 { value: 'good_detail', label: 'Odpowiedni' },
-                                { value: 'too_detailed', label: 'Za szczegółowo' }
-                            ].map(opt => (
+                                { value: 'too_detailed', label: 'Za szczegółowo' },
+                            ].map((opt) => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setFeedback({ ...feedback, detailFeedback: opt.value as any })}
@@ -219,9 +220,14 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                         <div className="flex gap-1.5">
                             {[
                                 { value: 'quick', label: 'Quick', icon: <Zap size={12} />, color: 'amber' },
-                                { value: 'standard', label: 'Standard', icon: <MessageSquare size={12} />, color: 'blue' },
-                                { value: 'deepStudy', label: 'Deep Study', icon: <Brain size={12} />, color: 'purple' }
-                            ].map(opt => (
+                                {
+                                    value: 'standard',
+                                    label: 'Standard',
+                                    icon: <MessageSquare size={12} />,
+                                    color: 'blue',
+                                },
+                                { value: 'deepStudy', label: 'Deep Study', icon: <Brain size={12} />, color: 'purple' },
+                            ].map((opt) => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setFeedback({ ...feedback, wantedMode: opt.value as any })}
@@ -276,12 +282,4 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
 };
 
 export default InlineResponseFeedback;
-
-
-
-
-
-
-
-
 

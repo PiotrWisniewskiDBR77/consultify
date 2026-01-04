@@ -1,12 +1,13 @@
 /**
  * Billing Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for billing routes - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Express, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('Billing Routes', () => {
@@ -63,27 +64,27 @@ describe('Billing Routes', () => {
     describe('GET /api/billing/stats', () => {
         it('should return billing stats for superadmin', async () => {
             // Mock database responses
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
-                if (sql.includes('MRR')) {
-                    callback(null, { mrr: 1000 });
-                } else if (sql.includes('revenue')) {
-                    callback(null, { total_revenue: 5000, invoice_count: 10 });
-                } else if (sql.includes('unpaid')) {
-                    callback(null, { count: 2, total_amount: 500 });
-                }
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => {
+                    if (sql.includes('MRR')) {
+                        callback(null, { mrr: 1000 });
+                    } else if (sql.includes('revenue')) {
+                        callback(null, { total_revenue: 5000, invoice_count: 10 });
+                    } else if (sql.includes('unpaid')) {
+                        callback(null, { count: 2, total_amount: 500 });
+                    }
+                },
+            );
 
-            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
-                if (sql.includes('subscriptionsByPlan')) {
-                    callback(null, [
-                        { plan_name: 'Basic', price_monthly: 29, subscriber_count: 5 },
-                    ]);
-                } else if (sql.includes('trends')) {
-                    callback(null, [
-                        { date: '2024-01-01', new_subscriptions: 2, churned: 0 },
-                    ]);
-                }
-            });
+            (mockDb.all as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => {
+                    if (sql.includes('subscriptionsByPlan')) {
+                        callback(null, [{ plan_name: 'Basic', price_monthly: 29, subscriber_count: 5 }]);
+                    } else if (sql.includes('trends')) {
+                        callback(null, [{ date: '2024-01-01', new_subscriptions: 2, churned: 0 }]);
+                    }
+                },
+            );
 
             // Test would go here - requires actual route handler import
             expect(true).toBe(true);
@@ -220,9 +221,11 @@ describe('Billing Routes', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             // Test would verify error handling
             expect(true).toBe(true);
@@ -236,4 +239,3 @@ describe('Billing Routes', () => {
         });
     });
 });
-

@@ -5,9 +5,9 @@
  * Includes initiatives across all statuses, roadmap waves, and dependencies.
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-import queryHelpers from '../utils/queryHelpers.js';
+import queryHelpers from '../src/utils/queryHelpers.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // ============================================

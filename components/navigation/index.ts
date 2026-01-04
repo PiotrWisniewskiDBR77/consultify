@@ -1,14 +1,2 @@
 export { BottomNavigation } from './BottomNavigation';
 
-
-
-
-
-
-
-
-
-
-
-
-

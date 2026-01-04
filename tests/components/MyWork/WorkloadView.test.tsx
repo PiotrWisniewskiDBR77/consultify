@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { WorkloadView } from '../../../components/MyWork/WorkloadView';
+import { WorkloadView } from '../../components/MyWork/WorkloadView';
 import { Api } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
@@ -34,6 +34,7 @@ describe('WorkloadView Component', () => {
         });
     });
 });
+
 
 
 

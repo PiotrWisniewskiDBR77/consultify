@@ -1,8 +1,8 @@
 /**
  * Admin PageHeader Component
- * 
+ *
  * Clean page header for Admin module
- * 
+ *
  * Key principles:
  * - Reduced title size (text-xl vs text-2xl)
  * - font-semibold instead of font-bold
@@ -10,8 +10,8 @@
  * - Smaller subtitle margin
  */
 
-import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import React from 'react';
 
 interface PageHeaderProps {
     title: string;
@@ -45,19 +45,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50 tracking-tight">
                             {title}
                         </h1>
-                        {subtitle && (
-                            <p className="text-sm text-slate-500 mt-0.5">
-                                {subtitle}
-                            </p>
-                        )}
+                        {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
                     </div>
                 </div>
 
-                {action && (
-                    <div className="flex items-center gap-2">
-                        {action}
-                    </div>
-                )}
+                {action && <div className="flex items-center gap-2">{action}</div>}
             </div>
         </header>
     );
@@ -71,12 +63,7 @@ interface SectionHeaderProps {
     className?: string;
 }
 
-export const SectionHeader: React.FC<SectionHeaderProps> = ({
-    title,
-    subtitle,
-    action,
-    className = '',
-}) => {
+export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, subtitle, action, className = '' }) => {
     return (
         <div className={`flex items-start justify-between mb-4 ${className}`}>
             <div>
@@ -124,11 +111,4 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
 };
 
 export default PageHeader;
-
-
-
-
-
-
-
 

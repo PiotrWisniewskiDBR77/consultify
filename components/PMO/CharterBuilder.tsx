@@ -1,29 +1,30 @@
 /**
  * CharterBuilder
- * 
+ *
  * Comprehensive initiative charter editing component.
- * Includes all charter fields: problem statement, deliverables, 
+ * Includes all charter fields: problem statement, deliverables,
  * success criteria, scope, risks, and budget.
  */
 
-import React, { useState, useCallback } from 'react';
 import {
-    FileText,
-    Target,
-    ListChecks,
     AlertTriangle,
-    DollarSign,
     Calendar,
-    User,
-    Plus,
-    X,
-    Save,
-    Loader2,
     CheckCircle2,
-    Minus
+    DollarSign,
+    FileText,
+    ListChecks,
+    Loader2,
+    Minus,
+    Plus,
+    Save,
+    Target,
+    User,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 import { InitiativeCompletenessChecker } from './InitiativeCompletenessChecker';
 
 interface Owner {
@@ -71,7 +72,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
     users = [],
     onSave,
     onCancel,
-    readOnly = false
+    readOnly = false,
 }) => {
     const [formData, setFormData] = useState<CharterData>({
         ...initialData,
@@ -79,21 +80,21 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
         successCriteria: initialData.successCriteria || [],
         scopeIn: initialData.scopeIn || [],
         scopeOut: initialData.scopeOut || [],
-        keyRisks: initialData.keyRisks || []
+        keyRisks: initialData.keyRisks || [],
     });
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState<string>('overview');
 
     // Update field
     const updateField = <K extends keyof CharterData>(field: K, value: CharterData[K]) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     // Add item to array field
     const addToArray = (field: 'deliverables' | 'successCriteria' | 'scopeIn' | 'scopeOut' | 'keyRisks') => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: [...(prev[field] || []), '']
+            [field]: [...(prev[field] || []), ''],
         }));
     };
 
@@ -101,22 +102,22 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
     const updateArrayItem = (
         field: 'deliverables' | 'successCriteria' | 'scopeIn' | 'scopeOut' | 'keyRisks',
         index: number,
-        value: string
+        value: string,
     ) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: (prev[field] || []).map((item, i) => i === index ? value : item)
+            [field]: (prev[field] || []).map((item, i) => (i === index ? value : item)),
         }));
     };
 
     // Remove array item
     const removeArrayItem = (
         field: 'deliverables' | 'successCriteria' | 'scopeIn' | 'scopeOut' | 'keyRisks',
-        index: number
+        index: number,
     ) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: (prev[field] || []).filter((_, i) => i !== index)
+            [field]: (prev[field] || []).filter((_, i) => i !== index),
         }));
     };
 
@@ -127,11 +128,11 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
             // Clean up empty array items
             const cleanedData = {
                 ...formData,
-                deliverables: (formData.deliverables || []).filter(d => d.trim()),
-                successCriteria: (formData.successCriteria || []).filter(s => s.trim()),
-                scopeIn: (formData.scopeIn || []).filter(s => s.trim()),
-                scopeOut: (formData.scopeOut || []).filter(s => s.trim()),
-                keyRisks: (formData.keyRisks || []).filter(r => r.trim())
+                deliverables: (formData.deliverables || []).filter((d) => d.trim()),
+                successCriteria: (formData.successCriteria || []).filter((s) => s.trim()),
+                scopeIn: (formData.scopeIn || []).filter((s) => s.trim()),
+                scopeOut: (formData.scopeOut || []).filter((s) => s.trim()),
+                keyRisks: (formData.keyRisks || []).filter((r) => r.trim()),
             };
 
             await Api.put(`/initiatives/${initiativeId}`, cleanedData);
@@ -151,7 +152,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
         { id: 'scope', label: 'Scope', icon: <CheckCircle2 size={16} /> },
         { id: 'risks', label: 'Risks', icon: <AlertTriangle size={16} /> },
         { id: 'budget', label: 'Budget & Timeline', icon: <DollarSign size={16} /> },
-        { id: 'owners', label: 'Owners', icon: <User size={16} /> }
+        { id: 'owners', label: 'Owners', icon: <User size={16} /> },
     ];
 
     return (
@@ -159,9 +160,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
             {/* Header with completeness */}
             <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                        Initiative Charter
-                    </h2>
+                    <h2 className="text-lg font-bold text-navy-900 dark:text-white">Initiative Charter</h2>
                     {!readOnly && (
                         <div className="flex items-center gap-2">
                             {onCancel && (
@@ -189,7 +188,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
             {/* Section Navigation */}
             <div className="shrink-0 px-6 py-2 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950 overflow-x-auto">
                 <div className="flex items-center gap-1">
-                    {sections.map(section => (
+                    {sections.map((section) => (
                         <button
                             key={section.id}
                             onClick={() => setActiveSection(section.id)}
@@ -273,7 +272,9 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="font-medium text-navy-900 dark:text-white">Deliverables</h3>
-                                <p className="text-sm text-slate-500">What tangible outputs will this initiative produce?</p>
+                                <p className="text-sm text-slate-500">
+                                    What tangible outputs will this initiative produce?
+                                </p>
                             </div>
                             {!readOnly && (
                                 <button
@@ -506,7 +507,12 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                                 <input
                                     type="number"
                                     value={formData.businessValue || ''}
-                                    onChange={(e) => updateField('businessValue', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'businessValue',
+                                            e.target.value ? parseFloat(e.target.value) : undefined,
+                                        )
+                                    }
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                                 />
@@ -518,7 +524,12 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                                 <input
                                     type="number"
                                     value={formData.expectedRoi || ''}
-                                    onChange={(e) => updateField('expectedRoi', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'expectedRoi',
+                                            e.target.value ? parseFloat(e.target.value) : undefined,
+                                        )
+                                    }
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                                 />
@@ -533,7 +544,12 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                                 <input
                                     type="number"
                                     value={formData.costCapex || ''}
-                                    onChange={(e) => updateField('costCapex', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'costCapex',
+                                            e.target.value ? parseFloat(e.target.value) : undefined,
+                                        )
+                                    }
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                                 />
@@ -545,7 +561,9 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                                 <input
                                     type="number"
                                     value={formData.costOpex || ''}
-                                    onChange={(e) => updateField('costOpex', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                    onChange={(e) =>
+                                        updateField('costOpex', e.target.value ? parseFloat(e.target.value) : undefined)
+                                    }
                                     disabled={readOnly}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                                 />
@@ -595,15 +613,13 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                             >
                                 <option value="">Select Business Owner</option>
-                                {users.map(user => (
+                                {users.map((user) => (
                                     <option key={user.id} value={user.id}>
                                         {user.firstName} {user.lastName}
                                     </option>
                                 ))}
                             </select>
-                            <p className="text-xs text-slate-500 mt-1">
-                                Person accountable for business outcomes
-                            </p>
+                            <p className="text-xs text-slate-500 mt-1">Person accountable for business outcomes</p>
                         </div>
 
                         <div>
@@ -617,15 +633,13 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
                             >
                                 <option value="">Select Execution Owner</option>
-                                {users.map(user => (
+                                {users.map((user) => (
                                     <option key={user.id} value={user.id}>
                                         {user.firstName} {user.lastName}
                                     </option>
                                 ))}
                             </select>
-                            <p className="text-xs text-slate-500 mt-1">
-                                Person responsible for delivery
-                            </p>
+                            <p className="text-xs text-slate-500 mt-1">Person responsible for delivery</p>
                         </div>
                     </div>
                 )}
@@ -635,12 +649,4 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
 };
 
 export default CharterBuilder;
-
-
-
-
-
-
-
-
 

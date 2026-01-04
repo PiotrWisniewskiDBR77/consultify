@@ -1,7 +1,7 @@
 /**
  * AI Analytics Dashboard
  * Step 18: Outcomes, ROI & Continuous Learning Loop
- * 
+ *
  * Executive dashboard for AI action/playbook analytics:
  * - Approval breakdown (manual vs auto)
  * - Execution success rates
@@ -11,15 +11,37 @@
  * - Export functionality
  */
 
-import React, { useState, useEffect } from 'react';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line, Legend
-} from 'recharts';
-import {
-    TrendingUp, DollarSign, Clock, CheckCircle, XCircle, AlertTriangle,
-    Play, Download, RefreshCw, Activity, Zap, Target
+    Activity,
+    AlertTriangle,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Download,
+    Play,
+    RefreshCw,
+    Target,
+    TrendingUp,
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Legend,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+
 import { Api } from '../services/api';
 
 interface DashboardData {
@@ -45,7 +67,17 @@ interface DashboardData {
         completed: number;
         failed: number;
         completion_rate: number;
-        by_playbook: Record<string, { name: string; total: number; completed: number; failed: number; completion_rate: number; avg_duration_mins: number | null }>;
+        by_playbook: Record<
+            string,
+            {
+                name: string;
+                total: number;
+                completed: number;
+                failed: number;
+                completion_rate: number;
+                avg_duration_mins: number | null;
+            }
+        >;
     };
     deadLetter: {
         total_jobs: number;
@@ -76,7 +108,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
         from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        to: new Date().toISOString().split('T')[0]
+        to: new Date().toISOString().split('T')[0],
     });
     const [exporting, setExporting] = useState(false);
 
@@ -142,7 +174,9 @@ export const AIAnalyticsDashboard: React.FC = () => {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
                 <AlertTriangle className="w-5 h-5 inline mr-2" />
                 {error}
-                <button onClick={loadData} className="ml-4 text-red-600 underline">Retry</button>
+                <button onClick={loadData} className="ml-4 text-red-600 underline">
+                    Retry
+                </button>
             </div>
         );
     }
@@ -154,19 +188,19 @@ export const AIAnalyticsDashboard: React.FC = () => {
         { name: 'Auto-Approved', value: data.approvals.auto_approved, color: '#10b981' },
         { name: 'Manual Approved', value: data.approvals.manual_approved, color: '#6366f1' },
         { name: 'Rejected', value: data.approvals.rejected, color: '#ef4444' },
-        { name: 'Modified', value: data.approvals.modified, color: '#f59e0b' }
-    ].filter(d => d.value > 0);
+        { name: 'Modified', value: data.approvals.modified, color: '#f59e0b' },
+    ].filter((d) => d.value > 0);
 
     const executionData = [
         { name: 'Success', value: data.actions.success_count, fill: '#10b981' },
-        { name: 'Failed', value: data.actions.failed_count, fill: '#ef4444' }
+        { name: 'Failed', value: data.actions.failed_count, fill: '#ef4444' },
     ];
 
     const playbookData = Object.entries(data.playbooks.by_playbook || {}).map(([key, pb]) => ({
         name: pb.name || key,
         completed: pb.completed,
         failed: pb.failed,
-        rate: pb.completion_rate
+        rate: pb.completion_rate,
     }));
 
     return (
@@ -175,9 +209,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Analytics Dashboard</h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        Outcomes, ROI & Learning Loop
-                    </p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Outcomes, ROI & Learning Loop</p>
                 </div>
                 <div className="flex items-center space-x-4">
                     {/* Date Range */}
@@ -185,14 +217,14 @@ export const AIAnalyticsDashboard: React.FC = () => {
                         <input
                             type="date"
                             value={dateRange.from}
-                            onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                            onChange={(e) => setDateRange((prev) => ({ ...prev, from: e.target.value }))}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                         <span className="text-gray-500">to</span>
                         <input
                             type="date"
                             value={dateRange.to}
-                            onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                            onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                     </div>
@@ -277,22 +309,34 @@ export const AIAnalyticsDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Execution Success Rate</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Execution Success Rate
+                        </span>
                         <CheckCircle className="w-5 h-5 text-green-500" />
                     </div>
                     <div className="text-3xl font-bold text-gray-900 dark:text-white">{data.actions.success_rate}%</div>
                     <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${data.actions.success_rate}%` }}></div>
+                        <div
+                            className="h-full bg-green-500 rounded-full"
+                            style={{ width: `${data.actions.success_rate}%` }}
+                        ></div>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Playbook Completion Rate</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Playbook Completion Rate
+                        </span>
                         <Play className="w-5 h-5 text-indigo-500" />
                     </div>
-                    <div className="text-3xl font-bold text-gray-900 dark:text-white">{data.playbooks.completion_rate}%</div>
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {data.playbooks.completion_rate}%
+                    </div>
                     <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${data.playbooks.completion_rate}%` }}></div>
+                        <div
+                            className="h-full bg-indigo-500 rounded-full"
+                            style={{ width: `${data.playbooks.completion_rate}%` }}
+                        ></div>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -300,9 +344,14 @@ export const AIAnalyticsDashboard: React.FC = () => {
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Dead-Letter Rate</span>
                         <AlertTriangle className="w-5 h-5 text-red-500" />
                     </div>
-                    <div className="text-3xl font-bold text-gray-900 dark:text-white">{data.deadLetter.dead_letter_rate}%</div>
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {data.deadLetter.dead_letter_rate}%
+                    </div>
                     <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-red-500 rounded-full" style={{ width: `${Math.min(data.deadLetter.dead_letter_rate, 100)}%` }}></div>
+                        <div
+                            className="h-full bg-red-500 rounded-full"
+                            style={{ width: `${Math.min(data.deadLetter.dead_letter_rate, 100)}%` }}
+                        ></div>
                     </div>
                 </div>
             </div>
@@ -343,11 +392,15 @@ export const AIAnalyticsDashboard: React.FC = () => {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">{data.approvals.auto_approval_rate}%</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {data.approvals.auto_approval_rate}%
+                            </div>
                             <div className="text-gray-500 dark:text-gray-400">Auto-Approval Rate</div>
                         </div>
                         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">{data.approvals.total_decisions}</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {data.approvals.total_decisions}
+                            </div>
                             <div className="text-gray-500 dark:text-gray-400">Total Decisions</div>
                         </div>
                     </div>
@@ -370,7 +423,9 @@ export const AIAnalyticsDashboard: React.FC = () => {
                     <div className="mt-4 flex justify-between text-sm">
                         <div className="flex items-center">
                             <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                            <span className="text-gray-600 dark:text-gray-400">{data.actions.success_count} successful</span>
+                            <span className="text-gray-600 dark:text-gray-400">
+                                {data.actions.success_count} successful
+                            </span>
                         </div>
                         <div className="flex items-center">
                             <XCircle className="w-4 h-4 text-red-500 mr-1" />
@@ -388,20 +443,35 @@ export const AIAnalyticsDashboard: React.FC = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Playbook</th>
-                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Completed</th>
-                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Failed</th>
-                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Completion Rate</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        Playbook
+                                    </th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        Completed
+                                    </th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        Failed
+                                    </th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        Completion Rate
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {playbookData.map((pb, idx) => (
-                                    <tr key={idx} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{pb.name}</td>
+                                    <tr
+                                        key={idx}
+                                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
+                                            {pb.name}
+                                        </td>
                                         <td className="py-3 px-4 text-sm text-right text-green-600">{pb.completed}</td>
                                         <td className="py-3 px-4 text-sm text-right text-red-600">{pb.failed}</td>
                                         <td className="py-3 px-4 text-sm text-right">
-                                            <span className={`px-2 py-1 rounded ${pb.rate >= 80 ? 'bg-green-100 text-green-700' : pb.rate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                            <span
+                                                className={`px-2 py-1 rounded ${pb.rate >= 80 ? 'bg-green-100 text-green-700' : pb.rate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}
+                                            >
                                                 {pb.rate}%
                                             </span>
                                         </td>

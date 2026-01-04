@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { SplitLayout } from '../components/SplitLayout';
-import { useAppStore } from '../store/useAppStore';
-import { Api } from '../services/api';
 // import { translations } from '../translations';
 import {
-    BarChart3, Users, DollarSign, TrendingUp,
-    Activity, ArrowUpRight, ArrowDownRight, PieChart
+    Activity,
+    ArrowDownRight,
+    ArrowUpRight,
+    BarChart3,
+    DollarSign,
+    PieChart,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { SplitLayout } from '../components/SplitLayout';
 import { sendMessageToAI } from '../services/ai/gemini';
+import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 
 interface HealthData {
     initiativesByStatus?: Array<{ status: string; count: number }>;
@@ -61,9 +68,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subValue, trend, 
     </div>
 );
 export const LeadershipDashboardView: React.FC = () => {
-    const {
-        currentUser, addChatMessage: addMessage
-    } = useAppStore();
+    const { currentUser, addChatMessage: addMessage } = useAppStore();
     // State for dashboard data
     const [healthData, setHealthData] = useState<HealthData | null>(null);
     const [performanceData, setPerformanceData] = useState<PerformanceUser[]>([]);
@@ -78,13 +83,13 @@ export const LeadershipDashboardView: React.FC = () => {
                 const [healthRes, perfRes, ecoRes] = await Promise.all([
                     Api.getAnalyticsHealth(),
                     Api.getAnalyticsPerformance(),
-                    Api.getAnalyticsEconomics()
+                    Api.getAnalyticsEconomics(),
                 ]);
                 setHealthData(healthRes);
                 setPerformanceData(perfRes);
                 setEconomicsData(ecoRes);
             } catch (error) {
-                console.error("Failed to load analytics", error);
+                console.error('Failed to load analytics', error);
             } finally {
                 setLoading(false);
             }
@@ -126,7 +131,8 @@ export const LeadershipDashboardView: React.FC = () => {
                                 key="roi"
                                 value={`${(economicsData?.expected_benefit || 0) / 1000}k`}
                                 subValue="Annual Benefit"
-                                trend="+24%" trendUp={true}
+                                trend="+24%"
+                                trendUp={true}
                                 icon={<TrendingUp size={16} />}
                                 color="text-green-400"
                             />
@@ -155,22 +161,32 @@ export const LeadershipDashboardView: React.FC = () => {
                         </h2>
                         <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-6 shadow-sm dark:shadow-none">
                             <div className="flex items-center justify-around text-center">
-                                {healthData?.initiativesByStatus?.map((statusItem: { status: string, count: number }) => (
-                                    <div key={statusItem.status} className="flex flex-col gap-2">
-                                        <div className="text-3xl font-bold text-navy-900 dark:text-white">{statusItem.count}</div>
-                                        <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">{statusItem.status.replace('_', ' ')}</div>
-                                        <div className="h-1 w-12 bg-blue-500/20 rounded-full mx-auto overflow-hidden">
-                                            <div className="h-full bg-blue-500 w-full"></div>
+                                {healthData?.initiativesByStatus?.map(
+                                    (statusItem: { status: string; count: number }) => (
+                                        <div key={statusItem.status} className="flex flex-col gap-2">
+                                            <div className="text-3xl font-bold text-navy-900 dark:text-white">
+                                                {statusItem.count}
+                                            </div>
+                                            <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">
+                                                {statusItem.status.replace('_', ' ')}
+                                            </div>
+                                            <div className="h-1 w-12 bg-blue-500/20 rounded-full mx-auto overflow-hidden">
+                                                <div className="h-full bg-blue-500 w-full"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                                {(!healthData?.initiativesByStatus?.length) && (
+                                    ),
+                                )}
+                                {!healthData?.initiativesByStatus?.length && (
                                     <div className="text-slate-500">No active initiatives found.</div>
                                 )}
                                 <div className="w-px h-16 bg-white/10"></div>
                                 <div className="flex flex-col gap-2">
-                                    <div className="text-3xl font-bold text-red-400">{healthData?.overdueTasks || 0}</div>
-                                    <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">Overdue Tasks</div>
+                                    <div className="text-3xl font-bold text-red-400">
+                                        {healthData?.overdueTasks || 0}
+                                    </div>
+                                    <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">
+                                        Overdue Tasks
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -182,17 +198,28 @@ export const LeadershipDashboardView: React.FC = () => {
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {performanceData.map((user: PerformanceUser) => (
-                                <div key={user.id} className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none">
+                                <div
+                                    key={user.id}
+                                    className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none"
+                                >
                                     <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white">
-                                        {user.first_name[0]}{user.last_name[0]}
+                                        {user.first_name[0]}
+                                        {user.last_name[0]}
                                     </div>
                                     <div className="flex-1">
-                                        <div className="font-bold text-navy-900 dark:text-white">{user.first_name} {user.last_name}</div>
-                                        <div className="text-xs text-slate-500 mb-2">Completion Rate: {Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100)}%</div>
+                                        <div className="font-bold text-navy-900 dark:text-white">
+                                            {user.first_name} {user.last_name}
+                                        </div>
+                                        <div className="text-xs text-slate-500 mb-2">
+                                            Completion Rate:{' '}
+                                            {Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100)}%
+                                        </div>
                                         <div className="w-full h-1.5 bg-navy-900 rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                                                style={{ width: `${Math.min(100, Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100))}%` }}
+                                                style={{
+                                                    width: `${Math.min(100, Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100))}%`,
+                                                }}
                                             ></div>
                                         </div>
                                     </div>

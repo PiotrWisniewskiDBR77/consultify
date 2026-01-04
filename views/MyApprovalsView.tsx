@@ -1,13 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, CheckCircle2, ClipboardList, Clock, Filter, RefreshCw } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    ClipboardList,
-    CheckCircle2,
-    Clock,
-    AlertTriangle,
-    RefreshCw,
-    Filter
-} from 'lucide-react';
 
 interface Approval {
     id: string;
@@ -48,7 +41,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             }
 
             const response = await fetch(`/api/workqueue/approvals?${params.toString()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!response.ok) {
@@ -73,9 +66,9 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             const response = await fetch(`/api/workqueue/approvals/${proposalId}/ack`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -93,9 +86,9 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             const response = await fetch(`/api/workqueue/approvals/${proposalId}/complete`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (!response.ok) {
@@ -119,10 +112,18 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
         }
 
         const configs: Record<string, { bg: string; text: string; icon?: React.ElementType }> = {
-            PENDING: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-400', icon: Clock },
+            PENDING: {
+                bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+                text: 'text-yellow-800 dark:text-yellow-400',
+                icon: Clock,
+            },
             ACKED: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-400' },
-            DONE: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-400', icon: CheckCircle2 },
-            EXPIRED: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400' }
+            DONE: {
+                bg: 'bg-green-100 dark:bg-green-900/30',
+                text: 'text-green-800 dark:text-green-400',
+                icon: CheckCircle2,
+            },
+            EXPIRED: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400' },
         };
 
         const config = configs[status] || configs.PENDING;
@@ -158,9 +159,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
                 <div className="flex items-center gap-3">
                     <ClipboardList className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            My Approvals
-                        </h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Approvals</h1>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             Action proposals assigned to you for review
                         </p>
@@ -212,9 +211,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
             {!loading && approvals.length === 0 && (
                 <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                     <ClipboardList className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                        No approvals found
-                    </h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No approvals found</h3>
                     <p className="text-gray-500 dark:text-gray-400">
                         {statusFilter !== 'ALL'
                             ? `No ${statusFilter.toLowerCase()} approvals assigned to you.`
@@ -229,10 +226,11 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
                     {approvals.map((approval) => (
                         <div
                             key={approval.id}
-                            className={`p-4 bg-white dark:bg-gray-800 rounded-xl border ${approval.isOverdue
-                                ? 'border-red-300 dark:border-red-700'
-                                : 'border-gray-200 dark:border-gray-700'
-                                } hover:shadow-md transition-shadow`}
+                            className={`p-4 bg-white dark:bg-gray-800 rounded-xl border ${
+                                approval.isOverdue
+                                    ? 'border-red-300 dark:border-red-700'
+                                    : 'border-gray-200 dark:border-gray-700'
+                            } hover:shadow-md transition-shadow`}
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
@@ -252,9 +250,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
                                             <Clock className="w-4 h-4" />
                                             Due: {formatDueDate(approval.sla_due_at)}
                                         </span>
-                                        {approval.scope && (
-                                            <span>Scope: {approval.scope}</span>
-                                        )}
+                                        {approval.scope && <span>Scope: {approval.scope}</span>}
                                     </div>
                                 </div>
 

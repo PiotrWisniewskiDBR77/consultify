@@ -1,6 +1,7 @@
+import { Mail, Megaphone, MessageCircle, Mic, Plus, Trash2, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { FullSession, StakeholderMapItem, CommsPlanItem } from '../types';
-import { Megaphone, Users, MessageCircle, Plus, Trash2, Mail, Mic } from 'lucide-react';
+
+import { CommsPlanItem, FullSession, StakeholderMapItem } from '../types';
 
 interface RolloutChangeTabProps {
     data: FullSession['rollout'];
@@ -19,8 +20,8 @@ export const RolloutChangeTab: React.FC<RolloutChangeTabProps> = ({ data, onUpda
             changeManagement: {
                 stakeholders,
                 commsPlan: comms,
-                ...update
-            }
+                ...update,
+            },
         });
     };
 
@@ -31,13 +32,13 @@ export const RolloutChangeTab: React.FC<RolloutChangeTabProps> = ({ data, onUpda
             role: 'Role/Group',
             influence: 3,
             attitude: 'Neutral',
-            engagementStrategy: ''
+            engagementStrategy: '',
         };
         updateChangeData({ stakeholders: [...stakeholders, newItem] });
     };
 
     const updateStakeholder = (id: string, updates: Partial<StakeholderMapItem>) => {
-        const updated = stakeholders.map(s => s.id === id ? { ...s, ...updates } : s);
+        const updated = stakeholders.map((s) => (s.id === id ? { ...s, ...updates } : s));
         updateChangeData({ stakeholders: updated });
     };
 
@@ -72,13 +73,19 @@ export const RolloutChangeTab: React.FC<RolloutChangeTabProps> = ({ data, onUpda
             {subTab === 'stakeholders' && (
                 <div className="space-y-4">
                     <div className="flex justify-end">
-                        <button onClick={addStakeholder} className="text-xs bg-yellow-500/10 text-yellow-600 px-3 py-1.5 rounded font-bold border border-yellow-500/20 hover:bg-yellow-500/20">
+                        <button
+                            onClick={addStakeholder}
+                            className="text-xs bg-yellow-500/10 text-yellow-600 px-3 py-1.5 rounded font-bold border border-yellow-500/20 hover:bg-yellow-500/20"
+                        >
                             + Add Stakeholder
                         </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {stakeholders.map(s => (
-                            <div key={s.id} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 p-4 rounded-xl shadow-sm relative group hover:border-yellow-500/50 transition-colors">
+                        {stakeholders.map((s) => (
+                            <div
+                                key={s.id}
+                                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 p-4 rounded-xl shadow-sm relative group hover:border-yellow-500/50 transition-colors"
+                            >
                                 <input
                                     value={s.name}
                                     onChange={(e) => updateStakeholder(s.id, { name: e.target.value })}
@@ -92,22 +99,37 @@ export const RolloutChangeTab: React.FC<RolloutChangeTabProps> = ({ data, onUpda
 
                                 <div className="flex gap-2 mb-3">
                                     <div className="flex-1">
-                                        <label className="text-[10px] text-slate-400 font-bold block mb-1">Influence (1-5)</label>
+                                        <label className="text-[10px] text-slate-400 font-bold block mb-1">
+                                            Influence (1-5)
+                                        </label>
                                         <input
-                                            type="number" min="1" max="5"
+                                            type="number"
+                                            min="1"
+                                            max="5"
                                             value={s.influence}
-                                            onChange={(e) => updateStakeholder(s.id, { influence: Number(e.target.value) as any })}
+                                            onChange={(e) =>
+                                                updateStakeholder(s.id, { influence: Number(e.target.value) as any })
+                                            }
                                             className="w-full bg-slate-50 dark:bg-navy-950 p-1 rounded border border-slate-200 dark:border-white/10 text-center text-sm"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-[10px] text-slate-400 font-bold block mb-1">Attitude</label>
+                                        <label className="text-[10px] text-slate-400 font-bold block mb-1">
+                                            Attitude
+                                        </label>
                                         <select
                                             value={s.attitude}
-                                            onChange={(e) => updateStakeholder(s.id, { attitude: e.target.value as any })}
+                                            onChange={(e) =>
+                                                updateStakeholder(s.id, { attitude: e.target.value as any })
+                                            }
                                             className={`w-full p-1 rounded border text-center text-[10px] font-bold outline-none
-                                                 ${s.attitude === 'Supportive' ? 'bg-green-100 text-green-700 border-green-200' :
-                                                    s.attitude === 'Resistant' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-100 text-slate-700 border-slate-200'}
+                                                 ${
+                                                     s.attitude === 'Supportive'
+                                                         ? 'bg-green-100 text-green-700 border-green-200'
+                                                         : s.attitude === 'Resistant'
+                                                           ? 'bg-red-100 text-red-700 border-red-200'
+                                                           : 'bg-slate-100 text-slate-700 border-slate-200'
+                                                 }
                                              `}
                                         >
                                             <option>Supportive</option>
@@ -146,9 +168,15 @@ export const RolloutChangeTab: React.FC<RolloutChangeTabProps> = ({ data, onUpda
                             <tr className="hover:bg-slate-50 dark:hover:bg-white/5">
                                 <td className="p-4 text-sm font-medium">Program Kickoff Announcement</td>
                                 <td className="p-4 text-sm text-slate-500">All Company</td>
-                                <td className="p-4"><span className="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded"><Mic size={12} /> Townhall</span></td>
+                                <td className="p-4">
+                                    <span className="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
+                                        <Mic size={12} /> Townhall
+                                    </span>
+                                </td>
                                 <td className="p-4 text-sm text-slate-500">Oct 15, 2025</td>
-                                <td className="p-4"><span className="text-xs font-bold text-green-600">Sent</span></td>
+                                <td className="p-4">
+                                    <span className="text-xs font-bold text-green-600">Sent</span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

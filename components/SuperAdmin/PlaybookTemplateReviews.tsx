@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    ClipboardCheck,
-    Plus,
-    User,
-    Clock,
-    CheckCircle2,
-    XCircle,
     AlertCircle,
-    MessageSquare,
-    RefreshCw,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
-    Send
+    ClipboardCheck,
+    Clock,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Send,
+    User,
+    XCircle,
 } from 'lucide-react';
-import type { ContentReview, ContentReviewStatus, ContentReviewPriority } from '../../types';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import type { ContentReview, ContentReviewPriority, ContentReviewStatus } from '../../types';
 
 interface PlaybookTemplateReviewsProps {
     templateId: string;
@@ -31,7 +32,7 @@ interface UserOption {
 export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = ({
     templateId,
     templateVersion,
-    onReviewComplete
+    onReviewComplete,
 }) => {
     const token = localStorage.getItem('token');
 
@@ -47,7 +48,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
         reviewerId: '',
         priority: 'NORMAL' as ContentReviewPriority,
         dueDate: '',
-        checklistItems: [] as Array<{ id: string; label: string; checked: boolean }>
+        checklistItems: [] as Array<{ id: string; label: string; checked: boolean }>,
     });
 
     // Review action state
@@ -56,7 +57,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
     const loadReviews = useCallback(async () => {
         try {
             const res = await fetch(`/api/content/playbooks/templates/${templateId}/reviews`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -73,7 +74,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
     const loadUsers = useCallback(async () => {
         try {
             const res = await fetch('/api/users', {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -99,14 +100,14 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     reviewerId: newReview.reviewerId,
                     priority: newReview.priority,
                     dueDate: newReview.dueDate || undefined,
-                    checklistItems: newReview.checklistItems
-                })
+                    checklistItems: newReview.checklistItems,
+                }),
             });
 
             if (res.ok) {
@@ -115,7 +116,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     reviewerId: '',
                     priority: 'NORMAL',
                     dueDate: '',
-                    checklistItems: []
+                    checklistItems: [],
                 });
                 loadReviews();
             }
@@ -133,9 +134,9 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ reviewNotes })
+                body: JSON.stringify({ reviewNotes }),
             });
 
             if (res.ok) {
@@ -162,9 +163,9 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ reviewNotes })
+                body: JSON.stringify({ reviewNotes }),
             });
 
             if (res.ok) {
@@ -191,9 +192,9 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ reviewNotes })
+                body: JSON.stringify({ reviewNotes }),
             });
 
             if (res.ok) {
@@ -211,23 +212,21 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
         const id = `check-${Date.now()}`;
         setNewReview((prev) => ({
             ...prev,
-            checklistItems: [...prev.checklistItems, { id, label: '', checked: false }]
+            checklistItems: [...prev.checklistItems, { id, label: '', checked: false }],
         }));
     };
 
     const updateChecklistItem = (id: string, label: string) => {
         setNewReview((prev) => ({
             ...prev,
-            checklistItems: prev.checklistItems.map((item) =>
-                item.id === id ? { ...item, label } : item
-            )
+            checklistItems: prev.checklistItems.map((item) => (item.id === id ? { ...item, label } : item)),
         }));
     };
 
     const removeChecklistItem = (id: string) => {
         setNewReview((prev) => ({
             ...prev,
-            checklistItems: prev.checklistItems.filter((item) => item.id !== id)
+            checklistItems: prev.checklistItems.filter((item) => item.id !== id),
         }));
     };
 
@@ -237,12 +236,14 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
             IN_REVIEW: { bg: 'bg-blue-500/10', text: 'text-blue-400', icon: <ClipboardCheck size={12} /> },
             APPROVED: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: <CheckCircle2 size={12} /> },
             REJECTED: { bg: 'bg-red-500/10', text: 'text-red-400', icon: <XCircle size={12} /> },
-            CHANGES_REQUESTED: { bg: 'bg-orange-500/10', text: 'text-orange-400', icon: <AlertCircle size={12} /> }
+            CHANGES_REQUESTED: { bg: 'bg-orange-500/10', text: 'text-orange-400', icon: <AlertCircle size={12} /> },
         };
 
         const style = styles[status];
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} border border-current/20`}>
+            <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text} border border-current/20`}
+            >
                 {style.icon}
                 {status.replace('_', ' ')}
             </span>
@@ -254,14 +255,10 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
             LOW: 'bg-slate-500/10 text-slate-400',
             NORMAL: 'bg-blue-500/10 text-blue-400',
             HIGH: 'bg-orange-500/10 text-orange-400',
-            URGENT: 'bg-red-500/10 text-red-400'
+            URGENT: 'bg-red-500/10 text-red-400',
         };
 
-        return (
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[priority]}`}>
-                {priority}
-            </span>
-        );
+        return <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[priority]}`}>{priority}</span>;
     };
 
     if (loading) {
@@ -299,14 +296,10 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                Reviewer *
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Reviewer *</label>
                             <select
                                 value={newReview.reviewerId}
-                                onChange={(e) =>
-                                    setNewReview((prev) => ({ ...prev, reviewerId: e.target.value }))
-                                }
+                                onChange={(e) => setNewReview((prev) => ({ ...prev, reviewerId: e.target.value }))}
                                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                             >
                                 <option value="">Select reviewer...</option>
@@ -319,15 +312,13 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                Priority
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Priority</label>
                             <select
                                 value={newReview.priority}
                                 onChange={(e) =>
                                     setNewReview((prev) => ({
                                         ...prev,
-                                        priority: e.target.value as ContentReviewPriority
+                                        priority: e.target.value as ContentReviewPriority,
                                     }))
                                 }
                                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
@@ -340,15 +331,11 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                Due Date
-                            </label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Due Date</label>
                             <input
                                 type="date"
                                 value={newReview.dueDate}
-                                onChange={(e) =>
-                                    setNewReview((prev) => ({ ...prev, dueDate: e.target.value }))
-                                }
+                                onChange={(e) => setNewReview((prev) => ({ ...prev, dueDate: e.target.value }))}
                                 className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                             />
                         </div>
@@ -357,9 +344,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     {/* Checklist */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm font-medium text-slate-300">
-                                Review Checklist
-                            </label>
+                            <label className="text-sm font-medium text-slate-300">Review Checklist</label>
                             <button
                                 onClick={addChecklistItem}
                                 className="text-xs text-violet-400 hover:text-violet-300"
@@ -400,11 +385,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             disabled={submitting || !newReview.reviewerId}
                             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50"
                         >
-                            {submitting ? (
-                                <RefreshCw size={16} className="animate-spin" />
-                            ) : (
-                                <Send size={16} />
-                            )}
+                            {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
                             Send Request
                         </button>
                     </div>
@@ -601,10 +582,4 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 };
 
 export default PlaybookTemplateReviews;
-
-
-
-
-
-
 

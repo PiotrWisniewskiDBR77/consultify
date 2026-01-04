@@ -1,34 +1,53 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
 
-const require = createRequire(import.meta.url);
+// Hoisted mock - defined inline
+const mockDb = vi.hoisted(() => ({
+    get: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, null));
+    }),
+    all: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, []));
+    }),
+    run: vi.fn(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
+    }),
+    exec: vi.fn((sql, callback) => {
+        if (callback) process.nextTick(() => callback(null));
+    }),
+    serialize: vi.fn((cb) => { if (cb) cb(); }),
+    prepare: vi.fn(),
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    initPromise: Promise.resolve()
+}));
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
 
 describe('CapacityService', () => {
-    let mockDb;
     let CapacityService;
     
-    beforeEach(() => {
-        vi.resetModules();
+    beforeEach(async () => {
+        vi.clearAllMocks();
         
-        mockDb = createMockDb();
-        
-        vi.doMock('../../../server/database', () => ({
-            default: mockDb
-        }));
-        
-        CapacityService = require('../../../server/services/capacityService.js');
+        // Dynamic import for ESM compatibility
+        const module = await import('../../../server/services/capacityService.js');
+        CapacityService = module.default;
         
         // Inject mock dependencies
-        CapacityService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'uuid-1234'
-        });
+        if (CapacityService.setDependencies) {
+            CapacityService.setDependencies({
+                db: mockDb,
+                uuidv4: () => 'uuid-1234'
+            });
+        }
     });
     
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.doUnmock('../../../server/database');
     });
 
     describe('getUserCapacity', () => {

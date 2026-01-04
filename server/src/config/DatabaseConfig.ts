@@ -1,15 +1,16 @@
 /**
  * Database Configuration
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Supports both SQLite (development) and PostgreSQL (production)
  * Switch by setting DATABASE_URL environment variable
  */
 
-import { z } from 'zod';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { z } from 'zod';
+import { validateDatabaseConfig } from './ConfigValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,17 +41,22 @@ const PostgresConfigSchema = z.object({
     statement_timeout: z.number().int().positive().default(60000),
 });
 
+const ReadReplicaConfigSchema = PostgresConfigSchema.optional();
+
 const SQLiteConfigSchema = z.object({
     path: z.string(),
-    options: z.object({
-        verbose: z.boolean().optional(),
-    }).optional(),
+    options: z
+        .object({
+            verbose: z.boolean().optional(),
+        })
+        .optional(),
 });
 
 const DatabaseConfigSchema = z.object({
     type: DatabaseTypeSchema,
     sqlite: SQLiteConfigSchema,
     postgres: PostgresConfigSchema,
+    readReplica: ReadReplicaConfigSchema,
     debug: z.boolean().default(false),
     logQueries: z.boolean().default(false),
 });
@@ -78,11 +84,17 @@ if (databaseUrl && databaseUrl.includes('${{')) {
  * Determine database type from environment
  */
 function getDatabaseType(): DatabaseType {
+    // Validate database configuration (will crash in production if invalid)
+    validateDatabaseConfig();
+
     // 1. Strict Mode: If DB_TYPE is explicitly set, we MUST satisfy it or crash.
     if (process.env.DB_TYPE) {
         if (process.env.DB_TYPE === 'postgres') {
             if (!databaseUrl && !process.env.DB_HOST) {
-                console.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.');
+                console.error(
+                    '\n\x1b[31m%s\x1b[0m',
+                    'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.',
+                );
                 console.error('Please configure your .env file with the correct database credentials.\n');
                 process.exit(1);
             }
@@ -132,7 +144,9 @@ function parsePostgresUrl(url: string): PostgresConfig | null {
         const connectionTimeout = (() => {
             const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
             if (timeout < 10000) {
-                console.warn(`[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`);
+                console.warn(
+                    `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`,
+                );
                 return 30000; // Force minimum 30 seconds
             }
             return timeout;
@@ -183,7 +197,9 @@ function getPostgresConfig(): PostgresConfig {
     const connectionTimeout = (() => {
         const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
         if (timeout < 10000) {
-            console.warn(`[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`);
+            console.warn(
+                `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`,
+            );
             return 30000; // Force minimum 30 seconds
         }
         return timeout;
@@ -204,6 +220,31 @@ function getPostgresConfig(): PostgresConfig {
 }
 
 /**
+ * Get Read Replica config from environment variables
+ */
+function getReadReplicaConfig(): PostgresConfig | undefined {
+    const readUrl = process.env.DB_READ_URL || process.env.DATABASE_READ_URL;
+    if (readUrl) {
+        const parsed = parsePostgresUrl(readUrl);
+        if (parsed) return parsed;
+    }
+
+    if (process.env.DB_READ_HOST) {
+        // Inherit defaults from primary, override with read-specifics
+        const primary = getPostgresConfig();
+        return {
+            ...primary,
+            host: process.env.DB_READ_HOST,
+            port: parseInt(process.env.DB_READ_PORT || String(primary.port)),
+            user: process.env.DB_READ_USER || primary.user,
+            password: process.env.DB_READ_PASSWORD || primary.password,
+        };
+    }
+
+    return undefined;
+}
+
+/**
  * Create and validate database configuration
  */
 function createDatabaseConfig(): DatabaseConfig {
@@ -216,6 +257,7 @@ function createDatabaseConfig(): DatabaseConfig {
             },
         },
         postgres: getPostgresConfig(),
+        readReplica: getReadReplicaConfig(),
         debug: process.env.DB_DEBUG === 'true',
         logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true',
     };
@@ -233,4 +275,3 @@ function createDatabaseConfig(): DatabaseConfig {
 export const databaseConfig = createDatabaseConfig();
 
 export default databaseConfig;
-

@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-01-04T11:15:09.549Z",
+  "tsx": {
+    "name": "tsx",
+    "startupTime": 3831,
+    "success": true
+  },
+  "compiled": {
+    "name": "compiled",
+    "startupTime": 45000,
+    "success": false,
+    "error": "Timeout or server not ready"
+  },
+  "note": "Startup time comparison (time to \"Server running\" message)"
+}

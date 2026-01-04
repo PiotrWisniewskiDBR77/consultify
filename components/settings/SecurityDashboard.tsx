@@ -1,6 +1,6 @@
 /**
  * SecurityDashboard - Security Overview & Health Score
- * 
+ *
  * Enterprise-grade security dashboard following HubSpot/ClickUp standards:
  * - Security Score (0-100) calculation
  * - Compliance badges (GDPR, SOC2, ISO 27001)
@@ -9,33 +9,34 @@
  * - Encryption status information
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Shield,
-    ShieldCheck,
-    ShieldAlert,
-    Lock,
-    Key,
-    Smartphone,
-    Monitor,
+    Activity,
     AlertTriangle,
+    Award,
     CheckCircle,
-    XCircle,
+    ChevronRight,
     Clock,
+    Download,
     Eye,
     FileText,
-    Download,
-    RefreshCw,
-    ChevronRight,
     Fingerprint,
     Globe,
+    Key,
+    Loader2,
+    Lock,
+    Monitor,
+    RefreshCw,
     Server,
-    Award,
+    Shield,
+    ShieldAlert,
+    ShieldCheck,
+    Smartphone,
     TrendingUp,
-    Activity,
-    Loader2
+    XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -80,22 +81,19 @@ const DEFAULT_SCORE: SecurityScore = {
         passwordStrength: { score: 0, max: 25, strength: 'unknown' },
         recentActivity: { score: 0, max: 20, suspicious: 0 },
         sessions: { score: 0, max: 15, count: 0 },
-        dataControls: { score: 0, max: 10, optedOut: false }
+        dataControls: { score: 0, max: 10, optedOut: false },
     },
-    recommendations: []
+    recommendations: [],
 };
 
 const DEFAULT_COMPLIANCE: ComplianceStatus = {
     gdpr: { compliant: true, lastAudit: '2024-12-01' },
     soc2: { compliant: true, certifiedUntil: '2025-12-31' },
     iso27001: { compliant: true, certifiedUntil: '2025-06-30' },
-    hipaa: { compliant: false, applicable: false }
+    hipaa: { compliant: false, applicable: false },
 };
 
-export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
-    currentUser,
-    onNavigateToTab
-}) => {
+export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ currentUser, onNavigateToTab }) => {
     const { t } = useTranslation();
     const [score, setScore] = useState<SecurityScore>(DEFAULT_SCORE);
     const [compliance, setCompliance] = useState<ComplianceStatus>(DEFAULT_COMPLIANCE);
@@ -110,7 +108,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
     const loadSecurityData = async () => {
         try {
             setLoading(true);
-            
+
             // Fetch security score
             const scoreResponse = await Api.get('/api/security/score').catch(() => null);
             if (scoreResponse?.score) {
@@ -133,8 +131,21 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
             } else {
                 // Mock recent events
                 setRecentEvents([
-                    { id: '1', type: 'login', severity: 'info', description: 'Successful login from Chrome on MacOS', timestamp: new Date().toISOString(), ip: '192.168.1.1' },
-                    { id: '2', type: 'password_change', severity: 'info', description: 'Password was changed', timestamp: new Date(Date.now() - 86400000 * 2).toISOString() },
+                    {
+                        id: '1',
+                        type: 'login',
+                        severity: 'info',
+                        description: 'Successful login from Chrome on MacOS',
+                        timestamp: new Date().toISOString(),
+                        ip: '192.168.1.1',
+                    },
+                    {
+                        id: '2',
+                        type: 'password_change',
+                        severity: 'info',
+                        description: 'Password was changed',
+                        timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+                    },
                 ]);
             }
         } catch (error) {
@@ -148,7 +159,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
     const calculateLocalScore = () => {
         const mfaEnabled = currentUser.mfaEnabled || false;
         const mfaScore = mfaEnabled ? 30 : 0;
-        
+
         const passwordScore = 20; // Assume decent password
         const activityScore = 18; // Assume good activity
         const sessionsScore = 12; // Assume reasonable sessions
@@ -158,10 +169,17 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
         const recommendations: string[] = [];
         if (!mfaEnabled) {
-            recommendations.push(t('security.dashboard.recommendations.enableMfa', 'Enable two-factor authentication for maximum security'));
+            recommendations.push(
+                t(
+                    'security.dashboard.recommendations.enableMfa',
+                    'Enable two-factor authentication for maximum security',
+                ),
+            );
         }
         if (total < 80) {
-            recommendations.push(t('security.dashboard.recommendations.reviewSessions', 'Review your active sessions regularly'));
+            recommendations.push(
+                t('security.dashboard.recommendations.reviewSessions', 'Review your active sessions regularly'),
+            );
         }
 
         setScore({
@@ -171,9 +189,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 passwordStrength: { score: passwordScore, max: 25, strength: 'good' },
                 recentActivity: { score: activityScore, max: 20, suspicious: 0 },
                 sessions: { score: sessionsScore, max: 15, count: 1 },
-                dataControls: { score: dataScore, max: 10, optedOut: false }
+                dataControls: { score: dataScore, max: 10, optedOut: false },
             },
-            recommendations
+            recommendations,
         });
     };
 
@@ -204,9 +222,12 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
     const getSeverityIcon = (severity: string) => {
         switch (severity) {
-            case 'critical': return <XCircle className="w-4 h-4 text-red-500" />;
-            case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-            default: return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+            case 'critical':
+                return <XCircle className="w-4 h-4 text-red-500" />;
+            case 'warning':
+                return <AlertTriangle className="w-4 h-4 text-amber-500" />;
+            default:
+                return <CheckCircle className="w-4 h-4 text-emerald-500" />;
         }
     };
 
@@ -269,7 +290,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                             {t('security.dashboard.securityScore', 'Security Score')}
                         </h3>
                         <div className="flex flex-col items-center">
-                            <div className={`relative w-32 h-32 rounded-full bg-gradient-to-br ${getScoreBgColor(score.total)} p-1`}>
+                            <div
+                                className={`relative w-32 h-32 rounded-full bg-gradient-to-br ${getScoreBgColor(score.total)} p-1`}
+                            >
                                 <div className="w-full h-full rounded-full bg-white dark:bg-navy-900 flex items-center justify-center">
                                     <div className="text-center">
                                         <span className={`text-4xl font-bold ${getScoreColor(score.total)}`}>
@@ -279,13 +302,15 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                                     </div>
                                 </div>
                             </div>
-                            <div className={`mt-4 px-4 py-1.5 rounded-full text-sm font-medium ${
-                                score.total >= 80 
-                                    ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                                    : score.total >= 60
-                                    ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                                    : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
-                            }`}>
+                            <div
+                                className={`mt-4 px-4 py-1.5 rounded-full text-sm font-medium ${
+                                    score.total >= 80
+                                        ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                                        : score.total >= 60
+                                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                                          : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                                }`}
+                            >
                                 {getScoreLabel(score.total)}
                             </div>
                         </div>
@@ -301,8 +326,12 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                         <div className="space-y-4">
                             {/* MFA */}
                             <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-lg ${score.breakdown.mfa.enabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}>
-                                    <Fingerprint className={`w-5 h-5 ${score.breakdown.mfa.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`} />
+                                <div
+                                    className={`p-2 rounded-lg ${score.breakdown.mfa.enabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}
+                                >
+                                    <Fingerprint
+                                        className={`w-5 h-5 ${score.breakdown.mfa.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                                    />
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
@@ -314,9 +343,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                                         </span>
                                     </div>
                                     <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className={`h-full rounded-full transition-all ${score.breakdown.mfa.enabled ? 'bg-emerald-500' : 'bg-red-500'}`}
-                                            style={{ width: `${(score.breakdown.mfa.score / score.breakdown.mfa.max) * 100}%` }}
+                                            style={{
+                                                width: `${(score.breakdown.mfa.score / score.breakdown.mfa.max) * 100}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -333,13 +364,16 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                                             {t('security.dashboard.passwordStrength', 'Password Strength')}
                                         </span>
                                         <span className="text-sm text-slate-500">
-                                            {score.breakdown.passwordStrength.score}/{score.breakdown.passwordStrength.max}
+                                            {score.breakdown.passwordStrength.score}/
+                                            {score.breakdown.passwordStrength.max}
                                         </span>
                                     </div>
                                     <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-blue-500 rounded-full transition-all"
-                                            style={{ width: `${(score.breakdown.passwordStrength.score / score.breakdown.passwordStrength.max) * 100}%` }}
+                                            style={{
+                                                width: `${(score.breakdown.passwordStrength.score / score.breakdown.passwordStrength.max) * 100}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -360,9 +394,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                                         </span>
                                     </div>
                                     <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-purple-500 rounded-full transition-all"
-                                            style={{ width: `${(score.breakdown.recentActivity.score / score.breakdown.recentActivity.max) * 100}%` }}
+                                            style={{
+                                                width: `${(score.breakdown.recentActivity.score / score.breakdown.recentActivity.max) * 100}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -383,9 +419,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                                         </span>
                                     </div>
                                     <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-amber-500 rounded-full transition-all"
-                                            style={{ width: `${(score.breakdown.sessions.score / score.breakdown.sessions.max) * 100}%` }}
+                                            style={{
+                                                width: `${(score.breakdown.sessions.score / score.breakdown.sessions.max) * 100}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -406,9 +444,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                                         </span>
                                     </div>
                                     <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-teal-500 rounded-full transition-all"
-                                            style={{ width: `${(score.breakdown.dataControls.score / score.breakdown.dataControls.max) * 100}%` }}
+                                            style={{
+                                                width: `${(score.breakdown.dataControls.score / score.breakdown.dataControls.max) * 100}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -423,9 +463,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 <QuickActionCard
                     icon={<Fingerprint className="w-6 h-6" />}
                     title={t('security.dashboard.actions.mfa', 'Two-Factor Auth')}
-                    description={score.breakdown.mfa.enabled 
-                        ? t('security.dashboard.actions.mfaEnabled', 'Enabled') 
-                        : t('security.dashboard.actions.mfaDisabled', 'Not enabled')}
+                    description={
+                        score.breakdown.mfa.enabled
+                            ? t('security.dashboard.actions.mfaEnabled', 'Enabled')
+                            : t('security.dashboard.actions.mfaDisabled', 'Not enabled')
+                    }
                     status={score.breakdown.mfa.enabled ? 'success' : 'warning'}
                     onClick={() => onNavigateToTab?.('mfa')}
                 />
@@ -439,7 +481,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 <QuickActionCard
                     icon={<Monitor className="w-6 h-6" />}
                     title={t('security.dashboard.actions.sessions', 'Active Sessions')}
-                    description={t('security.dashboard.actions.sessionsCount', '{{count}} active', { count: score.breakdown.sessions.count || 1 })}
+                    description={t('security.dashboard.actions.sessionsCount', '{{count}} active', {
+                        count: score.breakdown.sessions.count || 1,
+                    })}
                     status="info"
                     onClick={() => onNavigateToTab?.('sessions')}
                 />
@@ -448,7 +492,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                     title={t('security.dashboard.actions.export', 'Security Report')}
                     description={t('security.dashboard.actions.downloadReport', 'Download PDF report')}
                     status="info"
-                    onClick={() => {/* TODO: Generate report */}}
+                    onClick={() => {
+                        /* TODO: Generate report */
+                    }}
                 />
             </div>
 
@@ -512,7 +558,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                             </p>
                         ) : (
                             recentEvents.map((event) => (
-                                <div 
+                                <div
                                     key={event.id}
                                     className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg"
                                 >
@@ -554,7 +600,10 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                             </h3>
                             <ul className="space-y-2">
                                 {score.recommendations.map((rec, index) => (
-                                    <li key={index} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+                                    <li
+                                        key={index}
+                                        className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300"
+                                    >
                                         <ChevronRight className="w-4 h-4" />
                                         {rec}
                                     </li>
@@ -577,18 +626,12 @@ interface QuickActionCardProps {
     onClick?: () => void;
 }
 
-const QuickActionCard: React.FC<QuickActionCardProps> = ({
-    icon,
-    title,
-    description,
-    status,
-    onClick
-}) => {
+const QuickActionCard: React.FC<QuickActionCardProps> = ({ icon, title, description, status, onClick }) => {
     const statusColors = {
         success: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
         warning: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
         info: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400',
-        error: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+        error: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400',
     };
 
     return (
@@ -602,9 +645,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
             <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 {title}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                {description}
-            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>
         </button>
     );
 };
@@ -617,24 +658,23 @@ interface ComplianceBadgeProps {
     icon: React.ReactNode;
 }
 
-const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({
-    name,
-    compliant,
-    description,
-    icon
-}) => {
+const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({ name, compliant, description, icon }) => {
     return (
-        <div className={`p-4 rounded-xl border-2 ${
-            compliant 
-                ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
-                : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5'
-        }`}>
+        <div
+            className={`p-4 rounded-xl border-2 ${
+                compliant
+                    ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
+                    : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5'
+            }`}
+        >
             <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
-                    compliant
-                        ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                        : 'bg-slate-200 dark:bg-white/10 text-slate-500'
-                }`}>
+                <div
+                    className={`p-2 rounded-lg ${
+                        compliant
+                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-slate-200 dark:bg-white/10 text-slate-500'
+                    }`}
+                >
                     {icon}
                 </div>
                 <div>
@@ -650,11 +690,4 @@ const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({
 };
 
 export default SecurityDashboard;
-
-
-
-
-
-
-
 

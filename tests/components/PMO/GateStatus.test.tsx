@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { GateStatus } from '../../../components/PMO/GateStatus';
+import { GateStatus } from '../../components/PMO/GateStatus';
 
 // Mock dependencies
 vi.mock('../../../store/usePMOStore', () => ({
@@ -350,6 +350,7 @@ describe('GateStatus Component', () => {
         });
     });
 });
+
 
 
 

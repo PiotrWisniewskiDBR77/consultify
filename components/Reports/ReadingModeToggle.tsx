@@ -1,6 +1,6 @@
 /**
  * ReadingModeToggle
- * 
+ *
  * Focus mode for reading reports:
  * - Hides sidebar/navigation
  * - Centers content
@@ -9,23 +9,10 @@
  * - Print-friendly option
  */
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Eye, EyeOff, Maximize2, Minimize2, Minus, Moon, Plus, Printer, Settings, Sun, Type, X } from 'lucide-react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Eye,
-    EyeOff,
-    Sun,
-    Moon,
-    Minus,
-    Plus,
-    Type,
-    Printer,
-    Maximize2,
-    Minimize2,
-    X,
-    Settings
-} from 'lucide-react';
 
 // Reading mode context
 interface ReadingModeContextValue {
@@ -98,7 +85,7 @@ export const ReadingModeProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 toggleReadingMode: () => setIsEnabled(!isEnabled),
                 setFontSize,
                 setTheme,
-                toggleFullscreen
+                toggleFullscreen,
             }}
         >
             {children}
@@ -114,7 +101,7 @@ interface ReadingModeToggleProps {
 export const ReadingModeToggle: React.FC<ReadingModeToggleProps> = ({ className = '' }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
-    
+
     const [isOpen, setIsOpen] = useState(false);
     const [isEnabled, setIsEnabled] = useState(false);
     const [fontSize, setFontSize] = useState(16);
@@ -134,9 +121,10 @@ export const ReadingModeToggle: React.FC<ReadingModeToggleProps> = ({ className 
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
                     inline-flex items-center gap-2 px-3 py-2 rounded-lg transition-colors
-                    ${isEnabled 
-                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
-                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                    ${
+                        isEnabled
+                            ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                     }
                 `}
                 title={isPolish ? 'Ustawienia czytania' : 'Reading settings'}
@@ -152,10 +140,7 @@ export const ReadingModeToggle: React.FC<ReadingModeToggleProps> = ({ className 
             <AnimatePresence>
                 {isOpen && (
                     <>
-                        <div 
-                            className="fixed inset-0 z-40"
-                            onClick={() => setIsOpen(false)}
-                        />
+                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                         <motion.div
                             initial={{ opacity: 0, y: -10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -246,16 +231,17 @@ export const ReadingModeToggle: React.FC<ReadingModeToggleProps> = ({ className 
                                     {[
                                         { id: 'light', icon: Sun, label: isPolish ? 'Jasny' : 'Light' },
                                         { id: 'dark', icon: Moon, label: isPolish ? 'Ciemny' : 'Dark' },
-                                        { id: 'auto', icon: Settings, label: 'Auto' }
+                                        { id: 'auto', icon: Settings, label: 'Auto' },
                                     ].map(({ id, icon: Icon, label }) => (
                                         <button
                                             key={id}
                                             onClick={() => setTheme(id as typeof theme)}
                                             className={`
                                                 flex flex-col items-center gap-1 p-2 rounded-lg transition-colors
-                                                ${theme === id 
-                                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
-                                                    : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                ${
+                                                    theme === id
+                                                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
                                                 }
                                             `}
                                         >
@@ -311,9 +297,10 @@ export const ReadingModeSimpleToggle: React.FC<{
             onClick={onToggle}
             className={`
                 p-2 rounded-lg transition-colors
-                ${isEnabled 
-                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                ${
+                    isEnabled
+                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                 }
                 ${className}
             `}
@@ -325,4 +312,3 @@ export const ReadingModeSimpleToggle: React.FC<{
 };
 
 export default ReadingModeToggle;
-

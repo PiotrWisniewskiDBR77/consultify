@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
 import {
-    FileText, Download, Filter, ChevronLeft, ChevronRight,
-    Calendar, User, Activity, Search, RefreshCw
+    Activity,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Download,
+    FileText,
+    Filter,
+    RefreshCw,
+    Search,
+    User,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface AuditEntry {
     id: string;
@@ -32,13 +40,10 @@ const actionColors: Record<string, string> = {
     GRANT_PERMISSION: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
     REVOKE_PERMISSION: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
     BREAK_GLASS_START: 'bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300',
-    BREAK_GLASS_CLOSE: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+    BREAK_GLASS_CLOSE: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
 };
 
-export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
-    organizationId,
-    isSuperAdmin = false
-}) => {
+export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ organizationId, isSuperAdmin = false }) => {
     const [entries, setEntries] = useState<AuditEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -49,7 +54,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         resourceType: '',
         startDate: '',
         endDate: '',
-        search: ''
+        search: '',
     });
     const [selectedEntry, setSelectedEntry] = useState<AuditEntry | null>(null);
 
@@ -69,8 +74,8 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/governance/audit?${params}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) throw new Error('Failed to fetch audit log');
@@ -94,8 +99,8 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/governance/audit/export?${params}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) throw new Error('Export failed');
@@ -139,9 +144,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-blue-500" />
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Governance Audit Log
-                        </h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Governance Audit Log</h2>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -231,11 +234,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             </div>
 
             {/* Error */}
-            {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                    {error}
-                </div>
-            )}
+            {error && <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">{error}</div>}
 
             {/* Table */}
             <div className="overflow-x-auto">
@@ -294,7 +293,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${actionColors[entry.action] || 'bg-gray-100 text-gray-800'}`}>
+                                        <span
+                                            className={`inline-flex px-2 py-1 text-xs font-medium rounded ${actionColors[entry.action] || 'bg-gray-100 text-gray-800'}`}
+                                        >
                                             {entry.action}
                                         </span>
                                     </td>
@@ -313,7 +314,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-500">
                                         {entry.correlationId && (
-                                            <span className="text-xs font-mono">{entry.correlationId.slice(0, 12)}</span>
+                                            <span className="text-xs font-mono">
+                                                {entry.correlationId.slice(0, 12)}
+                                            </span>
                                         )}
                                     </td>
                                 </tr>
@@ -378,11 +381,15 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                 </div>
                                 <div>
                                     <label className="text-gray-500">Actor</label>
-                                    <div>{selectedEntry.actorId} ({selectedEntry.actorRole})</div>
+                                    <div>
+                                        {selectedEntry.actorId} ({selectedEntry.actorRole})
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-gray-500">Action</label>
-                                    <div className={`inline-flex px-2 py-1 rounded ${actionColors[selectedEntry.action]}`}>
+                                    <div
+                                        className={`inline-flex px-2 py-1 rounded ${actionColors[selectedEntry.action]}`}
+                                    >
                                         {selectedEntry.action}
                                     </div>
                                 </div>

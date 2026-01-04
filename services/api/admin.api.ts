@@ -4,7 +4,7 @@
  */
 
 import { User } from '../../types';
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export interface SuperAdminDashboard {
     activity: { total: number; last_hour: number; last_24h: number; last_7d: number };
@@ -27,7 +27,7 @@ export const AdminApi = {
     // ==========================================
     // SUPER ADMIN DASHBOARD
     // ==========================================
-    
+
     getSuperAdminDashboard: async (): Promise<SuperAdminDashboard> => {
         const res = await fetch(`${API_URL}/superadmin/dashboard`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch dashboard');
@@ -43,18 +43,21 @@ export const AdminApi = {
     // ==========================================
     // ORGANIZATION MANAGEMENT (SuperAdmin)
     // ==========================================
-    
+
     getOrganizations: async (): Promise<unknown[]> => {
         const res = await fetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organizations');
         return res.json();
     },
 
-    updateOrganization: async (id: string, updates: { plan?: string; status?: string; discount_percent?: number }): Promise<void> => {
+    updateOrganization: async (
+        id: string,
+        updates: { plan?: string; status?: string; discount_percent?: number },
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update organization');
     },
@@ -62,7 +65,7 @@ export const AdminApi = {
     deleteOrganization: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete organization');
     },
@@ -76,18 +79,21 @@ export const AdminApi = {
     // ==========================================
     // USER MANAGEMENT (SuperAdmin)
     // ==========================================
-    
+
     getSuperAdminUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch users');
         return res.json();
     },
 
-    updateSuperAdminUser: async (id: string, updates: { organizationId?: string; role?: string; status?: string }): Promise<void> => {
+    updateSuperAdminUser: async (
+        id: string,
+        updates: { organizationId?: string; role?: string; status?: string },
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update user');
     },
@@ -96,7 +102,7 @@ export const AdminApi = {
         const res = await fetch(`${API_URL}/superadmin/users`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(user)
+            body: JSON.stringify(user),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create super admin');
@@ -107,7 +113,7 @@ export const AdminApi = {
         const res = await fetch(`${API_URL}/superadmin/users/invite`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ email, role, organizationId })
+            body: JSON.stringify({ email, role, organizationId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to invite user');
@@ -117,7 +123,7 @@ export const AdminApi = {
     adminResetPassword: async (userId: string): Promise<{ resetLink: string; token: string }> => {
         const res = await fetch(`${API_URL}/superadmin/users/${userId}/reset-password`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to generate reset link');
@@ -128,7 +134,7 @@ export const AdminApi = {
         const res = await fetch(`${API_URL}/superadmin/impersonate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId })
+            body: JSON.stringify({ userId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to impersonate user');
@@ -138,7 +144,7 @@ export const AdminApi = {
     // ==========================================
     // DATABASE MANAGEMENT (SuperAdmin)
     // ==========================================
-    
+
     adminGetDatabaseTables: async (): Promise<string[]> => {
         const res = await fetch(`${API_URL}/superadmin/database/tables`, { headers: getHeaders() });
         const data = await res.json();
@@ -156,7 +162,7 @@ export const AdminApi = {
     // ==========================================
     // STORAGE MANAGEMENT (SuperAdmin)
     // ==========================================
-    
+
     adminGetStorageStats: async (): Promise<unknown> => {
         const res = await fetch(`${API_URL}/superadmin/storage/usage`, { headers: getHeaders() });
         const data = await res.json();
@@ -176,9 +182,9 @@ export const AdminApi = {
             method: 'DELETE',
             headers: {
                 ...getHeaders(),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ orgId, path })
+            body: JSON.stringify({ orgId, path }),
         });
         if (!res.ok) throw new Error('Failed to delete file');
     },
@@ -186,7 +192,7 @@ export const AdminApi = {
     // ==========================================
     // INVOICES (SuperAdmin)
     // ==========================================
-    
+
     getSuperAdminInvoices: async (period = '30d'): Promise<{ invoices: unknown[]; total: number }> => {
         const res = await fetch(`${API_URL}/superadmin/invoices?period=${period}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch invoices');
@@ -202,7 +208,7 @@ export const AdminApi = {
     // ==========================================
     // ADMIN ALERTS
     // ==========================================
-    
+
     getAdminAlerts: async (limit = 50): Promise<AdminAlert[]> => {
         const res = await fetch(`${API_URL}/admin-alerts?limit=${limit}`, { headers: getHeaders() });
         const json = await res.json();
@@ -214,7 +220,7 @@ export const AdminApi = {
         const res = await fetch(`${API_URL}/admin-alerts`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(alertConfig)
+            body: JSON.stringify(alertConfig),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to create admin alert');
@@ -231,7 +237,7 @@ export const AdminApi = {
     // ==========================================
     // SYSTEM HEALTH
     // ==========================================
-    
+
     checkSystemHealth: async (): Promise<{ status: string; latency: number }> => {
         const res = await fetch(`${API_URL}/health`);
         const data = await res.json();
@@ -242,7 +248,5 @@ export const AdminApi = {
     getSystemHealth: async (): Promise<unknown> => {
         const res = await fetchWithRetry(`${API_URL}/system-health`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch system health');
-    }
+    },
 };
-
-

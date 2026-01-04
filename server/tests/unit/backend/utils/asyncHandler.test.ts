@@ -4,9 +4,10 @@
  * ETAP 10.3: Testy dla Utils Layer - 100% coverage
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+import type { AuthenticatedRequest, NextFunction, Response } from '../../../src/types/index.js';
 import { asyncHandler, createAsyncHandler } from '../../../src/utils/asyncHandler.js';
-import type { AuthenticatedRequest, Response, NextFunction } from '../../../src/types/index.js';
 
 describe('asyncHandler', () => {
     let mockReq: Partial<AuthenticatedRequest>;
@@ -115,7 +116,4 @@ describe('asyncHandler', () => {
         });
     });
 });
-
-
-
 

@@ -5,8 +5,9 @@
  * Handles assigning, acknowledging, and completing approval tasks.
  */
 
-import db from '../database.js';
-import * as auditLogger from '../utils/auditLogger.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
+import * as auditLogger from '../dist/utils/auditLogger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 

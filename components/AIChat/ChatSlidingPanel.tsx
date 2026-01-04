@@ -1,6 +1,6 @@
 /**
  * ChatSlidingPanel
- * 
+ *
  * Claude-style sliding panel for chat history and project organization.
  * Slides in from the left when activated, showing:
  * - New Chat button
@@ -9,13 +9,14 @@
  * - Project folders with nested conversations
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader2, Plus, Search, Settings, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, X, Search, Settings, Loader2 } from 'lucide-react';
+
 import { useAppStore } from '../../store/useAppStore';
-import { useConversationStore, groupConversations } from '../../store/useConversationStore';
 import { useChatProjectStore } from '../../store/useChatProjectStore';
-import { ChatTabNavigation, ChatTab } from './ChatTabNavigation';
+import { groupConversations, useConversationStore } from '../../store/useConversationStore';
+import { ChatTab, ChatTabNavigation } from './ChatTabNavigation';
 import { ConversationList } from './ConversationList';
 import { ProjectList } from './ProjectList';
 
@@ -28,7 +29,7 @@ interface ChatSlidingPanelProps {
 export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
     onNewChat,
     onSelectConversation,
-    activeConversationId
+    activeConversationId,
 }) => {
     const { t } = useTranslation();
     const { isChatSlidingPanelOpen, setChatSlidingPanelOpen } = useAppStore();
@@ -38,7 +39,7 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
         isLoading: isLoadingConversations,
         fetchConversations,
         setSearchQuery,
-        searchQuery
+        searchQuery,
     } = useConversationStore();
     const { projects, fetchProjects } = useChatProjectStore();
 
@@ -100,10 +101,13 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
         // Don't close panel - user might want to see their new chat in the list
     }, [onNewChat]);
 
-    const handleSelectConversation = useCallback((id: string) => {
-        onSelectConversation(id);
-        // Keep panel open for easy switching between conversations
-    }, [onSelectConversation]);
+    const handleSelectConversation = useCallback(
+        (id: string) => {
+            onSelectConversation(id);
+            // Keep panel open for easy switching between conversations
+        },
+        [onSelectConversation],
+    );
 
     // Filter conversations based on search
     const filteredGroupedConversations = React.useMemo(() => {
@@ -112,16 +116,15 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
         }
 
         const query = localSearchQuery.toLowerCase();
-        const filtered = conversations.filter(c =>
-            c.title.toLowerCase().includes(query) ||
-            c.lastMessagePreview?.toLowerCase().includes(query)
+        const filtered = conversations.filter(
+            (c) => c.title.toLowerCase().includes(query) || c.lastMessagePreview?.toLowerCase().includes(query),
         );
 
         return groupConversations(filtered);
     }, [conversations, groupedConversations, localSearchQuery]);
 
     // Count non-archived conversations
-    const activeConversationsCount = conversations.filter(c => !c.archived).length;
+    const activeConversationsCount = conversations.filter((c) => !c.archived).length;
 
     return (
         <>
@@ -258,11 +261,4 @@ export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
 };
 
 export default ChatSlidingPanel;
-
-
-
-
-
-
-
 

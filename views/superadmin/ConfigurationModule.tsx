@@ -1,15 +1,16 @@
 /**
  * ConfigurationModule - Platform Configuration
- * 
+ *
  * Tabs: Settings | White-label | Legal
  */
 
+import { Palette, Scale, Settings } from 'lucide-react';
 import React, { useState } from 'react';
-import { Settings, Palette, Scale } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
+
+import { LegalPanel } from '../../components/SuperAdmin/LegalPanel';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { SystemSettings } from './SystemSettings';
 import { WhitelabelStudioView } from './WhitelabelStudioView';
-import { LegalPanel } from '../../components/SuperAdmin/LegalPanel';
 
 interface ConfigurationModuleProps {
     initialTab?: string;
@@ -59,12 +60,4 @@ export const ConfigurationModule: React.FC<ConfigurationModuleProps> = ({ initia
 };
 
 export default ConfigurationModule;
-
-
-
-
-
-
-
-
 

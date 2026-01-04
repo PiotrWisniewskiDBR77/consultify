@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ProjectTeamPanel } from '../../../components/PMO/ProjectTeamPanel';
+import { ProjectTeamPanel } from '../../components/PMO/ProjectTeamPanel';
 import { PMOProjectRole } from '../../../types';
 
 // Mock API
@@ -296,6 +296,7 @@ describe('ProjectTeamPanel Component', () => {
         });
     });
 });
+
 
 
 

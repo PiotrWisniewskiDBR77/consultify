@@ -9,10 +9,7 @@ interface ErrorContext {
     [key: string]: unknown;
 }
 
-export const logError = async (
-    error: Error,
-    context: Partial<ErrorContext> = {}
-): Promise<void> => {
+export const logError = async (error: Error, context: Partial<ErrorContext> = {}): Promise<void> => {
     const errorData = {
         message: error.message,
         stack: error.stack,
@@ -20,8 +17,8 @@ export const logError = async (
             ...context,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-            route: window.location.pathname
-        }
+            route: window.location.pathname,
+        },
     };
 
     // In development, just log to console
@@ -36,9 +33,9 @@ export const logError = async (
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
-            body: JSON.stringify(errorData)
+            body: JSON.stringify(errorData),
         });
     } catch (e) {
         // Silently fail - don't want error logging to cause more errors
@@ -46,11 +43,7 @@ export const logError = async (
     }
 };
 
-export const logPerformance = (
-    metric: string,
-    value: number,
-    context?: Record<string, unknown>
-): void => {
+export const logPerformance = (metric: string, value: number, context?: Record<string, unknown>): void => {
     if (process.env.NODE_ENV !== 'production') {
         console.log(`[Performance] ${metric}:`, value, context);
     }

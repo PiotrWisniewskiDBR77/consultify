@@ -1,26 +1,27 @@
 /**
  * Billing Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Delegates to granulated billing modules for queries, commands, and events.
  */
 
-import { BillingDependencyLoader } from './billing/billingDependencyLoader.js';
-import { BillingQueryService } from './billing/BillingQueryService.js';
-import { BillingCommandService } from './billing/BillingCommandService.js';
-import { BillingEventService } from './billing/BillingEventService.js';
 import type Stripe from 'stripe';
+
+import { BillingCommandService } from './billing/BillingCommandService.js';
+import { BillingDependencyLoader } from './billing/billingDependencyLoader.js';
+import { BillingEventService } from './billing/BillingEventService.js';
+import { BillingQueryService } from './billing/BillingQueryService.js';
 import type {
-    BillingPlan,
+    _BillingPlan,
+    _SetupIntent,
+    BillingServiceDependencies,
     CreatePlanData,
-    UpdatePlanData,
     CreateUserPlanData,
+    UpdateBillingAlertsData,
+    UpdatePlanData,
+    UpdateTaxSettingsData,
     UpdateUserPlanData,
     UpsertBillingData,
-    SetupIntent,
-    UpdateBillingAlertsData,
-    UpdateTaxSettingsData,
-    BillingServiceDependencies
 } from './billing/types.js';
 
 class BillingServiceClass {
@@ -30,7 +31,7 @@ class BillingServiceClass {
     readonly #commandService = new BillingCommandService(
         () => this.#depsLoader.deps,
         this.#queryService,
-        this.#eventService
+        this.#eventService,
     );
 
     async #ensureInitialized(): Promise<void> {
@@ -220,36 +221,54 @@ export const setDependencies = (newDeps: Partial<BillingServiceDependencies>) =>
 export const getPlans = () => billingServiceInstance.getPlans();
 export const getPlanById = (planId: string) => billingServiceInstance.getPlanById(planId);
 export const createPlan = (planData: CreatePlanData) => billingServiceInstance.createPlan(planData);
-export const updatePlan = (planId: string, updates: UpdatePlanData) => billingServiceInstance.updatePlan(planId, updates);
+export const updatePlan = (planId: string, updates: UpdatePlanData) =>
+    billingServiceInstance.updatePlan(planId, updates);
 export const deletePlan = (planId: string) => billingServiceInstance.deletePlan(planId);
 export const getUserPlans = () => billingServiceInstance.getUserPlans();
 export const createUserPlan = (planData: CreateUserPlanData) => billingServiceInstance.createUserPlan(planData);
-export const updateUserPlan = (planId: string, updates: UpdateUserPlanData) => billingServiceInstance.updateUserPlan(planId, updates);
+export const updateUserPlan = (planId: string, updates: UpdateUserPlanData) =>
+    billingServiceInstance.updateUserPlan(planId, updates);
 export const deleteUserPlan = (planId: string) => billingServiceInstance.deleteUserPlan(planId);
 export const getOrganizationBilling = (orgId: string) => billingServiceInstance.getOrganizationBilling(orgId);
-export const upsertOrganizationBilling = (orgId: string, billingData: UpsertBillingData) => billingServiceInstance.upsertOrgBilling(orgId, billingData);
-export const getOrCreateStripeCustomer = (orgId: string, email: string, orgName: string) => billingServiceInstance.getOrCreateStripeCustomer(orgId, email, orgName);
-export const createSubscription = (orgId: string, planId: string, paymentMethodId: string, email: string, orgName: string) =>
-    billingServiceInstance.createSubscription(orgId, planId, paymentMethodId, email, orgName);
+export const upsertOrganizationBilling = (orgId: string, billingData: UpsertBillingData) =>
+    billingServiceInstance.upsertOrgBilling(orgId, billingData);
+export const getOrCreateStripeCustomer = (orgId: string, email: string, orgName: string) =>
+    billingServiceInstance.getOrCreateStripeCustomer(orgId, email, orgName);
+export const createSubscription = (
+    orgId: string,
+    planId: string,
+    paymentMethodId: string,
+    email: string,
+    orgName: string,
+) => billingServiceInstance.createSubscription(orgId, planId, paymentMethodId, email, orgName);
 export const cancelSubscription = (orgId: string) => billingServiceInstance.cancelSubscription(orgId);
 export const changePlan = (orgId: string, newPlanId: string) => billingServiceInstance.changePlan(orgId, newPlanId);
 export const getInvoices = (orgId: string) => billingServiceInstance.getInvoices(orgId);
-export const recordInvoice = (orgId: string, stripeInvoice: Stripe.Invoice) => billingServiceInstance.recordInvoice(orgId, stripeInvoice);
+export const recordInvoice = (orgId: string, stripeInvoice: Stripe.Invoice) =>
+    billingServiceInstance.recordInvoice(orgId, stripeInvoice);
 export const getRevenueStats = () => billingServiceInstance.getRevenueStats();
 export const getPaymentMethods = (orgId: string) => billingServiceInstance.getPaymentMethods(orgId);
 export const getPaymentMethod = (paymentMethodId: string) => billingServiceInstance.getPaymentMethod(paymentMethodId);
-export const addPaymentMethod = (orgId: string, stripePaymentMethodId: string) => billingServiceInstance.addPaymentMethod(orgId, stripePaymentMethodId);
-export const removePaymentMethod = (paymentMethodId: string, orgId: string) => billingServiceInstance.removePaymentMethod(paymentMethodId, orgId);
-export const setDefaultPaymentMethod = (paymentMethodId: string, orgId: string) => billingServiceInstance.setDefaultPaymentMethod(paymentMethodId, orgId);
-export const createSetupIntent = (orgId: string, email: string, orgName: string) => billingServiceInstance.createSetupIntent(orgId, email, orgName);
+export const addPaymentMethod = (orgId: string, stripePaymentMethodId: string) =>
+    billingServiceInstance.addPaymentMethod(orgId, stripePaymentMethodId);
+export const removePaymentMethod = (paymentMethodId: string, orgId: string) =>
+    billingServiceInstance.removePaymentMethod(paymentMethodId, orgId);
+export const setDefaultPaymentMethod = (paymentMethodId: string, orgId: string) =>
+    billingServiceInstance.setDefaultPaymentMethod(paymentMethodId, orgId);
+export const createSetupIntent = (orgId: string, email: string, orgName: string) =>
+    billingServiceInstance.createSetupIntent(orgId, email, orgName);
 export const getBillingAlerts = (orgId: string) => billingServiceInstance.getBillingAlerts(orgId);
-export const updateBillingAlerts = (orgId: string, alertSettings: UpdateBillingAlertsData) => billingServiceInstance.updateBillingAlerts(orgId, alertSettings);
+export const updateBillingAlerts = (orgId: string, alertSettings: UpdateBillingAlertsData) =>
+    billingServiceInstance.updateBillingAlerts(orgId, alertSettings);
 export const getTaxSettings = (orgId: string) => billingServiceInstance.getTaxSettings(orgId);
-export const updateTaxSettings = (orgId: string, taxSettings: UpdateTaxSettingsData) => billingServiceInstance.updateTaxSettings(orgId, taxSettings);
-export const validateDiscountCode = (code: string, planId: string) => billingServiceInstance.validateDiscountCode(code, planId);
+export const updateTaxSettings = (orgId: string, taxSettings: UpdateTaxSettingsData) =>
+    billingServiceInstance.updateTaxSettings(orgId, taxSettings);
+export const validateDiscountCode = (code: string, planId: string) =>
+    billingServiceInstance.validateDiscountCode(code, planId);
 export const incrementDiscountCodeUsage = (codeId: string) => billingServiceInstance.incrementDiscountCodeUsage(codeId);
 export const getSeatPricing = (planId: string) => billingServiceInstance.getSeatPricing(planId);
-export const calculateSeatCost = (orgId: string, quantity: number) => billingServiceInstance.calculateSeatCost(orgId, quantity);
+export const calculateSeatCost = (orgId: string, quantity: number) =>
+    billingServiceInstance.calculateSeatCost(orgId, quantity);
 export const processSeatPurchase = (orgId: string, quantity: number, paymentMethodId: string) =>
     billingServiceInstance.processSeatPurchase(orgId, quantity, paymentMethodId);
 export const getBillingModel = (orgId: string) => billingServiceInstance.getBillingModel(orgId);

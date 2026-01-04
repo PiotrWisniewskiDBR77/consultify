@@ -1,6 +1,6 @@
 /**
  * DataManagementView - Data Management & GDPR Compliance
- * 
+ *
  * Features:
  * - Export organization data
  * - Data retention settings
@@ -8,29 +8,30 @@
  * - GDPR compliance tools
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+    AlertTriangle,
+    Archive,
+    Calendar,
+    Check,
+    Clock,
     Database,
     Download,
-    Trash2,
-    RefreshCw,
-    AlertTriangle,
-    Shield,
+    Eye,
     FileText,
-    Archive,
-    Clock,
-    Check,
-    Users,
     FolderOpen,
-    Calendar,
     Lock,
-    Eye
+    RefreshCw,
+    Shield,
+    Trash2,
+    Users,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
 
 interface DataCategory {
     id: string;
@@ -58,12 +59,48 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
 
     // Data categories
     const [dataCategories, setDataCategories] = useState<DataCategory[]>([
-        { id: 'users', name: 'Users & Team', description: 'User accounts, profiles, and team structure', icon: <Users size={20} />, recordCount: 45 },
-        { id: 'projects', name: 'Projects', description: 'All projects and associated data', icon: <FolderOpen size={20} />, recordCount: 12 },
-        { id: 'tasks', name: 'Tasks & Activities', description: 'Tasks, comments, and activity logs', icon: <FileText size={20} />, recordCount: 1283 },
-        { id: 'decisions', name: 'Decisions', description: 'Decisions and voting records', icon: <Shield size={20} />, recordCount: 87 },
-        { id: 'documents', name: 'Documents', description: 'Uploaded files and documents', icon: <Archive size={20} />, recordCount: 234 },
-        { id: 'audit', name: 'Audit Logs', description: 'Activity and security logs', icon: <Clock size={20} />, recordCount: 15420 }
+        {
+            id: 'users',
+            name: 'Users & Team',
+            description: 'User accounts, profiles, and team structure',
+            icon: <Users size={20} />,
+            recordCount: 45,
+        },
+        {
+            id: 'projects',
+            name: 'Projects',
+            description: 'All projects and associated data',
+            icon: <FolderOpen size={20} />,
+            recordCount: 12,
+        },
+        {
+            id: 'tasks',
+            name: 'Tasks & Activities',
+            description: 'Tasks, comments, and activity logs',
+            icon: <FileText size={20} />,
+            recordCount: 1283,
+        },
+        {
+            id: 'decisions',
+            name: 'Decisions',
+            description: 'Decisions and voting records',
+            icon: <Shield size={20} />,
+            recordCount: 87,
+        },
+        {
+            id: 'documents',
+            name: 'Documents',
+            description: 'Uploaded files and documents',
+            icon: <Archive size={20} />,
+            recordCount: 234,
+        },
+        {
+            id: 'audit',
+            name: 'Audit Logs',
+            description: 'Activity and security logs',
+            icon: <Clock size={20} />,
+            recordCount: 15420,
+        },
     ]);
 
     // Retention settings
@@ -75,15 +112,17 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
         setLoading(true);
         try {
             const res = await fetch('/api/organization-data/stats', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.stats) {
-                    setDataCategories(prev => prev.map(cat => ({
-                        ...cat,
-                        recordCount: data.stats[cat.id] || cat.recordCount
-                    })));
+                    setDataCategories((prev) =>
+                        prev.map((cat) => ({
+                            ...cat,
+                            recordCount: data.stats[cat.id] || cat.recordCount,
+                        })),
+                    );
                 }
             }
         } catch (error) {
@@ -101,7 +140,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
         try {
             const res = await fetch(`/api/organization-data/export/${categoryId}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
@@ -128,7 +167,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
         try {
             const res = await fetch('/api/organization-data/export/all', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
@@ -156,13 +195,13 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     auditLogRetentionDays: retentionPeriod === 'forever' ? 0 : parseInt(retentionPeriod),
                     autoDeleteEnabled: autoDeleteInactive,
-                    activityRetentionDays: autoDeleteInactive ? parseInt(inactivePeriod) : 365
-                })
+                    activityRetentionDays: autoDeleteInactive ? parseInt(inactivePeriod) : 365,
+                }),
             });
 
             if (res.ok) {
@@ -186,7 +225,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
         try {
             await fetch(`/api/organizations/${currentOrganization?.id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             toast.success('Organization deletion initiated');
             // Redirect or logout
@@ -235,12 +274,10 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
                 <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                        GDPR Compliance
-                    </p>
+                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">GDPR Compliance</p>
                     <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                        You can export all your organization data at any time. Data exports include all user information,
-                        project data, and associated records in a machine-readable format (JSON/CSV).
+                        You can export all your organization data at any time. Data exports include all user
+                        information, project data, and associated records in a machine-readable format (JSON/CSV).
                     </p>
                 </div>
             </div>
@@ -254,11 +291,8 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                     </span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    {dataCategories.map(category => (
-                        <div
-                            key={category.id}
-                            className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg"
-                        >
+                    {dataCategories.map((category) => (
+                        <div key={category.id} className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
                             <div className="flex items-center gap-2 mb-2 text-slate-600 dark:text-slate-400">
                                 {category.icon}
                                 <span className="text-xs font-medium">{category.name}</span>
@@ -275,7 +309,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
             <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                 <h3 className="font-medium text-slate-900 dark:text-white mb-4">Export by Category</h3>
                 <div className="space-y-3">
-                    {dataCategories.map(category => (
+                    {dataCategories.map((category) => (
                         <div
                             key={category.id}
                             className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900 rounded-lg"
@@ -347,7 +381,10 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                             className="mt-0.5"
                         />
                         <div>
-                            <label htmlFor="autoDelete" className="text-sm font-medium text-slate-900 dark:text-white cursor-pointer">
+                            <label
+                                htmlFor="autoDelete"
+                                className="text-sm font-medium text-slate-900 dark:text-white cursor-pointer"
+                            >
                                 Auto-delete inactive user data
                             </label>
                             <p className="text-xs text-slate-500 mt-1">
@@ -438,7 +475,8 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
 
                                 <div>
                                     <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                                        To confirm, type <span className="font-mono font-bold">{currentOrganization?.name}</span>:
+                                        To confirm, type{' '}
+                                        <span className="font-mono font-bold">{currentOrganization?.name}</span>:
                                     </p>
                                     <input
                                         type="text"
@@ -451,7 +489,10 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                             </div>
                             <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
                                 <button
-                                    onClick={() => { setShowDeleteModal(false); setDeleteConfirmation(''); }}
+                                    onClick={() => {
+                                        setShowDeleteModal(false);
+                                        setDeleteConfirmation('');
+                                    }}
                                     className="px-4 py-2 text-slate-600 dark:text-slate-400"
                                 >
                                     Cancel

@@ -1,17 +1,18 @@
 /**
  * SLA Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/slaService.js (CommonJS) to TypeScript (ES Modules)
  * Step 16: SLA timer and escalation logic.
  * Checks for expired assignments and handles escalation to org admins.
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+import { v4 as _uuidv4 } from 'uuid';
+
 import { getDatabase } from '../database/Database.js';
-import * as DbPromise from '../utils/DbPromise.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import auditLogger from '../utils/auditLogger.js';
+import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
 // CONSTANTS
@@ -103,7 +104,7 @@ export async function findExpiredAssignments(): Promise<ExpiredAssignment[]> {
          WHERE aa.status IN ('PENDING', 'ACKED')
          AND aa.sla_due_at < datetime('now')
          AND aa.escalated_at IS NULL`,
-        []
+        [],
     );
     return rows || [];
 }
@@ -112,11 +113,9 @@ export async function findExpiredAssignments(): Promise<ExpiredAssignment[]> {
  * Mark an assignment as expired.
  */
 export async function markExpired(assignmentId: string): Promise<boolean> {
-    const result = await DbPromise.run(
-        db,
-        `UPDATE approval_assignments SET status = 'EXPIRED' WHERE id = ?`,
-        [assignmentId]
-    );
+    const result = await DbPromise.run(db, `UPDATE approval_assignments SET status = 'EXPIRED' WHERE id = ?`, [
+        assignmentId,
+    ]);
     return result.changes > 0;
 }
 
@@ -130,7 +129,7 @@ export async function findOrgAdmin(orgId: string): Promise<OrgAdmin | null> {
          FROM users 
          WHERE organization_id = ? AND role = 'ADMIN'
          LIMIT 1`,
-        [orgId]
+        [orgId],
     );
     return row || null;
 }
@@ -141,14 +140,14 @@ export async function findOrgAdmin(orgId: string): Promise<OrgAdmin | null> {
 export async function escalateAssignment(
     assignmentId: string,
     toUserId: string,
-    reason: string = DEFAULT_ESCALATION_REASON
+    reason: string = DEFAULT_ESCALATION_REASON,
 ): Promise<EscalationResult> {
     const result = await DbPromise.run(
         db,
         `UPDATE approval_assignments 
          SET escalated_to_user_id = ?, escalated_at = CURRENT_TIMESTAMP, escalation_reason = ?
          WHERE id = ?`,
-        [toUserId, reason, assignmentId]
+        [toUserId, reason, assignmentId],
     );
 
     if (result.changes === 0) {
@@ -160,7 +159,7 @@ export async function escalateAssignment(
     auditLogger.warn('APPROVAL_ESCALATED', {
         assignment_id: assignmentId,
         escalated_to: toUserId,
-        reason
+        reason,
     });
 
     return { assignmentId, escalatedTo: toUserId, reason };
@@ -180,7 +179,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
         checked: 0,
         escalated: 0,
         notificationsSent: 0,
-        errors: []
+        errors: [],
     };
 
     try {
@@ -195,25 +194,16 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
 
                 if (admin && admin.id !== assignment.assigned_to_user_id) {
                     // 3. Escalate
-                    await escalateAssignment(
-                        assignment.id,
-                        admin.id,
-                        DEFAULT_ESCALATION_REASON
-                    );
+                    await escalateAssignment(assignment.id, admin.id, DEFAULT_ESCALATION_REASON);
                     summary.escalated++;
 
                     // 4. Create notification for escalated-to user
-                    await NotificationOutboxService.enqueue(
-                        admin.id,
-                        assignment.org_id,
-                        'ESCALATION',
-                        {
-                            proposalId: assignment.proposal_id,
-                            originalAssignee: assignment.assigned_to_user_id,
-                            slaDueAt: assignment.sla_due_at,
-                            escalationReason: DEFAULT_ESCALATION_REASON
-                        }
-                    );
+                    await NotificationOutboxService.enqueue(admin.id, assignment.org_id, 'ESCALATION', {
+                        proposalId: assignment.proposal_id,
+                        originalAssignee: assignment.assigned_to_user_id,
+                        slaDueAt: assignment.sla_due_at,
+                        escalationReason: DEFAULT_ESCALATION_REASON,
+                    });
                     summary.notificationsSent++;
 
                     // 5. Also notify original assignee
@@ -224,8 +214,8 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
                         {
                             proposalId: assignment.proposal_id,
                             status: 'Escalated to admin',
-                            slaDueAt: assignment.sla_due_at
-                        }
+                            slaDueAt: assignment.sla_due_at,
+                        },
                     );
                     summary.notificationsSent++;
                 } else {
@@ -237,8 +227,8 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
                         {
                             proposalId: assignment.proposal_id,
                             status: 'Overdue - requires immediate attention',
-                            slaDueAt: assignment.sla_due_at
-                        }
+                            slaDueAt: assignment.sla_due_at,
+                        },
                     );
                     summary.notificationsSent++;
                 }
@@ -254,7 +244,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
 
         auditLogger.info('SLA_CHECK_COMPLETE', {
             duration_ms: duration,
-            ...summary
+            ...summary,
         });
 
         return summary;
@@ -282,18 +272,20 @@ export async function getSlaHealth(orgId: string): Promise<SLAHealthStats> {
             SUM(CASE WHEN escalated_at IS NOT NULL THEN 1 ELSE 0 END) as escalated
          FROM approval_assignments
          WHERE org_id = ?`,
-        [orgId]
+        [orgId],
     );
 
-    return row || {
-        total: 0,
-        pending: 0,
-        acknowledged: 0,
-        completed: 0,
-        expired: 0,
-        overdue: 0,
-        escalated: 0
-    };
+    return (
+        row || {
+            total: 0,
+            pending: 0,
+            acknowledged: 0,
+            completed: 0,
+            expired: 0,
+            overdue: 0,
+            escalated: 0,
+        }
+    );
 }
 
 // Default export for backward compatibility
@@ -305,7 +297,7 @@ const SLAService = {
     findOrgAdmin,
     escalateAssignment,
     runSlaCheck,
-    getSlaHealth
+    getSlaHealth,
 };
 
 export default SLAService;

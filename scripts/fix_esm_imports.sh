@@ -31,3 +31,4 @@ echo ""
 echo "📋 Zmienione linie:"
 diff "$BACKUP_FILE" "$INDEX_FILE" || true
 
+

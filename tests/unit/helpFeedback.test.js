@@ -7,16 +7,35 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vite
 import request from 'supertest';
 import express from 'express';
 
-// Import Real Dependencies (Singleton)
-import db from '../../server/database.js';
-// We need to require routes because they are CJS and might depend on other CJS modules
-import helpFeedbackRoutes from '../../server/routes/helpFeedback.js';
+// Mock Database
+const mockDb = {
+    run: vi.fn((sql, params, cb) => {
+        if (cb) cb(null);
+        else return Promise.resolve({ changes: 1 });
+    }),
+    get: vi.fn((sql, params, cb) => {
+        if (cb) cb(null, null);
+        else return Promise.resolve(null);
+    }),
+    all: vi.fn((sql, params, cb) => {
+        if (cb) cb(null, []);
+        else return Promise.resolve([]);
+    }),
+    query: vi.fn((sql, params) => {
+        return Promise.resolve({ rows: [] });
+    })
+};
 
-// Mock Auth Middleware globally (or rely on bypass if available)
-// helpFeedback routes might not use the same bypass logic as ai-memory.
-// Let's check if helpFeedbackRoutes uses verifyToken.
-// If so, we might need to mock it.
-// Assuming verifyToken is used.
+vi.doMock('../../server/database.js', () => ({
+    default: mockDb,
+    getDatabase: () => mockDb
+}));
+
+// We need to require routes because they are CJS and might depend on other CJS modules
+// Using await import to ensure mock is applied first
+let helpFeedbackRoutes;
+
+// Mock Auth Middleware globally
 vi.mock('../../server/middleware/authMiddleware', () => ({
     default: (req, res, next) => {
         req.user = { id: 'test-user', organizationId: 'test-org' };
@@ -30,21 +49,14 @@ vi.mock('../../server/middleware/authMiddleware', () => ({
 describe('Help Feedback API', () => {
     let app;
 
-    const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
-        db.run(sql, params, (err) => {
-            if (err) return reject(err);
-            resolve();
-        });
-    });
-
     beforeAll(async () => {
-        vi.restoreAllMocks();
+        vi.resetModules();
+        const routesModule = await import('../../server/routes/helpFeedback.js');
+        helpFeedbackRoutes = routesModule.default;
     });
 
     beforeEach(async () => {
-        // Clear tables
-        await dbRun('DELETE FROM help_feedback');
-        await dbRun('DELETE FROM help_events');
+        vi.clearAllMocks();
 
         // Initialize App
         app = express();
@@ -92,12 +104,18 @@ describe('Help Feedback API', () => {
 
     describe('GET /api/help/analytics/summary', () => {
         it('should return analytics summary', async () => {
-            // Seed some events first
-            await dbRun(`INSERT INTO help_analytics 
-                (id, user_id, organization_id, event_type, content_type, content_id, metadata, created_at)
-                VALUES 
-                ('evt-1', 'test-user', 'test-org', 'search', 'global', 'none', '{"query":"help"}', datetime('now'))
-            `);
+            // Mock db.query to return seeded events
+            mockDb.query.mockImplementation((sql, params) => {
+                if (sql.includes('GROUP BY event_type')) {
+                    return Promise.resolve({
+                        rows: [
+                            { event_type: 'search', count: 5 },
+                            { event_type: 'feedback', count: 2 }
+                        ]
+                    });
+                }
+                return Promise.resolve({ rows: [] });
+            });
 
             const response = await request(app)
                 .get('/api/help/analytics/summary');

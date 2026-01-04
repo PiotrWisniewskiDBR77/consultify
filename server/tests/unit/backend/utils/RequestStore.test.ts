@@ -3,9 +3,10 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { getCorrelationId, getStore, getStartTime, correlationMiddleware } from '../../../src/utils/RequestStore.js';
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { correlationMiddleware, getCorrelationId, getStartTime, getStore } from '../../../src/utils/RequestStore.js';
 
 describe('RequestStore', () => {
     beforeEach(() => {
@@ -34,7 +35,4 @@ describe('RequestStore', () => {
         expect(typeof correlationMiddleware).toBe('function');
     });
 });
-
-
-
 

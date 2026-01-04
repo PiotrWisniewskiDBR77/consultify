@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { BillingOverviewPanel } from '../../../components/SuperAdmin/billing/BillingOverviewPanel';
+import { BillingOverviewPanel } from '../../components/SuperAdmin/billing/BillingOverviewPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -165,6 +165,7 @@ describe('BillingOverviewPanel', () => {
         });
     });
 });
+
 
 
 

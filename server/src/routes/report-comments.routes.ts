@@ -1,7 +1,7 @@
 /**
  * ReportComments Routes
  * API endpoints for report-comments
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof report_commentsRoutesJS === 'function' || (report_commentsRoutesJS && typeof report_commentsRoutesJS.handle === 'function')) {
+if (
+    typeof report_commentsRoutesJS === 'function' ||
+    (report_commentsRoutesJS && typeof report_commentsRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(report_commentsRoutesJS);
 } else {

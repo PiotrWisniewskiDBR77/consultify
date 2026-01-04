@@ -2,19 +2,11 @@
  * StudioSidebar - Documents list sidebar
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-    X, 
-    Search, 
-    Plus, 
-    FileText, 
-    FolderOpen,
-    Clock,
-    Trash2,
-    Loader2
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { Clock, FileText, FolderOpen, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface StudioDocument {
     id: string;
@@ -29,11 +21,7 @@ interface StudioSidebarProps {
     onClose: () => void;
 }
 
-export const StudioSidebar: React.FC<StudioSidebarProps> = ({
-    currentDocumentId,
-    onSelectDocument,
-    onClose
-}) => {
+export const StudioSidebar: React.FC<StudioSidebarProps> = ({ currentDocumentId, onSelectDocument, onClose }) => {
     const [documents, setDocuments] = useState<StudioDocument[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -56,17 +44,15 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
     }, []);
 
     // Filter documents
-    const filteredDocuments = documents.filter(doc =>
-        doc.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredDocuments = documents.filter((doc) => doc.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // Format date
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString(undefined, { 
-            month: 'short', 
+        return date.toLocaleDateString(undefined, {
+            month: 'short',
             day: 'numeric',
-            year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+            year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
         });
     };
 
@@ -77,7 +63,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
             org_chart: 'text-purple-400 bg-purple-500/20',
             mindmap: 'text-pink-400 bg-pink-500/20',
             raci: 'text-amber-400 bg-amber-500/20',
-            swimlane: 'text-cyan-400 bg-cyan-500/20'
+            swimlane: 'text-cyan-400 bg-cyan-500/20',
         };
         return colors[type] || 'text-slate-400 bg-slate-500/20';
     };
@@ -134,24 +120,26 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         </p>
                     </div>
                 ) : (
-                    filteredDocuments.map(doc => (
+                    filteredDocuments.map((doc) => (
                         <button
                             key={doc.id}
                             onClick={() => onSelectDocument(doc.id)}
                             className={`
                                 w-full text-left p-3 rounded-lg transition-colors
-                                ${doc.id === currentDocumentId
-                                    ? 'bg-blue-500/20 border border-blue-500/30'
-                                    : 'hover:bg-white/5 border border-transparent'
+                                ${
+                                    doc.id === currentDocumentId
+                                        ? 'bg-blue-500/20 border border-blue-500/30'
+                                        : 'hover:bg-white/5 border border-transparent'
                                 }
                             `}
                         >
                             <div className="flex items-start gap-3">
-                                <FileText size={16} className={doc.id === currentDocumentId ? 'text-blue-400' : 'text-slate-500'} />
+                                <FileText
+                                    size={16}
+                                    className={doc.id === currentDocumentId ? 'text-blue-400' : 'text-slate-500'}
+                                />
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm text-white truncate">
-                                        {doc.name}
-                                    </div>
+                                    <div className="font-medium text-sm text-white truncate">{doc.name}</div>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className={`px-1.5 py-0.5 text-[10px] rounded ${getTypeColor(doc.type)}`}>
                                             {doc.type.replace('_', ' ')}
@@ -172,12 +160,4 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
 };
 
 export default StudioSidebar;
-
-
-
-
-
-
-
-
 

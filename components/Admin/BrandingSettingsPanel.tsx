@@ -1,6 +1,6 @@
 /**
  * BrandingSettingsPanel - Organization Branding & White-label Settings
- * 
+ *
  * Features:
  * - Organization logo upload
  * - Primary/Secondary colors
@@ -8,31 +8,32 @@
  * - Email template branding
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-    Palette,
-    Upload,
-    Image,
-    Sun,
-    Moon,
-    Type,
-    Mail,
-    Globe,
-    Eye,
-    Save,
-    RefreshCw,
-    Trash2,
-    Check,
-    X,
     AlertTriangle,
+    Check,
+    Copy,
     ExternalLink,
-    Copy
+    Eye,
+    Globe,
+    Image,
+    Mail,
+    Moon,
+    Palette,
+    RefreshCw,
+    Save,
+    Sun,
+    Trash2,
+    Type,
+    Upload,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../shared/InfoButton';
 
 // Types
@@ -85,7 +86,7 @@ const DEFAULT_BRANDING: BrandingConfig = {
     emailHeaderLogo: '',
     emailFooterText: '',
     emailFromName: '',
-    isActive: false
+    isActive: false,
 };
 
 // Font options
@@ -99,7 +100,7 @@ const FONT_OPTIONS = [
     { id: 'Source Sans Pro', label: 'Source Sans Pro' },
     { id: 'Nunito', label: 'Nunito' },
     { id: 'Work Sans', label: 'Work Sans' },
-    { id: 'DM Sans', label: 'DM Sans' }
+    { id: 'DM Sans', label: 'DM Sans' },
 ];
 
 // Preset color themes
@@ -109,7 +110,7 @@ const COLOR_PRESETS = [
     { name: 'Emerald', primary: '#10B981', secondary: '#06B6D4', accent: '#8B5CF6' },
     { name: 'Rose', primary: '#F43F5E', secondary: '#EC4899', accent: '#F59E0B' },
     { name: 'Orange', primary: '#F97316', secondary: '#FBBF24', accent: '#3B82F6' },
-    { name: 'Slate', primary: '#475569', secondary: '#64748B', accent: '#3B82F6' }
+    { name: 'Slate', primary: '#475569', secondary: '#64748B', accent: '#3B82F6' },
 ];
 
 interface BrandingSettingsPanelProps {
@@ -119,50 +120,50 @@ interface BrandingSettingsPanelProps {
 export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ className = '' }) => {
     const { t } = useTranslation();
     const { currentOrganization } = useAppStore();
-    
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [branding, setBranding] = useState<BrandingConfig>(DEFAULT_BRANDING);
     const [activeSection, setActiveSection] = useState<'logos' | 'colors' | 'typography' | 'login' | 'email'>('logos');
     const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
-    
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadTarget, setUploadTarget] = useState<keyof BrandingConfig | null>(null);
 
     // Load branding
     const loadBranding = useCallback(async () => {
         if (!currentOrganization?.id) return;
-        
+
         setLoading(true);
         try {
             const response = await fetch(`/api/branding/${currentOrganization.id}`, {
-                headers: { 
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.configured && data.branding) {
                     setBranding({
                         ...DEFAULT_BRANDING,
                         ...data.branding,
-                        organizationId: currentOrganization.id
+                        organizationId: currentOrganization.id,
                     });
                 } else {
                     // No branding configured, use defaults
                     setBranding({
                         ...DEFAULT_BRANDING,
-                        organizationId: currentOrganization.id
+                        organizationId: currentOrganization.id,
                     });
                 }
             } else {
                 // Use defaults if fetch failed
                 setBranding({
                     ...DEFAULT_BRANDING,
-                    organizationId: currentOrganization.id
+                    organizationId: currentOrganization.id,
                 });
             }
         } catch (error) {
@@ -170,7 +171,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
             // Use defaults if no branding exists
             setBranding({
                 ...DEFAULT_BRANDING,
-                organizationId: currentOrganization.id
+                organizationId: currentOrganization.id,
             });
         } finally {
             setLoading(false);
@@ -183,25 +184,25 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
 
     // Update branding field
     const updateField = (field: keyof BrandingConfig, value: any) => {
-        setBranding(prev => ({ ...prev, [field]: value }));
+        setBranding((prev) => ({ ...prev, [field]: value }));
         setHasChanges(true);
     };
 
     // Save branding
     const saveBranding = async () => {
         if (!currentOrganization?.id) return;
-        
+
         setSaving(true);
         try {
             const response = await fetch(`/api/branding/${currentOrganization.id}`, {
                 method: 'PATCH', // PATCH = upsert (create or update)
-                headers: { 
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(branding)
+                body: JSON.stringify(branding),
             });
-            
+
             if (response.ok) {
                 toast.success(t('admin.branding.saved', 'Branding settings saved'));
                 setHasChanges(false);
@@ -260,24 +261,20 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
     };
 
     // Apply color preset
-    const applyPreset = (preset: typeof COLOR_PRESETS[0]) => {
-        setBranding(prev => ({
+    const applyPreset = (preset: (typeof COLOR_PRESETS)[0]) => {
+        setBranding((prev) => ({
             ...prev,
             primaryColor: preset.primary,
             secondaryColor: preset.secondary,
-            accentColor: preset.accent
+            accentColor: preset.accent,
         }));
         setHasChanges(true);
     };
 
     // Render logo uploader
-    const renderLogoUploader = (
-        label: string,
-        field: keyof BrandingConfig,
-        description: string
-    ) => {
+    const renderLogoUploader = (label: string, field: keyof BrandingConfig, description: string) => {
         const value = branding[field] as string;
-        
+
         return (
             <div className="p-4 bg-slate-50 dark:bg-navy-700 rounded-xl">
                 <div className="flex items-start justify-between mb-3">
@@ -294,17 +291,15 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                         </button>
                     )}
                 </div>
-                
+
                 {value ? (
                     <div className="relative group">
-                        <div className={`flex items-center justify-center p-4 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-600 ${
-                            field.includes('Dark') ? 'bg-slate-800' : 'bg-white'
-                        }`}>
-                            <img 
-                                src={value} 
-                                alt={label}
-                                className="max-h-16 max-w-full object-contain"
-                            />
+                        <div
+                            className={`flex items-center justify-center p-4 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-600 ${
+                                field.includes('Dark') ? 'bg-slate-800' : 'bg-white'
+                            }`}
+                        >
+                            <img src={value} alt={label} className="max-h-16 max-w-full object-contain" />
                         </div>
                         <button
                             onClick={() => triggerUpload(field)}
@@ -334,19 +329,13 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
         { id: 'colors', label: t('admin.branding.colors', 'Colors'), icon: Palette },
         { id: 'typography', label: t('admin.branding.typography', 'Typography'), icon: Type },
         { id: 'login', label: t('admin.branding.loginPage', 'Login Page'), icon: Globe },
-        { id: 'email', label: t('admin.branding.emailTemplates', 'Email'), icon: Mail }
+        { id: 'email', label: t('admin.branding.emailTemplates', 'Email'), icon: Mail },
     ];
 
     return (
         <div className={`space-y-6 ${className}`}>
             {/* Hidden file input */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
 
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -358,7 +347,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                         <InfoButton cardId="admin-branding" />
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('admin.branding.subtitle', 'Customize your organization\'s appearance')}
+                        {t('admin.branding.subtitle', "Customize your organization's appearance")}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -403,7 +392,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Section Navigation */}
                     <div className="space-y-2">
-                        {sections.map(section => {
+                        {sections.map((section) => {
                             const Icon = section.icon;
                             return (
                                 <button
@@ -430,27 +419,27 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                                     {t('admin.branding.logosTitle', 'Logo Settings')}
                                 </h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {renderLogoUploader(
                                         t('admin.branding.logoLight', 'Light Mode Logo'),
                                         'logoLightUrl',
-                                        t('admin.branding.logoLightDesc', 'Displayed on light backgrounds')
+                                        t('admin.branding.logoLightDesc', 'Displayed on light backgrounds'),
                                     )}
                                     {renderLogoUploader(
                                         t('admin.branding.logoDark', 'Dark Mode Logo'),
                                         'logoDarkUrl',
-                                        t('admin.branding.logoDarkDesc', 'Displayed on dark backgrounds')
+                                        t('admin.branding.logoDarkDesc', 'Displayed on dark backgrounds'),
                                     )}
                                     {renderLogoUploader(
                                         t('admin.branding.logoIcon', 'Logo Icon'),
                                         'logoIconUrl',
-                                        t('admin.branding.logoIconDesc', 'Square icon for compact spaces')
+                                        t('admin.branding.logoIconDesc', 'Square icon for compact spaces'),
                                     )}
                                     {renderLogoUploader(
                                         t('admin.branding.favicon', 'Favicon'),
                                         'faviconUrl',
-                                        t('admin.branding.faviconDesc', 'Browser tab icon (32x32)')
+                                        t('admin.branding.faviconDesc', 'Browser tab icon (32x32)'),
                                     )}
                                 </div>
                             </div>
@@ -469,17 +458,19 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         {t('admin.branding.colorPresets', 'Quick Presets')}
                                     </label>
                                     <div className="flex flex-wrap gap-2">
-                                        {COLOR_PRESETS.map(preset => (
+                                        {COLOR_PRESETS.map((preset) => (
                                             <button
                                                 key={preset.name}
                                                 onClick={() => applyPreset(preset)}
                                                 className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-600 hover:border-violet-400 transition-colors flex items-center gap-2"
                                             >
-                                                <div 
+                                                <div
                                                     className="w-4 h-4 rounded-full"
                                                     style={{ backgroundColor: preset.primary }}
                                                 />
-                                                <span className="text-sm text-slate-700 dark:text-slate-300">{preset.name}</span>
+                                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                                    {preset.name}
+                                                </span>
                                             </button>
                                         ))}
                                     </div>
@@ -488,11 +479,23 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                 {/* Custom Colors */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {[
-                                        { field: 'primaryColor', label: t('admin.branding.primaryColor', 'Primary Color') },
-                                        { field: 'secondaryColor', label: t('admin.branding.secondaryColor', 'Secondary Color') },
-                                        { field: 'accentColor', label: t('admin.branding.accentColor', 'Accent Color') },
-                                        { field: 'backgroundColor', label: t('admin.branding.backgroundColor', 'Background Color') },
-                                        { field: 'textColor', label: t('admin.branding.textColor', 'Text Color') }
+                                        {
+                                            field: 'primaryColor',
+                                            label: t('admin.branding.primaryColor', 'Primary Color'),
+                                        },
+                                        {
+                                            field: 'secondaryColor',
+                                            label: t('admin.branding.secondaryColor', 'Secondary Color'),
+                                        },
+                                        {
+                                            field: 'accentColor',
+                                            label: t('admin.branding.accentColor', 'Accent Color'),
+                                        },
+                                        {
+                                            field: 'backgroundColor',
+                                            label: t('admin.branding.backgroundColor', 'Background Color'),
+                                        },
+                                        { field: 'textColor', label: t('admin.branding.textColor', 'Text Color') },
                                     ].map(({ field, label }) => (
                                         <div key={field}>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -502,13 +505,17 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                                 <input
                                                     type="color"
                                                     value={branding[field as keyof BrandingConfig] as string}
-                                                    onChange={(e) => updateField(field as keyof BrandingConfig, e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateField(field as keyof BrandingConfig, e.target.value)
+                                                    }
                                                     className="w-10 h-10 rounded cursor-pointer border-0"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={branding[field as keyof BrandingConfig] as string}
-                                                    onChange={(e) => updateField(field as keyof BrandingConfig, e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateField(field as keyof BrandingConfig, e.target.value)
+                                                    }
                                                     className="flex-1 px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
                                                 />
                                             </div>
@@ -537,27 +544,28 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                             </button>
                                         </div>
                                     </div>
-                                    <div 
+                                    <div
                                         className="p-6 rounded-lg"
-                                        style={{ 
-                                            backgroundColor: previewMode === 'dark' ? '#1E293B' : branding.backgroundColor,
-                                            color: previewMode === 'dark' ? '#F8FAFC' : branding.textColor
+                                        style={{
+                                            backgroundColor:
+                                                previewMode === 'dark' ? '#1E293B' : branding.backgroundColor,
+                                            color: previewMode === 'dark' ? '#F8FAFC' : branding.textColor,
                                         }}
                                     >
                                         <div className="flex items-center gap-4 mb-4">
-                                            <button 
+                                            <button
                                                 className="px-4 py-2 rounded-lg text-white font-medium"
                                                 style={{ backgroundColor: branding.primaryColor }}
                                             >
                                                 Primary Button
                                             </button>
-                                            <button 
+                                            <button
                                                 className="px-4 py-2 rounded-lg text-white font-medium"
                                                 style={{ backgroundColor: branding.secondaryColor }}
                                             >
                                                 Secondary
                                             </button>
-                                            <span 
+                                            <span
                                                 className="px-3 py-1 rounded-full text-sm text-white"
                                                 style={{ backgroundColor: branding.accentColor }}
                                             >
@@ -587,8 +595,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                             onChange={(e) => updateField('fontFamily', e.target.value)}
                                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                         >
-                                            {FONT_OPTIONS.map(font => (
-                                                <option key={font.id} value={font.id}>{font.label}</option>
+                                            {FONT_OPTIONS.map((font) => (
+                                                <option key={font.id} value={font.id}>
+                                                    {font.label}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
@@ -601,8 +611,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                             onChange={(e) => updateField('fontHeadings', e.target.value)}
                                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                         >
-                                            {FONT_OPTIONS.map(font => (
-                                                <option key={font.id} value={font.id}>{font.label}</option>
+                                            {FONT_OPTIONS.map((font) => (
+                                                <option key={font.id} value={font.id}>
+                                                    {font.label}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
@@ -620,7 +632,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         placeholder="/* Custom CSS overrides */"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {t('admin.branding.customCssNote', 'Use with caution. May override default styles.')}
+                                        {t(
+                                            'admin.branding.customCssNote',
+                                            'Use with caution. May override default styles.',
+                                        )}
                                     </p>
                                 </div>
 
@@ -630,20 +645,21 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         {t('admin.branding.typographyPreview', 'Typography Preview')}
                                     </h4>
                                     <div className="space-y-3" style={{ fontFamily: branding.fontFamily }}>
-                                        <h1 
+                                        <h1
                                             className="text-3xl font-bold text-slate-900 dark:text-white"
                                             style={{ fontFamily: branding.fontHeadings }}
                                         >
                                             Heading Level 1
                                         </h1>
-                                        <h2 
+                                        <h2
                                             className="text-2xl font-semibold text-slate-800 dark:text-slate-200"
                                             style={{ fontFamily: branding.fontHeadings }}
                                         >
                                             Heading Level 2
                                         </h2>
                                         <p className="text-base text-slate-600 dark:text-slate-400">
-                                            Body text example. This demonstrates how your selected fonts will appear in the application.
+                                            Body text example. This demonstrates how your selected fonts will appear in
+                                            the application.
                                         </p>
                                         <p className="text-sm text-slate-500 dark:text-slate-500">
                                             Small text for captions and secondary information.
@@ -670,7 +686,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                             value={branding.loginPageTitle}
                                             onChange={(e) => updateField('loginPageTitle', e.target.value)}
                                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            placeholder={t('admin.branding.loginTitlePlaceholder', 'Welcome to Your Workspace')}
+                                            placeholder={t(
+                                                'admin.branding.loginTitlePlaceholder',
+                                                'Welcome to Your Workspace',
+                                            )}
                                         />
                                     </div>
                                     <div>
@@ -682,7 +701,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                             value={branding.loginPageSubtitle}
                                             onChange={(e) => updateField('loginPageSubtitle', e.target.value)}
                                             className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
-                                            placeholder={t('admin.branding.loginSubtitlePlaceholder', 'Sign in to continue')}
+                                            placeholder={t(
+                                                'admin.branding.loginSubtitlePlaceholder',
+                                                'Sign in to continue',
+                                            )}
                                         />
                                     </div>
                                 </div>
@@ -690,7 +712,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                 {renderLogoUploader(
                                     t('admin.branding.loginLogo', 'Login Page Logo'),
                                     'loginPageLogo',
-                                    t('admin.branding.loginLogoDesc', 'Logo shown on the login page')
+                                    t('admin.branding.loginLogoDesc', 'Logo shown on the login page'),
                                 )}
 
                                 <div>
@@ -717,7 +739,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         )}
                                     </div>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {t('admin.branding.customDomainNote', 'Contact support to configure DNS for custom domains.')}
+                                        {t(
+                                            'admin.branding.customDomainNote',
+                                            'Contact support to configure DNS for custom domains.',
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -733,7 +758,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                 {renderLogoUploader(
                                     t('admin.branding.emailLogo', 'Email Header Logo'),
                                     'emailHeaderLogo',
-                                    t('admin.branding.emailLogoDesc', 'Logo shown in email headers')
+                                    t('admin.branding.emailLogoDesc', 'Logo shown in email headers'),
                                 )}
 
                                 <div>
@@ -758,7 +783,10 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         onChange={(e) => updateField('emailFooterText', e.target.value)}
                                         className="w-full px-3 py-2 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white resize-none"
                                         rows={3}
-                                        placeholder={t('admin.branding.emailFooterPlaceholder', 'Company Name\n123 Street, City, Country\ncontact@company.com')}
+                                        placeholder={t(
+                                            'admin.branding.emailFooterPlaceholder',
+                                            'Company Name\n123 Street, City, Country\ncontact@company.com',
+                                        )}
                                     />
                                 </div>
 
@@ -768,14 +796,14 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         {t('admin.branding.emailPreview', 'Email Preview')}
                                     </h4>
                                     <div className="bg-white rounded-lg shadow-sm overflow-hidden max-w-md mx-auto">
-                                        <div 
+                                        <div
                                             className="px-6 py-4 text-center"
                                             style={{ backgroundColor: branding.primaryColor }}
                                         >
                                             {branding.emailHeaderLogo ? (
-                                                <img 
-                                                    src={branding.emailHeaderLogo} 
-                                                    alt="Logo" 
+                                                <img
+                                                    src={branding.emailHeaderLogo}
+                                                    alt="Logo"
                                                     className="h-8 mx-auto"
                                                 />
                                             ) : (
@@ -794,7 +822,8 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                                         </div>
                                         <div className="px-6 py-4 bg-slate-50 border-t text-center">
                                             <p className="text-xs text-slate-500 whitespace-pre-line">
-                                                {branding.emailFooterText || 'Your company footer text will appear here.'}
+                                                {branding.emailFooterText ||
+                                                    'Your company footer text will appear here.'}
                                             </p>
                                         </div>
                                     </div>
@@ -809,4 +838,3 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
 };
 
 export default BrandingSettingsPanel;
-

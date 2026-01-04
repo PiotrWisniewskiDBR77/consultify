@@ -3,20 +3,20 @@
  * BCG/McKinsey style: Prominent, scannable, action-oriented
  */
 
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
     AlertTriangle,
+    ArrowRight,
+    Calendar,
+    CheckCircle2,
+    ChevronRight,
     Clock,
     FileQuestion,
-    CheckCircle2,
-    XCircle,
-    ChevronRight,
-    Zap,
     User,
-    Calendar,
-    ArrowRight
+    XCircle,
+    Zap,
 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface ActionItem {
@@ -49,7 +49,7 @@ const typeIcons = {
     decision: FileQuestion,
     task: Clock,
     escalation: Zap,
-    blocker: AlertTriangle
+    blocker: AlertTriangle,
 };
 
 // Urgency styling
@@ -59,22 +59,22 @@ const urgencyConfig = {
         border: 'border-rose-200 dark:border-rose-500/30',
         text: 'text-rose-700 dark:text-rose-300',
         badge: 'bg-rose-500 text-white',
-        glow: 'shadow-rose-500/20'
+        glow: 'shadow-rose-500/20',
     },
     high: {
         bg: 'bg-amber-50 dark:bg-amber-900/20',
         border: 'border-amber-200 dark:border-amber-500/30',
         text: 'text-amber-700 dark:text-amber-300',
         badge: 'bg-amber-500 text-white',
-        glow: 'shadow-amber-500/20'
+        glow: 'shadow-amber-500/20',
     },
     medium: {
         bg: 'bg-blue-50 dark:bg-blue-900/20',
         border: 'border-blue-200 dark:border-blue-500/30',
         text: 'text-blue-700 dark:text-blue-300',
         badge: 'bg-blue-500 text-white',
-        glow: 'shadow-blue-500/20'
-    }
+        glow: 'shadow-blue-500/20',
+    },
 };
 
 // Action Item Card
@@ -109,10 +109,13 @@ const ActionItemCard: React.FC<{
                     </div>
                     <div>
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${config.text}`}>
-                            {item.type === 'decision' ? t('executive.action.decision', 'Decision') :
-                             item.type === 'task' ? t('executive.action.task', 'Task') :
-                             item.type === 'escalation' ? t('executive.action.escalation', 'Escalation') :
-                             t('executive.action.blocker', 'Blocker')}
+                            {item.type === 'decision'
+                                ? t('executive.action.decision', 'Decision')
+                                : item.type === 'task'
+                                  ? t('executive.action.task', 'Task')
+                                  : item.type === 'escalation'
+                                    ? t('executive.action.escalation', 'Escalation')
+                                    : t('executive.action.blocker', 'Blocker')}
                         </span>
                         {item.urgency === 'critical' && (
                             <span className="ml-2 px-1.5 py-0.5 bg-rose-500 text-white text-[9px] font-bold rounded animate-pulse">
@@ -130,15 +133,11 @@ const ActionItemCard: React.FC<{
             </div>
 
             {/* Title */}
-            <h4 className="text-sm font-semibold text-navy-900 dark:text-white line-clamp-2 mb-2">
-                {item.title}
-            </h4>
+            <h4 className="text-sm font-semibold text-navy-900 dark:text-white line-clamp-2 mb-2">{item.title}</h4>
 
             {/* Meta */}
             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                {item.projectName && (
-                    <span className="truncate max-w-[100px]">{item.projectName}</span>
-                )}
+                {item.projectName && <span className="truncate max-w-[100px]">{item.projectName}</span>}
                 {item.owner && (
                     <span className="flex items-center gap-1">
                         <User size={10} />
@@ -196,41 +195,44 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
     onViewAll,
     onItemClick,
     onApprove,
-    onReject
+    onReject,
 }) => {
     const { t } = useTranslation();
 
     // Default/mock items if none provided
-    const displayItems: ActionItem[] = items.length > 0 ? items : [
-        {
-            id: '1',
-            type: 'decision',
-            title: 'Budget Approval: Q1 Marketing Campaign',
-            urgency: 'critical',
-            daysOverdue: 2,
-            projectName: 'Marketing 2025',
-            owner: 'Anna K.'
-        },
-        {
-            id: '2',
-            type: 'escalation',
-            title: 'Vendor Delay: Server Infrastructure',
-            description: '2-week delay on cloud migration',
-            urgency: 'high',
-            projectName: 'IT Modernization'
-        },
-        {
-            id: '3',
-            type: 'task',
-            title: 'Review Architecture Documentation',
-            urgency: 'medium',
-            dueDate: new Date(Date.now() + 86400000).toISOString(),
-            owner: 'Tomasz K.'
-        }
-    ];
+    const displayItems: ActionItem[] =
+        items.length > 0
+            ? items
+            : [
+                  {
+                      id: '1',
+                      type: 'decision',
+                      title: 'Budget Approval: Q1 Marketing Campaign',
+                      urgency: 'critical',
+                      daysOverdue: 2,
+                      projectName: 'Marketing 2025',
+                      owner: 'Anna K.',
+                  },
+                  {
+                      id: '2',
+                      type: 'escalation',
+                      title: 'Vendor Delay: Server Infrastructure',
+                      description: '2-week delay on cloud migration',
+                      urgency: 'high',
+                      projectName: 'IT Modernization',
+                  },
+                  {
+                      id: '3',
+                      type: 'task',
+                      title: 'Review Architecture Documentation',
+                      urgency: 'medium',
+                      dueDate: new Date(Date.now() + 86400000).toISOString(),
+                      owner: 'Tomasz K.',
+                  },
+              ];
 
-    const criticalCount = displayItems.filter(i => i.urgency === 'critical').length;
-    const highCount = displayItems.filter(i => i.urgency === 'high').length;
+    const criticalCount = displayItems.filter((i) => i.urgency === 'critical').length;
+    const highCount = displayItems.filter((i) => i.urgency === 'high').length;
 
     if (loading) {
         return (
@@ -241,7 +243,10 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
                 </div>
                 <div className="flex gap-4 overflow-hidden">
                     {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex-shrink-0 w-80 h-36 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse" />
+                        <div
+                            key={i}
+                            className="flex-shrink-0 w-80 h-36 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse"
+                        />
                     ))}
                 </div>
             </div>
@@ -282,21 +287,25 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
             <div className="px-5 py-4 border-b border-slate-100 dark:border-white/5">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            criticalCount > 0 
-                                ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse' 
-                                : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30'
-                        }`}>
+                        <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                criticalCount > 0
+                                    ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse'
+                                    : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30'
+                            }`}
+                        >
                             <Zap size={20} className="text-white" />
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                                 {t('executive.action.title', 'Action Required')}
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                                    criticalCount > 0 
-                                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' 
-                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                }`}>
+                                <span
+                                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                        criticalCount > 0
+                                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                    }`}
+                                >
                                     {displayItems.length}
                                 </span>
                             </h3>
@@ -311,7 +320,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
                             </p>
                         </div>
                     </div>
-                    
+
                     {onViewAll && (
                         <button
                             onClick={onViewAll}
@@ -345,12 +354,4 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
 };
 
 export default ActionRequiredStrip;
-
-
-
-
-
-
-
-
 

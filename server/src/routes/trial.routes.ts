@@ -1,12 +1,13 @@
 /**
  * Trial Routes
  * API endpoints for trial
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoGuard } from '../middleware/demoGuard.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -49,84 +50,93 @@ try {
  * POST /api/trial/:trialId/convert
  * Convert trial to permanent organization
  */
-router.post('/:trialId/convert', verifyToken, demoGuard, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!TrialService?.convertTrialToOrg) {
-        return res.status(503).json({ error: 'Trial service not available' });
-    }
-
-    try {
-        const { trialId } = req.params;
-        const { newOrgName } = req.body;
-        const userId = req.user?.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+    '/:trialId/convert',
+    verifyToken,
+    demoGuard,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!TrialService?.convertTrialToOrg) {
+            return res.status(503).json({ error: 'Trial service not available' });
         }
 
-        if (!newOrgName) {
-            return res.status(400).json({ error: 'New organization name is required' });
+        try {
+            const { trialId } = req.params;
+            const { newOrgName } = req.body;
+            const userId = req.user?.id;
+
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            if (!newOrgName) {
+                return res.status(400).json({ error: 'New organization name is required' });
+            }
+
+            const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
+
+            res.json({
+                success: true,
+                message: 'Trial converted successfully',
+                newOrganizationId: result.newOrganizationId,
+            });
+        } catch (error: unknown) {
+            console.error('Trial Conversion Error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
-
-        const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
-
-        res.json({
-            success: true,
-            message: 'Trial converted successfully',
-            newOrganizationId: result.newOrganizationId
-        });
-    } catch (error: unknown) {
-        console.error('Trial Conversion Error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-    }
-}));
+    }),
+);
 
 /**
  * POST /api/trial/confirm-transition
  * Records explicit user confirmations before organization creation (Phase C → D Gate)
  */
-router.post('/confirm-transition', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AuditService?.log) {
-        return res.status(503).json({ error: 'Audit service not available' });
-    }
-
-    try {
-        const { confirmations, confirmedAt } = req.body;
-        const userId = req.user?.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+router.post(
+    '/confirm-transition',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!AuditService?.log) {
+            return res.status(503).json({ error: 'Audit service not available' });
         }
 
-        // Validate all 3 confirmations are present
-        if (!confirmations?.timeCommitment || !confirmations?.teamScope || !confirmations?.memoryAware) {
-            return res.status(400).json({
-                error: 'All three confirmations required',
-                required: ['timeCommitment', 'teamScope', 'memoryAware']
-            });
-        }
+        try {
+            const { confirmations, confirmedAt } = req.body;
+            const userId = req.user?.id;
 
-        // Log to audit trail
-        await AuditService.log({
-            userId,
-            action: 'trial_transition_confirmed',
-            entityType: 'user',
-            entityId: userId,
-            metadata: {
-                confirmations,
-                confirmedAt: confirmedAt || new Date().toISOString(),
-                phase: 'C_TO_D',
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
             }
-        });
 
-        res.json({
-            success: true,
-            message: 'Transition confirmed',
-            nextStep: 'ORG_SETUP_WIZARD'
-        });
-    } catch (error: unknown) {
-        console.error('Transition Confirmation Error:', error);
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-    }
-}));
+            // Validate all 3 confirmations are present
+            if (!confirmations?.timeCommitment || !confirmations?.teamScope || !confirmations?.memoryAware) {
+                return res.status(400).json({
+                    error: 'All three confirmations required',
+                    required: ['timeCommitment', 'teamScope', 'memoryAware'],
+                });
+            }
+
+            // Log to audit trail
+            await AuditService.log({
+                userId,
+                action: 'trial_transition_confirmed',
+                entityType: 'user',
+                entityId: userId,
+                metadata: {
+                    confirmations,
+                    confirmedAt: confirmedAt || new Date().toISOString(),
+                    phase: 'C_TO_D',
+                },
+            });
+
+            res.json({
+                success: true,
+                message: 'Transition confirmed',
+                nextStep: 'ORG_SETUP_WIZARD',
+            });
+        } catch (error: unknown) {
+            console.error('Transition Confirmation Error:', error);
+            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+    }),
+);
 
 export default router;

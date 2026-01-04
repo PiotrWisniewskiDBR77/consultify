@@ -1,17 +1,17 @@
-import { User, SessionMode, FullSession, LLMProvider } from '../types';
-import { tokenService } from './tokenService';
+import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import {
     API_URL,
-    getHeaders,
+    API_URL as UTILS_API_URL,
     fetchWithRetry,
-    handleResponse,
+    getHeaders,
     handleBlobResponse,
-    API_URL as UTILS_API_URL
+    handleResponse,
 } from './apiUtils';
+import { AccessControlService } from './modules/AccessControlService';
+import { AIService } from './modules/AIService';
 import { AuthService } from './modules/AuthService';
 import { ProjectService } from './modules/ProjectService';
-import { AIService } from './modules/AIService';
-import { AccessControlService } from './modules/AccessControlService';
+import { tokenService } from './tokenService';
 
 export const Api = {
     // GENERIC METHODS (Required for Studio and other tools)
@@ -24,7 +24,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'POST',
             headers: getHeaders(), // Added headers for POST
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, `POST ${url} failed`);
     },
@@ -33,7 +33,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PUT',
             headers: getHeaders(), // Added headers for PUT
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, `PUT ${url} failed`);
     },
@@ -41,7 +41,7 @@ export const Api = {
     delete: async (url: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'DELETE',
-            headers: getHeaders() // Added headers for DELETE
+            headers: getHeaders(), // Added headers for DELETE
         });
         return handleResponse(res, `DELETE ${url} failed`);
     },
@@ -50,7 +50,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}${url}`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, `PATCH ${url} failed`);
     },
@@ -61,7 +61,7 @@ export const Api = {
         const res = await fetch(`${API_URL}${url}`, {
             method: 'POST',
             headers,
-            body: formData
+            body: formData,
         });
         return handleResponse(res, `Upload to ${url} failed`);
     },
@@ -83,9 +83,12 @@ export const Api = {
     revokeAllSessions: AuthService.revokeAllSessions,
     // --- TOKEN USAGE ANALYTICS ---
     getTokenUsageAnalytics: async (organizationId: string, timeRange: '7d' | '30d' | '90d' = '30d'): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/analytics/token-usage?orgId=${organizationId}&range=${timeRange}`, {
-            headers: getHeaders()
-        });
+        const res = await fetchWithRetry(
+            `${API_URL}/analytics/token-usage?orgId=${organizationId}&range=${timeRange}`,
+            {
+                headers: getHeaders(),
+            },
+        );
         return handleResponse(res, 'Failed to fetch token usage analytics');
     },
 
@@ -101,7 +104,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ name, scopes })
+            body: JSON.stringify({ name, scopes }),
         });
         return handleResponse(res, 'Failed to create API key');
     },
@@ -109,14 +112,14 @@ export const Api = {
     deleteUserApiKey: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete API key');
     },
 
     getApiKeyUsage: async (keyId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}/usage`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await handleResponse(res, 'Failed to fetch API key usage');
         return data || {};
@@ -125,7 +128,7 @@ export const Api = {
     rotateApiKey: async (keyId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}/rotate`, {
             method: 'PUT',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to rotate API key');
     },
@@ -134,7 +137,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update API key');
     },
@@ -150,7 +153,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/integrations/webhooks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(webhook)
+            body: JSON.stringify(webhook),
         });
         return handleResponse(res, 'Failed to create webhook');
     },
@@ -159,30 +162,27 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/integrations/webhooks/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update webhook');
     },
-
-
 
     // --- USERS (Admin) ---
     getUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         const data = await handleResponse(res, 'Failed to fetch users');
         // Backend returns { users: [...], total: N }, extract array
-        return Array.isArray(data) ? data : (data.users || []);
+        return Array.isArray(data) ? data : data.users || [];
     },
 
     addUser: async (user: any): Promise<User> => {
         const res = await fetch(`${API_URL}/users`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(user)
+            body: JSON.stringify(user),
         });
         return handleResponse(res, 'Failed to add user');
     },
-
 
     uploadAvatar: async (userId: string, file: File): Promise<{ avatarUrl: string }> => {
         const formData = new FormData();
@@ -192,9 +192,9 @@ export const Api = {
             method: 'POST',
             headers: {
                 // Content-Type: multipart/form-data is set automatically with boundary by fetch when body is FormData
-                'Authorization': getHeaders()['Authorization']
+                Authorization: getHeaders()['Authorization'],
             },
-            body: formData
+            body: formData,
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to upload avatar');
@@ -205,16 +205,19 @@ export const Api = {
         const res = await fetch(`${API_URL}/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update user');
     },
 
-    updateUserStatus: async (id: string, status: { availabilityStatus?: string; statusMessage?: string }): Promise<void> => {
+    updateUserStatus: async (
+        id: string,
+        status: { availabilityStatus?: string; statusMessage?: string },
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/settings/profile/status`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ userId: id, ...status })
+            body: JSON.stringify({ userId: id, ...status }),
         });
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
@@ -225,12 +228,12 @@ export const Api = {
     deleteUser: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/users/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete user');
     },
 
-    checkSystemHealth: async (): Promise<{ status: string, latency: number }> => {
+    checkSystemHealth: async (): Promise<{ status: string; latency: number }> => {
         const res = await fetch(`${API_URL}/health`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Health check failed');
@@ -263,7 +266,7 @@ export const Api = {
         // Backend uses PATCH, not PUT
         const res = await fetchWithRetry(`${API_URL}/notifications/${id}/read`, {
             method: 'PATCH',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to mark notification as read');
     },
@@ -272,7 +275,7 @@ export const Api = {
         // Backend uses POST /mark-all-read, not PUT /read-all
         const res = await fetchWithRetry(`${API_URL}/notifications/mark-all-read`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to mark all notifications as read');
     },
@@ -280,14 +283,16 @@ export const Api = {
     deleteNotification: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/notifications/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete notification');
     },
 
     // --- SETTINGS (NotificationSettings, IntegrationSettings) ---
     getNotificationPreferences: async (userId: string): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, { headers: getHeaders() });
+        const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, {
+            headers: getHeaders(),
+        });
         if (!res.ok) return {};
         return res.json();
     },
@@ -296,13 +301,15 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/settings/notifications`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId, preferences })
+            body: JSON.stringify({ userId, preferences }),
         });
         if (!res.ok) throw new Error('Failed to save notification preferences');
     },
 
     getIntegrations: async (organizationId: string): Promise<any[]> => {
-        const res = await fetchWithRetry(`${API_URL}/settings/integrations?organizationId=${organizationId}`, { headers: getHeaders() });
+        const res = await fetchWithRetry(`${API_URL}/settings/integrations?organizationId=${organizationId}`, {
+            headers: getHeaders(),
+        });
         if (!res.ok) return [];
         return res.json();
     },
@@ -311,7 +318,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/settings/integrations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(integration)
+            body: JSON.stringify(integration),
         });
         return handleResponse(res, 'Failed to save integration');
     },
@@ -319,18 +326,24 @@ export const Api = {
     deleteIntegration: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/settings/integrations/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete integration');
     },
 
     // --- CONTACT FORM ---
-    submitContactForm: async (formData: { name: string; email: string; company?: string; subject: string; message: string }): Promise<void> => {
+    submitContactForm: async (formData: {
+        name: string;
+        email: string;
+        company?: string;
+        subject: string;
+        message: string;
+    }): Promise<void> => {
         // Contact form is under /api/legal/contact
         const res = await fetch(`${API_URL}/legal/contact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
         });
         if (!res.ok) throw new Error('Failed to submit contact form');
     },
@@ -354,7 +367,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/sessions`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId, type, data, projectId })
+            body: JSON.stringify({ userId, type, data, projectId }),
         });
         await handleResponse(res, `Failed to save session`);
     },
@@ -367,7 +380,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/settings`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ key, value })
+            body: JSON.stringify({ key, value }),
         });
         if (!res.ok) throw new Error('Failed to save setting');
     },
@@ -379,11 +392,14 @@ export const Api = {
         return res.json();
     },
 
-    updateOrganization: async (id: string, updates: { plan?: string; status?: string; discount_percent?: number }): Promise<void> => {
+    updateOrganization: async (
+        id: string,
+        updates: { plan?: string; status?: string; discount_percent?: number },
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update organization');
     },
@@ -391,7 +407,7 @@ export const Api = {
     deleteOrganization: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete organization');
     },
@@ -426,11 +442,14 @@ export const Api = {
         return res.json();
     },
 
-    updateSuperAdminUser: async (id: string, updates: { organizationId?: string; role?: string; status?: string }): Promise<void> => {
+    updateSuperAdminUser: async (
+        id: string,
+        updates: { organizationId?: string; role?: string; status?: string },
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update user');
     },
@@ -439,7 +458,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/superadmin/users`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(user)
+            body: JSON.stringify(user),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create super admin');
@@ -450,17 +469,17 @@ export const Api = {
         const res = await fetch(`${API_URL}/superadmin/users/invite`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ email, role, organizationId })
+            body: JSON.stringify({ email, role, organizationId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to invite user');
         return data;
     },
 
-    adminResetPassword: async (userId: string): Promise<{ resetLink: string, token: string }> => {
+    adminResetPassword: async (userId: string): Promise<{ resetLink: string; token: string }> => {
         const res = await fetch(`${API_URL}/superadmin/users/${userId}/reset-password`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to generate reset link');
@@ -469,7 +488,7 @@ export const Api = {
 
     adminGetDatabaseTables: async (): Promise<string[]> => {
         const res = await fetch(`${API_URL}/superadmin/database/tables`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch tables');
@@ -478,7 +497,7 @@ export const Api = {
 
     adminGetTableRows: async (tableName: string): Promise<any[]> => {
         const res = await fetch(`${API_URL}/superadmin/database/rows/${tableName}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch rows');
@@ -487,7 +506,7 @@ export const Api = {
 
     adminGetStorageStats: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/superadmin/storage/usage`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch storage stats');
@@ -496,7 +515,7 @@ export const Api = {
 
     adminGetOrgFiles: async (orgId: string): Promise<any[]> => {
         const res = await fetch(`${API_URL}/superadmin/storage/files/${orgId}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch files');
@@ -508,9 +527,9 @@ export const Api = {
             method: 'DELETE',
             headers: {
                 ...getHeaders(),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ orgId, path })
+            body: JSON.stringify({ orgId, path }),
         });
         if (!res.ok) throw new Error('Failed to delete file');
     },
@@ -526,7 +545,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/auth/reset-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token, newPassword })
+            body: JSON.stringify({ token, newPassword }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to reset password');
@@ -535,7 +554,7 @@ export const Api = {
     revertImpersonation: async (): Promise<{ user: User; token: string }> => {
         const res = await fetch(`${API_URL}/auth/revert-impersonation`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to revert impersonation');
@@ -546,7 +565,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/superadmin/impersonate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId })
+            body: JSON.stringify({ userId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to impersonate user');
@@ -596,7 +615,7 @@ export const Api = {
     getUserActiveModel: AIService.getUserActiveModel,
 
     // --- KNOWLEDGE BASE ---
-    getKnowledgeFiles: async (): Promise<{ docs: any[], availableFiles: string[] }> => {
+    getKnowledgeFiles: async (): Promise<{ docs: any[]; availableFiles: string[] }> => {
         const res = await fetch(`${API_URL}/knowledge/files`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch knowledge files');
         return res.json();
@@ -605,7 +624,7 @@ export const Api = {
     indexKnowledgeFiles: async (): Promise<{ message: string; indexedCount: number }> => {
         const res = await fetch(`${API_URL}/knowledge/index`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Indexing failed');
@@ -615,7 +634,13 @@ export const Api = {
     // ==========================================
     // PHASE 1: TASKS API
     // ==========================================
-    getTasks: async (filters?: { projectId?: string; status?: string; assigneeId?: string; priority?: string; initiativeId?: string }): Promise<any[]> => {
+    getTasks: async (filters?: {
+        projectId?: string;
+        status?: string;
+        assigneeId?: string;
+        priority?: string;
+        initiativeId?: string;
+    }): Promise<any[]> => {
         let url = `${API_URL}/tasks`;
         if (filters) {
             const params = new URLSearchParams();
@@ -656,7 +681,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/tasks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(task)
+            body: JSON.stringify(task),
         });
         return handleResponse(res, 'Failed to create task');
     },
@@ -665,7 +690,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update task');
     },
@@ -673,7 +698,7 @@ export const Api = {
     deleteTask: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete task');
     },
@@ -688,7 +713,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ content })
+            body: JSON.stringify({ content }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to add comment');
@@ -698,7 +723,7 @@ export const Api = {
     deleteTaskComment: async (taskId: string, commentId: string): Promise<void> => {
         const res = await fetch(`${API_URL}/tasks/${taskId}/comments/${commentId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete comment');
     },
@@ -722,7 +747,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/teams`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(team)
+            body: JSON.stringify(team),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create team');
@@ -733,7 +758,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/teams/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         if (!res.ok) throw new Error('Failed to update team');
     },
@@ -741,7 +766,7 @@ export const Api = {
     deleteTeam: async (id: string): Promise<void> => {
         const res = await fetch(`${API_URL}/teams/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete team');
     },
@@ -750,7 +775,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/teams/${teamId}/members`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId, role })
+            body: JSON.stringify({ userId, role }),
         });
         if (!res.ok) throw new Error('Failed to add team member');
     },
@@ -758,7 +783,7 @@ export const Api = {
     removeTeamMember: async (teamId: string, userId: string): Promise<void> => {
         const res = await fetch(`${API_URL}/teams/${teamId}/members/${userId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to remove team member');
     },
@@ -782,13 +807,13 @@ export const Api = {
         return data.count;
     },
 
-    // Note: markNotificationRead, markAllNotificationsRead, deleteNotification 
+    // Note: markNotificationRead, markAllNotificationsRead, deleteNotification
     // are defined above in "NOTIFICATIONS (NotificationCenter)" section with correct HTTP methods
 
     deleteReadNotifications: async (): Promise<void> => {
         const res = await fetch(`${API_URL}/notifications`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete read notifications');
     },
@@ -806,7 +831,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/notifications`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(notification)
+            body: JSON.stringify(notification),
         });
         if (!res.ok) throw new Error('Failed to create notification');
     },
@@ -827,7 +852,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/initiatives`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(initiative)
+            body: JSON.stringify(initiative),
         });
         return handleResponse(res, 'Failed to create initiative');
     },
@@ -836,7 +861,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/initiatives/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         await handleResponse(res, 'Failed to update initiative');
     },
@@ -844,7 +869,7 @@ export const Api = {
     validateInitiative: async (id: string) => {
         const response = await fetch(`${API_URL}/initiatives/${id}/validate`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Validation failed');
         return response.json();
@@ -853,7 +878,7 @@ export const Api = {
     enrichInitiative: async (id: string) => {
         const response = await fetch(`${API_URL}/initiatives/${id}/enrich`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Enrichment failed');
         return response.json();
@@ -861,8 +886,6 @@ export const Api = {
 
     // --- PROJECTS (Initiatives) ---
     suggestInitiativeTasks: ProjectService.suggestInitiativeTasks,
-
-
 
     // ==========================================
     // PHASE 7: AI EVOLUTION (Advanced Layers)
@@ -920,11 +943,17 @@ export const Api = {
     getKnowledgeDocumentsByStrategy: AIService.getKnowledgeDocumentsByStrategy,
     uploadDocument: AIService.uploadDocument,
     // --- FEEDBACK ---
-    sendFeedback: async (data: { user_id: string; type: string; message: string; screenshot?: string; url?: string }): Promise<void> => {
+    sendFeedback: async (data: {
+        user_id: string;
+        type: string;
+        message: string;
+        screenshot?: string;
+        url?: string;
+    }): Promise<void> => {
         const res = await fetch(`${API_URL}/feedback`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to submit feedback');
     },
@@ -939,7 +968,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/feedback/${id}/status`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status }),
         });
         if (!res.ok) throw new Error('Failed to update feedback status');
     },
@@ -948,7 +977,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/feedback/${id}/respond`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ response })
+            body: JSON.stringify({ response }),
         });
         if (!res.ok) throw new Error('Failed to send response');
     },
@@ -1001,7 +1030,7 @@ export const Api = {
     // Get subscription plans
     getSubscriptionPlans: async (): Promise<any[]> => {
         const res = await fetch(`${API_URL}/billing/plans`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch plans');
@@ -1011,7 +1040,7 @@ export const Api = {
     // Get user license plans
     getUserPlans: async (): Promise<any[]> => {
         const res = await fetch(`${API_URL}/billing/user-plans`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch user plans');
@@ -1021,7 +1050,7 @@ export const Api = {
     // Get current billing info
     getCurrentBilling: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/current`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch billing');
@@ -1031,7 +1060,7 @@ export const Api = {
     // Get current usage
     getUsage: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/usage`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch usage');
@@ -1043,7 +1072,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/subscribe`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ planId, paymentMethodId })
+            body: JSON.stringify({ planId, paymentMethodId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Subscription failed');
@@ -1055,7 +1084,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/change-plan`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ newPlanId })
+            body: JSON.stringify({ newPlanId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Plan change failed');
@@ -1066,7 +1095,7 @@ export const Api = {
     cancelSubscription: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/cancel`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Cancellation failed');
@@ -1076,7 +1105,7 @@ export const Api = {
     // Get invoices
     getInvoices: async (): Promise<any[]> => {
         const res = await fetch(`${API_URL}/billing/invoices`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch invoices');
@@ -1086,7 +1115,7 @@ export const Api = {
     // --- PAYMENT METHODS ---
     getPaymentMethods: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/payment-methods`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch payment methods');
@@ -1097,7 +1126,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/payment-methods`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ paymentMethodId })
+            body: JSON.stringify({ paymentMethodId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to add payment method');
@@ -1107,7 +1136,7 @@ export const Api = {
     removePaymentMethod: async (paymentMethodId: string): Promise<void> => {
         const res = await fetch(`${API_URL}/billing/payment-methods/${paymentMethodId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) {
             const json = await res.json().catch(() => ({}));
@@ -1118,7 +1147,7 @@ export const Api = {
     setDefaultPaymentMethod: async (paymentMethodId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/payment-methods/${paymentMethodId}/default`, {
             method: 'PUT',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set default payment method');
@@ -1128,7 +1157,7 @@ export const Api = {
     createSetupIntent: async (): Promise<{ clientSecret: string; id: string }> => {
         const res = await fetch(`${API_URL}/billing/setup-intent`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to create setup intent');
@@ -1138,7 +1167,7 @@ export const Api = {
     // --- BILLING ALERTS ---
     getBillingAlerts: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/alerts`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch billing alerts');
@@ -1149,7 +1178,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/alerts`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(alerts)
+            body: JSON.stringify(alerts),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to update billing alerts');
@@ -1159,7 +1188,7 @@ export const Api = {
     // --- TAX SETTINGS ---
     getTaxSettings: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/billing/tax-settings`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to fetch tax settings');
@@ -1170,7 +1199,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/tax-settings`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(settings)
+            body: JSON.stringify(settings),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to update tax settings');
@@ -1182,7 +1211,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/validate-discount`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ code, planId })
+            body: JSON.stringify({ code, planId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to validate discount code');
@@ -1201,7 +1230,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/seats/purchase`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ quantity, paymentMethodId })
+            body: JSON.stringify({ quantity, paymentMethodId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to purchase seats');
@@ -1212,7 +1241,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/seats/auto-add`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ enabled, threshold })
+            body: JSON.stringify({ enabled, threshold }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to update auto-add settings');
@@ -1230,7 +1259,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/seats/release`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId })
+            body: JSON.stringify({ userId }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to release seat');
@@ -1249,7 +1278,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/budgets/user/${userId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(budget)
+            body: JSON.stringify(budget),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set user budget');
@@ -1267,7 +1296,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/budgets/project/${projectId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(budget)
+            body: JSON.stringify(budget),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set project budget');
@@ -1285,7 +1314,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/budgets/organization`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(budget)
+            body: JSON.stringify(budget),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to set organization budget');
@@ -1324,7 +1353,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/billing/payg/invoice`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ periodStart, periodEnd })
+            body: JSON.stringify({ periodStart, periodEnd }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to generate PAYG invoice');
@@ -1343,7 +1372,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/admin-alerts`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(alertConfig)
+            body: JSON.stringify(alertConfig),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to create admin alert');
@@ -1362,7 +1391,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/ai/suggest-tasks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ initiative })
+            body: JSON.stringify({ initiative }),
         });
         if (!res.ok) throw new Error('Failed to suggest tasks');
         return res.json();
@@ -1372,7 +1401,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/ai/task-insight`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ task, initiative })
+            body: JSON.stringify({ task, initiative }),
         });
         if (!res.ok) throw new Error('Failed to generate task insight');
         return res.json();
@@ -1394,7 +1423,9 @@ export const Api = {
     },
 
     getTokenTransactions: async (limit = 50, offset = 0) => {
-        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit} & offset=${offset}`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/token-billing/transactions?limit=${limit} & offset=${offset}`, {
+            headers: getHeaders(),
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to get transactions');
         return data.transactions;
@@ -1407,11 +1438,11 @@ export const Api = {
         return data.keys;
     },
 
-    addApiKey: async (keyData: { provider: string, apiKey: string, displayName: string, modelPreference?: string }) => {
+    addApiKey: async (keyData: { provider: string; apiKey: string; displayName: string; modelPreference?: string }) => {
         const res = await fetch(`${API_URL}/token-billing/api-keys`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(keyData)
+            body: JSON.stringify(keyData),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to add API key');
@@ -1421,7 +1452,7 @@ export const Api = {
     deleteApiKey: async (keyId: string) => {
         const res = await fetch(`${API_URL}/token-billing/api-keys/${keyId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to delete API key');
@@ -1432,7 +1463,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/token-billing/purchase`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ packageId })
+            body: JSON.stringify({ packageId }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Purchase failed');
@@ -1451,7 +1482,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/token-billing/margins/${sourceType}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(marginData)
+            body: JSON.stringify(marginData),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to update margin');
@@ -1462,7 +1493,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/token-billing/packages`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(packageData)
+            body: JSON.stringify(packageData),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to save package');
@@ -1551,8 +1582,6 @@ export const Api = {
         return json;
     },
 
-
-
     getOrgMetricsHelp: async () => {
         const res = await fetch(`${API_URL}/metrics/org/help`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch organization help metrics');
@@ -1583,7 +1612,9 @@ export const Api = {
     // ==========================================
     // AI SLA METRICS
     // ==========================================
-    getAIHealthMetrics: async (): Promise<{ latency: { p50: number; p95: number; p99: number; avg: number; count: number } }> => {
+    getAIHealthMetrics: async (): Promise<{
+        latency: { p50: number; p95: number; p99: number; avg: number; count: number };
+    }> => {
         try {
             const res = await fetch(`${API_URL}/ai/metrics/health`, { headers: getHeaders() });
             if (!res.ok) return { latency: { p50: 1500, p95: 3500, p99: 7500, avg: 2000, count: 1000 } };
@@ -1593,7 +1624,9 @@ export const Api = {
         }
     },
 
-    getAIAvailability: async (): Promise<{ availability: { current: number; last24h: number; last7d: number; last30d: number } }> => {
+    getAIAvailability: async (): Promise<{
+        availability: { current: number; last24h: number; last7d: number; last30d: number };
+    }> => {
         try {
             const res = await fetch(`${API_URL}/ai/metrics/availability`, { headers: getHeaders() });
             if (!res.ok) return { availability: { current: 99.95, last24h: 99.9, last7d: 99.85, last30d: 99.8 } };
@@ -1603,7 +1636,16 @@ export const Api = {
         }
     },
 
-    getAISLABreaches: async (): Promise<{ breaches: Array<{ id: string; timestamp: string; metric: string; value: number; threshold: number; severity: 'warning' | 'critical' }> }> => {
+    getAISLABreaches: async (): Promise<{
+        breaches: Array<{
+            id: string;
+            timestamp: string;
+            metric: string;
+            value: number;
+            threshold: number;
+            severity: 'warning' | 'critical';
+        }>;
+    }> => {
         try {
             const res = await fetch(`${API_URL}/ai/metrics/sla-breaches`, { headers: getHeaders() });
             if (!res.ok) return { breaches: [] };
@@ -1613,7 +1655,9 @@ export const Api = {
         }
     },
 
-    getAISLATrends: async (): Promise<{ trends: Array<{ timestamp: string; p50: number; p95: number; p99: number; availability: number }> }> => {
+    getAISLATrends: async (): Promise<{
+        trends: Array<{ timestamp: string; p50: number; p95: number; p99: number; availability: number }>;
+    }> => {
         try {
             const res = await fetch(`${API_URL}/ai/metrics/sla-trends`, { headers: getHeaders() });
             if (!res.ok) return { trends: [] };
@@ -1623,11 +1667,11 @@ export const Api = {
         }
     },
 
-    recordAIActionDecision: async (data: { proposal_id: string, decision: string, reason?: string }): Promise<any> => {
+    recordAIActionDecision: async (data: { proposal_id: string; decision: string; reason?: string }): Promise<any> => {
         const res = await fetch(`${API_URL}/ai/actions/decide`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -1640,14 +1684,18 @@ export const Api = {
      * Get pending AI actions awaiting user approval
      * Used for inline visibility in chat interface
      */
-    getPendingAIActions: async (projectId?: string): Promise<{
-        id: string;
-        action_type: string;
-        status: string;
-        created_at: string;
-        payload: any;
-        draft_content?: any;
-    }[]> => {
+    getPendingAIActions: async (
+        projectId?: string,
+    ): Promise<
+        {
+            id: string;
+            action_type: string;
+            status: string;
+            created_at: string;
+            payload: any;
+            draft_content?: any;
+        }[]
+    > => {
         const url = projectId
             ? `${API_URL}/ai/actions/pending?projectId=${projectId}`
             : `${API_URL}/ai/actions/pending`;
@@ -1662,7 +1710,7 @@ export const Api = {
     approveAIAction: async (actionId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/ai/actions/${actionId}/approve`, {
             method: 'PATCH',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -1678,7 +1726,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/ai/actions/${actionId}/reject`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify({ reason })
+            body: JSON.stringify({ reason }),
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -1690,7 +1738,7 @@ export const Api = {
     // ==========================================
     // STEP 10: PROACTIVE SUGGESTIONS & QUALITY
     // ==========================================
-    
+
     /**
      * Get proactive suggestions based on current context
      */
@@ -1702,7 +1750,7 @@ export const Api = {
         const queryParams = new URLSearchParams();
         if (params.projectId) queryParams.append('projectId', params.projectId);
         if (params.screenContext) queryParams.append('screenContext', JSON.stringify(params.screenContext));
-        
+
         const res = await fetch(`${API_URL}/ai/suggestions?${queryParams}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch proactive suggestions');
         return res.json();
@@ -1711,11 +1759,15 @@ export const Api = {
     /**
      * Record suggestion action (accepted/dismissed)
      */
-    recordSuggestionAction: async (suggestionId: string, action: 'accepted' | 'dismissed' | 'clicked', feedback?: string): Promise<void> => {
+    recordSuggestionAction: async (
+        suggestionId: string,
+        action: 'accepted' | 'dismissed' | 'clicked',
+        feedback?: string,
+    ): Promise<void> => {
         const res = await fetch(`${API_URL}/ai/suggestions/action`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ suggestionId, action, feedback })
+            body: JSON.stringify({ suggestionId, action, feedback }),
         });
         if (!res.ok) throw new Error('Failed to record suggestion action');
     },
@@ -1750,7 +1802,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/ai/quality/calculate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(params)
+            body: JSON.stringify(params),
         });
         if (!res.ok) throw new Error('Failed to calculate response quality');
         const data = await res.json();
@@ -1782,7 +1834,7 @@ export const Api = {
     // ==========================================
     getUserOrganizations: async (): Promise<any[]> => {
         const res = await fetch(`${API_URL}/organizations/current`, { headers: getHeaders() });
-        return handleResponse(res, 'Failed to fetch organizations').then(data => data || []);
+        return handleResponse(res, 'Failed to fetch organizations').then((data) => data || []);
     },
 
     getOrganization: async (orgId: string): Promise<any> => {
@@ -1792,20 +1844,20 @@ export const Api = {
 
     getOrganizationMembers: async (orgId: string): Promise<any[]> => {
         const res = await fetch(`${API_URL}/organizations/${orgId}/members`, { headers: getHeaders() });
-        return handleResponse(res, 'Failed to fetch organization members').then(data => data || []);
+        return handleResponse(res, 'Failed to fetch organization members').then((data) => data || []);
     },
 
     addOrganizationMember: async (orgId: string, email: string, role: string): Promise<any> => {
         // NOTE: Backend currently expects targetUserId, but UI workflow implies email invite.
-        // We will pass email as targetUserId/email field and update backend if needed, 
-        // OR we just rely on ID if we have a picker. 
+        // We will pass email as targetUserId/email field and update backend if needed,
+        // OR we just rely on ID if we have a picker.
         // For MVP skeleton, we assume we might be adding by ID if we don't have invite flow,
         // BUT to be user friendly, we should probably implement invite.
         // I'll stick to passing the body as is, and update backend later if needed.
         const res = await fetch(`${API_URL}/organizations/${orgId}/members`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ targetUserId: email, role })
+            body: JSON.stringify({ targetUserId: email, role }),
         });
         return handleResponse(res, 'Failed to add member');
     },
@@ -1814,7 +1866,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/organizations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name }),
         });
         return handleResponse(res, 'Failed to create organization');
     },
@@ -1822,7 +1874,7 @@ export const Api = {
     activateBilling: async (orgId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/organizations/${orgId}/billing/activate`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to activate billing');
     },
@@ -1834,10 +1886,11 @@ export const Api = {
     },
 
     getOrgTokenLedger: async (orgId: string, limit = 50, offset = 0): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/organizations/${orgId}/tokens/ledger?limit=${limit}&offset=${offset}`, { headers: getHeaders() });
-        return handleResponse(res, 'Failed to fetch token ledger').then(data => data?.ledger || []);
+        const res = await fetch(`${API_URL}/organizations/${orgId}/tokens/ledger?limit=${limit}&offset=${offset}`, {
+            headers: getHeaders(),
+        });
+        return handleResponse(res, 'Failed to fetch token ledger').then((data) => data?.ledger || []);
     },
-
 
     // ==========================================
     // PHASE C: CONSULTANT MODE
@@ -1856,11 +1909,16 @@ export const Api = {
         return res.json();
     },
 
-    createConsultantInvite: async (data: { email: string; invitationType: string; firmName?: string; projectName?: string }): Promise<any> => {
+    createConsultantInvite: async (data: {
+        email: string;
+        invitationType: string;
+        firmName?: string;
+        projectName?: string;
+    }): Promise<any> => {
         const res = await fetch(`${API_URL}/consultants/invites`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to create invite');
@@ -1878,7 +1936,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/invitations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ email, role })
+            body: JSON.stringify({ email, role }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to send invitation');
@@ -1905,7 +1963,7 @@ export const Api = {
     generateReferralCode: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/referrals/generate`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to generate referral code');
     },
@@ -1917,7 +1975,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/onboarding/context`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(context)
+            body: JSON.stringify(context),
         });
         await handleResponse(res, 'Failed to save onboarding context');
     },
@@ -1925,7 +1983,7 @@ export const Api = {
     generateFirstValuePlan: async (): Promise<any> => {
         const res = await fetch(`${API_URL}/onboarding/generate-plan`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to generate plan');
     },
@@ -1934,7 +1992,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/onboarding/accept-plan`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ acceptedInitiativeIds, idempotencyKey })
+            body: JSON.stringify({ acceptedInitiativeIds, idempotencyKey }),
         });
         return handleResponse(res, 'Failed to accept plan');
     },
@@ -1958,7 +2016,7 @@ export const Api = {
      */
     getFullReport: async (reportId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/full`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load report');
     },
@@ -1970,7 +2028,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/generate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(options || {})
+            body: JSON.stringify(options || {}),
         });
         return handleResponse(res, 'Failed to generate report');
     },
@@ -1980,7 +2038,7 @@ export const Api = {
      */
     getReportSections: async (reportId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load sections');
     },
@@ -1988,18 +2046,21 @@ export const Api = {
     /**
      * Add a new section to the report
      */
-    addReportSection: async (reportId: string, data: {
-        sectionType: string;
-        axisId?: string;
-        areaId?: string;
-        title?: string;
-        content?: string;
-        orderIndex?: number
-    }): Promise<any> => {
+    addReportSection: async (
+        reportId: string,
+        data: {
+            sectionType: string;
+            axisId?: string;
+            areaId?: string;
+            title?: string;
+            content?: string;
+            orderIndex?: number;
+        },
+    ): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to add section');
     },
@@ -2007,15 +2068,19 @@ export const Api = {
     /**
      * Update a section's content
      */
-    updateReportSection: async (reportId: string, sectionId: string, data: {
-        content: string;
-        title?: string;
-        saveHistory?: boolean
-    }): Promise<any> => {
+    updateReportSection: async (
+        reportId: string,
+        sectionId: string,
+        data: {
+            content: string;
+            title?: string;
+            saveHistory?: boolean;
+        },
+    ): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update section');
     },
@@ -2026,7 +2091,7 @@ export const Api = {
     deleteReportSection: async (reportId: string, sectionId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete section');
     },
@@ -2034,15 +2099,19 @@ export const Api = {
     /**
      * AI action on a section (expand, summarize, improve, translate, regenerate)
      */
-    aiSectionAction: async (reportId: string, sectionId: string, data: {
-        action: string;
-        language?: string;
-        customPrompt?: string
-    }): Promise<any> => {
+    aiSectionAction: async (
+        reportId: string,
+        sectionId: string,
+        data: {
+            action: string;
+            language?: string;
+            customPrompt?: string;
+        },
+    ): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/ai`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to perform AI action');
     },
@@ -2050,11 +2119,14 @@ export const Api = {
     /**
      * Reorder sections
      */
-    reorderReportSections: async (reportId: string, sectionOrder: { id: string; orderIndex: number }[]): Promise<any> => {
+    reorderReportSections: async (
+        reportId: string,
+        sectionOrder: { id: string; orderIndex: number }[],
+    ): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/reorder`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ sectionOrder })
+            body: JSON.stringify({ sectionOrder }),
         });
         return handleResponse(res, 'Failed to reorder sections');
     },
@@ -2066,7 +2138,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/ai-edit`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to process AI edit request');
     },
@@ -2076,7 +2148,7 @@ export const Api = {
      */
     getSectionHistory: async (reportId: string, sectionId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/sections/${sectionId}/history`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load section history');
     },
@@ -2087,7 +2159,7 @@ export const Api = {
     finalizeReport: async (reportId: string): Promise<any> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/finalize`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to finalize report');
     },
@@ -2097,7 +2169,7 @@ export const Api = {
      */
     exportReportPDF: async (reportId: string): Promise<{ pdfUrl: string }> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/pdf`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) {
             throw new Error('Failed to export PDF');
@@ -2111,7 +2183,7 @@ export const Api = {
      */
     exportReportExcel: async (reportId: string): Promise<{ excelUrl: string }> => {
         const res = await fetch(`${API_URL}/assessment-reports/${reportId}/export/excel`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) {
             throw new Error('Failed to export Excel');
@@ -2161,7 +2233,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create analysis');
     },
@@ -2171,7 +2243,7 @@ export const Api = {
      */
     getDigitizationAnalysis: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load analysis');
     },
@@ -2179,17 +2251,20 @@ export const Api = {
     /**
      * Update digitization analysis
      */
-    updateDigitizationAnalysis: async (id: string, data: {
-        name?: string;
-        description?: string;
-        status?: string;
-        projectId?: string;
-        tags?: string[];
-    }): Promise<any> => {
+    updateDigitizationAnalysis: async (
+        id: string,
+        data: {
+            name?: string;
+            description?: string;
+            status?: string;
+            projectId?: string;
+            tags?: string[];
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update analysis');
     },
@@ -2200,7 +2275,7 @@ export const Api = {
     deleteDigitizationAnalysis: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete analysis');
     },
@@ -2212,7 +2287,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}/duplicate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name }),
         });
         return handleResponse(res, 'Failed to duplicate analysis');
     },
@@ -2220,20 +2295,23 @@ export const Api = {
     /**
      * Update scores for digitization analysis
      */
-    updateDigitizationScores: async (analysisId: string, scores: Array<{
-        axisId: string;
-        areaId: string;
-        areaCode?: string;
-        currentLevel: number;
-        targetLevel: number;
-        notes?: string;
-        evidence?: string[];
-        justification?: string;
-    }>): Promise<any> => {
+    updateDigitizationScores: async (
+        analysisId: string,
+        scores: Array<{
+            axisId: string;
+            areaId: string;
+            areaCode?: string;
+            currentLevel: number;
+            targetLevel: number;
+            notes?: string;
+            evidence?: string[];
+            justification?: string;
+        }>,
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/scores`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ scores })
+            body: JSON.stringify({ scores }),
         });
         return handleResponse(res, 'Failed to update scores');
     },
@@ -2241,25 +2319,26 @@ export const Api = {
     /**
      * Update single score for digitization analysis
      */
-    updateDigitizationScore: async (analysisId: string, scoreData: {
-        axisId: string;
-        areaId: string;
-        areaCode?: string;
-        currentLevel: number;
-        targetLevel: number;
-        notes?: string;
-        evidence?: string[];
-        justification?: string;
-    }): Promise<any> => {
+    updateDigitizationScore: async (
+        analysisId: string,
+        scoreData: {
+            axisId: string;
+            areaId: string;
+            areaCode?: string;
+            currentLevel: number;
+            targetLevel: number;
+            notes?: string;
+            evidence?: string[];
+            justification?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/score`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(scoreData)
+            body: JSON.stringify(scoreData),
         });
         return handleResponse(res, 'Failed to update score');
     },
-
-
 
     /**
      * Import digitization analysis from Excel file
@@ -2275,9 +2354,9 @@ export const Api = {
         const res = await fetch(`${API_URL}/economics/import`, {
             method: 'POST',
             headers: {
-                'Authorization': token ? `Bearer ${token}` : ''
+                Authorization: token ? `Bearer ${token}` : '',
             },
-            body: formData
+            body: formData,
         });
         return handleResponse(res, 'Failed to import Excel file');
     },
@@ -2285,14 +2364,18 @@ export const Api = {
     /**
      * Export digitization analysis to Excel
      */
-    exportDigitizationAnalysis: async (analysisId: string, options?: {
-        recommendations?: boolean;
-        rawData?: boolean;
-        language?: string;
-    }): Promise<any> => {
+    exportDigitizationAnalysis: async (
+        analysisId: string,
+        options?: {
+            recommendations?: boolean;
+            rawData?: boolean;
+            language?: string;
+        },
+    ): Promise<any> => {
         const params = new URLSearchParams();
         if (options) {
-            if (options.recommendations !== undefined) params.append('recommendations', String(options.recommendations));
+            if (options.recommendations !== undefined)
+                params.append('recommendations', String(options.recommendations));
             if (options.rawData !== undefined) params.append('rawData', String(options.rawData));
             if (options.language) params.append('language', options.language);
         }
@@ -2304,18 +2387,22 @@ export const Api = {
     /**
      * Export digitization analysis to PDF
      */
-    exportDigitizationPDF: async (analysisId: string, options?: {
-        template?: 'executive' | 'full' | 'gap_analysis';
-        language?: 'pl' | 'en';
-        logo?: boolean;
-        recommendations?: boolean;
-    }): Promise<{ success: boolean; downloadUrl: string; filename: string }> => {
+    exportDigitizationPDF: async (
+        analysisId: string,
+        options?: {
+            template?: 'executive' | 'full' | 'gap_analysis';
+            language?: 'pl' | 'en';
+            logo?: boolean;
+            recommendations?: boolean;
+        },
+    ): Promise<{ success: boolean; downloadUrl: string; filename: string }> => {
         const params = new URLSearchParams();
         if (options) {
             if (options.template) params.append('template', options.template);
             if (options.language) params.append('language', options.language);
             if (options.logo !== undefined) params.append('logo', String(options.logo));
-            if (options.recommendations !== undefined) params.append('recommendations', String(options.recommendations));
+            if (options.recommendations !== undefined)
+                params.append('recommendations', String(options.recommendations));
         }
         const url = `${API_URL}/economics/analyses/${analysisId}/export/pdf${params.toString() ? `?${params.toString()}` : ''}`;
         const res = await fetchWithRetry(url, { headers: getHeaders() });
@@ -2327,7 +2414,7 @@ export const Api = {
      */
     getDigitizationStats: async (): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/stats`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load statistics');
     },
@@ -2339,7 +2426,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/compare`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ analysisIds })
+            body: JSON.stringify({ analysisIds }),
         });
         return handleResponse(res, 'Failed to compare analyses');
     },
@@ -2356,7 +2443,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/comparisons`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create comparison');
     },
@@ -2366,7 +2453,7 @@ export const Api = {
      */
     getDigitizationComparison: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/comparisons/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load comparison');
     },
@@ -2378,15 +2465,18 @@ export const Api = {
     /**
      * Create version snapshot
      */
-    createDigitizationVersion: async (analysisId: string, data: {
-        versionName?: string;
-        versionType?: 'snapshot' | 'baseline' | 'milestone';
-        notes?: string;
-    }): Promise<any> => {
+    createDigitizationVersion: async (
+        analysisId: string,
+        data: {
+            versionName?: string;
+            versionType?: 'snapshot' | 'baseline' | 'milestone';
+            notes?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create version');
     },
@@ -2396,7 +2486,7 @@ export const Api = {
      */
     getDigitizationVersions: async (analysisId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load versions');
     },
@@ -2406,7 +2496,7 @@ export const Api = {
      */
     getDigitizationVersion: async (analysisId: string, versionId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/${versionId}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load version');
     },
@@ -2417,7 +2507,7 @@ export const Api = {
     restoreDigitizationVersion: async (analysisId: string, versionId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/${versionId}/restore`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to restore version');
     },
@@ -2426,9 +2516,12 @@ export const Api = {
      * Compare two versions
      */
     compareDigitizationVersions: async (analysisId: string, v1: string, v2: string): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/compare?v1=${v1}&v2=${v2}`, {
-            headers: getHeaders()
-        });
+        const res = await fetchWithRetry(
+            `${API_URL}/economics/analyses/${analysisId}/versions/compare?v1=${v1}&v2=${v2}`,
+            {
+                headers: getHeaders(),
+            },
+        );
         return handleResponse(res, 'Failed to compare versions');
     },
 
@@ -2438,7 +2531,7 @@ export const Api = {
     markVersionAsBaseline: async (analysisId: string, versionId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/versions/${versionId}/baseline`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to mark as baseline');
     },
@@ -2450,16 +2543,19 @@ export const Api = {
     /**
      * Add evidence to score
      */
-    addDigitizationEvidence: async (scoreId: string, data: {
-        evidenceType: 'document' | 'link' | 'screenshot' | 'note';
-        title: string;
-        content?: string;
-        category?: string;
-    }): Promise<any> => {
+    addDigitizationEvidence: async (
+        scoreId: string,
+        data: {
+            evidenceType: 'document' | 'link' | 'screenshot' | 'note';
+            title: string;
+            content?: string;
+            category?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to add evidence');
     },
@@ -2467,11 +2563,15 @@ export const Api = {
     /**
      * Upload evidence file
      */
-    uploadDigitizationEvidence: async (scoreId: string, file: File, metadata: {
-        title?: string;
-        description?: string;
-        category?: string;
-    }): Promise<any> => {
+    uploadDigitizationEvidence: async (
+        scoreId: string,
+        file: File,
+        metadata: {
+            title?: string;
+            description?: string;
+            category?: string;
+        },
+    ): Promise<any> => {
         const formData = new FormData();
         formData.append('file', file);
         if (metadata.title) formData.append('title', metadata.title);
@@ -2482,10 +2582,10 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence/upload`, {
             method: 'POST',
             headers: {
-                'Authorization': token ? `Bearer ${token}` : ''
+                Authorization: token ? `Bearer ${token}` : '',
                 // Note: Don't set Content-Type for FormData - browser sets it with boundary
             },
-            body: formData
+            body: formData,
         });
         return handleResponse(res, 'Failed to upload evidence');
     },
@@ -2495,7 +2595,7 @@ export const Api = {
      */
     getDigitizationEvidence: async (scoreId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/scores/${scoreId}/evidence`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load evidence');
     },
@@ -2505,7 +2605,7 @@ export const Api = {
      */
     getDigitizationAnalysisEvidence: async (analysisId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/evidence`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load evidence');
     },
@@ -2513,15 +2613,18 @@ export const Api = {
     /**
      * Update evidence
      */
-    updateDigitizationEvidence: async (evidenceId: string, data: {
-        title?: string;
-        content?: string;
-        category?: string;
-    }): Promise<any> => {
+    updateDigitizationEvidence: async (
+        evidenceId: string,
+        data: {
+            title?: string;
+            content?: string;
+            category?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/evidence/${evidenceId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update evidence');
     },
@@ -2532,7 +2635,7 @@ export const Api = {
     deleteDigitizationEvidence: async (evidenceId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/evidence/${evidenceId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete evidence');
     },
@@ -2543,7 +2646,7 @@ export const Api = {
     verifyDigitizationEvidence: async (evidenceId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/evidence/${evidenceId}/verify`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to verify evidence');
     },
@@ -2559,7 +2662,10 @@ export const Api = {
         return handleResponse(res, 'Failed to fetch user documents');
     },
 
-    uploadDocumentToLibrary: async (file: File, options?: { scope?: string, projectId?: string, description?: string, tags?: string[] }): Promise<any> => {
+    uploadDocumentToLibrary: async (
+        file: File,
+        options?: { scope?: string; projectId?: string; description?: string; tags?: string[] },
+    ): Promise<any> => {
         const formData = new FormData();
         formData.append('file', file);
         if (options) {
@@ -2575,7 +2681,7 @@ export const Api = {
         const res = await fetch(`${API_URL}/documents/upload`, {
             method: 'POST',
             headers: headers,
-            body: formData
+            body: formData,
         });
         return handleResponse(res, 'Failed to upload document');
     },
@@ -2584,7 +2690,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/documents/${docId}/move-to-project`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ projectId })
+            body: JSON.stringify({ projectId }),
         });
         return handleResponse(res, 'Failed to move document');
     },
@@ -2592,7 +2698,7 @@ export const Api = {
     deleteDocument: async (docId: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/documents/${docId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete document');
     },
@@ -2608,7 +2714,7 @@ export const Api = {
      */
     getEvidenceCategories: async (): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/evidence/categories`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to load categories');
     },
@@ -2623,7 +2729,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/link-initiative`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ initiativeId })
+            body: JSON.stringify({ initiativeId }),
         });
         return handleResponse(res, 'Failed to link analysis to initiative');
     },
@@ -2633,7 +2739,7 @@ export const Api = {
      */
     getAnalysisFinancials: async (analysisId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/financials`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch financial data');
     },
@@ -2641,16 +2747,19 @@ export const Api = {
     /**
      * Update financial data for analysis
      */
-    updateAnalysisFinancials: async (analysisId: string, data: {
-        costs?: Array<{ year: number; amount: number; description?: string }>;
-        benefits?: Array<{ year: number; amount: number; description?: string }>;
-        discountRate?: number;
-        investmentHorizon?: number;
-    }): Promise<any> => {
+    updateAnalysisFinancials: async (
+        analysisId: string,
+        data: {
+            costs?: Array<{ year: number; amount: number; description?: string }>;
+            benefits?: Array<{ year: number; amount: number; description?: string }>;
+            discountRate?: number;
+            investmentHorizon?: number;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/financials`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update financial data');
     },
@@ -2660,7 +2769,7 @@ export const Api = {
      */
     getAnalysisBenefits: async (analysisId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/benefits`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch benefit tracking data');
     },
@@ -2668,15 +2777,18 @@ export const Api = {
     /**
      * Update benefit tracking data for analysis
      */
-    updateAnalysisBenefits: async (analysisId: string, data: {
-        plannedBenefits?: Array<{ period: string; amount: number }>;
-        actualBenefits?: Array<{ period: string; amount: number }>;
-        trackingPeriod?: string;
-    }): Promise<any> => {
+    updateAnalysisBenefits: async (
+        analysisId: string,
+        data: {
+            plannedBenefits?: Array<{ period: string; amount: number }>;
+            actualBenefits?: Array<{ period: string; amount: number }>;
+            trackingPeriod?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/benefits`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update benefit tracking data');
     },
@@ -2686,7 +2798,7 @@ export const Api = {
      */
     getAnalysisQualityAssessment: async (analysisId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/quality-assessment`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch quality assessment');
     },
@@ -2694,7 +2806,9 @@ export const Api = {
     /**
      * Calculate financial metrics (NPV, IRR, Payback, ROI)
      */
-    calculateFinancialMetrics: async (analysisId: string): Promise<{
+    calculateFinancialMetrics: async (
+        analysisId: string,
+    ): Promise<{
         npv: number | null;
         irr: number | null;
         paybackPeriod: number | null;
@@ -2704,7 +2818,7 @@ export const Api = {
     }> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/calculate-metrics`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to calculate financial metrics');
     },
@@ -2712,17 +2826,20 @@ export const Api = {
     /**
      * Generate business case document
      */
-    generateBusinessCase: async (analysisId: string, options?: {
-        format?: 'pdf' | 'docx';
-        language?: 'pl' | 'en';
-        includeExecutiveSummary?: boolean;
-        includeFinancialAnalysis?: boolean;
-        includeRiskAssessment?: boolean;
-    }): Promise<{ downloadUrl: string; filename: string }> => {
+    generateBusinessCase: async (
+        analysisId: string,
+        options?: {
+            format?: 'pdf' | 'docx';
+            language?: 'pl' | 'en';
+            includeExecutiveSummary?: boolean;
+            includeFinancialAnalysis?: boolean;
+            includeRiskAssessment?: boolean;
+        },
+    ): Promise<{ downloadUrl: string; filename: string }> => {
         const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/business-case`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(options || {})
+            body: JSON.stringify(options || {}),
         });
         return handleResponse(res, 'Failed to generate business case');
     },
@@ -2754,7 +2871,7 @@ export const Api = {
         if (options?.offset) params.append('offset', String(options.offset));
 
         const res = await fetchWithRetry(`${API_URL}/conversations?${params.toString()}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch conversations');
     },
@@ -2770,7 +2887,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/conversations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data || {})
+            body: JSON.stringify(data || {}),
         });
         return handleResponse(res, 'Failed to create conversation');
     },
@@ -2780,7 +2897,7 @@ export const Api = {
      */
     getConversation: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch conversation');
     },
@@ -2788,18 +2905,21 @@ export const Api = {
     /**
      * Update conversation metadata
      */
-    updateConversation: async (id: string, updates: {
-        title?: string;
-        starred?: boolean;
-        archived?: boolean;
-        tags?: string[];
-        pmoContext?: Record<string, any>;
-        chatProjectId?: string | null;
-    }): Promise<any> => {
+    updateConversation: async (
+        id: string,
+        updates: {
+            title?: string;
+            starred?: boolean;
+            archived?: boolean;
+            tags?: string[];
+            pmoContext?: Record<string, any>;
+            chatProjectId?: string | null;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update conversation');
     },
@@ -2810,7 +2930,7 @@ export const Api = {
     deleteConversation: async (id: string): Promise<{ success: boolean; deleted: string }> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete conversation');
     },
@@ -2818,18 +2938,21 @@ export const Api = {
     /**
      * Add a message to a conversation
      */
-    addConversationMessage: async (conversationId: string, message: {
-        role: 'user' | 'ai';
-        content: string;
-        messageType?: string;
-        metadata?: Record<string, any>;
-        tokenCount?: number;
-        modelUsed?: string;
-    }): Promise<any> => {
+    addConversationMessage: async (
+        conversationId: string,
+        message: {
+            role: 'user' | 'ai';
+            content: string;
+            messageType?: string;
+            metadata?: Record<string, any>;
+            tokenCount?: number;
+            modelUsed?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/messages`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(message)
+            body: JSON.stringify(message),
         });
         return handleResponse(res, 'Failed to add message');
     },
@@ -2837,10 +2960,12 @@ export const Api = {
     /**
      * Generate title for a conversation
      */
-    generateConversationTitle: async (conversationId: string): Promise<{ title?: string; skipped?: boolean; reason?: string }> => {
+    generateConversationTitle: async (
+        conversationId: string,
+    ): Promise<{ title?: string; skipped?: boolean; reason?: string }> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/title/generate`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to generate title');
     },
@@ -2848,12 +2973,15 @@ export const Api = {
     /**
      * Report feedback on a message (thumbs up/down)
      */
-    reportMessageFeedback: async (messageId: string, rating: 'positive' | 'negative'): Promise<{ success: boolean }> => {
+    reportMessageFeedback: async (
+        messageId: string,
+        rating: 'positive' | 'negative',
+    ): Promise<{ success: boolean }> => {
         try {
             const res = await fetchWithRetry(`${API_URL}/ai/feedback`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ messageId, rating })
+                body: JSON.stringify({ messageId, rating }),
             });
             return handleResponse(res, 'Failed to report feedback');
         } catch (err) {
@@ -2870,7 +2998,7 @@ export const Api = {
             const res = await fetchWithRetry(`${API_URL}/ai/report`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ messageId, reason })
+                body: JSON.stringify({ messageId, reason }),
             });
             return handleResponse(res, 'Failed to report message');
         } catch (err) {
@@ -2882,7 +3010,10 @@ export const Api = {
     /**
      * Bulk operations on conversations
      */
-    bulkConversationOperation: async (ids: string[], action: 'archive' | 'unarchive' | 'delete' | 'star' | 'unstar'): Promise<{
+    bulkConversationOperation: async (
+        ids: string[],
+        action: 'archive' | 'unarchive' | 'delete' | 'star' | 'unstar',
+    ): Promise<{
         success: boolean;
         affected: number;
         ids: string[];
@@ -2890,7 +3021,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/conversations/bulk`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ ids, action })
+            body: JSON.stringify({ ids, action }),
         });
         return handleResponse(res, 'Failed to perform bulk operation');
     },
@@ -2898,14 +3029,16 @@ export const Api = {
     /**
      * Migrate conversations from localStorage
      */
-    migrateConversations: async (conversations: Array<{
-        projectId?: string;
-        messages: Array<{ role: string; content: string; timestamp?: Date }>;
-    }>): Promise<{ success: boolean; migrated: Array<{ conversationId: string; messageCount: number }> }> => {
+    migrateConversations: async (
+        conversations: Array<{
+            projectId?: string;
+            messages: Array<{ role: string; content: string; timestamp?: Date }>;
+        }>,
+    ): Promise<{ success: boolean; migrated: Array<{ conversationId: string; messageCount: number }> }> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/migrate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ conversations })
+            body: JSON.stringify({ conversations }),
         });
         return handleResponse(res, 'Failed to migrate conversations');
     },
@@ -2917,7 +3050,7 @@ export const Api = {
      */
     getChatProjects: async (): Promise<{ projects: any[] }> => {
         const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch chat projects');
     },
@@ -2927,7 +3060,7 @@ export const Api = {
      */
     getChatProject: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch chat project');
     },
@@ -2944,7 +3077,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create chat project');
     },
@@ -2952,16 +3085,19 @@ export const Api = {
     /**
      * Update a chat project
      */
-    updateChatProject: async (id: string, updates: {
-        name?: string;
-        description?: string;
-        color?: string;
-        icon?: string;
-    }): Promise<any> => {
+    updateChatProject: async (
+        id: string,
+        updates: {
+            name?: string;
+            description?: string;
+            color?: string;
+            icon?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update chat project');
     },
@@ -2972,7 +3108,7 @@ export const Api = {
     deleteChatProject: async (id: string): Promise<{ success: boolean; deleted: string }> => {
         const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete chat project');
     },
@@ -2984,7 +3120,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/conversations`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ conversationId })
+            body: JSON.stringify({ conversationId }),
         });
         return handleResponse(res, 'Failed to move conversation to project');
     },
@@ -2995,7 +3131,7 @@ export const Api = {
     removeConversationFromProject: async (projectId: string, conversationId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/conversations/${conversationId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to remove conversation from project');
     },
@@ -3022,7 +3158,7 @@ export const Api = {
         if (options?.offset) params.append('offset', String(options.offset));
 
         const res = await fetchWithRetry(`${API_URL}/studio/documents?${params.toString()}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch studio documents');
     },
@@ -3044,7 +3180,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/documents`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create studio document');
     },
@@ -3054,7 +3190,7 @@ export const Api = {
      */
     getStudioDocument: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch studio document');
     },
@@ -3062,24 +3198,27 @@ export const Api = {
     /**
      * Update studio document
      */
-    updateStudioDocument: async (id: string, data: {
-        name?: string;
-        description?: string;
-        type?: string;
-        nodes?: any[];
-        edges?: any[];
-        viewport?: any;
-        tags?: string[];
-        linkedTaskId?: string;
-        linkedProjectId?: string;
-        linkedInitiativeId?: string;
-        createSnapshot?: boolean;
-        snapshotReason?: string;
-    }): Promise<any> => {
+    updateStudioDocument: async (
+        id: string,
+        data: {
+            name?: string;
+            description?: string;
+            type?: string;
+            nodes?: any[];
+            edges?: any[];
+            viewport?: any;
+            tags?: string[];
+            linkedTaskId?: string;
+            linkedProjectId?: string;
+            linkedInitiativeId?: string;
+            createSnapshot?: boolean;
+            snapshotReason?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update studio document');
     },
@@ -3090,7 +3229,7 @@ export const Api = {
     deleteStudioDocument: async (id: string): Promise<{ success: boolean }> => {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete studio document');
     },
@@ -3102,7 +3241,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/snapshot`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data || {})
+            body: JSON.stringify(data || {}),
         });
         return handleResponse(res, 'Failed to create snapshot');
     },
@@ -3113,7 +3252,7 @@ export const Api = {
     restoreStudioSnapshot: async (documentId: string, snapshotId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/restore/${snapshotId}`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to restore snapshot');
     },
@@ -3124,7 +3263,7 @@ export const Api = {
     getStudioTemplates: async (category?: string): Promise<any[]> => {
         const params = category ? `?category=${category}` : '';
         const res = await fetchWithRetry(`${API_URL}/studio/templates${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch studio templates');
     },
@@ -3145,7 +3284,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/templates`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create template');
     },
@@ -3156,7 +3295,7 @@ export const Api = {
     shareStudioDocument: async (documentId: string): Promise<{ shareToken: string; shareUrl: string }> => {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/share`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to share document');
     },
@@ -3172,15 +3311,18 @@ export const Api = {
     /**
      * Link studio document to PMO entity
      */
-    linkStudioDocument: async (documentId: string, links: {
-        taskId?: string;
-        projectId?: string;
-        initiativeId?: string;
-    }): Promise<any> => {
+    linkStudioDocument: async (
+        documentId: string,
+        links: {
+            taskId?: string;
+            projectId?: string;
+            initiativeId?: string;
+        },
+    ): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/studio/documents/${documentId}/link`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(links)
+            body: JSON.stringify(links),
         });
         return handleResponse(res, 'Failed to link document');
     },
@@ -3190,7 +3332,10 @@ export const Api = {
     /**
      * Generate diagram from text
      */
-    generateStudioDiagram: async (prompt: string, diagramType?: string): Promise<{
+    generateStudioDiagram: async (
+        prompt: string,
+        diagramType?: string,
+    ): Promise<{
         nodes: any[];
         edges: any[];
         diagramType: string;
@@ -3200,7 +3345,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/ai/generate`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ prompt, diagramType })
+            body: JSON.stringify({ prompt, diagramType }),
         });
         return handleResponse(res, 'Failed to generate diagram');
     },
@@ -3208,7 +3353,11 @@ export const Api = {
     /**
      * Modify existing diagram
      */
-    modifyStudioDiagram: async (prompt: string, nodes: any[], edges: any[]): Promise<{
+    modifyStudioDiagram: async (
+        prompt: string,
+        nodes: any[],
+        edges: any[],
+    ): Promise<{
         nodes: any[];
         edges: any[];
         changes?: { added?: string[]; modified?: string[]; removed?: string[] };
@@ -3217,7 +3366,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/ai/modify`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ prompt, nodes, edges })
+            body: JSON.stringify({ prompt, nodes, edges }),
         });
         return handleResponse(res, 'Failed to modify diagram');
     },
@@ -3225,7 +3374,11 @@ export const Api = {
     /**
      * Studio AI chat
      */
-    studioAIChat: async (message: string, documentId?: string, context?: { nodes: any[]; edges: any[] }): Promise<{
+    studioAIChat: async (
+        message: string,
+        documentId?: string,
+        context?: { nodes: any[]; edges: any[] },
+    ): Promise<{
         text: string;
         intent: string;
         confidence: number;
@@ -3239,7 +3392,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/ai/chat`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ message, documentId, context })
+            body: JSON.stringify({ message, documentId, context }),
         });
         return handleResponse(res, 'Failed to process chat message');
     },
@@ -3247,7 +3400,11 @@ export const Api = {
     /**
      * Get diagram optimization suggestions
      */
-    getStudioSuggestions: async (nodes: any[], edges: any[], diagramType?: string): Promise<{
+    getStudioSuggestions: async (
+        nodes: any[],
+        edges: any[],
+        diagramType?: string,
+    ): Promise<{
         suggestions: Array<{
             type: string;
             message: string;
@@ -3257,7 +3414,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/ai/suggest`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ nodes, edges, diagramType })
+            body: JSON.stringify({ nodes, edges, diagramType }),
         });
         return handleResponse(res, 'Failed to get suggestions');
     },
@@ -3269,7 +3426,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/studio/ai/classify`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message }),
         });
         return handleResponse(res, 'Failed to classify intent');
     },
@@ -3281,7 +3438,7 @@ export const Api = {
      */
     getPermissionRequests: async (): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/permission-requests`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch permission requests');
     },
@@ -3294,7 +3451,7 @@ export const Api = {
             ? `${API_URL}/permission-requests/admin?status=${status}`
             : `${API_URL}/permission-requests/admin`;
         const res = await fetchWithRetry(url, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch admin permission requests');
     },
@@ -3312,7 +3469,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/permission-requests`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create permission request');
     },
@@ -3324,7 +3481,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/permission-requests/${requestId}/approve`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ adminNotes })
+            body: JSON.stringify({ adminNotes }),
         });
         return handleResponse(res, 'Failed to approve permission request');
     },
@@ -3336,7 +3493,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/permission-requests/${requestId}/reject`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ adminNotes })
+            body: JSON.stringify({ adminNotes }),
         });
         return handleResponse(res, 'Failed to reject permission request');
     },
@@ -3347,7 +3504,7 @@ export const Api = {
     cancelPermissionRequest: async (requestId: string): Promise<{ success: boolean }> => {
         const res = await fetchWithRetry(`${API_URL}/permission-requests/${requestId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to cancel permission request');
     },
@@ -3363,7 +3520,7 @@ export const Api = {
         total: number;
     }> => {
         const res = await fetchWithRetry(`${API_URL}/permission-requests/stats`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch permission request stats');
     },
@@ -3373,7 +3530,7 @@ export const Api = {
      */
     getUserActivityLog: async (limit = 50): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/users/me/activity?limit=${limit}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch activity log');
     },
@@ -3383,7 +3540,7 @@ export const Api = {
     // ==========================================
     getOrganizationMetadata: async (orgId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/metadata`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch organization metadata');
     },
@@ -3391,13 +3548,13 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/metadata`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(metadata)
+            body: JSON.stringify(metadata),
         });
         return handleResponse(res, 'Failed to update organization metadata');
     },
     getOrganizationTags: async (orgId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/tags`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch organization tags');
     },
@@ -3405,14 +3562,14 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/tags`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ tag, color, category })
+            body: JSON.stringify({ tag, color, category }),
         });
         return handleResponse(res, 'Failed to add organization tag');
     },
     removeOrganizationTag: async (orgId: string, tagId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/tags/${tagId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to remove organization tag');
     },
@@ -3423,7 +3580,7 @@ export const Api = {
     },
     getOrganizationRelationships: async (orgId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/relationships`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch organization relationships');
     },
@@ -3432,7 +3589,7 @@ export const Api = {
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/analytics?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch organization analytics');
     },
@@ -3442,7 +3599,7 @@ export const Api = {
     // ==========================================
     getUserProfileExtended: async (userId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/profile-extended`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user profile');
     },
@@ -3450,7 +3607,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/profile-extended`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(profile)
+            body: JSON.stringify(profile),
         });
         return handleResponse(res, 'Failed to update user profile');
     },
@@ -3461,26 +3618,26 @@ export const Api = {
     },
     getUserSessions: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/sessions`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user sessions');
     },
     revokeUserSession: async (userId: string, sessionId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/sessions/${sessionId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to revoke session');
     },
     getUserGroups: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/groups`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user groups');
     },
     getUserOnboardingProgress: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/onboarding`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch onboarding progress');
     },
@@ -3488,13 +3645,13 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/onboarding`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(progress)
+            body: JSON.stringify(progress),
         });
         return handleResponse(res, 'Failed to update onboarding progress');
     },
     getUserLicense: async (userId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/license`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user license');
     },
@@ -3502,7 +3659,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/license`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(license)
+            body: JSON.stringify(license),
         });
         return handleResponse(res, 'Failed to assign license');
     },
@@ -3512,7 +3669,7 @@ export const Api = {
     // ==========================================
     getIPWhitelist: async (orgId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/ip-whitelist`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch IP whitelist');
     },
@@ -3520,20 +3677,20 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/ip-whitelist`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(ipData)
+            body: JSON.stringify(ipData),
         });
         return handleResponse(res, 'Failed to add IP to whitelist');
     },
     removeIPWhitelist: async (ipId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/ip-whitelist/${ipId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to remove IP from whitelist');
     },
     getUserDevices: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/devices`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user devices');
     },
@@ -3541,20 +3698,20 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/devices/${deviceId}/block`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ reason })
+            body: JSON.stringify({ reason }),
         });
         return handleResponse(res, 'Failed to block device');
     },
     getMFAMethods: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/mfa`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch MFA methods');
     },
     setupTOTP: async (userId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/mfa/totp/setup`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to setup TOTP');
     },
@@ -3562,13 +3719,13 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/mfa/totp/verify`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ token })
+            body: JSON.stringify({ token }),
         });
         return handleResponse(res, 'Failed to verify TOTP');
     },
     getPasswordPolicy: async (orgId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/password-policy`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch password policy');
     },
@@ -3576,7 +3733,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/password-policy`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(policy)
+            body: JSON.stringify(policy),
         });
         return handleResponse(res, 'Failed to update password policy');
     },
@@ -3589,14 +3746,14 @@ export const Api = {
         if (filters?.resolved !== undefined) params.append('resolved', filters.resolved.toString());
         if (filters?.limit) params.append('limit', filters.limit.toString());
         const res = await fetchWithRetry(`${API_URL}/superadmin/security-events?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch security events');
     },
     resolveSecurityEvent: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/security-events/${id}/resolve`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to resolve security event');
     },
@@ -3613,7 +3770,7 @@ export const Api = {
         if (filters?.assignedTo) params.append('assignedTo', filters.assignedTo);
         if (filters?.limit) params.append('limit', filters.limit.toString());
         const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch support tickets');
     },
@@ -3621,7 +3778,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(ticket)
+            body: JSON.stringify(ticket),
         });
         return handleResponse(res, 'Failed to create support ticket');
     },
@@ -3629,7 +3786,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets/${ticketId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update support ticket');
     },
@@ -3637,7 +3794,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets/${ticketId}/comments`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(comment)
+            body: JSON.stringify(comment),
         });
         return handleResponse(res, 'Failed to add ticket comment');
     },
@@ -3646,16 +3803,19 @@ export const Api = {
         if (filters?.noteType) params.append('noteType', filters.noteType);
         if (filters?.userId) params.append('userId', filters.userId);
         if (filters?.limit) params.append('limit', filters.limit.toString());
-        const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/customer-success/notes?${params}`, {
-            headers: getHeaders()
-        });
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/organizations/${orgId}/customer-success/notes?${params}`,
+            {
+                headers: getHeaders(),
+            },
+        );
         return handleResponse(res, 'Failed to fetch customer success notes');
     },
     createCustomerSuccessNote: async (orgId: string, note: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/customer-success/notes`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(note)
+            body: JSON.stringify(note),
         });
         return handleResponse(res, 'Failed to create customer success note');
     },
@@ -3676,7 +3836,7 @@ export const Api = {
         if (filters?.status) params.append('status', filters.status);
         if (filters?.limit) params.append('limit', filters.limit.toString());
         const res = await fetchWithRetry(`${API_URL}/superadmin/feedback?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch feedback items');
     },
@@ -3684,7 +3844,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/feedback`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(feedback)
+            body: JSON.stringify(feedback),
         });
         return handleResponse(res, 'Failed to create feedback item');
     },
@@ -3692,7 +3852,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/feedback/${feedbackId}/vote`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ voteType })
+            body: JSON.stringify({ voteType }),
         });
         return handleResponse(res, 'Failed to vote on feedback');
     },
@@ -3700,7 +3860,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/feedback/${feedbackId}/comments`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(comment)
+            body: JSON.stringify(comment),
         });
         return handleResponse(res, 'Failed to add feedback comment');
     },
@@ -3713,7 +3873,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/feature-roadmap/${itemId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update feature roadmap');
     },
@@ -3726,13 +3886,13 @@ export const Api = {
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/adoption-metrics?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user adoption metrics');
     },
     getChurnPrediction: async (orgId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/churn-prediction`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch churn prediction');
     },
@@ -3749,27 +3909,30 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/compliance/retention-policies`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(policy)
+            body: JSON.stringify(policy),
         });
         return handleResponse(res, 'Failed to create data retention policy');
     },
     getGDPRRequests: async (organizationId: string): Promise<any[]> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/compliance/gdpr-requests?organizationId=${organizationId}`, {
-            headers: getHeaders()
-        });
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/compliance/gdpr-requests?organizationId=${organizationId}`,
+            {
+                headers: getHeaders(),
+            },
+        );
         return handleResponse(res, 'Failed to fetch GDPR requests');
     },
     createGDPRRequest: async (request: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/compliance/gdpr-requests`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(request)
+            body: JSON.stringify(request),
         });
         return handleResponse(res, 'Failed to create GDPR request');
     },
     getUserConsents: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/consents`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch user consents');
     },
@@ -3777,7 +3940,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/consents`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(consent)
+            body: JSON.stringify(consent),
         });
         return handleResponse(res, 'Failed to update user consent');
     },
@@ -3794,7 +3957,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/automation/rules`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(rule)
+            body: JSON.stringify(rule),
         });
         return handleResponse(res, 'Failed to create automation rule');
     },
@@ -3802,13 +3965,13 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/automation/rules/${ruleId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update automation rule');
     },
     getWebhookSubscriptions: async (organizationId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/webhooks?organizationId=${organizationId}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch webhook subscriptions');
     },
@@ -3816,7 +3979,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/webhooks`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(subscription)
+            body: JSON.stringify(subscription),
         });
         return handleResponse(res, 'Failed to create webhook subscription');
     },
@@ -3829,7 +3992,7 @@ export const Api = {
         if (category) params.append('category', category);
         if (activeOnly) params.append('activeOnly', 'true');
         const res = await fetchWithRetry(`${API_URL}/superadmin/email/templates?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch email templates');
     },
@@ -3837,7 +4000,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/email/templates`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(template)
+            body: JSON.stringify(template),
         });
         return handleResponse(res, 'Failed to create email template');
     },
@@ -3846,7 +4009,7 @@ export const Api = {
         if (organizationId) params.append('organizationId', organizationId);
         if (status) params.append('status', status);
         const res = await fetchWithRetry(`${API_URL}/superadmin/email/campaigns?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch email campaigns');
     },
@@ -3854,13 +4017,13 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/email/campaigns`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(campaign)
+            body: JSON.stringify(campaign),
         });
         return handleResponse(res, 'Failed to create email campaign');
     },
     getSuperAdminNotificationPreferences: async (userId: string): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/notification-preferences`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch notification preferences');
     },
@@ -3868,7 +4031,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/notification-preferences`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ preferences })
+            body: JSON.stringify({ preferences }),
         });
         return handleResponse(res, 'Failed to update notification preferences');
     },
@@ -3893,13 +4056,13 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/audit-logs?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch audit logs');
     },
     getAuditLogById: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/audit-logs/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch audit log');
     },
@@ -3913,7 +4076,7 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/audit-logs/stats/summary?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch audit log stats');
     },
@@ -3927,7 +4090,7 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/audit-logs/export/csv?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to export audit logs');
         return res.blob();
@@ -3942,7 +4105,7 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/audit-logs/compliance/${framework}?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch compliance report');
     },
@@ -3958,13 +4121,13 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/feature-flags/admin?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch feature flags');
     },
     getFeatureFlagById: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/feature-flags/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch feature flag');
     },
@@ -3972,7 +4135,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/feature-flags`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(flag)
+            body: JSON.stringify(flag),
         });
         return handleResponse(res, 'Failed to create feature flag');
     },
@@ -3980,14 +4143,14 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/feature-flags/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update feature flag');
     },
     deleteFeatureFlag: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/feature-flags/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to delete feature flag');
     },
@@ -3995,14 +4158,14 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/feature-flags/${id}/toggle`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ enabled })
+            body: JSON.stringify({ enabled }),
         });
         return handleResponse(res, 'Failed to toggle feature flag');
     },
     getFeatureFlagHistory: async (id: string, limit?: number): Promise<any[]> => {
         const params = limit ? `?limit=${limit}` : '';
         const res = await fetchWithRetry(`${API_URL}/feature-flags/${id}/history${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch feature flag history');
     },
@@ -4013,7 +4176,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/webhooks/${id}/test`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ payload })
+            body: JSON.stringify({ payload }),
         });
         return handleResponse(res, 'Failed to test webhook');
     },
@@ -4032,7 +4195,7 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/webhooks/${webhookId}/deliveries?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch webhook deliveries');
     },
@@ -4040,7 +4203,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/webhooks/${webhookId}/retry`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ deliveryId })
+            body: JSON.stringify({ deliveryId }),
         });
         return handleResponse(res, 'Failed to retry webhook delivery');
     },
@@ -4056,13 +4219,13 @@ export const Api = {
             });
         }
         const res = await fetchWithRetry(`${API_URL}/integrations?${params}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch integrations');
     },
     getIntegrationById: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/${id}`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to fetch integration');
     },
@@ -4070,7 +4233,7 @@ export const Api = {
     // --- USER DATA & ACCOUNT ---
     exportUserData: async (): Promise<Blob> => {
         const res = await fetchWithRetry(`${API_URL}/user/export-data`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleBlobResponse(res, 'Failed to export data');
     },
@@ -4078,7 +4241,7 @@ export const Api = {
     deleteAccount: async (_confirmation?: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/user/delete-account`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to delete account');
     },
@@ -4086,7 +4249,7 @@ export const Api = {
     // --- INTEGRATIONS: CALENDAR ---
     getCalendars: async (): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/calendar`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await handleResponse(res, 'Failed to fetch calendars');
         return data.calendars || [];
@@ -4094,7 +4257,7 @@ export const Api = {
     // Alias for getCalendars if needed
     getCalendarConnections: async (): Promise<any[]> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/calendar`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await handleResponse(res, 'Failed to fetch calendars');
         return data.calendars || [];
@@ -4103,7 +4266,7 @@ export const Api = {
     connectCalendar: async (calendarId: string): Promise<{ authUrl: string }> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/calendar/${calendarId}/connect`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleResponse(res, 'Failed to connect calendar');
     },
@@ -4111,14 +4274,14 @@ export const Api = {
     disconnectCalendar: async (calendarId: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/calendar/${calendarId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to disconnect calendar');
     },
 
     getCalendarSettings: async (): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/integrations/calendar/settings`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         const data = await handleResponse(res, 'Failed to fetch calendar settings');
         return data.settings || {};
@@ -4128,18 +4291,16 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/integrations/calendar/settings`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(settings)
+            body: JSON.stringify(settings),
         });
         await handleResponse(res, 'Failed to update calendar settings');
     },
-
-
 
     // --- AI SETTINGS ---
     clearAIMemory: async (): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/ai-memory/clear`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to clear AI memory');
     },
@@ -4148,7 +4309,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/ai-memory/settings`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(settings)
+            body: JSON.stringify(settings),
         });
         await handleResponse(res, 'Failed to update AI memory settings');
     },
@@ -4157,14 +4318,14 @@ export const Api = {
     clearChatHistory: async (): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/clear-all`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         await handleResponse(res, 'Failed to clear chat history');
     },
 
     exportChatHistory: async (): Promise<Blob> => {
         const res = await fetchWithRetry(`${API_URL}/conversations/export`, {
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         return handleBlobResponse(res, 'Failed to export history');
     },
@@ -4174,7 +4335,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/user/voice-settings`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(settings)
+            body: JSON.stringify(settings),
         });
         await handleResponse(res, 'Failed to update voice settings');
     },
@@ -4184,7 +4345,7 @@ export const Api = {
         const res = await fetchWithRetry(`${API_URL}/user/response-style`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify(style)
+            body: JSON.stringify(style),
         });
         await handleResponse(res, 'Failed to update response style');
     },
@@ -4200,17 +4361,21 @@ export const Api = {
         return handleResponse(res, 'Failed to fetch admin sessions');
     },
 
-    createAdminSession: async (data: { adminId?: string; mfaVerified?: boolean; expiresInHours?: number }): Promise<any> => {
+    createAdminSession: async (data: {
+        adminId?: string;
+        mfaVerified?: boolean;
+        expiresInHours?: number;
+    }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/sessions`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create admin session');
     },
 
     revokeAdminSession: async (sessionId: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/sessions/${sessionId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to revoke admin session');
     },
@@ -4218,7 +4383,7 @@ export const Api = {
     revokeAllAdminSessions: async (adminId?: string, exceptCurrent?: boolean): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/sessions/revoke-all`, {
             method: 'POST',
-            body: JSON.stringify({ adminId, exceptCurrent })
+            body: JSON.stringify({ adminId, exceptCurrent }),
         });
         return handleResponse(res, 'Failed to revoke all admin sessions');
     },
@@ -4229,7 +4394,13 @@ export const Api = {
     },
 
     // Admin Audit Logs
-    getAdminAuditLogs: async (params?: { adminId?: string; actionType?: string; riskScoreMin?: number; status?: string; limit?: number }): Promise<any[]> => {
+    getAdminAuditLogs: async (params?: {
+        adminId?: string;
+        actionType?: string;
+        riskScoreMin?: number;
+        status?: string;
+        limit?: number;
+    }): Promise<any[]> => {
         const queryParams = new URLSearchParams();
         if (params?.adminId) queryParams.append('adminId', params.adminId);
         if (params?.actionType) queryParams.append('actionType', params.actionType);
@@ -4248,7 +4419,7 @@ export const Api = {
     resolveAdminAuditLog: async (logId: string, resolutionNotes: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/audit-logs/${logId}/resolve`, {
             method: 'POST',
-            body: JSON.stringify({ resolutionNotes })
+            body: JSON.stringify({ resolutionNotes }),
         });
         await handleResponse(res, 'Failed to resolve admin audit log');
     },
@@ -4295,7 +4466,7 @@ export const Api = {
     createAdminPermission: async (data: { key: string; description: string; category: string }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create admin permission');
     },
@@ -4303,14 +4474,14 @@ export const Api = {
     updateAdminPermission: async (key: string, data: { description: string; category: string }): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions/${key}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update admin permission');
     },
 
     deleteAdminPermission: async (key: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions/${key}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete admin permission');
     },
@@ -4323,29 +4494,34 @@ export const Api = {
     updateRolePermissions: async (roleId: string, permissions: string[]): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions/roles/${roleId}`, {
             method: 'PUT',
-            body: JSON.stringify({ permissions })
+            body: JSON.stringify({ permissions }),
         });
         return handleResponse(res, 'Failed to update role permissions');
     },
 
     toggleRolePermission: async (roleId: string, permissionKey: string, enabled: boolean): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions/roles/${roleId}/permissions/${encodeURIComponent(permissionKey)}`, {
-            method: 'POST',
-            body: JSON.stringify({ enabled })
-        });
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/admin/permissions/roles/${roleId}/permissions/${encodeURIComponent(permissionKey)}`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ enabled }),
+            },
+        );
         return handleResponse(res, 'Failed to toggle permission');
     },
 
     copyRolePermissions: async (sourceRole: string, targetRole: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions/copy`, {
             method: 'POST',
-            body: JSON.stringify({ sourceRole, targetRole })
+            body: JSON.stringify({ sourceRole, targetRole }),
         });
         return handleResponse(res, 'Failed to copy permissions');
     },
 
     compareRolePermissions: async (role1: string, role2: string): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/admin/permissions/compare?role1=${role1}&role2=${role2}`);
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/admin/permissions/compare?role1=${role1}&role2=${role2}`,
+        );
         return handleResponse(res, 'Failed to compare roles');
     },
 
@@ -4366,7 +4542,7 @@ export const Api = {
     createApprovalWorkflow: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/approval-workflows`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create approval workflow');
     },
@@ -4374,14 +4550,14 @@ export const Api = {
     updateApprovalWorkflow: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/approval-workflows/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update approval workflow');
     },
 
     deleteApprovalWorkflow: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/approval-workflows/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete approval workflow');
     },
@@ -4397,7 +4573,7 @@ export const Api = {
     approveRequest: async (id: string, notes?: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/approval-requests/${id}/approve`, {
             method: 'POST',
-            body: JSON.stringify({ notes })
+            body: JSON.stringify({ notes }),
         });
         await handleResponse(res, 'Failed to approve request');
     },
@@ -4405,7 +4581,7 @@ export const Api = {
     rejectRequest: async (id: string, reason?: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/admin/approval-requests/${id}/reject`, {
             method: 'POST',
-            body: JSON.stringify({ reason })
+            body: JSON.stringify({ reason }),
         });
         await handleResponse(res, 'Failed to reject request');
     },
@@ -4415,7 +4591,11 @@ export const Api = {
     // =========================================
 
     // Security Incidents
-    getSecurityIncidents: async (params?: { incidentType?: string; severity?: string; status?: string }): Promise<any[]> => {
+    getSecurityIncidents: async (params?: {
+        incidentType?: string;
+        severity?: string;
+        status?: string;
+    }): Promise<any[]> => {
         const queryParams = new URLSearchParams();
         if (params?.incidentType) queryParams.append('incidentType', params.incidentType);
         if (params?.severity) queryParams.append('severity', params.severity);
@@ -4432,7 +4612,7 @@ export const Api = {
     createSecurityIncident: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/security-incidents`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create security incident');
     },
@@ -4440,7 +4620,7 @@ export const Api = {
     updateSecurityIncident: async (id: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/security-incidents/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update security incident');
     },
@@ -4448,14 +4628,14 @@ export const Api = {
     resolveSecurityIncident: async (id: string, resolutionNotes: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/security-incidents/${id}/resolve`, {
             method: 'POST',
-            body: JSON.stringify({ resolutionNotes })
+            body: JSON.stringify({ resolutionNotes }),
         });
         return handleResponse(res, 'Failed to resolve security incident');
     },
 
     deleteSecurityIncident: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/security-incidents/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete security incident');
     },
@@ -4466,7 +4646,13 @@ export const Api = {
     },
 
     // Threat Intelligence
-    getThreats: async (params?: { threatType?: string; threatLevel?: string; isBlocked?: boolean; ipAddress?: string; domain?: string }): Promise<any[]> => {
+    getThreats: async (params?: {
+        threatType?: string;
+        threatLevel?: string;
+        isBlocked?: boolean;
+        ipAddress?: string;
+        domain?: string;
+    }): Promise<any[]> => {
         const queryParams = new URLSearchParams();
         if (params?.threatType) queryParams.append('threatType', params.threatType);
         if (params?.threatLevel) queryParams.append('threatLevel', params.threatLevel);
@@ -4485,7 +4671,7 @@ export const Api = {
     addThreat: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/threats`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to add threat');
     },
@@ -4493,28 +4679,28 @@ export const Api = {
     updateThreat: async (id: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/threats/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update threat');
     },
 
     blockThreat: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/threats/${id}/block`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to block threat');
     },
 
     unblockThreat: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/threats/${id}/unblock`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to unblock threat');
     },
 
     deleteThreat: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/threats/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete threat');
     },
@@ -4542,7 +4728,7 @@ export const Api = {
     bulkImportThreats: async (threats: any[]): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/threats/bulk-import`, {
             method: 'POST',
-            body: JSON.stringify({ threats })
+            body: JSON.stringify({ threats }),
         });
         return handleResponse(res, 'Failed to import threats');
     },
@@ -4569,7 +4755,7 @@ export const Api = {
     createDLPPolicy: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dlp/policies`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create DLP policy');
     },
@@ -4577,7 +4763,7 @@ export const Api = {
     updateDLPPolicy: async (id: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dlp/policies/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update DLP policy');
     },
@@ -4585,19 +4771,23 @@ export const Api = {
     toggleDLPPolicy: async (id: string, isActive: boolean): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dlp/policies/${id}/toggle`, {
             method: 'POST',
-            body: JSON.stringify({ isActive })
+            body: JSON.stringify({ isActive }),
         });
         return handleResponse(res, 'Failed to toggle DLP policy');
     },
 
     deleteDLPPolicy: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dlp/policies/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete DLP policy');
     },
 
-    getDLPViolations: async (params?: { policyId?: string; severity?: string; isResolved?: boolean }): Promise<any[]> => {
+    getDLPViolations: async (params?: {
+        policyId?: string;
+        severity?: string;
+        isResolved?: boolean;
+    }): Promise<any[]> => {
         const queryParams = new URLSearchParams();
         if (params?.policyId) queryParams.append('policyId', params.policyId);
         if (params?.severity) queryParams.append('severity', params.severity);
@@ -4613,7 +4803,7 @@ export const Api = {
 
     resolveDLPViolation: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dlp/violations/${id}/resolve`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to resolve DLP violation');
     },
@@ -4626,7 +4816,7 @@ export const Api = {
     scanResourceDLP: async (data: { resourceType: string; resourceId?: string; content: string }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dlp/scan`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to scan resource');
     },
@@ -4651,7 +4841,7 @@ export const Api = {
     createDashboard: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create dashboard');
     },
@@ -4659,14 +4849,14 @@ export const Api = {
     updateDashboard: async (id: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to update dashboard');
     },
 
     deleteDashboard: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete dashboard');
     },
@@ -4674,7 +4864,7 @@ export const Api = {
     cloneDashboard: async (id: string, name?: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${id}/clone`, {
             method: 'POST',
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name }),
         });
         return handleResponse(res, 'Failed to clone dashboard');
     },
@@ -4682,7 +4872,7 @@ export const Api = {
     toggleDashboardShare: async (id: string, isShared: boolean): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${id}/share`, {
             method: 'POST',
-            body: JSON.stringify({ isShared })
+            body: JSON.stringify({ isShared }),
         });
         return handleResponse(res, 'Failed to share/unshare dashboard');
     },
@@ -4690,7 +4880,7 @@ export const Api = {
     addDashboardWidget: async (dashboardId: string, widget: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${dashboardId}/widgets`, {
             method: 'POST',
-            body: JSON.stringify(widget)
+            body: JSON.stringify(widget),
         });
         return handleResponse(res, 'Failed to add widget');
     },
@@ -4698,14 +4888,14 @@ export const Api = {
     updateDashboardWidget: async (dashboardId: string, widgetId: string, updates: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${dashboardId}/widgets/${widgetId}`, {
             method: 'PUT',
-            body: JSON.stringify(updates)
+            body: JSON.stringify(updates),
         });
         return handleResponse(res, 'Failed to update widget');
     },
 
     removeDashboardWidget: async (dashboardId: string, widgetId: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${dashboardId}/widgets/${widgetId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to remove widget');
     },
@@ -4713,7 +4903,7 @@ export const Api = {
     reorderDashboardWidgets: async (dashboardId: string, widgetOrder: string[]): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${dashboardId}/widgets/reorder`, {
             method: 'POST',
-            body: JSON.stringify({ widgetOrder })
+            body: JSON.stringify({ widgetOrder }),
         });
         return handleResponse(res, 'Failed to reorder widgets');
     },
@@ -4721,7 +4911,7 @@ export const Api = {
     getDashboardWidgetData: async (widget: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/widget-data`, {
             method: 'POST',
-            body: JSON.stringify(widget)
+            body: JSON.stringify(widget),
         });
         return handleResponse(res, 'Failed to fetch widget data');
     },
@@ -4741,7 +4931,7 @@ export const Api = {
     createAnalyticsReport: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/reports`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create analytics report');
     },
@@ -4749,21 +4939,21 @@ export const Api = {
     updateAnalyticsReport: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/reports/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update analytics report');
     },
 
     deleteAnalyticsReport: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/reports/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete analytics report');
     },
 
     executeAnalyticsReport: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/reports/${id}/execute`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to execute analytics report');
     },
@@ -4771,7 +4961,7 @@ export const Api = {
     scheduleAnalyticsReport: async (id: string, schedule: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/reports/${id}/schedule`, {
             method: 'POST',
-            body: JSON.stringify({ schedule })
+            body: JSON.stringify({ schedule }),
         });
         await handleResponse(res, 'Failed to schedule analytics report');
     },
@@ -4794,7 +4984,7 @@ export const Api = {
     createBusinessMetric: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/metrics`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create business metric');
     },
@@ -4802,21 +4992,21 @@ export const Api = {
     updateBusinessMetric: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/metrics/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update business metric');
     },
 
     deleteBusinessMetric: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/metrics/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete business metric');
     },
 
     calculateBusinessMetric: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/metrics/${id}/calculate`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to calculate business metric');
     },
@@ -4844,7 +5034,7 @@ export const Api = {
     createPredictiveModel: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/predictive/models`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create predictive model');
     },
@@ -4852,21 +5042,21 @@ export const Api = {
     updatePredictiveModel: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/predictive/models/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update predictive model');
     },
 
     deletePredictiveModel: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/predictive/models/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete predictive model');
     },
 
     trainPredictiveModel: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/predictive/models/${id}/train`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to train predictive model');
     },
@@ -4874,14 +5064,16 @@ export const Api = {
     makePrediction: async (id: string, inputData: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/predictive/models/${id}/predict`, {
             method: 'POST',
-            body: JSON.stringify({ inputData })
+            body: JSON.stringify({ inputData }),
         });
         return handleResponse(res, 'Failed to make prediction');
     },
 
     getModelPredictions: async (id: string, limit?: number): Promise<any[]> => {
         const params = limit ? `?limit=${limit}` : '';
-        const res = await fetchWithRetry(`${API_URL}/superadmin/analytics/predictive/models/${id}/predictions${params}`);
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/analytics/predictive/models/${id}/predictions${params}`,
+        );
         return handleResponse(res, 'Failed to fetch model predictions');
     },
 
@@ -4916,7 +5108,7 @@ export const Api = {
     shareAnalyticsDashboard: async (id: string, userIds: string[]): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/dashboards/${id}/share`, {
             method: 'POST',
-            body: JSON.stringify({ userIds })
+            body: JSON.stringify({ userIds }),
         });
         await handleResponse(res, 'Failed to share analytics dashboard');
     },
@@ -4934,7 +5126,7 @@ export const Api = {
     createLifecycleStage: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/lifecycle/stages`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create lifecycle stage');
     },
@@ -4942,22 +5134,27 @@ export const Api = {
     updateLifecycleStage: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/lifecycle/stages/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update lifecycle stage');
     },
 
     deleteLifecycleStage: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/lifecycle/stages/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete lifecycle stage');
     },
 
-    transitionOrganizationLifecycle: async (data: { organizationId: string; fromStageId?: string; toStageId: string; notes?: string }): Promise<any> => {
+    transitionOrganizationLifecycle: async (data: {
+        organizationId: string;
+        fromStageId?: string;
+        toStageId: string;
+        notes?: string;
+    }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/lifecycle/transitions`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to transition organization');
     },
@@ -4983,7 +5180,7 @@ export const Api = {
     createSuccessPlaybook: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/success/playbooks`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create success playbook');
     },
@@ -4991,14 +5188,14 @@ export const Api = {
     updateSuccessPlaybook: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/success/playbooks/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update success playbook');
     },
 
     deleteSuccessPlaybook: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/success/playbooks/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete success playbook');
     },
@@ -5006,12 +5203,16 @@ export const Api = {
     executeSuccessPlaybook: async (id: string, organizationId: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/success/playbooks/${id}/execute`, {
             method: 'POST',
-            body: JSON.stringify({ organizationId })
+            body: JSON.stringify({ organizationId }),
         });
         return handleResponse(res, 'Failed to execute success playbook');
     },
 
-    getSuccessActions: async (params?: { playbookId?: string; organizationId?: string; status?: string }): Promise<any[]> => {
+    getSuccessActions: async (params?: {
+        playbookId?: string;
+        organizationId?: string;
+        status?: string;
+    }): Promise<any[]> => {
         const queryParams = new URLSearchParams();
         if (params?.playbookId) queryParams.append('playbookId', params.playbookId);
         if (params?.organizationId) queryParams.append('organizationId', params.organizationId);
@@ -5037,7 +5238,7 @@ export const Api = {
     createCustomerContract: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/contracts`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create customer contract');
     },
@@ -5045,14 +5246,14 @@ export const Api = {
     updateCustomerContract: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/contracts/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update customer contract');
     },
 
     deleteCustomerContract: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/contracts/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete customer contract');
     },
@@ -5060,7 +5261,7 @@ export const Api = {
     createContractAmendment: async (contractId: string, data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/customers/contracts/${contractId}/amendments`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create contract amendment');
     },
@@ -5094,7 +5295,7 @@ export const Api = {
     createPricingPlanAdvanced: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/pricing-plans`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create pricing plan');
     },
@@ -5102,14 +5303,14 @@ export const Api = {
     updatePricingPlanAdvanced: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/pricing-plans/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update pricing plan');
     },
 
     deletePricingPlanAdvanced: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/pricing-plans/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete pricing plan');
     },
@@ -5122,20 +5323,25 @@ export const Api = {
     addPlanFeature: async (planId: string, data: { featureKey: string; featureValue: string }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/pricing-plans/${planId}/features`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to add plan feature');
     },
 
     removePlanFeature: async (planId: string, featureId: string): Promise<void> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/pricing-plans/${planId}/features/${featureId}`, {
-            method: 'DELETE'
-        });
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/revenue/pricing-plans/${planId}/features/${featureId}`,
+            {
+                method: 'DELETE',
+            },
+        );
         await handleResponse(res, 'Failed to remove plan feature');
     },
 
     comparePricingPlans: async (planIds: string[]): Promise<any> => {
-        const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/pricing-plans/compare?planIds=${planIds.join(',')}`);
+        const res = await fetchWithRetry(
+            `${API_URL}/superadmin/revenue/pricing-plans/compare?planIds=${planIds.join(',')}`,
+        );
         return handleResponse(res, 'Failed to compare pricing plans');
     },
 
@@ -5153,7 +5359,7 @@ export const Api = {
 
     approveSubscriptionChange: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/${id}/approve`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to approve subscription change');
     },
@@ -5161,7 +5367,7 @@ export const Api = {
     rejectSubscriptionChange: async (id: string, reason: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/${id}/reject`, {
             method: 'POST',
-            body: JSON.stringify({ reason })
+            body: JSON.stringify({ reason }),
         });
         return handleResponse(res, 'Failed to reject subscription change');
     },
@@ -5169,19 +5375,23 @@ export const Api = {
     createSubscriptionChange: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create subscription change');
     },
 
-    calculateProration: async (data: { organizationId: string; fromPlanId: string; toPlanId: string; effectiveDate: string }): Promise<any> => {
+    calculateProration: async (data: {
+        organizationId: string;
+        fromPlanId: string;
+        toPlanId: string;
+        effectiveDate: string;
+    }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/subscription-changes/calculate-proration`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to calculate proration');
     },
-
 
     // Revenue Recognition
     getRevenueRecognitions: async (params?: { organizationId?: string; status?: string }): Promise<any[]> => {
@@ -5195,7 +5405,7 @@ export const Api = {
     createRevenueRecognition: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/recognition`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create revenue recognition');
     },
@@ -5203,7 +5413,7 @@ export const Api = {
     updateRevenueRecognition: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/recognition/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update revenue recognition');
     },
@@ -5211,7 +5421,7 @@ export const Api = {
     recognizeRevenue: async (id: string, amount?: number): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/recognition/${id}/recognize`, {
             method: 'POST',
-            body: JSON.stringify({ amount })
+            body: JSON.stringify({ amount }),
         });
         return handleResponse(res, 'Failed to recognize revenue');
     },
@@ -5226,7 +5436,6 @@ export const Api = {
         return handleResponse(res, 'Failed to fetch revenue recognition stats');
     },
 
-
     // Revenue Forecasting
     getRevenueForecasts: async (forecastType?: string): Promise<any[]> => {
         const params = forecastType ? `?forecastType=${forecastType}` : '';
@@ -5237,7 +5446,7 @@ export const Api = {
     createRevenueForecast: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/forecasts`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to create revenue forecast');
     },
@@ -5245,14 +5454,14 @@ export const Api = {
     updateRevenueForecast: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/forecasts/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update revenue forecast');
     },
 
     deleteRevenueForecast: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/forecasts/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete revenue forecast');
     },
@@ -5260,7 +5469,7 @@ export const Api = {
     generateRevenueForecast: async (data: { forecastType: string; periodMonths: number }): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/forecasts/generate`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to generate revenue forecast');
     },
@@ -5280,7 +5489,7 @@ export const Api = {
     addPaymentMethodAdvanced: async (data: any): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/payment-methods`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         return handleResponse(res, 'Failed to add payment method');
     },
@@ -5288,14 +5497,14 @@ export const Api = {
     updatePaymentMethodAdvanced: async (id: string, data: any): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/payment-methods/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         await handleResponse(res, 'Failed to update payment method');
     },
 
     deletePaymentMethodAdvanced: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/payment-methods/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
         });
         await handleResponse(res, 'Failed to delete payment method');
     },
@@ -5310,7 +5519,7 @@ export const Api = {
 
     retryPayment: async (id: string): Promise<any> => {
         const res = await fetchWithRetry(`${API_URL}/superadmin/revenue/payment-failures/${id}/retry`, {
-            method: 'POST'
+            method: 'POST',
         });
         return handleResponse(res, 'Failed to retry payment');
     },

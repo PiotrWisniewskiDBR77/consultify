@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SessionManagementPanel } from '../../../components/SuperAdmin/security/SessionManagementPanel';
+import { SessionManagementPanel } from '../../components/SuperAdmin/security/SessionManagementPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -240,6 +240,7 @@ describe('SessionManagementPanel', () => {
         });
     });
 });
+
 
 
 

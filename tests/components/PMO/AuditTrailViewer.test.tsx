@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AuditTrailViewer } from '../../../components/PMO/AuditTrailViewer';
+import { AuditTrailViewer } from '../../components/PMO/AuditTrailViewer';
 
 // Mock API
 vi.mock('../../../services/api', () => ({
@@ -324,6 +324,7 @@ describe('AuditTrailViewer Component', () => {
         });
     });
 });
+
 
 
 

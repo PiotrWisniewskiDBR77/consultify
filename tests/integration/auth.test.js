@@ -1,6 +1,17 @@
 import request from 'supertest';
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+
+// Ensure consistent JWT secret for tests (relies on tests/setup.ts)
+// process.env.JWT_SECRET = 'test-jwt-secret-key-123';
+
+// Unmock auth middleware to test real authentication flow
+
+// Unmock auth middleware to test real authentication flow
+vi.unmock('../../server/src/middleware/auth.middleware.js');
+vi.unmock('jsonwebtoken');
+vi.unmock('../../server/src/services/RefreshTokenService.js');
 import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
+import bcrypt from 'bcryptjs';
 
 // We delay importing app/db until after we set up the mock DB
 let app;
@@ -13,49 +24,75 @@ describe('Auth Integration', () => {
     const password = 'password123';
 
     // Explicitly mock Sentry here to survive resetModules or ensure it's picked up
+    vi.mock('@sentry/node', () => ({
+        init: vi.fn(),
+        Handlers: { requestHandler: () => (req, res, next) => next(), errorHandler: () => (items, req, res, next) => next() },
+        captureException: vi.fn(),
+    }));
 
+    // Mock Gateway to only load auth routes (Vertical Slice)
+    vi.mock('../../server/src/Gateway.ts', async () => {
+        const authRoutes = await import('../../server/src/routes/auth.routes.js');
+        return {
+            apiGateway: {
+                initializeRoutes: (app) => {
+                    console.log('[MockGateway] Initializing Auth routes only...');
+                    app.use('/api/auth', authRoutes.default);
+                }
+            }
+        };
+    });
 
     beforeAll(async () => {
-        // 1. Create a fresh in-memory DB with schema
-        const testDb = await TestDatabaseFactory.create();
+        try {
+            console.log('Starting auth.test.js setup...');
+            // 1. Create a fresh in-memory DB with schema
+            const testDb = await TestDatabaseFactory.create();
+            console.log('DB created');
 
-        // 2. Inject it into the global mock slot (which server/database.js uses when MOCK_DB=true)
-        // Note: tests/setup.ts sets MOCK_DB=true
-        global.__TEST_DB_MOCK__ = testDb;
+            // 2. Inject it into the global mock slot (which server/database.js uses when MOCK_DB=true)
+            // Note: tests/setup.ts sets MOCK_DB=true
+            global.__TEST_DB_MOCK__ = testDb;
 
-        // 3. Reset modules to ensure server/database.js is re-evaluated and picks up the new global mock
-        vi.resetModules();
+            // 3. Reset modules to ensure server/database.js is re-evaluated and picks up the new global mock
+            vi.resetModules();
+            console.log('Modules reset');
 
-        // 4. Import the app and db (using dynamic import to ensure freshness)
-        // We use createRequire for compatibility if needed, or just import
-        const dbModule = await import('../../server/database.js');
-        db = dbModule.default;
+            // 4. Import the app and db (using dynamic import to ensure freshness)
+            const dbModule = await import('../../server/database.js');
+            db = dbModule.default;
+            console.log('DB Imported');
 
-        const appModule = await import('../../server/index.js');
-        app = appModule.default || appModule; // Handle CJS/ESM interop
+            const appModule = await import('../../server/src/index.ts');
+            app = appModule.default || appModule; // Handle CJS/ESM interop
+            console.log('App Imported');
 
-        const bcrypt = await import('bcryptjs');
-        const hash = bcrypt.hashSync(password, 8);
-        const orgId = `org-auth-${testId}`;
-        const userId = `user-auth-${testId}`;
+            const hash = bcrypt.hashSync(password, 8);
+            const orgId = `org-auth-${testId}`;
+            const userId = `user-auth-${testId}`;
 
-        // 5. Seed data using the testDb directly (or the imported db wrapper, they should be the same now)
-        await new Promise((resolve, reject) => {
-            testDb.serialize(() => {
-                // Create org
-                testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                    [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
-                        if (err) console.error('Auth org error:', err.message);
-                    });
+            // 5. Seed data using the testDb directly (or the imported db wrapper, they should be the same now)
+            await new Promise((resolve, reject) => {
+                testDb.serialize(() => {
+                    // Create org
+                    testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                        [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
+                            if (err) console.error('Auth org error:', err.message);
+                        });
 
-                // Create user
-                testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                    [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
-                        if (err) console.error('Auth user error:', err.message);
-                        resolve();
-                    });
+                    // Create user
+                    testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                        [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
+                            if (err) console.error('Auth user error:', err.message);
+                            resolve();
+                        });
+                });
             });
-        });
+            console.log('Auth setup complete');
+        } catch (error) {
+            console.error('FATAL SETUP ERROR in auth.test.js:', error);
+            throw error;
+        }
     });
 
     it('should login successfully with valid credentials', async () => {
@@ -129,7 +166,6 @@ describe('Auth Integration', () => {
         const user2Email = `auth-user2-${testId2}@test.com`;
 
         beforeAll(async () => {
-            const bcrypt = await import('bcryptjs');
             const hash = bcrypt.hashSync('test123', 8);
 
             await new Promise((resolve) => {

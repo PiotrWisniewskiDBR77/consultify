@@ -1,30 +1,31 @@
 /**
  * AI Budgets View
- * 
+ *
  * Dashboard for managing AI spending budgets, alerts, and model permissions.
  * Enterprise-grade cost control for AI features.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    DollarSign,
-    TrendingUp,
     AlertTriangle,
     Bell,
-    Settings,
-    Plus,
-    Trash2,
-    Edit2,
-    RefreshCw,
+    Bot,
     Check,
+    Clock,
+    DollarSign,
+    Edit2,
+    Plus,
+    RefreshCw,
+    Settings,
+    Target,
+    Trash2,
+    TrendingUp,
+    Users,
     X,
     Zap,
-    Target,
-    Clock,
-    Users,
-    Bot,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { api } from '../../services/api';
 
 interface Budget {
@@ -82,7 +83,11 @@ type TabType = 'overview' | 'budgets' | 'alerts' | 'models';
 
 const MODEL_PROVIDERS = [
     { id: 'openai', name: 'OpenAI', models: ['gpt-4', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'] },
-    { id: 'anthropic', name: 'Anthropic', models: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', 'claude-3.5-sonnet'] },
+    {
+        id: 'anthropic',
+        name: 'Anthropic',
+        models: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', 'claude-3.5-sonnet'],
+    },
     { id: 'google', name: 'Google', models: ['gemini-pro', 'gemini-pro-vision'] },
 ];
 
@@ -150,7 +155,13 @@ const AIBudgetsView: React.FC = () => {
         try {
             await api.post('/ai-budgets/budgets', newBudget);
             setShowBudgetModal(false);
-            setNewBudget({ budgetType: 'cost', period: 'monthly', budgetLimit: 100, warningThreshold: 0.8, hardLimit: true });
+            setNewBudget({
+                budgetType: 'cost',
+                period: 'monthly',
+                budgetLimit: 100,
+                warningThreshold: 0.8,
+                hardLimit: true,
+            });
             fetchData();
         } catch (error) {
             console.error('[AI Budgets] Create error:', error);
@@ -171,7 +182,7 @@ const AIBudgetsView: React.FC = () => {
     const handleAcknowledgeAlert = async (alertId: string) => {
         try {
             await api.post(`/ai-budgets/alerts/${alertId}/acknowledge`, {});
-            setAlerts(alerts.map(a => a.id === alertId ? { ...a, status: 'acknowledged' } : a));
+            setAlerts(alerts.map((a) => (a.id === alertId ? { ...a, status: 'acknowledged' } : a)));
         } catch (error) {
             console.error('[AI Budgets] Acknowledge error:', error);
         }
@@ -180,7 +191,7 @@ const AIBudgetsView: React.FC = () => {
     const handleDismissAlert = async (alertId: string) => {
         try {
             await api.post(`/ai-budgets/alerts/${alertId}/dismiss`, {});
-            setAlerts(alerts.filter(a => a.id !== alertId));
+            setAlerts(alerts.filter((a) => a.id !== alertId));
         } catch (error) {
             console.error('[AI Budgets] Dismiss error:', error);
         }
@@ -215,7 +226,8 @@ const AIBudgetsView: React.FC = () => {
     ];
 
     const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
-    const formatTokens = (value: number) => value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value;
+    const formatTokens = (value: number) =>
+        value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value;
 
     const renderOverview = () => (
         <div className="space-y-6">
@@ -227,7 +239,7 @@ const AIBudgetsView: React.FC = () => {
                         <span className="text-xs text-violet-300 bg-violet-500/20 px-2 py-0.5 rounded">This Month</span>
                     </div>
                     <div className="text-2xl font-bold text-white">
-                        {formatCurrency(usageStats?.budgets.find(b => b.type === 'cost')?.current || 0)}
+                        {formatCurrency(usageStats?.budgets.find((b) => b.type === 'cost')?.current || 0)}
                     </div>
                     <div className="text-sm text-violet-300">Total AI Spending</div>
                 </div>
@@ -237,7 +249,7 @@ const AIBudgetsView: React.FC = () => {
                         <Zap className="text-emerald-400" size={24} />
                     </div>
                     <div className="text-2xl font-bold text-white">
-                        {formatTokens(usageStats?.budgets.find(b => b.type === 'tokens')?.current || 0)}
+                        {formatTokens(usageStats?.budgets.find((b) => b.type === 'tokens')?.current || 0)}
                     </div>
                     <div className="text-sm text-emerald-300">Tokens Used</div>
                 </div>
@@ -266,25 +278,31 @@ const AIBudgetsView: React.FC = () => {
                     {usageStats?.budgets.map((budget) => (
                         <div key={budget.id}>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-300 capitalize">{budget.type} ({budget.period})</span>
+                                <span className="text-gray-300 capitalize">
+                                    {budget.type} ({budget.period})
+                                </span>
                                 <span className="text-gray-400">
-                                    {budget.type === 'cost' ? formatCurrency(budget.current) : formatTokens(budget.current)} /
+                                    {budget.type === 'cost'
+                                        ? formatCurrency(budget.current)
+                                        : formatTokens(budget.current)}{' '}
+                                    /
                                     {budget.type === 'cost' ? formatCurrency(budget.limit) : formatTokens(budget.limit)}
                                 </span>
                             </div>
                             <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
                                 <div
-                                    className={`h-full rounded-full transition-all ${budget.percentUsed >= 100 ? 'bg-red-500' :
-                                            budget.percentUsed >= 80 ? 'bg-amber-500' :
-                                                'bg-violet-500'
-                                        }`}
+                                    className={`h-full rounded-full transition-all ${
+                                        budget.percentUsed >= 100
+                                            ? 'bg-red-500'
+                                            : budget.percentUsed >= 80
+                                              ? 'bg-amber-500'
+                                              : 'bg-violet-500'
+                                    }`}
                                     style={{ width: `${Math.min(100, budget.percentUsed)}%` }}
                                 />
                             </div>
                         </div>
-                    )) || (
-                            <p className="text-gray-500 text-center py-4">No budgets configured</p>
-                        )}
+                    )) || <p className="text-gray-500 text-center py-4">No budgets configured</p>}
                 </div>
             </div>
 
@@ -294,15 +312,27 @@ const AIBudgetsView: React.FC = () => {
                     <h3 className="text-lg font-semibold text-white mb-4">Recent Alerts</h3>
                     <div className="space-y-3">
                         {alerts.slice(0, 3).map((alert) => (
-                            <div key={alert.id} className={`flex items-center justify-between p-3 rounded-lg ${alert.alertType === 'exceeded' ? 'bg-red-500/10 border border-red-500/30' :
-                                    alert.alertType === 'warning' ? 'bg-amber-500/10 border border-amber-500/30' :
-                                        'bg-blue-500/10 border border-blue-500/30'
-                                }`}>
+                            <div
+                                key={alert.id}
+                                className={`flex items-center justify-between p-3 rounded-lg ${
+                                    alert.alertType === 'exceeded'
+                                        ? 'bg-red-500/10 border border-red-500/30'
+                                        : alert.alertType === 'warning'
+                                          ? 'bg-amber-500/10 border border-amber-500/30'
+                                          : 'bg-blue-500/10 border border-blue-500/30'
+                                }`}
+                            >
                                 <div className="flex items-center gap-3">
-                                    <AlertTriangle className={
-                                        alert.alertType === 'exceeded' ? 'text-red-400' :
-                                            alert.alertType === 'warning' ? 'text-amber-400' : 'text-blue-400'
-                                    } size={20} />
+                                    <AlertTriangle
+                                        className={
+                                            alert.alertType === 'exceeded'
+                                                ? 'text-red-400'
+                                                : alert.alertType === 'warning'
+                                                  ? 'text-amber-400'
+                                                  : 'text-blue-400'
+                                        }
+                                        size={20}
+                                    />
                                     <div>
                                         <div className="text-white font-medium">{alert.title}</div>
                                         <div className="text-sm text-gray-400">{alert.message}</div>
@@ -324,14 +354,16 @@ const AIBudgetsView: React.FC = () => {
             <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Model Pricing (per 1K tokens)</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Object.entries(modelCosts).slice(0, 8).map(([model, costs]) => (
-                        <div key={model} className="bg-gray-900/50 rounded-lg p-3">
-                            <div className="text-sm font-medium text-white truncate">{model}</div>
-                            <div className="text-xs text-gray-400 mt-1">
-                                In: ${costs.input.toFixed(4)} • Out: ${costs.output.toFixed(4)}
+                    {Object.entries(modelCosts)
+                        .slice(0, 8)
+                        .map(([model, costs]) => (
+                            <div key={model} className="bg-gray-900/50 rounded-lg p-3">
+                                <div className="text-sm font-medium text-white truncate">{model}</div>
+                                <div className="text-xs text-gray-400 mt-1">
+                                    In: ${costs.input.toFixed(4)} • Out: ${costs.output.toFixed(4)}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
                 </div>
             </div>
         </div>
@@ -367,24 +399,38 @@ const AIBudgetsView: React.FC = () => {
                             <div key={budget.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${budget.budgetType === 'cost' ? 'bg-violet-500/20' :
-                                                budget.budgetType === 'tokens' ? 'bg-emerald-500/20' : 'bg-blue-500/20'
-                                            }`}>
-                                            {budget.budgetType === 'cost' ? <DollarSign className="text-violet-400" size={20} /> :
-                                                budget.budgetType === 'tokens' ? <Zap className="text-emerald-400" size={20} /> :
-                                                    <Clock className="text-blue-400" size={20} />}
+                                        <div
+                                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                budget.budgetType === 'cost'
+                                                    ? 'bg-violet-500/20'
+                                                    : budget.budgetType === 'tokens'
+                                                      ? 'bg-emerald-500/20'
+                                                      : 'bg-blue-500/20'
+                                            }`}
+                                        >
+                                            {budget.budgetType === 'cost' ? (
+                                                <DollarSign className="text-violet-400" size={20} />
+                                            ) : budget.budgetType === 'tokens' ? (
+                                                <Zap className="text-emerald-400" size={20} />
+                                            ) : (
+                                                <Clock className="text-blue-400" size={20} />
+                                            )}
                                         </div>
                                         <div>
                                             <h4 className="font-medium text-white capitalize">
                                                 {budget.budgetType} Budget
-                                                {budget.userEmail && <span className="text-gray-400 ml-2">({budget.userEmail})</span>}
+                                                {budget.userEmail && (
+                                                    <span className="text-gray-400 ml-2">({budget.userEmail})</span>
+                                                )}
                                             </h4>
                                             <p className="text-sm text-gray-400 capitalize">{budget.period}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {budget.hardLimit && (
-                                            <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded">Hard Limit</span>
+                                            <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded">
+                                                Hard Limit
+                                            </span>
                                         )}
                                         <button
                                             onClick={() => handleDeleteBudget(budget.id)}
@@ -397,18 +443,27 @@ const AIBudgetsView: React.FC = () => {
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-400">
-                                            {budget.budgetType === 'cost' ? formatCurrency(budget.currentUsage) : formatTokens(budget.currentUsage)} used
+                                            {budget.budgetType === 'cost'
+                                                ? formatCurrency(budget.currentUsage)
+                                                : formatTokens(budget.currentUsage)}{' '}
+                                            used
                                         </span>
                                         <span className="text-gray-400">
-                                            Limit: {budget.budgetType === 'cost' ? formatCurrency(budget.budgetLimit) : formatTokens(budget.budgetLimit)}
+                                            Limit:{' '}
+                                            {budget.budgetType === 'cost'
+                                                ? formatCurrency(budget.budgetLimit)
+                                                : formatTokens(budget.budgetLimit)}
                                         </span>
                                     </div>
                                     <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full rounded-full transition-all ${percentUsed >= 100 ? 'bg-red-500' :
-                                                    percentUsed >= budget.warningThreshold * 100 ? 'bg-amber-500' :
-                                                        'bg-violet-500'
-                                                }`}
+                                            className={`h-full rounded-full transition-all ${
+                                                percentUsed >= 100
+                                                    ? 'bg-red-500'
+                                                    : percentUsed >= budget.warningThreshold * 100
+                                                      ? 'bg-amber-500'
+                                                      : 'bg-violet-500'
+                                            }`}
                                             style={{ width: `${Math.min(100, percentUsed)}%` }}
                                         />
                                     </div>
@@ -461,7 +516,9 @@ const AIBudgetsView: React.FC = () => {
                                 <input
                                     type="number"
                                     value={newBudget.budgetLimit}
-                                    onChange={(e) => setNewBudget({ ...newBudget, budgetLimit: parseFloat(e.target.value) })}
+                                    onChange={(e) =>
+                                        setNewBudget({ ...newBudget, budgetLimit: parseFloat(e.target.value) })
+                                    }
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
                                 />
                             </div>
@@ -470,7 +527,12 @@ const AIBudgetsView: React.FC = () => {
                                 <input
                                     type="number"
                                     value={newBudget.warningThreshold * 100}
-                                    onChange={(e) => setNewBudget({ ...newBudget, warningThreshold: parseFloat(e.target.value) / 100 })}
+                                    onChange={(e) =>
+                                        setNewBudget({
+                                            ...newBudget,
+                                            warningThreshold: parseFloat(e.target.value) / 100,
+                                        })
+                                    }
                                     min={0}
                                     max={100}
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
@@ -531,19 +593,37 @@ const AIBudgetsView: React.FC = () => {
             ) : (
                 <div className="space-y-3">
                     {alerts.map((alert) => (
-                        <div key={alert.id} className={`bg-gray-800/50 border rounded-xl p-4 ${alert.alertType === 'exceeded' ? 'border-red-500/50' :
-                                alert.alertType === 'warning' ? 'border-amber-500/50' :
-                                    'border-gray-700'
-                            }`}>
+                        <div
+                            key={alert.id}
+                            className={`bg-gray-800/50 border rounded-xl p-4 ${
+                                alert.alertType === 'exceeded'
+                                    ? 'border-red-500/50'
+                                    : alert.alertType === 'warning'
+                                      ? 'border-amber-500/50'
+                                      : 'border-gray-700'
+                            }`}
+                        >
                             <div className="flex items-start justify-between">
                                 <div className="flex items-start gap-3">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${alert.alertType === 'exceeded' ? 'bg-red-500/20' :
-                                            alert.alertType === 'warning' ? 'bg-amber-500/20' : 'bg-blue-500/20'
-                                        }`}>
-                                        <AlertTriangle className={
-                                            alert.alertType === 'exceeded' ? 'text-red-400' :
-                                                alert.alertType === 'warning' ? 'text-amber-400' : 'text-blue-400'
-                                        } size={20} />
+                                    <div
+                                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                            alert.alertType === 'exceeded'
+                                                ? 'bg-red-500/20'
+                                                : alert.alertType === 'warning'
+                                                  ? 'bg-amber-500/20'
+                                                  : 'bg-blue-500/20'
+                                        }`}
+                                    >
+                                        <AlertTriangle
+                                            className={
+                                                alert.alertType === 'exceeded'
+                                                    ? 'text-red-400'
+                                                    : alert.alertType === 'warning'
+                                                      ? 'text-amber-400'
+                                                      : 'text-blue-400'
+                                            }
+                                            size={20}
+                                        />
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-white">{alert.title}</h4>
@@ -624,13 +704,19 @@ const AIBudgetsView: React.FC = () => {
                                         <span className="text-sm text-gray-300 capitalize">{perm.scopeType}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded text-xs ${perm.isAllowed ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
-                                            }`}>
+                                        <span
+                                            className={`px-2 py-1 rounded text-xs ${
+                                                perm.isAllowed
+                                                    ? 'bg-green-500/20 text-green-300'
+                                                    : 'bg-red-500/20 text-red-300'
+                                            }`}
+                                        >
                                             {perm.isAllowed ? 'Allowed' : 'Blocked'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-400">
-                                        {perm.maxTokensPerRequest && `Max: ${formatTokens(perm.maxTokensPerRequest)}/req`}
+                                        {perm.maxTokensPerRequest &&
+                                            `Max: ${formatTokens(perm.maxTokensPerRequest)}/req`}
                                         {perm.dailyTokenLimit && `, ${formatTokens(perm.dailyTokenLimit)}/day`}
                                         {!perm.maxTokensPerRequest && !perm.dailyTokenLimit && '-'}
                                     </td>
@@ -659,11 +745,19 @@ const AIBudgetsView: React.FC = () => {
                                 <label className="block text-sm text-gray-400 mb-1">Provider</label>
                                 <select
                                     value={newModelPermission.modelProvider}
-                                    onChange={(e) => setNewModelPermission({ ...newModelPermission, modelProvider: e.target.value, modelId: '' })}
+                                    onChange={(e) =>
+                                        setNewModelPermission({
+                                            ...newModelPermission,
+                                            modelProvider: e.target.value,
+                                            modelId: '',
+                                        })
+                                    }
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
                                 >
-                                    {MODEL_PROVIDERS.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    {MODEL_PROVIDERS.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -671,20 +765,28 @@ const AIBudgetsView: React.FC = () => {
                                 <label className="block text-sm text-gray-400 mb-1">Model</label>
                                 <select
                                     value={newModelPermission.modelId}
-                                    onChange={(e) => setNewModelPermission({ ...newModelPermission, modelId: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewModelPermission({ ...newModelPermission, modelId: e.target.value })
+                                    }
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
                                 >
                                     <option value="">Select a model</option>
-                                    {MODEL_PROVIDERS.find(p => p.id === newModelPermission.modelProvider)?.models.map(m => (
-                                        <option key={m} value={m}>{m}</option>
-                                    ))}
+                                    {MODEL_PROVIDERS.find((p) => p.id === newModelPermission.modelProvider)?.models.map(
+                                        (m) => (
+                                            <option key={m} value={m}>
+                                                {m}
+                                            </option>
+                                        ),
+                                    )}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm text-gray-400 mb-1">Scope</label>
                                 <select
                                     value={newModelPermission.scopeType}
-                                    onChange={(e) => setNewModelPermission({ ...newModelPermission, scopeType: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewModelPermission({ ...newModelPermission, scopeType: e.target.value })
+                                    }
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
                                 >
                                     <option value="organization">Organization</option>
@@ -696,7 +798,9 @@ const AIBudgetsView: React.FC = () => {
                                 <input
                                     type="checkbox"
                                     checked={newModelPermission.isAllowed}
-                                    onChange={(e) => setNewModelPermission({ ...newModelPermission, isAllowed: e.target.checked })}
+                                    onChange={(e) =>
+                                        setNewModelPermission({ ...newModelPermission, isAllowed: e.target.checked })
+                                    }
                                     className="rounded border-gray-600 bg-gray-900 text-violet-500"
                                 />
                                 <span className="text-sm text-gray-300">Allow access to this model</span>
@@ -742,10 +846,11 @@ const AIBudgetsView: React.FC = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${activeTab === tab.id
+                                className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
+                                    activeTab === tab.id
                                         ? 'border-violet-500 text-white'
                                         : 'border-transparent text-gray-400 hover:text-white'
-                                    }`}
+                                }`}
                             >
                                 <Icon size={18} />
                                 {tab.label}
@@ -778,10 +883,4 @@ const AIBudgetsView: React.FC = () => {
 };
 
 export default AIBudgetsView;
-
-
-
-
-
-
 

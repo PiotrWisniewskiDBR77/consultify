@@ -1,14 +1,12 @@
 /**
  * Dependency Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadDependencyservice = createCachedLazyService('../../services/dependencyService.js');
+import service from '../../services/dependencyService.js';
 
 // Export default instance (for backward compatibility)
-export default loadDependencyservice();
+export default service;

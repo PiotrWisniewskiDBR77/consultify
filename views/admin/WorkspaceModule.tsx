@@ -1,10 +1,11 @@
+import { FileText, Globe, LayoutGrid, Settings } from 'lucide-react';
 import React, { useState } from 'react';
-import { LayoutGrid, FileText, Settings, Globe } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { WorkspaceDefaultsPanel } from '../../components/Admin/WorkspaceDefaultsPanel';
-import { TemplatesManagementPanel } from '../../components/Admin/TemplatesManagementPanel';
-import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { useTranslation } from 'react-i18next';
+
+import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
+import { TemplatesManagementPanel } from '../../components/Admin/TemplatesManagementPanel';
+import { WorkspaceDefaultsPanel } from '../../components/Admin/WorkspaceDefaultsPanel';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 
 export const WorkspaceModule: React.FC = () => {
     const { t } = useTranslation();
@@ -14,17 +15,17 @@ export const WorkspaceModule: React.FC = () => {
         {
             id: 'defaults',
             label: t('admin.tabs.defaults', 'Defaults'),
-            icon: <Settings size={16} />
+            icon: <Settings size={16} />,
         },
         {
             id: 'templates',
             label: t('admin.tabs.templates', 'Templates'),
-            icon: <FileText size={16} />
+            icon: <FileText size={16} />,
         },
         {
             id: 'branding',
             label: t('admin.tabs.branding', 'Branding'),
-            icon: <Globe size={16} />
+            icon: <Globe size={16} />,
         },
     ];
 

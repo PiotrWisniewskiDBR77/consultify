@@ -3,7 +3,7 @@
  * Provides caching layer for frequently accessed data
  * Uses Redis for distributed caching
  */
-import client from './redisClient';
+import client from './redisClient.js';
 export const DEFAULT_TTL = {
     SHORT: 60, // 1 minute - frequently changing data
     MEDIUM: 300, // 5 minutes - moderately stable data

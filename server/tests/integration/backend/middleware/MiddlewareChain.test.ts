@@ -1,12 +1,13 @@
 /**
  * Middleware Chain Integration Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Integration tests for middleware chain - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { verifyToken } from '../../../../src/middleware/auth.middleware.js';
 import { requireRole } from '../../../../src/middleware/rbac.middleware.js';
 import { validateBody } from '../../../../src/middleware/validation.middleware.js';
@@ -57,4 +58,3 @@ describe('Middleware Chain Integration', () => {
         });
     });
 });
-

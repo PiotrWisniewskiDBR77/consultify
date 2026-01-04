@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
 import {
+    Activity,
+    BookOpen,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    Mail,
     RefreshCw,
+    Target,
     TrendingUp,
     Users,
-    BookOpen,
-    Target,
-    CheckCircle2,
-    Clock,
-    ChevronRight,
-    Activity,
-    Mail
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 export const AdminMetricsDashboardView: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -29,7 +30,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 Api.getOrgMetricsOverview(),
                 Api.getOrgMetricsHelp(),
                 Api.getOrgMetricsTeam(),
-                (Api as any).getOrgMetricsEvents?.(20) || Promise.resolve({ events: [] })
+                (Api as any).getOrgMetricsEvents?.(20) || Promise.resolve({ events: [] }),
             ]);
 
             setOverview({
@@ -37,13 +38,13 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 // Use real active users from overview
                 activeUsers: overviewData?.activeUsers || 0,
                 // Use real seat data if available
-                seatConfiguration: overviewData?.seatConfiguration
+                seatConfiguration: overviewData?.seatConfiguration,
             });
             setHelpMetrics(helpData);
             setTeamMetrics({
                 ...teamData,
                 // Use real seat management data
-                seatManagement: teamData?.seatManagement
+                seatManagement: teamData?.seatManagement,
             });
             setRecentEvents(eventsData.events || []);
         } catch (err: any) {
@@ -97,7 +98,11 @@ export const AdminMetricsDashboardView: React.FC = () => {
                     value={`${teamMetrics?.invitations?.acceptanceRate || 0}%`}
                     subtitle={`${teamMetrics?.invitations?.accepted || 0} / ${teamMetrics?.invitations?.sent || 0} accepted`}
                     icon={<Users className="text-purple-400" />}
-                    trend={teamMetrics?.seatManagement ? `${teamMetrics.seatManagement.seatsUsed}/${teamMetrics.seatManagement.totalSeats} seats` : "+12%"}
+                    trend={
+                        teamMetrics?.seatManagement
+                            ? `${teamMetrics.seatManagement.seatsUsed}/${teamMetrics.seatManagement.totalSeats} seats`
+                            : '+12%'
+                    }
                     color="purple"
                 />
                 <MetricCard
@@ -111,9 +116,17 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 <MetricCard
                     title="Active Users"
                     value={overview?.activeUsers || overview?.seatConfiguration?.seatsUsed || 0}
-                    subtitle={overview?.seatConfiguration ? `${overview.seatConfiguration.seatsRemaining} seats remaining` : "30-Day Activity"}
+                    subtitle={
+                        overview?.seatConfiguration
+                            ? `${overview.seatConfiguration.seatsRemaining} seats remaining`
+                            : '30-Day Activity'
+                    }
                     icon={<Activity className="text-green-400" />}
-                    trend={overview?.seatConfiguration ? `${overview.seatConfiguration.utilizationPercent}% utilized` : "+2"}
+                    trend={
+                        overview?.seatConfiguration
+                            ? `${overview.seatConfiguration.utilizationPercent}% utilized`
+                            : '+2'
+                    }
                     color="green"
                 />
                 <MetricCard
@@ -164,9 +177,13 @@ export const AdminMetricsDashboardView: React.FC = () => {
                             <FunnelStep
                                 label="Self-Service Users"
                                 value={overview?.selfServeUsers || overview?.activeUsers || 0}
-                                percent={teamMetrics?.invitations?.sent > 0 && overview?.activeUsers > 0
-                                    ? Math.round((overview.activeUsers / teamMetrics.invitations.sent) * 100)
-                                    : overview?.activeUsers > 0 ? 100 : 0}
+                                percent={
+                                    teamMetrics?.invitations?.sent > 0 && overview?.activeUsers > 0
+                                        ? Math.round((overview.activeUsers / teamMetrics.invitations.sent) * 100)
+                                        : overview?.activeUsers > 0
+                                          ? 100
+                                          : 0
+                                }
                                 color="bg-green-600"
                             />
                         </div>
@@ -174,15 +191,25 @@ export const AdminMetricsDashboardView: React.FC = () => {
                         <div className="grid grid-cols-3 gap-4 mt-4 pt-6 border-t border-white/5 text-center">
                             <div>
                                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Sent</p>
-                                <p className="text-xl font-bold text-white mt-1">{teamMetrics?.invitations?.sent || 0}</p>
+                                <p className="text-xl font-bold text-white mt-1">
+                                    {teamMetrics?.invitations?.sent || 0}
+                                </p>
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Pending</p>
-                                <p className="text-xl font-bold text-orange-400 mt-1">{teamMetrics?.invitations?.pending || 0}</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                                    Pending
+                                </p>
+                                <p className="text-xl font-bold text-orange-400 mt-1">
+                                    {teamMetrics?.invitations?.pending || 0}
+                                </p>
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Success Rate</p>
-                                <p className="text-xl font-bold text-blue-400 mt-1">{teamMetrics?.invitations?.acceptanceRate || 0}%</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                                    Success Rate
+                                </p>
+                                <p className="text-xl font-bold text-blue-400 mt-1">
+                                    {teamMetrics?.invitations?.acceptanceRate || 0}%
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -202,17 +229,26 @@ export const AdminMetricsDashboardView: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {helpMetrics?.byPlaybook?.length > 0 ? (
                                 helpMetrics.byPlaybook.map((playbook: any, idx: number) => (
-                                    <div key={idx} className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-5 hover:border-secondary-500/30 transition-all group">
+                                    <div
+                                        key={idx}
+                                        className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-5 hover:border-secondary-500/30 transition-all group"
+                                    >
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-sm font-bold text-navy-900 dark:text-white truncate group-hover:text-secondary-600 dark:group-hover:text-cyan-400 transition-colors">
                                                     {playbook.playbookKey.replace(/_/g, ' ')}
                                                 </h3>
-                                                <p className="text-[10px] text-slate-500 mt-0.5">{playbook.started} Attempts</p>
+                                                <p className="text-[10px] text-slate-500 mt-0.5">
+                                                    {playbook.started} Attempts
+                                                </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-lg font-black text-secondary-600 dark:text-cyan-400">{playbook.completionRate}%</p>
-                                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Success</p>
+                                                <p className="text-lg font-black text-secondary-600 dark:text-cyan-400">
+                                                    {playbook.completionRate}%
+                                                </p>
+                                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">
+                                                    Success
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="h-1.5 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
@@ -248,19 +284,20 @@ export const AdminMetricsDashboardView: React.FC = () => {
                             <p className="text-white/70 dark:text-slate-400 text-sm leading-relaxed mb-6">
                                 {overview?.orgStatus === 'trial'
                                     ? `Your trial expires in ${overview?.daysLeft || 0} days. Your engagement score is high, indicating a healthy adoption path.`
-                                    : 'Your organization is fully licensed and performing at peak efficiency.'
-                                }
+                                    : 'Your organization is fully licensed and performing at peak efficiency.'}
                             </p>
                             <div className="flex items-center gap-4 pt-4 border-t border-white/20 dark:border-white/10">
                                 <div className="flex-1">
                                     <div className="flex justify-between text-[10px] font-bold text-white/70 dark:text-slate-500 mb-1 uppercase">
                                         <span>Trial Progress</span>
-                                        <span>{Math.round((30 - (overview?.daysLeft || 0)) / 30 * 100)}%</span>
+                                        <span>{Math.round(((30 - (overview?.daysLeft || 0)) / 30) * 100)}%</span>
                                     </div>
                                     <div className="h-1.5 bg-white/20 dark:bg-navy-800 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-white dark:bg-blue-500"
-                                            style={{ width: `${Math.round((30 - (overview?.daysLeft || 0)) / 30 * 100)}%` }}
+                                            style={{
+                                                width: `${Math.round(((30 - (overview?.daysLeft || 0)) / 30) * 100)}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -274,13 +311,13 @@ export const AdminMetricsDashboardView: React.FC = () => {
                                 <Activity size={16} className="text-success-600 dark:text-green-400" />
                                 Metric Feed
                             </h3>
-                            <button className="text-[10px] font-bold text-primary-600 dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors">VIEW ALL</button>
+                            <button className="text-[10px] font-bold text-primary-600 dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors">
+                                VIEW ALL
+                            </button>
                         </div>
                         <div className="divide-y divide-slate-200 dark:divide-white/5 max-h-[500px] overflow-y-auto">
                             {recentEvents.length > 0 ? (
-                                recentEvents.map((event, idx) => (
-                                    <EventRow key={idx} event={event} />
-                                ))
+                                recentEvents.map((event, idx) => <EventRow key={idx} event={event} />)
                             ) : (
                                 <div className="p-12 text-center text-slate-500 text-xs italic">
                                     No recent events tracked.
@@ -314,7 +351,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
         purple: 'text-primary-600 dark:text-purple-400 bg-primary-500/10 border-primary-500/30 dark:border-purple-500/20',
         cyan: 'text-secondary-600 dark:text-cyan-400 bg-secondary-500/10 border-secondary-500/30 dark:border-cyan-500/20',
         green: 'text-success-600 dark:text-green-400 bg-success-500/10 border-success-500/30 dark:border-green-500/20',
-        orange: 'text-primary-600 dark:text-orange-400 bg-primary-500/10 border-primary-500/30 dark:border-orange-500/20'
+        orange: 'text-primary-600 dark:text-orange-400 bg-primary-500/10 border-primary-500/30 dark:border-orange-500/20',
     };
 
     return (
@@ -327,7 +364,9 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${colorClasses[color]}`}>
                         {trend}
                     </span>
-                    <span className="text-[9px] text-slate-500 mt-1 uppercase font-bold tracking-tighter">v. Prev Month</span>
+                    <span className="text-[9px] text-slate-500 mt-1 uppercase font-bold tracking-tighter">
+                        v. Prev Month
+                    </span>
                 </div>
             </div>
             <h3 className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">{title}</h3>
@@ -339,12 +378,19 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
     );
 };
 
-const FunnelStep: React.FC<{ label: string; value: number; percent: number; color: string }> = ({ label, value, percent, color }) => (
+const FunnelStep: React.FC<{ label: string; value: number; percent: number; color: string }> = ({
+    label,
+    value,
+    percent,
+    color,
+}) => (
     <div className="group">
         <div className="flex items-center gap-4 mb-2 px-2">
             <div className="w-24 text-right">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{label}</p>
-                <p className="text-[10px] text-primary-600 dark:text-orange-400 font-black">{Math.round(percent)}% COV</p>
+                <p className="text-[10px] text-primary-600 dark:text-orange-400 font-black">
+                    {Math.round(percent)}% COV
+                </p>
             </div>
             <div className="flex-1 h-12 relative flex items-center">
                 <div className="absolute inset-0 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5" />
@@ -387,13 +433,15 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
                 <p className="text-xs font-bold text-navy-900 dark:text-white uppercase tracking-tight truncate">
                     {event.event_type.replace(/_/g, ' ')}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-0.5 truncate">
-                    {formatContext()}
-                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">{formatContext()}</p>
             </div>
             <div className="text-right shrink-0">
-                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                <p className="text-[9px] text-slate-500 dark:text-slate-600 mt-0.5">{new Date(event.created_at).toLocaleDateString()}</p>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                    {new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                <p className="text-[9px] text-slate-500 dark:text-slate-600 mt-0.5">
+                    {new Date(event.created_at).toLocaleDateString()}
+                </p>
             </div>
         </div>
     );

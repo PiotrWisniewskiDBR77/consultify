@@ -5,7 +5,8 @@
  * Uses pattern matching and industry best practices to suggest initiatives.
  */
 
-import defaultDb from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { DIGITIZATION_AXES } from '../data/digitizationEvaluationData.js';
 
@@ -291,6 +292,7 @@ class AIRecommendationService {
 // Export singleton instance
 const aIRecommendationServiceInstance = new AIRecommendationService();
 export default aIRecommendationServiceInstance;
+
 
 
 

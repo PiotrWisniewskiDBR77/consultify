@@ -5,7 +5,8 @@
  * Provides staging area for AI suggestions before user approval.
  */
 
-import db from '../../database.js';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import { aiLogger } from './logger.js';
 
@@ -432,6 +433,7 @@ export default {
     draftService,
     DRAFT_TYPES
 };
+
 
 
 

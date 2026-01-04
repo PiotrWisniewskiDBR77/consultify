@@ -1,23 +1,24 @@
 /**
  * DraftReviewPanel Component
- * 
+ *
  * Displays AI-generated drafts for review with Accept/Reject/Edit actions.
  * Part of the Draft-Review-Approve pattern for human-in-the-loop AI.
  */
 
-import React, { useState, useMemo } from 'react';
-import { 
-    CheckCircle, 
-    XCircle, 
-    Edit3, 
-    Clock, 
+import {
     AlertTriangle,
+    CheckCircle,
     ChevronDown,
     ChevronUp,
-    Sparkles,
+    Clock,
+    Edit3,
+    FileText,
     RefreshCw,
-    FileText
+    Sparkles,
+    XCircle,
 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
 import { AIDraft, useDraftApproval } from '../../hooks/useDraftApproval';
 
 interface DraftReviewPanelProps {
@@ -39,13 +40,13 @@ const DRAFT_TYPE_LABELS: Record<string, string> = {
     RISK_ANALYSIS: 'Analiza ryzyka',
     FIELD_SUGGESTION: 'Sugestia pola',
     PATTERN: 'Wzorzec',
-    SUMMARY: 'Podsumowanie'
+    SUMMARY: 'Podsumowanie',
 };
 
 const CONFIDENCE_LEVELS = {
     HIGH: { min: 0.8, color: 'text-green-600', bg: 'bg-green-100' },
     MEDIUM: { min: 0.6, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-    LOW: { min: 0, color: 'text-red-600', bg: 'bg-red-100' }
+    LOW: { min: 0, color: 'text-red-600', bg: 'bg-red-100' },
 };
 
 function getConfidenceLevel(score: number) {
@@ -62,18 +63,13 @@ export function DraftReviewPanel({
     onApproved,
     onRejected,
     showStats = true,
-    compact = false
+    compact = false,
 }: DraftReviewPanelProps) {
-    const {
-        drafts,
-        loading,
-        error,
-        stats,
-        pendingCount,
-        fetchDrafts,
-        approveDraft,
-        rejectDraft
-    } = useDraftApproval({ projectId, draftType, autoRefresh: true });
+    const { drafts, loading, error, stats, pendingCount, fetchDrafts, approveDraft, rejectDraft } = useDraftApproval({
+        projectId,
+        draftType,
+        autoRefresh: true,
+    });
 
     const [expandedDrafts, setExpandedDrafts] = useState<Set<string>>(new Set());
     const [editingDraft, setEditingDraft] = useState<string | null>(null);
@@ -83,15 +79,13 @@ export function DraftReviewPanel({
     // Filter drafts if entity specified
     const filteredDrafts = useMemo(() => {
         if (entityType && entityId) {
-            return drafts.filter(
-                d => d.target_entity_type === entityType && d.target_entity_id === entityId
-            );
+            return drafts.filter((d) => d.target_entity_type === entityType && d.target_entity_id === entityId);
         }
         return drafts;
     }, [drafts, entityType, entityId]);
 
     const toggleExpand = (draftId: string) => {
-        setExpandedDrafts(prev => {
+        setExpandedDrafts((prev) => {
             const next = new Set(prev);
             if (next.has(draftId)) {
                 next.delete(draftId);
@@ -103,15 +97,15 @@ export function DraftReviewPanel({
     };
 
     const handleApprove = async (draft: AIDraft, modifications?: any) => {
-        setProcessingDrafts(prev => new Set(prev).add(draft.id));
-        
+        setProcessingDrafts((prev) => new Set(prev).add(draft.id));
+
         const success = await approveDraft(draft.id, undefined, modifications);
-        
+
         if (success && onApproved) {
             onApproved(draft, modifications);
         }
-        
-        setProcessingDrafts(prev => {
+
+        setProcessingDrafts((prev) => {
             const next = new Set(prev);
             next.delete(draft.id);
             return next;
@@ -120,15 +114,15 @@ export function DraftReviewPanel({
     };
 
     const handleReject = async (draft: AIDraft, notes?: string) => {
-        setProcessingDrafts(prev => new Set(prev).add(draft.id));
-        
+        setProcessingDrafts((prev) => new Set(prev).add(draft.id));
+
         const success = await rejectDraft(draft.id, notes);
-        
+
         if (success && onRejected) {
             onRejected(draft);
         }
-        
-        setProcessingDrafts(prev => {
+
+        setProcessingDrafts((prev) => {
             const next = new Set(prev);
             next.delete(draft.id);
             return next;
@@ -138,9 +132,9 @@ export function DraftReviewPanel({
     const startEditing = (draft: AIDraft) => {
         setEditingDraft(draft.id);
         setEditContent(
-            typeof draft.suggested_content === 'string' 
-                ? draft.suggested_content 
-                : JSON.stringify(draft.suggested_content, null, 2)
+            typeof draft.suggested_content === 'string'
+                ? draft.suggested_content
+                : JSON.stringify(draft.suggested_content, null, 2),
         );
     };
 
@@ -161,10 +155,10 @@ export function DraftReviewPanel({
         const isProcessing = processingDrafts.has(draft.id);
         const confidenceLevel = getConfidenceLevel(draft.confidence_score);
         const expiresAt = draft.expires_at ? new Date(draft.expires_at) : null;
-        const isExpiringSoon = expiresAt && (expiresAt.getTime() - Date.now()) < 3600000; // 1 hour
+        const isExpiringSoon = expiresAt && expiresAt.getTime() - Date.now() < 3600000; // 1 hour
 
         return (
-            <div 
+            <div
                 key={draft.id}
                 className={`border rounded-lg transition-all ${
                     isExpiringSoon ? 'border-orange-300 bg-orange-50/50' : 'border-gray-200 dark:border-gray-700'
@@ -177,7 +171,9 @@ export function DraftReviewPanel({
                         <span className="font-medium truncate">
                             {DRAFT_TYPE_LABELS[draft.draft_type] || draft.draft_type}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${confidenceLevel.bg} ${confidenceLevel.color}`}>
+                        <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${confidenceLevel.bg} ${confidenceLevel.color}`}
+                        >
                             {Math.round(draft.confidence_score * 100)}% pewności
                         </span>
                         {isExpiringSoon && (
@@ -188,7 +184,7 @@ export function DraftReviewPanel({
                         )}
                     </div>
 
-                    <button 
+                    <button
                         onClick={() => toggleExpand(draft.id)}
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                     >
@@ -214,12 +210,8 @@ export function DraftReviewPanel({
                 {/* Reasoning (if expanded) */}
                 {isExpanded && draft.reasoning && (
                     <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                            Uzasadnienie AI:
-                        </p>
-                        <p className="text-sm text-blue-600 dark:text-blue-400">
-                            {draft.reasoning}
-                        </p>
+                        <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">Uzasadnienie AI:</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-400">{draft.reasoning}</p>
                     </div>
                 )}
 
@@ -311,10 +303,7 @@ export function DraftReviewPanel({
             <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" />
                 <span>{error}</span>
-                <button 
-                    onClick={fetchDrafts}
-                    className="ml-auto text-sm underline"
-                >
+                <button onClick={fetchDrafts} className="ml-auto text-sm underline">
                     Spróbuj ponownie
                 </button>
             </div>
@@ -375,20 +364,10 @@ export function DraftReviewPanel({
             )}
 
             {/* Drafts List */}
-            <div className="space-y-3">
-                {filteredDrafts.map(renderDraftCard)}
-            </div>
+            <div className="space-y-3">{filteredDrafts.map(renderDraftCard)}</div>
         </div>
     );
 }
 
 export default DraftReviewPanel;
-
-
-
-
-
-
-
-
 

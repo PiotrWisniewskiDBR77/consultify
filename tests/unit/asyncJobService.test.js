@@ -15,16 +15,20 @@ describe('AsyncJobService Constants and Logic', () => {
         vi.resetModules();
 
         // Mock the dependencies before requiring the service
-        vi.doMock('../../server/database', () => ({
-            default: {
+        vi.doMock('../../server/database', () => {
+            const mockDb = {
                 run: vi.fn((sql, params, cb) => {
                     if (typeof params === 'function') params(null);
                     else if (cb) cb(null);
                 }),
                 get: vi.fn((sql, params, cb) => cb(null, null)),
                 all: vi.fn((sql, params, cb) => cb(null, []))
-            }
-        }));
+            };
+            return {
+                default: mockDb,
+                getDatabase: () => mockDb
+            };
+        });
 
         vi.doMock('../../server/queues/aiQueue', () => ({
             default: {

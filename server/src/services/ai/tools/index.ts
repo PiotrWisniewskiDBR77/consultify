@@ -3,10 +3,10 @@
  */
 
 import { mcpServer } from '../mcpServer.js';
-import { getProjectDetails } from './getProjectDetails.js';
-import { searchKnowledgeBase } from './searchKnowledgeBase.js';
 import { calculateRoiDraft } from './calculateRoiDraft.js';
 import { createInitiative } from './createInitiative.js';
+import { getProjectDetails } from './getProjectDetails.js';
+import { searchKnowledgeBase } from './searchKnowledgeBase.js';
 import { updateAssessmentScore } from './updateAssessmentScore.js';
 
 export function registerAllTools(): void {
@@ -16,9 +16,7 @@ export function registerAllTools(): void {
     mcpServer.registerHandler('create_initiative', createInitiative);
     mcpServer.registerHandler('update_assessment_score', updateAssessmentScore);
 
-    console.log('[MCP] Registered tools:',
-        Array.from(mcpServer.tools.keys()).join(', ')
-    );
+    console.log('[MCP] Registered tools:', Array.from(mcpServer.tools.keys()).join(', '));
 }
 
 registerAllTools();

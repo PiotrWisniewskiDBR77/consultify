@@ -1,9 +1,10 @@
+import { ArrowLeft } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { EntryTopBar } from '../Landing/EntryTopBar';
+
 import { EntryFooter } from '../Landing/EntryFooter';
+import { EntryTopBar } from '../Landing/EntryTopBar';
 
 interface LegalPageLayoutProps {
     title: string;
@@ -11,11 +12,7 @@ interface LegalPageLayoutProps {
     children: React.ReactNode;
 }
 
-export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({
-    title,
-    lastUpdated,
-    children
-}) => {
+export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, children }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -57,7 +54,8 @@ export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({
                     </div>
 
                     {/* Content */}
-                    <article className="prose prose-slate dark:prose-invert max-w-none
+                    <article
+                        className="prose prose-slate dark:prose-invert max-w-none
                         prose-headings:font-bold prose-headings:tracking-tight
                         prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:text-navy-900 dark:prose-h2:text-white
                         prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-navy-800 dark:prose-h3:text-slate-200
@@ -65,7 +63,8 @@ export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({
                         prose-li:text-slate-600 dark:prose-li:text-slate-300
                         prose-a:text-purple-600 dark:prose-a:text-purple-400 prose-a:no-underline hover:prose-a:underline
                         prose-strong:text-navy-900 dark:prose-strong:text-white
-                    ">
+                    "
+                    >
                         {children}
                     </article>
                 </div>

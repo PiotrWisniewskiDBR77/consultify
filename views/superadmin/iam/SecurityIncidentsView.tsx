@@ -3,14 +3,26 @@
  * Manages security incidents in the IAM module
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import {
-    Shield, AlertTriangle, AlertCircle, CheckCircle, Clock,
-    Filter, RefreshCw, Loader2, Plus, Eye, Check, X, Trash2
+    AlertCircle,
+    AlertTriangle,
+    Check,
+    CheckCircle,
+    Clock,
+    Eye,
+    Filter,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Shield,
+    Trash2,
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { Api } from '../../../services/api';
 
 interface SecurityIncident {
     id: string;
@@ -61,7 +73,7 @@ const INCIDENT_TYPES = [
     { value: 'insider_threat', label: 'Insider Threat' },
     { value: 'configuration_error', label: 'Configuration Error' },
     { value: 'suspicious_activity', label: 'Suspicious Activity' },
-    { value: 'other', label: 'Other' }
+    { value: 'other', label: 'Other' },
 ];
 
 const SecurityIncidentsView: React.FC = () => {
@@ -72,7 +84,7 @@ const SecurityIncidentsView: React.FC = () => {
     const [filters, setFilters] = useState({
         severity: '',
         status: '',
-        incidentType: ''
+        incidentType: '',
     });
     const [showFilters, setShowFilters] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -84,7 +96,7 @@ const SecurityIncidentsView: React.FC = () => {
         incidentType: 'suspicious_activity',
         severity: 'MEDIUM',
         description: '',
-        affectedResources: ''
+        affectedResources: '',
     });
 
     useEffect(() => {
@@ -103,7 +115,7 @@ const SecurityIncidentsView: React.FC = () => {
 
             const [incidentsData, statsData] = await Promise.all([
                 Api.getSecurityIncidents(params),
-                Api.getSecurityIncidentStats()
+                Api.getSecurityIncidentStats(),
             ]);
 
             setIncidents(incidentsData);
@@ -125,8 +137,8 @@ const SecurityIncidentsView: React.FC = () => {
                 description: formData.description,
                 affectedResources: formData.affectedResources
                     .split(',')
-                    .map(r => r.trim())
-                    .filter(Boolean)
+                    .map((r) => r.trim())
+                    .filter(Boolean),
             });
             toast.success('Security incident created successfully');
             await loadData();
@@ -135,7 +147,7 @@ const SecurityIncidentsView: React.FC = () => {
                 incidentType: 'suspicious_activity',
                 severity: 'MEDIUM',
                 description: '',
-                affectedResources: ''
+                affectedResources: '',
             });
         } catch (err: any) {
             toast.error(err.message || 'Failed to create security incident');
@@ -149,11 +161,13 @@ const SecurityIncidentsView: React.FC = () => {
             setSaving(true);
             await Api.resolveSecurityIncident(incidentId, resolutionNotes);
             toast.success('Incident resolved successfully');
-            setIncidents(prev => prev.map(inc =>
-                inc.id === incidentId
-                    ? { ...inc, status: 'resolved', resolvedAt: new Date().toISOString(), resolutionNotes }
-                    : inc
-            ));
+            setIncidents((prev) =>
+                prev.map((inc) =>
+                    inc.id === incidentId
+                        ? { ...inc, status: 'resolved', resolvedAt: new Date().toISOString(), resolutionNotes }
+                        : inc,
+                ),
+            );
             setShowResolveModal(null);
             setResolutionNotes('');
             loadData(); // Refresh stats
@@ -169,7 +183,7 @@ const SecurityIncidentsView: React.FC = () => {
         try {
             await Api.deleteSecurityIncident(incidentId);
             toast.success('Incident deleted successfully');
-            setIncidents(prev => prev.filter(inc => inc.id !== incidentId));
+            setIncidents((prev) => prev.filter((inc) => inc.id !== incidentId));
             loadData(); // Refresh stats
         } catch (err: any) {
             toast.error(err.message || 'Failed to delete incident');
@@ -225,7 +239,7 @@ const SecurityIncidentsView: React.FC = () => {
     };
 
     const getIncidentTypeLabel = (type: string) => {
-        return INCIDENT_TYPES.find(t => t.value === type)?.label || type;
+        return INCIDENT_TYPES.find((t) => t.value === type)?.label || type;
     };
 
     if (loading && incidents.length === 0) {
@@ -357,8 +371,10 @@ const SecurityIncidentsView: React.FC = () => {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                             >
                                 <option value="">All Severities</option>
-                                {SEVERITY_OPTIONS.map(s => (
-                                    <option key={s} value={s}>{s}</option>
+                                {SEVERITY_OPTIONS.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -370,8 +386,10 @@ const SecurityIncidentsView: React.FC = () => {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                             >
                                 <option value="">All Statuses</option>
-                                {STATUS_OPTIONS.map(s => (
-                                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</option>
+                                {STATUS_OPTIONS.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -383,8 +401,10 @@ const SecurityIncidentsView: React.FC = () => {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                             >
                                 <option value="">All Types</option>
-                                {INCIDENT_TYPES.map(t => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                {INCIDENT_TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>
+                                        {t.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -415,7 +435,10 @@ const SecurityIncidentsView: React.FC = () => {
                                 </tr>
                             ) : (
                                 incidents.map((incident) => (
-                                    <tr key={incident.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+                                    <tr
+                                        key={incident.id}
+                                        className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                                    >
                                         <td className="py-3 px-4">
                                             <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
                                                 {getIncidentTypeLabel(incident.incidentType)}
@@ -480,8 +503,10 @@ const SecurityIncidentsView: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, incidentType: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
-                                    {INCIDENT_TYPES.map(t => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
+                                    {INCIDENT_TYPES.map((t) => (
+                                        <option key={t.value} value={t.value}>
+                                            {t.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -492,8 +517,10 @@ const SecurityIncidentsView: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
                                 >
-                                    {SEVERITY_OPTIONS.map(s => (
-                                        <option key={s} value={s}>{s}</option>
+                                    {SEVERITY_OPTIONS.map((s) => (
+                                        <option key={s} value={s}>
+                                            {s}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -507,7 +534,9 @@ const SecurityIncidentsView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-slate-400 mb-1">Affected Resources (comma-separated)</label>
+                                <label className="block text-sm text-slate-400 mb-1">
+                                    Affected Resources (comma-separated)
+                                </label>
                                 <input
                                     type="text"
                                     value={formData.affectedResources}
@@ -525,7 +554,7 @@ const SecurityIncidentsView: React.FC = () => {
                                         incidentType: 'suspicious_activity',
                                         severity: 'MEDIUM',
                                         description: '',
-                                        affectedResources: ''
+                                        affectedResources: '',
                                     });
                                 }}
                                 className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
@@ -558,7 +587,10 @@ const SecurityIncidentsView: React.FC = () => {
                         />
                         <div className="flex justify-end gap-2">
                             <button
-                                onClick={() => { setShowResolveModal(null); setResolutionNotes(''); }}
+                                onClick={() => {
+                                    setShowResolveModal(null);
+                                    setResolutionNotes('');
+                                }}
                                 className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
                             >
                                 Cancel
@@ -617,7 +649,9 @@ const SecurityIncidentsView: React.FC = () => {
                                     <p className="text-sm text-slate-400">Affected Resources</p>
                                     <div className="flex flex-wrap gap-2 mt-1">
                                         {showDetailModal.affectedResources.map((r, i) => (
-                                            <span key={i} className="px-2 py-1 bg-slate-700 rounded text-xs">{r}</span>
+                                            <span key={i} className="px-2 py-1 bg-slate-700 rounded text-xs">
+                                                {r}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
@@ -631,7 +665,10 @@ const SecurityIncidentsView: React.FC = () => {
                                     {showDetailModal.resolvedBy && (
                                         <div>
                                             <p className="text-sm text-slate-400">Resolved By</p>
-                                            <p>{showDetailModal.resolvedBy.firstName} {showDetailModal.resolvedBy.lastName}</p>
+                                            <p>
+                                                {showDetailModal.resolvedBy.firstName}{' '}
+                                                {showDetailModal.resolvedBy.lastName}
+                                            </p>
                                         </div>
                                     )}
                                     {showDetailModal.resolutionNotes && (
@@ -659,10 +696,4 @@ const SecurityIncidentsView: React.FC = () => {
 };
 
 export default SecurityIncidentsView;
-
-
-
-
-
-
 

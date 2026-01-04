@@ -47,7 +47,7 @@ const CohortService = {
                     resolve(rows || []);
             });
         });
-    }
+    },
 };
 export default CohortService;
 //# sourceMappingURL=cohortService.js.map

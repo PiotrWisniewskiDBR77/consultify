@@ -3,19 +3,20 @@
  * Fetches and displays related object details with navigation
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Target,
+    AlertCircle,
+    ArrowRight,
+    Calendar,
     CheckSquare,
     Clock,
-    User,
-    Calendar,
-    Loader2,
     ExternalLink,
-    AlertCircle,
-    ArrowRight
+    Loader2,
+    Target,
+    User,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 
 interface RelatedObjectPreviewProps {
@@ -90,11 +91,7 @@ const formatDate = (dateStr?: string): string => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
-    type,
-    id,
-    onNavigate
-}) => {
+export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({ type, id, onNavigate }) => {
     const { t } = useTranslation();
     const [data, setData] = useState<RelatedData>(null);
     const [loading, setLoading] = useState(true);
@@ -166,7 +163,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
     if (type?.toUpperCase() === 'INITIATIVE') {
         const initiative = data as InitiativeData;
         return (
-            <div 
+            <div
                 onClick={handleClick}
                 className={`
                     p-4 bg-white dark:bg-navy-900 rounded-lg 
@@ -178,27 +175,29 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
                     <div className="shrink-0 p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                         <Target size={20} className="text-purple-600 dark:text-purple-400" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium uppercase">
                                 Initiative
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${getStatusStyle(initiative.status)}`}>
+                            <span
+                                className={`text-[10px] px-2 py-0.5 rounded font-medium ${getStatusStyle(initiative.status)}`}
+                            >
                                 {initiative.status}
                             </span>
                         </div>
-                        
+
                         <h4 className="text-sm font-medium text-slate-800 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                             {initiative.name}
                         </h4>
-                        
+
                         {initiative.description && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">
                                 {initiative.description}
                             </p>
                         )}
-                        
+
                         <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
                             {(initiative.ownerName || initiative.owner_business_name) && (
                                 <div className="flex items-center gap-1">
@@ -206,17 +205,16 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
                                     <span>{initiative.ownerName || initiative.owner_business_name}</span>
                                 </div>
                             )}
-                            {initiative.category && (
-                                <span className="text-slate-300 dark:text-slate-600">•</span>
-                            )}
-                            {initiative.category && (
-                                <span>{initiative.category}</span>
-                            )}
+                            {initiative.category && <span className="text-slate-300 dark:text-slate-600">•</span>}
+                            {initiative.category && <span>{initiative.category}</span>}
                         </div>
                     </div>
-                    
+
                     {onNavigate && (
-                        <ArrowRight size={16} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors" />
+                        <ArrowRight
+                            size={16}
+                            className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+                        />
                     )}
                 </div>
             </div>
@@ -228,9 +226,9 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
         const task = data as TaskData;
         const dueDate = task.dueDate || task.due_date;
         const assignee = task.assigneeName || task.assignee_name;
-        
+
         return (
-            <div 
+            <div
                 onClick={handleClick}
                 className={`
                     p-4 bg-white dark:bg-navy-900 rounded-lg 
@@ -242,27 +240,29 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
                     <div className="shrink-0 p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                         <CheckSquare size={20} className="text-blue-600 dark:text-blue-400" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium uppercase">
                                 Task
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${getStatusStyle(task.status)}`}>
+                            <span
+                                className={`text-[10px] px-2 py-0.5 rounded font-medium ${getStatusStyle(task.status)}`}
+                            >
                                 {task.status}
                             </span>
                         </div>
-                        
+
                         <h4 className="text-sm font-medium text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {task.title}
                         </h4>
-                        
+
                         {task.description && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">
                                 {task.description}
                             </p>
                         )}
-                        
+
                         <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
                             {assignee && (
                                 <div className="flex items-center gap-1">
@@ -281,9 +281,12 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
                             )}
                         </div>
                     </div>
-                    
+
                     {onNavigate && (
-                        <ArrowRight size={16} className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
+                        <ArrowRight
+                            size={16}
+                            className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors"
+                        />
                     )}
                 </div>
             </div>
@@ -294,18 +297,12 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
     return (
         <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             {getTypeIcon(type)}
-            <span>{type}: {id}</span>
+            <span>
+                {type}: {id}
+            </span>
         </div>
     );
 };
 
 export default RelatedObjectPreview;
-
-
-
-
-
-
-
-
 

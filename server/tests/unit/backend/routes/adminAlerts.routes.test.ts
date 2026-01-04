@@ -3,8 +3,9 @@
  * Unit tests for adminAlerts routes
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { AuthRequest } from '../../../../src/middleware/auth.middleware.js';
 
 // Mock adminAlertService
@@ -147,7 +148,4 @@ describe('Admin Alerts Routes', () => {
         });
     });
 });
-
-
-
 

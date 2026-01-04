@@ -1,7 +1,7 @@
 /**
  * Lazy Service Loader Utility
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Utility for lazy-loading ES module services to replace wrapper services
  */
 
@@ -28,7 +28,7 @@ export function createCachedLazyService<T = unknown>(servicePath: string): () =>
             return serviceCache;
         }
         if (!servicePromise) {
-            servicePromise = createLazyService<T>(servicePath).then(service => {
+            servicePromise = createLazyService<T>(servicePath).then((service) => {
                 serviceCache = service;
                 return service;
             });
@@ -36,7 +36,4 @@ export function createCachedLazyService<T = unknown>(servicePath: string): () =>
         return servicePromise;
     };
 }
-
-
-
 

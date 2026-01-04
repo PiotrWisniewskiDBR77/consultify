@@ -1,7 +1,7 @@
 /**
  * Organization Validators
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Zod schemas for organization-related API endpoints
  */
 
@@ -55,7 +55,4 @@ export type UpdateOrganizationRequest = z.infer<typeof UpdateOrganizationSchema>
 export type AddMemberRequest = z.infer<typeof AddMemberSchema>;
 export type UpdateMemberRoleRequest = z.infer<typeof UpdateMemberRoleSchema>;
 export type InviteMemberRequest = z.infer<typeof InviteMemberSchema>;
-
-
-
 

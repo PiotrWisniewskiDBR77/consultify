@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
+
+import { AppView, AuthStep, SessionMode, User } from '../../types';
 import { AppState } from '../useAppStore';
-import { User, SessionMode, AuthStep, AppView } from '../../types';
 
 export interface AuthSlice {
     currentUser: User | null;
@@ -27,54 +28,61 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
     setAuthInitialStep: (step) => set({ authInitialStep: step }),
     setCurrentOrganization: (org) => set({ currentOrganization: org }),
 
-    logout: () => set((state) => ({
-        // Auth Reset
-        currentUser: null,
-        currentOrganization: null,
-        sessionMode: SessionMode.FREE,
+    logout: () =>
+        set((state) => ({
+            // Auth Reset
+            currentUser: null,
+            currentOrganization: null,
+            sessionMode: SessionMode.FREE,
 
-        // UI Reset
-        currentView: AppView.WELCOME,
-        isSidebarOpen: false,
-        activeSidePanel: null,
+            // UI Reset
+            currentView: AppView.WELCOME,
+            isSidebarOpen: false,
+            activeSidePanel: null,
 
-        // Chat Reset
-        activeChatMessages: [],
-        currentStreamContent: '',
-        aiConfig: { autoMode: true, maxMode: false, multiModel: false, selectedModelId: null, selectedTier: 'BUDGET' },
-
-        // Project/Session Reset
-        currentProjectId: null,
-        notifications: [],
-        freeSessionData: {
-            painPoints: [],
-            goal: '',
-            timeHorizon: '',
-            step1Completed: false,
-            step2Completed: false,
-            step3Completed: false,
-        },
-        fullSessionData: {
-            id: '',
-            assessment: {
-                completedAxes: [],
-                processes: { actual: 1, target: 1, justification: '', notes: '' },
-                digitalProducts: { actual: 1, target: 1, justification: '', notes: '' },
-                businessModels: { actual: 1, target: 1, justification: '', notes: '' },
-                dataManagement: { actual: 1, target: 1, justification: '', notes: '' },
-                culture: { actual: 1, target: 1, justification: '', notes: '' },
-                cybersecurity: { actual: 1, target: 1, justification: '', notes: '' },
-                aiMaturity: { actual: 1, target: 1, justification: '', notes: '' },
+            // Chat Reset
+            activeChatMessages: [],
+            currentStreamContent: '',
+            aiConfig: {
+                autoMode: true,
+                maxMode: false,
+                multiModel: false,
+                selectedModelId: null,
+                selectedTier: 'BUDGET',
             },
-            audits: [],
-            roadmap: [],
-            initiatives: [],
-            economics: { totalCost: 0, totalAnnualBenefit: 0, overallROI: 0, paybackPeriodYears: 0 },
-            step1Completed: false,
-            step2Completed: false,
-            step3Completed: false,
-            step4Completed: false,
-            step5Completed: false
-        }
-    })),
+
+            // Project/Session Reset
+            currentProjectId: null,
+            notifications: [],
+            freeSessionData: {
+                painPoints: [],
+                goal: '',
+                timeHorizon: '',
+                step1Completed: false,
+                step2Completed: false,
+                step3Completed: false,
+            },
+            fullSessionData: {
+                id: '',
+                assessment: {
+                    completedAxes: [],
+                    processes: { actual: 1, target: 1, justification: '', notes: '' },
+                    digitalProducts: { actual: 1, target: 1, justification: '', notes: '' },
+                    businessModels: { actual: 1, target: 1, justification: '', notes: '' },
+                    dataManagement: { actual: 1, target: 1, justification: '', notes: '' },
+                    culture: { actual: 1, target: 1, justification: '', notes: '' },
+                    cybersecurity: { actual: 1, target: 1, justification: '', notes: '' },
+                    aiMaturity: { actual: 1, target: 1, justification: '', notes: '' },
+                },
+                audits: [],
+                roadmap: [],
+                initiatives: [],
+                economics: { totalCost: 0, totalAnnualBenefit: 0, overallROI: 0, paybackPeriodYears: 0 },
+                step1Completed: false,
+                step2Completed: false,
+                step3Completed: false,
+                step4Completed: false,
+                step5Completed: false,
+            },
+        })),
 });

@@ -1,44 +1,45 @@
 /**
  * InitiativeManagementView
- * 
+ *
  * @deprecated This view is replaced by PortfolioView (AppView.PORTFOLIO_ROADMAP)
- * which provides a unified Portfolio & Roadmap experience with List, Kanban, 
+ * which provides a unified Portfolio & Roadmap experience with List, Kanban,
  * Timeline, and Matrix views.
- * 
+ *
  * Kept for backward compatibility. Routes redirect to PortfolioView.
- * 
+ *
  * Module 2: Initiative Management
  * Shows initiatives in REVIEW and APPROVED status
  * Handles approval workflow and transfer to roadmap
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Search,
-    Lightbulb,
+    AlertTriangle,
+    ArrowRight,
+    Building2,
+    CheckCircle2,
+    Clock,
     Edit,
     Eye,
-    Trash2,
+    FileCheck,
+    Filter,
+    Lightbulb,
+    Loader2,
+    MapPin,
+    MessageSquare,
     MoreVertical,
     RefreshCw,
-    Loader2,
-    TrendingUp,
-    ArrowRight,
-    MapPin,
-    Building2,
-    Clock,
-    CheckCircle2,
+    Search,
     Send,
-    FileCheck,
-    MessageSquare,
-    AlertTriangle,
-    Filter
+    Trash2,
+    TrendingUp,
 } from 'lucide-react';
-import { InitiativeStatus } from '../types';
-import { StatusTransitionDropdown } from '../components/PMO/StatusTransitionDropdown';
-import { InitiativeCompletenessChecker } from '../components/PMO/InitiativeCompletenessChecker';
-import { Api } from '../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { InitiativeCompletenessChecker } from '../components/PMO/InitiativeCompletenessChecker';
+import { StatusTransitionDropdown } from '../components/PMO/StatusTransitionDropdown';
+import { Api } from '../services/api';
+import { InitiativeStatus } from '../types';
 
 interface Initiative {
     id: string;
@@ -69,10 +70,10 @@ interface Initiative {
 type TabType = 'review' | 'approved';
 
 const PRIORITY_CONFIG = {
-    'LOW': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-    'MEDIUM': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    'HIGH': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    'CRITICAL': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+    LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+    MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    HIGH: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    CRITICAL: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 export const InitiativeManagementView: React.FC = () => {
@@ -82,8 +83,8 @@ export const InitiativeManagementView: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterProject, setFilterProject] = useState<string>('');
     const [filterLocation, setFilterLocation] = useState<string>('');
-    const [projects, setProjects] = useState<{id: string; name: string}[]>([]);
-    const [locations, setLocations] = useState<{id: string; name: string}[]>([]);
+    const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+    const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
     const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
     const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -125,42 +126,47 @@ export const InitiativeManagementView: React.FC = () => {
     }, [fetchInitiatives]);
 
     // Handle status change
-    const handleStatusChange = useCallback((initiativeId: string, newStatus: InitiativeStatus, moduleTransition?: any) => {
-        // Remove from current list if status moves to different module
-        if (newStatus === InitiativeStatus.EXECUTING || newStatus === InitiativeStatus.CANCELLED) {
-            setInitiatives(prev => prev.filter(i => i.id !== initiativeId));
-        } else if (activeTab === 'review' && newStatus === InitiativeStatus.APPROVED) {
-            // Move to approved tab
-            setInitiatives(prev => prev.filter(i => i.id !== initiativeId));
-        } else if (activeTab === 'approved' && newStatus === InitiativeStatus.REVIEW) {
-            // Move back to review tab
-            setInitiatives(prev => prev.filter(i => i.id !== initiativeId));
-        } else {
-            setInitiatives(prev => prev.map(i => 
-                i.id === initiativeId ? { ...i, status: newStatus } : i
-            ));
-        }
-    }, [activeTab]);
+    const handleStatusChange = useCallback(
+        (initiativeId: string, newStatus: InitiativeStatus, moduleTransition?: any) => {
+            // Remove from current list if status moves to different module
+            if (newStatus === InitiativeStatus.EXECUTING || newStatus === InitiativeStatus.CANCELLED) {
+                setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
+            } else if (activeTab === 'review' && newStatus === InitiativeStatus.APPROVED) {
+                // Move to approved tab
+                setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
+            } else if (activeTab === 'approved' && newStatus === InitiativeStatus.REVIEW) {
+                // Move back to review tab
+                setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
+            } else {
+                setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
+            }
+        },
+        [activeTab],
+    );
 
     // Handle review action (approve/request changes/reject)
     const handleReviewSubmit = async () => {
         if (!selectedInitiative) return;
 
         try {
-            const newStatus = 
-                reviewAction === 'approve' ? InitiativeStatus.APPROVED :
-                reviewAction === 'changes' ? InitiativeStatus.PLANNING :
-                InitiativeStatus.CANCELLED;
+            const newStatus =
+                reviewAction === 'approve'
+                    ? InitiativeStatus.APPROVED
+                    : reviewAction === 'changes'
+                      ? InitiativeStatus.PLANNING
+                      : InitiativeStatus.CANCELLED;
 
             await Api.patch(`/initiatives/${selectedInitiative.id}/status`, {
                 status: newStatus,
-                reason: reviewComment || undefined
+                reason: reviewComment || undefined,
             });
 
             toast.success(
-                reviewAction === 'approve' ? 'Initiative approved' :
-                reviewAction === 'changes' ? 'Sent back for changes' :
-                'Initiative rejected'
+                reviewAction === 'approve'
+                    ? 'Initiative approved'
+                    : reviewAction === 'changes'
+                      ? 'Sent back for changes'
+                      : 'Initiative rejected',
             );
 
             handleStatusChange(selectedInitiative.id, newStatus);
@@ -177,7 +183,7 @@ export const InitiativeManagementView: React.FC = () => {
         // TODO: Show quarter selection modal
         try {
             await Api.patch(`/initiatives/${initiative.id}/status`, {
-                status: InitiativeStatus.EXECUTING
+                status: InitiativeStatus.EXECUTING,
             });
             toast.success('Initiative transferred to execution');
             handleStatusChange(initiative.id, InitiativeStatus.EXECUTING);
@@ -187,7 +193,7 @@ export const InitiativeManagementView: React.FC = () => {
     };
 
     // Filter initiatives
-    const filteredInitiatives = initiatives.filter(initiative => {
+    const filteredInitiatives = initiatives.filter((initiative) => {
         if (filterProject && initiative.projectId !== filterProject) return false;
         if (filterLocation && initiative.locationId !== filterLocation) return false;
         if (searchQuery) {
@@ -210,8 +216,8 @@ export const InitiativeManagementView: React.FC = () => {
     };
 
     // Stats
-    const reviewCount = initiatives.filter(i => i.status === InitiativeStatus.REVIEW).length;
-    const approvedCount = initiatives.filter(i => i.status === InitiativeStatus.APPROVED).length;
+    const reviewCount = initiatives.filter((i) => i.status === InitiativeStatus.REVIEW).length;
+    const approvedCount = initiatives.filter((i) => i.status === InitiativeStatus.APPROVED).length;
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
@@ -219,9 +225,7 @@ export const InitiativeManagementView: React.FC = () => {
             <div className="shrink-0 px-6 py-4 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                            Initiative Management
-                        </h1>
+                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Initiative Management</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Review and approve initiatives before execution
                         </p>
@@ -273,8 +277,10 @@ export const InitiativeManagementView: React.FC = () => {
                             className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                         >
                             <option value="">All Projects</option>
-                            {projects.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
+                            {projects.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
                             ))}
                         </select>
                     )}
@@ -286,8 +292,10 @@ export const InitiativeManagementView: React.FC = () => {
                             className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                         >
                             <option value="">All Locations</option>
-                            {locations.map(l => (
-                                <option key={l.id} value={l.id}>{l.name}</option>
+                            {locations.map((l) => (
+                                <option key={l.id} value={l.id}>
+                                    {l.name}
+                                </option>
                             ))}
                         </select>
                     )}
@@ -333,8 +341,8 @@ export const InitiativeManagementView: React.FC = () => {
                             {activeTab === 'review' ? 'No initiatives awaiting review' : 'No approved initiatives'}
                         </p>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {activeTab === 'review' 
-                                ? 'Initiatives submitted for review will appear here' 
+                            {activeTab === 'review'
+                                ? 'Initiatives submitted for review will appear here'
                                 : 'Approved initiatives ready for roadmap will appear here'}
                         </p>
                     </div>
@@ -392,7 +400,7 @@ export const InitiativeManagementView: React.FC = () => {
                                                     initiativeId={initiative.id}
                                                     currentStatus={initiative.status}
                                                     charterCompleteness={initiative.charterCompleteness}
-                                                    onStatusChange={(newStatus, moduleTransition) => 
+                                                    onStatusChange={(newStatus, moduleTransition) =>
                                                         handleStatusChange(initiative.id, newStatus, moduleTransition)
                                                     }
                                                     size="md"
@@ -408,13 +416,18 @@ export const InitiativeManagementView: React.FC = () => {
                                                     <>
                                                         <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
                                                             {initiative.ownerBusiness.avatarUrl ? (
-                                                                <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                                <img
+                                                                    src={initiative.ownerBusiness.avatarUrl}
+                                                                    alt=""
+                                                                    className="w-full h-full object-cover"
+                                                                />
                                                             ) : (
                                                                 `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
                                                             )}
                                                         </div>
                                                         <span className="text-sm text-slate-600 dark:text-slate-400">
-                                                            {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
+                                                            {initiative.ownerBusiness.firstName}{' '}
+                                                            {initiative.ownerBusiness.lastName}
                                                         </span>
                                                     </>
                                                 ) : (
@@ -423,7 +436,9 @@ export const InitiativeManagementView: React.FC = () => {
                                             </div>
 
                                             {/* Priority */}
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}>
+                                            <span
+                                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}
+                                            >
                                                 {initiative.priority}
                                             </span>
 
@@ -439,7 +454,9 @@ export const InitiativeManagementView: React.FC = () => {
                                             {initiative.expectedRoi && initiative.expectedRoi > 0 && (
                                                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                                                     <TrendingUp size={14} />
-                                                    <span className="text-sm font-medium">{initiative.expectedRoi}x ROI</span>
+                                                    <span className="text-sm font-medium">
+                                                        {initiative.expectedRoi}x ROI
+                                                    </span>
                                                 </div>
                                             )}
 
@@ -519,13 +536,13 @@ export const InitiativeManagementView: React.FC = () => {
                             )}
                             <div>
                                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    {reviewAction === 'approve' ? 'Approve Initiative' :
-                                     reviewAction === 'changes' ? 'Request Changes' :
-                                     'Reject Initiative'}
+                                    {reviewAction === 'approve'
+                                        ? 'Approve Initiative'
+                                        : reviewAction === 'changes'
+                                          ? 'Request Changes'
+                                          : 'Reject Initiative'}
                                 </h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {selectedInitiative.name}
-                                </p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{selectedInitiative.name}</p>
                             </div>
                         </div>
 
@@ -537,9 +554,11 @@ export const InitiativeManagementView: React.FC = () => {
                                 value={reviewComment}
                                 onChange={(e) => setReviewComment(e.target.value)}
                                 placeholder={
-                                    reviewAction === 'approve' ? 'Add any comments...' :
-                                    reviewAction === 'changes' ? 'What changes are needed?' :
-                                    'Why is this being rejected?'
+                                    reviewAction === 'approve'
+                                        ? 'Add any comments...'
+                                        : reviewAction === 'changes'
+                                          ? 'What changes are needed?'
+                                          : 'Why is this being rejected?'
                                 }
                                 rows={4}
                                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -561,16 +580,18 @@ export const InitiativeManagementView: React.FC = () => {
                                 onClick={handleReviewSubmit}
                                 disabled={reviewAction !== 'approve' && !reviewComment.trim()}
                                 className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${
-                                    reviewAction === 'approve' 
-                                        ? 'bg-green-600 hover:bg-green-500' 
+                                    reviewAction === 'approve'
+                                        ? 'bg-green-600 hover:bg-green-500'
                                         : reviewAction === 'changes'
-                                        ? 'bg-amber-600 hover:bg-amber-500'
-                                        : 'bg-red-600 hover:bg-red-500'
+                                          ? 'bg-amber-600 hover:bg-amber-500'
+                                          : 'bg-red-600 hover:bg-red-500'
                                 }`}
                             >
-                                {reviewAction === 'approve' ? 'Approve' :
-                                 reviewAction === 'changes' ? 'Send Back' :
-                                 'Reject'}
+                                {reviewAction === 'approve'
+                                    ? 'Approve'
+                                    : reviewAction === 'changes'
+                                      ? 'Send Back'
+                                      : 'Reject'}
                             </button>
                         </div>
                     </div>
@@ -581,4 +602,3 @@ export const InitiativeManagementView: React.FC = () => {
 };
 
 export default InitiativeManagementView;
-

@@ -1,6 +1,6 @@
 /**
  * ApiKeysManagementView - API Keys Management for Organization
- * 
+ *
  * Features:
  * - Create new API keys with custom permissions
  * - List all API keys with usage stats
@@ -9,29 +9,30 @@
  * - Set expiration dates
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Key,
-    Plus,
+    Activity,
+    AlertTriangle,
+    Calendar,
+    Check,
+    Clock,
     Copy,
-    Trash2,
     Eye,
     EyeOff,
-    Clock,
-    Check,
-    AlertTriangle,
+    Key,
+    Plus,
     RefreshCw,
     Shield,
+    Trash2,
     Zap,
-    Calendar,
-    Activity
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
 import { ApiKey } from '../../types';
-import { InfoButton } from '../../components/shared/InfoButton';
 
 // Available API permissions (scopes) - matches backend
 const API_PERMISSIONS = [
@@ -42,7 +43,7 @@ const API_PERMISSIONS = [
     { id: 'ai', label: 'AI', description: 'AI and LLM operations' },
     { id: 'export', label: 'Export', description: 'Export data' },
     { id: 'projects', label: 'Projects', description: 'Project management' },
-    { id: 'assessments', label: 'Assessments', description: 'Assessment operations' }
+    { id: 'assessments', label: 'Assessments', description: 'Assessment operations' },
 ];
 
 interface ApiKeysManagementViewProps {
@@ -66,32 +67,34 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         name: '',
         description: '',
         permissions: [] as string[],
-        expiresIn: '90' // days
+        expiresIn: '90', // days
     });
 
     const loadApiKeys = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch('/api/api-keys', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.ok) {
                 const data = await res.json();
                 // Map the response to match expected format
-                setApiKeys((data.keys || []).map((k: any) => ({
-                    id: k.id,
-                    organizationId: currentOrganization?.id || '',
-                    name: k.name,
-                    description: k.description,
-                    keyPrefix: k.keyPrefix,
-                    keyHash: '***',
-                    permissions: k.scopes || [],
-                    expiresAt: k.expiresAt,
-                    lastUsedAt: k.lastUsedAt,
-                    createdBy: k.createdBy,
-                    createdAt: k.createdAt,
-                    revokedAt: k.isRevoked ? k.revokedAt : undefined
-                })));
+                setApiKeys(
+                    (data.keys || []).map((k: any) => ({
+                        id: k.id,
+                        organizationId: currentOrganization?.id || '',
+                        name: k.name,
+                        description: k.description,
+                        keyPrefix: k.keyPrefix,
+                        keyHash: '***',
+                        permissions: k.scopes || [],
+                        expiresAt: k.expiresAt,
+                        lastUsedAt: k.lastUsedAt,
+                        createdBy: k.createdBy,
+                        createdAt: k.createdAt,
+                        revokedAt: k.isRevoked ? k.revokedAt : undefined,
+                    })),
+                );
             } else {
                 const errorData = await res.json();
                 console.error('Failed to load API keys:', errorData.error);
@@ -139,14 +142,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     name: newKeyForm.name,
                     description: newKeyForm.description,
                     scopes: newKeyForm.permissions,
-                    expiresAt
-                })
+                    expiresAt,
+                }),
             });
 
             const data = await res.json();
@@ -175,7 +178,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         try {
             const res = await fetch(`/api/api-keys/${keyId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             const data = await res.json();
@@ -199,11 +202,11 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
     };
 
     const togglePermission = (permId: string) => {
-        setNewKeyForm(prev => ({
+        setNewKeyForm((prev) => ({
             ...prev,
             permissions: prev.permissions.includes(permId)
-                ? prev.permissions.filter(p => p !== permId)
-                : [...prev.permissions, permId]
+                ? prev.permissions.filter((p) => p !== permId)
+                : [...prev.permissions, permId],
         }));
     };
 
@@ -212,7 +215,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -279,11 +282,10 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
                 <Shield className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
                 <div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                        Keep your API keys secure
-                    </p>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Keep your API keys secure</p>
                     <p className="text-xs text-amber-600 dark:text-amber-300 mt-1">
-                        API keys provide access to your organization's data. Never share them in public repositories or client-side code.
+                        API keys provide access to your organization's data. Never share them in public repositories or
+                        client-side code.
                     </p>
                 </div>
             </div>
@@ -293,7 +295,9 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                     <Key className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-slate-900 dark:text-white">No API Keys</h3>
-                    <p className="text-slate-500 mt-1 mb-4">Create your first API key to get started with integrations</p>
+                    <p className="text-slate-500 mt-1 mb-4">
+                        Create your first API key to get started with integrations
+                    </p>
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
@@ -303,26 +307,33 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {apiKeys.map(key => (
+                    {apiKeys.map((key) => (
                         <div
                             key={key.id}
-                            className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${isKeyExpired(key)
-                                ? 'border-red-200 dark:border-red-800'
-                                : isKeyExpiringSoon(key)
-                                    ? 'border-amber-200 dark:border-amber-800'
-                                    : 'border-slate-200 dark:border-navy-700'
-                                }`}
+                            className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
+                                isKeyExpired(key)
+                                    ? 'border-red-200 dark:border-red-800'
+                                    : isKeyExpiringSoon(key)
+                                      ? 'border-amber-200 dark:border-amber-800'
+                                      : 'border-slate-200 dark:border-navy-700'
+                            }`}
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex items-start gap-4">
-                                    <div className={`p-3 rounded-lg ${isKeyExpired(key) || key.revokedAt
-                                        ? 'bg-red-100 dark:bg-red-900/30'
-                                        : 'bg-violet-100 dark:bg-violet-900/30'
-                                        }`}>
-                                        <Key className={`w-5 h-5 ${isKeyExpired(key) || key.revokedAt
-                                            ? 'text-red-600 dark:text-red-400'
-                                            : 'text-violet-600 dark:text-violet-400'
-                                            }`} />
+                                    <div
+                                        className={`p-3 rounded-lg ${
+                                            isKeyExpired(key) || key.revokedAt
+                                                ? 'bg-red-100 dark:bg-red-900/30'
+                                                : 'bg-violet-100 dark:bg-violet-900/30'
+                                        }`}
+                                    >
+                                        <Key
+                                            className={`w-5 h-5 ${
+                                                isKeyExpired(key) || key.revokedAt
+                                                    ? 'text-red-600 dark:text-red-400'
+                                                    : 'text-violet-600 dark:text-violet-400'
+                                            }`}
+                                        />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -359,7 +370,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                                             )}
                                         </div>
                                         <div className="flex flex-wrap gap-1 mt-3">
-                                            {key.permissions.map(perm => (
+                                            {key.permissions.map((perm) => (
                                                 <span
                                                     key={perm}
                                                     className="px-2 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded"
@@ -464,13 +475,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                                         Permissions *
                                     </label>
                                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                                        {API_PERMISSIONS.map(perm => (
+                                        {API_PERMISSIONS.map((perm) => (
                                             <label
                                                 key={perm.id}
-                                                className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${newKeyForm.permissions.includes(perm.id)
-                                                    ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
-                                                    : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
-                                                    }`}
+                                                className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                                                    newKeyForm.permissions.includes(perm.id)
+                                                        ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                                                        : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
+                                                }`}
                                             >
                                                 <input
                                                     type="checkbox"
@@ -479,7 +491,9 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                                                     className="mt-0.5 w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                                                 />
                                                 <div>
-                                                    <span className="font-medium text-slate-900 dark:text-white text-sm">{perm.label}</span>
+                                                    <span className="font-medium text-slate-900 dark:text-white text-sm">
+                                                        {perm.label}
+                                                    </span>
                                                     <p className="text-xs text-slate-500">{perm.description}</p>
                                                 </div>
                                             </label>
@@ -581,4 +595,3 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
 };
 
 export default ApiKeysManagementView;
-

@@ -2,10 +2,11 @@
  * SecurityPanel - Security & Compliance Management
  */
 
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { Shield, AlertTriangle, CheckCircle, XCircle, Loader2, Filter } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Filter, Loader2, Shield, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 export const SecurityPanel: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'events' | 'compliance'>('events');
@@ -67,19 +68,21 @@ export const SecurityPanel: React.FC = () => {
             <div className="flex gap-2 border-b border-white/10">
                 <button
                     onClick={() => setActiveTab('events')}
-                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'events'
-                        ? 'text-blue-400 border-b-2 border-blue-400'
-                        : 'text-slate-400 hover:text-white'
-                        }`}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'events'
+                            ? 'text-blue-400 border-b-2 border-blue-400'
+                            : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                     Security Events
                 </button>
                 <button
                     onClick={() => setActiveTab('compliance')}
-                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'compliance'
-                        ? 'text-blue-400 border-b-2 border-blue-400'
-                        : 'text-slate-400 hover:text-white'
-                        }`}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'compliance'
+                            ? 'text-blue-400 border-b-2 border-blue-400'
+                            : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                     Compliance
                 </button>
@@ -113,18 +116,21 @@ export const SecurityPanel: React.FC = () => {
                             <div className="text-center py-12 text-slate-400">No security events</div>
                         ) : (
                             events.map((event) => (
-                                <div
-                                    key={event.id}
-                                    className="p-4 bg-white/5 rounded-xl border border-white/10"
-                                >
+                                <div key={event.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-2 py-1 text-xs rounded ${event.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-400' :
-                                                    event.severity === 'HIGH' ? 'bg-orange-500/20 text-orange-400' :
-                                                        event.severity === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                            'bg-green-500/20 text-green-400'
-                                                    }`}>
+                                                <span
+                                                    className={`px-2 py-1 text-xs rounded ${
+                                                        event.severity === 'CRITICAL'
+                                                            ? 'bg-red-500/20 text-red-400'
+                                                            : event.severity === 'HIGH'
+                                                              ? 'bg-orange-500/20 text-orange-400'
+                                                              : event.severity === 'MEDIUM'
+                                                                ? 'bg-yellow-500/20 text-yellow-400'
+                                                                : 'bg-green-500/20 text-green-400'
+                                                    }`}
+                                                >
                                                     {event.severity}
                                                 </span>
                                                 <span className="text-white font-medium">{event.event_type}</span>
@@ -165,19 +171,18 @@ export const SecurityPanel: React.FC = () => {
                             <div className="text-center py-12 text-slate-400">No compliance records</div>
                         ) : (
                             complianceRecords.map((record) => (
-                                <div
-                                    key={record.id}
-                                    className="p-4 bg-white/5 rounded-xl border border-white/10"
-                                >
+                                <div key={record.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <div className="flex items-center gap-3 mb-2">
                                                 <span className="text-white font-medium">{record.framework}</span>
-                                                <span className="px-2 py-1 text-xs rounded ${
+                                                <span
+                                                    className="px-2 py-1 text-xs rounded ${
                                                     record.status === 'compliant' ? 'bg-green-500/20 text-green-400' :
                                                     record.status === 'non_compliant' ? 'bg-red-500/20 text-red-400' :
                                                     'bg-slate-500/20 text-slate-400'
-                                                }">
+                                                }"
+                                                >
                                                     {record.status}
                                                 </span>
                                             </div>
@@ -195,10 +200,4 @@ export const SecurityPanel: React.FC = () => {
 };
 
 export default SecurityPanel;
-
-
-
-
-
-
 

@@ -1,13 +1,13 @@
 /**
  * Database Query Adapter
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Full TypeScript migration of queryAdapter.js
  * Provides a unified interface for both SQLite and PostgreSQL
  */
 
-import type { IDatabase, QueryResult, RunResult } from '../database/IDatabase.js';
-import { databaseConfig } from '../config/DatabaseConfig.js';
+import { _databaseConfig } from '../config/DatabaseConfig.js';
+import type { _QueryResult, IDatabase, RunResult } from '../database/IDatabase.js';
 import { run as dbRunPromise } from './DbPromise.js';
 
 export type DatabaseType = 'sqlite' | 'postgres';
@@ -89,7 +89,7 @@ export class QueryAdapter {
             const result = await this.db.query(adapted.sql, adapted.params);
             return {
                 changes: result.rowCount,
-                lastID: (result.rows[0] as { id?: number })?.id // For RETURNING id
+                lastID: (result.rows[0] as { id?: number })?.id, // For RETURNING id
             };
         } else {
             const result = await dbRunPromise(adapted.sql, adapted.params);
@@ -98,7 +98,7 @@ export class QueryAdapter {
             }
             return {
                 changes: result.changes || 0,
-                lastID: result.lastID
+                lastID: result.lastID,
             };
         }
     }
@@ -163,4 +163,3 @@ export class QueryAdapter {
 }
 
 export default QueryAdapter;
-

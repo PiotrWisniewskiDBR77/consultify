@@ -1,17 +1,15 @@
 /**
  * PDF Export Modal
- * 
+ *
  * Modal for configuring and exporting digitization analysis to PDF.
  * Supports multiple templates and languages.
  */
 
+import { CheckCircle, Download, FileCheck, FileText, Globe, Layout, Loader2, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { 
-    X, FileText, Download, Loader2, 
-    CheckCircle, Globe, Layout, FileCheck
-} from 'lucide-react';
-import { Api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 import { DigitizationAnalysis } from './types';
 
 interface PDFExportModalProps {
@@ -36,7 +34,7 @@ const TEMPLATES: Array<{
         nameEn: 'Executive Summary',
         descriptionPl: '1-2 strony z kluczowymi wynikami i rekomendacjami',
         descriptionEn: '1-2 pages with key results and recommendations',
-        icon: FileCheck
+        icon: FileCheck,
     },
     {
         id: 'full',
@@ -44,7 +42,7 @@ const TEMPLATES: Array<{
         nameEn: 'Full Report',
         descriptionPl: 'Kompletny raport ze wszystkimi szczegółami per oś',
         descriptionEn: 'Complete report with all axis details',
-        icon: FileText
+        icon: FileText,
     },
     {
         id: 'gap_analysis',
@@ -52,8 +50,8 @@ const TEMPLATES: Array<{
         nameEn: 'Gap Analysis',
         descriptionPl: 'Szczegółowa analiza luk z priorytetyzacją',
         descriptionEn: 'Detailed gap analysis with prioritization',
-        icon: Layout
-    }
+        icon: Layout,
+    },
 ];
 
 export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClose }) => {
@@ -71,13 +69,15 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             const result = await Api.exportDigitizationPDF(analysis.id, {
                 template,
                 language,
-                recommendations: includeRecommendations
+                recommendations: includeRecommendations,
             });
 
             setExportResult({ success: true, url: result.downloadUrl });
             toast.success(language === 'pl' ? 'PDF wygenerowany pomyślnie' : 'PDF generated successfully');
         } catch (error: any) {
-            toast.error(error.message || (language === 'pl' ? 'Nie udało się wygenerować PDF' : 'Failed to generate PDF'));
+            toast.error(
+                error.message || (language === 'pl' ? 'Nie udało się wygenerować PDF' : 'Failed to generate PDF'),
+            );
             setExportResult({ success: false });
         } finally {
             setIsExporting(false);
@@ -108,7 +108,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                             <p className="text-sm text-slate-500">{analysis.name}</p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                     >
@@ -167,14 +167,18 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                                                 : 'bg-slate-50 dark:bg-navy-800 border-2 border-transparent hover:border-slate-200'
                                         }`}
                                     >
-                                        <Icon 
-                                            size={20} 
-                                            className={template === t.id ? 'text-emerald-500' : 'text-slate-400'} 
+                                        <Icon
+                                            size={20}
+                                            className={template === t.id ? 'text-emerald-500' : 'text-slate-400'}
                                         />
                                         <div>
-                                            <p className={`font-medium ${
-                                                template === t.id ? 'text-emerald-600' : 'text-navy-900 dark:text-white'
-                                            }`}>
+                                            <p
+                                                className={`font-medium ${
+                                                    template === t.id
+                                                        ? 'text-emerald-600'
+                                                        : 'text-navy-900 dark:text-white'
+                                                }`}
+                                            >
                                                 {isPl ? t.namePl : t.nameEn}
                                             </p>
                                             <p className="text-xs text-slate-500">
@@ -259,12 +263,4 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
 };
 
 export default PDFExportModal;
-
-
-
-
-
-
-
-
 

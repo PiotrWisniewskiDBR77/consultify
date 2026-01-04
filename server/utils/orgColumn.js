@@ -7,7 +7,7 @@
  * This is the MVP-safe approach that avoids risky schema migrations.
  */
 
-import { getDatabase } from '../database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
 /**

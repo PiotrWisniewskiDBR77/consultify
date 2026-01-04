@@ -1,16 +1,17 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useAppStore } from '../store/useAppStore';
-import { AppView } from '../types';
-import { DashboardOverview } from '../components/dashboard/DashboardOverview';
+import React, { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
 import { DashboardExecutionSnapshot } from '../components/dashboard/DashboardExecutionSnapshot';
+import { DashboardOverview } from '../components/dashboard/DashboardOverview';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
 import { GateStatus } from '../components/PMO/GateStatus'; // CRIT-01
 import { PMOHealthSection } from '../components/PMO/PMOHealthSection'; // Step A: PMO Health
 import { SplitLayout } from '../components/SplitLayout';
-import { useTranslation } from 'react-i18next';
 import { useDashboardShortcuts } from '../hooks/useDashboardShortcuts';
 import { Api } from '../services/api';
-import toast from 'react-hot-toast';
+import { useAppStore } from '../store/useAppStore';
+import { AppView } from '../types';
 
 interface UserDashboardViewProps {
     currentUser: any;
@@ -20,7 +21,14 @@ interface UserDashboardViewProps {
 import { useScreenContext } from '../hooks/useScreenContext';
 
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUser, onNavigate }) => {
-    const { fullSessionData, currentView, addChatMessage: addMessage, activeChatMessages: messages, setIsBotTyping: setTyping, currentProjectId } = useAppStore();
+    const {
+        fullSessionData,
+        currentView,
+        addChatMessage: addMessage,
+        activeChatMessages: messages,
+        setIsBotTyping: setTyping,
+        currentProjectId,
+    } = useAppStore();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -31,17 +39,24 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     const isSnapshot = currentView === AppView.DASHBOARD_SNAPSHOT;
 
     // Register Context for AI
-    const screenContextData = useMemo(() => ({
-        mode: isSnapshot ? 'Snapshot' : 'Overview',
-        projectStatus: fullSessionData?.step5Completed ? 'Execution' : (fullSessionData?.step3Completed ? 'Roadmap' : 'Planning'),
-        keyMetrics: fullSessionData?.kpiResults || {}
-    }), [isSnapshot, fullSessionData?.step5Completed, fullSessionData?.step3Completed, fullSessionData?.kpiResults]);
+    const screenContextData = useMemo(
+        () => ({
+            mode: isSnapshot ? 'Snapshot' : 'Overview',
+            projectStatus: fullSessionData?.step5Completed
+                ? 'Execution'
+                : fullSessionData?.step3Completed
+                  ? 'Roadmap'
+                  : 'Planning',
+            keyMetrics: fullSessionData?.kpiResults || {},
+        }),
+        [isSnapshot, fullSessionData?.step5Completed, fullSessionData?.step3Completed, fullSessionData?.kpiResults],
+    );
 
     useScreenContext(
         'user_dashboard',
         isSnapshot ? 'Execution Snapshot' : 'Executive Dashboard',
         screenContextData,
-        "User is reviewing their transformation progress and high-level KPIs."
+        'User is reviewing their transformation progress and high-level KPIs.',
     );
 
     const handleStartTransformation = useCallback(() => {
@@ -63,7 +78,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     }, []);
 
     const handleTaskSaved = useCallback(() => {
-        setRefreshTrigger(prev => prev + 1);
+        setRefreshTrigger((prev) => prev + 1);
         setIsCreateModalOpen(false);
     }, []);
 
@@ -88,15 +103,16 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUse
     useDashboardShortcuts({
         onNewTask: handleCreateTask,
         onMarkAllRead: handleMarkAllRead,
-        onEscape: handleEscapeKey
+        onEscape: handleEscapeKey,
     });
 
     // NOTE: We pass undefined to let SplitLayout use its default AI handler
     // The default handler in SplitLayout properly calls startStream() which sends to backend
 
     // Step C: Handle "Explain This" click from PMO Health section
-    const handleExplainPMO = useCallback((snapshot: any) => {
-        const prompt = `Explain the current PMO situation for project "${snapshot.projectName}":
+    const handleExplainPMO = useCallback(
+        (snapshot: any) => {
+            const prompt = `Explain the current PMO situation for project "${snapshot.projectName}":
 
 **Current Phase:** ${snapshot.phase.name} (${snapshot.phase.number}/6)
 **Gate Status:** ${snapshot.stageGate.isReady ? 'Ready' : `Not Ready - ${snapshot.stageGate.missingCriteria.length} criteria missing`}
@@ -109,10 +125,12 @@ Please explain:
 2. What to do next (ordered steps)
 3. Who should act on each item`;
 
-        addMessage({ id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() });
-    }, [addMessage]);
+            addMessage({ id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() });
+        },
+        [addMessage],
+    );
 
-    const handleProceed = useCallback(() => setRefreshTrigger(prev => prev + 1), []);
+    const handleProceed = useCallback(() => setRefreshTrigger((prev) => prev + 1), []);
 
     return (
         <SplitLayout
@@ -124,21 +142,14 @@ Please explain:
                     {/* Step A: PMO Health Section - canonical health snapshot */}
                     {currentProjectId && (
                         <div className="mb-4">
-                            <PMOHealthSection
-                                projectId={currentProjectId}
-                                onExplainClick={handleExplainPMO}
-                            />
+                            <PMOHealthSection projectId={currentProjectId} onExplainClick={handleExplainPMO} />
                         </div>
                     )}
 
                     {/* CRIT-01: Gate Status - shows progression blockers */}
                     {currentProjectId && (
                         <div className="mb-4">
-                            <GateStatus
-                                projectId={currentProjectId}
-                                compact={false}
-                                onProceed={handleProceed}
-                            />
+                            <GateStatus projectId={currentProjectId} compact={false} onProceed={handleProceed} />
                         </div>
                     )}
 
@@ -168,4 +179,3 @@ Please explain:
         </SplitLayout>
     );
 };
-

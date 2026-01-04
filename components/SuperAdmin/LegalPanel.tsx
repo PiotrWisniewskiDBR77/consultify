@@ -1,11 +1,11 @@
 /**
  * LegalPanel - Legal Documents & GDPR Management
- * 
+ *
  * Manage legal documents and handle GDPR data export requests.
  */
 
+import { AlertTriangle, CheckCircle, Download, FileText, Scale, Shield, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { Scale, FileText, Download, Shield, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface DataExportRequest {
     id: string;
@@ -84,9 +84,7 @@ export const LegalPanel: React.FC = () => {
                     <div className="p-8 text-center">
                         <Users size={32} className="mx-auto text-slate-600 mb-3" />
                         <p className="text-slate-400">No pending data export requests</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                            User data export requests will appear here
-                        </p>
+                        <p className="text-xs text-slate-500 mt-1">User data export requests will appear here</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-white/5">
@@ -145,12 +143,4 @@ export const LegalPanel: React.FC = () => {
 };
 
 export default LegalPanel;
-
-
-
-
-
-
-
-
 

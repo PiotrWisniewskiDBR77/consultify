@@ -1,7 +1,8 @@
 import defaultJwt from 'jsonwebtoken';
 import config from '../config.js';
 const JWT_SECRET = config.JWT_SECRET;
-import defaultDb from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
 
 // Dependencies object to allow injection
 const deps = {

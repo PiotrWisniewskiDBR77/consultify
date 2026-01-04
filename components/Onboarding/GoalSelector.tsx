@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Target, Users, Presentation, Compass, ChevronRight, CheckCircle2, Clock } from 'lucide-react';
-import { Api } from '../../services/api';
-import { useTour } from './TourProvider';
+import { CheckCircle2, ChevronRight, Clock, Compass, Presentation, Target, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { FIRST_VALUE_TOUR } from '../../config/tours/firstValueTour';
 import { TEAM_TOUR } from '../../config/tours/teamTour';
+import { Api } from '../../services/api';
+import { useTour } from './TourProvider';
 
 /**
  * GoalSelector — Phase E Entry
- * 
+ *
  * Allows user to select their primary goal.
  * Personalizes the onboarding experience based on selection.
  */
@@ -70,11 +71,7 @@ interface GoalSelectorProps {
     showSkip?: boolean;
 }
 
-export const GoalSelector: React.FC<GoalSelectorProps> = ({
-    onGoalSelected,
-    initialGoalId,
-    showSkip = true,
-}) => {
+export const GoalSelector: React.FC<GoalSelectorProps> = ({ onGoalSelected, initialGoalId, showSkip = true }) => {
     const [selectedGoalId, setSelectedGoalId] = useState<string | null>(initialGoalId || null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { startTour } = useTour();
@@ -86,7 +83,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
     const handleConfirm = async () => {
         if (!selectedGoalId) return;
 
-        const goal = USER_GOALS.find(g => g.id === selectedGoalId);
+        const goal = USER_GOALS.find((g) => g.id === selectedGoalId);
         if (!goal) return;
 
         setIsSubmitting(true);
@@ -102,7 +99,9 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                     eventName: 'goal_selected',
                     metadata: { goalId: goal.id },
                 });
-            } catch { /* ignore */ }
+            } catch {
+                /* ignore */
+            }
 
             // Trigger appropriate tour
             if (goal.tourId === 'first_value') {
@@ -121,7 +120,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
 
     const handleSkip = () => {
         // Default to explore mode
-        const exploreGoal = USER_GOALS.find(g => g.id === 'explore')!;
+        const exploreGoal = USER_GOALS.find((g) => g.id === 'explore')!;
         onGoalSelected(exploreGoal);
     };
 
@@ -152,12 +151,9 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
         <div className="max-w-3xl mx-auto p-8">
             {/* Header */}
             <div className="text-center mb-10">
-                <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-3">
-                    Co chcesz dziś osiągnąć?
-                </h1>
+                <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-3">Co chcesz dziś osiągnąć?</h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-                    Twój wybór pomoże nam dostosować doświadczenie i zaproponować
-                    najlepsze następne kroki.
+                    Twój wybór pomoże nam dostosować doświadczenie i zaproponować najlepsze następne kroki.
                 </p>
             </div>
 
@@ -174,9 +170,10 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                             onClick={() => handleSelect(goal)}
                             className={`
                                 relative p-6 rounded-xl border-2 text-left transition-all duration-200
-                                ${isSelected
-                                    ? `${colors.bg} ${colors.border} shadow-lg`
-                                    : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                ${
+                                    isSelected
+                                        ? `${colors.bg} ${colors.border} shadow-lg`
+                                        : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                                 }
                             `}
                         >
@@ -188,10 +185,12 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                             )}
 
                             {/* Icon */}
-                            <div className={`
+                            <div
+                                className={`
                                 w-12 h-12 rounded-xl flex items-center justify-center mb-4
                                 ${isSelected ? colors.bg : 'bg-slate-100 dark:bg-navy-900'}
-                            `}>
+                            `}
+                            >
                                 <Icon
                                     size={24}
                                     className={isSelected ? colors.text : 'text-slate-400 dark:text-slate-500'}
@@ -199,15 +198,15 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                             </div>
 
                             {/* Content */}
-                            <h3 className={`
+                            <h3
+                                className={`
                                 font-semibold mb-2
                                 ${isSelected ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}
-                            `}>
+                            `}
+                            >
                                 {goal.title}
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-                                {goal.description}
-                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{goal.description}</p>
 
                             {/* Time estimate */}
                             <div className="flex items-center gap-1.5 text-xs text-slate-400">
@@ -235,9 +234,10 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                     disabled={!selectedGoalId || isSubmitting}
                     className={`
                         flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all
-                        ${selectedGoalId
-                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20'
-                            : 'bg-slate-100 dark:bg-navy-900 text-slate-400 cursor-not-allowed'
+                        ${
+                            selectedGoalId
+                                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20'
+                                : 'bg-slate-100 dark:bg-navy-900 text-slate-400 cursor-not-allowed'
                         }
                     `}
                 >

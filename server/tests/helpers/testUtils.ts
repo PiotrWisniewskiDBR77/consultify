@@ -1,13 +1,14 @@
 /**
  * Test Utilities
  * Enterprise SaaS Architecture - TypeScript Backend Tests
- * 
+ *
  * Common utilities for backend tests: mocks, fixtures, helpers
  */
 
-import type { Request, Response, NextFunction } from 'express';
-import type { IDatabase } from '../../src/database/IDatabase.js';
+import type { NextFunction, Request, Response } from 'express';
 import { vi } from 'vitest';
+
+import type { IDatabase } from '../../src/database/IDatabase.js';
 
 // ==========================================
 // MOCK DATABASE
@@ -175,7 +176,4 @@ export function createTestError(message: string, code?: string): Error & { code?
 export function resetMocks(): void {
     vi.clearAllMocks();
 }
-
-
-
 

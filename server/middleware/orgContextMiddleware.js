@@ -14,7 +14,8 @@
  * 3. User's last selected org — only for reads when strictWrite=true
  */
 
-import defaultDb from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
 
 // Dependencies object to allow injection
 const deps = {

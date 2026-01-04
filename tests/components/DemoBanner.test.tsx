@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DemoBanner from '../../../components/DemoBanner';
+import DemoBanner from '../../components/DemoBanner';
 
 
 describe('DemoBanner Component', () => {
@@ -89,6 +89,7 @@ describe('DemoBanner Component', () => {
         expect(onStartTrialClick).toBeDefined();
     });
 });
+
 
 
 

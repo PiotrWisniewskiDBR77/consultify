@@ -1,15 +1,16 @@
 /**
  * NotificationsModule - Notification Preferences
- * 
+ *
  * Tabs: Email | Push | In-App | Schedule
  */
 
+import { Bell, Clock, Filter, Mail, Smartphone } from 'lucide-react';
 import React, { useState } from 'react';
-import { Mail, Smartphone, Bell, Clock, Filter } from 'lucide-react';
-import { TabLayout, Tab } from '../../components/SuperAdmin/TabLayout';
-import { NotificationSettings } from '../../components/settings/NotificationSettings';
-import { NotificationRulesBuilder } from '../../components/settings/NotificationRulesBuilder';
 import { useTranslation } from 'react-i18next';
+
+import { NotificationRulesBuilder } from '../../components/settings/NotificationRulesBuilder';
+import { NotificationSettings } from '../../components/settings/NotificationSettings';
+import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
 
 interface NotificationsModuleProps {
@@ -32,7 +33,7 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                     {t('settings.schedule.title', 'Notification Schedule')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    {t('settings.schedule.description', 'Set quiet hours when you don\'t want to be disturbed')}
+                    {t('settings.schedule.description', "Set quiet hours when you don't want to be disturbed")}
                 </p>
             </div>
 
@@ -53,9 +54,11 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                             quietHoursEnabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
-                            quietHoursEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                        <div
+                            className={`w-5 h-5 bg-white rounded-full transform transition-transform ${
+                                quietHoursEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                        />
                     </button>
                 </div>
             </div>
@@ -110,39 +113,35 @@ const ScheduleSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
     );
 };
 
-export const NotificationsModule: React.FC<NotificationsModuleProps> = ({ 
-    initialTab,
-    currentUser,
-    onUpdateUser
-}) => {
+export const NotificationsModule: React.FC<NotificationsModuleProps> = ({ initialTab, currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(initialTab || 'all');
 
     const tabs: Tab[] = [
-        { 
-            id: 'all', 
-            label: t('settings.tabs.allNotifications', 'All'), 
-            icon: <Bell size={16} /> 
+        {
+            id: 'all',
+            label: t('settings.tabs.allNotifications', 'All'),
+            icon: <Bell size={16} />,
         },
-        { 
-            id: 'email', 
-            label: t('settings.tabs.email', 'Email'), 
-            icon: <Mail size={16} /> 
+        {
+            id: 'email',
+            label: t('settings.tabs.email', 'Email'),
+            icon: <Mail size={16} />,
         },
-        { 
-            id: 'push', 
-            label: t('settings.tabs.push', 'Push'), 
-            icon: <Smartphone size={16} /> 
+        {
+            id: 'push',
+            label: t('settings.tabs.push', 'Push'),
+            icon: <Smartphone size={16} />,
         },
-        { 
-            id: 'rules', 
-            label: t('settings.tabs.rules', 'Rules'), 
-            icon: <Filter size={16} /> 
+        {
+            id: 'rules',
+            label: t('settings.tabs.rules', 'Rules'),
+            icon: <Filter size={16} />,
         },
-        { 
-            id: 'schedule', 
-            label: t('settings.tabs.schedule', 'Schedule'), 
-            icon: <Clock size={16} /> 
+        {
+            id: 'schedule',
+            label: t('settings.tabs.schedule', 'Schedule'),
+            icon: <Clock size={16} />,
         },
     ];
 
@@ -183,4 +182,3 @@ export const NotificationsModule: React.FC<NotificationsModuleProps> = ({
 };
 
 export default NotificationsModule;
-

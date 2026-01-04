@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FocusModeSelector } from '../../../components/AIChat/Input/FocusModeSelector';
+import { FocusModeSelector } from '../../components/AIChat/Input/FocusModeSelector';
 import { FocusMode } from '../../../types';
 
 // Mock react-i18next

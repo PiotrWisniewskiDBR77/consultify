@@ -1,19 +1,19 @@
 /**
  * VoiceIndicator Component
- * 
+ *
  * Compact voice state indicator with:
  * - Animated waveform during listening/speaking
  * - Color coding (green=listening, blue=AI speaking, gray=idle)
  * - Recording duration display
  * - Audio level visualization
- * 
+ *
  * Part of the Universal Voice Conversation System
- * 
+ *
  * @version 1.0.0
  */
 
+import { Loader2, Mic, Volume2 } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { Mic, Volume2, Loader2 } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -35,11 +35,7 @@ interface VoiceIndicatorProps {
 // Audio Wave Animation Component
 // ============================================================================
 
-const AudioWaves: React.FC<{ level: number; color: string; barCount?: number }> = ({ 
-    level, 
-    color,
-    barCount = 5 
-}) => {
+const AudioWaves: React.FC<{ level: number; color: string; barCount?: number }> = ({ level, color, barCount = 5 }) => {
     const bars = useMemo(() => {
         return Array.from({ length: barCount }, (_, i) => {
             const baseHeight = 4 + Math.random() * 4;
@@ -56,7 +52,7 @@ const AudioWaves: React.FC<{ level: number; color: string; barCount?: number }> 
                     className={`w-1 rounded-full transition-all duration-100 ${color}`}
                     style={{
                         height: `${height}px`,
-                        animationDelay: `${i * 0.1}s`
+                        animationDelay: `${i * 0.1}s`,
                     }}
                 />
             ))}
@@ -86,7 +82,7 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
     transcript,
     compact = false,
     className = '',
-    onClick
+    onClick,
 }) => {
     // Format duration
     const formattedDuration = useMemo(() => {
@@ -106,7 +102,7 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
                     waveColor: 'bg-green-500',
                     icon: Mic,
                     label: 'Listening...',
-                    dotColor: 'bg-green-500'
+                    dotColor: 'bg-green-500',
                 };
             case 'processing':
                 return {
@@ -116,7 +112,7 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
                     waveColor: 'bg-amber-500',
                     icon: Loader2,
                     label: 'Processing...',
-                    dotColor: 'bg-amber-500'
+                    dotColor: 'bg-amber-500',
                 };
             case 'speaking':
                 return {
@@ -126,7 +122,7 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
                     waveColor: 'bg-blue-500',
                     icon: Volume2,
                     label: 'Speaking...',
-                    dotColor: 'bg-blue-500'
+                    dotColor: 'bg-blue-500',
                 };
             default:
                 return {
@@ -136,7 +132,7 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
                     waveColor: 'bg-slate-400',
                     icon: Mic,
                     label: 'Voice ready',
-                    dotColor: 'bg-slate-400'
+                    dotColor: 'bg-slate-400',
                 };
         }
     }, [state]);
@@ -162,9 +158,7 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
                     <Icon size={14} className={stateConfig.textColor} />
                 )}
                 {isActive && (
-                    <span className={`text-xs font-medium ${stateConfig.textColor}`}>
-                        {formattedDuration}
-                    </span>
+                    <span className={`text-xs font-medium ${stateConfig.textColor}`}>{formattedDuration}</span>
                 )}
             </button>
         );
@@ -182,45 +176,34 @@ export const VoiceIndicator: React.FC<VoiceIndicatorProps> = ({
             `}
         >
             {/* Icon */}
-            <div className={`
+            <div
+                className={`
                 flex items-center justify-center w-8 h-8 rounded-full
                 ${state === 'processing' ? 'animate-pulse' : ''}
                 ${isActive ? stateConfig.dotColor : 'bg-slate-200 dark:bg-slate-700'}
-            `}>
-                <Icon 
-                    size={16} 
-                    className={`text-white ${state === 'processing' ? 'animate-spin' : ''}`}
-                />
+            `}
+            >
+                <Icon size={16} className={`text-white ${state === 'processing' ? 'animate-spin' : ''}`} />
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     {/* Label */}
-                    <span className={`text-sm font-medium ${stateConfig.textColor}`}>
-                        {stateConfig.label}
-                    </span>
+                    <span className={`text-sm font-medium ${stateConfig.textColor}`}>{stateConfig.label}</span>
 
                     {/* Duration */}
-                    {isActive && (
-                        <span className="text-xs text-slate-500 tabular-nums">
-                            {formattedDuration}
-                        </span>
-                    )}
+                    {isActive && <span className="text-xs text-slate-500 tabular-nums">{formattedDuration}</span>}
                 </div>
 
                 {/* Transcript preview */}
                 {transcript && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                        "{transcript}"
-                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">"{transcript}"</p>
                 )}
             </div>
 
             {/* Audio Waves */}
-            {isActive && state !== 'processing' && (
-                <AudioWaves level={audioLevel} color={stateConfig.waveColor} />
-            )}
+            {isActive && state !== 'processing' && <AudioWaves level={audioLevel} color={stateConfig.waveColor} />}
         </div>
     );
 };
@@ -238,13 +221,13 @@ export const VoiceBadge: React.FC<{
     const colors = {
         listening: 'bg-green-500',
         processing: 'bg-amber-500',
-        speaking: 'bg-blue-500'
+        speaking: 'bg-blue-500',
     };
 
     const labels = {
         listening: '🎤',
         processing: '⏳',
-        speaking: '🔊'
+        speaking: '🔊',
     };
 
     return (
@@ -262,12 +245,4 @@ export const VoiceBadge: React.FC<{
 };
 
 export default VoiceIndicator;
-
-
-
-
-
-
-
-
 

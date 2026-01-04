@@ -9,33 +9,31 @@ import { z } from 'zod';
 // PROJECT
 // ==========================================
 
-export const CreateProjectSchema = z.object({
-    name: z.string()
-        .min(1, 'Project name is required')
-        .max(255, 'Project name too long')
-        .trim(),
-    description: z.string()
-        .max(5000, 'Description too long')
-        .optional(),
-    status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled'])
-        .optional()
-        .default('draft'),
-    startDate: z.string().datetime().optional().nullable(),
-    endDate: z.string().datetime().optional().nullable(),
-    budget: z.number().min(0).max(1000000000).optional(),
-    currency: z.string().length(3).optional().default('USD'),
-    tags: z.array(z.string().max(50)).max(20).optional(),
-    methodology: z.enum(['agile', 'waterfall', 'hybrid', 'custom']).optional(),
-    visibility: z.enum(['private', 'team', 'organization']).optional().default('team'),
-}).refine(data => {
-    if (data.startDate && data.endDate) {
-        return new Date(data.startDate) <= new Date(data.endDate);
-    }
-    return true;
-}, {
-    message: 'End date must be after start date',
-    path: ['endDate'],
-});
+export const CreateProjectSchema = z
+    .object({
+        name: z.string().min(1, 'Project name is required').max(255, 'Project name too long').trim(),
+        description: z.string().max(5000, 'Description too long').optional(),
+        status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled']).optional().default('draft'),
+        startDate: z.string().datetime().optional().nullable(),
+        endDate: z.string().datetime().optional().nullable(),
+        budget: z.number().min(0).max(1000000000).optional(),
+        currency: z.string().length(3).optional().default('USD'),
+        tags: z.array(z.string().max(50)).max(20).optional(),
+        methodology: z.enum(['agile', 'waterfall', 'hybrid', 'custom']).optional(),
+        visibility: z.enum(['private', 'team', 'organization']).optional().default('team'),
+    })
+    .refine(
+        (data) => {
+            if (data.startDate && data.endDate) {
+                return new Date(data.startDate) <= new Date(data.endDate);
+            }
+            return true;
+        },
+        {
+            message: 'End date must be after start date',
+            path: ['endDate'],
+        },
+    );
 
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 

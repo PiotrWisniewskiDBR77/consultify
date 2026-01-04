@@ -415,13 +415,15 @@ class ABTestingService {
 const abTestingService = new ABTestingService();
 
 export {
-ABTestingService,
-    abTestingService,
-    abTesting: abTestingService // Alias for API routes
-};
-
-export default {
     ABTestingService,
     abTestingService,
-    abTesting: abTestingService // Alias for API routes
+    abTestingService as abTesting
 };
+
+const abTestingModule = {
+    ABTestingService,
+    abTestingService,
+    abTesting: abTestingService
+};
+
+export default abTestingModule;

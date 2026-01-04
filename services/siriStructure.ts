@@ -1,9 +1,9 @@
 /**
  * SIRI (Smart Industry Readiness Index) Structure
- * 
+ *
  * SIRI jest narzędziem opracowanym przez Singapore Economic Development Board (EDB)
  * we współpracy z TÜV SÜD. Wykorzystanie w Consultify ma wyłącznie cel edukacyjny.
- * 
+ *
  * Structure:
  * - 3 Building Blocks (Process, Technology, Organization)
  * - 8 Dimensions across blocks
@@ -142,11 +142,7 @@ export const SIRI_MATURITY_LEVELS: SIRILevel[] = [
         level: 2,
         title: 'Digital',
         description: 'Digital technologies implemented in silos. Data collection started.',
-        indicators: [
-            'Standalone digital systems',
-            'Basic data collection',
-            'Some process digitization',
-        ],
+        indicators: ['Standalone digital systems', 'Basic data collection', 'Some process digitization'],
     },
     {
         level: 3,
@@ -162,21 +158,13 @@ export const SIRI_MATURITY_LEVELS: SIRILevel[] = [
         level: 4,
         title: 'Automated',
         description: 'Automated decision-making with AI/ML. Predictive capabilities.',
-        indicators: [
-            'AI-driven automation',
-            'Predictive analytics',
-            'Self-adjusting processes',
-        ],
+        indicators: ['AI-driven automation', 'Predictive analytics', 'Self-adjusting processes'],
     },
     {
         level: 5,
         title: 'Intelligent',
         description: 'Self-optimizing autonomous operations. Continuous improvement loop.',
-        indicators: [
-            'Autonomous operations',
-            'Self-learning systems',
-            'Ecosystem-wide optimization',
-        ],
+        indicators: ['Autonomous operations', 'Self-learning systems', 'Ecosystem-wide optimization'],
     },
 ];
 
@@ -210,7 +198,7 @@ export const SIRI_DIMENSIONS: SIRIDimension[] = [
         levels: SIRI_MATURITY_LEVELS,
         prioritisationAreas: ['integrated_product_lifecycle', 'digital_twin'],
     },
-    
+
     // TECHNOLOGY Building Block
     {
         id: 'automation',
@@ -236,7 +224,7 @@ export const SIRI_DIMENSIONS: SIRIDimension[] = [
         levels: SIRI_MATURITY_LEVELS,
         prioritisationAreas: ['shop_floor_intelligence', 'enterprise_intelligence', 'facility_intelligence'],
     },
-    
+
     // ORGANIZATION Building Block
     {
         id: 'talent_readiness',
@@ -286,7 +274,7 @@ export const SIRI_PRIORITISATION_AREAS: SIRIPrioritisationArea[] = [
         dimension: 'product_lifecycle',
         description: 'End-to-end product lifecycle management',
     },
-    
+
     // Technology - Automation
     {
         id: 'shop_floor_automation',
@@ -312,7 +300,7 @@ export const SIRI_PRIORITISATION_AREAS: SIRIPrioritisationArea[] = [
         dimension: 'automation',
         description: 'Building management, energy optimization',
     },
-    
+
     // Technology - Connectivity
     {
         id: 'shop_floor_connectivity',
@@ -338,7 +326,7 @@ export const SIRI_PRIORITISATION_AREAS: SIRIPrioritisationArea[] = [
         dimension: 'connectivity',
         description: 'Smart building systems, utilities monitoring',
     },
-    
+
     // Technology - Intelligence
     {
         id: 'shop_floor_intelligence',
@@ -364,7 +352,7 @@ export const SIRI_PRIORITISATION_AREAS: SIRIPrioritisationArea[] = [
         dimension: 'intelligence',
         description: 'Energy AI, space optimization, sustainability analytics',
     },
-    
+
     // Organization
     {
         id: 'workforce_learning',
@@ -408,28 +396,28 @@ export const SIRI_PRIORITISATION_AREAS: SIRIPrioritisationArea[] = [
  * Get dimension by ID
  */
 export function getSIRIDimension(dimensionId: string): SIRIDimension | undefined {
-    return SIRI_DIMENSIONS.find(d => d.id === dimensionId);
+    return SIRI_DIMENSIONS.find((d) => d.id === dimensionId);
 }
 
 /**
  * Get dimensions for a building block
  */
 export function getDimensionsForBlock(block: SIRIBuildingBlock): SIRIDimension[] {
-    return SIRI_DIMENSIONS.filter(d => d.buildingBlock === block);
+    return SIRI_DIMENSIONS.filter((d) => d.buildingBlock === block);
 }
 
 /**
  * Get prioritisation areas for a dimension
  */
 export function getPrioritisationAreasForDimension(dimensionId: string): SIRIPrioritisationArea[] {
-    return SIRI_PRIORITISATION_AREAS.filter(a => a.dimension === dimensionId);
+    return SIRI_PRIORITISATION_AREAS.filter((a) => a.dimension === dimensionId);
 }
 
 /**
  * Get prioritisation areas for a building block
  */
 export function getPrioritisationAreasForBlock(block: SIRIBuildingBlock): SIRIPrioritisationArea[] {
-    return SIRI_PRIORITISATION_AREAS.filter(a => a.buildingBlock === block);
+    return SIRI_PRIORITISATION_AREAS.filter((a) => a.buildingBlock === block);
 }
 
 /**
@@ -438,9 +426,9 @@ export function getPrioritisationAreasForBlock(block: SIRIBuildingBlock): SIRIPr
 export function calculateBlockScore(dimensionScores: Record<string, number>, block: SIRIBuildingBlock): number {
     const blockConfig = SIRI_BUILDING_BLOCKS[block];
     const relevantScores = blockConfig.dimensionIds
-        .map(id => dimensionScores[id])
-        .filter(score => score !== undefined && score !== null);
-    
+        .map((id) => dimensionScores[id])
+        .filter((score) => score !== undefined && score !== null);
+
     if (relevantScores.length === 0) return 0;
     return Math.round((relevantScores.reduce((a, b) => a + b, 0) / relevantScores.length) * 10) / 10;
 }
@@ -449,7 +437,7 @@ export function calculateBlockScore(dimensionScores: Record<string, number>, blo
  * Calculate overall SIRI score
  */
 export function calculateOverallSIRIScore(dimensionScores: Record<string, number>): number {
-    const allScores = Object.values(dimensionScores).filter(s => s !== undefined && s !== null);
+    const allScores = Object.values(dimensionScores).filter((s) => s !== undefined && s !== null);
     if (allScores.length === 0) return 0;
     return Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10;
 }
@@ -459,14 +447,14 @@ export function calculateOverallSIRIScore(dimensionScores: Record<string, number
  */
 export function mapSIRIDimensionToDRD(dimensionId: string): string {
     const mapping: Record<string, string> = {
-        'operations': 'processes',
-        'supply_chain': 'processes',
-        'product_lifecycle': 'digitalProducts',
-        'automation': 'processes',
-        'connectivity': 'dataManagement',
-        'intelligence': 'aiMaturity',
-        'talent_readiness': 'culture',
-        'structure_management': 'culture',
+        operations: 'processes',
+        supply_chain: 'processes',
+        product_lifecycle: 'digitalProducts',
+        automation: 'processes',
+        connectivity: 'dataManagement',
+        intelligence: 'aiMaturity',
+        talent_readiness: 'culture',
+        structure_management: 'culture',
     };
     return mapping[dimensionId] || 'processes';
 }
@@ -476,15 +464,15 @@ export function mapSIRIDimensionToDRD(dimensionId: string): string {
  */
 export function createEmptySIRIAssessment(): SIRIAssessmentData {
     const dimensions: Record<string, SIRIDimensionScore> = {};
-    SIRI_DIMENSIONS.forEach(dim => {
+    SIRI_DIMENSIONS.forEach((dim) => {
         dimensions[dim.id] = { current: 0, target: 0, gap: 0 };
     });
-    
+
     const prioritisationMatrix: Record<string, number> = {};
-    SIRI_PRIORITISATION_AREAS.forEach(area => {
+    SIRI_PRIORITISATION_AREAS.forEach((area) => {
         prioritisationMatrix[area.id] = 0;
     });
-    
+
     return {
         buildingBlocks: {
             PROCESS: { score: 0, dimensionScores: {} },
@@ -508,12 +496,4 @@ export default {
     SIRI_PRIORITISATION_AREAS,
     SIRI_MATURITY_LEVELS,
 };
-
-
-
-
-
-
-
-
 

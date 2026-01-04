@@ -1,20 +1,32 @@
 /**
  * Analysis Compare View
- * 
+ *
  * Side-by-side comparison of multiple digitization analyses
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-    GitCompare, Search, Plus, X, BarChart3, TrendingUp,
-    Workflow, Package, Building, Database, Users, Shield,
-    PieChart, List
+import {
+    BarChart3,
+    Building,
+    Database,
+    GitCompare,
+    List,
+    Package,
+    PieChart,
+    Plus,
+    Search,
+    Shield,
+    TrendingUp,
+    Users,
+    Workflow,
+    X,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { DigitizationAnalysis } from './types';
+
 import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluationData';
-import { ComparisonRadarChart, AnalysisDataSeries } from '../Charts';
+import { Api } from '../../services/api';
+import { AnalysisDataSeries, ComparisonRadarChart } from '../Charts';
+import { DigitizationAnalysis } from './types';
 
 const AXIS_ICONS: Record<string, any> = {
     digital_processes: Workflow,
@@ -56,7 +68,7 @@ export const AnalysisCompareView: React.FC = () => {
             toast.error('Maksymalnie 4 analizy do porównania');
             return;
         }
-        if (selectedAnalyses.find(a => a.id === analysis.id)) {
+        if (selectedAnalyses.find((a) => a.id === analysis.id)) {
             toast.error('Ta analiza jest już wybrana');
             return;
         }
@@ -65,28 +77,28 @@ export const AnalysisCompareView: React.FC = () => {
     };
 
     const removeAnalysis = (id: string) => {
-        setSelectedAnalyses(selectedAnalyses.filter(a => a.id !== id));
+        setSelectedAnalyses(selectedAnalyses.filter((a) => a.id !== id));
     };
 
     // Prepare data for radar chart
     const radarData: AnalysisDataSeries[] = useMemo(() => {
         return selectedAnalyses.map((analysis, index) => {
             const scores: Record<string, number> = {};
-            DIGITIZATION_AXES.forEach(axis => {
+            DIGITIZATION_AXES.forEach((axis) => {
                 scores[axis.id] = analysis.axisScores?.[axis.id]?.currentScore || 0;
             });
             return {
                 id: analysis.id,
                 name: analysis.name,
                 color: ANALYSIS_COLORS[index % ANALYSIS_COLORS.length],
-                scores
+                scores,
             };
         });
     }, [selectedAnalyses]);
 
     const axisLabels: Record<string, string> = useMemo(() => {
         const labels: Record<string, string> = {};
-        DIGITIZATION_AXES.forEach(axis => {
+        DIGITIZATION_AXES.forEach((axis) => {
             // Shorten labels for radar chart
             labels[axis.id] = axis.namePl.length > 15 ? axis.namePl.substring(0, 13) + '...' : axis.namePl;
         });
@@ -110,9 +122,7 @@ export const AnalysisCompareView: React.FC = () => {
                         <GitCompare className="text-purple-500" />
                         Porównanie analiz
                     </h2>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Porównaj do 4 analiz dojrzałości cyfrowej
-                    </p>
+                    <p className="text-sm text-slate-500 mt-1">Porównaj do 4 analiz dojrzałości cyfrowej</p>
                 </div>
                 {selectedAnalyses.length < 4 && (
                     <button
@@ -132,9 +142,7 @@ export const AnalysisCompareView: React.FC = () => {
                     <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-4">
                         <GitCompare size={32} className="text-purple-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-                        Brak wybranych analiz
-                    </h3>
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Brak wybranych analiz</h3>
                     <p className="text-sm text-slate-500 mb-4 max-w-md">
                         Wybierz co najmniej 2 analizy, aby rozpocząć porównanie
                     </p>
@@ -151,8 +159,8 @@ export const AnalysisCompareView: React.FC = () => {
                 <div className="space-y-6">
                     {/* Analysis Cards Row */}
                     <div className={`grid gap-4 grid-cols-${Math.min(selectedAnalyses.length, 4)}`}>
-                        {selectedAnalyses.map(analysis => (
-                            <div 
+                        {selectedAnalyses.map((analysis) => (
+                            <div
                                 key={analysis.id}
                                 className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl p-4 relative"
                             >
@@ -167,12 +175,18 @@ export const AnalysisCompareView: React.FC = () => {
                                         <BarChart3 size={20} className="text-emerald-500" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-navy-900 dark:text-white truncate">{analysis.name}</p>
-                                        <p className="text-xs text-slate-400">{new Date(analysis.createdAt).toLocaleDateString('pl-PL')}</p>
+                                        <p className="font-medium text-navy-900 dark:text-white truncate">
+                                            {analysis.name}
+                                        </p>
+                                        <p className="text-xs text-slate-400">
+                                            {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="text-center py-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg">
-                                    <p className="text-3xl font-bold text-emerald-500">{analysis.overallScore?.toFixed(1) || '0'}</p>
+                                    <p className="text-3xl font-bold text-emerald-500">
+                                        {analysis.overallScore?.toFixed(1) || '0'}
+                                    </p>
                                     <p className="text-xs text-slate-500">ogólny wynik</p>
                                 </div>
                             </div>
@@ -183,16 +197,14 @@ export const AnalysisCompareView: React.FC = () => {
                     {selectedAnalyses.length >= 2 && (
                         <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                    Porównanie per oś
-                                </h3>
+                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Porównanie per oś</h3>
                                 {/* View toggle */}
                                 <div className="flex items-center bg-slate-100 dark:bg-navy-900/50 rounded-lg p-1">
                                     <button
                                         onClick={() => setViewMode('radar')}
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                            viewMode === 'radar' 
-                                                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm' 
+                                            viewMode === 'radar'
+                                                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                     >
@@ -202,8 +214,8 @@ export const AnalysisCompareView: React.FC = () => {
                                     <button
                                         onClick={() => setViewMode('bar')}
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                            viewMode === 'bar' 
-                                                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm' 
+                                            viewMode === 'bar'
+                                                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                     >
@@ -222,12 +234,12 @@ export const AnalysisCompareView: React.FC = () => {
                                 />
                             ) : (
                                 <div className="space-y-4">
-                                    {DIGITIZATION_AXES.map(axis => {
+                                    {DIGITIZATION_AXES.map((axis) => {
                                         const Icon = AXIS_ICONS[axis.id] || Workflow;
                                         return (
                                             <div key={axis.id} className="space-y-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div 
+                                                    <div
                                                         className="w-6 h-6 rounded flex items-center justify-center"
                                                         style={{ backgroundColor: `${axis.color}20` }}
                                                     >
@@ -242,17 +254,29 @@ export const AnalysisCompareView: React.FC = () => {
                                                         const score = analysis.axisScores?.[axis.id]?.currentScore || 0;
                                                         return (
                                                             <div key={analysis.id} className="flex items-center gap-2">
-                                                                <span className="w-24 text-xs text-slate-500 truncate">{analysis.name}</span>
+                                                                <span className="w-24 text-xs text-slate-500 truncate">
+                                                                    {analysis.name}
+                                                                </span>
                                                                 <div className="flex-1 h-4 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                                                    <div 
+                                                                    <div
                                                                         className="h-full rounded-full transition-all"
-                                                                        style={{ 
+                                                                        style={{
                                                                             width: `${(score / 7) * 100}%`,
-                                                                            backgroundColor: ANALYSIS_COLORS[index % ANALYSIS_COLORS.length]
+                                                                            backgroundColor:
+                                                                                ANALYSIS_COLORS[
+                                                                                    index % ANALYSIS_COLORS.length
+                                                                                ],
                                                                         }}
                                                                     />
                                                                 </div>
-                                                                <span className="w-12 text-sm font-medium text-right" style={{ color: ANALYSIS_COLORS[index % ANALYSIS_COLORS.length] }}>
+                                                                <span
+                                                                    className="w-12 text-sm font-medium text-right"
+                                                                    style={{
+                                                                        color: ANALYSIS_COLORS[
+                                                                            index % ANALYSIS_COLORS.length
+                                                                        ],
+                                                                    }}
+                                                                >
                                                                     {score.toFixed(1)}
                                                                 </span>
                                                             </div>
@@ -275,15 +299,18 @@ export const AnalysisCompareView: React.FC = () => {
                     <div className="bg-white dark:bg-navy-900 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
                         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10">
                             <h3 className="font-bold text-navy-900 dark:text-white">Wybierz analizę</h3>
-                            <button onClick={() => setShowSelector(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg">
+                            <button
+                                onClick={() => setShowSelector(false)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                            >
                                 <X size={20} className="text-slate-400" />
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4">
                             <div className="space-y-2">
                                 {availableAnalyses
-                                    .filter(a => !selectedAnalyses.find(s => s.id === a.id))
-                                    .map(analysis => (
+                                    .filter((a) => !selectedAnalyses.find((s) => s.id === a.id))
+                                    .map((analysis) => (
                                         <button
                                             key={analysis.id}
                                             onClick={() => addAnalysis(analysis)}
@@ -294,9 +321,11 @@ export const AnalysisCompareView: React.FC = () => {
                                                     <BarChart3 size={20} className="text-emerald-500" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-navy-900 dark:text-white truncate">{analysis.name}</p>
+                                                    <p className="font-medium text-navy-900 dark:text-white truncate">
+                                                        {analysis.name}
+                                                    </p>
                                                     <p className="text-xs text-slate-400">
-                                                        Wynik: {analysis.overallScore?.toFixed(1) || '0'}/7 • 
+                                                        Wynik: {analysis.overallScore?.toFixed(1) || '0'}/7 •
                                                         {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}
                                                     </p>
                                                 </div>
@@ -313,4 +342,3 @@ export const AnalysisCompareView: React.FC = () => {
 };
 
 export default AnalysisCompareView;
-

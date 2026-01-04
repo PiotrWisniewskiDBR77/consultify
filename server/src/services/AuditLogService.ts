@@ -1,7 +1,7 @@
 /**
  * Audit Log Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Comprehensive audit logging for enterprise compliance and security.
  * Features:
  * - Immutable audit trail
@@ -12,10 +12,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -92,7 +93,7 @@ export interface PaginatedAuditLogs {
 // ==========================================
 
 class AuditLogService {
-    private db: IDatabase;
+    private _db: IDatabase;
 
     constructor(dbInstance?: IDatabase) {
         this.db = dbInstance || getDatabase();
@@ -116,7 +117,7 @@ class AuditLogService {
             compliance_tags = [],
             request_id,
             organization_id,
-            metadata = {}
+            metadata = {},
         } = logData;
 
         const id = uuidv4();
@@ -130,13 +131,23 @@ class AuditLogService {
                     risk_level, compliance_tags, request_id, organization_id, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    id, timestamp, user_id, user_email, ip_address, user_agent,
-                    action_type, resource_type, resource_id,
+                    id,
+                    timestamp,
+                    user_id,
+                    user_email,
+                    ip_address,
+                    user_agent,
+                    action_type,
+                    resource_type,
+                    resource_id,
                     before_data ? JSON.stringify(before_data) : null,
                     after_data ? JSON.stringify(after_data) : null,
-                    risk_level, JSON.stringify(compliance_tags), request_id,
-                    organization_id, JSON.stringify(metadata)
-                ]
+                    risk_level,
+                    JSON.stringify(compliance_tags),
+                    request_id,
+                    organization_id,
+                    JSON.stringify(metadata),
+                ],
             );
             return { id, timestamp };
         } catch (err: unknown) {
@@ -148,7 +159,10 @@ class AuditLogService {
     /**
      * Get audit logs with filtering and pagination
      */
-    async getLogs(filters: AuditLogFilters = {}, pagination: Pagination = { page: 1, pageSize: 50 }): Promise<PaginatedAuditLogs> {
+    async getLogs(
+        filters: AuditLogFilters = {},
+        pagination: Pagination = { page: 1, pageSize: 50 },
+    ): Promise<PaginatedAuditLogs> {
         const {
             search,
             riskLevel,
@@ -160,7 +174,7 @@ class AuditLogService {
             resourceType,
             resourceId,
             organizationId,
-            complianceTag
+            complianceTag,
         } = filters;
 
         const { page = 1, pageSize = 50 } = pagination;
@@ -246,7 +260,7 @@ class AuditLogService {
             total,
             page,
             pageSize,
-            totalPages: Math.ceil(total / pageSize)
+            totalPages: Math.ceil(total / pageSize),
         };
     }
 }

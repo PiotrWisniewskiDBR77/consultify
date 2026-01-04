@@ -1,6 +1,6 @@
 /**
  * DashboardPreferencesSettings Component
- * 
+ *
  * User preferences for dashboard customization:
  * - Default landing page after login
  * - Widget visibility toggles
@@ -9,27 +9,28 @@
  * - Auto-refresh interval
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    LayoutDashboard, 
-    Eye, 
-    EyeOff, 
-    RefreshCw, 
-    Minimize2, 
-    MessageSquare,
-    Save,
-    Loader2,
-    Home,
-    Briefcase,
-    CheckSquare,
-    Calendar,
+import {
+    BarChart3,
     Brain,
-    BarChart3
+    Briefcase,
+    Calendar,
+    CheckSquare,
+    Eye,
+    EyeOff,
+    Home,
+    LayoutDashboard,
+    Loader2,
+    MessageSquare,
+    Minimize2,
+    RefreshCw,
+    Save,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
 interface DashboardPreferencesSettingsProps {
@@ -65,11 +66,14 @@ const DEFAULT_PREFERENCES: DashboardPreferences = {
         aiInsights: true,
         recentActivity: true,
         quickActions: true,
-        metrics: true
-    }
+        metrics: true,
+    },
 };
 
-export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettingsProps> = ({ currentUser, onUpdateUser }) => {
+export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettingsProps> = ({
+    currentUser,
+    onUpdateUser,
+}) => {
     const { t } = useTranslation();
     const [preferences, setPreferences] = useState<DashboardPreferences>(DEFAULT_PREFERENCES);
     const [loading, setLoading] = useState(true);
@@ -105,13 +109,13 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
     };
 
     const updatePreference = <K extends keyof DashboardPreferences>(key: K, value: DashboardPreferences[K]) => {
-        setPreferences(prev => ({ ...prev, [key]: value }));
+        setPreferences((prev) => ({ ...prev, [key]: value }));
     };
 
     const toggleWidget = (widget: keyof DashboardPreferences['widgets']) => {
-        setPreferences(prev => ({
+        setPreferences((prev) => ({
             ...prev,
-            widgets: { ...prev.widgets, [widget]: !prev.widgets[widget] }
+            widgets: { ...prev.widgets, [widget]: !prev.widgets[widget] },
         }));
     };
 
@@ -128,23 +132,43 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
         { value: 'projects', label: t('settings.dashboard.pages.projects', 'Projects'), icon: Briefcase },
         { value: 'tasks', label: t('settings.dashboard.pages.tasks', 'My Tasks'), icon: CheckSquare },
         { value: 'calendar', label: t('settings.dashboard.pages.calendar', 'Calendar'), icon: Calendar },
-        { value: 'ai-assistant', label: t('settings.dashboard.pages.ai', 'AI Assistant'), icon: Brain }
+        { value: 'ai-assistant', label: t('settings.dashboard.pages.ai', 'AI Assistant'), icon: Brain },
     ];
 
     const widgetOptions = [
         { key: 'tasks' as const, label: t('settings.dashboard.widgets.tasks', 'My Tasks'), icon: CheckSquare },
-        { key: 'initiatives' as const, label: t('settings.dashboard.widgets.initiatives', 'Active Initiatives'), icon: Briefcase },
-        { key: 'calendar' as const, label: t('settings.dashboard.widgets.calendar', 'Calendar Preview'), icon: Calendar },
+        {
+            key: 'initiatives' as const,
+            label: t('settings.dashboard.widgets.initiatives', 'Active Initiatives'),
+            icon: Briefcase,
+        },
+        {
+            key: 'calendar' as const,
+            label: t('settings.dashboard.widgets.calendar', 'Calendar Preview'),
+            icon: Calendar,
+        },
         { key: 'aiInsights' as const, label: t('settings.dashboard.widgets.aiInsights', 'AI Insights'), icon: Brain },
-        { key: 'recentActivity' as const, label: t('settings.dashboard.widgets.activity', 'Recent Activity'), icon: RefreshCw },
-        { key: 'quickActions' as const, label: t('settings.dashboard.widgets.quickActions', 'Quick Actions'), icon: Home },
-        { key: 'metrics' as const, label: t('settings.dashboard.widgets.metrics', 'Metrics Overview'), icon: BarChart3 }
+        {
+            key: 'recentActivity' as const,
+            label: t('settings.dashboard.widgets.activity', 'Recent Activity'),
+            icon: RefreshCw,
+        },
+        {
+            key: 'quickActions' as const,
+            label: t('settings.dashboard.widgets.quickActions', 'Quick Actions'),
+            icon: Home,
+        },
+        {
+            key: 'metrics' as const,
+            label: t('settings.dashboard.widgets.metrics', 'Metrics Overview'),
+            icon: BarChart3,
+        },
     ];
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
             <InfoButton cardId="settings-profile" position="top-right" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -174,23 +198,33 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {t('settings.dashboard.landingPageDescription', 'Choose where you want to land after logging in')}
                 </p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {landingPageOptions.map(option => {
+                    {landingPageOptions.map((option) => {
                         const Icon = option.icon;
                         const isSelected = preferences.defaultLandingPage === option.value;
                         return (
                             <button
                                 key={option.value}
-                                onClick={() => updatePreference('defaultLandingPage', option.value as DashboardPreferences['defaultLandingPage'])}
+                                onClick={() =>
+                                    updatePreference(
+                                        'defaultLandingPage',
+                                        option.value as DashboardPreferences['defaultLandingPage'],
+                                    )
+                                }
                                 className={`p-4 rounded-xl border-2 transition-all text-center ${
                                     isSelected
                                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
                                         : 'border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50'
                                 }`}
                             >
-                                <Icon size={24} className={`mx-auto ${isSelected ? 'text-blue-600' : 'text-slate-400'}`} />
-                                <div className={`mt-2 text-sm font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                <Icon
+                                    size={24}
+                                    className={`mx-auto ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}
+                                />
+                                <div
+                                    className={`mt-2 text-sm font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
+                                >
                                     {option.label}
                                 </div>
                             </button>
@@ -206,11 +240,14 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     {t('settings.dashboard.widgetVisibility', 'Widget Visibility')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    {t('settings.dashboard.widgetVisibilityDescription', 'Choose which widgets to show on your dashboard')}
+                    {t(
+                        'settings.dashboard.widgetVisibilityDescription',
+                        'Choose which widgets to show on your dashboard',
+                    )}
                 </p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {widgetOptions.map(option => {
+                    {widgetOptions.map((option) => {
                         const Icon = option.icon;
                         const isEnabled = preferences.widgets[option.key];
                         return (
@@ -220,7 +257,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                             >
                                 <div className="flex items-center gap-3">
                                     <Icon size={20} className={isEnabled ? 'text-green-500' : 'text-slate-400'} />
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">{option.label}</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                        {option.label}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={() => toggleWidget(option.key)}
@@ -228,7 +267,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                                         isEnabled ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
                                     }`}
                                 >
-                                    <span className={`${isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                    <span
+                                        className={`${isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                                    />
                                 </button>
                             </div>
                         );
@@ -242,7 +283,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     <Minimize2 size={20} className="text-purple-500" />
                     {t('settings.dashboard.displayOptions', 'Display Options')}
                 </h3>
-                
+
                 <div className="space-y-6">
                     {/* Compact Mode */}
                     <div className="flex items-center justify-between">
@@ -251,7 +292,10 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                                 {t('settings.dashboard.compactMode', 'Compact Mode')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.dashboard.compactModeDescription', 'Reduce padding and margins for denser information display')}
+                                {t(
+                                    'settings.dashboard.compactModeDescription',
+                                    'Reduce padding and margins for denser information display',
+                                )}
                             </p>
                         </div>
                         <button
@@ -260,7 +304,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                                 preferences.compactMode ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.compactMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.compactMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -272,7 +318,10 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                                 {t('settings.dashboard.showGreeting', 'Show Greeting Message')}
                             </label>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('settings.dashboard.showGreetingDescription', 'Display personalized greeting on dashboard')}
+                                {t(
+                                    'settings.dashboard.showGreetingDescription',
+                                    'Display personalized greeting on dashboard',
+                                )}
                             </p>
                         </div>
                         <button
@@ -281,7 +330,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                                 preferences.showGreeting ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
                             }`}
                         >
-                            <span className={`${preferences.showGreeting ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            <span
+                                className={`${preferences.showGreeting ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                            />
                         </button>
                     </div>
 
@@ -302,10 +353,16 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                             className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                         >
                             <option value="0">{t('settings.dashboard.disabled', 'Disabled')}</option>
-                            <option value="30">{t('settings.dashboard.seconds', '{{count}} seconds', { count: 30 })}</option>
+                            <option value="30">
+                                {t('settings.dashboard.seconds', '{{count}} seconds', { count: 30 })}
+                            </option>
                             <option value="60">{t('settings.dashboard.minute', '1 minute')}</option>
-                            <option value="300">{t('settings.dashboard.minutes', '{{count}} minutes', { count: 5 })}</option>
-                            <option value="600">{t('settings.dashboard.minutes', '{{count}} minutes', { count: 10 })}</option>
+                            <option value="300">
+                                {t('settings.dashboard.minutes', '{{count}} minutes', { count: 5 })}
+                            </option>
+                            <option value="600">
+                                {t('settings.dashboard.minutes', '{{count}} minutes', { count: 10 })}
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -315,12 +372,4 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
 };
 
 export default DashboardPreferencesSettings;
-
-
-
-
-
-
-
-
 

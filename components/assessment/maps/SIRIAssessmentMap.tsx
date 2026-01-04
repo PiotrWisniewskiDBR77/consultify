@@ -1,6 +1,6 @@
 /**
  * SIRI Assessment Map Component
- * 
+ *
  * Smart Industry Readiness Index assessment visualization:
  * - 3 Building Blocks (Process, Technology, Organization)
  * - 8 Dimensions with radar charts
@@ -8,35 +8,36 @@
  * - Legal notice (Singapore EDB)
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
 import {
-    Settings,
-    Cpu,
-    Users,
-    Info,
+    AlertTriangle,
+    BarChart3,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
-    AlertTriangle,
+    Cpu,
+    HelpCircle,
+    Info,
     Save,
-    BarChart3,
+    Settings,
     Target,
     TrendingUp,
-    CheckCircle2,
-    HelpCircle
+    Users,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import {
-    SIRI_BUILDING_BLOCKS,
-    SIRI_DIMENSIONS,
-    SIRI_PRIORITISATION_AREAS,
-    SIRI_MATURITY_LEVELS,
-    SIRIBuildingBlock,
-    SIRIDimension,
-    SIRIPrioritisationArea,
-    SIRIAssessmentData,
     calculateBlockScore,
     calculateOverallSIRIScore,
     createEmptySIRIAssessment,
+    SIRI_BUILDING_BLOCKS,
+    SIRI_DIMENSIONS,
+    SIRI_MATURITY_LEVELS,
+    SIRI_PRIORITISATION_AREAS,
+    SIRIAssessmentData,
+    SIRIBuildingBlock,
+    SIRIDimension,
+    SIRIPrioritisationArea,
 } from '../../../services/siriStructure';
 
 // ============================================
@@ -134,28 +135,27 @@ const SIRIBuildingBlockCard: React.FC<{
 }> = ({ block, dimensions, scores, onDimensionChange, readOnly, expanded, onToggleExpand }) => {
     const config = SIRI_BUILDING_BLOCKS[block];
     const colors = getColorClasses(config.color);
-    
+
     const blockScore = useMemo(() => {
         const currentScores: Record<string, number> = {};
-        dimensions.forEach(d => {
+        dimensions.forEach((d) => {
             currentScores[d.id] = scores[d.id]?.current || 0;
         });
         return calculateBlockScore(currentScores, block);
     }, [dimensions, scores, block]);
-    
+
     const IconComponent = block === 'PROCESS' ? Settings : block === 'TECHNOLOGY' ? Cpu : Users;
-    
+
     return (
-        <div className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
-            expanded 
-                ? `${colors.border500} shadow-lg ${colors.shadow}` 
-                : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-        }`}>
+        <div
+            className={`bg-white dark:bg-navy-950/50 rounded-xl border-2 transition-all ${
+                expanded
+                    ? `${colors.border500} shadow-lg ${colors.shadow}`
+                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+            }`}
+        >
             {/* Header */}
-            <button
-                onClick={onToggleExpand}
-                className="w-full p-4 flex items-center justify-between"
-            >
+            <button onClick={onToggleExpand} className="w-full p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-xl ${colors.bg100} flex items-center justify-center`}>
                         <IconComponent className={`w-6 h-6 ${colors.text600}`} />
@@ -168,22 +168,18 @@ const SIRIBuildingBlockCard: React.FC<{
                 <div className="flex items-center gap-4">
                     {/* Score Badge */}
                     <div className={`px-3 py-1.5 rounded-lg ${colors.bg100}`}>
-                        <span className={`text-lg font-bold ${colors.text600}`}>
-                            {blockScore.toFixed(1)}
-                        </span>
+                        <span className={`text-lg font-bold ${colors.text600}`}>{blockScore.toFixed(1)}</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">/5</span>
                     </div>
                     {expanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
             </button>
-            
+
             {/* Expanded Content */}
             {expanded && (
                 <div className="px-4 pb-4 border-t border-slate-200 dark:border-white/10">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 py-3">
-                        {config.description}
-                    </p>
-                    
+                    <p className="text-sm text-slate-600 dark:text-slate-400 py-3">{config.description}</p>
+
                     {/* Mini Radar Chart (simplified bars) */}
                     <div className="mb-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
@@ -194,13 +190,15 @@ const SIRIBuildingBlockCard: React.FC<{
                                     Current
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <div className={`w-2 h-2 rounded-full ${colors.bg300} border ${colors.border500}`}></div>
+                                    <div
+                                        className={`w-2 h-2 rounded-full ${colors.bg300} border ${colors.border500}`}
+                                    ></div>
                                     Target
                                 </span>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            {dimensions.map(dim => {
+                            {dimensions.map((dim) => {
                                 const score = scores[dim.id] || { current: 0, target: 0 };
                                 return (
                                     <div key={dim.id} className="flex items-center gap-2">
@@ -208,11 +206,11 @@ const SIRIBuildingBlockCard: React.FC<{
                                             {dim.name}
                                         </span>
                                         <div className="flex-1 h-4 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden relative">
-                                            <div 
+                                            <div
                                                 className={`absolute inset-y-0 left-0 ${colors.bg200} rounded-full`}
                                                 style={{ width: `${(score.target / 5) * 100}%` }}
                                             />
-                                            <div 
+                                            <div
                                                 className={`absolute inset-y-0 left-0 ${colors.bg500} rounded-full`}
                                                 style={{ width: `${(score.current / 5) * 100}%` }}
                                             />
@@ -225,10 +223,10 @@ const SIRIBuildingBlockCard: React.FC<{
                             })}
                         </div>
                     </div>
-                    
+
                     {/* Dimension Cards */}
                     <div className="space-y-3">
-                        {dimensions.map(dim => (
+                        {dimensions.map((dim) => (
                             <SIRIDimensionCard
                                 key={dim.id}
                                 dimension={dim}
@@ -259,15 +257,13 @@ const SIRIDimensionCard: React.FC<{
 }> = ({ dimension, current, target, onChange, readOnly, colorClasses }) => {
     const [showLevels, setShowLevels] = useState(false);
     const gap = Math.max(0, target - current);
-    
+
     return (
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex-1">
                     <h4 className="font-medium text-navy-900 dark:text-white text-sm">{dimension.name}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                        {dimension.description}
-                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{dimension.description}</p>
                 </div>
                 <button
                     onClick={() => setShowLevels(!showLevels)}
@@ -276,13 +272,13 @@ const SIRIDimensionCard: React.FC<{
                     <HelpCircle size={14} className="text-slate-400" />
                 </button>
             </div>
-            
+
             {/* Score Selectors */}
             <div className="flex items-center gap-4">
                 <div className="flex-1">
                     <label className="text-xs text-slate-500 mb-1 block">Current</label>
                     <div className="flex gap-1">
-                        {[0, 1, 2, 3, 4, 5].map(level => (
+                        {[0, 1, 2, 3, 4, 5].map((level) => (
                             <button
                                 key={level}
                                 onClick={() => !readOnly && onChange(level, target)}
@@ -301,7 +297,7 @@ const SIRIDimensionCard: React.FC<{
                 <div className="flex-1">
                     <label className="text-xs text-slate-500 mb-1 block">Target</label>
                     <div className="flex gap-1">
-                        {[0, 1, 2, 3, 4, 5].map(level => (
+                        {[0, 1, 2, 3, 4, 5].map((level) => (
                             <button
                                 key={level}
                                 onClick={() => !readOnly && onChange(current, level)}
@@ -326,18 +322,16 @@ const SIRIDimensionCard: React.FC<{
                     </div>
                 )}
             </div>
-            
+
             {/* Level Details */}
             {showLevels && (
                 <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
                     <div className="grid grid-cols-6 gap-1 text-xs">
-                        {SIRI_MATURITY_LEVELS.map(level => (
-                            <div 
+                        {SIRI_MATURITY_LEVELS.map((level) => (
+                            <div
                                 key={level.level}
                                 className={`p-2 rounded ${
-                                    current === level.level 
-                                        ? colorClasses.bg100
-                                        : 'bg-white dark:bg-navy-900'
+                                    current === level.level ? colorClasses.bg100 : 'bg-white dark:bg-navy-900'
                                 }`}
                             >
                                 <div className="font-bold text-navy-900 dark:text-white">{level.level}</div>
@@ -368,19 +362,19 @@ const SIRIPrioritisationHeatmap: React.FC<{
         if (score <= 4) return 'bg-green-400';
         return 'bg-emerald-500';
     };
-    
+
     const groupedAreas = useMemo(() => {
         const grouped: Record<SIRIBuildingBlock, SIRIPrioritisationArea[]> = {
             PROCESS: [],
             TECHNOLOGY: [],
             ORGANIZATION: [],
         };
-        areas.forEach(area => {
+        areas.forEach((area) => {
             grouped[area.buildingBlock].push(area);
         });
         return grouped;
     }, [areas]);
-    
+
     return (
         <div className="bg-white dark:bg-navy-950/50 rounded-xl border border-slate-200 dark:border-white/10 p-4">
             <div className="flex items-center justify-between mb-4">
@@ -390,7 +384,7 @@ const SIRIPrioritisationHeatmap: React.FC<{
                 </h3>
                 <div className="flex items-center gap-2 text-xs">
                     <span className="text-slate-500">Score:</span>
-                    {[0, 1, 2, 3, 4, 5].map(score => (
+                    {[0, 1, 2, 3, 4, 5].map((score) => (
                         <div key={score} className="flex items-center gap-1">
                             <div className={`w-4 h-4 rounded ${getColorClass(score)}`}></div>
                             <span className="text-slate-600 dark:text-slate-400">{score}</span>
@@ -398,21 +392,18 @@ const SIRIPrioritisationHeatmap: React.FC<{
                     ))}
                 </div>
             </div>
-            
+
             <div className="space-y-4">
-                {(Object.keys(groupedAreas) as SIRIBuildingBlock[]).map(block => (
+                {(Object.keys(groupedAreas) as SIRIBuildingBlock[]).map((block) => (
                     <div key={block}>
                         <h4 className="text-xs font-medium text-slate-500 uppercase mb-2">
                             {SIRI_BUILDING_BLOCKS[block].name}
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                            {groupedAreas[block].map(area => {
+                            {groupedAreas[block].map((area) => {
                                 const score = scores[area.id] || 0;
                                 return (
-                                    <div
-                                        key={area.id}
-                                        className="relative group"
-                                    >
+                                    <div key={area.id} className="relative group">
                                         <div
                                             className={`p-3 rounded-lg ${getColorClass(score)} transition-all cursor-pointer hover:opacity-90`}
                                             onClick={() => {
@@ -422,10 +413,14 @@ const SIRIPrioritisationHeatmap: React.FC<{
                                                 }
                                             }}
                                         >
-                                            <div className={`text-xs font-medium ${score > 2 ? 'text-white' : 'text-navy-900'}`}>
+                                            <div
+                                                className={`text-xs font-medium ${score > 2 ? 'text-white' : 'text-navy-900'}`}
+                                            >
                                                 {area.namePL}
                                             </div>
-                                            <div className={`text-lg font-bold ${score > 2 ? 'text-white' : 'text-navy-900'}`}>
+                                            <div
+                                                className={`text-lg font-bold ${score > 2 ? 'text-white' : 'text-navy-900'}`}
+                                            >
                                                 {score}
                                             </div>
                                         </div>
@@ -453,8 +448,8 @@ const SIRILegalNotice: React.FC = () => (
         <div className="text-sm text-amber-800 dark:text-amber-200">
             <strong>SIRI (Smart Industry Readiness Index)</strong> jest narzędziem opracowanym przez{' '}
             <strong>Singapore Economic Development Board (EDB)</strong> we współpracy z <strong>TÜV SÜD</strong>.
-            Wykorzystanie struktury SIRI w Consultify ma wyłącznie <strong>cel edukacyjny</strong> i służy do nauki metodologii Industry 4.0.
-            Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.
+            Wykorzystanie struktury SIRI w Consultify ma wyłącznie <strong>cel edukacyjny</strong> i służy do nauki
+            metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.
         </div>
     </div>
 );
@@ -470,72 +465,74 @@ export const SIRIAssessmentMap: React.FC<SIRIAssessmentMapProps> = ({
     showLegalNotice = true,
 }) => {
     const { t } = useTranslation();
-    
+
     // Initialize data
-    const [data, setData] = useState<SIRIAssessmentData>(() => 
-        initialData || createEmptySIRIAssessment()
-    );
-    
+    const [data, setData] = useState<SIRIAssessmentData>(() => initialData || createEmptySIRIAssessment());
+
     // Track expanded building blocks
-    const [expandedBlocks, setExpandedBlocks] = useState<Set<SIRIBuildingBlock>>(
-        new Set(['PROCESS'])
-    );
-    
+    const [expandedBlocks, setExpandedBlocks] = useState<Set<SIRIBuildingBlock>>(new Set(['PROCESS']));
+
     // Handlers
-    const handleDimensionChange = useCallback((dimensionId: string, current: number, target: number) => {
-        setData(prev => {
-            const newData = {
-                ...prev,
-                dimensions: {
-                    ...prev.dimensions,
-                    [dimensionId]: {
-                        ...prev.dimensions[dimensionId],
-                        current,
-                        target,
-                        gap: Math.max(0, target - current),
+    const handleDimensionChange = useCallback(
+        (dimensionId: string, current: number, target: number) => {
+            setData((prev) => {
+                const newData = {
+                    ...prev,
+                    dimensions: {
+                        ...prev.dimensions,
+                        [dimensionId]: {
+                            ...prev.dimensions[dimensionId],
+                            current,
+                            target,
+                            gap: Math.max(0, target - current),
+                        },
                     },
-                },
-            };
-            
-            // Recalculate building block scores
-            const currentScores: Record<string, number> = {};
-            Object.entries(newData.dimensions).forEach(([id, score]) => {
-                currentScores[id] = score.current;
-            });
-            
-            (Object.keys(SIRI_BUILDING_BLOCKS) as SIRIBuildingBlock[]).forEach(block => {
-                const blockScore = calculateBlockScore(currentScores, block);
-                newData.buildingBlocks[block] = {
-                    ...newData.buildingBlocks[block],
-                    score: blockScore,
-                    dimensionScores: currentScores,
                 };
+
+                // Recalculate building block scores
+                const currentScores: Record<string, number> = {};
+                Object.entries(newData.dimensions).forEach(([id, score]) => {
+                    currentScores[id] = score.current;
+                });
+
+                (Object.keys(SIRI_BUILDING_BLOCKS) as SIRIBuildingBlock[]).forEach((block) => {
+                    const blockScore = calculateBlockScore(currentScores, block);
+                    newData.buildingBlocks[block] = {
+                        ...newData.buildingBlocks[block],
+                        score: blockScore,
+                        dimensionScores: currentScores,
+                    };
+                });
+
+                // Recalculate overall score
+                newData.overallScore = calculateOverallSIRIScore(currentScores);
+
+                onChange?.(newData);
+                return newData;
             });
-            
-            // Recalculate overall score
-            newData.overallScore = calculateOverallSIRIScore(currentScores);
-            
-            onChange?.(newData);
-            return newData;
-        });
-    }, [onChange]);
-    
-    const handlePrioritisationChange = useCallback((areaId: string, score: number) => {
-        setData(prev => {
-            const newData = {
-                ...prev,
-                prioritisationMatrix: {
-                    ...prev.prioritisationMatrix,
-                    [areaId]: score,
-                },
-            };
-            onChange?.(newData);
-            return newData;
-        });
-    }, [onChange]);
-    
+        },
+        [onChange],
+    );
+
+    const handlePrioritisationChange = useCallback(
+        (areaId: string, score: number) => {
+            setData((prev) => {
+                const newData = {
+                    ...prev,
+                    prioritisationMatrix: {
+                        ...prev.prioritisationMatrix,
+                        [areaId]: score,
+                    },
+                };
+                onChange?.(newData);
+                return newData;
+            });
+        },
+        [onChange],
+    );
+
     const toggleBlockExpand = useCallback((block: SIRIBuildingBlock) => {
-        setExpandedBlocks(prev => {
+        setExpandedBlocks((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(block)) {
                 newSet.delete(block);
@@ -545,16 +542,17 @@ export const SIRIAssessmentMap: React.FC<SIRIAssessmentMapProps> = ({
             return newSet;
         });
     }, []);
-    
+
     // Calculate stats
     const stats = useMemo(() => {
         const dimensionScores = Object.values(data.dimensions);
-        const filledDimensions = dimensionScores.filter(d => d.current > 0).length;
+        const filledDimensions = dimensionScores.filter((d) => d.current > 0).length;
         const totalGap = dimensionScores.reduce((sum, d) => sum + d.gap, 0);
-        const avgCurrent = dimensionScores.length > 0
-            ? dimensionScores.reduce((sum, d) => sum + d.current, 0) / dimensionScores.length
-            : 0;
-        
+        const avgCurrent =
+            dimensionScores.length > 0
+                ? dimensionScores.reduce((sum, d) => sum + d.current, 0) / dimensionScores.length
+                : 0;
+
         return {
             overall: data.overallScore,
             filledDimensions,
@@ -564,7 +562,7 @@ export const SIRIAssessmentMap: React.FC<SIRIAssessmentMapProps> = ({
             progress: Math.round((filledDimensions / SIRI_DIMENSIONS.length) * 100),
         };
     }, [data]);
-    
+
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 overflow-hidden">
             {/* Header with Stats */}
@@ -598,45 +596,43 @@ export const SIRIAssessmentMap: React.FC<SIRIAssessmentMapProps> = ({
                         </div>
                         {/* Total Gap */}
                         <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-xl text-center">
-                            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                                {stats.totalGap}
-                            </div>
+                            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.totalGap}</div>
                             <div className="text-xs text-red-600/70 dark:text-red-400/70">Total Gap</div>
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                         className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all"
                         style={{ width: `${stats.progress}%` }}
                     />
                 </div>
             </div>
-            
+
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Legal Notice */}
                 {showLegalNotice && <SIRILegalNotice />}
-                
+
                 {/* Building Blocks */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                         <Target size={18} />
                         Building Blocks Assessment
                     </h3>
-                    
-                    {(Object.keys(SIRI_BUILDING_BLOCKS) as SIRIBuildingBlock[]).map(block => {
-                        const dimensions = SIRI_DIMENSIONS.filter(d => d.buildingBlock === block);
+
+                    {(Object.keys(SIRI_BUILDING_BLOCKS) as SIRIBuildingBlock[]).map((block) => {
+                        const dimensions = SIRI_DIMENSIONS.filter((d) => d.buildingBlock === block);
                         const scores: Record<string, { current: number; target: number }> = {};
-                        dimensions.forEach(d => {
+                        dimensions.forEach((d) => {
                             scores[d.id] = {
                                 current: data.dimensions[d.id]?.current || 0,
                                 target: data.dimensions[d.id]?.target || 0,
                             };
                         });
-                        
+
                         return (
                             <SIRIBuildingBlockCard
                                 key={block}
@@ -651,7 +647,7 @@ export const SIRIAssessmentMap: React.FC<SIRIAssessmentMapProps> = ({
                         );
                     })}
                 </div>
-                
+
                 {/* Prioritisation Matrix */}
                 <div className="mt-6">
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2 mb-4">

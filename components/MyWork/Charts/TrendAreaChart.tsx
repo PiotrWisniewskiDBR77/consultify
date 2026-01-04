@@ -3,8 +3,8 @@
  * BCG/McKinsey style: Clean lines, gradient fill, trend annotations
  */
 
-import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
 
 interface DataPoint {
     label: string;
@@ -45,7 +45,7 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
     yAxisMin,
     yAxisMax,
     formatValue = (v) => v.toString(),
-    className = ''
+    className = '',
 }) => {
     const padding = { top: 10, right: 10, bottom: showLabels ? 24 : 10, left: 40 };
     const chartWidth = width - padding.left - padding.right;
@@ -55,10 +55,10 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
     const { minY, maxY, points, targetLine, areaPath, linePath } = useMemo(() => {
         if (data.length === 0) return { minY: 0, maxY: 100, points: [], targetLine: '', areaPath: '', linePath: '' };
 
-        const values = data.map(d => d.value);
-        const targets = data.filter(d => d.target !== undefined).map(d => d.target!);
+        const values = data.map((d) => d.value);
+        const targets = data.filter((d) => d.target !== undefined).map((d) => d.target!);
         const allValues = [...values, ...targets];
-        
+
         const dataMin = Math.min(...allValues);
         const dataMax = Math.max(...allValues);
         const minY = yAxisMin !== undefined ? yAxisMin : Math.floor(dataMin * 0.9);
@@ -81,14 +81,17 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
         // Target line (if targets exist)
         const targetPoints = data
             .map((d, i) => ({ x: padding.left + (i / (data.length - 1)) * chartWidth, target: d.target }))
-            .filter(p => p.target !== undefined);
-        
-        const targetLine = targetPoints.length > 0
-            ? targetPoints.map((p, i) => {
-                const y = padding.top + chartHeight - ((p.target! - minY) / range) * chartHeight;
-                return `${i === 0 ? 'M' : 'L'} ${p.x},${y}`;
-            }).join(' ')
-            : '';
+            .filter((p) => p.target !== undefined);
+
+        const targetLine =
+            targetPoints.length > 0
+                ? targetPoints
+                      .map((p, i) => {
+                          const y = padding.top + chartHeight - ((p.target! - minY) / range) * chartHeight;
+                          return `${i === 0 ? 'M' : 'L'} ${p.x},${y}`;
+                      })
+                      .join(' ')
+                : '';
 
         return { minY, maxY, points, targetLine, areaPath, linePath };
     }, [data, chartWidth, chartHeight, padding, yAxisMin, yAxisMax]);
@@ -108,9 +111,9 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
     const gradientId = useMemo(() => `area-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
 
     return (
-        <svg 
-            width={width} 
-            height={height} 
+        <svg
+            width={width}
+            height={height}
             className={`overflow-visible ${className}`}
             viewBox={`0 0 ${width} ${height}`}
         >
@@ -123,29 +126,30 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
             </defs>
 
             {/* Grid lines */}
-            {showGrid && yTicks.map((tick, i) => (
-                <g key={i}>
-                    <line
-                        x1={padding.left}
-                        y1={tick.y}
-                        x2={width - padding.right}
-                        y2={tick.y}
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        strokeDasharray={i === 0 ? "0" : "2 4"}
-                        className="text-slate-200 dark:text-white/10"
-                    />
-                    <text
-                        x={padding.left - 8}
-                        y={tick.y}
-                        textAnchor="end"
-                        dominantBaseline="middle"
-                        className="text-[10px] fill-slate-400 dark:fill-slate-500"
-                    >
-                        {formatValue(tick.value)}
-                    </text>
-                </g>
-            ))}
+            {showGrid &&
+                yTicks.map((tick, i) => (
+                    <g key={i}>
+                        <line
+                            x1={padding.left}
+                            y1={tick.y}
+                            x2={width - padding.right}
+                            y2={tick.y}
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            strokeDasharray={i === 0 ? '0' : '2 4'}
+                            className="text-slate-200 dark:text-white/10"
+                        />
+                        <text
+                            x={padding.left - 8}
+                            y={tick.y}
+                            textAnchor="end"
+                            dominantBaseline="middle"
+                            className="text-[10px] fill-slate-400 dark:fill-slate-500"
+                        >
+                            {formatValue(tick.value)}
+                        </text>
+                    </g>
+                ))}
 
             {/* Area fill */}
             <motion.path
@@ -183,44 +187,46 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
             />
 
             {/* Data points */}
-            {showDots && points.map((point, i) => (
-                <motion.g key={i}>
-                    <motion.circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={i === points.length - 1 ? 5 : 3}
-                        fill={color}
-                        initial={animate ? { scale: 0 } : undefined}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 1 + i * 0.1 }}
-                    />
-                    {i === points.length - 1 && (
+            {showDots &&
+                points.map((point, i) => (
+                    <motion.g key={i}>
                         <motion.circle
                             cx={point.x}
                             cy={point.y}
-                            r={8}
+                            r={i === points.length - 1 ? 5 : 3}
                             fill={color}
-                            opacity={0.3}
                             initial={animate ? { scale: 0 } : undefined}
                             animate={{ scale: 1 }}
                             transition={{ delay: 1 + i * 0.1 }}
                         />
-                    )}
-                </motion.g>
-            ))}
+                        {i === points.length - 1 && (
+                            <motion.circle
+                                cx={point.x}
+                                cy={point.y}
+                                r={8}
+                                fill={color}
+                                opacity={0.3}
+                                initial={animate ? { scale: 0 } : undefined}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 1 + i * 0.1 }}
+                            />
+                        )}
+                    </motion.g>
+                ))}
 
             {/* X-axis labels */}
-            {showLabels && points.map((point, i) => (
-                <text
-                    key={i}
-                    x={point.x}
-                    y={height - 6}
-                    textAnchor="middle"
-                    className="text-[9px] fill-slate-400 dark:fill-slate-500"
-                >
-                    {point.label}
-                </text>
-            ))}
+            {showLabels &&
+                points.map((point, i) => (
+                    <text
+                        key={i}
+                        x={point.x}
+                        y={height - 6}
+                        textAnchor="middle"
+                        className="text-[9px] fill-slate-400 dark:fill-slate-500"
+                    >
+                        {point.label}
+                    </text>
+                ))}
 
             {/* Current value annotation */}
             {points.length > 0 && (
@@ -248,12 +254,4 @@ export const TrendAreaChart: React.FC<TrendAreaChartProps> = ({
 };
 
 export default TrendAreaChart;
-
-
-
-
-
-
-
-
 

@@ -1,11 +1,12 @@
 /**
  * BillingService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for BillingService - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import BillingService from '../../../../src/services/BillingService.js';
 
@@ -54,7 +55,7 @@ describe('BillingService', () => {
             expect(plans).toEqual(mockPlans);
             expect(mockDb.all).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT * FROM subscription_plans'),
-                expect.any(Array)
+                expect.any(Array),
             );
         });
 
@@ -66,16 +67,18 @@ describe('BillingService', () => {
             expect(plan).toEqual(mockPlan);
             expect(mockDb.get).toHaveBeenCalledWith(
                 expect.stringContaining('SELECT * FROM subscription_plans WHERE id = ?'),
-                ['plan-1']
+                ['plan-1'],
             );
         });
     });
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

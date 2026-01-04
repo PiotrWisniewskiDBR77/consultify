@@ -1,14 +1,14 @@
 /**
  * Promo Code Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/promoCodeService.js (CommonJS) to TypeScript (ES Modules)
  * Enterprise-grade promotional code management for attribution and discounts.
  * Supports three code types:
  * - DISCOUNT: Applies discount to billing
  * - PARTNER: Attribution only (for partner settlements)
  * - CAMPAIGN: Marketing campaign tracking
- * 
+ *
  * Security Features:
  * - Case-insensitive code matching (stored uppercase)
  * - Validity window enforcement
@@ -17,8 +17,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { IDatabase } from '../database/IDatabase.js';
+
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
@@ -28,18 +29,18 @@ import * as DbPromise from '../utils/DbPromise.js';
 export const PROMO_TYPES = {
     DISCOUNT: 'DISCOUNT',
     PARTNER: 'PARTNER',
-    CAMPAIGN: 'CAMPAIGN'
+    CAMPAIGN: 'CAMPAIGN',
 } as const;
 
-export type PromoType = typeof PROMO_TYPES[keyof typeof PROMO_TYPES];
+export type PromoType = (typeof PROMO_TYPES)[keyof typeof PROMO_TYPES];
 
 export const DISCOUNT_TYPES = {
     PERCENT: 'PERCENT',
     FIXED: 'FIXED',
-    NONE: 'NONE'
+    NONE: 'NONE',
 } as const;
 
-export type DiscountType = typeof DISCOUNT_TYPES[keyof typeof DISCOUNT_TYPES];
+export type DiscountType = (typeof DISCOUNT_TYPES)[keyof typeof DISCOUNT_TYPES];
 
 interface ValidatePromoCodeResult {
     valid: boolean;
@@ -160,7 +161,7 @@ export async function validatePromoCode(code: string): Promise<ValidatePromoCode
         const row = await DbPromise.get<PromoCodeRow>(
             db,
             `SELECT * FROM promo_codes WHERE code = ? AND is_active = 1`,
-            [normalizedCode]
+            [normalizedCode],
         );
 
         if (!row) {
@@ -192,7 +193,7 @@ export async function validatePromoCode(code: string): Promise<ValidatePromoCode
             discountType: row.discount_type as DiscountType,
             discountValue: row.discount_value,
             partnerCode: row.type === PROMO_TYPES.PARTNER ? row.code : null,
-            metadata: JSON.parse(row.metadata || '{}')
+            metadata: JSON.parse(row.metadata || '{}'),
         };
 
         // Add human-readable discount message
@@ -220,7 +221,7 @@ export async function hasBeenUsedByOrg(code: string, organizationId: string): Pr
         `SELECT pcu.id FROM promo_code_usage pcu
          JOIN promo_codes pc ON pc.id = pcu.promo_code_id
          WHERE pc.code = ? AND pcu.organization_id = ?`,
-        [normalizedCode, organizationId]
+        [normalizedCode, organizationId],
     );
 
     return !!row;
@@ -232,7 +233,7 @@ export async function hasBeenUsedByOrg(code: string, organizationId: string): Pr
 export async function markPromoCodeUsed(
     code: string,
     organizationId: string,
-    userId: string | null = null
+    userId: string | null = null,
 ): Promise<MarkPromoCodeUsedResult> {
     const normalizedCode = code.trim().toUpperCase();
 
@@ -249,11 +250,9 @@ export async function markPromoCodeUsed(
     }
 
     // Atomic increment of used_count
-    const updateResult = await DbPromise.run(
-        db,
-        `UPDATE promo_codes SET used_count = used_count + 1 WHERE code = ?`,
-        [normalizedCode]
-    );
+    const updateResult = await DbPromise.run(db, `UPDATE promo_codes SET used_count = used_count + 1 WHERE code = ?`, [
+        normalizedCode,
+    ]);
 
     if (updateResult.changes === 0) {
         return { success: false, reason: 'Promo code not found' };
@@ -264,7 +263,7 @@ export async function markPromoCodeUsed(
     await DbPromise.run(
         db,
         `INSERT INTO promo_code_usage (id, promo_code_id, organization_id, user_id) VALUES (?, ?, ?, ?)`,
-        [usageId, validation.codeId!, organizationId, userId]
+        [usageId, validation.codeId!, organizationId, userId],
     );
 
     console.log(`[PromoCodeService] Promo code ${normalizedCode} used by org ${organizationId}`);
@@ -273,7 +272,7 @@ export async function markPromoCodeUsed(
         success: true,
         codeId: validation.codeId,
         discountType: validation.discountType,
-        discountValue: validation.discountValue
+        discountValue: validation.discountValue,
     };
 }
 
@@ -290,7 +289,7 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
         validUntil = null,
         maxUses = null,
         createdByUserId,
-        metadata = {}
+        metadata = {},
     } = params;
 
     if (!code || !type || !validFrom) {
@@ -313,7 +312,18 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
             db,
             `INSERT INTO promo_codes (id, code, type, discount_type, discount_value, valid_from, valid_until, max_uses, created_by_user_id, metadata)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [promoId, normalizedCode, type, discountType, discountValue, validFrom, validUntil, maxUses, createdByUserId, JSON.stringify(metadata)]
+            [
+                promoId,
+                normalizedCode,
+                type,
+                discountType,
+                discountValue,
+                validFrom,
+                validUntil,
+                maxUses,
+                createdByUserId,
+                JSON.stringify(metadata),
+            ],
         );
 
         console.log(`[PromoCodeService] Created promo code: ${normalizedCode} (${type})`);
@@ -331,7 +341,7 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
             isActive: true,
             createdByUserId,
             metadata,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
         };
     } catch (err: unknown) {
         const error = err as Error;
@@ -366,7 +376,7 @@ export async function listPromoCodes(options: ListPromoCodesOptions = {}): Promi
 
     const rows = await DbPromise.all<PromoCodeRow>(db, query, params);
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         id: row.id,
         code: row.code,
         type: row.type as PromoType,
@@ -379,7 +389,7 @@ export async function listPromoCodes(options: ListPromoCodesOptions = {}): Promi
         isActive: !!row.is_active,
         createdByUserId: row.created_by_user_id,
         metadata: JSON.parse(row.metadata || '{}'),
-        createdAt: row.created_at
+        createdAt: row.created_at,
     }));
 }
 
@@ -387,11 +397,7 @@ export async function listPromoCodes(options: ListPromoCodesOptions = {}): Promi
  * Deactivate a promo code
  */
 export async function deactivatePromoCode(codeId: string): Promise<{ success: boolean }> {
-    const result = await DbPromise.run(
-        db,
-        `UPDATE promo_codes SET is_active = 0 WHERE id = ?`,
-        [codeId]
-    );
+    const result = await DbPromise.run(db, `UPDATE promo_codes SET is_active = 0 WHERE id = ?`, [codeId]);
 
     return { success: result.changes > 0 };
 }
@@ -408,16 +414,16 @@ export async function getUsageHistory(codeId: string): Promise<PromoCodeUsageHis
          LEFT JOIN users u ON u.id = pcu.user_id
          WHERE pcu.promo_code_id = ?
          ORDER BY pcu.used_at DESC`,
-        [codeId]
+        [codeId],
     );
 
-    return (rows || []).map(row => ({
+    return (rows || []).map((row) => ({
         id: row.id,
         organizationId: row.organization_id,
         organizationName: row.organization_name || null,
         userId: row.user_id || null,
         userEmail: row.user_email || null,
-        usedAt: row.used_at
+        usedAt: row.used_at,
     }));
 }
 
@@ -432,7 +438,7 @@ const PromoCodeService = {
     createPromoCode,
     listPromoCodes,
     deactivatePromoCode,
-    getUsageHistory
+    getUsageHistory,
 };
 
 export default PromoCodeService;

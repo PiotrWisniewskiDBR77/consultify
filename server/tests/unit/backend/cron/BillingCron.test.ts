@@ -3,14 +3,15 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-    resetMonthlyBudgets,
+    calculateMonthlyUsage,
     checkAndTriggerAlerts,
     generatePayAsYouGoInvoices,
-    updateSeatCounts,
-    calculateMonthlyUsage,
     getBillingCron,
+    resetMonthlyBudgets,
+    updateSeatCounts,
 } from '../../../../src/cron/BillingCron.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
@@ -19,7 +20,11 @@ describe('BillingCron', () => {
     let mockBudgetService: { resetMonthlyBudgets: () => Promise<void> };
     let mockAdminAlertService: { checkAndTriggerAlerts: (orgId: string) => Promise<{ triggeredCount: number }> };
     let mockPayAsYouGoService: {
-        generatePayAsYouGoInvoice: (orgId: string, startDate: Date, endDate: Date) => Promise<{ invoiced: boolean; totalCost: number }>;
+        generatePayAsYouGoInvoice: (
+            orgId: string,
+            startDate: Date,
+            endDate: Date,
+        ) => Promise<{ invoiced: boolean; totalCost: number }>;
     };
     let mockSeatManagementService: { updateSeatCount: (orgId: string) => Promise<void> };
 
@@ -72,7 +77,7 @@ describe('BillingCron', () => {
                 resetMonthlyBudgets({
                     db: mockDb,
                     budgetManagementService: mockBudgetService,
-                })
+                }),
             ).rejects.toThrow('Reset failed');
         });
     });
@@ -91,7 +96,8 @@ describe('BillingCron', () => {
         });
 
         it('should handle errors for individual organizations', async () => {
-            mockAdminAlertService.checkAndTriggerAlerts = vi.fn()
+            mockAdminAlertService.checkAndTriggerAlerts = vi
+                .fn()
                 .mockResolvedValueOnce({ triggeredCount: 1 })
                 .mockRejectedValueOnce(new Error('Alert check failed'));
 
@@ -104,10 +110,12 @@ describe('BillingCron', () => {
         });
 
         it('should return 0 when no organizations found', async () => {
-            mockDb.all = vi.fn((sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
-                callback(null, []);
-                return mockDb;
-            }) as unknown as IDatabase['all'];
+            mockDb.all = vi.fn(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
+                    callback(null, []);
+                    return mockDb;
+                },
+            ) as unknown as IDatabase['all'];
 
             const triggeredCount = await checkAndTriggerAlerts({
                 db: mockDb,
@@ -120,10 +128,12 @@ describe('BillingCron', () => {
 
     describe('generatePayAsYouGoInvoices', () => {
         it('should generate invoices for PAYG organizations', async () => {
-            mockDb.all = vi.fn((sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
-                callback(null, [{ organization_id: 'org1' }, { organization_id: 'org2' }]);
-                return mockDb;
-            }) as unknown as IDatabase['all'];
+            mockDb.all = vi.fn(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
+                    callback(null, [{ organization_id: 'org1' }, { organization_id: 'org2' }]);
+                    return mockDb;
+                },
+            ) as unknown as IDatabase['all'];
 
             const invoicesGenerated = await generatePayAsYouGoInvoices({
                 db: mockDb,
@@ -135,12 +145,15 @@ describe('BillingCron', () => {
         });
 
         it('should handle errors for individual invoices', async () => {
-            mockDb.all = vi.fn((sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
-                callback(null, [{ organization_id: 'org1' }, { organization_id: 'org2' }]);
-                return mockDb;
-            }) as unknown as IDatabase['all'];
+            mockDb.all = vi.fn(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
+                    callback(null, [{ organization_id: 'org1' }, { organization_id: 'org2' }]);
+                    return mockDb;
+                },
+            ) as unknown as IDatabase['all'];
 
-            mockPayAsYouGoService.generatePayAsYouGoInvoice = vi.fn()
+            mockPayAsYouGoService.generatePayAsYouGoInvoice = vi
+                .fn()
                 .mockResolvedValueOnce({ invoiced: true, totalCost: 100 })
                 .mockRejectedValueOnce(new Error('Invoice generation failed'));
 
@@ -153,17 +166,20 @@ describe('BillingCron', () => {
         });
 
         it('should calculate correct date range for last month', async () => {
-            mockDb.all = vi.fn((sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
-                callback(null, [{ organization_id: 'org1' }]);
-                return mockDb;
-            }) as unknown as IDatabase['all'];
+            mockDb.all = vi.fn(
+                (sql: string, params: unknown[], callback: (err: Error | null, rows?: unknown[]) => void) => {
+                    callback(null, [{ organization_id: 'org1' }]);
+                    return mockDb;
+                },
+            ) as unknown as IDatabase['all'];
 
             await generatePayAsYouGoInvoices({
                 db: mockDb,
                 payAsYouGoService: mockPayAsYouGoService,
             });
 
-            const callArgs = (mockPayAsYouGoService.generatePayAsYouGoInvoice as ReturnType<typeof vi.fn>).mock.calls[0];
+            const callArgs = (mockPayAsYouGoService.generatePayAsYouGoInvoice as ReturnType<typeof vi.fn>).mock
+                .calls[0];
             const startDate = callArgs[1] as Date;
             const endDate = callArgs[2] as Date;
 
@@ -187,7 +203,8 @@ describe('BillingCron', () => {
         });
 
         it('should handle errors for individual organizations', async () => {
-            mockSeatManagementService.updateSeatCount = vi.fn()
+            mockSeatManagementService.updateSeatCount = vi
+                .fn()
                 .mockResolvedValueOnce(undefined)
                 .mockRejectedValueOnce(new Error('Update failed'));
 
@@ -220,7 +237,4 @@ describe('BillingCron', () => {
         });
     });
 });
-
-
-
 

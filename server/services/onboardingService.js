@@ -8,7 +8,8 @@
  * - Integration with audit logging
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import AiService from './aiService.js';
 import { v4 as uuidv4 } from 'uuid';
 import { runAsync, getAsync, withTransaction } from '../db/sqliteAsync.js';

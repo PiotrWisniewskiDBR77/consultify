@@ -1,11 +1,11 @@
 /**
  * Billing Flow E2E Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * End-to-end tests for billing journey - 95%+ coverage target
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Billing Flow E2E', () => {
     describe('Full Billing Journey', () => {
@@ -26,4 +26,3 @@ describe('Billing Flow E2E', () => {
         });
     });
 });
-

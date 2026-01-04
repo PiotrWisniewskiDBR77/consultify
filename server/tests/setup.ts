@@ -1,11 +1,11 @@
 /**
  * Test Setup File
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Global test configuration and setup
  */
 
-import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 // Set test environment
 process.env.NODE_ENV = 'test';
@@ -28,7 +28,4 @@ beforeEach(() => {
 afterEach(() => {
     // Cleanup after each test
 });
-
-
-
 

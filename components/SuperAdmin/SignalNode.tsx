@@ -1,5 +1,5 @@
-import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import React from 'react';
 
 interface SignalNodeProps {
     type: 'system' | 'client' | 'feedback';
@@ -18,7 +18,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
     count,
     colorClass,
     active,
-    onClick
+    onClick,
 }) => {
     // Determine blinking effect for Critical/Warning states
     const isCritical = colorClass.includes('red');
@@ -37,9 +37,10 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
             className={`
                 relative flex items-center justify-center p-2.5 rounded-xl transition-all duration-300
                 group border bg-white dark:bg-navy-950/50 
-                ${active
-                    ? `border-${colorClass.split('-')[1]}-500/30 bg-slate-50 dark:bg-white/5`
-                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-100 dark:hover:border-white/5'
+                ${
+                    active
+                        ? `border-${colorClass.split('-')[1]}-500/30 bg-slate-50 dark:bg-white/5`
+                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-100 dark:hover:border-white/5'
                 }
             `}
             title={`${count} ${label}`}
@@ -63,7 +64,8 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
 
             {/* Numeric Badge (If Count > 0) */}
             {count > 0 && (
-                <span className={`
+                <span
+                    className={`
                     absolute -top-2 -right-2 
                     min-w-[20px] h-5 
                     flex items-center justify-center 
@@ -73,7 +75,8 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
                     text-slate-900 dark:text-white
                     shadow-sm dark:shadow-lg dark:shadow-black/50
                     z-10
-                `}>
+                `}
+                >
                     <span className={colorClass}>{count > 99 ? '99+' : count}</span>
                 </span>
             )}

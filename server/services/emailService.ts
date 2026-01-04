@@ -4,19 +4,20 @@
  * Currently configured for console output, ready for SMTP integration.
  */
 
-import db from '../database';
 import nodemailer from 'nodemailer';
-import config from '../config';
+
+import config from '../config.js';
+import db from '../database.js';
 
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
 }
 
-interface SMTPSettings {
+interface _SMTPSettings {
     [key: string]: string;
 }
 
-interface SMTPConfig {
+interface _SMTPConfig {
     host?: string;
     port: number;
     secure: boolean;
@@ -53,7 +54,7 @@ interface Dependencies {
 const deps: Dependencies = {
     db: db as Database,
     nodemailer,
-    config
+    config,
 };
 
 export interface EmailServiceInterface {
@@ -83,7 +84,7 @@ const EmailService: EmailServiceInterface = {
             deps.db.all("SELECT key, value FROM settings WHERE key LIKE 'smtp_%'", [], (err, rows) => {
                 if (err || !rows) return resolve({});
                 const s = {};
-                rows.forEach(r => s[r.key] = r.value);
+                rows.forEach((r) => (s[r.key] = r.value));
                 resolve(s);
             });
         });
@@ -94,9 +95,9 @@ const EmailService: EmailServiceInterface = {
             secure: false, // true for 465, false for other ports
             auth: {
                 user: settings['smtp_user'] || process.env.SMTP_USER,
-                pass: settings['smtp_pass'] || process.env.SMTP_PASS
+                pass: settings['smtp_pass'] || process.env.SMTP_PASS,
             },
-            from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>'
+            from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>',
         };
 
         // For logging and debugging
@@ -115,8 +116,10 @@ const EmailService: EmailServiceInterface = {
                     from: smtpConfig.from,
                     to,
                     subject,
-                    html: html || `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
-                    attachments
+                    html:
+                        html ||
+                        `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
+                    attachments,
                 });
                 console.log('[EMAIL SERVICE] Sent successfully via SMTP');
             } catch (e) {
@@ -132,8 +135,7 @@ const EmailService: EmailServiceInterface = {
      */
     sendEmail: async (to: string, subject: string, html: string): Promise<boolean> => {
         return EmailService.send({ to, subject, html });
-    }
+    },
 };
 
 export default EmailService;
-

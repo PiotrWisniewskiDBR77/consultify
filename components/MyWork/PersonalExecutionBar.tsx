@@ -1,6 +1,7 @@
+import { AlertCircle, CheckCircle, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
+
 import { Task } from '../../types';
-import { Target, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface Props {
     stats: {
@@ -24,7 +25,9 @@ export const PersonalExecutionBar: React.FC<Props> = ({ stats }) => {
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/5 shadow-sm">
             <div className="flex justify-between items-end mb-4">
                 <div>
-                    <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Personal Execution Score</h3>
+                    <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Personal Execution Score
+                    </h3>
                     <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-extrabold text-navy-900 dark:text-white">{score}</span>
                         <span className="text-sm font-medium text-slate-400">/ 100</span>

@@ -13,8 +13,9 @@ let deps = {
  */
 async function initDeps() {
     if (!deps.db) {
-        const dbModule = await import('../database.js');
-        deps.db = dbModule.default || dbModule;
+        const dbModule = await import('../src/database/index.js');
+    const { getDatabase } = dbModule;
+    deps.db = getDatabase();
     }
 
     if (!deps.uuidv4) {

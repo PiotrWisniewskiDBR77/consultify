@@ -1,11 +1,12 @@
 /**
  * PayAsYouGoService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for PayAsYouGoService - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import PayAsYouGoService from '../../../../src/services/payAsYouGoService.js';
 
@@ -55,7 +56,7 @@ describe('PayAsYouGoService', () => {
                 orgId: 'org-1',
                 usageType: 'tokens',
                 quantity: 100,
-                unitPrice: 0.01
+                unitPrice: 0.01,
             });
 
             expect(result).toBeDefined();
@@ -64,7 +65,7 @@ describe('PayAsYouGoService', () => {
 
         it('should get current period usage', async () => {
             const mockUsageRows = [
-                { usage_type: 'tokens', total_quantity: 100, avg_unit_price: 0.01, total_cost: 1, usage_count: 1 }
+                { usage_type: 'tokens', total_quantity: 100, avg_unit_price: 0.01, total_cost: 1, usage_count: 1 },
             ];
             (mockDb.all as any).mockImplementation((sql: any, params: any, callback: any) => {
                 callback(null, mockUsageRows);
@@ -78,9 +79,11 @@ describe('PayAsYouGoService', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

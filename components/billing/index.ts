@@ -4,13 +4,7 @@
  */
 
 export { CreditNotesPanel } from './CreditNotesPanel';
-export { TaxSettingsPanel } from './TaxSettingsPanel';
-export { SubscriptionAnalytics } from './SubscriptionAnalytics';
 export { InvoiceTemplateEditor } from './InvoiceTemplateEditor';
-
-
-
-
-
-
+export { SubscriptionAnalytics } from './SubscriptionAnalytics';
+export { TaxSettingsPanel } from './TaxSettingsPanel';
 

@@ -1,7 +1,7 @@
 /**
  * AiActions Routes
  * API endpoints for aiActions
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

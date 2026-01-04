@@ -1,25 +1,25 @@
 /**
  * BlockInsertMenu
- * 
+ *
  * Slash command menu for inserting custom blocks like charts,
  * recommendation cards, and data visualizations.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
 import {
-    BarChart3,
-    Target,
-    Lightbulb,
-    FileText,
-    Table,
     AlertCircle,
-    TrendingUp,
-    PieChart,
+    BarChart3,
     Calendar,
-    Users,
+    FileText,
     Gauge,
-    Sparkles
+    Lightbulb,
+    PieChart,
+    Sparkles,
+    Table,
+    Target,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface BlockInsertMenuProps {
     position: { x: number; y: number };
@@ -44,7 +44,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Radar Dojrzałości',
         description: 'Wykres radarowy z poziomami dojrzałości',
         icon: PieChart,
-        category: 'data'
+        category: 'data',
     },
     {
         id: 'gapHeatmap',
@@ -52,7 +52,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Mapa Ciepła Luk',
         description: 'Heatmapa pokazująca luki w dojrzałości',
         icon: Target,
-        category: 'data'
+        category: 'data',
     },
     {
         id: 'metricCard',
@@ -60,7 +60,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Karty Metryk',
         description: 'Karty z kluczowymi wskaźnikami',
         icon: Gauge,
-        category: 'data'
+        category: 'data',
     },
     {
         id: 'trendChart',
@@ -68,7 +68,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Wykres Trendu',
         description: 'Wykres trendu czasowego',
         icon: TrendingUp,
-        category: 'data'
+        category: 'data',
     },
 
     // Content Blocks
@@ -78,7 +78,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Rekomendacja',
         description: 'Karta rekomendacji z priorytetem i ROI',
         icon: Lightbulb,
-        category: 'content'
+        category: 'content',
     },
     {
         id: 'callout',
@@ -86,7 +86,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Wyróżnienie',
         description: 'Wyróżniony blok informacyjny',
         icon: AlertCircle,
-        category: 'content'
+        category: 'content',
     },
     {
         id: 'table',
@@ -94,7 +94,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Tabela',
         description: 'Tabela z danymi',
         icon: Table,
-        category: 'content'
+        category: 'content',
     },
     {
         id: 'timeline',
@@ -102,7 +102,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Oś Czasu',
         description: 'Roadmapa lub harmonogram',
         icon: Calendar,
-        category: 'content'
+        category: 'content',
     },
 
     // AI Generated
@@ -112,7 +112,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Podsumowanie Wykonawcze',
         description: 'AI-generowane podsumowanie dla zarządu',
         icon: FileText,
-        category: 'ai'
+        category: 'ai',
     },
     {
         id: 'aiRecommendations',
@@ -120,32 +120,29 @@ const BLOCK_OPTIONS: BlockOption[] = [
         labelPl: 'Rekomendacje AI',
         description: 'Automatycznie generowane rekomendacje',
         icon: Sparkles,
-        category: 'ai'
-    }
+        category: 'ai',
+    },
 ];
 
-export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
-    position,
-    onSelect,
-    onClose
-}) => {
+export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({ position, onSelect, onClose }) => {
     const [search, setSearch] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const menuRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Filter blocks based on search
-    const filteredBlocks = BLOCK_OPTIONS.filter(block =>
-        block.label.toLowerCase().includes(search.toLowerCase()) ||
-        block.labelPl.toLowerCase().includes(search.toLowerCase()) ||
-        block.description.toLowerCase().includes(search.toLowerCase())
+    const filteredBlocks = BLOCK_OPTIONS.filter(
+        (block) =>
+            block.label.toLowerCase().includes(search.toLowerCase()) ||
+            block.labelPl.toLowerCase().includes(search.toLowerCase()) ||
+            block.description.toLowerCase().includes(search.toLowerCase()),
     );
 
     // Group by category
     const groupedBlocks = {
-        data: filteredBlocks.filter(b => b.category === 'data'),
-        content: filteredBlocks.filter(b => b.category === 'content'),
-        ai: filteredBlocks.filter(b => b.category === 'ai')
+        data: filteredBlocks.filter((b) => b.category === 'data'),
+        content: filteredBlocks.filter((b) => b.category === 'content'),
+        ai: filteredBlocks.filter((b) => b.category === 'ai'),
     };
 
     // Focus input on mount
@@ -171,11 +168,11 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
             switch (e.key) {
                 case 'ArrowDown':
                     e.preventDefault();
-                    setSelectedIndex(i => Math.min(i + 1, filteredBlocks.length - 1));
+                    setSelectedIndex((i) => Math.min(i + 1, filteredBlocks.length - 1));
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
-                    setSelectedIndex(i => Math.max(i - 1, 0));
+                    setSelectedIndex((i) => Math.max(i - 1, 0));
                     break;
                 case 'Enter':
                     e.preventDefault();
@@ -198,9 +195,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
 
         return (
             <div key={title}>
-                <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    {title}
-                </div>
+                <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</div>
                 {blocks.map((block, idx) => {
                     const Icon = block.icon;
                     const globalIndex = filteredBlocks.indexOf(block);
@@ -216,13 +211,16 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
                 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-white/5'}
               `}
                         >
-                            <div className={`
+                            <div
+                                className={`
                 p-2 rounded-lg
-                ${block.category === 'ai'
-                                    ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                                }
-              `}>
+                ${
+                    block.category === 'ai'
+                        ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                }
+              `}
+                            >
                                 <Icon className="w-4 h-4" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -264,9 +262,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
             {/* Block List */}
             <div className="max-h-80 overflow-y-auto py-2">
                 {filteredBlocks.length === 0 ? (
-                    <div className="px-3 py-8 text-center text-slate-400">
-                        Nie znaleziono bloków
-                    </div>
+                    <div className="px-3 py-8 text-center text-slate-400">Nie znaleziono bloków</div>
                 ) : (
                     <>
                         {renderCategory('Wizualizacja Danych', groupedBlocks.data)}

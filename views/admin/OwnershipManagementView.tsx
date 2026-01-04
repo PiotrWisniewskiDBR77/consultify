@@ -1,6 +1,6 @@
 /**
  * OwnershipManagementView - Organization Owner & Billing Admin Management
- * 
+ *
  * Critical Features:
  * - Display current organization owner (billing admin)
  * - Transfer ownership to another admin
@@ -9,31 +9,32 @@
  * - Organization deletion (30-day grace period)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Crown,
-    Shield,
-    CreditCard,
-    ArrowRight,
-    AlertTriangle,
-    Check,
-    X,
-    Mail,
-    User as UserIcon,
-    Building2,
-    Clock,
-    Trash2,
-    RefreshCw,
     AlertCircle,
+    AlertTriangle,
+    ArrowRight,
+    Building2,
+    Check,
+    Clock,
+    CreditCard,
+    Crown,
     FileText,
-    MapPin
+    Mail,
+    MapPin,
+    RefreshCw,
+    Shield,
+    Trash2,
+    User as UserIcon,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../store/useAppStore';
-import { OrganizationOwnership, BillingAddress, User, OwnershipTransferRequest } from '../../types';
+import { useTranslation } from 'react-i18next';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
+import { BillingAddress, OrganizationOwnership, OwnershipTransferRequest, User } from '../../types';
 
 interface OwnershipManagementViewProps {
     className?: string;
@@ -66,7 +67,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         try {
             // Load ownership info
             const ownershipRes = await fetch(`/api/organizations/${currentOrganization?.id}/ownership`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (ownershipRes.ok) {
                 const data = await ownershipRes.json();
@@ -76,7 +77,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
             // Load admins for transfer
             const adminsRes = await fetch(`/api/organizations/${currentOrganization?.id}/admins`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (adminsRes.ok) {
                 const data = await adminsRes.json();
@@ -84,9 +85,12 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
             }
 
             // Check pending transfer
-            const transferRes = await fetch(`/api/organizations/${currentOrganization?.id}/ownership/pending-transfer`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
+            const transferRes = await fetch(
+                `/api/organizations/${currentOrganization?.id}/ownership/pending-transfer`,
+                {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                },
+            );
             if (transferRes.ok) {
                 const data = await transferRes.json();
                 setPendingTransfer(data);
@@ -119,12 +123,12 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     toUserId: selectedAdminId,
-                    reason: transferReason
-                })
+                    reason: transferReason,
+                }),
             });
 
             if (res.ok) {
@@ -145,7 +149,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         try {
             const res = await fetch(`/api/organizations/${currentOrganization?.id}/ownership/cancel-transfer`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
@@ -161,7 +165,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         try {
             const res = await fetch(`/api/organizations/${currentOrganization?.id}/ownership/accept-transfer`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 
             if (res.ok) {
@@ -185,8 +189,8 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             if (res.ok) {
@@ -201,7 +205,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         }
         setSaving(false);
     };
-
 
     if (loading) {
         return (
@@ -240,7 +243,8 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                                 Ownership Transfer Pending
                             </h4>
                             <p className="text-sm text-violet-600 dark:text-violet-300 mt-1">
-                                You have been selected to become the new organization owner. This will make you the billing admin.
+                                You have been selected to become the new organization owner. This will make you the
+                                billing admin.
                             </p>
                             <div className="flex gap-2 mt-3">
                                 <button
@@ -280,7 +284,10 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{ownerUser?.email}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                            Billing Admin since {ownership?.createdAt ? new Date(ownership.createdAt).toLocaleDateString() : 'Initial Setup'}
+                            Billing Admin since{' '}
+                            {ownership?.createdAt
+                                ? new Date(ownership.createdAt).toLocaleDateString()
+                                : 'Initial Setup'}
                         </p>
                     </div>
                     {isOwner && (
@@ -298,7 +305,8 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                 <div className="mt-4 p-3 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5" />
                     <p className="text-xs text-amber-700 dark:text-amber-300">
-                        The organization owner is the billing admin and cannot be deleted. To remove this user, ownership must be transferred first.
+                        The organization owner is the billing admin and cannot be deleted. To remove this user,
+                        ownership must be transferred first.
                     </p>
                 </div>
             </div>
@@ -347,7 +355,8 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                             <div className="p-6 space-y-4">
                                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                                     <p className="text-sm text-amber-700 dark:text-amber-300">
-                                        Transferring ownership will make the selected user the billing admin. You will retain admin privileges but will no longer manage billing.
+                                        Transferring ownership will make the selected user the billing admin. You will
+                                        retain admin privileges but will no longer manage billing.
                                     </p>
                                 </div>
 
@@ -361,7 +370,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                                     >
                                         <option value="">Select an admin...</option>
-                                        {admins.map(admin => (
+                                        {admins.map((admin) => (
                                             <option key={admin.id} value={admin.id}>
                                                 {admin.firstName} {admin.lastName} ({admin.email})
                                             </option>
@@ -470,11 +479,8 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                     </motion.div>
                 )}
             </AnimatePresence>
-
         </div>
     );
 };
 
 export default OwnershipManagementView;
-
-

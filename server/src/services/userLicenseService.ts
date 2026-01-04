@@ -1,14 +1,12 @@
 /**
  * Userlicense Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadUserlicenseservice = createCachedLazyService('../../services/userLicenseService.js');
+import service from '../../services/userLicenseService.js';
 
 // Export default instance (for backward compatibility)
-export default loadUserlicenseservice();
+export default service;

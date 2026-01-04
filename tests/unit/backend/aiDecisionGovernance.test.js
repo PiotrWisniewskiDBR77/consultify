@@ -1,21 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRequire } from 'module';
 import { createMockDb } from '../../helpers/dependencyInjector.js';
-
-const require = createRequire(import.meta.url);
 
 describe('AI Decision Governance Service', () => {
     let AIDecisionGovernance;
     let mockDb;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.resetModules();
 
         mockDb = createMockDb();
 
-        vi.doMock('../../../server/database', () => ({ default: mockDb }));
+        vi.doMock('../../../server/database', () => ({
+            default: mockDb,
+            getDatabase: () => mockDb
+        }));
 
-        AIDecisionGovernance = require('../../../server/services/aiDecisionGovernance.js');
+        const module = await import('../../../server/services/aiDecisionGovernance.js');
+        AIDecisionGovernance = module.default;
 
         // Inject mock dependencies
         AIDecisionGovernance.setDependencies({

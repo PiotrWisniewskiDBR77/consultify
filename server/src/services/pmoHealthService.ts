@@ -1,18 +1,18 @@
 /**
  * PMO Health Service - Single Source of Truth
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Migrated from server/services/pmoHealthService.js (CommonJS) to TypeScript (ES Modules)
  * Step A: Canonical PMOHealthSnapshot for UI and AI context
- * 
+ *
  * This service provides a canonical snapshot of PMO health for a project,
  * used by both UI and AI context builder to ensure consistency.
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
-import { PHASE_ORDER, getGateType, evaluateGate, type Phase } from './stageGateService.js';
+import { evaluateGate, getGateType, type Phase, PHASE_ORDER } from './stageGateService.js';
 
 // ==========================================
 // TYPES
@@ -125,11 +125,7 @@ export async function getHealthSnapshot(projectId: string): Promise<PMOHealthSna
     const startTime = Date.now();
 
     // 1. Get project and current phase
-    const project = await DbPromise.get<Project>(
-        db,
-        `SELECT * FROM projects WHERE id = ?`,
-        [projectId]
-    );
+    const project = await DbPromise.get<Project>(db, `SELECT * FROM projects WHERE id = ?`, [projectId]);
 
     if (!project) {
         throw new Error('Project not found');
@@ -143,7 +139,7 @@ export async function getHealthSnapshot(projectId: string): Promise<PMOHealthSna
         gateType: null,
         isReady: false,
         missingCriteria: [],
-        metCriteria: []
+        metCriteria: [],
     };
 
     if (phaseNumber < PHASE_ORDER.length) {
@@ -156,11 +152,11 @@ export async function getHealthSnapshot(projectId: string): Promise<PMOHealthSna
                 gateType,
                 isReady: evaluation.status === 'READY',
                 missingCriteria: (evaluation.completionCriteria || [])
-                    .filter(c => !c.isMet)
-                    .map(c => ({ criterion: c.criterion, evidence: c.evidence })),
+                    .filter((c) => !c.isMet)
+                    .map((c) => ({ criterion: c.criterion, evidence: c.evidence })),
                 metCriteria: (evaluation.completionCriteria || [])
-                    .filter(c => c.isMet)
-                    .map(c => ({ criterion: c.criterion, evidence: c.evidence }))
+                    .filter((c) => c.isMet)
+                    .map((c) => ({ criterion: c.criterion, evidence: c.evidence })),
             };
         }
     }
@@ -185,14 +181,14 @@ export async function getHealthSnapshot(projectId: string): Promise<PMOHealthSna
         projectName: project.name,
         phase: {
             number: phaseNumber,
-            name: currentPhase
+            name: currentPhase,
         },
         stageGate,
         blockers,
         tasks: taskCounts,
         decisions: decisionCounts,
         initiatives: initiativeCounts,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
     };
 }
 
@@ -212,13 +208,13 @@ async function getTaskCounts(projectId: string): Promise<TaskCounts> {
                 SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as blockedCount
             FROM tasks 
             WHERE project_id = ?`,
-            [today, today, dueSoonDate, projectId]
+            [today, today, dueSoonDate, projectId],
         );
 
         return {
             overdueCount: row?.overdueCount || 0,
             dueSoonCount: row?.dueSoonCount || 0,
-            blockedCount: row?.blockedCount || 0
+            blockedCount: row?.blockedCount || 0,
         };
     } catch (err: unknown) {
         console.error('[PMOHealthService] Task count error:', err);
@@ -240,12 +236,12 @@ async function getDecisionCounts(projectId: string): Promise<DecisionCounts> {
                 SUM(CASE WHEN status = 'PENDING' AND created_at < ? THEN 1 ELSE 0 END) as overdueCount
             FROM decisions 
             WHERE project_id = ?`,
-            [sevenDaysAgo, projectId]
+            [sevenDaysAgo, projectId],
         );
 
         return {
             pendingCount: row?.pendingCount || 0,
-            overdueCount: row?.overdueCount || 0
+            overdueCount: row?.overdueCount || 0,
         };
     } catch (err: unknown) {
         console.error('[PMOHealthService] Decision count error:', err);
@@ -265,12 +261,12 @@ async function getInitiativeCounts(projectId: string): Promise<InitiativeCounts>
                 SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as blockedCount
             FROM initiatives 
             WHERE project_id = ?`,
-            [projectId]
+            [projectId],
         );
 
         return {
             atRiskCount: row?.atRiskCount || 0,
-            blockedCount: row?.blockedCount || 0
+            blockedCount: row?.blockedCount || 0,
         };
     } catch (err: unknown) {
         console.error('[PMOHealthService] Initiative count error:', err);
@@ -293,14 +289,14 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
             `SELECT id, title FROM tasks 
              WHERE project_id = ? AND due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED')
              LIMIT 5`,
-            [projectId, today]
+            [projectId, today],
         );
 
         for (const task of overdueTasks) {
             blockers.push({
                 type: 'TASK',
                 message: `Overdue: ${task.title}`,
-                ref: { entityType: 'task', entityId: task.id }
+                ref: { entityType: 'task', entityId: task.id },
             });
         }
     } catch (err: unknown) {
@@ -314,14 +310,14 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
             `SELECT id, title FROM decisions 
              WHERE project_id = ? AND status = 'PENDING' AND created_at < ?
              LIMIT 5`,
-            [projectId, sevenDaysAgo]
+            [projectId, sevenDaysAgo],
         );
 
         for (const decision of pendingDecisions) {
             blockers.push({
                 type: 'DECISION',
                 message: `Pending decision: ${decision.title}`,
-                ref: { entityType: 'decision', entityId: decision.id }
+                ref: { entityType: 'decision', entityId: decision.id },
             });
         }
     } catch (err: unknown) {
@@ -339,13 +335,13 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
 
             if (gateType) {
                 const evaluation = await evaluateGate(projectId, gateType);
-                const missing = (evaluation.completionCriteria || []).filter(c => !c.isMet);
+                const missing = (evaluation.completionCriteria || []).filter((c) => !c.isMet);
 
                 if (missing.length > 0) {
                     blockers.push({
                         type: 'GATE',
                         message: `Gate ${gateType}: ${missing.length} criteria not met`,
-                        ref: { entityType: 'gate', entityId: gateType }
+                        ref: { entityType: 'gate', entityId: gateType },
                     });
                 }
             }
@@ -361,11 +357,9 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
  * Get current phase for a project
  */
 async function getCurrentPhase(projectId: string): Promise<Phase> {
-    const row = await DbPromise.get<ProjectPhaseRow>(
-        db,
-        `SELECT current_phase FROM projects WHERE id = ?`,
-        [projectId]
-    );
+    const row = await DbPromise.get<ProjectPhaseRow>(db, `SELECT current_phase FROM projects WHERE id = ?`, [
+        projectId,
+    ]);
 
     return (row?.current_phase || 'Context') as Phase;
 }
@@ -373,7 +367,7 @@ async function getCurrentPhase(projectId: string): Promise<Phase> {
 // Default export for backward compatibility
 const PMOHealthService = {
     setDependencies,
-    getHealthSnapshot
+    getHealthSnapshot,
 };
 
 export default PMOHealthService;

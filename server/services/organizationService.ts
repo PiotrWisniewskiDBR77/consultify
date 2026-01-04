@@ -7,8 +7,9 @@
  * - Organization details
  */
 
-import db from '../database';
 import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database.js';
 
 interface Database {
     serialize: (callback: () => void) => void;
@@ -25,7 +26,7 @@ interface Dependencies {
 // Dependency injection for testing
 const deps: Dependencies = {
     db: db as Database,
-    uuidv4
+    uuidv4,
 };
 
 export interface CreateOrganizationParams {
@@ -139,13 +140,18 @@ const OrganizationService: OrganizationServiceInterface = {
         OWNER: 'OWNER',
         ADMIN: 'ADMIN',
         MEMBER: 'MEMBER',
-        CONSULTANT: 'CONSULTANT'
+        CONSULTANT: 'CONSULTANT',
     },
 
     /**
      * Create a new organization with an initial OWNER
      */
-    createOrganization: async ({ userId, name, email, attribution = null }: CreateOrganizationParams): Promise<CreateOrganizationResult> => {
+    createOrganization: async ({
+        userId,
+        name,
+        _email,
+        attribution = null,
+    }: CreateOrganizationParams): Promise<CreateOrganizationResult> => {
         await initDeps();
         const orgId = deps.uuidv4();
         const now = new Date().toISOString();
@@ -168,7 +174,7 @@ const OrganizationService: OrganizationServiceInterface = {
                             deps.db.run('ROLLBACK');
                             return reject(err);
                         }
-                    }
+                    },
                 );
 
                 // 2. Add Creator as OWNER
@@ -186,7 +192,7 @@ const OrganizationService: OrganizationServiceInterface = {
                             if (commitErr) return reject(commitErr);
                             resolve({ id: orgId, name, role: 'OWNER' });
                         });
-                    }
+                    },
                 );
             });
         });
@@ -206,7 +212,7 @@ const OrganizationService: OrganizationServiceInterface = {
                     if (err) return reject(err);
                     if (!row) return reject(new Error('Organization not found'));
                     resolve(row);
-                }
+                },
             );
         });
     },
@@ -235,7 +241,7 @@ const OrganizationService: OrganizationServiceInterface = {
                         return reject(err);
                     }
                     resolve({ id, organizationId, userId, role });
-                }
+                },
             );
         });
     },
@@ -255,7 +261,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 (err, rows) => {
                     if (err) return reject(err);
                     resolve(rows || []);
-                }
+                },
             );
         });
     },
@@ -275,7 +281,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 (err, rows) => {
                     if (err) return reject(err);
                     resolve(rows || []);
-                }
+                },
             );
         });
     },
@@ -314,7 +320,7 @@ const OrganizationService: OrganizationServiceInterface = {
                             deps.db.run('ROLLBACK');
                             return reject(new Error('Organization not found'));
                         }
-                    }
+                    },
                 );
 
                 // Update Billing Table (Stub/Real)
@@ -342,26 +348,39 @@ const OrganizationService: OrganizationServiceInterface = {
 
                             // Log the credit via TokenBillingService (post-commit)
                             try {
-                                const { default: TokenBillingService } = await import('./tokenBillingService.js');
+                                const { default: _TokenBillingService } = await import('./tokenBillingService.js');
                                 // We already added balance, so we just want to log the transaction?
                                 // Actually TokenBillingService.creditTokens adds balance. Double adding?
                                 // Let's NOT add balance in the SQL above if we use creditTokens.
-                                // RE-PLAN: Use raw SQL above for atomicity of Status change, 
+                                // RE-PLAN: Use raw SQL above for atomicity of Status change,
                                 // then use creditTokens for Ledger?
                                 // Or do it all here. I'll do it all here to ensure atomic upgrade.
 
                                 // Actually, let's just log the event.
-                                const { default: OrganizationEventService } = await import('./organizationEventService.js');
-                                await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
+                                const { default: OrganizationEventService } =
+                                    await import('./organizationEventService.js');
+                                await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, {
+                                    initialTokens: INITIAL_TOKENS,
+                                });
 
-                                resolve({ success: true, billingStatus: 'ACTIVE', organizationType: 'PAID', tokensAdded: INITIAL_TOKENS });
+                                resolve({
+                                    success: true,
+                                    billingStatus: 'ACTIVE',
+                                    organizationType: 'PAID',
+                                    tokensAdded: INITIAL_TOKENS,
+                                });
                             } catch (e) {
                                 // Event logging failed, but billing is active. Acceptable.
-                                console.error("Post-billing activation error", e);
-                                resolve({ success: true, billingStatus: 'ACTIVE', organizationType: 'PAID', tokensAdded: INITIAL_TOKENS });
+                                console.error('Post-billing activation error', e);
+                                resolve({
+                                    success: true,
+                                    billingStatus: 'ACTIVE',
+                                    organizationType: 'PAID',
+                                    tokensAdded: INITIAL_TOKENS,
+                                });
                             }
                         });
-                    }
+                    },
                 );
             });
         });
@@ -389,14 +408,10 @@ const OrganizationService: OrganizationServiceInterface = {
         params.push(orgId);
 
         return new Promise((resolve, reject) => {
-            deps.db.run(
-                `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`,
-                params,
-                (err) => {
-                    if (err) return reject(err);
-                    resolve();
-                }
-            );
+            deps.db.run(`UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`, params, (err) => {
+                if (err) return reject(err);
+                resolve();
+            });
         });
     },
 
@@ -412,11 +427,13 @@ const OrganizationService: OrganizationServiceInterface = {
                 [orgId],
                 (err, row) => {
                     if (err) return reject(err);
-                    resolve(row || {
-                        ai_assertiveness_level: 'MEDIUM',
-                        ai_autonomy_level: 'SUGGEST_ONLY'
-                    });
-                }
+                    resolve(
+                        row || {
+                            ai_assertiveness_level: 'MEDIUM',
+                            ai_autonomy_level: 'SUGGEST_ONLY',
+                        },
+                    );
+                },
             );
         });
     },
@@ -437,7 +454,7 @@ const OrganizationService: OrganizationServiceInterface = {
                         return reject(new Error('Member not found'));
                     }
                     resolve();
-                }
+                },
             );
         });
     },
@@ -445,7 +462,11 @@ const OrganizationService: OrganizationServiceInterface = {
     /**
      * Update a member's role in the organization
      */
-    updateMemberRole: async ({ organizationId, userId, role }: UpdateMemberRoleParams): Promise<UpdateMemberRoleResult> => {
+    updateMemberRole: async ({
+        organizationId,
+        userId,
+        role,
+    }: UpdateMemberRoleParams): Promise<UpdateMemberRoleResult> => {
         await initDeps();
         if (!Object.values(OrganizationService.ROLES).includes(role)) {
             throw new Error('Invalid role');
@@ -463,7 +484,7 @@ const OrganizationService: OrganizationServiceInterface = {
                         return reject(new Error('Member not found'));
                     }
                     resolve({ organizationId, userId, role });
-                }
+                },
             );
         });
     },
@@ -481,10 +502,10 @@ const OrganizationService: OrganizationServiceInterface = {
                 (err, row) => {
                     if (err) return reject(err);
                     resolve(row ? row.role : null);
-                }
+                },
             );
         });
-    }
+    },
 };
 
 export default OrganizationService;

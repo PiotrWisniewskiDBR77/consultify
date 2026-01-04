@@ -4,9 +4,19 @@
  * ETAP 10.3: Testy dla Utils Layer - 100% coverage
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { validateOrFallback, GapRecommendationSchema, GapAnalysisSchema, InitiativeSchema, InitiativeListSchema, PrioritizedInitiativeSchema, PrioritizedListSchema, ROIEstimateSchema } from '../../../src/utils/AISchemaValidator.js';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+
+import {
+    GapAnalysisSchema,
+    GapRecommendationSchema,
+    InitiativeListSchema,
+    InitiativeSchema,
+    PrioritizedInitiativeSchema,
+    PrioritizedListSchema,
+    ROIEstimateSchema,
+    validateOrFallback,
+} from '../../../src/utils/AISchemaValidator.js';
 
 describe('AISchemaValidator', () => {
     describe('validateOrFallback', () => {
@@ -18,7 +28,7 @@ describe('AISchemaValidator', () => {
         it('should return validated data when valid', () => {
             const validData = { name: 'Test', age: 25 };
             const fallback = { name: 'Fallback', age: 0 };
-            
+
             const result = validateOrFallback(validData, TestSchema, fallback);
             expect(result).toEqual(validData);
         });
@@ -26,7 +36,7 @@ describe('AISchemaValidator', () => {
         it('should return fallback when validation fails', () => {
             const invalidData = { name: 'Test' }; // Missing age
             const fallback = { name: 'Fallback', age: 0 };
-            
+
             const result = validateOrFallback(invalidData, TestSchema, fallback);
             expect(result).toEqual(fallback);
         });
@@ -34,14 +44,14 @@ describe('AISchemaValidator', () => {
         it('should return fallback on unexpected error', () => {
             const invalidData = null;
             const fallback = { name: 'Fallback', age: 0 };
-            
+
             // Mock console.warn to avoid noise in tests
             const originalWarn = console.warn;
             console.warn = vi.fn();
-            
+
             const result = validateOrFallback(invalidData, TestSchema, fallback);
             expect(result).toEqual(fallback);
-            
+
             console.warn = originalWarn;
         });
     });
@@ -54,7 +64,7 @@ describe('AISchemaValidator', () => {
                 priority: 'HIGH',
                 timeframe: 'Q1 2024',
             };
-            
+
             const result = GapRecommendationSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
@@ -66,7 +76,7 @@ describe('AISchemaValidator', () => {
                 priority: 'CUSTOM_PRIORITY',
                 timeframe: 'Q1 2024',
             };
-            
+
             const result = GapRecommendationSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
@@ -88,7 +98,7 @@ describe('AISchemaValidator', () => {
                     timeframe: 'Q2',
                 },
             ];
-            
+
             const result = GapAnalysisSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
@@ -105,7 +115,7 @@ describe('AISchemaValidator', () => {
                 estimatedBudget: '$100k',
                 expectedImpact: 'High impact',
             };
-            
+
             const result = InitiativeSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
@@ -121,7 +131,7 @@ describe('AISchemaValidator', () => {
                 expectedImpact: 'Medium impact',
                 dependencies: ['dep1', 'dep2'],
             };
-            
+
             const result = InitiativeSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
@@ -136,7 +146,7 @@ describe('AISchemaValidator', () => {
                 reasoning: 'High impact',
                 recommendedQuarter: 'Q1 2024',
             };
-            
+
             const result = PrioritizedInitiativeSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
@@ -154,13 +164,10 @@ describe('AISchemaValidator', () => {
                 assumptions: ['Assumption 1', 'Assumption 2'],
                 risks: ['Risk 1'],
             };
-            
+
             const result = ROIEstimateSchema.safeParse(valid);
             expect(result.success).toBe(true);
         });
     });
 });
-
-
-
 

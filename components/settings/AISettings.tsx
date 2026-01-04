@@ -1,19 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { User, LLMProvider, AIPreferences, UserAIProvider, UserAISettings, AIProactivityMode, OrgAISettings } from '../../types';
-import { LLMProviderConfig } from '../../types/domain/ai';
-import { InfoButton } from '../shared/InfoButton';
+import {
+    Activity,
+    AlertCircle,
+    BarChart2,
+    Bot,
+    Brain,
+    Check,
+    ChevronRight,
+    Cpu,
+    ExternalLink,
+    Eye,
+    FileText,
+    Fingerprint,
+    Gauge,
+    Globe,
+    HardDrive,
+    Key,
+    LayoutGrid,
+    Lock,
+    MessageSquare,
+    MoreHorizontal,
+    Network,
+    Pause,
+    Plus,
+    Save,
+    Scale,
+    Server,
+    Settings,
+    Shield,
+    Sliders,
+    Sparkles,
+    Terminal,
+    Trash2,
+    User as UserIcon,
+    Wifi,
+    Zap,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import {
-    Bot, MessageSquare, Zap, Brain, Save, Check, FileText, ExternalLink, Shield,
-    Server, Key, Plus, Trash2, Wifi, Cpu, Globe, Lock, Sparkles, AlertCircle, ChevronRight,
-    Settings, LayoutGrid, Terminal, User as UserIcon, Activity, Fingerprint, Eye, MoreHorizontal,
-    Sliders, Gauge, HardDrive, Network, Scale, Pause, BarChart2
-} from 'lucide-react';
-import { Api } from '../../services/api';
-import { toast } from 'react-hot-toast';
-import { ProactivitySelector } from '../AISettings';
+
 import { useRealtimeCosts } from '../../hooks/useRealtimeCosts';
+import { Api } from '../../services/api';
+import {
+    AIPreferences,
+    AIProactivityMode,
+    LLMProvider,
+    OrgAISettings,
+    User,
+    UserAIProvider,
+    UserAISettings,
+} from '../../types';
+import { LLMProviderConfig } from '../../types/domain/ai';
+import { ProactivitySelector } from '../AISettings';
+import { InfoButton } from '../shared/InfoButton';
 
 interface AISettingsProps {
     currentUser: User;
@@ -42,7 +82,7 @@ const defaultPreferences: AIPreferences = {
     enableWebSearch: true,
     enablePiiRedaction: false,
     dataRetentionPolicy: 'standard',
-    contextWindowStrategy: 'auto'
+    contextWindowStrategy: 'auto',
 };
 
 type SettingsTab = 'org' | 'api' | 'local' | 'behavior' | 'proactivity' | 'privacy';
@@ -51,7 +91,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<SettingsTab>('org');
 
-    const [preferences, setPreferences] = useState<AIPreferences & { userRole: string, supportLevel: string, autonomyLevel: string }>(defaultPreferences as any);
+    const [preferences, setPreferences] = useState<
+        AIPreferences & { userRole: string; supportLevel: string; autonomyLevel: string }
+    >(defaultPreferences as any);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -66,7 +108,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     const [newProvider, setNewProvider] = useState<Partial<UserAIProvider>>({
         provider: 'openai',
         isEnabled: true,
-        isLocal: false
+        isLocal: false,
     });
 
     useEffect(() => {
@@ -82,11 +124,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     const [maxProactivity, setMaxProactivity] = useState<AIProactivityMode>('PROACTIVE');
 
     // Real-time Cost Tracking
-    const { connected: costsConnected, summary: costSummary, refresh: refreshCosts } = useRealtimeCosts({
+    const {
+        connected: costsConnected,
+        summary: costSummary,
+        refresh: refreshCosts,
+    } = useRealtimeCosts({
         enabled: true,
         onBudgetAlert: (percentage) => {
             toast.error(`Budget Alert: You've used ${percentage}% of your monthly budget!`);
-        }
+        },
     });
 
     useEffect(() => {
@@ -96,20 +142,20 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 // 1. Load Preferences
                 const prefRes = await Api.get('/settings/preferences');
                 if (prefRes.data?.ai) {
-                    setPreferences(prev => ({ ...prev, ...prefRes.data.ai }));
+                    setPreferences((prev) => ({ ...prev, ...prefRes.data.ai }));
                 }
 
                 // 2. Load Organization Providers
                 const providers = await Api.getLLMProviders(true); // adminContext=true to get is_enabled_for_org
                 // Filter only those active globally AND enabled for org
-                const availableFn = providers.filter(p => p.is_active && p.is_enabled_for_org !== false);
+                const availableFn = providers.filter((p) => p.is_active && p.is_enabled_for_org !== false);
                 setOrgProviders(availableFn);
 
                 // 3. Load User selection (from user.aiConfig.visibleModelIds)
                 if (currentUser.aiConfig?.visibleModelIds) {
                     setSelectedOrgModels(currentUser.aiConfig.visibleModelIds);
                 } else {
-                    setSelectedOrgModels(availableFn.map(p => p.id));
+                    setSelectedOrgModels(availableFn.map((p) => p.id));
                 }
 
                 // 4. Load Local/Personal Providers
@@ -129,8 +175,8 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 // 6. Load User AI Settings (proactivity)
                 try {
                     const userSettings = await fetch('/api/ai-settings/user', {
-                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                    }).then(r => r.json());
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                    }).then((r) => r.json());
                     if (userSettings.proactivityMode) {
                         setProactivityMode(userSettings.proactivityMode);
                     }
@@ -141,15 +187,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 // 7. Load Org Settings (for max proactivity)
                 try {
                     const orgSettings = await fetch('/api/ai-settings/org/' + currentUser.organizationId, {
-                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                    }).then(r => r.json());
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                    }).then((r) => r.json());
                     if (orgSettings.defaultProactivityMode) {
                         setMaxProactivity(orgSettings.defaultProactivityMode);
                     }
                 } catch (e) {
                     console.error('Failed to load org settings', e);
                 }
-
             } catch (e) {
                 console.error('Failed to load AI settings', e);
                 toast.error('Failed to load settings');
@@ -170,14 +215,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify({ proactivityMode })
+                body: JSON.stringify({ proactivityMode }),
             });
 
             const updatedAiConfig = {
                 ...currentUser.aiConfig,
-                visibleModelIds: selectedOrgModels
+                visibleModelIds: selectedOrgModels,
             };
 
             onUpdateUser({ aiConfig: updatedAiConfig as any });
@@ -194,10 +239,8 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     };
 
     const handleOrgModelToggle = (modelId: string) => {
-        setSelectedOrgModels(prev =>
-            prev.includes(modelId)
-                ? prev.filter(id => id !== modelId)
-                : [...prev, modelId]
+        setSelectedOrgModels((prev) =>
+            prev.includes(modelId) ? prev.filter((id) => id !== modelId) : [...prev, modelId],
         );
         setSaved(false);
     };
@@ -215,9 +258,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             name: newProvider.name,
             provider: newProvider.provider as any,
             apiKey: newProvider.apiKey,
-            endpoint: isLocal ? (newProvider.endpoint || 'http://localhost:11434') : undefined,
+            endpoint: isLocal ? newProvider.endpoint || 'http://localhost:11434' : undefined,
             isEnabled: true,
-            isLocal: isLocal
+            isLocal: isLocal,
         };
 
         const updated = [...localProviders, provider];
@@ -230,15 +273,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
     };
 
     const removeLocalProvider = (id: string) => {
-        const updated = localProviders.filter(p => p.id !== id);
+        const updated = localProviders.filter((p) => p.id !== id);
         setLocalProviders(updated);
         localStorage.setItem('user_ai_providers', JSON.stringify(updated));
         toast.success('Provider removed');
     };
 
     // Filter providers for current view
-    const apiProviders = localProviders.filter(p => !p.isLocal);
-    const localHostProviders = localProviders.filter(p => p.isLocal);
+    const apiProviders = localProviders.filter((p) => !p.isLocal);
+    const localHostProviders = localProviders.filter((p) => p.isLocal);
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto pb-10">
@@ -250,17 +293,20 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-white tracking-tight">LLM Management</h2>
-                        <p className="text-xs text-slate-500 uppercase tracking-widest font-medium mt-0.5">Enterprise Control Plane</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-widest font-medium mt-0.5">
+                            Enterprise Control Plane
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={savePreferences}
                         disabled={saving || saved || loadingModels}
-                        className={`px-6 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${saved
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                            : 'bg-white text-black hover:bg-slate-200 border border-transparent shadow-lg shadow-white/5 hover:shadow-white/10'
-                            }`}
+                        className={`px-6 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${
+                            saved
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                : 'bg-white text-black hover:bg-slate-200 border border-transparent shadow-lg shadow-white/5 hover:shadow-white/10'
+                        }`}
                     >
                         {saved ? (
                             <>
@@ -280,22 +326,60 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
             {/* Navigation Tabs - High Tech Button Style */}
             <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none">
-                <NavTab id="org" label="Performance Tiers" icon={<Shield size={16} />} active={activeTab === 'org'} onClick={() => setActiveTab('org')} />
-                <NavTab id="api" label="BYOK Keys" icon={<Key size={16} />} active={activeTab === 'api'} onClick={() => setActiveTab('api')} />
-                <NavTab id="local" label="Local Inference" icon={<Terminal size={16} />} active={activeTab === 'local'} onClick={() => setActiveTab('local')} />
+                <NavTab
+                    id="org"
+                    label="Performance Tiers"
+                    icon={<Shield size={16} />}
+                    active={activeTab === 'org'}
+                    onClick={() => setActiveTab('org')}
+                />
+                <NavTab
+                    id="api"
+                    label="BYOK Keys"
+                    icon={<Key size={16} />}
+                    active={activeTab === 'api'}
+                    onClick={() => setActiveTab('api')}
+                />
+                <NavTab
+                    id="local"
+                    label="Local Inference"
+                    icon={<Terminal size={16} />}
+                    active={activeTab === 'local'}
+                    onClick={() => setActiveTab('local')}
+                />
                 <div className="w-px h-6 bg-white/10 mx-2" />
-                <NavTab id="proactivity" label="AI Proactivity" icon={<Scale size={16} />} active={activeTab === 'proactivity'} onClick={() => setActiveTab('proactivity')} />
-                <NavTab id="behavior" label="Behavior & Context" icon={<Sliders size={16} />} active={activeTab === 'behavior'} onClick={() => setActiveTab('behavior')} />
-                <NavTab id="privacy" label="Privacy & Controls" icon={<Lock size={16} />} active={activeTab === 'privacy'} onClick={() => setActiveTab('privacy')} />
+                <NavTab
+                    id="proactivity"
+                    label="AI Proactivity"
+                    icon={<Scale size={16} />}
+                    active={activeTab === 'proactivity'}
+                    onClick={() => setActiveTab('proactivity')}
+                />
+                <NavTab
+                    id="behavior"
+                    label="Behavior & Context"
+                    icon={<Sliders size={16} />}
+                    active={activeTab === 'behavior'}
+                    onClick={() => setActiveTab('behavior')}
+                />
+                <NavTab
+                    id="privacy"
+                    label="Privacy & Controls"
+                    icon={<Lock size={16} />}
+                    active={activeTab === 'privacy'}
+                    onClick={() => setActiveTab('privacy')}
+                />
             </div>
 
             {/* Content Area */}
             <div className="min-h-[400px]">
-
                 {/* 1. Performance Tiers (Was Model Registry) */}
                 {activeTab === 'org' && (
                     <div className="animate-in fade-in duration-300">
-                        <SectionHeader title="Default Performance Tier" subtitle="Select your preferred balance of speed, capability, and cost." />
+                        <SectionHeader
+                            title="Default Performance Tier"
+                            subtitle="Select your preferred balance of speed, capability, and cost."
+                        />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {[
@@ -305,7 +389,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Fastest responses, lowest cost. Best for simple queries and drafting.',
                                     icon: <Zap size={24} className="text-emerald-400" />,
                                     color: 'emerald',
-                                    example: 'GPT-4o Mini, Haiku'
+                                    example: 'GPT-4o Mini, Haiku',
                                 },
                                 {
                                     id: 'STANDARD',
@@ -313,7 +397,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Balanced performance. Good for most daily tasks and coding.',
                                     icon: <Activity size={24} className="text-blue-400" />,
                                     color: 'blue',
-                                    example: 'GPT-4o, Sonnet 3.5'
+                                    example: 'GPT-4o, Sonnet 3.5',
                                 },
                                 {
                                     id: 'PREMIUM',
@@ -321,7 +405,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Highest quality output. Best for complex analysis and creativity.',
                                     icon: <Sparkles size={24} className="text-purple-400" />,
                                     color: 'purple',
-                                    example: 'GPT-4-Turbo, Opus'
+                                    example: 'GPT-4-Turbo, Opus',
                                 },
                                 {
                                     id: 'REASONING',
@@ -329,9 +413,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Deep thought capability. Best for math, hard logic, and architecture.',
                                     icon: <Brain size={24} className="text-amber-400" />,
                                     color: 'amber',
-                                    example: 'o1-preview, o1-mini'
-                                }
-                            ].map(tier => (
+                                    example: 'o1-preview, o1-mini',
+                                },
+                            ].map((tier) => (
                                 <button
                                     key={tier.id}
                                     onClick={() => {
@@ -339,20 +423,23 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                         // Since preferences is typed strictly, we might need to cast or just update the visibleModelIds hack or add a new field
                                         // For now, let's update selectedOrgModels as a proxy or add a new state
                                         // But to persist, we need to add it to savePreferences
-                                        onUpdateUser({ aiConfig: { ...currentUser.aiConfig, selectedTier: tier.id } as any });
+                                        onUpdateUser({
+                                            aiConfig: { ...currentUser.aiConfig, selectedTier: tier.id } as any,
+                                        });
                                         toast.success(`Default tier set to ${tier.label}`);
                                     }}
-                                    className={`p-6 rounded-xl border text-left transition-all relative group overflow-hidden ${(currentUser.aiConfig as any)?.selectedTier === tier.id
-                                        ? `bg-${tier.color}-500/10 border-${tier.color}-500`
-                                        : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
-                                        }`}
+                                    className={`p-6 rounded-xl border text-left transition-all relative group overflow-hidden ${
+                                        (currentUser.aiConfig as any)?.selectedTier === tier.id
+                                            ? `bg-${tier.color}-500/10 border-${tier.color}-500`
+                                            : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
+                                    }`}
                                 >
                                     <div className="flex items-start justify-between mb-4">
-                                        <div className={`p-3 rounded-lg bg-${tier.color}-500/10`}>
-                                            {tier.icon}
-                                        </div>
+                                        <div className={`p-3 rounded-lg bg-${tier.color}-500/10`}>{tier.icon}</div>
                                         {(currentUser.aiConfig as any)?.selectedTier === tier.id && (
-                                            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase bg-${tier.color}-500 text-white`}>
+                                            <div
+                                                className={`px-2 py-1 rounded text-[10px] font-bold uppercase bg-${tier.color}-500 text-white`}
+                                            >
                                                 Active Default
                                             </div>
                                         )}
@@ -372,7 +459,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         {/* Personal Cost Dashboard - Real-time */}
                         <div className="mt-12">
                             <div className="flex items-center justify-between mb-4">
-                                <SectionHeader title="Your AI Usage" subtitle="Track your personal AI costs and usage this month." />
+                                <SectionHeader
+                                    title="Your AI Usage"
+                                    subtitle="Track your personal AI costs and usage this month."
+                                />
                                 <div className="flex items-center gap-2">
                                     {costsConnected && (
                                         <span className="flex items-center gap-1 text-xs text-emerald-400">
@@ -398,32 +488,42 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     )}
                                     <div className="flex items-center gap-2 mb-3">
                                         <Activity size={16} className="text-emerald-400" />
-                                        <span className="text-xs text-emerald-400 uppercase font-bold tracking-wider">Total Spent</span>
+                                        <span className="text-xs text-emerald-400 uppercase font-bold tracking-wider">
+                                            Total Spent
+                                        </span>
                                     </div>
-                                    <p className="text-3xl font-bold text-white">${costSummary.totalCostThisMonth.toFixed(2)}</p>
+                                    <p className="text-3xl font-bold text-white">
+                                        ${costSummary.totalCostThisMonth.toFixed(2)}
+                                    </p>
                                     <p className="text-xs text-slate-500 mt-1">this month</p>
                                 </div>
 
                                 <div className="bg-black/30 border border-white/10 rounded-xl p-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Zap size={16} className="text-blue-400" />
-                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Requests</span>
+                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                                            Requests
+                                        </span>
                                     </div>
-                                    <p className="text-3xl font-bold text-white">{costSummary.totalRequestsThisMonth.toLocaleString()}</p>
+                                    <p className="text-3xl font-bold text-white">
+                                        {costSummary.totalRequestsThisMonth.toLocaleString()}
+                                    </p>
                                     <p className="text-xs text-slate-500 mt-1">AI interactions</p>
                                 </div>
 
                                 <div className="bg-black/30 border border-white/10 rounded-xl p-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <FileText size={16} className="text-purple-400" />
-                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Tokens</span>
+                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                                            Tokens
+                                        </span>
                                     </div>
                                     <p className="text-3xl font-bold text-white">
                                         {costSummary.totalTokensThisMonth >= 1000000
                                             ? `${(costSummary.totalTokensThisMonth / 1000000).toFixed(1)}M`
                                             : costSummary.totalTokensThisMonth >= 1000
-                                                ? `${(costSummary.totalTokensThisMonth / 1000).toFixed(1)}k`
-                                                : costSummary.totalTokensThisMonth}
+                                              ? `${(costSummary.totalTokensThisMonth / 1000).toFixed(1)}k`
+                                              : costSummary.totalTokensThisMonth}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1">consumed</p>
                                 </div>
@@ -431,11 +531,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 <div className="bg-black/30 border border-white/10 rounded-xl p-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Gauge size={16} className="text-amber-400" />
-                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Avg/Request</span>
+                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                                            Avg/Request
+                                        </span>
                                     </div>
                                     <p className="text-3xl font-bold text-white">
-                                        ${costSummary.totalRequestsThisMonth > 0
-                                            ? (costSummary.totalCostThisMonth / costSummary.totalRequestsThisMonth).toFixed(3)
+                                        $
+                                        {costSummary.totalRequestsThisMonth > 0
+                                            ? (
+                                                  costSummary.totalCostThisMonth / costSummary.totalRequestsThisMonth
+                                              ).toFixed(3)
                                             : '0.00'}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1">cost efficiency</p>
@@ -450,10 +555,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </h4>
                                 <div className="space-y-3">
                                     {[
-                                        { tier: 'Budget', requests: 85, cost: 1.20, color: 'emerald', percent: 67 },
+                                        { tier: 'Budget', requests: 85, cost: 1.2, color: 'emerald', percent: 67 },
                                         { tier: 'Standard', requests: 35, cost: 2.45, color: 'blue', percent: 27 },
-                                        { tier: 'Premium', requests: 7, cost: 0.67, color: 'purple', percent: 6 }
-                                    ].map(stat => (
+                                        { tier: 'Premium', requests: 7, cost: 0.67, color: 'purple', percent: 6 },
+                                    ].map((stat) => (
                                         <div key={stat.tier} className="flex items-center gap-4">
                                             <div className="w-20 text-xs font-medium text-slate-400">{stat.tier}</div>
                                             <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -462,8 +567,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                                     style={{ width: `${stat.percent}%` }}
                                                 />
                                             </div>
-                                            <div className="w-20 text-xs text-slate-500 text-right">{stat.requests} req</div>
-                                            <div className="w-16 text-xs font-mono text-white text-right">${stat.cost.toFixed(2)}</div>
+                                            <div className="w-20 text-xs text-slate-500 text-right">
+                                                {stat.requests} req
+                                            </div>
+                                            <div className="w-16 text-xs font-mono text-white text-right">
+                                                ${stat.cost.toFixed(2)}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -482,11 +591,17 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {activeTab === 'api' && (
                     <div className="animate-in fade-in duration-300">
                         <div className="flex justify-between items-end mb-6">
-                            <SectionHeader title="Bring Your Own Keys" subtitle="Connect external providers securely." />
-                            <button onClick={() => {
-                                setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
-                                setShowAddProvider(true);
-                            }} className="text-xs uppercase tracking-wider font-bold text-blue-400 hover:text-blue-300 border border-blue-500/30 px-4 py-2 rounded hover:bg-blue-500/10 transition-colors flex items-center gap-2">
+                            <SectionHeader
+                                title="Bring Your Own Keys"
+                                subtitle="Connect external providers securely."
+                            />
+                            <button
+                                onClick={() => {
+                                    setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
+                                    setShowAddProvider(true);
+                                }}
+                                className="text-xs uppercase tracking-wider font-bold text-blue-400 hover:text-blue-300 border border-blue-500/30 px-4 py-2 rounded hover:bg-blue-500/10 transition-colors flex items-center gap-2"
+                            >
                                 <Plus size={14} /> Add Key
                             </button>
                         </div>
@@ -501,11 +616,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div>
-                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">Provider</label>
+                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                                            Provider
+                                        </label>
                                         <div className="relative">
                                             <select
                                                 value={newProvider.provider}
-                                                onChange={e => setNewProvider({ ...newProvider, provider: e.target.value as any })}
+                                                onChange={(e) =>
+                                                    setNewProvider({ ...newProvider, provider: e.target.value as any })
+                                                }
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white appearance-none focus:border-blue-500/50 outline-none transition-all"
                                             >
                                                 <option value="openai">OpenAI</option>
@@ -513,27 +632,36 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                                 <option value="google">Google Gemini</option>
                                                 <option value="deepseek">DeepSeek</option>
                                             </select>
-                                            <ChevronRight className="absolute right-4 top-3.5 text-slate-500 rotate-90 pointer-events-none" size={14} />
+                                            <ChevronRight
+                                                className="absolute right-4 top-3.5 text-slate-500 rotate-90 pointer-events-none"
+                                                size={14}
+                                            />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">Friendly Name</label>
+                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                                            Friendly Name
+                                        </label>
                                         <input
                                             placeholder="e.g. My Personal GPT-4 Key"
                                             value={newProvider.name}
-                                            onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
+                                            onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
                                             className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none transition-all"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">API Secret Key</label>
+                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                                            API Secret Key
+                                        </label>
                                         <div className="relative">
                                             <Key className="absolute left-4 top-3.5 text-slate-600" size={16} />
                                             <input
                                                 type="password"
                                                 placeholder="sk-..."
                                                 value={newProvider.apiKey}
-                                                onChange={e => setNewProvider({ ...newProvider, apiKey: e.target.value })}
+                                                onChange={(e) =>
+                                                    setNewProvider({ ...newProvider, apiKey: e.target.value })
+                                                }
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none font-mono transition-all"
                                             />
                                         </div>
@@ -544,8 +672,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
-                                    <button onClick={() => setShowAddProvider(false)} className="px-5 py-2 text-sm text-slate-400 hover:text-white transition-colors">Cancel</button>
-                                    <button onClick={handleAddProvider} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2">
+                                    <button
+                                        onClick={() => setShowAddProvider(false)}
+                                        className="px-5 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleAddProvider}
+                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2"
+                                    >
                                         <Save size={16} /> Save Key
                                     </button>
                                 </div>
@@ -563,7 +699,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {apiProviders.map(p => (
+                                    {apiProviders.map((p) => (
                                         <tr key={p.id} className="hover:bg-white/5 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-white flex items-center gap-3">
@@ -574,13 +710,19 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-sm text-slate-400 capitalize bg-white/5 px-2 py-1 rounded border border-white/5">{p.provider}</span>
+                                                <span className="text-sm text-slate-400 capitalize bg-white/5 px-2 py-1 rounded border border-white/5">
+                                                    {p.provider}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 font-mono text-xs text-slate-600">
                                                 •••••••••••••••••{p.apiKey?.slice(-4)}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button onClick={() => removeLocalProvider(p.id)} className="text-slate-500 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors" title="Remove Key">
+                                                <button
+                                                    onClick={() => removeLocalProvider(p.id)}
+                                                    className="text-slate-500 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                                                    title="Remove Key"
+                                                >
                                                     <Trash2 size={16} />
                                                 </button>
                                             </td>
@@ -604,12 +746,18 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {activeTab === 'local' && (
                     <div className="animate-in fade-in duration-300">
                         <div className="flex justify-between items-end mb-6">
-                            <SectionHeader title="Local Inference Engine" subtitle="Connect to high-performance local models via Ollama." />
+                            <SectionHeader
+                                title="Local Inference Engine"
+                                subtitle="Connect to high-performance local models via Ollama."
+                            />
                             {!showAddProvider && (
-                                <button onClick={() => {
-                                    setNewProvider({ provider: 'ollama', isEnabled: true, isLocal: true });
-                                    setShowAddProvider(true);
-                                }} className="text-xs uppercase tracking-wider font-bold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 px-4 py-2 rounded hover:bg-emerald-500/10 transition-colors flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        setNewProvider({ provider: 'ollama', isEnabled: true, isLocal: true });
+                                        setShowAddProvider(true);
+                                    }}
+                                    className="text-xs uppercase tracking-wider font-bold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 px-4 py-2 rounded hover:bg-emerald-500/10 transition-colors flex items-center gap-2"
+                                >
                                     <Plus size={14} /> Connect Local
                                 </button>
                             )}
@@ -625,30 +773,44 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div className="md:col-span-2">
-                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">Connection Name</label>
+                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                                            Connection Name
+                                        </label>
                                         <input
                                             placeholder="e.g. My MacBook Ollama"
                                             value={newProvider.name}
-                                            onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
+                                            onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
                                             className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition-all"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">Endpoint URL</label>
+                                        <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                                            Endpoint URL
+                                        </label>
                                         <div className="relative">
                                             <Wifi className="absolute left-4 top-3.5 text-slate-600" size={16} />
                                             <input
                                                 placeholder="http://localhost:11434"
                                                 value={newProvider.endpoint}
-                                                onChange={e => setNewProvider({ ...newProvider, endpoint: e.target.value })}
+                                                onChange={(e) =>
+                                                    setNewProvider({ ...newProvider, endpoint: e.target.value })
+                                                }
                                                 className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none font-mono transition-all"
                                             />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
-                                    <button onClick={() => setShowAddProvider(false)} className="px-5 py-2 text-sm text-slate-400 hover:text-white transition-colors">Cancel</button>
-                                    <button onClick={handleAddProvider} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center gap-2">
+                                    <button
+                                        onClick={() => setShowAddProvider(false)}
+                                        className="px-5 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleAddProvider}
+                                        className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center gap-2"
+                                    >
                                         <Zap size={16} /> Connect
                                     </button>
                                 </div>
@@ -666,7 +828,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {localHostProviders.map(p => (
+                                    {localHostProviders.map((p) => (
                                         <tr key={p.id} className="hover:bg-white/5 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-white flex items-center gap-3">
@@ -683,13 +845,19 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-sm text-slate-400">Ollama / OpenAI Compatible</span>
+                                                <span className="text-sm text-slate-400">
+                                                    Ollama / OpenAI Compatible
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 font-mono text-xs text-slate-500 group-hover:text-slate-300 transition-colors">
                                                 {p.endpoint}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button onClick={() => removeLocalProvider(p.id)} className="text-slate-500 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors" title="Disconnect">
+                                                <button
+                                                    onClick={() => removeLocalProvider(p.id)}
+                                                    className="text-slate-500 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                                                    title="Disconnect"
+                                                >
                                                     <Trash2 size={16} />
                                                 </button>
                                             </td>
@@ -712,7 +880,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* 2. Behavior & Context Settings */}
                 {activeTab === 'behavior' && (
                     <div className="animate-in fade-in duration-300 max-w-4xl">
-                        <SectionHeader title="Model Behavior" subtitle="Configure granular generation parameters and persona." />
+                        <SectionHeader
+                            title="Model Behavior"
+                            subtitle="Configure granular generation parameters and persona."
+                        />
 
                         {/* System Instructions */}
                         <div className="mb-8">
@@ -721,7 +892,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <Terminal size={14} />
                                     Global System Instructions
                                 </span>
-                                <span className="text-slate-600 font-normal normal-case">Applied to all chat sessions</span>
+                                <span className="text-slate-600 font-normal normal-case">
+                                    Applied to all chat sessions
+                                </span>
                             </label>
                             <textarea
                                 className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-slate-300 focus:border-white/20 focus:ring-0 transition-colors h-32 resize-y"
@@ -739,13 +912,19 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                         <Gauge size={16} className="text-blue-400" />
                                         Temperature
                                     </label>
-                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-blue-400">{preferences.modelTemperature ?? 0.7}</span>
+                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-blue-400">
+                                        {preferences.modelTemperature ?? 0.7}
+                                    </span>
                                 </div>
                                 <input
                                     type="range"
-                                    min="0" max="2" step="0.1"
+                                    min="0"
+                                    max="2"
+                                    step="0.1"
                                     value={preferences.modelTemperature ?? 0.7}
-                                    onChange={(e) => setPreferences({ ...preferences, modelTemperature: parseFloat(e.target.value) })}
+                                    onChange={(e) =>
+                                        setPreferences({ ...preferences, modelTemperature: parseFloat(e.target.value) })
+                                    }
                                     className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                                 />
                                 <div className="flex justify-between text-[10px] text-slate-500 mt-2 font-medium uppercase tracking-wider">
@@ -760,12 +939,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                         <HardDrive size={16} className="text-purple-400" />
                                         Max Output Tokens
                                     </label>
-                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-purple-400">{preferences.maxTokens ?? 4096}</span>
+                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-purple-400">
+                                        {preferences.maxTokens ?? 4096}
+                                    </span>
                                 </div>
                                 <input
                                     type="number"
                                     value={preferences.maxTokens ?? 4096}
-                                    onChange={(e) => setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })}
+                                    onChange={(e) =>
+                                        setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })
+                                    }
                                     className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500/50 outline-none transition-all font-mono"
                                 />
                                 <p className="text-[10px] text-slate-500 mt-2">Maximum length of generated response.</p>
@@ -777,13 +960,19 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                         <Sparkles size={16} className="text-amber-400" />
                                         Top P (Nucleus)
                                     </label>
-                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-amber-400">{preferences.topP ?? 1.0}</span>
+                                    <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-amber-400">
+                                        {preferences.topP ?? 1.0}
+                                    </span>
                                 </div>
                                 <input
                                     type="range"
-                                    min="0" max="1" step="0.05"
+                                    min="0"
+                                    max="1"
+                                    step="0.05"
                                     value={preferences.topP ?? 1.0}
-                                    onChange={(e) => setPreferences({ ...preferences, topP: parseFloat(e.target.value) })}
+                                    onChange={(e) =>
+                                        setPreferences({ ...preferences, topP: parseFloat(e.target.value) })
+                                    }
                                     className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                                 />
                             </div>
@@ -797,7 +986,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                 </div>
                                 <select
                                     value={preferences.contextWindowStrategy || 'auto'}
-                                    onChange={(e) => setPreferences({ ...preferences, contextWindowStrategy: e.target.value as any })}
+                                    onChange={(e) =>
+                                        setPreferences({ ...preferences, contextWindowStrategy: e.target.value as any })
+                                    }
                                     className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-emerald-500/50 outline-none transition-all"
                                 >
                                     <option value="auto">Auto (Recommended)</option>
@@ -809,7 +1000,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         </div>
 
                         {/* Response Mode Settings - NEW */}
-                        <SectionHeader title="Response Mode" subtitle="Configure default response length and style preferences." />
+                        <SectionHeader
+                            title="Response Mode"
+                            subtitle="Configure default response length and style preferences."
+                        />
 
                         {/* Mode Selection Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -820,7 +1014,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Szybkie, zwięzłe odpowiedzi',
                                     tokens: '50-300',
                                     icon: <Zap size={24} className="text-amber-400" />,
-                                    color: 'amber'
+                                    color: 'amber',
                                 },
                                 {
                                     id: 'standard',
@@ -828,7 +1022,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Zbalansowane z wyjaśnieniami',
                                     tokens: '300-800',
                                     icon: <MessageSquare size={24} className="text-blue-400" />,
-                                    color: 'blue'
+                                    color: 'blue',
                                 },
                                 {
                                     id: 'deepStudy',
@@ -836,28 +1030,37 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     desc: 'Kompleksowa analiza',
                                     tokens: '1000-4000',
                                     icon: <Brain size={24} className="text-purple-400" />,
-                                    color: 'purple'
-                                }
-                            ].map(mode => (
+                                    color: 'purple',
+                                },
+                            ].map((mode) => (
                                 <button
                                     key={mode.id}
-                                    onClick={() => setPreferences(p => ({
-                                        ...p,
-                                        contextualBehavior: {
-                                            ...p.contextualBehavior,
-                                            chatMode: mode.id as any
-                                        }
-                                    } as any))}
-                                    className={`p-5 rounded-xl border transition-all text-center ${preferences.contextualBehavior?.chatMode === mode.id
-                                        ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
-                                        : 'bg-white/5 border-white/10 hover:border-white/30'
-                                        }`}
+                                    onClick={() =>
+                                        setPreferences(
+                                            (p) =>
+                                                ({
+                                                    ...p,
+                                                    contextualBehavior: {
+                                                        ...p.contextualBehavior,
+                                                        chatMode: mode.id as any,
+                                                    },
+                                                }) as any,
+                                        )
+                                    }
+                                    className={`p-5 rounded-xl border transition-all text-center ${
+                                        preferences.contextualBehavior?.chatMode === mode.id
+                                            ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
+                                            : 'bg-white/5 border-white/10 hover:border-white/30'
+                                    }`}
                                 >
                                     <div className="mx-auto mb-3">{mode.icon}</div>
-                                    <div className={`font-bold text-sm mb-1 ${preferences.contextualBehavior?.chatMode === mode.id
-                                        ? `text-${mode.color}-400`
-                                        : 'text-white'
-                                        }`}>
+                                    <div
+                                        className={`font-bold text-sm mb-1 ${
+                                            preferences.contextualBehavior?.chatMode === mode.id
+                                                ? `text-${mode.color}-400`
+                                                : 'text-white'
+                                        }`}
+                                    >
                                         {mode.label}
                                     </div>
                                     <div className="text-xs text-slate-500 mb-2">{mode.desc}</div>
@@ -884,15 +1087,24 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </div>
                                     <input
                                         type="range"
-                                        min="0" max="2"
+                                        min="0"
+                                        max="2"
                                         className="w-full accent-amber-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
-                                        value={['ultra_short', 'short', 'medium'].indexOf(preferences.responseLength?.quick || 'short')}
+                                        value={['ultra_short', 'short', 'medium'].indexOf(
+                                            preferences.responseLength?.quick || 'short',
+                                        )}
                                         onChange={(e) => {
                                             const values = ['ultra_short', 'short', 'medium'] as const;
-                                            setPreferences(p => ({
-                                                ...p,
-                                                responseLength: { ...p.responseLength, quick: values[parseInt(e.target.value)] }
-                                            } as any));
+                                            setPreferences(
+                                                (p) =>
+                                                    ({
+                                                        ...p,
+                                                        responseLength: {
+                                                            ...p.responseLength,
+                                                            quick: values[parseInt(e.target.value)],
+                                                        },
+                                                    }) as any,
+                                            );
                                         }}
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-500 mt-1">
@@ -912,15 +1124,24 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </div>
                                     <input
                                         type="range"
-                                        min="0" max="2"
+                                        min="0"
+                                        max="2"
                                         className="w-full accent-blue-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
-                                        value={['short', 'medium', 'long'].indexOf(preferences.responseLength?.standard || 'medium')}
+                                        value={['short', 'medium', 'long'].indexOf(
+                                            preferences.responseLength?.standard || 'medium',
+                                        )}
                                         onChange={(e) => {
                                             const values = ['short', 'medium', 'long'] as const;
-                                            setPreferences(p => ({
-                                                ...p,
-                                                responseLength: { ...p.responseLength, standard: values[parseInt(e.target.value)] }
-                                            } as any));
+                                            setPreferences(
+                                                (p) =>
+                                                    ({
+                                                        ...p,
+                                                        responseLength: {
+                                                            ...p.responseLength,
+                                                            standard: values[parseInt(e.target.value)],
+                                                        },
+                                                    }) as any,
+                                            );
                                         }}
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-500 mt-1">
@@ -940,15 +1161,24 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     </div>
                                     <input
                                         type="range"
-                                        min="0" max="2"
+                                        min="0"
+                                        max="2"
                                         className="w-full accent-purple-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
-                                        value={['medium', 'long', 'comprehensive'].indexOf(preferences.responseLength?.deepStudy || 'long')}
+                                        value={['medium', 'long', 'comprehensive'].indexOf(
+                                            preferences.responseLength?.deepStudy || 'long',
+                                        )}
                                         onChange={(e) => {
                                             const values = ['medium', 'long', 'comprehensive'] as const;
-                                            setPreferences(p => ({
-                                                ...p,
-                                                responseLength: { ...p.responseLength, deepStudy: values[parseInt(e.target.value)] }
-                                            } as any));
+                                            setPreferences(
+                                                (p) =>
+                                                    ({
+                                                        ...p,
+                                                        responseLength: {
+                                                            ...p.responseLength,
+                                                            deepStudy: values[parseInt(e.target.value)],
+                                                        },
+                                                    }) as any,
+                                            );
                                         }}
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-500 mt-1">
@@ -970,60 +1200,104 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             </div>
                             <Toggle
                                 enabled={preferences.contextualBehavior?.autoDetectIntent ?? true}
-                                onChange={() => setPreferences(p => ({
-                                    ...p,
-                                    contextualBehavior: { ...p.contextualBehavior, autoDetectIntent: !(p.contextualBehavior?.autoDetectIntent ?? true) }
-                                } as any))}
+                                onChange={() =>
+                                    setPreferences(
+                                        (p) =>
+                                            ({
+                                                ...p,
+                                                contextualBehavior: {
+                                                    ...p.contextualBehavior,
+                                                    autoDetectIntent: !(p.contextualBehavior?.autoDetectIntent ?? true),
+                                                },
+                                            }) as any,
+                                    )
+                                }
                             />
                         </div>
 
                         {/* Formatting Preferences */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                             <button
-                                onClick={() => setPreferences(p => ({
-                                    ...p,
-                                    formatting: { ...p.formatting, preferBulletPoints: !p.formatting?.preferBulletPoints }
-                                } as any))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.preferBulletPoints
-                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                    }`}
+                                onClick={() =>
+                                    setPreferences(
+                                        (p) =>
+                                            ({
+                                                ...p,
+                                                formatting: {
+                                                    ...p.formatting,
+                                                    preferBulletPoints: !p.formatting?.preferBulletPoints,
+                                                },
+                                            }) as any,
+                                    )
+                                }
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.preferBulletPoints
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
                             >
                                 • Bullet Points
                             </button>
                             <button
-                                onClick={() => setPreferences(p => ({
-                                    ...p,
-                                    formatting: { ...p.formatting, preferTables: !p.formatting?.preferTables }
-                                } as any))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.preferTables
-                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                    }`}
+                                onClick={() =>
+                                    setPreferences(
+                                        (p) =>
+                                            ({
+                                                ...p,
+                                                formatting: {
+                                                    ...p.formatting,
+                                                    preferTables: !p.formatting?.preferTables,
+                                                },
+                                            }) as any,
+                                    )
+                                }
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.preferTables
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
                             >
                                 ⊞ Tables
                             </button>
                             <button
-                                onClick={() => setPreferences(p => ({
-                                    ...p,
-                                    formatting: { ...p.formatting, includeActionItems: !p.formatting?.includeActionItems }
-                                } as any))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.includeActionItems
-                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                    }`}
+                                onClick={() =>
+                                    setPreferences(
+                                        (p) =>
+                                            ({
+                                                ...p,
+                                                formatting: {
+                                                    ...p.formatting,
+                                                    includeActionItems: !p.formatting?.includeActionItems,
+                                                },
+                                            }) as any,
+                                    )
+                                }
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.includeActionItems
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
                             >
                                 ✓ Action Items
                             </button>
                             <button
-                                onClick={() => setPreferences(p => ({
-                                    ...p,
-                                    formatting: { ...p.formatting, includeSources: !p.formatting?.includeSources }
-                                } as any))}
-                                className={`p-3 rounded-lg border text-center text-xs transition-all ${preferences.formatting?.includeSources
-                                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
-                                    }`}
+                                onClick={() =>
+                                    setPreferences(
+                                        (p) =>
+                                            ({
+                                                ...p,
+                                                formatting: {
+                                                    ...p.formatting,
+                                                    includeSources: !p.formatting?.includeSources,
+                                                },
+                                            }) as any,
+                                    )
+                                }
+                                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                                    preferences.formatting?.includeSources
+                                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30'
+                                }`}
                             >
                                 📚 Sources
                             </button>
@@ -1032,20 +1306,31 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         <SectionHeader title="Persona Definition" subtitle="Define your role to tailor AI responses." />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {[
-                                { id: 'executive', label: 'Executive / Strategy', desc: 'Strategic insights, no jargon.' },
+                                {
+                                    id: 'executive',
+                                    label: 'Executive / Strategy',
+                                    desc: 'Strategic insights, no jargon.',
+                                },
                                 { id: 'manager', label: 'Project Manager', desc: 'Timeline-focused, risk-aware.' },
                                 { id: 'analyst', label: 'Business Analyst', desc: 'Data-driven, detailed output.' },
-                                { id: 'developer', label: 'Developer / Technical', desc: 'Code-centric, architecture focus.' }
-                            ].map(role => (
+                                {
+                                    id: 'developer',
+                                    label: 'Developer / Technical',
+                                    desc: 'Code-centric, architecture focus.',
+                                },
+                            ].map((role) => (
                                 <button
                                     key={role.id}
-                                    onClick={() => setPreferences(p => ({ ...p, userRole: role.id }))}
-                                    className={`text-left p-4 rounded-lg border transition-all ${preferences.userRole === role.id
-                                        ? 'bg-blue-500/10 border-blue-500/50'
-                                        : 'bg-white/5 border-white/5 hover:border-white/20'
-                                        }`}
+                                    onClick={() => setPreferences((p) => ({ ...p, userRole: role.id }))}
+                                    className={`text-left p-4 rounded-lg border transition-all ${
+                                        preferences.userRole === role.id
+                                            ? 'bg-blue-500/10 border-blue-500/50'
+                                            : 'bg-white/5 border-white/5 hover:border-white/20'
+                                    }`}
                                 >
-                                    <div className={`font-semibold text-sm mb-1 ${preferences.userRole === role.id ? 'text-blue-400' : 'text-white'}`}>
+                                    <div
+                                        className={`font-semibold text-sm mb-1 ${preferences.userRole === role.id ? 'text-blue-400' : 'text-white'}`}
+                                    >
                                         {role.label}
                                     </div>
                                     <div className="text-xs text-slate-500">{role.desc}</div>
@@ -1053,210 +1338,249 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             ))}
                         </div>
                     </div>
-                )
-                }
+                )}
 
                 {/* AI Proactivity Tab */}
-                {
-                    activeTab === 'proactivity' && (
-                        <div className="animate-in fade-in duration-300 max-w-4xl">
-                            <SectionHeader title="AI Proactivity Level" subtitle="Control how actively the AI assists you." />
+                {activeTab === 'proactivity' && (
+                    <div className="animate-in fade-in duration-300 max-w-4xl">
+                        <SectionHeader
+                            title="AI Proactivity Level"
+                            subtitle="Control how actively the AI assists you."
+                        />
 
-                            {/* Proactivity Selector */}
-                            <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
-                                <ProactivitySelector
-                                    value={proactivityMode}
-                                    onChange={setProactivityMode}
-                                    maxAllowed={maxProactivity}
-                                    showBehaviors={true}
-                                />
-                            </div>
-
-                            {/* Proactivity Explanation */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                                <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'REACTIVE'
-                                    ? 'bg-slate-600/20 border-slate-500/50'
-                                    : 'bg-white/5 border-white/5'
-                                    }`}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Pause size={18} className="text-slate-400" />
-                                        <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
-                                    </div>
-                                    <p className="text-xs text-slate-400 leading-relaxed">
-                                        AI remains silent until you explicitly ask. Perfect for experienced users who prefer full control and only want help when requested.
-                                    </p>
-                                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                            <span>✗</span> No auto-suggestions
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                            <span>✗</span> No proactive nudges
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                            <span>✗</span> No conversation initiation
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'BALANCED'
-                                    ? 'bg-violet-600/20 border-violet-500/50'
-                                    : 'bg-white/5 border-white/5'
-                                    }`}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Scale size={18} className="text-violet-400" />
-                                        <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
-                                    </div>
-                                    <p className="text-xs text-slate-400 leading-relaxed">
-                                        AI provides helpful suggestions when relevant, but waits for you to drive major interactions. Recommended for most users.
-                                    </p>
-                                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                            <span>✓</span> Contextual suggestions
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                            <span>✓</span> Helpful nudges
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                            <span>✗</span> No conversation initiation
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className={`p-4 rounded-xl border transition-all ${proactivityMode === 'PROACTIVE'
-                                    ? 'bg-emerald-600/20 border-emerald-500/50'
-                                    : 'bg-white/5 border-white/5'
-                                    }`}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Zap size={18} className="text-emerald-400" />
-                                        <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
-                                    </div>
-                                    <p className="text-xs text-slate-400 leading-relaxed">
-                                        AI actively monitors your work and proactively offers assistance, even starting conversations about potential issues.
-                                    </p>
-                                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
-                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                            <span>✓</span> Active suggestions
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                            <span>✓</span> Continuous monitoring
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                            <span>✓</span> Proactive conversations
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Organization Limit Notice */}
-                            {maxProactivity !== 'PROACTIVE' && (
-                                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
-                                    <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
-                                        <p className="text-xs text-amber-400/80 mt-1">
-                                            Your organization has set the maximum proactivity level to <strong>{maxProactivity}</strong>.
-                                            Contact your administrator if you need a higher level.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                        {/* Proactivity Selector */}
+                        <div className="mb-8 p-6 rounded-xl border border-white/10 bg-white/5">
+                            <ProactivitySelector
+                                value={proactivityMode}
+                                onChange={setProactivityMode}
+                                maxAllowed={maxProactivity}
+                                showBehaviors={true}
+                            />
                         </div>
-                    )
-                }
+
+                        {/* Proactivity Explanation */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <div
+                                className={`p-4 rounded-xl border transition-all ${
+                                    proactivityMode === 'REACTIVE'
+                                        ? 'bg-slate-600/20 border-slate-500/50'
+                                        : 'bg-white/5 border-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Pause size={18} className="text-slate-400" />
+                                    <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    AI remains silent until you explicitly ask. Perfect for experienced users who prefer
+                                    full control and only want help when requested.
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No auto-suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No proactive nudges
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No conversation initiation
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                className={`p-4 rounded-xl border transition-all ${
+                                    proactivityMode === 'BALANCED'
+                                        ? 'bg-violet-600/20 border-violet-500/50'
+                                        : 'bg-white/5 border-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Scale size={18} className="text-violet-400" />
+                                    <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    AI provides helpful suggestions when relevant, but waits for you to drive major
+                                    interactions. Recommended for most users.
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Contextual suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Helpful nudges
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        <span>✗</span> No conversation initiation
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                className={`p-4 rounded-xl border transition-all ${
+                                    proactivityMode === 'PROACTIVE'
+                                        ? 'bg-emerald-600/20 border-emerald-500/50'
+                                        : 'bg-white/5 border-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Zap size={18} className="text-emerald-400" />
+                                    <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    AI actively monitors your work and proactively offers assistance, even starting
+                                    conversations about potential issues.
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Active suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Continuous monitoring
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                        <span>✓</span> Proactive conversations
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Organization Limit Notice */}
+                        {maxProactivity !== 'PROACTIVE' && (
+                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                                <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
+                                    <p className="text-xs text-amber-400/80 mt-1">
+                                        Your organization has set the maximum proactivity level to{' '}
+                                        <strong>{maxProactivity}</strong>. Contact your administrator if you need a
+                                        higher level.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* 3. Privacy & Controls */}
-                {
-                    activeTab === 'privacy' && (
-                        <div className="animate-in fade-in duration-300 max-w-4xl">
-                            <SectionHeader title="Data Privacy & Governance" subtitle="Manage how your data is handled and retained." />
+                {activeTab === 'privacy' && (
+                    <div className="animate-in fade-in duration-300 max-w-4xl">
+                        <SectionHeader
+                            title="Data Privacy & Governance"
+                            subtitle="Manage how your data is handled and retained."
+                        />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                {/* PII Redaction */}
-                                <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
-                                                <Fingerprint size={20} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-semibold text-white">PII Redaction</h3>
-                                                <p className="text-xs text-slate-500">Auto-remove sensitive data</p>
-                                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            {/* PII Redaction */}
+                            <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
+                                            <Fingerprint size={20} />
                                         </div>
-                                        <Toggle
-                                            enabled={preferences.enablePiiRedaction || false}
-                                            onChange={() => setPreferences(p => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
-                                        Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.
-                                    </p>
-                                </div>
-
-                                {/* Web Search */}
-                                <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
-                                                <Globe size={20} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-semibold text-white">Web Connectivity</h3>
-                                                <p className="text-xs text-slate-500">Allow external searches</p>
-                                            </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-white">PII Redaction</h3>
+                                            <p className="text-xs text-slate-500">Auto-remove sensitive data</p>
                                         </div>
-                                        <Toggle
-                                            enabled={preferences.enableWebSearch || false}
-                                            onChange={() => setPreferences(p => ({ ...p, enableWebSearch: !p.enableWebSearch }))}
-                                        />
                                     </div>
-                                    <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
-                                        Enables the model to search the web for real-time information. May increase latency.
-                                    </p>
+                                    <Toggle
+                                        enabled={preferences.enablePiiRedaction || false}
+                                        onChange={() =>
+                                            setPreferences((p) => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))
+                                        }
+                                    />
                                 </div>
+                                <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                                    Automatically detects and redacts emails, phone numbers, and credit card patterns
+                                    before sending to the model.
+                                </p>
                             </div>
 
-                            {/* Retention Policy */}
-                            <div className="p-6 rounded-xl border border-white/5 bg-white/5">
-                                <h3 className="text-sm font-semibold text-white mb-6 flex items-center gap-2">
-                                    <Activity size={16} className="text-emerald-400" />
-                                    Data Retention Policy
-                                </h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {[
-                                        { id: 'none', label: 'Ephemeral', desc: 'No data saved', icon: <Trash2 size={16} /> },
-                                        { id: '30days', label: '30 Days', desc: 'Standard rotation', icon: <Activity size={16} /> },
-                                        { id: 'standard', label: 'Indefinite', desc: 'Full history', icon: <HardDrive size={16} /> }
-                                    ].map((policy) => (
-                                        <button
-                                            key={policy.id}
-                                            onClick={() => setPreferences(p => ({ ...p, dataRetentionPolicy: policy.id as any }))}
-                                            className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${preferences.dataRetentionPolicy === policy.id
-                                                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                                                : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
-                                                }`}
-                                        >
-                                            {policy.icon}
-                                            <div className="text-center">
-                                                <div className="font-semibold text-xs">{policy.label}</div>
-                                                <div className="text-[10px] opacity-70">{policy.desc}</div>
-                                            </div>
-                                        </button>
-                                    ))}
+                            {/* Web Search */}
+                            <div className="p-6 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 transition-colors">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                                            <Globe size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-white">Web Connectivity</h3>
+                                            <p className="text-xs text-slate-500">Allow external searches</p>
+                                        </div>
+                                    </div>
+                                    <Toggle
+                                        enabled={preferences.enableWebSearch || false}
+                                        onChange={() =>
+                                            setPreferences((p) => ({ ...p, enableWebSearch: !p.enableWebSearch }))
+                                        }
+                                    />
                                 </div>
+                                <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                                    Enables the model to search the web for real-time information. May increase latency.
+                                </p>
                             </div>
                         </div>
-                    )
-                }
-            </div >
+
+                        {/* Retention Policy */}
+                        <div className="p-6 rounded-xl border border-white/5 bg-white/5">
+                            <h3 className="text-sm font-semibold text-white mb-6 flex items-center gap-2">
+                                <Activity size={16} className="text-emerald-400" />
+                                Data Retention Policy
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {[
+                                    {
+                                        id: 'none',
+                                        label: 'Ephemeral',
+                                        desc: 'No data saved',
+                                        icon: <Trash2 size={16} />,
+                                    },
+                                    {
+                                        id: '30days',
+                                        label: '30 Days',
+                                        desc: 'Standard rotation',
+                                        icon: <Activity size={16} />,
+                                    },
+                                    {
+                                        id: 'standard',
+                                        label: 'Indefinite',
+                                        desc: 'Full history',
+                                        icon: <HardDrive size={16} />,
+                                    },
+                                ].map((policy) => (
+                                    <button
+                                        key={policy.id}
+                                        onClick={() =>
+                                            setPreferences((p) => ({ ...p, dataRetentionPolicy: policy.id as any }))
+                                        }
+                                        className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${
+                                            preferences.dataRetentionPolicy === policy.id
+                                                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                                : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                                        }`}
+                                    >
+                                        {policy.icon}
+                                        <div className="text-center">
+                                            <div className="font-semibold text-xs">{policy.label}</div>
+                                            <div className="text-[10px] opacity-70">{policy.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Minimal Footer */}
-            < div className="mt-12 border-t border-white/5 pt-6 flex justify-between items-center text-[10px] text-slate-600 uppercase tracking-widest" >
+            <div className="mt-12 border-t border-white/5 pt-6 flex justify-between items-center text-[10px] text-slate-600 uppercase tracking-widest">
                 <span>AI Governance v2.4.0</span>
-                <Link to="/legal/ai-policy" className="hover:text-slate-400 transition-colors">Safety Policy &rarr;</Link>
-            </div >
-        </div >
+                <Link to="/legal/ai-policy" className="hover:text-slate-400 transition-colors">
+                    Safety Policy &rarr;
+                </Link>
+            </div>
+        </div>
     );
 };
 
@@ -1264,17 +1588,18 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 const NavTab = ({ id, label, icon, active, onClick }: any) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all font-medium text-xs whitespace-nowrap ${active
-            ? 'bg-white text-black border-white shadow-[0_0_15px_-3px_rgba(255,255,255,0.3)]'
-            : 'text-slate-500 border-transparent hover:text-white hover:bg-white/5'
-            }`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all font-medium text-xs whitespace-nowrap ${
+            active
+                ? 'bg-white text-black border-white shadow-[0_0_15px_-3px_rgba(255,255,255,0.3)]'
+                : 'text-slate-500 border-transparent hover:text-white hover:bg-white/5'
+        }`}
     >
         {icon}
         {label}
     </button>
 );
 
-const SectionHeader = ({ title, subtitle }: { title: string, subtitle: string }) => (
+const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
     <div className="mb-6">
         <h3 className="text-lg font-medium text-white">{title}</h3>
         <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
@@ -1284,12 +1609,14 @@ const SectionHeader = ({ title, subtitle }: { title: string, subtitle: string })
 const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
     <button
         onClick={onChange}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black ${enabled ? 'bg-blue-600' : 'bg-slate-700'
-            }`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black ${
+            enabled ? 'bg-blue-600' : 'bg-slate-700'
+        }`}
     >
         <span
-            className={`${enabled ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+            className={`${
+                enabled ? 'translate-x-6' : 'translate-x-1'
+            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
         />
     </button>
 );

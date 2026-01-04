@@ -1,7 +1,7 @@
 /**
  * GenericReports Routes
  * API endpoints for generic-reports
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript
@@ -17,7 +17,10 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof generic_reportsRoutesJS === 'function' || (generic_reportsRoutesJS && typeof generic_reportsRoutesJS.handle === 'function')) {
+if (
+    typeof generic_reportsRoutesJS === 'function' ||
+    (generic_reportsRoutesJS && typeof generic_reportsRoutesJS.handle === 'function')
+) {
     // If it's a router function or Router object, use it
     router.use(generic_reportsRoutesJS);
 } else {

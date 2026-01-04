@@ -108,5 +108,3 @@ export interface ServiceHealth {
     lastCheck?: string;
     error?: string;
 }
-
-

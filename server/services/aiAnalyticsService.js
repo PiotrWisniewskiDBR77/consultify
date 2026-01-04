@@ -9,7 +9,8 @@
  * - SLA metrics
  */
 
-import defaultDb from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
 
 
 

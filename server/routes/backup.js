@@ -6,7 +6,7 @@
 
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 import BackupService from '../services/backupService.js';
 
@@ -144,6 +144,7 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
 });
 
 export default router;
+
 
 
 

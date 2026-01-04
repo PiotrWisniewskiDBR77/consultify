@@ -83,8 +83,8 @@ router.get('/organization/:orgId', async (req, res) => {
         }
 
         // Fetch all external assessments for this org
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         const sql = `
             SELECT id, framework_type, framework_version, assessment_date, 
                    processing_status, uploaded_at, file_name
@@ -124,8 +124,8 @@ router.post('/:id/remap', async (req, res) => {
         const updatedMapping = { ...assessment.drd_axis_mapping, ...customMapping };
 
         // Save updated mapping
-        const { getDatabase } = await import('../src/database/Database.js');
-const db = getDatabase();
+        const { getDatabase } = await import('../src/database/index.js');
+
         const sql = `
             UPDATE external_digital_assessments
             SET drd_axis_mapping = ?, mapping_confidence = 1.0

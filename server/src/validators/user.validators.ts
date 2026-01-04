@@ -1,7 +1,7 @@
 /**
  * User Validators
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Zod schemas for user-related API endpoints
  */
 
@@ -51,7 +51,4 @@ export const GetUsersQuerySchema = z.object({
 export type UpdateUserRequest = z.infer<typeof UpdateUserSchema>;
 export type UpdateUserRoleRequest = z.infer<typeof UpdateUserRoleSchema>;
 export type GetUsersQuery = z.infer<typeof GetUsersQuerySchema>;
-
-
-
 

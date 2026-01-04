@@ -1,33 +1,30 @@
 /**
  * ApprovalWorkflow Component
- * 
+ *
  * Multi-level approval workflow for Management Reports.
  * Shows approval chain status, allows approve/reject actions,
  * and displays SLA countdown.
- * 
+ *
  * PMO Standards: PRINCE2 Project Board approval flow
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { 
-    CheckCircle2, 
-    XCircle, 
-    Clock, 
+import {
     AlertTriangle,
+    CheckCircle2,
     ChevronDown,
     ChevronUp,
-    Send,
-    User,
-    Shield,
+    Clock,
     Crown,
     MessageSquare,
-    Timer
+    Send,
+    Shield,
+    Timer,
+    User,
+    XCircle,
 } from 'lucide-react';
-import { 
-    ApprovalChainStatus, 
-    ReportApproval, 
-    ReportApprovalStatus 
-} from '../../../types';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { ApprovalChainStatus, ReportApproval, ReportApprovalStatus } from '../../../types';
 
 interface ApprovalWorkflowProps {
     reportId: string;
@@ -103,7 +100,9 @@ const SLACountdown: React.FC<{ dueAt: string }> = ({ dueAt }) => {
 
     const isUrgent = diffHours < 8;
     return (
-        <span className={`flex items-center gap-1 text-xs font-medium ${isUrgent ? 'text-amber-500' : 'text-slate-500'}`}>
+        <span
+            className={`flex items-center gap-1 text-xs font-medium ${isUrgent ? 'text-amber-500' : 'text-slate-500'}`}
+        >
             <Timer size={12} />
             {diffHours}h {diffMins}m remaining
         </span>
@@ -122,20 +121,24 @@ const ApprovalStep: React.FC<{
         <div className="flex items-start gap-4">
             {/* Connector line */}
             <div className="flex flex-col items-center">
-                <div className={`
+                <div
+                    className={`
                     w-10 h-10 rounded-full flex items-center justify-center
                     ${statusColor}
                     ${isActive ? 'ring-2 ring-offset-2 ring-violet-500' : ''}
-                `}>
+                `}
+                >
                     {approval.status === 'APPROVED' && <CheckCircle2 size={20} />}
                     {approval.status === 'REJECTED' && <XCircle size={20} />}
                     {approval.status === 'PENDING' && <Clock size={20} />}
                     {approval.status === 'SKIPPED' && <span className="text-xs">—</span>}
                 </div>
                 {!isLast && (
-                    <div className={`w-0.5 h-12 ${
-                        approval.status === 'APPROVED' ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-navy-700'
-                    }`} />
+                    <div
+                        className={`w-0.5 h-12 ${
+                            approval.status === 'APPROVED' ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-navy-700'
+                        }`}
+                    />
                 )}
             </div>
 
@@ -148,9 +151,7 @@ const ApprovalStep: React.FC<{
                             Level {approval.approvalLevel}: {getRoleLabel(approval.requiredRole)}
                         </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColor}`}>
-                        {approval.status}
-                    </span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColor}`}>{approval.status}</span>
                 </div>
 
                 {approval.assignedToName && (
@@ -194,7 +195,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
     onApprove,
     onReject,
     onRefresh,
-    className = ''
+    className = '',
 }) => {
     const [expanded, setExpanded] = useState(true);
     const [showDecisionModal, setShowDecisionModal] = useState<'approve' | 'reject' | null>(null);
@@ -205,7 +206,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
     // Determine overall status badge
     const statusBadge = useMemo(() => {
         if (!approvalStatus) return null;
-        
+
         const { overallStatus } = approvalStatus;
         switch (overallStatus) {
             case 'APPROVED':
@@ -262,7 +263,9 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
     // Not submitted state
     if (!approvalStatus || approvalStatus.overallStatus === 'NONE') {
         return (
-            <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4 ${className}`}>
+            <div
+                className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4 ${className}`}
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
@@ -291,7 +294,9 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
     }
 
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}
+        >
             {/* Header */}
             <button
                 onClick={() => setExpanded(!expanded)}
@@ -314,7 +319,11 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                             {statusBadge.label}
                         </span>
                     )}
-                    {expanded ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                    {expanded ? (
+                        <ChevronUp size={20} className="text-slate-400" />
+                    ) : (
+                        <ChevronDown size={20} className="text-slate-400" />
+                    )}
                 </div>
             </button>
 
@@ -370,14 +379,17 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    {showDecisionModal === 'approve' ? 'Comment (optional)' : 'Reason for rejection (required)'}
+                                    {showDecisionModal === 'approve'
+                                        ? 'Comment (optional)'
+                                        : 'Reason for rejection (required)'}
                                 </label>
                                 <textarea
                                     value={decisionComment}
                                     onChange={(e) => setDecisionComment(e.target.value)}
-                                    placeholder={showDecisionModal === 'approve' 
-                                        ? 'Add an optional comment...' 
-                                        : 'Please provide a reason for rejection...'
+                                    placeholder={
+                                        showDecisionModal === 'approve'
+                                            ? 'Add an optional comment...'
+                                            : 'Please provide a reason for rejection...'
                                     }
                                     className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
                                     rows={4}
@@ -418,7 +430,11 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                                         : 'bg-red-500 hover:bg-red-600 disabled:bg-red-300'
                                 }`}
                             >
-                                {submitting ? 'Processing...' : showDecisionModal === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+                                {submitting
+                                    ? 'Processing...'
+                                    : showDecisionModal === 'approve'
+                                      ? 'Confirm Approval'
+                                      : 'Confirm Rejection'}
                             </button>
                         </div>
                     </div>
@@ -429,12 +445,4 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
 };
 
 export default ApprovalWorkflow;
-
-
-
-
-
-
-
-
 

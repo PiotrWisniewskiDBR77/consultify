@@ -12,18 +12,28 @@ describe('NotificationOutboxService Constants and Logic', () => {
         vi.resetModules();
 
         // Mock database
-        vi.doMock('../../server/database', () => ({
+        vi.doMock('../../server/database.js', () => ({
             default: {
                 run: vi.fn((sql, params, cb) => {
                     if (typeof params === 'function') params(null);
                     else if (cb) cb.call({ changes: 1 }, null);
+                    else return Promise.resolve({ changes: 1 });
                 }),
-                get: vi.fn((sql, params, cb) => cb(null, null)),
-                all: vi.fn((sql, params, cb) => cb(null, []))
+                get: vi.fn((sql, params, cb) => {
+                    if (cb) cb(null, null);
+                    else return Promise.resolve(null);
+                }),
+                all: vi.fn((sql, params, cb) => {
+                    if (cb) cb(null, []);
+                    else return Promise.resolve([]);
+                }),
+                // Add queryRun/queryOne helpers if BaseService calls them on db? 
+                // No, BaseService calls queryHelpers which wraps db. But if db is direct...
+                // BaseService init() loads db module.
             }
         }));
 
-        vi.doMock('../../server/utils/auditLogger', () => ({
+        vi.doMock('../../server/utils/auditLogger.js', () => ({
             default: {
                 info: vi.fn(),
                 warn: vi.fn(),
@@ -32,11 +42,28 @@ describe('NotificationOutboxService Constants and Logic', () => {
             }
         }));
 
+        // Mock Utils used by BaseService if they are imported there
+        vi.doMock('../../server/utils/cacheHelper.js', () => ({
+            default: {
+                getCached: vi.fn((key, factory) => factory()),
+                DEFAULT_TTL: { MEDIUM: 60 }
+            }
+        }));
+
+        vi.doMock('../../server/utils/queryHelpers.js', () => ({
+            default: {
+                queryAll: vi.fn().mockResolvedValue([]),
+                queryOne: vi.fn().mockResolvedValue(null),
+                queryRun: vi.fn().mockResolvedValue({ changes: 1 }),
+                parseJsonFields: vi.fn((r) => r)
+            }
+        }));
+
         vi.doMock('uuid', () => ({
             v4: () => 'test-uuid-notif'
         }));
 
-        NotificationOutboxService = (await import('../../server/services/notificationOutboxService')).default;
+        NotificationOutboxService = (await import('../../server/services/notificationOutboxService.js')).default;
     });
 
     describe('NOTIFICATION_TYPES Constants', () => {

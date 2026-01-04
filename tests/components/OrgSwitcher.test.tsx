@@ -4,8 +4,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import OrgSwitcher from '../../../components/OrgSwitcher';
-import { useOrgContext } from '../../../contexts/OrgContext';
+import OrgSwitcher from '../../components/OrgSwitcher';
+import { useOrgContext } from '../../contexts/OrgContext';
 
 vi.mock('../../../contexts/OrgContext', () => ({
     useOrgContext: vi.fn()

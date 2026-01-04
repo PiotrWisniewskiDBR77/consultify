@@ -23,26 +23,28 @@ type RagChunk = {
 
 export async function searchKnowledgeBase(
     params: SearchParams,
-    context: SearchContext = {}
+    context: SearchContext = {},
 ): Promise<{ results: Array<{ content: string; source: string; relevance: number }>; totalFound: number }> {
     const { query, maxResults = 5 } = params;
 
     try {
         const ragModule = await import('../../ragService.js');
-        const ragService = (ragModule.default || ragModule) as { searchRelevantChunks: (queryText: string, options: Record<string, unknown>) => Promise<RagChunk[]> };
+        const ragService = (ragModule.default || ragModule) as {
+            searchRelevantChunks: (queryText: string, options: Record<string, unknown>) => Promise<RagChunk[]>;
+        };
 
         const results = await ragService.searchRelevantChunks(query, {
             limit: maxResults,
-            organizationId: context.organizationId
+            organizationId: context.organizationId,
         });
 
         return {
-            results: results.map(r => ({
+            results: results.map((r) => ({
                 content: r.content || r.text || '',
                 source: r.source || r.document_name || 'DRD Methodology',
-                relevance: r.similarity || r.score || 0.8
+                relevance: r.similarity || r.score || 0.8,
             })),
-            totalFound: results.length
+            totalFound: results.length,
         };
     } catch (error: unknown) {
         const err = error as Error;
@@ -53,10 +55,10 @@ export async function searchKnowledgeBase(
                 {
                     content: getDRDFallbackContent(query),
                     source: 'DRD Methodology (Fallback)',
-                    relevance: 0.7
-                }
+                    relevance: 0.7,
+                },
             ],
-            totalFound: 1
+            totalFound: 1,
         };
     }
 }

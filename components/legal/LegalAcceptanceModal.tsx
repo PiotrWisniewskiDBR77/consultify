@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { AlertTriangle, CheckCircle, ChevronDown, ChevronUp, FileText, Loader2, Shield } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, CheckCircle, AlertTriangle, ChevronDown, ChevronUp, Shield, Loader2 } from 'lucide-react';
-import { LegalDocument, LegalDocType } from '../../types';
+
+import { LegalDocType, LegalDocument } from '../../types';
 
 interface LegalAcceptanceModalProps {
     onAccepted: () => void;
@@ -15,7 +16,7 @@ const DOC_TYPE_LABELS: Record<LegalDocType, string> = {
     COOKIES: 'Cookie Policy',
     AUP: 'Acceptable Use Policy',
     AI_POLICY: 'AI Usage Policy',
-    DPA: 'Data Processing Addendum'
+    DPA: 'Data Processing Addendum',
 };
 
 export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAccepted, userId, userRole }) => {
@@ -39,7 +40,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
         try {
             const token = localStorage.getItem('token');
             const res = await fetch('/api/legal/pending', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -63,12 +64,12 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`/api/legal/active/${docType}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
                 const doc = await res.json();
-                setDocContents(prev => ({ ...prev, [docType]: doc.content_md || '' }));
+                setDocContents((prev) => ({ ...prev, [docType]: doc.content_md || '' }));
             }
         } catch (err) {
             console.error('Failed to fetch document content:', err);
@@ -85,7 +86,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
     };
 
     const toggleCheck = (docType: string) => {
-        setCheckedDocs(prev => {
+        setCheckedDocs((prev) => {
             const next = new Set(prev);
             if (next.has(docType)) {
                 next.delete(docType);
@@ -97,11 +98,11 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
     };
 
     const allChecked = () => {
-        const requiredTypes = pendingDocs.map(d => d.docType);
+        const requiredTypes = pendingDocs.map((d) => d.docType);
         if (dpaPending && isOrgAdmin && dpaDoc) {
             requiredTypes.push(dpaDoc.docType);
         }
-        return requiredTypes.every(t => checkedDocs.has(t));
+        return requiredTypes.every((t) => checkedDocs.has(t));
     };
 
     const handleAccept = async () => {
@@ -110,17 +111,17 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
 
         try {
             const token = localStorage.getItem('token');
-            const docTypes = pendingDocs.map(d => d.docType);
+            const docTypes = pendingDocs.map((d) => d.docType);
 
             // Accept user-level docs
             if (docTypes.length > 0) {
                 const userRes = await fetch('/api/legal/accept', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ docTypes, scope: 'USER' })
+                    body: JSON.stringify({ docTypes, scope: 'USER' }),
                 });
 
                 if (!userRes.ok) {
@@ -133,10 +134,10 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
                 const dpaRes = await fetch('/api/legal/accept', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ docTypes: ['DPA'], scope: 'ORG_ADMIN' })
+                    body: JSON.stringify({ docTypes: ['DPA'], scope: 'ORG_ADMIN' }),
                 });
 
                 if (!dpaRes.ok) {
@@ -179,7 +180,10 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
                                 {t('legal.modal.title', 'Legal Updates Required')}
                             </h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t('legal.modal.subtitle', 'Please review and accept the following documents to continue.')}
+                                {t(
+                                    'legal.modal.subtitle',
+                                    'Please review and accept the following documents to continue.',
+                                )}
                             </p>
                         </div>
                     </div>
@@ -187,7 +191,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
 
                 {/* Documents List */}
                 <div className="flex-1 overflow-auto p-6 space-y-3">
-                    {allDocs.map(doc => {
+                    {allDocs.map((doc) => {
                         const docType = doc.docType as LegalDocType;
                         const isExpanded = expandedDoc === docType;
                         const isChecked = checkedDocs.has(docType);
@@ -204,11 +208,15 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
                                 >
                                     <div className="flex items-center gap-3">
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); toggleCheck(docType); }}
-                                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isChecked
-                                                ? 'bg-blue-500 border-blue-500 text-white'
-                                                : 'border-slate-300 dark:border-slate-600'
-                                                }`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleCheck(docType);
+                                            }}
+                                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                                isChecked
+                                                    ? 'bg-blue-500 border-blue-500 text-white'
+                                                    : 'border-slate-300 dark:border-slate-600'
+                                            }`}
                                         >
                                             {isChecked && <CheckCircle size={14} />}
                                         </button>
@@ -221,9 +229,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
                                                     {t('legal.orgAdmin', 'Organization Agreement')}
                                                 </span>
                                             )}
-                                            <p className="text-xs text-slate-500">
-                                                Version {doc.version}
-                                            </p>
+                                            <p className="text-xs text-slate-500">Version {doc.version}</p>
                                         </div>
                                     </div>
                                     {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -252,7 +258,10 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
                         <div className="flex items-center gap-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
                             <AlertTriangle size={18} />
                             <span className="text-sm">
-                                {t('legal.dpaPendingOrgAdmin', 'The Data Processing Addendum requires acceptance by an organization administrator.')}
+                                {t(
+                                    'legal.dpaPendingOrgAdmin',
+                                    'The Data Processing Addendum requires acceptance by an organization administrator.',
+                                )}
                             </span>
                         </div>
                     )}
@@ -268,10 +277,11 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
                     <button
                         onClick={handleAccept}
                         disabled={!allChecked() || accepting}
-                        className={`w-full py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${allChecked() && !accepting
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                            }`}
+                        className={`w-full py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+                            allChecked() && !accepting
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                        }`}
                     >
                         {accepting ? (
                             <>

@@ -1,31 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Brain,
-    Settings,
-    MessageSquare,
-    Wand2,
-    FileText,
-    Target,
-    BarChart3,
-    Shield,
-    Zap,
-    Save,
-    RefreshCw,
-    ChevronRight,
-    AlertTriangle,
-    CheckCircle,
-    DollarSign,
     Activity,
+    AlertTriangle,
+    BarChart3,
+    Brain,
+    CheckCircle,
+    ChevronRight,
+    Clock,
     Cpu,
     Database,
+    DollarSign,
     Eye,
+    FileText,
     Hand,
+    MessageSquare,
+    RefreshCw,
+    Save,
+    Settings,
+    Shield,
     Sparkles,
-    Clock,
-    TrendingUp
+    Target,
+    TrendingUp,
+    Wand2,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 // AI Capability definitions with their prompt keys
 const AI_CAPABILITIES = [
@@ -35,7 +36,7 @@ const AI_CAPABILITIES = [
         icon: MessageSquare,
         description: 'Główny asystent AI w rozmowach',
         promptKey: 'system_chat',
-        color: 'from-blue-500 to-blue-600'
+        color: 'from-blue-500 to-blue-600',
     },
     {
         id: 'magic_wand',
@@ -43,7 +44,7 @@ const AI_CAPABILITIES = [
         icon: Wand2,
         description: 'Sugestie dla pól formularzy',
         promptKey: 'system_magic_wand',
-        color: 'from-purple-500 to-purple-600'
+        color: 'from-purple-500 to-purple-600',
     },
     {
         id: 'reports',
@@ -51,7 +52,7 @@ const AI_CAPABILITIES = [
         icon: FileText,
         description: 'Generowanie raportów i analiz',
         promptKey: 'system_reports',
-        color: 'from-emerald-500 to-emerald-600'
+        color: 'from-emerald-500 to-emerald-600',
     },
     {
         id: 'initiative_analysis',
@@ -59,7 +60,7 @@ const AI_CAPABILITIES = [
         icon: Target,
         description: 'Analiza i scoring inicjatyw',
         promptKey: 'system_initiative',
-        color: 'from-amber-500 to-amber-600'
+        color: 'from-amber-500 to-amber-600',
     },
     {
         id: 'max_mode',
@@ -67,7 +68,7 @@ const AI_CAPABILITIES = [
         icon: Sparkles,
         description: 'Głęboka analiza z chain-of-thought',
         promptKey: 'system_max_reasoner',
-        color: 'from-rose-500 to-rose-600'
+        color: 'from-rose-500 to-rose-600',
     },
     {
         id: 'coach',
@@ -75,8 +76,8 @@ const AI_CAPABILITIES = [
         icon: Brain,
         description: 'Coaching i mentoring PMO',
         promptKey: 'system_coach',
-        color: 'from-cyan-500 to-cyan-600'
-    }
+        color: 'from-cyan-500 to-cyan-600',
+    },
 ];
 
 // Tabs for the AI Hub
@@ -118,25 +119,30 @@ export const AIHubView: React.FC = () => {
             // Load usage stats
             try {
                 const usage = await fetch('/api/llm/control/usage', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setUsageStats(usage);
-            } catch (e) { console.error('Usage load failed:', e); }
+            } catch (e) {
+                console.error('Usage load failed:', e);
+            }
 
             // Load costs
             try {
                 const costs = await fetch('/api/llm/costs', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                }).then(r => r.json());
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }).then((r) => r.json());
                 setCostStats(costs);
-            } catch (e) { console.error('Costs load failed:', e); }
+            } catch (e) {
+                console.error('Costs load failed:', e);
+            }
 
             // Load health
             try {
-                const health = await fetch('/api/llm/diagnose').then(r => r.json());
+                const health = await fetch('/api/llm/diagnose').then((r) => r.json());
                 setHealthStatus(health);
-            } catch (e) { console.error('Health load failed:', e); }
-
+            } catch (e) {
+                console.error('Health load failed:', e);
+            }
         } catch (err) {
             console.error('Failed to load AI Hub data:', err);
             toast.error('Failed to load AI configuration');
@@ -149,7 +155,7 @@ export const AIHubView: React.FC = () => {
     }, [loadInitialData]);
 
     const selectCapability = (capabilityId: string) => {
-        const cap = AI_CAPABILITIES.find(c => c.id === capabilityId);
+        const cap = AI_CAPABILITIES.find((c) => c.id === capabilityId);
         if (cap) {
             setSelectedCapability(capabilityId);
             setEditingPrompt(prompts[cap.promptKey]?.content || getDefaultPrompt(capabilityId));
@@ -220,7 +226,7 @@ PODEJŚCIE:
 - Buduj świadomość przez refleksję
 - Wspieraj w definiowaniu celów
 - Celebruj postępy
-- Bądź empatyczny ale wymagający`
+- Bądź empatyczny ale wymagający`,
         };
         return defaults[capabilityId] || '';
     };
@@ -228,15 +234,15 @@ PODEJŚCIE:
     const savePrompt = async () => {
         if (!selectedCapability) return;
 
-        const cap = AI_CAPABILITIES.find(c => c.id === selectedCapability);
+        const cap = AI_CAPABILITIES.find((c) => c.id === selectedCapability);
         if (!cap) return;
 
         setSaving(true);
         try {
             await Api.aiUpdateSystemPrompt(cap.promptKey, { content: editingPrompt });
-            setPrompts(prev => ({
+            setPrompts((prev) => ({
                 ...prev,
-                [cap.promptKey]: { content: editingPrompt, updated_at: new Date().toISOString() }
+                [cap.promptKey]: { content: editingPrompt, updated_at: new Date().toISOString() },
             }));
             toast.success(`Zapisano instrukcje dla ${cap.name}`);
         } catch (err) {
@@ -270,14 +276,15 @@ PODEJŚCIE:
 
             {/* Tabs */}
             <div className="shrink-0 px-6 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
-                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                            activeTab === tab.id
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <tab.icon size={16} />
                         {tab.label}
@@ -295,17 +302,18 @@ PODEJŚCIE:
                                 Funkcje AI
                             </h3>
                             <div className="space-y-2">
-                                {AI_CAPABILITIES.map(cap => {
+                                {AI_CAPABILITIES.map((cap) => {
                                     const Icon = cap.icon;
                                     const hasCustomPrompt = !!prompts[cap.promptKey]?.content;
                                     return (
                                         <button
                                             key={cap.id}
                                             onClick={() => selectCapability(cap.id)}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${selectedCapability === cap.id
-                                                ? 'bg-white/10 border border-purple-500/50'
-                                                : 'hover:bg-white/5 border border-transparent'
-                                                }`}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+                                                selectedCapability === cap.id
+                                                    ? 'bg-white/10 border border-purple-500/50'
+                                                    : 'hover:bg-white/5 border border-transparent'
+                                            }`}
                                         >
                                             <div className={`p-2 rounded-lg bg-gradient-to-br ${cap.color}`}>
                                                 <Icon size={18} className="text-white" />
@@ -314,9 +322,7 @@ PODEJŚCIE:
                                                 <div className="font-medium text-white text-sm truncate">
                                                     {cap.name}
                                                 </div>
-                                                <div className="text-xs text-slate-500 truncate">
-                                                    {cap.description}
-                                                </div>
+                                                <div className="text-xs text-slate-500 truncate">{cap.description}</div>
                                             </div>
                                             <div className="shrink-0">
                                                 {hasCustomPrompt ? (
@@ -338,10 +344,17 @@ PODEJŚCIE:
                                     <div className="shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
                                         <div>
                                             <h3 className="font-semibold text-white">
-                                                Instrukcje dla: {AI_CAPABILITIES.find(c => c.id === selectedCapability)?.name}
+                                                Instrukcje dla:{' '}
+                                                {AI_CAPABILITIES.find((c) => c.id === selectedCapability)?.name}
                                             </h3>
                                             <p className="text-xs text-slate-500 mt-1">
-                                                Prompt key: <code className="text-purple-400">{AI_CAPABILITIES.find(c => c.id === selectedCapability)?.promptKey}</code>
+                                                Prompt key:{' '}
+                                                <code className="text-purple-400">
+                                                    {
+                                                        AI_CAPABILITIES.find((c) => c.id === selectedCapability)
+                                                            ?.promptKey
+                                                    }
+                                                </code>
                                             </p>
                                         </div>
                                         <button
@@ -349,20 +362,27 @@ PODEJŚCIE:
                                             disabled={saving}
                                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                                         >
-                                            {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                            {saving ? (
+                                                <RefreshCw size={14} className="animate-spin" />
+                                            ) : (
+                                                <Save size={14} />
+                                            )}
                                             Zapisz
                                         </button>
                                     </div>
                                     <div className="flex-1 p-4 overflow-hidden">
                                         <textarea
                                             value={editingPrompt}
-                                            onChange={e => setEditingPrompt(e.target.value)}
+                                            onChange={(e) => setEditingPrompt(e.target.value)}
                                             placeholder="Wpisz instrukcje dla AI..."
                                             className="w-full h-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
                                         />
                                     </div>
                                     <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500">
-                                        💡 Tip: Użyj placeholderów jak <code className="text-purple-400">{"{{project_name}}"}</code>, <code className="text-purple-400">{"{{user_role}}"}</code>, <code className="text-purple-400">{"{{screen_context}}"}</code>
+                                        💡 Tip: Użyj placeholderów jak{' '}
+                                        <code className="text-purple-400">{'{{project_name}}'}</code>,{' '}
+                                        <code className="text-purple-400">{'{{user_role}}'}</code>,{' '}
+                                        <code className="text-purple-400">{'{{screen_context}}'}</code>
                                     </div>
                                 </>
                             ) : (
@@ -380,26 +400,42 @@ PODEJŚCIE:
                 {activeTab === 'providers' && (
                     <div className="p-6 overflow-y-auto h-full">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {providers.map(provider => (
+                            {providers.map((provider) => (
                                 <div key={provider.id} className="bg-slate-900 border border-white/10 rounded-xl p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${provider.is_active ? 'bg-emerald-500/20' : 'bg-slate-700'}`}>
-                                                <Cpu size={18} className={provider.is_active ? 'text-emerald-400' : 'text-slate-500'} />
+                                            <div
+                                                className={`p-2 rounded-lg ${provider.is_active ? 'bg-emerald-500/20' : 'bg-slate-700'}`}
+                                            >
+                                                <Cpu
+                                                    size={18}
+                                                    className={
+                                                        provider.is_active ? 'text-emerald-400' : 'text-slate-500'
+                                                    }
+                                                />
                                             </div>
                                             <div>
                                                 <div className="font-medium text-white">{provider.name}</div>
                                                 <div className="text-xs text-slate-500">{provider.provider}</div>
                                             </div>
                                         </div>
-                                        <span className={`px-2 py-1 rounded text-xs ${provider.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                                            }`}>
+                                        <span
+                                            className={`px-2 py-1 rounded text-xs ${
+                                                provider.is_active
+                                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                                    : 'bg-slate-700 text-slate-400'
+                                            }`}
+                                        >
                                             {provider.is_active ? 'Aktywny' : 'Nieaktywny'}
                                         </span>
                                     </div>
                                     <div className="text-xs text-slate-500 space-y-1">
-                                        <div>Model: <span className="text-slate-300">{provider.model_id}</span></div>
-                                        <div>Widoczność: <span className="text-slate-300">{provider.visibility}</span></div>
+                                        <div>
+                                            Model: <span className="text-slate-300">{provider.model_id}</span>
+                                        </div>
+                                        <div>
+                                            Widoczność: <span className="text-slate-300">{provider.visibility}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -421,21 +457,48 @@ PODEJŚCIE:
 
                                 <div className="space-y-4">
                                     {[
-                                        { tier: 'BUDGET', label: 'Budget Tier', desc: 'Proste pytania, szybkie odpowiedzi', default: 'deepseek-chat' },
-                                        { tier: 'STANDARD', label: 'Standard Tier', desc: 'Większość zadań (chat, magic wand)', default: 'gpt-4o-mini' },
-                                        { tier: 'PREMIUM', label: 'Premium Tier', desc: 'Złożone analizy, raporty', default: 'gpt-4o' },
-                                        { tier: 'REASONING', label: 'Reasoning Tier', desc: 'MAX Mode, deep thinking', default: 'o1-preview' },
-                                    ].map(item => (
-                                        <div key={item.tier} className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg">
+                                        {
+                                            tier: 'BUDGET',
+                                            label: 'Budget Tier',
+                                            desc: 'Proste pytania, szybkie odpowiedzi',
+                                            default: 'deepseek-chat',
+                                        },
+                                        {
+                                            tier: 'STANDARD',
+                                            label: 'Standard Tier',
+                                            desc: 'Większość zadań (chat, magic wand)',
+                                            default: 'gpt-4o-mini',
+                                        },
+                                        {
+                                            tier: 'PREMIUM',
+                                            label: 'Premium Tier',
+                                            desc: 'Złożone analizy, raporty',
+                                            default: 'gpt-4o',
+                                        },
+                                        {
+                                            tier: 'REASONING',
+                                            label: 'Reasoning Tier',
+                                            desc: 'MAX Mode, deep thinking',
+                                            default: 'o1-preview',
+                                        },
+                                    ].map((item) => (
+                                        <div
+                                            key={item.tier}
+                                            className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg"
+                                        >
                                             <div className="flex-1">
                                                 <div className="font-medium text-white">{item.label}</div>
                                                 <div className="text-xs text-slate-500">{item.desc}</div>
                                             </div>
                                             <select className="bg-slate-700 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
                                                 <option>{item.default}</option>
-                                                {providers.filter(p => p.is_active).map(p => (
-                                                    <option key={p.id} value={p.model_id}>{p.model_id}</option>
-                                                ))}
+                                                {providers
+                                                    .filter((p) => p.is_active)
+                                                    .map((p) => (
+                                                        <option key={p.id} value={p.model_id}>
+                                                            {p.model_id}
+                                                        </option>
+                                                    ))}
                                             </select>
                                         </div>
                                     ))}
@@ -485,8 +548,12 @@ PODEJŚCIE:
                                                 <div className="text-xs text-slate-500">{m.requests} requestów</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-sm text-emerald-400">${(m.cost || 0).toFixed(4)}</div>
-                                                <div className="text-xs text-slate-500">{(m.tokens || 0).toLocaleString()} tokenów</div>
+                                                <div className="text-sm text-emerald-400">
+                                                    ${(m.cost || 0).toFixed(4)}
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {(m.tokens || 0).toLocaleString()} tokenów
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -503,21 +570,33 @@ PODEJŚCIE:
                             <div className="bg-slate-900 border border-white/10 rounded-xl p-6 mb-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-white">Status Systemu AI</h3>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${healthStatus?.status === 'OK'
-                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                        : 'bg-amber-500/20 text-amber-400'
-                                        }`}>
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                            healthStatus?.status === 'OK'
+                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                : 'bg-amber-500/20 text-amber-400'
+                                        }`}
+                                    >
                                         {healthStatus?.status || 'Unknown'}
                                     </span>
                                 </div>
 
                                 <div className="space-y-3">
                                     {healthStatus?.checks?.map((check: any, idx: number) => (
-                                        <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                                        <div
+                                            key={idx}
+                                            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                                        >
                                             <span className="text-sm text-slate-300">{check.name}</span>
-                                            <span className={`text-sm ${check.status === 'OK' ? 'text-emerald-400' :
-                                                check.status === 'MISSING' ? 'text-amber-400' : 'text-slate-400'
-                                                }`}>
+                                            <span
+                                                className={`text-sm ${
+                                                    check.status === 'OK'
+                                                        ? 'text-emerald-400'
+                                                        : check.status === 'MISSING'
+                                                          ? 'text-amber-400'
+                                                          : 'text-slate-400'
+                                                }`}
+                                            >
                                                 {check.status || check.value}
                                             </span>
                                         </div>
@@ -534,7 +613,7 @@ PODEJŚCIE:
                                         { id: 'eyes', icon: Eye, label: 'AI Eyes (Visual)' },
                                         { id: 'memory', icon: Database, label: 'AI Memory (RAG)' },
                                         { id: 'hands', icon: Hand, label: 'AI Hands (Tools)' },
-                                    ].map(cap => (
+                                    ].map((cap) => (
                                         <button
                                             key={cap.id}
                                             className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors"
@@ -557,7 +636,12 @@ PODEJŚCIE:
 };
 
 // Helper component
-const StatCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({ icon: Icon, label, value, color }) => (
+const StatCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({
+    icon: Icon,
+    label,
+    value,
+    color,
+}) => (
     <div className="bg-slate-900 border border-white/10 rounded-xl p-4">
         <div className="flex items-center gap-3 mb-2">
             <Icon size={18} className={color} />
@@ -568,4 +652,3 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
 );
 
 export default AIHubView;
-

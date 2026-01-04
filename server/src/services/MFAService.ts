@@ -1,14 +1,12 @@
 /**
  * Mfa Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadMfaservice = createCachedLazyService('../../services/MFAService.js');
+import service from '../../services/MFAService.js';
 
 // Export default instance (for backward compatibility)
-export default loadMfaservice();
+export default service;

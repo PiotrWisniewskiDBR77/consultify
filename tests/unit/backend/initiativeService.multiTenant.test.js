@@ -1,14 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock queryHelpers before import
-const mockQueryHelpers = vi.hoisted(() => ({
-    queryAll: vi.fn(),
-    queryOne: vi.fn(),
-    queryRun: vi.fn()
-}));
-
-vi.doMock('../../../server/utils/queryHelpers', () => mockQueryHelpers);
-
 // Mock dependencies
 const mockDb = {
     get: vi.fn(),
@@ -18,28 +9,33 @@ const mockDb = {
     initPromise: Promise.resolve()
 };
 
-import InitiativeService from '../../../server/services/initiativeService.js';
+// Import the TS source directly
+import InitiativeService from '../../../server/src/services/initiativeService.ts';
 
 describe('InitiativeService - Multi-Tenant Isolation', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Set dependencies on the singleton instance
         InitiativeService.setDependencies({ db: mockDb });
 
-        // Default queryHelpers mocks
-        mockQueryHelpers.queryAll.mockResolvedValue([]);
-        mockQueryHelpers.queryRun.mockResolvedValue({ changes: 1, lastID: 0 });
+        // Default DB mocks
+        mockDb.all.mockResolvedValue([]);
+        mockDb.run.mockResolvedValue({ changes: 1, lastID: 0 });
     });
 
     describe('recalculateProgress with organizationId', () => {
         it('should filter tasks by organization_id AND initiative_id', async () => {
-            // Simulate tasks only from orgA
-            mockQueryHelpers.queryAll.mockImplementation((query, params) => {
+            // Simulate tasks from DB
+            mockDb.all.mockImplementation((query, params) => {
                 // Verify the query includes org_id filter
-                expect(query).toContain('organization_id = ?');
-                expect(query).toContain('initiative_id = ?');
-                expect(params[0]).toBe('org-a');
-                expect(params[1]).toBe('init-1');
-                return Promise.resolve([{ progress: 100, priority: 'medium' }]);
+                if (query.includes('FROM tasks')) {
+                    expect(query).toContain('organization_id = ?');
+                    expect(query).toContain('initiative_id = ?');
+                    expect(params).toContain('org-a');
+                    expect(params).toContain('init-1');
+                    return Promise.resolve([{ progress: 100, priority: 'medium' }]);
+                }
+                return Promise.resolve([]);
             });
 
             const progress = await InitiativeService.recalculateProgress({
@@ -51,13 +47,15 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
         });
 
         it('should update initiative with org-scoped WHERE clause', async () => {
-            mockQueryHelpers.queryAll.mockResolvedValue([{ progress: 50, priority: 'high' }]);
+            mockDb.all.mockResolvedValue([{ progress: 50, priority: 'high' }]);
 
             let updateQuery = '';
             let updateParams = [];
-            mockQueryHelpers.queryRun.mockImplementation((query, params) => {
-                updateQuery = query;
-                updateParams = params;
+            mockDb.run.mockImplementation((query, params) => {
+                if (query.includes('UPDATE initiatives')) {
+                    updateQuery = query;
+                    updateParams = params;
+                }
                 return Promise.resolve({ changes: 1, lastID: 0 });
             });
 
@@ -79,15 +77,16 @@ describe('InitiativeService - Multi-Tenant Isolation', () => {
             const orgATasks = [{ progress: 100, priority: 'high' }];
             const orgBTasks = [{ progress: 0, priority: 'low' }];
 
-            mockQueryHelpers.queryAll.mockImplementation((query, params) => {
-                const [orgId, initId] = params;
-                if (orgId === 'org-a') {
-                    return Promise.resolve(orgATasks);
-                } else if (orgId === 'org-b') {
-                    return Promise.resolve(orgBTasks);
-                } else {
-                    return Promise.resolve([]);
+            mockDb.all.mockImplementation((query, params) => {
+                if (query.includes('FROM tasks')) {
+                    const orgId = params.find(p => p === 'org-a' || p === 'org-b');
+                    if (orgId === 'org-a') {
+                        return Promise.resolve(orgATasks);
+                    } else if (orgId === 'org-b') {
+                        return Promise.resolve(orgBTasks);
+                    }
                 }
+                return Promise.resolve([]);
             });
 
             const progressA = await InitiativeService.recalculateProgress({

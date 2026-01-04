@@ -5,7 +5,7 @@
  * Unified with AIPipeline for generative capabilities.
  */
 import { aiPipeline } from '../services/ai/aiPipeline.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
 // In-memory cache for request coalescing

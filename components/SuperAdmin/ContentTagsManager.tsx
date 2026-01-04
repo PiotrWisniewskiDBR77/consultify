@@ -1,15 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Tag,
-    Plus,
-    Edit,
-    Trash2,
-    MoreVertical,
-    RefreshCw,
-    Save,
-    X,
-    Hash
-} from 'lucide-react';
+import { Edit, Hash, MoreVertical, Plus, RefreshCw, Save, Tag, Trash2, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import type { ContentTag } from '../../types';
 
 interface ContentTagsManagerProps {
@@ -21,9 +12,18 @@ interface ContentTagsManagerProps {
 }
 
 const PRESET_COLORS = [
-    '#EF4444', '#F59E0B', '#10B981', '#3B82F6',
-    '#6366F1', '#8B5CF6', '#EC4899', '#06B6D4',
-    '#14B8A6', '#84CC16', '#F97316', '#A855F7'
+    '#EF4444',
+    '#F59E0B',
+    '#10B981',
+    '#3B82F6',
+    '#6366F1',
+    '#8B5CF6',
+    '#EC4899',
+    '#06B6D4',
+    '#14B8A6',
+    '#84CC16',
+    '#F97316',
+    '#A855F7',
 ];
 
 export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
@@ -31,7 +31,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
     onTagSelect,
     selectedTags = [],
     onTagsChange,
-    selectable = false
+    selectable = false,
 }) => {
     const token = localStorage.getItem('token');
 
@@ -45,7 +45,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
 
     const [formData, setFormData] = useState({
         name: '',
-        color: '#10B981'
+        color: '#10B981',
     });
 
     const loadTags = useCallback(async () => {
@@ -59,7 +59,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
             }
 
             const res = await fetch(`/api/content/tags?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (res.ok) {
@@ -86,13 +86,13 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     name: formData.name,
                     color: formData.color,
-                    contentType
-                })
+                    contentType,
+                }),
             });
 
             if (res.ok) {
@@ -114,12 +114,12 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                 method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     name: formData.name,
-                    color: formData.color
-                })
+                    color: formData.color,
+                }),
             });
 
             if (res.ok) {
@@ -139,7 +139,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
         try {
             await fetch(`/api/content/tags/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             loadTags();
         } catch (err) {
@@ -152,7 +152,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
         setEditingId(tag.id);
         setFormData({
             name: tag.name,
-            color: tag.color
+            color: tag.color,
         });
         setMenuOpen(null);
     };
@@ -188,9 +188,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                 <div className="flex items-center gap-2">
                     <Tag className="w-5 h-5 text-emerald-400" />
                     <h3 className="font-semibold text-white">Tags</h3>
-                    <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
-                        {tags.length}
-                    </span>
+                    <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">{tags.length}</span>
                 </div>
                 <button
                     onClick={() => {
@@ -230,7 +228,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                             onKeyPress={(e) => e.key === 'Enter' && handleCreate()}
                         />
                     </div>
-                    
+
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Color</label>
                         <div className="flex flex-wrap gap-2">
@@ -290,9 +288,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                                     <input
                                         type="text"
                                         value={formData.name}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({ ...prev, name: e.target.value }))
-                                        }
+                                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                         className="px-2 py-1 bg-slate-900 border border-slate-600 rounded text-white text-sm w-24 focus:outline-none"
                                         autoFocus
                                     />
@@ -300,13 +296,9 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                                         {PRESET_COLORS.slice(0, 6).map((color) => (
                                             <button
                                                 key={color}
-                                                onClick={() =>
-                                                    setFormData((prev) => ({ ...prev, color }))
-                                                }
+                                                onClick={() => setFormData((prev) => ({ ...prev, color }))}
                                                 className={`w-4 h-4 rounded-full border ${
-                                                    formData.color === color
-                                                        ? 'border-white'
-                                                        : 'border-transparent'
+                                                    formData.color === color ? 'border-white' : 'border-transparent'
                                                 }`}
                                                 style={{ backgroundColor: color }}
                                             />
@@ -333,15 +325,13 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                             <div
                                 key={tag.id}
                                 className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all ${
-                                    isSelected
-                                        ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900'
-                                        : ''
+                                    isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''
                                 }`}
                                 style={{
                                     backgroundColor: `${tag.color}15`,
                                     color: tag.color,
                                     borderColor: `${tag.color}40`,
-                                    borderWidth: '1px'
+                                    borderWidth: '1px',
                                 }}
                                 onClick={() => handleTagClick(tag)}
                             >
@@ -399,18 +389,10 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
             )}
 
             {/* Click away handler */}
-            {menuOpen && (
-                <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />
-            )}
+            {menuOpen && <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />}
         </div>
     );
 };
 
 export default ContentTagsManager;
-
-
-
-
-
-
 

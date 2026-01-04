@@ -1,37 +1,38 @@
-import React, { useState, useEffect } from 'react';
 import {
-    CreditCard,
-    TrendingUp,
-    Package,
-    Coins,
-    Receipt,
-    DollarSign,
-    Users,
-    BarChart3,
     Activity,
     ArrowUpRight,
-    PieChart,
-    Server,
-    RefreshCw,
+    BarChart3,
     Building2,
-    Plus,
-    Edit2,
-    Trash2,
-    Save,
-    X,
     Check,
+    Coins,
+    CreditCard,
     Database,
-    Star,
+    DollarSign,
+    Edit2,
     HelpCircle,
-    Zap
+    Package,
+    PieChart,
+    Plus,
+    Receipt,
+    RefreshCw,
+    Save,
+    Server,
+    Star,
+    Trash2,
+    TrendingUp,
+    Users,
+    X,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { SubscriptionAnalytics } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
-import { SubscriptionAnalytics } from '../../components/billing';
 
 type BillingTab = 'overview' | 'plans' | 'token-economy' | 'transactions' | 'analytics';
 
@@ -69,7 +70,7 @@ const OverviewTab: React.FC = () => {
             const [revenue, usage, costs] = await Promise.all([
                 Api.get('/billing/admin/revenue'),
                 Api.get('/billing/admin/usage'),
-                Api.get('/billing/admin/operational-costs').catch(() => ({ costs: [] }))
+                Api.get('/billing/admin/operational-costs').catch(() => ({ costs: [] })),
             ]);
             setRevenueStats(revenue);
             setUsageStats(usage);
@@ -86,7 +87,7 @@ const OverviewTab: React.FC = () => {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(amount);
     };
 
@@ -163,16 +164,25 @@ const OverviewTab: React.FC = () => {
 
                     <div className="space-y-4">
                         {revenueStats?.planDistribution.map((plan, idx) => {
-                            const percentage = totalPlanSubscriptions > 0
-                                ? Math.round((plan.count / totalPlanSubscriptions) * 100)
-                                : 0;
-                            const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-orange-500', 'bg-pink-500', 'bg-cyan-500'];
+                            const percentage =
+                                totalPlanSubscriptions > 0
+                                    ? Math.round((plan.count / totalPlanSubscriptions) * 100)
+                                    : 0;
+                            const colors = [
+                                'bg-blue-500',
+                                'bg-emerald-500',
+                                'bg-orange-500',
+                                'bg-pink-500',
+                                'bg-cyan-500',
+                            ];
 
                             return (
                                 <div key={plan.name} className="space-y-2">
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-slate-300">{plan.name}</span>
-                                        <span className="text-slate-500">{plan.count} ({percentage}%)</span>
+                                        <span className="text-slate-500">
+                                            {plan.count} ({percentage}%)
+                                        </span>
                                     </div>
                                     <div className="h-2 bg-navy-950 rounded-full overflow-hidden">
                                         <div
@@ -200,13 +210,17 @@ const OverviewTab: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-navy-950 rounded-lg p-4">
                             <p className="text-xs text-slate-500">Total Tokens</p>
-                            <p className="text-2xl font-bold text-white mt-1">{formatNumber(usageStats?.totalTokensThisMonth || 0)}</p>
+                            <p className="text-2xl font-bold text-white mt-1">
+                                {formatNumber(usageStats?.totalTokensThisMonth || 0)}
+                            </p>
                             <p className="text-[10px] text-slate-600 mt-1">This month</p>
                         </div>
 
                         <div className="bg-navy-950 rounded-lg p-4">
                             <p className="text-xs text-slate-500">Storage Used</p>
-                            <p className="text-2xl font-bold text-white mt-1">{(usageStats?.totalStorageGB || 0).toFixed(2)} GB</p>
+                            <p className="text-2xl font-bold text-white mt-1">
+                                {(usageStats?.totalStorageGB || 0).toFixed(2)} GB
+                            </p>
                             <p className="text-[10px] text-slate-600 mt-1">Across all orgs</p>
                         </div>
 
@@ -218,7 +232,9 @@ const OverviewTab: React.FC = () => {
 
                         <div className="bg-navy-950 rounded-lg p-4">
                             <p className="text-xs text-slate-500">Gross Profit</p>
-                            <p className={`text-2xl font-bold mt-1 ${grossProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <p
+                                className={`text-2xl font-bold mt-1 ${grossProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                            >
                                 {formatCurrency(grossProfit)}
                             </p>
                             <p className="text-[10px] text-slate-600 mt-1">MRR - Costs</p>
@@ -245,7 +261,7 @@ const OverviewTab: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {revenueStats?.planDistribution.map(plan => (
+                            {revenueStats?.planDistribution.map((plan) => (
                                 <tr key={plan.name} className="text-white">
                                     <td className="py-3 font-medium">{plan.name}</td>
                                     <td className="py-3 text-slate-400">{formatCurrency(plan.price_monthly)}/mo</td>
@@ -257,7 +273,9 @@ const OverviewTab: React.FC = () => {
                             ))}
                             {(!revenueStats?.planDistribution || revenueStats.planDistribution.length === 0) && (
                                 <tr>
-                                    <td colSpan={4} className="py-8 text-center text-slate-500">No revenue data available</td>
+                                    <td colSpan={4} className="py-8 text-center text-slate-500">
+                                        No revenue data available
+                                    </td>
                                 </tr>
                             )}
                         </tbody>
@@ -296,14 +314,18 @@ const OverviewTab: React.FC = () => {
                             ))}
                             {(!operationalCosts?.items || operationalCosts.items.length === 0) && (
                                 <tr>
-                                    <td colSpan={4} className="py-8 text-center text-slate-500">No operational cost data</td>
+                                    <td colSpan={4} className="py-8 text-center text-slate-500">
+                                        No operational cost data
+                                    </td>
                                 </tr>
                             )}
                         </tbody>
                         {operationalCosts && operationalCosts.items.length > 0 && (
                             <tfoot>
                                 <tr className="border-t-2 border-white/10">
-                                    <td colSpan={3} className="py-3 font-bold text-white">Total Operational Cost</td>
+                                    <td colSpan={3} className="py-3 font-bold text-white">
+                                        Total Operational Cost
+                                    </td>
                                     <td className="py-3 text-right font-bold text-lg text-red-400">
                                         ${operationalCosts.totalCost.toFixed(2)}
                                     </td>
@@ -361,7 +383,7 @@ const PlansTab: React.FC = () => {
         try {
             const [orgData, userData] = await Promise.all([
                 Api.get('/billing/admin/plans'),
-                Api.get('/billing/admin/user-plans')
+                Api.get('/billing/admin/user-plans'),
             ]);
             setOrgPlans(Array.isArray(orgData) ? orgData : []);
             setUserPlans(Array.isArray(userData) ? userData : []);
@@ -404,9 +426,8 @@ const PlansTab: React.FC = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to deactivate this plan?')) return;
         try {
-            const endpoint = planType === 'organization'
-                ? `/billing/admin/plans/${id}`
-                : `/billing/admin/user-plans/${id}`;
+            const endpoint =
+                planType === 'organization' ? `/billing/admin/plans/${id}` : `/billing/admin/user-plans/${id}`;
             await Api.delete(endpoint);
             await fetchPlans();
             toast.success('Plan deactivated');
@@ -433,14 +454,14 @@ const PlansTab: React.FC = () => {
                 token_limit: 100000,
                 storage_limit_gb: 5,
                 token_overage_rate: 0.015,
-                storage_overage_rate: 0.10,
-                features: '{}'
+                storage_overage_rate: 0.1,
+                features: '{}',
             });
         } else {
             setUserFormData({
                 name: '',
                 price_monthly: 0,
-                features: '{}'
+                features: '{}',
             });
         }
     };
@@ -463,21 +484,29 @@ const PlansTab: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div className="flex gap-2">
                     <button
-                        onClick={() => { setPlanType('organization'); resetForm(); }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${planType === 'organization'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                            }`}
+                        onClick={() => {
+                            setPlanType('organization');
+                            resetForm();
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            planType === 'organization'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                        }`}
                     >
                         <Building2 size={16} />
                         Organization Plans
                     </button>
                     <button
-                        onClick={() => { setPlanType('user'); resetForm(); }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${planType === 'user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                            }`}
+                        onClick={() => {
+                            setPlanType('user');
+                            resetForm();
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            planType === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                        }`}
                     >
                         <Users size={16} />
                         User Licenses
@@ -513,10 +542,9 @@ const PlansTab: React.FC = () => {
                 {plans.map((plan: any) => (
                     <div
                         key={plan.id}
-                        className={`relative bg-navy-900 rounded-xl p-6 border transition-all ${plan.is_active
-                            ? 'border-white/10 hover:border-white/20'
-                            : 'border-white/5 opacity-60'
-                            }`}
+                        className={`relative bg-navy-900 rounded-xl p-6 border transition-all ${
+                            plan.is_active ? 'border-white/10 hover:border-white/20' : 'border-white/5 opacity-60'
+                        }`}
                     >
                         {editingId === plan.id ? (
                             <PlanForm
@@ -540,7 +568,8 @@ const PlansTab: React.FC = () => {
 
                 {plans.length === 0 && !showNewForm && !loading && (
                     <div className="col-span-full text-center py-12 text-slate-500">
-                        No {planType === 'organization' ? 'organization plans' : 'user licenses'} found. Create one to get started.
+                        No {planType === 'organization' ? 'organization plans' : 'user licenses'} found. Create one to
+                        get started.
                     </div>
                 )}
             </div>
@@ -567,7 +596,7 @@ const PlanForm: React.FC<{
             <input
                 type="text"
                 value={formData.name || ''}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
             />
         </div>
@@ -577,7 +606,7 @@ const PlanForm: React.FC<{
             <input
                 type="number"
                 value={formData.price_monthly || 0}
-                onChange={e => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) })}
                 className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
             />
         </div>
@@ -590,7 +619,7 @@ const PlanForm: React.FC<{
                         <input
                             type="number"
                             value={formData.token_limit || 0}
-                            onChange={e => setFormData({ ...formData, token_limit: parseInt(e.target.value) })}
+                            onChange={(e) => setFormData({ ...formData, token_limit: parseInt(e.target.value) })}
                             className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
                         />
                     </div>
@@ -599,7 +628,7 @@ const PlanForm: React.FC<{
                         <input
                             type="number"
                             value={formData.storage_limit_gb || 0}
-                            onChange={e => setFormData({ ...formData, storage_limit_gb: parseFloat(e.target.value) })}
+                            onChange={(e) => setFormData({ ...formData, storage_limit_gb: parseFloat(e.target.value) })}
                             className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
                         />
                     </div>
@@ -609,7 +638,7 @@ const PlanForm: React.FC<{
                     <input
                         type="text"
                         value={formData.stripe_price_id || ''}
-                        onChange={e => setFormData({ ...formData, stripe_price_id: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, stripe_price_id: e.target.value })}
                         className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono focus:border-blue-500 outline-none"
                         placeholder="price_..."
                     />
@@ -620,8 +649,12 @@ const PlanForm: React.FC<{
         <div>
             <label className="text-xs font-medium text-slate-400 mb-1 block">Features (JSON)</label>
             <textarea
-                value={typeof formData.features === 'string' ? formData.features : JSON.stringify(formData.features || {}, null, 2)}
-                onChange={e => setFormData({ ...formData, features: e.target.value })}
+                value={
+                    typeof formData.features === 'string'
+                        ? formData.features
+                        : JSON.stringify(formData.features || {}, null, 2)
+                }
+                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
                 className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono h-20 focus:border-blue-500 outline-none resize-none"
             />
         </div>
@@ -632,7 +665,13 @@ const PlanForm: React.FC<{
                 disabled={saving}
                 className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
             >
-                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save</>}
+                {saving ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                    <>
+                        <Save className="w-4 h-4" /> Save
+                    </>
+                )}
             </button>
             <button
                 onClick={onCancel}
@@ -652,10 +691,11 @@ const PlanCard: React.FC<{
 }> = ({ plan, type, onEdit, onDelete }) => (
     <>
         <div className="absolute top-4 right-4">
-            <span className={`px-2 py-1 text-[10px] font-bold rounded-full uppercase ${plan.is_active
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'bg-slate-700 text-slate-400'
-                }`}>
+            <span
+                className={`px-2 py-1 text-[10px] font-bold rounded-full uppercase ${
+                    plan.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                }`}
+            >
                 {plan.is_active ? 'Active' : 'Inactive'}
             </span>
         </div>
@@ -681,7 +721,9 @@ const PlanCard: React.FC<{
 
         <div className="mt-4 pt-4 border-t border-white/10">
             <div className="text-[10px] text-slate-600 font-mono overflow-hidden h-10">
-                {typeof plan.features === 'string' ? plan.features.substring(0, 80) : JSON.stringify(plan.features || {})}
+                {typeof plan.features === 'string'
+                    ? plan.features.substring(0, 80)
+                    : JSON.stringify(plan.features || {})}
             </div>
         </div>
 
@@ -708,7 +750,7 @@ const TokenEconomyTab: React.FC = () => {
         activeModels: 0,
         activePackages: 0,
         platformMargin: 0,
-        balance: 0
+        balance: 0,
     });
     const [loading, setLoading] = useState(true);
 
@@ -723,7 +765,7 @@ const TokenEconomyTab: React.FC = () => {
                 Api.getLLMProviders().catch(() => []),
                 Api.getTokenPackages().catch(() => []),
                 Api.getBillingMargins().catch(() => []),
-                Api.getTokenBalance().catch(() => 0)
+                Api.getTokenBalance().catch(() => 0),
             ]);
 
             const platformMargin = margins.find((m: any) => m.source_type === 'platform');
@@ -732,7 +774,7 @@ const TokenEconomyTab: React.FC = () => {
                 activeModels: providers.filter((p: any) => p.is_active).length,
                 activePackages: packages.filter((p: any) => p.is_active).length,
                 platformMargin: platformMargin ? platformMargin.margin_percent : 0,
-                balance: balance
+                balance: balance,
             });
         } catch (error) {
             console.error('Failed to load billing stats', error);
@@ -814,17 +856,20 @@ const TransactionsTab: React.FC = () => {
         }
     };
 
-    const filteredTransactions = filter === 'all'
-        ? transactions
-        : transactions.filter(t => t.type === filter);
+    const filteredTransactions = filter === 'all' ? transactions : transactions.filter((t) => t.type === filter);
 
     const getTypeColor = (type: string) => {
         switch (type) {
-            case 'purchase': return 'bg-emerald-500/20 text-emerald-400';
-            case 'usage': return 'bg-blue-500/20 text-blue-400';
-            case 'refund': return 'bg-red-500/20 text-red-400';
-            case 'bonus': return 'bg-yellow-500/20 text-yellow-400';
-            default: return 'bg-slate-700 text-slate-300';
+            case 'purchase':
+                return 'bg-emerald-500/20 text-emerald-400';
+            case 'usage':
+                return 'bg-blue-500/20 text-blue-400';
+            case 'refund':
+                return 'bg-red-500/20 text-red-400';
+            case 'bonus':
+                return 'bg-yellow-500/20 text-yellow-400';
+            default:
+                return 'bg-slate-700 text-slate-300';
         }
     };
 
@@ -833,14 +878,15 @@ const TransactionsTab: React.FC = () => {
             {/* Filters */}
             <div className="flex items-center justify-between">
                 <div className="flex gap-2">
-                    {(['all', 'purchase', 'usage', 'refund'] as const).map(f => (
+                    {(['all', 'purchase', 'usage', 'refund'] as const).map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === f
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                                }`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                filter === f
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                            }`}
                         >
                             {f.charAt(0).toUpperCase() + f.slice(1)}
                         </button>
@@ -893,7 +939,9 @@ const TransactionsTab: React.FC = () => {
                                         {tx.organization_name || tx.organization_id?.slice(0, 8) || '-'}
                                     </td>
                                     <td className="py-4 px-6">
-                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getTypeColor(tx.type)}`}>
+                                        <span
+                                            className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getTypeColor(tx.type)}`}
+                                        >
                                             {tx.type}
                                         </span>
                                     </td>
@@ -911,7 +959,8 @@ const TransactionsTab: React.FC = () => {
                                     </td>
                                     <td className="py-4 px-6 text-right font-mono text-sm">
                                         <span className={tx.tokens > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                                            {tx.tokens > 0 ? '+' : ''}{(tx.tokens || 0).toLocaleString()}
+                                            {tx.tokens > 0 ? '+' : ''}
+                                            {(tx.tokens || 0).toLocaleString()}
                                         </span>
                                     </td>
                                 </tr>
@@ -955,14 +1004,15 @@ export const BillingCenterView: React.FC = () => {
 
             {/* Tab Navigation */}
             <div className="flex gap-1 mb-8 bg-navy-900/50 p-1 rounded-xl w-fit border border-white/5">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            activeTab === tab.id
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         {tab.icon}
                         {tab.label}
@@ -981,4 +1031,3 @@ export const BillingCenterView: React.FC = () => {
 };
 
 export default BillingCenterView;
-

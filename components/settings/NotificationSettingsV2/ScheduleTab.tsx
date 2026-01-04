@@ -2,9 +2,10 @@
  * ScheduleTab - Notification schedule and quiet hours
  */
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Clock, Moon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import type { NotificationPreferences, ScheduleSettings } from '../../../hooks/useUserNotificationPreferences';
 
 interface ScheduleTabProps {
@@ -22,10 +23,7 @@ const DAYS_OF_WEEK = [
     { key: 'sunday', label: 'Sun' },
 ];
 
-const ScheduleTab: React.FC<ScheduleTabProps> = ({
-    preferences,
-    onUpdateSchedule
-}) => {
+const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule }) => {
     const { t } = useTranslation();
     const [localSchedule, setLocalSchedule] = useState(preferences.schedule);
     const prevScheduleRef = React.useRef(preferences.schedule);
@@ -40,22 +38,20 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
 
     const handleQuietHoursToggle = async () => {
         const newValue = !localSchedule.quietHoursEnabled;
-        setLocalSchedule(prev => ({ ...prev, quietHoursEnabled: newValue }));
+        setLocalSchedule((prev) => ({ ...prev, quietHoursEnabled: newValue }));
         await onUpdateSchedule({ quietHoursEnabled: newValue });
     };
 
     const handleTimeChange = async (field: 'quietHoursStart' | 'quietHoursEnd', value: string) => {
-        setLocalSchedule(prev => ({ ...prev, [field]: value }));
+        setLocalSchedule((prev) => ({ ...prev, [field]: value }));
         await onUpdateSchedule({ [field]: value });
     };
 
     const handleDayToggle = async (day: string) => {
         const currentDays = localSchedule.quietDays || [];
-        const newDays = currentDays.includes(day)
-            ? currentDays.filter(d => d !== day)
-            : [...currentDays, day];
-        
-        setLocalSchedule(prev => ({ ...prev, quietDays: newDays }));
+        const newDays = currentDays.includes(day) ? currentDays.filter((d) => d !== day) : [...currentDays, day];
+
+        setLocalSchedule((prev) => ({ ...prev, quietDays: newDays }));
         await onUpdateSchedule({ quietDays: newDays });
     };
 
@@ -67,7 +63,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
                     {t('settings.notifications.scheduleTitle', 'Notification Schedule')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t('settings.notifications.scheduleDesc', 'Set quiet hours when you don\'t want to be disturbed.')}
+                    {t('settings.notifications.scheduleDesc', "Set quiet hours when you don't want to be disturbed.")}
                 </p>
             </div>
 
@@ -155,7 +151,10 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
                                 {t('settings.notifications.criticalOverride', 'Critical Notifications Override')}
                             </p>
                             <p className="text-sm text-amber-600 dark:text-amber-400">
-                                {t('settings.notifications.criticalOverrideDesc', 'Critical notifications will still be delivered during quiet hours')}
+                                {t(
+                                    'settings.notifications.criticalOverrideDesc',
+                                    'Critical notifications will still be delivered during quiet hours',
+                                )}
                             </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -177,11 +176,3 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
 };
 
 export default ScheduleTab;
-
-
-
-
-
-
-
-

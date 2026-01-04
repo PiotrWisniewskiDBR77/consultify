@@ -6,18 +6,42 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
 import { testUsers, testOrganizations, testProjects } from '../../fixtures/testData.js';
 
+// Hoisted mock - defined inline
+const mockDb = vi.hoisted(() => ({
+    get: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, null));
+    }),
+    all: vi.fn((sql, params, callback) => {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb(null, []));
+    }),
+    run: vi.fn(function(sql, params, callback) {
+        const cb = typeof params === 'function' ? params : callback;
+        if (cb) process.nextTick(() => cb.call({ changes: 1, lastID: 1 }, null));
+    }),
+    exec: vi.fn((sql, callback) => {
+        if (callback) process.nextTick(() => callback(null));
+    }),
+    serialize: vi.fn((cb) => { if (cb) cb(); }),
+    prepare: vi.fn(),
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    initPromise: Promise.resolve()
+}));
+
+vi.mock('../../../server/database', () => ({
+    default: mockDb
+}));
+
 describe('EscalationService', () => {
-    let mockDb;
     let EscalationService;
     let mockNotificationService;
 
     beforeEach(async () => {
-        vi.resetModules();
+        vi.clearAllMocks();
         
-        mockDb = createMockDb();
         mockNotificationService = {
             create: vi.fn().mockResolvedValue({ id: 'notif-123' })
         };

@@ -1,13 +1,14 @@
 /**
  * AIOrchestrator Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for AIOrchestrator - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import AIOrchestrator from '../../../../src/services/aiOrchestrator.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import AIOrchestrator from '../../../../src/services/aiOrchestrator.js';
 
 describe('AIOrchestrator', () => {
     let mockDb: IDatabase;
@@ -51,4 +52,3 @@ describe('AIOrchestrator', () => {
         });
     });
 });
-

@@ -2,12 +2,12 @@
  * Integration Tests for Server Entry Point
  * Enterprise SaaS Architecture - TypeScript Backend
  * ETAP 10.8: Rozszerzenie testów dla Entry Point - 100% coverage
- * 
+ *
  * Tests for server/src/index.ts - Full integration testing
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import type { Express } from 'express';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Server Entry Point - Integration Tests', () => {
     let originalEnv: NodeJS.ProcessEnv;
@@ -173,4 +173,3 @@ describe('Server Entry Point - Integration Tests', () => {
         });
     });
 });
-

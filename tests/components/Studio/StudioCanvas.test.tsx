@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ReactFlowProvider } from 'reactflow';
-import { StudioCanvas } from '../../../components/Studio/StudioCanvas';
+import { StudioCanvas } from '../../components/Studio/StudioCanvas';
 
 // Mock ReactFlow
 vi.mock('reactflow', async () => {
@@ -145,6 +145,7 @@ describe('StudioCanvas', () => {
         // This is handled by the ReactFlow selected state
     });
 });
+
 
 
 

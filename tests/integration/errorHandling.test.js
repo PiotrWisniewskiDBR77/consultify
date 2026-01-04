@@ -3,17 +3,46 @@
  * Tests error handling, resilience, and recovery mechanisms
  */
 
-const request = require('supertest');
-const app = require('../../server/index.js');
-const { initTestDb, cleanTables } = require('../helpers/dbHelper.cjs');
+// @vitest-environment node
+import request from 'supertest';
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
+// Using TestDatabaseFactory is safer/more standard now than legacy dbHelper.cjs
+import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
+
+// Explicitly mock Sentry here to survive resetModules
+vi.mock('@sentry/node', () => ({
+    init: vi.fn(),
+    Handlers: { requestHandler: () => (req, res, next) => next(), errorHandler: () => (error, req, res, next) => next() },
+    captureException: vi.fn(),
+}));
+
+// Deliberately delay app/db import until after mock injection
 
 describe('Error Handling & Resilience', () => {
-    beforeEach(async () => {
-        await initTestDb();
+    let app;
+    let db;
+
+    beforeAll(async () => {
+        // 1. Create DB
+        const testDb = await TestDatabaseFactory.create();
+        global.__TEST_DB_MOCK__ = testDb;
+
+        // 2. Reset modules
+        vi.resetModules();
+
+        // 3. Import app/db
+        const dbModule = await import('../../server/database.js');
+        db = dbModule.default;
+
+        const appModule = await import('../../server/src/index.ts');
+        app = appModule.default || appModule;
+
+        await db.initPromise;
     });
 
     afterEach(async () => {
-        await cleanTables();
+        // Optional: clean tables if needed
+        // await testDb.run('DELETE FROM ...'); 
     });
 
     describe('API Error Responses', () => {

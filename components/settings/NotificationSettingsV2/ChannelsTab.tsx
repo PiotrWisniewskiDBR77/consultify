@@ -3,11 +3,12 @@
  * Configure which emails you want to receive
  */
 
+import { Check, Mail } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mail, Check } from 'lucide-react';
+
+import type { Provider, UserIntegration } from '../../../hooks/useUserIntegrations';
 import type { NotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
-import type { UserIntegration, Provider } from '../../../hooks/useUserIntegrations';
 
 interface ChannelsTabProps {
     preferences: NotificationPreferences;
@@ -23,14 +24,9 @@ const EMAIL_CATEGORIES = [
     { key: 'marketing', label: 'Marketing', desc: 'Product updates and tips' },
 ] as const;
 
-const ChannelsTab: React.FC<ChannelsTabProps> = ({
-    preferences,
-    integrations,
-    providers,
-    onUpdatePreferences
-}) => {
+const ChannelsTab: React.FC<ChannelsTabProps> = ({ preferences, integrations, providers, onUpdatePreferences }) => {
     const { t } = useTranslation();
-    
+
     // Get email settings from preferences
     const getEmailEnabled = (key: string): boolean => {
         switch (key) {
@@ -49,7 +45,7 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
 
     const toggleEmail = async (key: string) => {
         const current = getEmailEnabled(key);
-        
+
         switch (key) {
             case 'taskUpdates':
                 await onUpdatePreferences({
@@ -59,10 +55,10 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
                             ...preferences.categories.tasks,
                             channels: {
                                 ...preferences.categories.tasks.channels,
-                                email: !current
-                            }
-                        }
-                    }
+                                email: !current,
+                            },
+                        },
+                    },
                 });
                 break;
             case 'projectAlerts':
@@ -73,18 +69,18 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
                             ...preferences.categories.governance,
                             channels: {
                                 ...preferences.categories.governance.channels,
-                                email: !current
-                            }
-                        }
-                    }
+                                email: !current,
+                            },
+                        },
+                    },
                 });
                 break;
             case 'weeklyDigest':
                 await onUpdatePreferences({
                     digests: {
                         ...preferences.digests,
-                        weeklyEnabled: !current
-                    }
+                        weeklyEnabled: !current,
+                    },
                 });
                 break;
             default:
@@ -107,7 +103,7 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
             <div className="space-y-3">
                 {EMAIL_CATEGORIES.map(({ key, label, desc }) => {
                     const enabled = getEmailEnabled(key);
-                    
+
                     return (
                         <div
                             key={key}
@@ -140,11 +136,4 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
 };
 
 export default ChannelsTab;
-
-
-
-
-
-
-
 

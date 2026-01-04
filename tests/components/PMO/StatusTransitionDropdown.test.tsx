@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StatusTransitionDropdown } from '../../../components/PMO/StatusTransitionDropdown';
+import { StatusTransitionDropdown } from '../../components/PMO/StatusTransitionDropdown';
 import { InitiativeStatus } from '../../../types';
 
 // Mock API
@@ -374,6 +374,7 @@ describe('StatusTransitionDropdown Component', () => {
         });
     });
 });
+
 
 
 

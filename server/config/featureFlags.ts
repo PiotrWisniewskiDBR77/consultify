@@ -1,6 +1,6 @@
 /**
  * Feature Flags Configuration
- * 
+ *
  * Centralized feature toggles for the application.
  * Can be overridden by environment variables.
  */
@@ -27,8 +27,7 @@ const flags: FeatureFlags = {
     ENABLE_AI_COACH: process.env.ENABLE_AI_COACH !== 'false', // Default true
 
     // Enable self-serve help system
-    ENABLE_HELP_SYSTEM: process.env.ENABLE_HELP_SYSTEM !== 'false' // Default true
+    ENABLE_HELP_SYSTEM: process.env.ENABLE_HELP_SYSTEM !== 'false', // Default true
 };
 
 export default flags;
-

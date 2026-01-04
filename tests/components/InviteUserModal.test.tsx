@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import InviteUserModal from '../../../components/InviteUserModal';
+import InviteUserModal from '../../components/InviteUserModal';
 import { useAppStore } from '../../../store/useAppStore';
 
 vi.mock('../../../store/useAppStore', () => ({
@@ -108,6 +108,7 @@ describe('InviteUserModal Component', () => {
         });
     });
 });
+
 
 
 

@@ -1,6 +1,6 @@
 /**
  * KeyTakeaways
- * 
+ *
  * Summary box component for each major section:
  * - 3-5 bullet points in highlighted box
  * - Left border accent
@@ -8,19 +8,10 @@
  * - Collapsible on mobile
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Lightbulb, Star, Target, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Lightbulb, 
-    Star, 
-    ChevronDown, 
-    ChevronUp,
-    TrendingUp,
-    AlertTriangle,
-    CheckCircle,
-    Target
-} from 'lucide-react';
 
 interface Takeaway {
     text: string;
@@ -44,43 +35,43 @@ const ACCENT_COLORS = {
         border: 'border-blue-500',
         iconBg: 'bg-blue-100 dark:bg-blue-500/20',
         iconColor: 'text-blue-600 dark:text-blue-400',
-        textColor: 'text-blue-900 dark:text-blue-100'
+        textColor: 'text-blue-900 dark:text-blue-100',
     },
     purple: {
         bg: 'bg-purple-50 dark:bg-purple-500/10',
         border: 'border-purple-500',
         iconBg: 'bg-purple-100 dark:bg-purple-500/20',
         iconColor: 'text-purple-600 dark:text-purple-400',
-        textColor: 'text-purple-900 dark:text-purple-100'
+        textColor: 'text-purple-900 dark:text-purple-100',
     },
     green: {
         bg: 'bg-green-50 dark:bg-green-500/10',
         border: 'border-green-500',
         iconBg: 'bg-green-100 dark:bg-green-500/20',
         iconColor: 'text-green-600 dark:text-green-400',
-        textColor: 'text-green-900 dark:text-green-100'
+        textColor: 'text-green-900 dark:text-green-100',
     },
     amber: {
         bg: 'bg-amber-50 dark:bg-amber-500/10',
         border: 'border-amber-500',
         iconBg: 'bg-amber-100 dark:bg-amber-500/20',
         iconColor: 'text-amber-600 dark:text-amber-400',
-        textColor: 'text-amber-900 dark:text-amber-100'
-    }
+        textColor: 'text-amber-900 dark:text-amber-100',
+    },
 };
 
 const TAKEAWAY_ICONS = {
     insight: Lightbulb,
     warning: AlertTriangle,
     success: CheckCircle,
-    action: Target
+    action: Target,
 };
 
 const TAKEAWAY_COLORS = {
     insight: 'text-blue-500',
     warning: 'text-amber-500',
     success: 'text-green-500',
-    action: 'text-purple-500'
+    action: 'text-purple-500',
 };
 
 export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
@@ -90,11 +81,11 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
     accentColor = 'blue',
     collapsible = false,
     defaultExpanded = true,
-    className = ''
+    className = '',
 }) => {
     const { t, i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
-    
+
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const colors = ACCENT_COLORS[accentColor];
 
@@ -109,9 +100,11 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
                 <ul className="space-y-1 text-sm">
                     {takeaways.slice(0, 3).map((takeaway, index) => (
                         <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-400">
-                            <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                                takeaway.type ? TAKEAWAY_COLORS[takeaway.type] : 'bg-slate-400'
-                            }`} />
+                            <span
+                                className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                    takeaway.type ? TAKEAWAY_COLORS[takeaway.type] : 'bg-slate-400'
+                                }`}
+                            />
                             <span>{takeaway.text}</span>
                         </li>
                     ))}
@@ -122,13 +115,13 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
 
     if (variant === 'card') {
         return (
-            <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}>
+            <div
+                className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}
+            >
                 <div className={`px-4 py-3 ${colors.bg} border-b border-slate-200 dark:border-white/10`}>
                     <div className="flex items-center gap-2">
                         <Star className={`w-5 h-5 ${colors.iconColor}`} />
-                        <h4 className={`font-semibold ${colors.textColor}`}>
-                            {title || defaultTitle}
-                        </h4>
+                        <h4 className={`font-semibold ${colors.textColor}`}>{title || defaultTitle}</h4>
                     </div>
                 </div>
                 <div className="p-4">
@@ -147,9 +140,7 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
                                 >
                                     <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${iconColor}`} />
                                     <div>
-                                        <p className="text-sm text-navy-900 dark:text-white">
-                                            {takeaway.text}
-                                        </p>
+                                        <p className="text-sm text-navy-900 dark:text-white">{takeaway.text}</p>
                                         {takeaway.metric && (
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                                                 <TrendingUp className="w-3 h-3" />
@@ -168,14 +159,14 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
 
     // Default variant
     return (
-        <div 
+        <div
             className={`
                 ${colors.bg} rounded-xl border-l-4 ${colors.border} overflow-hidden
                 ${className}
             `}
         >
             {/* Header */}
-            <div 
+            <div
                 className={`
                     px-4 py-3 flex items-center justify-between
                     ${collapsible ? 'cursor-pointer hover:bg-white/30 dark:hover:bg-white/5 transition-colors' : ''}
@@ -186,14 +177,12 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
                     <div className={`p-2 rounded-lg ${colors.iconBg}`}>
                         <Lightbulb className={`w-5 h-5 ${colors.iconColor}`} />
                     </div>
-                    <h4 className={`font-semibold ${colors.textColor}`}>
-                        {title || defaultTitle}
-                    </h4>
+                    <h4 className={`font-semibold ${colors.textColor}`}>{title || defaultTitle}</h4>
                     <span className="text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-white/10 px-2 py-0.5 rounded-full">
                         {takeaways.length} {isPolish ? 'punktów' : 'points'}
                     </span>
                 </div>
-                
+
                 {collapsible && (
                     <button className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                         {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -264,21 +253,24 @@ export const QuickStats: React.FC<{
     return (
         <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 ${className}`}>
             {stats.map((stat, index) => (
-                <div 
+                <div
                     key={index}
                     className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4"
                 >
                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                         {stat.label}
                     </p>
-                    <p className="text-2xl font-bold text-navy-900 dark:text-white">
-                        {stat.value}
-                    </p>
+                    <p className="text-2xl font-bold text-navy-900 dark:text-white">{stat.value}</p>
                     {stat.change !== undefined && (
-                        <p className={`text-xs mt-1 flex items-center gap-1 ${
-                            stat.trend === 'up' ? 'text-green-500' : 
-                            stat.trend === 'down' ? 'text-red-500' : 'text-slate-500'
-                        }`}>
+                        <p
+                            className={`text-xs mt-1 flex items-center gap-1 ${
+                                stat.trend === 'up'
+                                    ? 'text-green-500'
+                                    : stat.trend === 'down'
+                                      ? 'text-red-500'
+                                      : 'text-slate-500'
+                            }`}
+                        >
                             {stat.trend === 'up' ? '↑' : stat.trend === 'down' ? '↓' : '→'}
                             {Math.abs(stat.change)}%
                         </p>
@@ -290,4 +282,3 @@ export const QuickStats: React.FC<{
 };
 
 export default KeyTakeaways;
-

@@ -10,7 +10,7 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
@@ -396,7 +396,7 @@ router.post('/:id/title/generate', verifyToken, async (req, res) => {
         }
 
         // Use title generator service
-        const titleGeneratorModule = await import('../ai/titleGenerator.js');
+        const titleGeneratorModule = await import('../services/ai/titleGenerator.js');
         const titleGenerator = titleGeneratorModule.default || titleGeneratorModule;
         const generatedTitle = await titleGenerator.generateConversationTitle(messages);
 

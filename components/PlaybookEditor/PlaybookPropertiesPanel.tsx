@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { PlaybookNode as PlaybookNodeType, PlaybookNodeType as NodeType } from '../../types';
 
 interface PlaybookPropertiesPanelProps {
@@ -10,14 +11,10 @@ interface PlaybookPropertiesPanelProps {
 /**
  * PlaybookPropertiesPanel Component
  * Step 13: Visual Playbook Editor
- * 
+ *
  * Right-side panel for editing selected node properties.
  */
-export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = ({
-    node,
-    onUpdate,
-    onClose
-}) => {
+export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = ({ node, onUpdate, onClose }) => {
     if (!node) {
         return (
             <div className="w-80 bg-gray-50 border-l border-gray-200 p-4">
@@ -33,14 +30,14 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
     const handleActionTypeChange = (actionType: string) => {
         onUpdate({
             ...node,
-            data: { ...node.data, actionType }
+            data: { ...node.data, actionType },
         });
     };
 
     const handleDescriptionChange = (description: string) => {
         onUpdate({
             ...node,
-            data: { ...node.data, description }
+            data: { ...node.data, description },
         });
     };
 
@@ -50,7 +47,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
         'PLAYBOOK_ASSIGN',
         'NOTIFICATION_SEND',
         'EMAIL_SEND',
-        'WEBHOOK_TRIGGER'
+        'WEBHOOK_TRIGGER',
     ];
 
     return (
@@ -58,10 +55,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
             <div className="p-4 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                     <h3 className="font-semibold text-gray-900">Node Properties</h3>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
-                    >
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         ×
                     </button>
                 </div>
@@ -75,9 +69,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
             <div className="p-4 space-y-4">
                 {/* Title */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Title
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                     <input
                         type="text"
                         value={node.title}
@@ -90,17 +82,17 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
                 {/* Action Type (only for ACTION nodes) */}
                 {node.type === NodeType.ACTION && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Action Type
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
                         <select
                             value={node.data?.actionType || ''}
                             onChange={(e) => handleActionTypeChange(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         >
                             <option value="">Select action...</option>
-                            {actionTypes.map(type => (
-                                <option key={type} value={type}>{type}</option>
+                            {actionTypes.map((type) => (
+                                <option key={type} value={type}>
+                                    {type}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -109,9 +101,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
                 {/* Description (for ACTION/BRANCH/CHECK) */}
                 {[NodeType.ACTION, NodeType.BRANCH, NodeType.CHECK].includes(node.type) && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Description
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea
                             value={node.data?.description || ''}
                             onChange={(e) => handleDescriptionChange(e.target.value)}
@@ -125,9 +115,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
                 {/* Condition (for BRANCH nodes) */}
                 {node.type === NodeType.BRANCH && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Condition
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
                         <input
                             type="text"
                             value={node.data?.condition || ''}
@@ -145,7 +133,9 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
                             type="checkbox"
                             id="isOptional"
                             checked={node.data?.isOptional || false}
-                            onChange={(e) => onUpdate({ ...node, data: { ...node.data, isOptional: e.target.checked } })}
+                            onChange={(e) =>
+                                onUpdate({ ...node, data: { ...node.data, isOptional: e.target.checked } })
+                            }
                             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                         />
                         <label htmlFor="isOptional" className="ml-2 text-sm text-gray-700">
@@ -159,9 +149,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
                     <p className="text-xs text-gray-500">
                         Position: ({Math.round(node.position.x)}, {Math.round(node.position.y)})
                     </p>
-                    <p className="text-xs text-gray-500">
-                        ID: {node.id}
-                    </p>
+                    <p className="text-xs text-gray-500">ID: {node.id}</p>
                 </div>
             </div>
         </div>

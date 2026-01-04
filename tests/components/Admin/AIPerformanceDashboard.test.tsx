@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { AIPerformanceDashboard } from '../../../components/Admin/AIPerformanceDashboard';
+import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDashboard';
 
 // Mock dependencies
 vi.mock('react-i18next', () => ({
@@ -206,6 +206,7 @@ describe('AIPerformanceDashboard', () => {
         expect(api.default.get).toHaveBeenCalled();
     });
 });
+
 
 
 

@@ -1,6 +1,6 @@
 /**
  * EnterpriseApiManagement - Comprehensive API Key & Management Panel
- * 
+ *
  * Features:
  * - API Key CRUD with scopes
  * - Rate limiting configuration
@@ -9,38 +9,39 @@
  * - Webhook management
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Key,
-    Plus,
-    Trash2,
-    Edit,
-    RefreshCw,
-    Copy,
-    Check,
-    Eye,
-    EyeOff,
-    Search,
-    Filter,
-    BarChart3,
-    Clock,
-    Globe,
-    Shield,
+    Activity,
     AlertTriangle,
+    BarChart3,
+    Check,
     ChevronDown,
     ChevronRight,
-    Activity,
-    Zap,
-    FileText,
+    Clock,
     Code,
+    Copy,
+    Edit,
     ExternalLink,
+    Eye,
+    EyeOff,
+    FileText,
+    Filter,
+    Globe,
+    Key,
     Loader2,
     Lock,
+    Plus,
+    RefreshCw,
+    Search,
+    Shield,
+    Trash2,
     Unlock,
-    X
+    X,
+    Zap,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface ApiKey {
     id: string;
@@ -93,7 +94,12 @@ const AVAILABLE_SCOPES: Scope[] = [
     { id: 'read:projects', name: 'Read Projects', description: 'Read project data', category: 'Projects' },
     { id: 'write:projects', name: 'Write Projects', description: 'Create/update projects', category: 'Projects' },
     { id: 'read:assessments', name: 'Read Assessments', description: 'Read assessments', category: 'Assessments' },
-    { id: 'write:assessments', name: 'Write Assessments', description: 'Create/update assessments', category: 'Assessments' },
+    {
+        id: 'write:assessments',
+        name: 'Write Assessments',
+        description: 'Create/update assessments',
+        category: 'Assessments',
+    },
     { id: 'read:reports', name: 'Read Reports', description: 'Read reports', category: 'Reports' },
     { id: 'export:reports', name: 'Export Reports', description: 'Export reports to PDF/Excel', category: 'Reports' },
     { id: 'use:ai', name: 'Use AI', description: 'Access AI features', category: 'AI' },
@@ -184,9 +190,10 @@ export const EnterpriseApiManagement: React.FC = () => {
         setTimeout(() => setCopiedKey(null), 2000);
     };
 
-    const filteredKeys = apiKeys.filter(key =>
-        key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        key.key_prefix.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredKeys = apiKeys.filter(
+        (key) =>
+            key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            key.key_prefix.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     return (
@@ -236,10 +243,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setNewKeyVisible(null)}
-                            className="p-1 hover:bg-white/10 rounded"
-                        >
+                        <button onClick={() => setNewKeyVisible(null)} className="p-1 hover:bg-white/10 rounded">
                             <X className="w-4 h-4 text-slate-400" />
                         </button>
                     </div>
@@ -256,10 +260,11 @@ export const EnterpriseApiManagement: React.FC = () => {
                     <button
                         key={id}
                         onClick={() => setActiveTab(id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab === id
-                            ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
+                            activeTab === id
+                                ? 'bg-white/10 text-white border-b-2 border-purple-500'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
                     >
                         <Icon className="w-4 h-4" />
                         {label}
@@ -272,7 +277,10 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <div className="space-y-4">
                     {/* Search */}
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={16} />
+                        <Search
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"
+                            size={16}
+                        />
                         <input
                             type="text"
                             placeholder="Search API keys..."
@@ -298,14 +306,17 @@ export const EnterpriseApiManagement: React.FC = () => {
                             {filteredKeys.map((key) => (
                                 <div
                                     key={key.id}
-                                    className={`p-4 rounded-xl border transition-colors ${key.revoked_at
-                                        ? 'bg-red-500/5 border-red-500/20 opacity-60'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                                        }`}
+                                    className={`p-4 rounded-xl border transition-colors ${
+                                        key.revoked_at
+                                            ? 'bg-red-500/5 border-red-500/20 opacity-60'
+                                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                                    }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-lg ${key.revoked_at ? 'bg-red-500/20' : 'bg-purple-500/20'}`}>
+                                            <div
+                                                className={`p-2 rounded-lg ${key.revoked_at ? 'bg-red-500/20' : 'bg-purple-500/20'}`}
+                                            >
                                                 {key.revoked_at ? (
                                                     <Lock className="w-5 h-5 text-red-400" />
                                                 ) : (
@@ -318,7 +329,9 @@ export const EnterpriseApiManagement: React.FC = () => {
                                                     <code className="px-2 py-0.5 text-xs bg-slate-800 text-slate-300 rounded font-mono">
                                                         {key.key_prefix}...
                                                     </code>
-                                                    <span className={`px-2 py-0.5 text-xs rounded ${KEY_TYPE_CONFIG[key.key_type].color}`}>
+                                                    <span
+                                                        className={`px-2 py-0.5 text-xs rounded ${KEY_TYPE_CONFIG[key.key_type].color}`}
+                                                    >
                                                         {KEY_TYPE_CONFIG[key.key_type].label}
                                                     </span>
                                                     {key.revoked_at && (
@@ -336,7 +349,10 @@ export const EnterpriseApiManagement: React.FC = () => {
                                                     {key.last_used_at && (
                                                         <>
                                                             <span>•</span>
-                                                            <span>Last used: {new Date(key.last_used_at).toLocaleDateString()}</span>
+                                                            <span>
+                                                                Last used:{' '}
+                                                                {new Date(key.last_used_at).toLocaleDateString()}
+                                                            </span>
                                                         </>
                                                     )}
                                                 </div>
@@ -411,7 +427,9 @@ export const EnterpriseApiManagement: React.FC = () => {
                                     </button>
                                     <div>
                                         <h3 className="text-lg font-medium text-white">{selectedKeyUsage.key.name}</h3>
-                                        <code className="text-sm text-slate-500">{selectedKeyUsage.key.key_prefix}...</code>
+                                        <code className="text-sm text-slate-500">
+                                            {selectedKeyUsage.key.key_prefix}...
+                                        </code>
                                     </div>
                                 </div>
                             </div>
@@ -434,8 +452,13 @@ export const EnterpriseApiManagement: React.FC = () => {
                                     <div className="text-sm text-slate-400">Error Rate</div>
                                     <div className="text-2xl font-bold text-white">
                                         {selectedKeyUsage.usage.totals?.total_requests
-                                            ? ((selectedKeyUsage.usage.totals.total_errors / selectedKeyUsage.usage.totals.total_requests) * 100).toFixed(2)
-                                            : 0}%
+                                            ? (
+                                                  (selectedKeyUsage.usage.totals.total_errors /
+                                                      selectedKeyUsage.usage.totals.total_requests) *
+                                                  100
+                                              ).toFixed(2)
+                                            : 0}
+                                        %
                                     </div>
                                 </div>
                                 <div className="p-4 bg-white/5 rounded-xl border border-white/10">
@@ -456,11 +479,13 @@ export const EnterpriseApiManagement: React.FC = () => {
                                                 <div
                                                     className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t-sm"
                                                     style={{
-                                                        height: `${Math.max(5, (day.requests / Math.max(...selectedKeyUsage.usage.usage.map(d => d.requests))) * 100)}%`
+                                                        height: `${Math.max(5, (day.requests / Math.max(...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
                                                     }}
                                                 />
                                                 <div className="text-xs text-slate-500 mt-2">
-                                                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                                                    {new Date(day.date).toLocaleDateString('en-US', {
+                                                        weekday: 'short',
+                                                    })}
                                                 </div>
                                             </div>
                                         ))
@@ -481,16 +506,24 @@ export const EnterpriseApiManagement: React.FC = () => {
                                                 className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`px-2 py-0.5 text-xs font-mono rounded ${endpoint.method === 'GET' ? 'bg-blue-500/20 text-blue-400' :
-                                                        endpoint.method === 'POST' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                            endpoint.method === 'PUT' ? 'bg-amber-500/20 text-amber-400' :
-                                                                'bg-red-500/20 text-red-400'
-                                                        }`}>
+                                                    <span
+                                                        className={`px-2 py-0.5 text-xs font-mono rounded ${
+                                                            endpoint.method === 'GET'
+                                                                ? 'bg-blue-500/20 text-blue-400'
+                                                                : endpoint.method === 'POST'
+                                                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                                                  : endpoint.method === 'PUT'
+                                                                    ? 'bg-amber-500/20 text-amber-400'
+                                                                    : 'bg-red-500/20 text-red-400'
+                                                        }`}
+                                                    >
                                                         {endpoint.method}
                                                     </span>
                                                     <code className="text-sm text-slate-300">{endpoint.endpoint}</code>
                                                 </div>
-                                                <span className="text-sm text-slate-400">{endpoint.count.toLocaleString()}</span>
+                                                <span className="text-sm text-slate-400">
+                                                    {endpoint.count.toLocaleString()}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
@@ -518,7 +551,8 @@ export const EnterpriseApiManagement: React.FC = () => {
                     <div className="p-6 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 rounded-xl border border-purple-500/20">
                         <h3 className="text-xl font-bold text-white mb-2">Consultify API</h3>
                         <p className="text-slate-400 mb-4">
-                            Build powerful integrations with the Consultify REST API. Access projects, assessments, reports, and more.
+                            Build powerful integrations with the Consultify REST API. Access projects, assessments,
+                            reports, and more.
                         </p>
                         <div className="flex items-center gap-4">
                             <a
@@ -553,9 +587,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                                 All API requests require authentication using an API key in the Authorization header.
                             </p>
                             <div className="p-3 bg-slate-900 rounded-lg">
-                                <code className="text-sm text-cyan-400">
-                                    Authorization: Bearer ck_live_xxx...
-                                </code>
+                                <code className="text-sm text-cyan-400">Authorization: Bearer ck_live_xxx...</code>
                             </div>
                         </div>
 
@@ -596,9 +628,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                                 <Activity className="w-4 h-4 text-blue-400" />
                                 Response Format
                             </h4>
-                            <p className="text-sm text-slate-400 mb-3">
-                                All responses are returned in JSON format.
-                            </p>
+                            <p className="text-sm text-slate-400 mb-3">All responses are returned in JSON format.</p>
                             <div className="p-3 bg-slate-900 rounded-lg">
                                 <pre className="text-sm text-blue-400">
                                     {`{
@@ -614,10 +644,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                         <h4 className="font-medium text-white mb-4">Available Scopes</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                             {AVAILABLE_SCOPES.map((scope) => (
-                                <div
-                                    key={scope.id}
-                                    className="p-3 bg-slate-800/50 rounded-lg"
-                                >
+                                <div key={scope.id} className="p-3 bg-slate-800/50 rounded-lg">
                                     <div className="flex items-center justify-between mb-1">
                                         <code className="text-sm text-cyan-400">{scope.id}</code>
                                         <span className="text-xs text-slate-500">{scope.category}</span>
@@ -672,7 +699,7 @@ const ApiKeyModal: React.FC<{
         try {
             await onSave({
                 ...formData,
-                allowed_ips: formData.allowed_ips ? formData.allowed_ips.split(',').map(ip => ip.trim()) : [],
+                allowed_ips: formData.allowed_ips ? formData.allowed_ips.split(',').map((ip) => ip.trim()) : [],
                 expires_at: formData.expires_at || null,
             });
         } finally {
@@ -681,27 +708,28 @@ const ApiKeyModal: React.FC<{
     };
 
     const toggleScope = (scopeId: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             scopes: prev.scopes.includes(scopeId)
-                ? prev.scopes.filter(s => s !== scopeId)
+                ? prev.scopes.filter((s) => s !== scopeId)
                 : [...prev.scopes, scopeId],
         }));
     };
 
-    const scopesByCategory = availableScopes.reduce((acc, scope) => {
-        if (!acc[scope.category]) acc[scope.category] = [];
-        acc[scope.category].push(scope);
-        return acc;
-    }, {} as Record<string, Scope[]>);
+    const scopesByCategory = availableScopes.reduce(
+        (acc, scope) => {
+            if (!acc[scope.category]) acc[scope.category] = [];
+            acc[scope.category].push(scope);
+            return acc;
+        },
+        {} as Record<string, Scope[]>,
+    );
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-white">
-                        {editKey ? 'Edit API Key' : 'Create API Key'}
-                    </h3>
+                    <h3 className="text-xl font-bold text-white">{editKey ? 'Edit API Key' : 'Create API Key'}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg">
                         <X className="w-5 h-5 text-slate-400" />
                     </button>
@@ -757,27 +785,37 @@ const ApiKeyModal: React.FC<{
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Rate Limit (per minute)</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">
+                                Rate Limit (per minute)
+                            </label>
                             <input
                                 type="number"
                                 value={formData.rate_limit_per_minute}
-                                onChange={(e) => setFormData({ ...formData, rate_limit_per_minute: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, rate_limit_per_minute: parseInt(e.target.value) })
+                                }
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Rate Limit (per day)</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">
+                                Rate Limit (per day)
+                            </label>
                             <input
                                 type="number"
                                 value={formData.rate_limit_per_day}
-                                onChange={(e) => setFormData({ ...formData, rate_limit_per_day: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, rate_limit_per_day: parseInt(e.target.value) })
+                                }
                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Allowed IPs (comma separated)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                            Allowed IPs (comma separated)
+                        </label>
                         <input
                             type="text"
                             value={formData.allowed_ips}
@@ -799,10 +837,11 @@ const ApiKeyModal: React.FC<{
                                                 key={scope.id}
                                                 type="button"
                                                 onClick={() => toggleScope(scope.id)}
-                                                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${formData.scopes.includes(scope.id)
-                                                    ? 'bg-purple-600 text-white'
-                                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                                    }`}
+                                                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                                                    formData.scopes.includes(scope.id)
+                                                        ? 'bg-purple-600 text-white'
+                                                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                                }`}
                                             >
                                                 {scope.name}
                                             </button>
@@ -837,10 +876,4 @@ const ApiKeyModal: React.FC<{
 };
 
 export default EnterpriseApiManagement;
-
-
-
-
-
-
 

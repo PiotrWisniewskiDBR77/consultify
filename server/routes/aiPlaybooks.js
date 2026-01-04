@@ -7,7 +7,7 @@ import AIPlaybookEngine from '../ai/aiPlaybookEngine.js';
 import AIPlaybookExecutor from '../ai/aiPlaybookExecutor.js';
 
 /**
- * @route GET /api/ai/playbooks/templates
+ * @route GET /a../services/ai/playbooks/templates
  * @desc List playbook templates (with optional status filter)
  * @access SUPERADMIN
  * @query status - Optional filter: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED'
@@ -33,7 +33,7 @@ router.get('/templates', authMiddleware, verifySuperAdmin, async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/templates
+ * @route POST /a../services/ai/playbooks/templates
  * @desc Create a playbook template (as DRAFT)
  * @access SUPERADMIN
  */
@@ -56,7 +56,7 @@ router.post('/templates', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/playbooks/proposals
+ * @route GET /a../services/ai/playbooks/proposals
  * @desc Get playbook proposals for current org
  * @access ADMIN/SUPERADMIN
  */
@@ -81,7 +81,7 @@ router.get('/proposals', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/runs
+ * @route POST /a../services/ai/playbooks/runs
  * @desc Initiate a playbook run
  * @access ADMIN/SUPERADMIN
  */
@@ -112,7 +112,7 @@ router.post('/runs', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/playbooks/runs/:id
+ * @route GET /a../services/ai/playbooks/runs/:id
  * @desc Get run status with steps
  * @access ADMIN/SUPERADMIN
  */
@@ -141,7 +141,7 @@ router.get('/runs/:id', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/runs/:id/advance
+ * @route POST /a../services/ai/playbooks/runs/:id/advance
  * @desc Execute next step in the run
  * @access ADMIN/SUPERADMIN
  */
@@ -175,7 +175,7 @@ router.post('/runs/:id/advance', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/runs/:id/cancel
+ * @route POST /a../services/ai/playbooks/runs/:id/cancel
  * @desc Cancel a run
  * @access ADMIN/SUPERADMIN
  */
@@ -213,7 +213,7 @@ router.post('/runs/:id/cancel', async (req, res) => {
 // ==========================================
 
 /**
- * @route POST /api/ai/playbooks/runs/:id/dry-run-route
+ * @route POST /a../services/ai/playbooks/runs/:id/dry-run-route
  * @desc Preview routing for current step without persisting
  * @access ADMIN/SUPERADMIN
  */
@@ -249,7 +249,7 @@ router.post('/runs/:id/dry-run-route', async (req, res) => {
 import templateValidationService from '../ai/templateValidationService.js';
 
 /**
- * @route GET /api/ai/playbooks/templates/published
+ * @route GET /a../services/ai/playbooks/templates/published
  * @desc List published templates only (for ADMIN)
  * @access ADMIN/SUPERADMIN
  */
@@ -268,7 +268,7 @@ router.get('/templates/published', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/playbooks/templates/:id
+ * @route GET /a../services/ai/playbooks/templates/:id
  * @desc Get single template by ID
  * @access SUPERADMIN (full) / ADMIN (published only)
  */
@@ -297,7 +297,7 @@ router.get('/templates/:id', async (req, res) => {
 });
 
 /**
- * @route PUT /api/ai/playbooks/templates/:id
+ * @route PUT /a../services/ai/playbooks/templates/:id
  * @desc Update a draft template
  * @access SUPERADMIN
  */
@@ -326,7 +326,7 @@ router.put('/templates/:id', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/templates/:id/validate
+ * @route POST /a../services/ai/playbooks/templates/:id/validate
  * @desc Validate template graph
  * @access SUPERADMIN
  */
@@ -350,7 +350,7 @@ router.post('/templates/:id/validate', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/templates/:id/publish
+ * @route POST /a../services/ai/playbooks/templates/:id/publish
  * @desc Publish a draft template
  * @access SUPERADMIN
  */
@@ -383,7 +383,7 @@ router.post('/templates/:id/publish', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/templates/:id/deprecate
+ * @route POST /a../services/ai/playbooks/templates/:id/deprecate
  * @desc Deprecate a template
  * @access SUPERADMIN
  */
@@ -402,7 +402,7 @@ router.post('/templates/:id/deprecate', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/playbooks/templates/:id/export
+ * @route GET /a../services/ai/playbooks/templates/:id/export
  * @desc Export template as JSON
  * @access SUPERADMIN
  */
@@ -425,7 +425,7 @@ router.get('/templates/:id/export', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/templates/import
+ * @route POST /a../services/ai/playbooks/templates/import
  * @desc Import template from JSON
  * @access SUPERADMIN
  */
@@ -452,7 +452,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AICoach from '../ai/aiCoach.js';
 
 /**
- * @route POST /api/ai/playbooks/runs/:id/advance-async
+ * @route POST /a../services/ai/playbooks/runs/:id/advance-async
  * @desc Enqueue async advance to next playbook step
  * @access ADMIN/SUPERADMIN
  */
@@ -496,7 +496,7 @@ router.post('/runs/:id/advance-async', async (req, res) => {
 });
 
 /**
- * @route GET /api/ai/playbooks/jobs/:jobId
+ * @route GET /a../services/ai/playbooks/jobs/:jobId
  * @desc Get async job status
  * @access ADMIN/SUPERADMIN
  */
@@ -521,7 +521,7 @@ router.get('/jobs/:jobId', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/jobs/:jobId/retry
+ * @route POST /a../services/ai/playbooks/jobs/:jobId/retry
  * @desc Retry a failed or dead-letter job
  * @access ADMIN/SUPERADMIN
  */
@@ -548,7 +548,7 @@ router.post('/jobs/:jobId/retry', async (req, res) => {
 });
 
 /**
- * @route POST /api/ai/playbooks/jobs/:jobId/cancel
+ * @route POST /a../services/ai/playbooks/jobs/:jobId/cancel
  * @desc Cancel a queued job
  * @access ADMIN/SUPERADMIN
  */

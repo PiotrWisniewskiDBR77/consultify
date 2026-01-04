@@ -1,6 +1,6 @@
 /**
  * SLA Dashboard Component
- * 
+ *
  * Monitors Service Level Agreement metrics for AI services.
  * Features:
  * - Uptime percentage (99.9% SLA target)
@@ -11,27 +11,28 @@
  * - Compliance status indicators
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Shield,
-    Clock,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
-    TrendingUp,
-    Calendar,
-    RefreshCw,
-    Download,
-    Bell,
-    Target,
+import {
     Activity,
-    Zap,
     AlertOctagon,
-    Info
+    AlertTriangle,
+    Bell,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Download,
+    Info,
+    RefreshCw,
+    Shield,
+    Target,
+    TrendingUp,
+    XCircle,
+    Zap,
 } from 'lucide-react';
-import api from '../../services/api';
-import { useTranslation } from 'react-i18next';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import api from '../../services/api';
 
 interface SLAMetrics {
     uptimePercentage: number;
@@ -90,7 +91,7 @@ export function SLADashboard() {
         failedRequests: 0,
         averageLatency: 0,
         slaCompliant: true,
-        lastCalculated: new Date().toISOString()
+        lastCalculated: new Date().toISOString(),
     });
     const [breaches, setBreaches] = useState<SLABreach[]>([]);
     const [uptimeHistory, setUptimeHistory] = useState<UptimeDataPoint[]>([]);
@@ -137,7 +138,7 @@ export function SLADashboard() {
         const totalReqs = Math.floor(50000 + Math.random() * 100000);
         const errorRate = 0.05 + Math.random() * 0.5;
         const failedReqs = Math.floor(totalReqs * (errorRate / 100));
-        
+
         return {
             uptimePercentage: uptime,
             uptimeTarget: 99.9,
@@ -153,14 +154,14 @@ export function SLADashboard() {
             failedRequests: failedReqs,
             averageLatency: 0.8 + Math.random() * 0.7,
             slaCompliant: uptime >= 99.9 && errorRate <= 1.0,
-            lastCalculated: new Date().toISOString()
+            lastCalculated: new Date().toISOString(),
         };
     };
 
     const generateMockBreaches = (): SLABreach[] => {
         const breaches: SLABreach[] = [];
         const now = Date.now();
-        
+
         // Generate some historical breaches
         if (Math.random() > 0.3) {
             breaches.push({
@@ -172,10 +173,10 @@ export function SLADashboard() {
                 severity: 'warning',
                 resolved: true,
                 resolvedAt: new Date(now - 2 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000).toISOString(),
-                duration: 15
+                duration: 15,
             });
         }
-        
+
         if (Math.random() > 0.5) {
             breaches.push({
                 id: 'breach-2',
@@ -186,10 +187,10 @@ export function SLADashboard() {
                 severity: 'critical',
                 resolved: true,
                 resolvedAt: new Date(now - 5 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
-                duration: 45
+                duration: 45,
             });
         }
-        
+
         if (Math.random() > 0.7) {
             breaches.push({
                 id: 'breach-3',
@@ -200,17 +201,17 @@ export function SLADashboard() {
                 severity: 'critical',
                 resolved: true,
                 resolvedAt: new Date(now - 12 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),
-                duration: 120
+                duration: 120,
             });
         }
-        
+
         return breaches;
     };
 
     const generateMockHistory = (): UptimeDataPoint[] => {
         const days = timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
         const isHourly = timeRange === '24h';
-        
+
         return Array.from({ length: days }, (_, i) => {
             const date = new Date();
             if (isHourly) {
@@ -218,12 +219,12 @@ export function SLADashboard() {
             } else {
                 date.setDate(date.getDate() - (days - i - 1));
             }
-            
+
             const hasIncident = Math.random() > 0.92;
             return {
                 date: date.toISOString(),
                 uptime: hasIncident ? 98 + Math.random() * 1.9 : 99.5 + Math.random() * 0.5,
-                incidents: hasIncident ? Math.floor(1 + Math.random() * 2) : 0
+                incidents: hasIncident ? Math.floor(1 + Math.random() * 2) : 0,
             };
         });
     };
@@ -234,7 +235,7 @@ export function SLADashboard() {
             timeRange,
             metrics,
             breaches,
-            uptimeHistory
+            uptimeHistory,
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -248,7 +249,7 @@ export function SLADashboard() {
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return timeRange === '24h' 
+        return timeRange === '24h'
             ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     };
@@ -260,8 +261,8 @@ export function SLADashboard() {
         return actual >= target ? 'compliant' : 'breach';
     };
 
-    const activeBreaches = breaches.filter(b => !b.resolved);
-    const resolvedBreaches = breaches.filter(b => b.resolved);
+    const activeBreaches = breaches.filter((b) => !b.resolved);
+    const resolvedBreaches = breaches.filter((b) => b.resolved);
 
     return (
         <div className="space-y-6">
@@ -272,9 +273,7 @@ export function SLADashboard() {
                         <Shield size={24} className="text-emerald-400" />
                         SLA Dashboard
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1">
-                        Service Level Agreement monitoring and compliance
-                    </p>
+                    <p className="text-slate-400 text-sm mt-1">Service Level Agreement monitoring and compliance</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {/* Time Range */}
@@ -303,14 +302,14 @@ export function SLADashboard() {
                         <Zap size={14} />
                         {autoRefresh ? 'Live' : 'Auto'}
                     </button>
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
                     >
                         <Download size={14} />
                         Export
                     </button>
-                    <button 
+                    <button
                         onClick={loadSLAData}
                         disabled={loading}
                         className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
@@ -322,11 +321,11 @@ export function SLADashboard() {
             </div>
 
             {/* Overall SLA Status */}
-            <div className={`rounded-xl p-6 border ${
-                metrics.slaCompliant 
-                    ? 'bg-emerald-900/20 border-emerald-500/30' 
-                    : 'bg-red-900/20 border-red-500/30'
-            }`}>
+            <div
+                className={`rounded-xl p-6 border ${
+                    metrics.slaCompliant ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-red-900/20 border-red-500/30'
+                }`}
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         {metrics.slaCompliant ? (
@@ -343,20 +342,15 @@ export function SLADashboard() {
                                 {metrics.slaCompliant ? 'SLA Compliant' : 'SLA Breach Detected'}
                             </h3>
                             <p className="text-sm text-slate-400">
-                                {metrics.slaCompliant 
+                                {metrics.slaCompliant
                                     ? 'All service level objectives are being met'
-                                    : `${activeBreaches.length} active breach(es) require attention`
-                                }
+                                    : `${activeBreaches.length} active breach(es) require attention`}
                             </p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-3xl font-bold text-white">
-                            {metrics.uptimePercentage.toFixed(3)}%
-                        </div>
-                        <div className="text-sm text-slate-400">
-                            Current Uptime (Target: {metrics.uptimeTarget}%)
-                        </div>
+                        <div className="text-3xl font-bold text-white">{metrics.uptimePercentage.toFixed(3)}%</div>
+                        <div className="text-sm text-slate-400">Current Uptime (Target: {metrics.uptimeTarget}%)</div>
                     </div>
                 </div>
             </div>
@@ -372,7 +366,7 @@ export function SLADashboard() {
                     status={getComplianceStatus(metrics.uptimeTarget, metrics.uptimePercentage, false)}
                     color="emerald"
                 />
-                
+
                 {/* Response Time P95 */}
                 <SLAMetricCard
                     icon={Clock}
@@ -382,7 +376,7 @@ export function SLADashboard() {
                     status={getComplianceStatus(metrics.responseTimeP95, metrics.responseTimeTargetP95)}
                     color="cyan"
                 />
-                
+
                 {/* Response Time P99 */}
                 <SLAMetricCard
                     icon={Clock}
@@ -392,7 +386,7 @@ export function SLADashboard() {
                     status={getComplianceStatus(metrics.responseTimeP99, metrics.responseTimeTargetP99)}
                     color="purple"
                 />
-                
+
                 {/* Error Rate */}
                 <SLAMetricCard
                     icon={AlertTriangle}
@@ -414,24 +408,20 @@ export function SLADashboard() {
                     </h3>
                     <div className="space-y-4">
                         <StatRow label="Total Requests" value={metrics.totalRequests.toLocaleString()} />
-                        <StatRow 
-                            label="Successful" 
-                            value={metrics.successfulRequests.toLocaleString()} 
+                        <StatRow
+                            label="Successful"
+                            value={metrics.successfulRequests.toLocaleString()}
                             color="text-emerald-400"
                         />
-                        <StatRow 
-                            label="Failed" 
-                            value={metrics.failedRequests.toLocaleString()} 
-                            color="text-red-400"
-                        />
-                        <StatRow 
-                            label="Avg Latency" 
-                            value={`${metrics.averageLatency.toFixed(2)}s`} 
+                        <StatRow label="Failed" value={metrics.failedRequests.toLocaleString()} color="text-red-400" />
+                        <StatRow
+                            label="Avg Latency"
+                            value={`${metrics.averageLatency.toFixed(2)}s`}
                             color="text-cyan-400"
                         />
                         <div className="pt-3 border-t border-white/10">
-                            <StatRow 
-                                label="Success Rate" 
+                            <StatRow
+                                label="Success Rate"
                                 value={`${((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2)}%`}
                                 color="text-emerald-400"
                             />
@@ -446,9 +436,7 @@ export function SLADashboard() {
                         Uptime History
                     </h3>
                     {loading ? (
-                        <div className="h-40 flex items-center justify-center text-slate-500">
-                            Loading chart...
-                        </div>
+                        <div className="h-40 flex items-center justify-center text-slate-500">Loading chart...</div>
                     ) : (
                         <div className="space-y-2">
                             <div className="h-40 flex items-end gap-1">
@@ -456,15 +444,15 @@ export function SLADashboard() {
                                     const height = ((point.uptime - 95) / 5) * 100; // Scale 95-100% to 0-100%
                                     const isGood = point.uptime >= 99.9;
                                     return (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
                                             title={`${formatDate(point.date)}: ${point.uptime.toFixed(2)}% uptime${point.incidents > 0 ? `, ${point.incidents} incident(s)` : ''}`}
                                         >
-                                            <div 
+                                            <div
                                                 className={`w-full rounded-t transition-all ${
-                                                    isGood 
-                                                        ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 group-hover:from-emerald-500' 
+                                                    isGood
+                                                        ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 group-hover:from-emerald-500'
                                                         : 'bg-gradient-to-t from-amber-600 to-amber-400 group-hover:from-amber-500'
                                                 }`}
                                                 style={{ height: `${Math.max(height, 5)}%` }}
@@ -497,7 +485,7 @@ export function SLADashboard() {
                         </span>
                     )}
                 </h3>
-                
+
                 {breaches.length === 0 ? (
                     <div className="flex items-center justify-center py-8 text-slate-500">
                         <Info size={18} className="mr-2" />
@@ -506,23 +494,25 @@ export function SLADashboard() {
                 ) : (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                         {breaches.map((breach) => (
-                            <div 
+                            <div
                                 key={breach.id}
                                 className={`flex items-center gap-4 p-4 rounded-lg ${
-                                    breach.resolved 
-                                        ? 'bg-navy-950/50' 
-                                        : breach.severity === 'critical' 
-                                            ? 'bg-red-900/20 border border-red-500/30' 
-                                            : 'bg-amber-900/20 border border-amber-500/30'
+                                    breach.resolved
+                                        ? 'bg-navy-950/50'
+                                        : breach.severity === 'critical'
+                                          ? 'bg-red-900/20 border border-red-500/30'
+                                          : 'bg-amber-900/20 border border-amber-500/30'
                                 }`}
                             >
-                                <div className={`p-2 rounded-full ${
-                                    breach.resolved 
-                                        ? 'bg-slate-700' 
-                                        : breach.severity === 'critical' 
-                                            ? 'bg-red-500/20' 
-                                            : 'bg-amber-500/20'
-                                }`}>
+                                <div
+                                    className={`p-2 rounded-full ${
+                                        breach.resolved
+                                            ? 'bg-slate-700'
+                                            : breach.severity === 'critical'
+                                              ? 'bg-red-500/20'
+                                              : 'bg-amber-500/20'
+                                    }`}
+                                >
                                     {breach.resolved ? (
                                         <CheckCircle size={16} className="text-slate-400" />
                                     ) : breach.severity === 'critical' ? (
@@ -533,14 +523,14 @@ export function SLADashboard() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-white">
-                                            {breach.metric}
-                                        </span>
-                                        <span className={`text-xs px-2 py-0.5 rounded ${
-                                            breach.severity === 'critical' 
-                                                ? 'bg-red-500/20 text-red-400' 
-                                                : 'bg-amber-500/20 text-amber-400'
-                                        }`}>
+                                        <span className="text-sm font-medium text-white">{breach.metric}</span>
+                                        <span
+                                            className={`text-xs px-2 py-0.5 rounded ${
+                                                breach.severity === 'critical'
+                                                    ? 'bg-red-500/20 text-red-400'
+                                                    : 'bg-amber-500/20 text-amber-400'
+                                            }`}
+                                        >
                                             {breach.severity}
                                         </span>
                                     </div>
@@ -552,13 +542,9 @@ export function SLADashboard() {
                                     <div className="text-xs text-slate-400">
                                         {new Date(breach.timestamp).toLocaleString()}
                                     </div>
-                                    <div className="text-xs text-slate-500 mt-1">
-                                        Duration: {breach.duration} min
-                                    </div>
+                                    <div className="text-xs text-slate-500 mt-1">Duration: {breach.duration} min</div>
                                 </div>
-                                {breach.resolved && (
-                                    <span className="text-xs text-emerald-400">Resolved</span>
-                                )}
+                                {breach.resolved && <span className="text-xs text-emerald-400">Resolved</span>}
                             </div>
                         ))}
                     </div>
@@ -572,26 +558,10 @@ export function SLADashboard() {
                     SLA Targets Reference
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <SLATargetCard
-                        metric="Uptime"
-                        target="≥ 99.9%"
-                        description="Monthly service availability"
-                    />
-                    <SLATargetCard
-                        metric="Response Time P95"
-                        target="< 3.0s"
-                        description="95th percentile latency"
-                    />
-                    <SLATargetCard
-                        metric="Response Time P99"
-                        target="< 5.0s"
-                        description="99th percentile latency"
-                    />
-                    <SLATargetCard
-                        metric="Error Rate"
-                        target="< 1.0%"
-                        description="Failed requests percentage"
-                    />
+                    <SLATargetCard metric="Uptime" target="≥ 99.9%" description="Monthly service availability" />
+                    <SLATargetCard metric="Response Time P95" target="< 3.0s" description="95th percentile latency" />
+                    <SLATargetCard metric="Response Time P99" target="< 5.0s" description="99th percentile latency" />
+                    <SLATargetCard metric="Error Rate" target="< 1.0%" description="Failed requests percentage" />
                 </div>
             </div>
 
@@ -612,9 +582,11 @@ const SLAMetricCard: React.FC<{
     status: 'compliant' | 'breach';
     color: string;
 }> = ({ icon: Icon, label, value, target, status, color }) => (
-    <div className={`bg-navy-900 border rounded-xl p-5 ${
-        status === 'compliant' ? 'border-white/10' : 'border-red-500/30'
-    }`}>
+    <div
+        className={`bg-navy-900 border rounded-xl p-5 ${
+            status === 'compliant' ? 'border-white/10' : 'border-red-500/30'
+        }`}
+    >
         <div className="flex items-center justify-between mb-3">
             <div className={`p-2 rounded-lg bg-${color}-500/20`}>
                 <Icon size={18} className={`text-${color}-400`} />
@@ -627,9 +599,7 @@ const SLAMetricCard: React.FC<{
         </div>
         <div className="text-2xl font-bold text-white mb-1">{value}</div>
         <div className="text-xs text-slate-500 uppercase tracking-wider">{label}</div>
-        <div className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-red-400'}`}>
-            {target}
-        </div>
+        <div className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-red-400'}`}>{target}</div>
     </div>
 );
 
@@ -657,8 +627,3 @@ const SLATargetCard: React.FC<{
 );
 
 export default SLADashboard;
-
-
-
-
-

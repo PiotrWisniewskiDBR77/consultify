@@ -1,6 +1,21 @@
+import {
+    Activity,
+    AlertTriangle,
+    Brain,
+    CheckCircle2,
+    FileText,
+    HelpCircle,
+    Info,
+    Layers,
+    Shield,
+    Target,
+    Terminal,
+    TrendingUp,
+    XCircle,
+} from 'lucide-react';
 import React, { useState } from 'react';
+
 import { ActionProposal } from './ActionProposalList';
-import { Brain, Target, Shield, AlertTriangle, TrendingUp, CheckCircle2, XCircle, Terminal, HelpCircle, Activity, Info, FileText, Layers } from 'lucide-react';
 import EvidencePanel from './EvidencePanel';
 
 interface PolicyEvaluation {
@@ -27,7 +42,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
     onReject,
     onModify,
     policyEvaluation,
-    token
+    token,
 }) => {
     const [activeTab, setActiveTab] = useState<TabType>('details');
 
@@ -36,7 +51,9 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
             <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50 dark:bg-navy-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
                 <Brain size={48} className="mb-4 opacity-20" />
                 <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Select a Proposal</h3>
-                <p className="max-w-xs mx-auto text-sm">Review AI-generated suggestions to optimize your digital transformation flow.</p>
+                <p className="max-w-xs mx-auto text-sm">
+                    Review AI-generated suggestions to optimize your digital transformation flow.
+                </p>
             </div>
         );
     }
@@ -61,15 +78,30 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                 <div className="flex flex-wrap gap-4 mt-4">
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm">
                         <Activity size={14} className="text-indigo-500" />
-                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Action: {proposal.action_type}</span>
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            Action: {proposal.action_type}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm">
-                        <Shield size={14} className={proposal.risk_level === 'LOW' ? 'text-emerald-500' : proposal.risk_level === 'MEDIUM' ? 'text-amber-500' : 'text-red-500'} />
-                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Risk: {proposal.risk_level}</span>
+                        <Shield
+                            size={14}
+                            className={
+                                proposal.risk_level === 'LOW'
+                                    ? 'text-emerald-500'
+                                    : proposal.risk_level === 'MEDIUM'
+                                      ? 'text-amber-500'
+                                      : 'text-red-500'
+                            }
+                        />
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            Risk: {proposal.risk_level}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm">
                         <Target size={14} className="text-purple-500" />
-                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Scope: {proposal.scope}</span>
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            Scope: {proposal.scope}
+                        </span>
                     </div>
                 </div>
 
@@ -80,9 +112,10 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative
-                                ${activeTab === tab.id
-                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                ${
+                                    activeTab === tab.id
+                                        ? 'text-indigo-600 dark:text-indigo-400'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                 }
                             `}
                         >
@@ -113,8 +146,12 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                                 <div className="bg-white dark:bg-navy-950 p-3 rounded-lg border border-indigo-100 dark:border-indigo-500/10 flex items-start gap-3">
                                     <Info size={16} className="text-indigo-400 mt-0.5 shrink-0" />
                                     <div>
-                                        <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1 uppercase">Origin Signal</h4>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">{proposal.origin_signal}: Detected organization friction patterns.</p>
+                                        <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1 uppercase">
+                                            Origin Signal
+                                        </h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            {proposal.origin_signal}: Detected organization friction patterns.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -129,11 +166,18 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                                 </h3>
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-4">
-                                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${policyEvaluation.matched
-                                            ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
-                                            : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                                            }`}>
-                                            {policyEvaluation.matched ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                                        <div
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                                                policyEvaluation.matched
+                                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                                                    : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            {policyEvaluation.matched ? (
+                                                <CheckCircle2 size={16} />
+                                            ) : (
+                                                <XCircle size={16} />
+                                            )}
                                             <span className="text-xs font-bold uppercase">
                                                 {policyEvaluation.matched ? 'Policy Match' : 'No Policy Match'}
                                             </span>
@@ -160,7 +204,9 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
 
                         {/* Narrative Summary */}
                         <section className="bg-emerald-500/5 dark:bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-5">
-                            <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">Narrative Projection</h4>
+                            <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">
+                                Narrative Projection
+                            </h4>
                             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                                 {proposal.expected_impact}
                             </p>
@@ -181,13 +227,23 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                                     <Activity size={14} /> Expected Direction
                                 </h4>
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${proposal.simulation.expected_direction === 'positive' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-500/20 text-slate-500'
-                                        }`}>
+                                    <div
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                            proposal.simulation.expected_direction === 'positive'
+                                                ? 'bg-emerald-500/20 text-emerald-500'
+                                                : 'bg-slate-500/20 text-slate-500'
+                                        }`}
+                                    >
                                         <TrendingUp size={20} />
                                     </div>
                                     <div>
-                                        <span className={`text-sm font-bold capitalize ${proposal.simulation.expected_direction === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
-                                            }`}>
+                                        <span
+                                            className={`text-sm font-bold capitalize ${
+                                                proposal.simulation.expected_direction === 'positive'
+                                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                                    : 'text-slate-600 dark:text-slate-400'
+                                            }`}
+                                        >
                                             {proposal.simulation.expected_direction} Impact
                                         </span>
                                         <p className="text-xs text-slate-500">Based on algorithmic projection</p>
@@ -201,13 +257,18 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                                 <ul className="space-y-2">
                                     {proposal.simulation.assumptions.length > 0 ? (
                                         proposal.simulation.assumptions.map((item, i) => (
-                                            <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                            <li
+                                                key={i}
+                                                className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400"
+                                            >
                                                 <div className="w-1 h-1 rounded-full bg-slate-400 mt-1.5 shrink-0" />
                                                 {item}
                                             </li>
                                         ))
                                     ) : (
-                                        <li className="text-xs text-slate-400 italic">No explicit assumptions provided.</li>
+                                        <li className="text-xs text-slate-400 italic">
+                                            No explicit assumptions provided.
+                                        </li>
                                     )}
                                 </ul>
                             </div>
@@ -230,11 +291,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
 
                 {/* Evidence Tab */}
                 {activeTab === 'evidence' && (
-                    <EvidencePanel
-                        entityType="proposal"
-                        entityId={proposal.proposal_id}
-                        token={token || ''}
-                    />
+                    <EvidencePanel entityType="proposal" entityId={proposal.proposal_id} token={token || ''} />
                 )}
             </div>
 

@@ -8,10 +8,10 @@ export const LOG_LEVELS = {
     DEBUG: 'DEBUG',
     INFO: 'INFO',
     WARN: 'WARN',
-    ERROR: 'ERROR'
+    ERROR: 'ERROR',
 } as const;
 
-export type LogLevel = typeof LOG_LEVELS[keyof typeof LOG_LEVELS];
+export type LogLevel = (typeof LOG_LEVELS)[keyof typeof LOG_LEVELS];
 
 export interface AuditLogParams {
     level?: LogLevel;
@@ -63,7 +63,7 @@ export function log(params: AuditLogParams): AuditLogEntry {
         duration_ms,
         error_code,
         error_message,
-        metadata
+        metadata,
     } = params;
 
     const logEntry: AuditLogEntry = {
@@ -80,12 +80,12 @@ export function log(params: AuditLogParams): AuditLogEntry {
         duration_ms: duration_ms !== undefined ? duration_ms : undefined,
         error_code: error_code || undefined,
         error_message: error_message || undefined,
-        ...(metadata ? { metadata } : {})
+        ...(metadata ? { metadata } : {}),
     };
 
     // Clean undefined values for cleaner output
     const cleanEntry = Object.fromEntries(
-        Object.entries(logEntry).filter(([_, v]) => v !== undefined && v !== null)
+        Object.entries(logEntry).filter(([_, v]) => v !== undefined && v !== null),
     ) as AuditLogEntry;
 
     const jsonLine = JSON.stringify(cleanEntry);
@@ -111,15 +111,14 @@ export function log(params: AuditLogParams): AuditLogEntry {
 }
 
 // Convenience methods
-export const info = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const info = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.INFO, event });
 
-export const warn = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const warn = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.WARN, event });
 
-export const error = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const error = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.ERROR, event });
 
-export const debug = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry => 
+export const debug = (event: string, params: Omit<AuditLogParams, 'event' | 'level'> = {}): AuditLogEntry =>
     log({ ...params, level: LOG_LEVELS.DEBUG, event });
-

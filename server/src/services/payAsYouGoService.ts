@@ -1,7 +1,7 @@
 /**
  * Pay-as-You-Go Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles PAYG usage tracking, cost calculation, and invoice generation
  * Fully migrated to Class-based Async DI pattern
  */
@@ -35,12 +35,15 @@ export interface CurrentPeriodUsageSummary {
     periodStart: string;
     periodEnd: string;
     totalCost: number;
-    byType: Record<string, {
-        quantity: number;
-        avgUnitPrice: number;
-        totalCost: number;
-        usageCount: number;
-    }>;
+    byType: Record<
+        string,
+        {
+            quantity: number;
+            avgUnitPrice: number;
+            totalCost: number;
+            usageCount: number;
+        }
+    >;
 }
 
 export interface GenerateInvoiceResult {
@@ -116,7 +119,7 @@ class PayAsYouGoServiceClass {
 
                 this.#deps = {
                     db,
-                    uuidv4
+                    uuidv4,
                 };
 
                 this.#initialized = true;
@@ -168,7 +171,19 @@ class PayAsYouGoServiceClass {
                 id, organization_id, user_id, project_id, usage_type, quantity,
                 unit_price, total_cost, billing_period_start, billing_period_end, metadata
             ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, orgId, userId, projectId, usageType, quantity, unitPrice, totalCost, periodStart.toISOString(), periodEnd.toISOString(), JSON.stringify(metadata)]
+            [
+                id,
+                orgId,
+                userId,
+                projectId,
+                usageType,
+                quantity,
+                unitPrice,
+                totalCost,
+                periodStart.toISOString(),
+                periodEnd.toISOString(),
+                JSON.stringify(metadata),
+            ],
         );
 
         return { id, totalCost };
@@ -180,7 +195,7 @@ class PayAsYouGoServiceClass {
     async getCurrentPeriodUsage(
         orgId: string,
         periodStart: Date | null = null,
-        periodEnd: Date | null = null
+        periodEnd: Date | null = null,
     ): Promise<CurrentPeriodUsageSummary> {
         const deps = await this.#getDeps();
         const now = new Date();
@@ -201,22 +216,22 @@ class PayAsYouGoServiceClass {
                AND billing_period_end <= ?
                AND invoiced = 0
              GROUP BY usage_type`,
-            [orgId, start.toISOString(), end.toISOString()]
+            [orgId, start.toISOString(), end.toISOString()],
         );
 
         const summary: CurrentPeriodUsageSummary = {
             periodStart: start.toISOString(),
             periodEnd: end.toISOString(),
             totalCost: 0,
-            byType: {}
+            byType: {},
         };
 
-        rows.forEach(row => {
+        rows.forEach((row) => {
             summary.byType[row.usage_type] = {
                 quantity: row.total_quantity,
                 avgUnitPrice: row.avg_unit_price,
                 totalCost: row.total_cost,
-                usageCount: row.usage_count
+                usageCount: row.usage_count,
             };
             summary.totalCost += row.total_cost || 0;
         });
@@ -227,11 +242,7 @@ class PayAsYouGoServiceClass {
     /**
      * Generate PAYG invoice (mark usage as invoiced)
      */
-    async generatePayAsYouGoInvoice(
-        orgId: string,
-        periodStart: Date,
-        periodEnd: Date
-    ): Promise<GenerateInvoiceResult> {
+    async generatePayAsYouGoInvoice(orgId: string, periodStart: Date, periodEnd: Date): Promise<GenerateInvoiceResult> {
         const deps = await this.#getDeps();
         const usage = await this.getCurrentPeriodUsage(orgId, periodStart, periodEnd);
 
@@ -248,7 +259,7 @@ class PayAsYouGoServiceClass {
                AND billing_period_start >= ?
                AND billing_period_end <= ?
                AND invoiced = 0`,
-            [orgId, periodStart.toISOString(), periodEnd.toISOString()]
+            [orgId, periodStart.toISOString(), periodEnd.toISOString()],
         );
 
         return {
@@ -256,18 +267,14 @@ class PayAsYouGoServiceClass {
             periodStart: periodStart.toISOString(),
             periodEnd: periodEnd.toISOString(),
             totalCost: usage.totalCost,
-            usageByType: usage.byType
+            usageByType: usage.byType,
         };
     }
 
     /**
      * Calculate usage cost
      */
-    async calculateUsageCost(
-        orgId: string,
-        usageType: UsageType,
-        quantity: number
-    ): Promise<CalculateUsageCostResult> {
+    async calculateUsageCost(orgId: string, usageType: UsageType, quantity: number): Promise<CalculateUsageCostResult> {
         const deps = await this.#getDeps();
         // Get billing model and pricing from organization
         const row = await DbPromise.get<BillingModelRow>(
@@ -277,7 +284,7 @@ class PayAsYouGoServiceClass {
              LEFT JOIN organization_billing ob ON os.organization_id = ob.organization_id
              LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
              WHERE os.organization_id = ?`,
-            [orgId]
+            [orgId],
         );
 
         const billingModel = row?.billing_model || 'subscription';
@@ -293,7 +300,7 @@ class PayAsYouGoServiceClass {
                 const marginRow = await DbPromise.get<MarginRow>(
                     deps.db,
                     `SELECT base_cost_per_1k, margin_percent FROM billing_margins WHERE source_type = 'platform' AND is_active = 1`,
-                    []
+                    [],
                 );
                 const baseCost = marginRow?.base_cost_per_1k || 0.03;
                 const margin = marginRow?.margin_percent || 30;
@@ -301,7 +308,7 @@ class PayAsYouGoServiceClass {
                 return { cost: quantity * unitPrice, unitPrice };
             case 'storage':
                 // Storage pricing (per GB/month)
-                unitPrice = 0.10; // $0.10 per GB/month
+                unitPrice = 0.1; // $0.10 per GB/month
                 return { cost: quantity * unitPrice, unitPrice };
             case 'seats':
                 unitPrice = row?.seat_price_monthly || row?.plan_seat_price || 0;
@@ -318,9 +325,9 @@ class PayAsYouGoServiceClass {
      * Check PAYG limits before usage
      */
     async checkPayAsYouGoLimits(
-        orgId: string,
-        usageType: UsageType,
-        quantity: number
+        _orgId: string,
+        _usageType: UsageType,
+        _quantity: number,
     ): Promise<{ allowed: boolean }> {
         // For now, PAYG has no hard limits (can be extended with budget checks)
         return { allowed: true };
@@ -344,7 +351,7 @@ class PayAsYouGoServiceClass {
             projectedCost,
             daysElapsed,
             daysInMonth,
-            usageByType: usage.byType
+            usageByType: usage.byType,
         };
     }
 }
@@ -353,12 +360,17 @@ class PayAsYouGoServiceClass {
 const payAsYouGoServiceInstance = new PayAsYouGoServiceClass();
 
 // Export individual functions for backward compatibility
-export const setDependencies = (newDeps: Partial<PayAsYouGoServiceDependencies>) => payAsYouGoServiceInstance.setDependencies(newDeps);
+export const setDependencies = (newDeps: Partial<PayAsYouGoServiceDependencies>) =>
+    payAsYouGoServiceInstance.setDependencies(newDeps);
 export const recordUsage = (params: RecordUsageParams) => payAsYouGoServiceInstance.recordUsage(params);
-export const getCurrentPeriodUsage = (orgId: string, periodStart: Date | null = null, periodEnd: Date | null = null) => payAsYouGoServiceInstance.getCurrentPeriodUsage(orgId, periodStart, periodEnd);
-export const generatePayAsYouGoInvoice = (orgId: string, periodStart: Date, periodEnd: Date) => payAsYouGoServiceInstance.generatePayAsYouGoInvoice(orgId, periodStart, periodEnd);
-export const calculateUsageCost = (orgId: string, usageType: UsageType, quantity: number) => payAsYouGoServiceInstance.calculateUsageCost(orgId, usageType, quantity);
-export const checkPayAsYouGoLimits = (orgId: string, usageType: UsageType, quantity: number) => payAsYouGoServiceInstance.checkPayAsYouGoLimits(orgId, usageType, quantity);
+export const getCurrentPeriodUsage = (orgId: string, periodStart: Date | null = null, periodEnd: Date | null = null) =>
+    payAsYouGoServiceInstance.getCurrentPeriodUsage(orgId, periodStart, periodEnd);
+export const generatePayAsYouGoInvoice = (orgId: string, periodStart: Date, periodEnd: Date) =>
+    payAsYouGoServiceInstance.generatePayAsYouGoInvoice(orgId, periodStart, periodEnd);
+export const calculateUsageCost = (orgId: string, usageType: UsageType, quantity: number) =>
+    payAsYouGoServiceInstance.calculateUsageCost(orgId, usageType, quantity);
+export const checkPayAsYouGoLimits = (orgId: string, usageType: UsageType, quantity: number) =>
+    payAsYouGoServiceInstance.checkPayAsYouGoLimits(orgId, usageType, quantity);
 export const getPayAsYouGoForecast = (orgId: string) => payAsYouGoServiceInstance.getPayAsYouGoForecast(orgId);
 
 // Default export for backward compatibility
@@ -369,7 +381,7 @@ const PayAsYouGoService = {
     generatePayAsYouGoInvoice,
     calculateUsageCost,
     checkPayAsYouGoLimits,
-    getPayAsYouGoForecast
+    getPayAsYouGoForecast,
 };
 
 export default PayAsYouGoService;

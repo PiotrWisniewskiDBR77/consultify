@@ -11,19 +11,10 @@ import { z } from 'zod';
 
 export const CreateTaskSchema = z.object({
     projectId: z.string().uuid('Invalid project ID'),
-    title: z.string()
-        .min(1, 'Task title is required')
-        .max(255, 'Task title too long')
-        .trim(),
-    description: z.string()
-        .max(10000, 'Description too long')
-        .optional(),
-    status: z.enum(['todo', 'in_progress', 'review', 'done', 'blocked'])
-        .optional()
-        .default('todo'),
-    priority: z.enum(['low', 'medium', 'high', 'critical'])
-        .optional()
-        .default('medium'),
+    title: z.string().min(1, 'Task title is required').max(255, 'Task title too long').trim(),
+    description: z.string().max(10000, 'Description too long').optional(),
+    status: z.enum(['todo', 'in_progress', 'review', 'done', 'blocked']).optional().default('todo'),
+    priority: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
     assigneeId: z.string().uuid().optional().nullable(),
     dueDate: z.string().datetime().optional().nullable(),
     estimatedHours: z.number().min(0).max(10000).optional().nullable(),
@@ -31,14 +22,19 @@ export const CreateTaskSchema = z.object({
     taskType: z.string().max(50).optional(),
     initiativeId: z.string().uuid().optional().nullable(),
     parentTaskId: z.string().uuid().optional().nullable(),
-    
+
     // Checklist items
-    checklist: z.array(z.object({
-        id: z.string().optional(),
-        text: z.string().min(1).max(500),
-        completed: z.boolean().default(false),
-    })).max(50).optional(),
-    
+    checklist: z
+        .array(
+            z.object({
+                id: z.string().optional(),
+                text: z.string().min(1).max(500),
+                completed: z.boolean().default(false),
+            }),
+        )
+        .max(50)
+        .optional(),
+
     // PMO integration
     why: z.string().max(1000).optional(),
     stepPhase: z.enum(['design', 'pilot', 'rollout']).optional(),
@@ -46,9 +42,11 @@ export const CreateTaskSchema = z.object({
 
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 
-export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ projectId: true }).extend({
-    actualHours: z.number().min(0).max(100000).optional(),
-});
+export const UpdateTaskSchema = CreateTaskSchema.partial()
+    .omit({ projectId: true })
+    .extend({
+        actualHours: z.number().min(0).max(100000).optional(),
+    });
 
 export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;
 
@@ -57,10 +55,7 @@ export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;
 // ==========================================
 
 export const CreateTaskCommentSchema = z.object({
-    content: z.string()
-        .min(1, 'Comment cannot be empty')
-        .max(5000, 'Comment too long')
-        .trim(),
+    content: z.string().min(1, 'Comment cannot be empty').max(5000, 'Comment too long').trim(),
     parentCommentId: z.string().uuid().optional(),
 });
 
@@ -110,5 +105,3 @@ export const BulkDeleteTasksSchema = z.object({
 });
 
 export type BulkDeleteTasksInput = z.infer<typeof BulkDeleteTasksSchema>;
-
-

@@ -1,13 +1,13 @@
 /**
  * Admin Button Component
- * 
+ *
  * Minimalist button variants for Admin module
  * Variants: primary, secondary, ghost, icon
  * Sizes: sm, md, lg
  */
 
+import { Loader2, LucideIcon } from 'lucide-react';
 import React from 'react';
-import { LucideIcon, Loader2 } from 'lucide-react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -26,10 +26,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
  */
 const variantClasses: Record<ButtonVariant, string> = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white',  // Fiolet
-    secondary: 'bg-secondary-800 hover:bg-secondary-900 text-white border border-white/10',  // Navy
+    primary: 'bg-primary-600 hover:bg-primary-700 text-white', // Fiolet
+    secondary: 'bg-secondary-800 hover:bg-secondary-900 text-white border border-white/10', // Navy
     ghost: 'hover:bg-white/[0.04] text-slate-400 hover:text-slate-300',
-    danger: 'bg-danger-600/10 hover:bg-danger-600/20 text-danger-400 border border-danger-500/20',  // Czerwień
+    danger: 'bg-danger-600/10 hover:bg-danger-600/20 text-danger-400 border border-danger-500/20', // Czerwień
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -69,7 +69,9 @@ export const Button: React.FC<ButtonProps> = ({
                 ${variantClasses[variant]}
                 ${sizeClasses[size]}
                 ${className}
-            `.trim().replace(/\s+/g, ' ')}
+            `
+                .trim()
+                .replace(/\s+/g, ' ')}
             disabled={isDisabled}
             {...props}
         >
@@ -105,10 +107,11 @@ export const IconButton: React.FC<IconButtonProps> = ({
 }) => {
     const iconSize = iconSizes[size];
     const paddingClass = size === 'sm' ? 'p-1.5' : size === 'lg' ? 'p-2.5' : 'p-2';
-    
-    const variantClass = variant === 'danger' 
-        ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10' 
-        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]';
+
+    const variantClass =
+        variant === 'danger'
+            ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10'
+            : 'text-slate-400 hover:text-white hover:bg-white/[0.04]';
 
     return (
         <button
@@ -119,21 +122,17 @@ export const IconButton: React.FC<IconButtonProps> = ({
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClass}
                 ${className}
-            `.trim().replace(/\s+/g, ' ')}
+            `
+                .trim()
+                .replace(/\s+/g, ' ')}
             disabled={disabled || loading}
             title={label}
             aria-label={label}
             {...props}
         >
-            {loading ? (
-                <Loader2 size={iconSize} className="animate-spin" />
-            ) : (
-                <Icon size={iconSize} />
-            )}
+            {loading ? <Loader2 size={iconSize} className="animate-spin" /> : <Icon size={iconSize} />}
         </button>
     );
 };
 
 export default Button;
-
-

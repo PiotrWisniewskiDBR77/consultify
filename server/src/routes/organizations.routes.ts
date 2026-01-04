@@ -1,20 +1,21 @@
 /**
  * Organizations Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * All organization-related API endpoints with Zod validation
  */
 
 import { Router } from 'express';
+
+import OrganizationController from '../controllers/OrganizationController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import OrganizationController from '../controllers/OrganizationController.js';
 import {
-    CreateOrganizationSchema,
-    UpdateOrganizationSchema,
+    _InviteMemberSchema,
     AddMemberSchema,
+    CreateOrganizationSchema,
     UpdateMemberRoleSchema,
-    InviteMemberSchema,
+    UpdateOrganizationSchema,
 } from '../validators/organization.validators.js';
 
 const router = Router();
@@ -36,11 +37,7 @@ router.get('/current', OrganizationController.getCurrentOrganizations);
  * POST /api/organizations
  * Create new organization
  */
-router.post(
-    '/',
-    validateBody(CreateOrganizationSchema),
-    OrganizationController.createOrganization
-);
+router.post('/', validateBody(CreateOrganizationSchema), OrganizationController.createOrganization);
 
 /**
  * GET /api/organizations/:orgId
@@ -52,11 +49,7 @@ router.get('/:orgId', OrganizationController.getOrganizationById);
  * PUT /api/organizations/:orgId
  * Update organization
  */
-router.put(
-    '/:orgId',
-    validateBody(UpdateOrganizationSchema),
-    OrganizationController.updateOrganization
-);
+router.put('/:orgId', validateBody(UpdateOrganizationSchema), OrganizationController.updateOrganization);
 
 // ==========================================
 // MEMBERS MANAGEMENT
@@ -72,11 +65,7 @@ router.get('/:orgId/members', OrganizationController.getMembers);
  * POST /api/organizations/:orgId/members
  * Add member to organization
  */
-router.post(
-    '/:orgId/members',
-    validateBody(AddMemberSchema),
-    OrganizationController.addMember
-);
+router.post('/:orgId/members', validateBody(AddMemberSchema), OrganizationController.addMember);
 
 /**
  * PATCH /api/organizations/:orgId/members/:memberId/role
@@ -85,7 +74,7 @@ router.post(
 router.patch(
     '/:orgId/members/:memberId/role',
     validateBody(UpdateMemberRoleSchema),
-    OrganizationController.updateMemberRole
+    OrganizationController.updateMemberRole,
 );
 
 /**

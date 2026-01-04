@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * useExitIntent — Detects user exit intent for conversion optimization
- * 
+ *
  * Triggers when:
  * - Mouse moves toward browser chrome (top of screen)
  * - User switches tabs
@@ -27,7 +27,7 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
         threshold = 50,
         delayMs = 5000, // Wait 5 seconds before allowing trigger
         triggerOnce = true,
-        disabled = false
+        disabled = false,
     } = options;
 
     const [showExitIntent, setShowExitIntent] = useState(false);
@@ -37,7 +37,7 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
     // Check if already dismissed in this session
     useEffect(() => {
         if (disabled) return;
-        
+
         const alreadyDismissed = sessionStorage.getItem('exit_intent_dismissed');
         if (alreadyDismissed && triggerOnce) {
             queueMicrotask(() => setHasTriggered(true));
@@ -68,7 +68,7 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
         };
 
         document.addEventListener('mouseleave', handleMouseLeave);
-        
+
         return () => {
             document.removeEventListener('mouseleave', handleMouseLeave);
         };
@@ -91,7 +91,7 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        
+
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
@@ -111,17 +111,8 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
     return {
         showExitIntent,
         dismissExitIntent,
-        resetExitIntent
+        resetExitIntent,
     };
 };
 
 export default useExitIntent;
-
-
-
-
-
-
-
-
-

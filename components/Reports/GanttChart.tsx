@@ -1,6 +1,6 @@
 /**
  * GanttChart
- * 
+ *
  * Interactive timeline visualization for transformation roadmap:
  * - Q1-Q4 quarters, expandable to months
  * - Phase duration bars with milestones
@@ -8,19 +8,10 @@
  * - Zoom levels: Month/Quarter/Year
  */
 
-import React, { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import {
-    ZoomIn,
-    ZoomOut,
-    ChevronLeft,
-    ChevronRight,
-    Flag,
-    CheckCircle,
-    Clock,
-    AlertCircle
-} from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Clock, Flag, ZoomIn, ZoomOut } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Phase {
     id: string;
@@ -57,8 +48,8 @@ const DEFAULT_PHASES: Phase[] = [
         milestones: [
             { month: 2, label: 'Data Governance', labelPl: 'Data Governance' },
             { month: 4, label: 'Security Framework', labelPl: 'Framework Bezpieczeństwa' },
-            { month: 6, label: 'Foundation Complete', labelPl: 'Zakończenie Fundamentów' }
-        ]
+            { month: 6, label: 'Foundation Complete', labelPl: 'Zakończenie Fundamentów' },
+        ],
     },
     {
         id: 'quick_wins',
@@ -71,8 +62,8 @@ const DEFAULT_PHASES: Phase[] = [
         dependencies: ['foundation'],
         milestones: [
             { month: 5, label: 'Process Automation', labelPl: 'Automatyzacja Procesów' },
-            { month: 9, label: 'Quick Wins Delivered', labelPl: 'Quick Wins Dostarczone' }
-        ]
+            { month: 9, label: 'Quick Wins Delivered', labelPl: 'Quick Wins Dostarczone' },
+        ],
     },
     {
         id: 'strategic',
@@ -86,8 +77,8 @@ const DEFAULT_PHASES: Phase[] = [
         milestones: [
             { month: 10, label: 'Digital Products MVP', labelPl: 'MVP Produktów Cyfrowych' },
             { month: 14, label: 'New Business Models', labelPl: 'Nowe Modele Biznesowe' },
-            { month: 18, label: 'Strategic Complete', labelPl: 'Strategia Zakończona' }
-        ]
+            { month: 18, label: 'Strategic Complete', labelPl: 'Strategia Zakończona' },
+        ],
     },
     {
         id: 'ai_integration',
@@ -101,9 +92,9 @@ const DEFAULT_PHASES: Phase[] = [
         milestones: [
             { month: 16, label: 'AI Pilots', labelPl: 'Piloty AI' },
             { month: 20, label: 'AI at Scale', labelPl: 'AI na Skalę' },
-            { month: 24, label: 'Full AI Maturity', labelPl: 'Pełna Dojrzałość AI' }
-        ]
-    }
+            { month: 24, label: 'Full AI Maturity', labelPl: 'Pełna Dojrzałość AI' },
+        ],
+    },
 ];
 
 // Status icons and colors
@@ -111,13 +102,13 @@ const STATUS_CONFIG = {
     completed: { icon: CheckCircle, color: '#10b981', label: 'Completed', labelPl: 'Zakończone' },
     in_progress: { icon: Clock, color: '#3b82f6', label: 'In Progress', labelPl: 'W trakcie' },
     pending: { icon: Clock, color: '#94a3b8', label: 'Pending', labelPl: 'Oczekujące' },
-    at_risk: { icon: AlertCircle, color: '#ef4444', label: 'At Risk', labelPl: 'Zagrożone' }
+    at_risk: { icon: AlertCircle, color: '#ef4444', label: 'At Risk', labelPl: 'Zagrożone' },
 };
 
 export const GanttChart: React.FC<GanttChartProps> = ({
     phases = DEFAULT_PHASES,
     startYear = new Date().getFullYear(),
-    className = ''
+    className = '',
 }) => {
     const { i18n } = useTranslation();
     const isPolish = i18n.language === 'pl';
@@ -126,7 +117,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
     const [scrollOffset, setScrollOffset] = useState(0);
 
     // Calculate timeline range
-    const maxMonth = Math.max(...phases.map(p => p.startMonth + p.duration));
+    const maxMonth = Math.max(...phases.map((p) => p.startMonth + p.duration));
     const totalMonths = Math.ceil(maxMonth / 12) * 12; // Round to full years
 
     // Generate timeline headers
@@ -135,7 +126,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
         if (zoom === 'month') {
             for (let m = 1; m <= totalMonths; m++) {
-                const monthNames = isPolish 
+                const monthNames = isPolish
                     ? ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
                     : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 const year = startYear + Math.floor((m - 1) / 12);
@@ -143,7 +134,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                 headers.push({
                     label: `${monthNames[monthIndex]} ${year}`,
                     span: 1,
-                    key: `m${m}`
+                    key: `m${m}`,
                 });
             }
         } else if (zoom === 'quarter') {
@@ -153,7 +144,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                 headers.push({
                     label: `Q${quarter} ${year}`,
                     span: 3,
-                    key: `q${q}`
+                    key: `q${q}`,
                 });
             }
         } else {
@@ -161,7 +152,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                 headers.push({
                     label: `${startYear + y}`,
                     span: 12,
-                    key: `y${y}`
+                    key: `y${y}`,
                 });
             }
         }
@@ -171,10 +162,13 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
     // Cell width based on zoom
     const cellWidth = zoom === 'month' ? 60 : zoom === 'quarter' ? 120 : 200;
-    const totalWidth = totalMonths * (zoom === 'month' ? cellWidth : zoom === 'quarter' ? cellWidth / 3 : cellWidth / 12);
+    const totalWidth =
+        totalMonths * (zoom === 'month' ? cellWidth : zoom === 'quarter' ? cellWidth / 3 : cellWidth / 12);
 
     return (
-        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden ${className}`}
+        >
             {/* Toolbar */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-800/50">
                 <h3 className="font-semibold text-navy-900 dark:text-white">
@@ -186,8 +180,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                         <button
                             onClick={() => setZoom('year')}
                             className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                                zoom === 'year' 
-                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
+                                zoom === 'year'
+                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}
                         >
@@ -196,8 +190,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                         <button
                             onClick={() => setZoom('quarter')}
                             className={`px-3 py-1.5 text-xs font-medium transition-colors border-x border-slate-200 dark:border-white/10 ${
-                                zoom === 'quarter' 
-                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
+                                zoom === 'quarter'
+                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}
                         >
@@ -206,8 +200,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                         <button
                             onClick={() => setZoom('month')}
                             className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                                zoom === 'month' 
-                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
+                                zoom === 'month'
+                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                             }`}
                         >
@@ -221,10 +215,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <div className="px-4 py-2 border-b border-slate-200 dark:border-white/10 flex items-center gap-6 text-xs">
                 {Object.entries(STATUS_CONFIG).map(([key, config]) => (
                     <div key={key} className="flex items-center gap-1.5">
-                        <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: config.color }}
-                        />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }} />
                         <span className="text-slate-600 dark:text-slate-400">
                             {isPolish ? config.labelPl : config.label}
                         </span>
@@ -251,7 +242,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                 <div
                                     key={header.key}
                                     className="flex-shrink-0 px-2 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 border-r border-slate-100 dark:border-white/5"
-                                    style={{ width: cellWidth * header.span / (zoom === 'month' ? 1 : zoom === 'quarter' ? 3 : 12) }}
+                                    style={{
+                                        width:
+                                            (cellWidth * header.span) /
+                                            (zoom === 'month' ? 1 : zoom === 'quarter' ? 3 : 12),
+                                    }}
                                 >
                                     {header.label}
                                 </div>
@@ -278,7 +273,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                     <div className="flex items-center gap-2">
                                         {React.createElement(status.icon, {
                                             className: 'w-4 h-4',
-                                            style: { color: status.color }
+                                            style: { color: status.color },
                                         })}
                                         <div>
                                             <p className="font-medium text-sm text-navy-900 dark:text-white">
@@ -299,7 +294,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                             <div
                                                 key={header.key}
                                                 className="flex-shrink-0 border-r border-slate-100 dark:border-white/5"
-                                                style={{ width: cellWidth * header.span / (zoom === 'month' ? 1 : zoom === 'quarter' ? 3 : 12) }}
+                                                style={{
+                                                    width:
+                                                        (cellWidth * header.span) /
+                                                        (zoom === 'month' ? 1 : zoom === 'quarter' ? 3 : 12),
+                                                }}
                                             />
                                         ))}
                                     </div>
@@ -312,7 +311,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                             width: `${barWidth}%`,
                                             backgroundColor: phase.color,
                                             top: '50%',
-                                            transform: 'translateY(-50%)'
+                                            transform: 'translateY(-50%)',
                                         }}
                                         initial={{ scaleX: 0, originX: 0 }}
                                         animate={{ scaleX: 1 }}
@@ -332,7 +331,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                                 className="absolute top-1/2 -translate-y-1/2 z-10 group"
                                                 style={{ left: `${milestonePos}%` }}
                                             >
-                                                <div 
+                                                <div
                                                     className="w-4 h-4 rounded-full bg-white border-2 flex items-center justify-center cursor-pointer transform hover:scale-125 transition-transform"
                                                     style={{ borderColor: phase.color }}
                                                 >
@@ -356,10 +355,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-t border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-600 dark:text-slate-400">
-                        {isPolish ? 'Całkowity czas transformacji' : 'Total transformation time'}: <strong className="text-navy-900 dark:text-white">{maxMonth} {isPolish ? 'miesięcy' : 'months'}</strong>
+                        {isPolish ? 'Całkowity czas transformacji' : 'Total transformation time'}:{' '}
+                        <strong className="text-navy-900 dark:text-white">
+                            {maxMonth} {isPolish ? 'miesięcy' : 'months'}
+                        </strong>
                     </span>
                     <span className="text-slate-600 dark:text-slate-400">
-                        {phases.length} {isPolish ? 'faz' : 'phases'} • {phases.reduce((sum, p) => sum + (p.milestones?.length || 0), 0)} {isPolish ? 'kamieni milowych' : 'milestones'}
+                        {phases.length} {isPolish ? 'faz' : 'phases'} •{' '}
+                        {phases.reduce((sum, p) => sum + (p.milestones?.length || 0), 0)}{' '}
+                        {isPolish ? 'kamieni milowych' : 'milestones'}
                     </span>
                 </div>
             </div>
@@ -368,4 +372,3 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 };
 
 export default GanttChart;
-

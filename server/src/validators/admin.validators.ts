@@ -1,7 +1,7 @@
 /**
  * Admin Validators
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Zod schemas for admin-related API endpoints
  */
 
@@ -79,7 +79,4 @@ export type CreateAccessCodeRequest = z.infer<typeof CreateAccessCodeSchema>;
 export type UpdateUserTierRequest = z.infer<typeof UpdateUserTierSchema>;
 export type CreateAdminAlertRequest = z.infer<typeof CreateAdminAlertSchema>;
 export type GetAdminDataQuery = z.infer<typeof GetAdminDataQuerySchema>;
-
-
-
 

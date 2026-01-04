@@ -3,28 +3,29 @@
  * List of all user's assessments with filters, search, and actions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FileText,
-    Search,
-    Filter,
-    ChevronDown,
-    Eye,
-    Edit,
-    Trash2,
-    Download,
-    Copy,
-    MoreVertical,
-    Clock,
-    CheckCircle2,
     AlertCircle,
-    FileCheck,
     ArrowUpDown,
+    Calendar,
+    CheckCircle2,
+    ChevronDown,
+    Clock,
+    Copy,
+    Download,
+    Edit,
+    Eye,
+    FileCheck,
+    FileText,
+    Filter,
     Loader2,
-    RefreshCw,
+    MoreVertical,
     Plus,
-    Calendar
+    RefreshCw,
+    Search,
+    Trash2,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, WorkflowState } from '../../types';
 
@@ -57,46 +58,46 @@ type SortField = 'name' | 'status' | 'updatedAt' | 'score';
 type SortOrder = 'asc' | 'desc';
 
 const STATUS_CONFIG: Record<WorkflowState, { label: string; color: string; icon: React.ReactNode }> = {
-    DRAFT: { 
-        label: 'Szkic', 
+    DRAFT: {
+        label: 'Szkic',
         color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-        icon: <Edit className="w-3.5 h-3.5" />
+        icon: <Edit className="w-3.5 h-3.5" />,
     },
-    IN_REVIEW: { 
-        label: 'W recenzji', 
+    IN_REVIEW: {
+        label: 'W recenzji',
         color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-        icon: <Clock className="w-3.5 h-3.5" />
+        icon: <Clock className="w-3.5 h-3.5" />,
     },
-    AWAITING_APPROVAL: { 
-        label: 'Oczekuje na zatwierdzenie', 
+    AWAITING_APPROVAL: {
+        label: 'Oczekuje na zatwierdzenie',
         color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-        icon: <FileCheck className="w-3.5 h-3.5" />
+        icon: <FileCheck className="w-3.5 h-3.5" />,
     },
-    APPROVED: { 
-        label: 'Zatwierdzony', 
+    APPROVED: {
+        label: 'Zatwierdzony',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 className="w-3.5 h-3.5" />
+        icon: <CheckCircle2 className="w-3.5 h-3.5" />,
     },
-    REJECTED: { 
-        label: 'Odrzucony', 
+    REJECTED: {
+        label: 'Odrzucony',
         color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-        icon: <AlertCircle className="w-3.5 h-3.5" />
+        icon: <AlertCircle className="w-3.5 h-3.5" />,
     },
-    ARCHIVED: { 
-        label: 'Zarchiwizowany', 
+    ARCHIVED: {
+        label: 'Zarchiwizowany',
         color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
-        icon: <FileText className="w-3.5 h-3.5" />
+        icon: <FileText className="w-3.5 h-3.5" />,
     },
-    COMPLETED: { 
-        label: 'Ukończony', 
+    COMPLETED: {
+        label: 'Ukończony',
         color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-        icon: <CheckCircle2 className="w-3.5 h-3.5" />
+        icon: <CheckCircle2 className="w-3.5 h-3.5" />,
     },
-    IN_PROGRESS: { 
-        label: 'W trakcie', 
+    IN_PROGRESS: {
+        label: 'W trakcie',
         color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-        icon: <Clock className="w-3.5 h-3.5" />
-    }
+        icon: <Clock className="w-3.5 h-3.5" />,
+    },
 };
 
 export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
@@ -105,7 +106,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
     onDeleteAssessment,
     onExportAssessment,
     onDuplicateAssessment,
-    onCreateNew
+    onCreateNew,
 }) => {
     const { currentUser, setCurrentView } = useAppStore();
 
@@ -130,8 +131,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
         try {
             const response = await fetch('/api/assessments/my-assessments', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             if (!response.ok) {
@@ -154,12 +155,11 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
     // Filter and sort assessments
     const filteredAssessments = assessments
-        .filter(a => {
+        .filter((a) => {
             // Search filter
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
-                if (!a.name.toLowerCase().includes(query) && 
-                    !a.projectName.toLowerCase().includes(query)) {
+                if (!a.name.toLowerCase().includes(query) && !a.projectName.toLowerCase().includes(query)) {
                     return false;
                 }
             }
@@ -215,7 +215,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
         return new Date(dateStr).toLocaleDateString('pl-PL', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -223,7 +223,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
         const date = new Date(dateStr);
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 0) return 'Dzisiaj';
         if (diffDays === 1) return 'Wczoraj';
         if (diffDays < 7) return `${diffDays} dni temu`;
@@ -248,12 +248,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                         <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                            Moje Oceny
-                        </h1>
-                        <p className="text-slate-500 dark:text-slate-400">
-                            {assessments.length} ocen łącznie
-                        </p>
+                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Moje Oceny</h1>
+                        <p className="text-slate-500 dark:text-slate-400">{assessments.length} ocen łącznie</p>
                     </div>
                 </div>
 
@@ -395,16 +391,25 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                     {/* Table Header */}
                     <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 dark:bg-navy-950/50 border-b border-slate-200 dark:border-white/10 text-sm font-medium text-slate-500 dark:text-slate-400">
-                        <div className="col-span-4 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('name')}>
+                        <div
+                            className="col-span-4 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+                            onClick={() => handleSort('name')}
+                        >
                             Nazwa
                             <ArrowUpDown className="w-4 h-4" />
                         </div>
-                        <div className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('status')}>
+                        <div
+                            className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+                            onClick={() => handleSort('status')}
+                        >
                             Status
                             <ArrowUpDown className="w-4 h-4" />
                         </div>
                         <div className="col-span-2">Postęp</div>
-                        <div className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('updatedAt')}>
+                        <div
+                            className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+                            onClick={() => handleSort('updatedAt')}
+                        >
                             Aktualizacja
                             <ArrowUpDown className="w-4 h-4" />
                         </div>
@@ -413,20 +418,18 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
                     {/* Table Body */}
                     <div className="divide-y divide-slate-200 dark:divide-white/10">
-                        {filteredAssessments.map(assessment => {
+                        {filteredAssessments.map((assessment) => {
                             const statusConfig = STATUS_CONFIG[assessment.status];
                             const progress = Math.round((assessment.completedAxes / assessment.totalAxes) * 100);
 
                             return (
-                                <div 
+                                <div
                                     key={assessment.id}
                                     className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                 >
                                     {/* Name */}
                                     <div className="col-span-4">
-                                        <p className="font-medium text-navy-900 dark:text-white">
-                                            {assessment.name}
-                                        </p>
+                                        <p className="font-medium text-navy-900 dark:text-white">{assessment.name}</p>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {assessment.projectName} • {assessment.type}
                                         </p>
@@ -434,7 +437,9 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
                                     {/* Status */}
                                     <div className="col-span-2">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusConfig.color}`}>
+                                        <span
+                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusConfig.color}`}
+                                        >
                                             {statusConfig.icon}
                                             {statusConfig.label}
                                         </span>
@@ -444,7 +449,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                                     <div className="col-span-2">
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
-                                                <div 
+                                                <div
                                                     className="h-full bg-purple-500 rounded-full"
                                                     style={{ width: `${progress}%` }}
                                                 />
@@ -491,7 +496,9 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                                         {/* More Menu */}
                                         <div className="relative">
                                             <button
-                                                onClick={() => setOpenMenuId(openMenuId === assessment.id ? null : assessment.id)}
+                                                onClick={() =>
+                                                    setOpenMenuId(openMenuId === assessment.id ? null : assessment.id)
+                                                }
                                                 className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                                             >
                                                 <MoreVertical className="w-4 h-4" />
@@ -559,9 +566,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                                 <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                             </div>
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                Potwierdź usunięcie
-                            </h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">Potwierdź usunięcie</h3>
                         </div>
                         <p className="text-slate-600 dark:text-slate-300 mb-6">
                             Czy na pewno chcesz usunąć tę ocenę? Ta operacja jest nieodwracalna.
@@ -586,4 +591,3 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
         </div>
     );
 };
-

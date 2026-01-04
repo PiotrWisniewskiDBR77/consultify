@@ -1,14 +1,12 @@
 /**
  * Aiprompthierarchy Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadAiprompthierarchy = createCachedLazyService('../../services/aiPromptHierarchy.js');
+import service from '../../services/aiPromptHierarchy.js';
 
 // Export default instance (for backward compatibility)
-export default loadAiprompthierarchy();
+export default service;

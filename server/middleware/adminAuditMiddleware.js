@@ -5,7 +5,7 @@
  * Can be applied to specific routes or globally.
  */
 
-const adminAuditService = import('adminAuditService.js');
+const adminAuditService = import('../services/adminAuditService.js');
 
 /**
  * Extract resource info from request

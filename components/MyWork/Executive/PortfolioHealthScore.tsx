@@ -3,25 +3,16 @@
  * BCG/McKinsey style: Large, prominent, data-dense
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity, AlertTriangle, CheckCircle2, Minus, Target, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    TrendingUp,
-    TrendingDown,
-    Minus,
-    Activity,
-    AlertTriangle,
-    CheckCircle2,
-    Target,
-    Zap
-} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface HealthBreakdown {
-    execution: number;      // Task completion rate
-    decisions: number;      // Decision velocity
-    capacity: number;       // Team utilization
-    risk: number;           // Risk mitigation
+    execution: number; // Task completion rate
+    decisions: number; // Decision velocity
+    capacity: number; // Team utilization
+    risk: number; // Risk mitigation
 }
 
 interface PortfolioHealthProps {
@@ -34,10 +25,7 @@ interface PortfolioHealthProps {
 }
 
 // Animated number counter
-const AnimatedNumber: React.FC<{ value: number; duration?: number }> = ({ 
-    value, 
-    duration = 1000 
-}) => {
+const AnimatedNumber: React.FC<{ value: number; duration?: number }> = ({ value, duration = 1000 }) => {
     const [displayValue, setDisplayValue] = useState(0);
 
     useEffect(() => {
@@ -47,7 +35,7 @@ const AnimatedNumber: React.FC<{ value: number; duration?: number }> = ({
         const animate = (timestamp: number) => {
             if (!startTime) startTime = timestamp;
             const progress = Math.min((timestamp - startTime) / duration, 1);
-            
+
             // Easing function for smooth animation
             const easeOutQuart = 1 - Math.pow(1 - progress, 4);
             setDisplayValue(Math.floor(easeOutQuart * value));
@@ -109,9 +97,9 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 2
                 strokeDasharray={circumference}
                 initial={{ strokeDashoffset: circumference }}
                 animate={{ strokeDashoffset: offset }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
                 style={{
-                    filter: `drop-shadow(0 0 8px ${getGlowColor(score)})`
+                    filter: `drop-shadow(0 0 8px ${getGlowColor(score)})`,
                 }}
             />
         </svg>
@@ -119,36 +107,35 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 2
 };
 
 // Breakdown bar component
-const BreakdownBar: React.FC<{ 
-    label: string; 
-    value: number; 
+const BreakdownBar: React.FC<{
+    label: string;
+    value: number;
     icon: React.ReactNode;
     color: string;
 }> = ({ label, value, icon, color }) => {
     return (
         <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center shrink-0`}>
-                {icon}
-            </div>
+            <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center shrink-0`}>{icon}</div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                         {label}
                     </span>
-                    <span className="text-sm font-bold text-navy-900 dark:text-white tabular-nums">
-                        {value}%
-                    </span>
+                    <span className="text-sm font-bold text-navy-900 dark:text-white tabular-nums">{value}%</span>
                 </div>
                 <div className="h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${value}%` }}
-                        transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                        transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
                         className={`h-full rounded-full ${
-                            value >= 80 ? 'bg-emerald-500' :
-                            value >= 60 ? 'bg-cyan-500' :
-                            value >= 40 ? 'bg-amber-500' :
-                            'bg-rose-500'
+                            value >= 80
+                                ? 'bg-emerald-500'
+                                : value >= 60
+                                  ? 'bg-cyan-500'
+                                  : value >= 40
+                                    ? 'bg-amber-500'
+                                    : 'bg-rose-500'
                         }`}
                     />
                 </div>
@@ -163,7 +150,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
     breakdown,
     trend = 'stable',
     loading = false,
-    compact = false
+    compact = false,
 }) => {
     const { t } = useTranslation();
 
@@ -182,7 +169,9 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 
     if (loading) {
         return (
-            <div className={`bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 ${compact ? 'p-4' : 'p-6'} animate-pulse`}>
+            <div
+                className={`bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 ${compact ? 'p-4' : 'p-6'} animate-pulse`}
+            >
                 <div className="flex items-center justify-center">
                     <div className="w-48 h-48 rounded-full bg-slate-200 dark:bg-white/10" />
                 </div>
@@ -209,14 +198,13 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
                         {t('executive.health.portfolio', 'Portfolio Health')}
                     </p>
-                    <p className={`text-sm font-semibold ${scoreInfo.color}`}>
-                        {scoreInfo.label}
-                    </p>
+                    <p className={`text-sm font-semibold ${scoreInfo.color}`}>{scoreInfo.label}</p>
                     {scoreDiff !== 0 && (
                         <div className={`flex items-center gap-1 mt-1 ${trendColor}`}>
                             <TrendIcon size={12} />
                             <span className="text-xs font-medium">
-                                {scoreDiff > 0 ? '+' : ''}{scoreDiff}%
+                                {scoreDiff > 0 ? '+' : ''}
+                                {scoreDiff}%
                             </span>
                         </div>
                     )}
@@ -247,17 +235,22 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                             </p>
                         </div>
                     </div>
-                    
+
                     {/* Trend Badge */}
                     {scoreDiff !== 0 && (
-                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                            trend === 'up' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
-                            trend === 'down' ? 'bg-rose-100 dark:bg-rose-900/30' :
-                            'bg-slate-100 dark:bg-white/5'
-                        }`}>
+                        <div
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                                trend === 'up'
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                                    : trend === 'down'
+                                      ? 'bg-rose-100 dark:bg-rose-900/30'
+                                      : 'bg-slate-100 dark:bg-white/5'
+                            }`}
+                        >
                             <TrendIcon size={14} className={trendColor} />
                             <span className={`text-sm font-semibold ${trendColor}`}>
-                                {scoreDiff > 0 ? '+' : ''}{scoreDiff}%
+                                {scoreDiff > 0 ? '+' : ''}
+                                {scoreDiff}%
                             </span>
                             <span className="text-xs text-slate-400">vs last week</span>
                         </div>
@@ -275,9 +268,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                             <span className="text-5xl font-bold text-navy-900 dark:text-white tabular-nums">
                                 <AnimatedNumber value={score} duration={1500} />
                             </span>
-                            <span className={`text-sm font-semibold mt-1 ${scoreInfo.color}`}>
-                                {scoreInfo.label}
-                            </span>
+                            <span className={`text-sm font-semibold mt-1 ${scoreInfo.color}`}>{scoreInfo.label}</span>
                         </div>
                     </div>
 
@@ -317,7 +308,8 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
             <div className="px-6 py-3 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5">
                 <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 dark:text-slate-400">
-                        {t('executive.health.lastUpdated', 'Last updated')}: {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                        {t('executive.health.lastUpdated', 'Last updated')}:{' '}
+                        {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -330,12 +322,4 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 };
 
 export default PortfolioHealthScore;
-
-
-
-
-
-
-
-
 

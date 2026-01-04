@@ -1,24 +1,15 @@
 /**
  * ReportComments Component
- * 
+ *
  * Section-based commenting system for Management Reports.
  * Supports threads, mentions, and resolution tracking.
- * 
+ *
  * PMO Standards: Stakeholder Communication (PMBOK 7)
  */
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { 
-    MessageSquare, 
-    Reply, 
-    CheckCircle2, 
-    Send,
-    MoreHorizontal,
-    Trash2,
-    AtSign,
-    Clock,
-    User
-} from 'lucide-react';
+import { AtSign, CheckCircle2, Clock, MessageSquare, MoreHorizontal, Reply, Send, Trash2, User } from 'lucide-react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+
 import { ReportComment } from '../../../types';
 
 interface ReportCommentsProps {
@@ -49,18 +40,20 @@ const CommentItem: React.FC<{
     const canDelete = isAuthor; // Only author can delete
 
     return (
-        <div className={`group p-3 rounded-lg transition-colors ${
-            comment.isResolved 
-                ? 'bg-emerald-50 dark:bg-emerald-900/10 opacity-75' 
-                : 'bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800'
-        }`}>
+        <div
+            className={`group p-3 rounded-lg transition-colors ${
+                comment.isResolved
+                    ? 'bg-emerald-50 dark:bg-emerald-900/10 opacity-75'
+                    : 'bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800'
+            }`}
+        >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1">
                     {/* Avatar */}
                     <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
                         <User size={16} className="text-violet-600 dark:text-violet-400" />
                     </div>
-                    
+
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -77,11 +70,11 @@ const CommentItem: React.FC<{
                                 </span>
                             )}
                         </div>
-                        
+
                         <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
                             {comment.content}
                         </p>
-                        
+
                         {/* Mentions */}
                         {comment.mentions && comment.mentions.length > 0 && (
                             <div className="flex items-center gap-1 mt-2 text-xs text-violet-600 dark:text-violet-400">
@@ -101,16 +94,16 @@ const CommentItem: React.FC<{
                         >
                             <MoreHorizontal size={16} className="text-slate-400" />
                         </button>
-                        
+
                         {showMenu && (
                             <>
-                                <div 
-                                    className="fixed inset-0 z-10" 
-                                    onClick={() => setShowMenu(false)} 
-                                />
+                                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                                 <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-20">
                                     <button
-                                        onClick={() => { onReply(); setShowMenu(false); }}
+                                        onClick={() => {
+                                            onReply();
+                                            setShowMenu(false);
+                                        }}
                                         className="w-full px-3 py-2 text-left text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
                                     >
                                         <Reply size={14} />
@@ -118,7 +111,10 @@ const CommentItem: React.FC<{
                                     </button>
                                     {!comment.isResolved && (
                                         <button
-                                            onClick={() => { onResolve(); setShowMenu(false); }}
+                                            onClick={() => {
+                                                onResolve();
+                                                setShowMenu(false);
+                                            }}
                                             className="w-full px-3 py-2 text-left text-sm text-emerald-600 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
                                         >
                                             <CheckCircle2 size={14} />
@@ -127,7 +123,10 @@ const CommentItem: React.FC<{
                                     )}
                                     {canDelete && (
                                         <button
-                                            onClick={() => { onDelete(); setShowMenu(false); }}
+                                            onClick={() => {
+                                                onDelete();
+                                                setShowMenu(false);
+                                            }}
                                             className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
                                         >
                                             <Trash2 size={14} />
@@ -144,7 +143,7 @@ const CommentItem: React.FC<{
             {/* Replies */}
             {comment.replies && comment.replies.length > 0 && (
                 <div className="mt-3 ml-11 space-y-2 border-l-2 border-slate-200 dark:border-navy-700 pl-3">
-                    {comment.replies.map(reply => (
+                    {comment.replies.map((reply) => (
                         <CommentItem
                             key={reply.id}
                             comment={reply}
@@ -178,9 +177,8 @@ const CommentInput: React.FC<{
     const filteredMembers = useMemo(() => {
         if (!mentionSearch) return teamMembers;
         const search = mentionSearch.toLowerCase();
-        return teamMembers.filter(m => 
-            m.name.toLowerCase().includes(search) || 
-            m.email.toLowerCase().includes(search)
+        return teamMembers.filter(
+            (m) => m.name.toLowerCase().includes(search) || m.email.toLowerCase().includes(search),
         );
     }, [teamMembers, mentionSearch]);
 
@@ -197,8 +195,8 @@ const CommentInput: React.FC<{
     };
 
     const handleMention = (member: { id: string; name: string }) => {
-        setContent(prev => prev.replace(/@\w*$/, `@${member.name} `));
-        setMentions(prev => [...prev, member.id]);
+        setContent((prev) => prev.replace(/@\w*$/, `@${member.name} `));
+        setMentions((prev) => [...prev, member.id]);
         setShowMentions(false);
         inputRef.current?.focus();
     };
@@ -232,7 +230,7 @@ const CommentInput: React.FC<{
                 className="w-full px-3 py-2 pr-12 border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
                 rows={2}
             />
-            
+
             <button
                 onClick={handleSubmit}
                 disabled={!content.trim()}
@@ -244,7 +242,7 @@ const CommentInput: React.FC<{
             {/* Mentions dropdown */}
             {showMentions && filteredMembers.length > 0 && (
                 <div className="absolute left-0 bottom-full mb-1 w-64 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 max-h-48 overflow-y-auto z-20">
-                    {filteredMembers.map(member => (
+                    {filteredMembers.map((member) => (
                         <button
                             key={member.id}
                             onClick={() => handleMention(member)}
@@ -257,9 +255,7 @@ const CommentInput: React.FC<{
                                 <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
                                     {member.name}
                                 </div>
-                                <div className="text-xs text-slate-400 truncate">
-                                    {member.email}
-                                </div>
+                                <div className="text-xs text-slate-400 truncate">{member.email}</div>
                             </div>
                         </button>
                     ))}
@@ -280,26 +276,29 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
     onResolveComment,
     onDeleteComment,
     teamMembers = [],
-    className = ''
+    className = '',
 }) => {
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     // Count unresolved comments
     const unresolvedCount = useMemo(() => {
-        return comments.filter(c => !c.isResolved).length;
+        return comments.filter((c) => !c.isResolved).length;
     }, [comments]);
 
     // Handle add comment
-    const handleAddComment = useCallback(async (content: string, mentions: string[]) => {
-        setSubmitting(true);
-        try {
-            await onAddComment(content, mentions, replyingTo || undefined);
-            setReplyingTo(null);
-        } finally {
-            setSubmitting(false);
-        }
-    }, [onAddComment, replyingTo]);
+    const handleAddComment = useCallback(
+        async (content: string, mentions: string[]) => {
+            setSubmitting(true);
+            try {
+                await onAddComment(content, mentions, replyingTo || undefined);
+                setReplyingTo(null);
+            } finally {
+                setSubmitting(false);
+            }
+        },
+        [onAddComment, replyingTo],
+    );
 
     return (
         <div className={`${className}`}>
@@ -321,7 +320,7 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
             {/* Comments list */}
             {comments.length > 0 ? (
                 <div className="space-y-2 mb-3">
-                    {comments.map(comment => (
+                    {comments.map((comment) => (
                         <CommentItem
                             key={comment.id}
                             comment={comment}
@@ -374,12 +373,4 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
 };
 
 export default ReportComments;
-
-
-
-
-
-
-
-
 

@@ -1,6 +1,6 @@
 /**
  * EnhancedChatInput
- * 
+ *
  * Perplexity-style chat input with:
  * - Dynamic button switching (voice conversation ↔ send)
  * - Separate dictation mic (for precision prompts)
@@ -9,18 +9,19 @@
  * - Two distinct voice modes:
  *   1. Voice Conversation: Auto-send, AI speaks back
  *   2. Dictation: Fill text, user reviews and sends
- * 
+ *
  * Part of the Universal Voice Conversation System
- * 
+ *
  * @version 2.0.0
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { AudioWaveform, Mic, Plus, Send, Square, StopCircle, Wrench } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, Plus, Wrench, Mic, Square, AudioWaveform, StopCircle } from 'lucide-react';
+
+import { useAppStore } from '../../store/useAppStore';
 import { AddFilesMenu } from './AddFilesMenu';
 import { ToolsMenu } from './ToolsMenu';
-import { useAppStore } from '../../store/useAppStore';
 
 // ============================================================================
 // Types
@@ -49,26 +50,26 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     placeholder,
     className = '',
     voiceModeEnabled = false,
-    onVoiceModeChange
+    onVoiceModeChange,
 }) => {
     const { t } = useTranslation();
     const { aiFreezeStatus } = useAppStore();
-    
+
     // Input state
     const [value, setValue] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [attachments, setAttachments] = useState<any[]>([]);
-    
+
     // Voice state
     const [isDictating, setIsDictating] = useState(false);
     const [isVoiceConversation, setIsVoiceConversation] = useState(voiceModeEnabled);
     const [recordingDuration, setRecordingDuration] = useState(0);
     const [audioLevel, setAudioLevel] = useState(0);
     const [interimTranscript, setInterimTranscript] = useState('');
-    
+
     // Support detection
     const [speechSupported, setSpeechSupported] = useState(false);
-    
+
     // Refs
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const recognitionRef = useRef<any>(null);
@@ -91,13 +92,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     // ========================================================================
 
     useEffect(() => {
-        const SpeechRecognition = (window as any).SpeechRecognition || 
-                                  (window as any).webkitSpeechRecognition;
-        
-        const SpeechRecognitionClass = (window as any).SpeechRecognition || 
-                                      (window as any).webkitSpeechRecognition;
-        
-        if (SpeechRecognitionClass || (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function')) {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+        const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+        if (
+            SpeechRecognitionClass ||
+            (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function')
+        ) {
             setSpeechSupported(true);
         }
 
@@ -139,7 +141,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 const normalizedLevel = Math.min(1, average / 128);
                 setAudioLevel(normalizedLevel);
             }, 100);
-
         } catch (error) {
             console.warn('[Voice] VAD not available');
         }
@@ -189,7 +190,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
         // Stop stream
         if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
         }
 
@@ -207,8 +208,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     const startDictation = useCallback(async () => {
         if (isDictating || isVoiceConversation) return;
 
-        const SpeechRecognition = (window as any).SpeechRecognition || 
-                                  (window as any).webkitSpeechRecognition;
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
         if (!SpeechRecognition) {
             console.warn('[Voice] Web Speech API not supported');
@@ -221,8 +221,12 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
         const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
         const langMap: Record<string, string> = {
-            'pl': 'pl-PL', 'en': 'en-US', 'de': 'de-DE',
-            'es': 'es-ES', 'ja': 'ja-JP', 'ar': 'ar-SA'
+            pl: 'pl-PL',
+            en: 'en-US',
+            de: 'de-DE',
+            es: 'es-ES',
+            ja: 'ja-JP',
+            ar: 'ar-SA',
         };
         recognition.lang = langMap[i18nLang] || 'pl-PL';
 
@@ -240,7 +244,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             }
 
             if (final) {
-                setValue(prev => (prev + ' ' + final).trim());
+                setValue((prev) => (prev + ' ' + final).trim());
                 setInterimTranscript('');
             } else {
                 setInterimTranscript(interim);
@@ -265,18 +269,17 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         };
 
         recognitionRef.current = recognition;
-        
+
         try {
             recognition.start();
             setIsDictating(true);
-            
+
             // Start recording timer
             let duration = 0;
             recordingTimerRef.current = setInterval(() => {
                 duration++;
                 setRecordingDuration(duration);
             }, 1000);
-            
         } catch (e) {
             console.error('[Voice] Failed to start dictation:', e);
         }
@@ -315,8 +318,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    autoGainControl: true
-                }
+                    autoGainControl: true,
+                },
             });
 
             streamRef.current = stream;
@@ -325,8 +328,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
                 ? 'audio/webm;codecs=opus'
                 : MediaRecorder.isTypeSupported('audio/webm')
-                    ? 'audio/webm'
-                    : 'audio/mp4';
+                  ? 'audio/webm'
+                  : 'audio/mp4';
 
             const mediaRecorder = new MediaRecorder(stream, { mimeType });
 
@@ -337,12 +340,12 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             };
 
             mediaRecorder.onstop = async () => {
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach((track) => track.stop());
                 stopVAD();
 
                 if (audioChunksRef.current.length > 0) {
                     const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-                    
+
                     // Send to server for transcription
                     try {
                         const formData = new FormData();
@@ -352,7 +355,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                         const response = await fetch('/api/voice/stt', {
                             method: 'POST',
                             body: formData,
-                            credentials: 'include'
+                            credentials: 'include',
                         });
 
                         if (response.ok) {
@@ -382,7 +385,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 duration++;
                 setRecordingDuration(duration);
             }, 1000);
-
         } catch (error: any) {
             console.error('[Voice] Failed to start voice conversation:', error);
         }
@@ -396,7 +398,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         }
 
         if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
         }
 
@@ -427,12 +429,15 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
         }
     }, [canSend, value, attachments, onSend, stopDictation]);
 
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    }, [handleSend]);
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        },
+        [handleSend],
+    );
 
     const handleDynamicButtonClick = useCallback(() => {
         if (hasText) {
@@ -457,11 +462,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     }, [isDictating, startDictation, stopDictation]);
 
     const handleFileSelect = useCallback((files: File[]) => {
-        setAttachments(prev => [...prev, ...files]);
+        setAttachments((prev) => [...prev, ...files]);
     }, []);
 
     const handlePmoImport = useCallback((type: string, data: any) => {
-        setAttachments(prev => [...prev, { type: `pmo:${type}`, data }]);
+        setAttachments((prev) => [...prev, { type: `pmo:${type}`, data }]);
     }, []);
 
     // ========================================================================
@@ -471,10 +476,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     const placeholderText = aiFreezeStatus.isFrozen
         ? t('aiChat.frozenPlaceholder', 'AI temporarily unavailable')
         : isRecordingAny
-            ? isVoiceConversation 
-                ? t('aiChat.voiceConversation', 'Listening... speak naturally')
-                : t('aiChat.dictating', 'Dictating...')
-            : placeholder || t('aiChat.placeholder', 'Ask anything...');
+          ? isVoiceConversation
+              ? t('aiChat.voiceConversation', 'Listening... speak naturally')
+              : t('aiChat.dictating', 'Dictating...')
+          : placeholder || t('aiChat.placeholder', 'Ask anything...');
 
     return (
         <div className={`${className}`}>
@@ -488,7 +493,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                         >
                             <span>{att.name || att.type}</span>
                             <button
-                                onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                                onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
                                 className="ml-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                             >
                                 ×
@@ -509,16 +514,16 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                                 className="w-1 bg-blue-500 rounded-full transition-all duration-75"
                                 style={{
                                     height: `${Math.max(4, Math.min(16, audioLevel * 20 * (i + 1)))}px`,
-                                    opacity: audioLevel > i * 0.2 ? 1 : 0.3
+                                    opacity: audioLevel > i * 0.2 ? 1 : 0.3,
                                 }}
                             />
                         ))}
                     </div>
-                    
+
                     <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
                         {isVoiceConversation ? 'Voice Conversation' : 'Dictation'}
                     </span>
-                    
+
                     <span className="text-xs text-slate-500 tabular-nums">
                         {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
                     </span>
@@ -532,15 +537,18 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             )}
 
             {/* Main Input Container */}
-            <div className={`
+            <div
+                className={`
                 bg-white dark:bg-navy-900 rounded-2xl border transition-all duration-200
-                ${isFocused
-                    ? 'border-primary-500 shadow-lg shadow-primary-500/10 dark:shadow-primary-500/5'
-                    : 'border-slate-200 dark:border-white/10 shadow-sm'
+                ${
+                    isFocused
+                        ? 'border-primary-500 shadow-lg shadow-primary-500/10 dark:shadow-primary-500/5'
+                        : 'border-slate-200 dark:border-white/10 shadow-sm'
                 }
                 ${isRecordingAny ? 'ring-2 ring-blue-500/50' : ''}
                 ${isDisabled ? 'opacity-60' : ''}
-            `}>
+            `}
+            >
                 {/* Textarea */}
                 <textarea
                     ref={textareaRef}
@@ -584,15 +592,17 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                                 disabled={isDisabled}
                                 className={`
                                     flex items-center gap-1.5 p-2 rounded-lg transition-all
-                                    ${isDictating
-                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                    ${
+                                        isDictating
+                                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                     }
                                     ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                                 `}
-                                title={isDictating 
-                                    ? t('aiChat.stopDictation', 'Stop dictation')
-                                    : t('aiChat.startDictation', 'Dictate (fills input, you review & send)')
+                                title={
+                                    isDictating
+                                        ? t('aiChat.stopDictation', 'Stop dictation')
+                                        : t('aiChat.startDictation', 'Dictate (fills input, you review & send)')
                                 }
                             >
                                 {isDictating ? <StopCircle size={18} /> : <Mic size={18} />}
@@ -605,13 +615,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                             disabled={isDisabled || (hasText && !canSend)}
                             className={`
                                 p-2.5 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center
-                                ${hasText
-                                    ? canSend
-                                        ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                                        : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
-                                    : isVoiceConversation
-                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 animate-pulse'
-                                        : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
+                                ${
+                                    hasText
+                                        ? canSend
+                                            ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                                        : isVoiceConversation
+                                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 animate-pulse'
+                                          : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
                                 }
                                 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                             `}
@@ -619,8 +630,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                                 hasText
                                     ? t('aiChat.send', 'Send')
                                     : isVoiceConversation
-                                        ? t('aiChat.stopVoice', 'Stop voice conversation')
-                                        : t('aiChat.startVoice', 'Start voice conversation (auto-send)')
+                                      ? t('aiChat.stopVoice', 'Stop voice conversation')
+                                      : t('aiChat.startVoice', 'Start voice conversation (auto-send)')
                             }
                         >
                             {hasText ? (

@@ -1,32 +1,31 @@
 // DRD Audit Report Builder Components
+export { EmbeddedMatrix } from './EmbeddedMatrix';
+export { InitiativesReportSection } from './InitiativesReportSection';
 export { ReportBuilder } from './ReportBuilder';
+export { ReportHeader } from './ReportHeader';
 export { ReportSection } from './ReportSection';
 export { RichTextEditor } from './RichTextEditor';
-export { EmbeddedMatrix } from './EmbeddedMatrix';
 export { TableOfContents } from './TableOfContents';
-export { ReportHeader } from './ReportHeader';
-export { InitiativesReportSection } from './InitiativesReportSection';
 
 // New Enterprise Components
-export { StickyNavigation } from './StickyNavigation';
+export { FinancialImpact } from './FinancialImpact';
+export { GanttChart } from './GanttChart';
+export { HeatmapMatrix } from './HeatmapMatrix';
+export { IndustryBenchmark } from './IndustryBenchmark';
+export { KeyTakeaways, QuickStats } from './KeyTakeaways';
 export { ProgressRing, ProgressRingCompact } from './ProgressRing';
 export { RadarChartComponent, RadarChartMini } from './RadarChart';
-export { HeatmapMatrix } from './HeatmapMatrix';
-export { KeyTakeaways, QuickStats } from './KeyTakeaways';
-export { ReadingModeToggle, ReadingModeProvider, ReadingModeSimpleToggle } from './ReadingModeToggle';
-export { GanttChart } from './GanttChart';
-export { IndustryBenchmark } from './IndustryBenchmark';
+export { ReadingModeProvider, ReadingModeSimpleToggle, ReadingModeToggle } from './ReadingModeToggle';
 export { RiskMatrix } from './RiskMatrix';
-export { FinancialImpact } from './FinancialImpact';
+export { StickyNavigation } from './StickyNavigation';
 
 // Area-based Report Components (Enterprise DRD)
-export { AreaMatrixTable, BUSINESS_AREAS, MATURITY_LEVELS } from './AreaMatrixTable';
-export type { AreaAssessment } from './AreaMatrixTable';
+export type { AreaDetailData, AreaLevelInfo, InterviewData } from './AreaDetailCard';
 export { AreaDetailCard } from './AreaDetailCard';
-export type { AreaDetailData, InterviewData, AreaLevelInfo } from './AreaDetailCard';
-export { AxisReportSection } from './AxisReportSection';
+export type { AreaAssessment } from './AreaMatrixTable';
+export { AreaMatrixTable, BUSINESS_AREAS, MATURITY_LEVELS } from './AreaMatrixTable';
 export type { AxisInfo, AxisReportData } from './AxisReportSection';
+export { AxisReportSection } from './AxisReportSection';
 
 // Management Reports Module (Team Meeting & Steering Committee)
 export * from './Management';
-

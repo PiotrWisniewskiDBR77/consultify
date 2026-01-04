@@ -1,5 +1,6 @@
+import { Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+
 import { refineContent, RefineContext } from '../../../services/ai/gemini';
 
 interface AITextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -7,7 +8,12 @@ interface AITextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaEleme
     aiContext?: RefineContext;
 }
 
-export const AITextArea: React.FC<AITextAreaProps> = ({ className = '', onRefine, aiContext = 'general', ...props }) => {
+export const AITextArea: React.FC<AITextAreaProps> = ({
+    className = '',
+    onRefine,
+    aiContext = 'general',
+    ...props
+}) => {
     const [isRefining, setIsRefining] = useState(false);
 
     const handleRefine = async () => {
@@ -26,12 +32,12 @@ export const AITextArea: React.FC<AITextAreaProps> = ({ className = '', onRefine
             // Synthetic event to update parent logic
             if (props.onChange) {
                 const event = {
-                    target: { value: refinedText }
+                    target: { value: refinedText },
                 } as React.ChangeEvent<HTMLTextAreaElement>;
                 props.onChange(event);
             }
         } catch (error) {
-            console.error("Refine failed", error);
+            console.error('Refine failed', error);
         } finally {
             setIsRefining(false);
         }

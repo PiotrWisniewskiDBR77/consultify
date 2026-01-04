@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components/Admin/shared/Card';
 import {
-    Plus,
-    FileText,
-    Calendar,
-    Clock,
     AlertTriangle,
-    CheckCircle2,
-    Trash2,
-    Edit,
     Building2,
+    Calendar,
+    CheckCircle2,
+    Clock,
     DollarSign,
-    Loader2,
     Download,
+    Edit,
+    ExternalLink,
+    FileText,
+    Loader2,
+    Plus,
     RefreshCw,
-    ExternalLink
+    Trash2,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Card } from '../../../components/Admin/shared/Card';
 import Api from '../../../services/api';
 
 interface Contract {
@@ -85,7 +86,7 @@ const ContractManagementView: React.FC = () => {
         value: '',
         currency: 'USD',
         terms: {},
-        documentUrl: ''
+        documentUrl: '',
     });
 
     useEffect(() => {
@@ -98,7 +99,7 @@ const ContractManagementView: React.FC = () => {
             const [contractsData, statsData, renewalsData] = await Promise.all([
                 Api.getCustomerContracts(filterStatus ? { status: filterStatus } : undefined),
                 Api.getContractStats(),
-                Api.getUpcomingRenewals(30)
+                Api.getUpcomingRenewals(30),
             ]);
             setContracts(contractsData || []);
             setStats(statsData);
@@ -116,7 +117,7 @@ const ContractManagementView: React.FC = () => {
         try {
             await Api.createCustomerContract({
                 ...newContract,
-                value: parseFloat(newContract.value) || 0
+                value: parseFloat(newContract.value) || 0,
             });
             setShowCreateModal(false);
             setNewContract({
@@ -128,7 +129,7 @@ const ContractManagementView: React.FC = () => {
                 value: '',
                 currency: 'USD',
                 terms: {},
-                documentUrl: ''
+                documentUrl: '',
             });
             fetchData();
         } catch (error) {
@@ -151,19 +152,19 @@ const ContractManagementView: React.FC = () => {
     };
 
     const getStatusColor = (status: string) => {
-        const statusInfo = CONTRACT_STATUSES.find(s => s.id === status);
+        const statusInfo = CONTRACT_STATUSES.find((s) => s.id === status);
         return statusInfo?.color || 'gray';
     };
 
     const getStatusLabel = (status: string) => {
-        const statusInfo = CONTRACT_STATUSES.find(s => s.id === status);
+        const statusInfo = CONTRACT_STATUSES.find((s) => s.id === status);
         return statusInfo?.label || status;
     };
 
     const formatCurrency = (value: number, currency: string = 'USD') => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: currency
+            currency: currency,
         }).format(value);
     };
 
@@ -200,8 +201,10 @@ const ContractManagementView: React.FC = () => {
                         className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
                     >
                         <option value="">All Statuses</option>
-                        {CONTRACT_STATUSES.map(s => (
-                            <option key={s.id} value={s.id}>{s.label}</option>
+                        {CONTRACT_STATUSES.map((s) => (
+                            <option key={s.id} value={s.id}>
+                                {s.label}
+                            </option>
                         ))}
                     </select>
                     <button
@@ -245,9 +248,7 @@ const ContractManagementView: React.FC = () => {
                                 <DollarSign className="w-5 h-5 text-purple-400" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-white">
-                                    {formatCurrency(stats.total_value)}
-                                </p>
+                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.total_value)}</p>
                                 <span className="text-xs text-gray-400">Total Value</span>
                             </div>
                         </div>
@@ -274,11 +275,8 @@ const ContractManagementView: React.FC = () => {
                         <h3 className="text-lg font-semibold text-white">Upcoming Renewals</h3>
                     </div>
                     <div className="grid grid-cols-4 gap-3">
-                        {upcomingRenewals.slice(0, 4).map(renewal => (
-                            <div
-                                key={renewal.id}
-                                className="bg-gray-800/50 rounded-lg p-3"
-                            >
+                        {upcomingRenewals.slice(0, 4).map((renewal) => (
+                            <div key={renewal.id} className="bg-gray-800/50 rounded-lg p-3">
                                 <p className="text-white font-medium truncate">{renewal.organization_name}</p>
                                 <p className="text-yellow-400 text-sm">
                                     {renewal.days_until} days • {formatCurrency(renewal.value)}
@@ -293,9 +291,7 @@ const ContractManagementView: React.FC = () => {
                 {/* Contracts List */}
                 <div className="col-span-5">
                     <Card className="bg-gray-800 p-4">
-                        <h3 className="text-lg font-semibold text-white mb-4">
-                            Contracts ({contracts.length})
-                        </h3>
+                        <h3 className="text-lg font-semibold text-white mb-4">Contracts ({contracts.length})</h3>
                         <div className="space-y-2 max-h-[500px] overflow-y-auto">
                             {contracts.length === 0 ? (
                                 <div className="text-center py-8">
@@ -303,7 +299,7 @@ const ContractManagementView: React.FC = () => {
                                     <p className="text-gray-500 text-sm">No contracts found</p>
                                 </div>
                             ) : (
-                                contracts.map(contract => (
+                                contracts.map((contract) => (
                                     <div
                                         key={contract.id}
                                         onClick={() => setSelectedContract(contract)}
@@ -320,13 +316,16 @@ const ContractManagementView: React.FC = () => {
                                                     {contract.organization_name || 'Unknown'}
                                                 </span>
                                             </div>
-                                            <span className={`text-xs px-2 py-1 rounded bg-${getStatusColor(contract.status)}-500/20 text-${getStatusColor(contract.status)}-400`}>
+                                            <span
+                                                className={`text-xs px-2 py-1 rounded bg-${getStatusColor(contract.status)}-500/20 text-${getStatusColor(contract.status)}-400`}
+                                            >
                                                 {getStatusLabel(contract.status)}
                                             </span>
                                         </div>
                                         <div className="mt-2 flex items-center justify-between text-sm">
                                             <span className="text-gray-400">
-                                                {CONTRACT_TYPES.find(t => t.id === contract.contract_type)?.label || contract.contract_type}
+                                                {CONTRACT_TYPES.find((t) => t.id === contract.contract_type)?.label ||
+                                                    contract.contract_type}
                                             </span>
                                             <span className="text-green-400 font-medium">
                                                 {formatCurrency(contract.value, contract.currency)}
@@ -334,7 +333,9 @@ const ContractManagementView: React.FC = () => {
                                         </div>
                                         <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
                                             <Calendar className="w-3 h-3" />
-                                            <span>{formatDate(contract.start_date)} - {formatDate(contract.end_date)}</span>
+                                            <span>
+                                                {formatDate(contract.start_date)} - {formatDate(contract.end_date)}
+                                            </span>
                                         </div>
                                     </div>
                                 ))
@@ -354,7 +355,7 @@ const ContractManagementView: React.FC = () => {
                                         {selectedContract.organization_name || 'Contract Details'}
                                     </h3>
                                     <p className="text-gray-400 text-sm">
-                                        {CONTRACT_TYPES.find(t => t.id === selectedContract.contract_type)?.label}
+                                        {CONTRACT_TYPES.find((t) => t.id === selectedContract.contract_type)?.label}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -382,7 +383,9 @@ const ContractManagementView: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="bg-gray-700/50 rounded-lg p-3">
                                     <span className="text-gray-400 text-xs">Status</span>
-                                    <p className={`text-${getStatusColor(selectedContract.status)}-400 font-medium mt-1`}>
+                                    <p
+                                        className={`text-${getStatusColor(selectedContract.status)}-400 font-medium mt-1`}
+                                    >
                                         {getStatusLabel(selectedContract.status)}
                                     </p>
                                 </div>
@@ -414,14 +417,14 @@ const ContractManagementView: React.FC = () => {
                                                     ({getDaysUntil(selectedContract.renewal_date)} days)
                                                 </span>
                                             </>
-                                        ) : '-'}
+                                        ) : (
+                                            '-'
+                                        )}
                                     </p>
                                 </div>
                                 <div className="bg-gray-700/50 rounded-lg p-3">
                                     <span className="text-gray-400 text-xs">Currency</span>
-                                    <p className="text-white font-medium mt-1">
-                                        {selectedContract.currency}
-                                    </p>
+                                    <p className="text-white font-medium mt-1">{selectedContract.currency}</p>
                                 </div>
                             </div>
 
@@ -447,7 +450,9 @@ const ContractManagementView: React.FC = () => {
                                             <div className="w-4 h-4 bg-green-500 rounded-full z-10" />
                                             <div>
                                                 <p className="text-white text-sm">Contract Started</p>
-                                                <p className="text-gray-400 text-xs">{formatDate(selectedContract.start_date)}</p>
+                                                <p className="text-gray-400 text-xs">
+                                                    {formatDate(selectedContract.start_date)}
+                                                </p>
                                             </div>
                                         </div>
                                         {selectedContract.renewal_date && (
@@ -455,7 +460,9 @@ const ContractManagementView: React.FC = () => {
                                                 <div className="w-4 h-4 bg-yellow-500 rounded-full z-10" />
                                                 <div>
                                                     <p className="text-white text-sm">Renewal Due</p>
-                                                    <p className="text-gray-400 text-xs">{formatDate(selectedContract.renewal_date)}</p>
+                                                    <p className="text-gray-400 text-xs">
+                                                        {formatDate(selectedContract.renewal_date)}
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}
@@ -464,7 +471,9 @@ const ContractManagementView: React.FC = () => {
                                                 <div className="w-4 h-4 bg-red-500 rounded-full z-10" />
                                                 <div>
                                                     <p className="text-white text-sm">Contract Ends</p>
-                                                    <p className="text-gray-400 text-xs">{formatDate(selectedContract.end_date)}</p>
+                                                    <p className="text-gray-400 text-xs">
+                                                        {formatDate(selectedContract.end_date)}
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}
@@ -476,9 +485,7 @@ const ContractManagementView: React.FC = () => {
                         <Card className="bg-gray-800 p-8">
                             <div className="flex flex-col items-center justify-center h-64">
                                 <FileText className="w-16 h-16 text-gray-600 mb-4" />
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Select a Contract
-                                </h3>
+                                <h3 className="text-xl font-semibold text-white mb-2">Select a Contract</h3>
                                 <p className="text-gray-400 text-center">
                                     Choose a contract from the list to view details
                                 </p>
@@ -495,9 +502,7 @@ const ContractManagementView: React.FC = () => {
                         <h3 className="text-xl font-bold text-white mb-4">Create New Contract</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Organization ID
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Organization ID</label>
                                 <input
                                     type="text"
                                     value={newContract.organizationId}
@@ -507,24 +512,22 @@ const ContractManagementView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Contract Type
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Contract Type</label>
                                 <select
                                     value={newContract.contractType}
                                     onChange={(e) => setNewContract({ ...newContract, contractType: e.target.value })}
                                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                                 >
-                                    {CONTRACT_TYPES.map(t => (
-                                        <option key={t.id} value={t.id}>{t.label}</option>
+                                    {CONTRACT_TYPES.map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                                        Start Date
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
                                     <input
                                         type="date"
                                         value={newContract.startDate}
@@ -533,9 +536,7 @@ const ContractManagementView: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                                        End Date
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">End Date</label>
                                     <input
                                         type="date"
                                         value={newContract.endDate}
@@ -558,9 +559,7 @@ const ContractManagementView: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                                        Currency
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
                                     <select
                                         value={newContract.currency}
                                         onChange={(e) => setNewContract({ ...newContract, currency: e.target.value })}
@@ -574,9 +573,7 @@ const ContractManagementView: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Renewal Date
-                                </label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Renewal Date</label>
                                 <input
                                     type="date"
                                     value={newContract.renewalDate}
@@ -608,6 +605,3 @@ const ContractManagementView: React.FC = () => {
 };
 
 export default ContractManagementView;
-
-
-

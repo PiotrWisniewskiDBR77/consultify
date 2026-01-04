@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - User Notifications
  */
 
-import { API_URL, fetchWithRetry, handleResponse, getHeaders } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export interface Notification {
     id: string;
@@ -31,7 +31,7 @@ export const NotificationApi = {
     // ==========================================
     // NOTIFICATIONS
     // ==========================================
-    
+
     fetchNotifications: async (): Promise<Notification[]> => {
         const res = await fetchWithRetry(`${API_URL}/notifications`, { headers: getHeaders() });
         return handleResponse(res, 'Failed to fetch notifications');
@@ -56,7 +56,7 @@ export const NotificationApi = {
     markNotificationRead: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/notifications/${id}/read`, {
             method: 'PATCH',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to mark notification as read');
     },
@@ -64,7 +64,7 @@ export const NotificationApi = {
     markAllNotificationsRead: async (): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/notifications/mark-all-read`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to mark all notifications as read');
     },
@@ -72,7 +72,7 @@ export const NotificationApi = {
     deleteNotification: async (id: string): Promise<void> => {
         const res = await fetchWithRetry(`${API_URL}/notifications/${id}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete notification');
     },
@@ -80,7 +80,7 @@ export const NotificationApi = {
     deleteReadNotifications: async (): Promise<void> => {
         const res = await fetch(`${API_URL}/notifications`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getHeaders(),
         });
         if (!res.ok) throw new Error('Failed to delete read notifications');
     },
@@ -98,7 +98,7 @@ export const NotificationApi = {
         const res = await fetch(`${API_URL}/notifications`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(notification)
+            body: JSON.stringify(notification),
         });
         if (!res.ok) throw new Error('Failed to create notification');
     },
@@ -106,9 +106,11 @@ export const NotificationApi = {
     // ==========================================
     // NOTIFICATION PREFERENCES
     // ==========================================
-    
+
     getNotificationPreferences: async (userId: string): Promise<NotificationPreferences> => {
-        const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, { headers: getHeaders() });
+        const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, {
+            headers: getHeaders(),
+        });
         if (!res.ok) return { email: true, push: true, inApp: true, categories: {} };
         return res.json();
     },
@@ -117,10 +119,8 @@ export const NotificationApi = {
         const res = await fetchWithRetry(`${API_URL}/settings/notifications`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ userId, preferences })
+            body: JSON.stringify({ userId, preferences }),
         });
         if (!res.ok) throw new Error('Failed to save notification preferences');
-    }
+    },
 };
-
-

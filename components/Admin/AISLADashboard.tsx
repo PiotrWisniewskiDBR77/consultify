@@ -1,47 +1,48 @@
 /**
  * AI SLA Dashboard
- * 
+ *
  * Real-time monitoring of AI system SLA compliance including:
  * - P50/P95/P99 latency gauges
  * - SLA breach alerts
  * - Historical trend charts
  * - Availability percentage
- * 
+ *
  * Part of Stability Excellence - Phase 2.3
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
     Activity,
+    AlertCircle,
     AlertTriangle,
     CheckCircle2,
     Clock,
-    TrendingUp,
-    TrendingDown,
-    Zap,
+    Gauge,
     RefreshCw,
-    AlertCircle,
     Server,
-    Gauge
+    TrendingDown,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
-import { Card, CardHeader, CardContent } from '../ui/primitives/Card';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { Badge } from '../ui/primitives/Badge';
 import { Button } from '../ui/primitives/Button';
+import { Card, CardContent, CardHeader } from '../ui/primitives/Card';
 import { Skeleton } from '../ui/primitives/Skeleton';
-import { Api } from '../../services/api';
 
 // CardTitle component - if not exported from Card, define it here
 const CardTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
+    <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
 );
 
 // SLA Thresholds (in milliseconds)
 const SLA_THRESHOLDS = {
-    P50: 2000,   // 2s
-    P95: 5000,   // 5s
-    P99: 10000,  // 10s
-    AVAILABILITY: 99.9
+    P50: 2000, // 2s
+    P95: 5000, // 5s
+    P99: 10000, // 10s
+    AVAILABILITY: 99.9,
 };
 
 interface LatencyMetrics {
@@ -89,19 +90,19 @@ export const AISLADashboard: React.FC = () => {
     const fetchMetrics = useCallback(async () => {
         try {
             // Fetch latency metrics
-            const latencyRes = await Api.getAIHealthMetrics?.() || mockLatencyData();
+            const latencyRes = (await Api.getAIHealthMetrics?.()) || mockLatencyData();
             setLatency(latencyRes.latency);
 
             // Fetch availability metrics
-            const availRes = await Api.getAIAvailability?.() || mockAvailabilityData();
+            const availRes = (await Api.getAIAvailability?.()) || mockAvailabilityData();
             setAvailability(availRes.availability);
 
             // Fetch SLA breaches
-            const breachRes = await Api.getAISLABreaches?.() || mockBreachData();
+            const breachRes = (await Api.getAISLABreaches?.()) || mockBreachData();
             setBreaches(breachRes.breaches || []);
 
             // Fetch trend data
-            const trendRes = await Api.getAISLATrends?.() || mockTrendData();
+            const trendRes = (await Api.getAISLATrends?.()) || mockTrendData();
             setTrends(trendRes.trends || []);
 
             setLastUpdated(new Date());
@@ -114,7 +115,7 @@ export const AISLADashboard: React.FC = () => {
 
     useEffect(() => {
         void fetchMetrics();
-        
+
         if (autoRefresh) {
             const interval = setInterval(() => void fetchMetrics(), 30000); // Refresh every 30s
             return () => clearInterval(interval);
@@ -133,19 +134,27 @@ export const AISLADashboard: React.FC = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'healthy': return 'text-green-500';
-            case 'warning': return 'text-amber-500';
-            case 'critical': return 'text-red-500';
-            default: return 'text-gray-500';
+            case 'healthy':
+                return 'text-green-500';
+            case 'warning':
+                return 'text-amber-500';
+            case 'critical':
+                return 'text-red-500';
+            default:
+                return 'text-gray-500';
         }
     };
 
     const getStatusBg = (status: string) => {
         switch (status) {
-            case 'healthy': return 'bg-green-500/10 border-green-500/30';
-            case 'warning': return 'bg-amber-500/10 border-amber-500/30';
-            case 'critical': return 'bg-red-500/10 border-red-500/30';
-            default: return 'bg-gray-500/10 border-gray-500/30';
+            case 'healthy':
+                return 'bg-green-500/10 border-green-500/30';
+            case 'warning':
+                return 'bg-amber-500/10 border-amber-500/30';
+            case 'critical':
+                return 'bg-red-500/10 border-red-500/30';
+            default:
+                return 'bg-gray-500/10 border-gray-500/30';
         }
     };
 
@@ -155,12 +164,7 @@ export const AISLADashboard: React.FC = () => {
     };
 
     // Render metric card with gauge visualization
-    const renderLatencyGauge = (
-        title: string,
-        value: number,
-        threshold: number,
-        icon: React.ReactNode
-    ) => {
+    const renderLatencyGauge = (title: string, value: number, threshold: number, icon: React.ReactNode) => {
         const status = value <= threshold ? 'healthy' : value <= threshold * 1.5 ? 'warning' : 'critical';
         const percentage = Math.min((value / (threshold * 2)) * 100, 100);
 
@@ -182,18 +186,19 @@ export const AISLADashboard: React.FC = () => {
                         <Skeleton className="h-16 w-full" />
                     ) : (
                         <>
-                            <div className={`text-3xl font-bold ${getStatusColor(status)}`}>
-                                {formatLatency(value)}
-                            </div>
+                            <div className={`text-3xl font-bold ${getStatusColor(status)}`}>{formatLatency(value)}</div>
                             <div className="text-xs text-muted-foreground mt-1">
                                 SLA Target: {formatLatency(threshold)}
                             </div>
                             {/* Progress bar gauge */}
                             <div className="mt-3 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                     className={`h-full transition-all duration-500 ${
-                                        status === 'healthy' ? 'bg-green-500' :
-                                        status === 'warning' ? 'bg-amber-500' : 'bg-red-500'
+                                        status === 'healthy'
+                                            ? 'bg-green-500'
+                                            : status === 'warning'
+                                              ? 'bg-amber-500'
+                                              : 'bg-red-500'
                                     }`}
                                     style={{ width: `${percentage}%` }}
                                 />
@@ -206,9 +211,7 @@ export const AISLADashboard: React.FC = () => {
     };
 
     const renderAvailabilityCard = () => {
-        const status = availability 
-            ? getSLAStatus('AVAILABILITY', availability.current)
-            : 'healthy';
+        const status = availability ? getSLAStatus('AVAILABILITY', availability.current) : 'healthy';
 
         return (
             <Card className={`${getStatusBg(status)} border col-span-2`}>
@@ -286,11 +289,11 @@ export const AISLADashboard: React.FC = () => {
                 ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {breaches.map((breach) => (
-                            <div 
+                            <div
                                 key={breach.id}
                                 className={`p-3 rounded-lg border ${
-                                    breach.severity === 'critical' 
-                                        ? 'bg-red-500/10 border-red-500/30' 
+                                    breach.severity === 'critical'
+                                        ? 'bg-red-500/10 border-red-500/30'
                                         : 'bg-amber-500/10 border-amber-500/30'
                                 }`}
                             >
@@ -332,26 +335,26 @@ export const AISLADashboard: React.FC = () => {
                 ) : (
                     <div className="h-48 flex items-end justify-between gap-1">
                         {trends.slice(-24).map((point, idx) => {
-                            const maxP99 = Math.max(...trends.map(t => t.p99), SLA_THRESHOLDS.P99);
+                            const maxP99 = Math.max(...trends.map((t) => t.p99), SLA_THRESHOLDS.P99);
                             const heightP99 = (point.p99 / maxP99) * 100;
                             const heightP95 = (point.p95 / maxP99) * 100;
                             const heightP50 = (point.p50 / maxP99) * 100;
-                            
+
                             return (
-                                <div 
-                                    key={idx} 
+                                <div
+                                    key={idx}
                                     className="flex-1 flex flex-col items-center gap-0.5"
                                     title={`${new Date(point.timestamp).toLocaleTimeString()}\nP50: ${formatLatency(point.p50)}\nP95: ${formatLatency(point.p95)}\nP99: ${formatLatency(point.p99)}`}
                                 >
-                                    <div 
+                                    <div
                                         className="w-full bg-red-400/60 rounded-t"
                                         style={{ height: `${heightP99}%` }}
                                     />
-                                    <div 
+                                    <div
                                         className="w-full bg-amber-400/60 -mt-[1px]"
                                         style={{ height: `${heightP95}%` }}
                                     />
-                                    <div 
+                                    <div
                                         className="w-full bg-green-400/60 -mt-[1px] rounded-b"
                                         style={{ height: `${heightP50}%` }}
                                     />
@@ -380,9 +383,7 @@ export const AISLADashboard: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">
-                        {t('admin.sla.title', 'AI SLA Dashboard')}
-                    </h2>
+                    <h2 className="text-2xl font-bold tracking-tight">{t('admin.sla.title', 'AI SLA Dashboard')}</h2>
                     <p className="text-muted-foreground">
                         {t('admin.sla.description', 'Real-time AI system performance and SLA compliance monitoring')}
                     </p>
@@ -413,20 +414,15 @@ export const AISLADashboard: React.FC = () => {
                     'P50 Latency',
                     latency?.p50 || 0,
                     SLA_THRESHOLDS.P50,
-                    <Gauge className="h-4 w-4" />
+                    <Gauge className="h-4 w-4" />,
                 )}
                 {renderLatencyGauge(
                     'P95 Latency',
                     latency?.p95 || 0,
                     SLA_THRESHOLDS.P95,
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-4 w-4" />,
                 )}
-                {renderLatencyGauge(
-                    'P99 Latency',
-                    latency?.p99 || 0,
-                    SLA_THRESHOLDS.P99,
-                    <Zap className="h-4 w-4" />
-                )}
+                {renderLatencyGauge('P99 Latency', latency?.p99 || 0, SLA_THRESHOLDS.P99, <Zap className="h-4 w-4" />)}
                 <Card className="bg-background border">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -439,12 +435,8 @@ export const AISLADashboard: React.FC = () => {
                             <Skeleton className="h-16 w-full" />
                         ) : (
                             <>
-                                <div className="text-3xl font-bold">
-                                    {(latency?.count || 0).toLocaleString()}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                    Last 24 hours
-                                </div>
+                                <div className="text-3xl font-bold">{(latency?.count || 0).toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground mt-1">Last 24 hours</div>
                             </>
                         )}
                     </CardContent>
@@ -452,9 +444,7 @@ export const AISLADashboard: React.FC = () => {
             </div>
 
             {/* Availability Section */}
-            <div className="grid gap-4 md:grid-cols-2">
-                {renderAvailabilityCard()}
-            </div>
+            <div className="grid gap-4 md:grid-cols-2">{renderAvailabilityCard()}</div>
 
             {/* Trend Chart */}
             {renderTrendChart()}
@@ -473,8 +463,8 @@ function mockLatencyData() {
             p95: 3500 + Math.random() * 1500,
             p99: 7000 + Math.random() * 3000,
             avg: 1800 + Math.random() * 1000,
-            count: Math.floor(10000 + Math.random() * 5000)
-        }
+            count: Math.floor(10000 + Math.random() * 5000),
+        },
     };
 }
 
@@ -484,15 +474,15 @@ function mockAvailabilityData() {
             current: 99.95 + Math.random() * 0.05,
             last24h: 99.9 + Math.random() * 0.1,
             last7d: 99.85 + Math.random() * 0.15,
-            last30d: 99.8 + Math.random() * 0.2
-        }
+            last30d: 99.8 + Math.random() * 0.2,
+        },
     };
 }
 
 function mockBreachData() {
     const hasBreaches = Math.random() > 0.7;
     if (!hasBreaches) return { breaches: [] };
-    
+
     return {
         breaches: [
             {
@@ -501,9 +491,9 @@ function mockBreachData() {
                 metric: 'P99 Latency',
                 value: 12000,
                 threshold: 10000,
-                severity: 'warning' as const
-            }
-        ]
+                severity: 'warning' as const,
+            },
+        ],
     };
 }
 
@@ -515,12 +505,10 @@ function mockTrendData() {
             p50: 1000 + Math.random() * 1000,
             p95: 3000 + Math.random() * 2000,
             p99: 6000 + Math.random() * 4000,
-            availability: 99.9 + Math.random() * 0.1
+            availability: 99.9 + Math.random() * 0.1,
         });
     }
     return { trends };
 }
 
 export default AISLADashboard;
-
-

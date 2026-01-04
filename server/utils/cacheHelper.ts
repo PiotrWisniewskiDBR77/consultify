@@ -4,13 +4,13 @@
  * Uses Redis for distributed caching
  */
 
-import client from './redisClient';
+import client from './redisClient.js';
 
 export const DEFAULT_TTL = {
-    SHORT: 60,        // 1 minute - frequently changing data
-    MEDIUM: 300,      // 5 minutes - moderately stable data
-    LONG: 900,        // 15 minutes - stable data
-    VERY_LONG: 3600   // 1 hour - rarely changing data
+    SHORT: 60, // 1 minute - frequently changing data
+    MEDIUM: 300, // 5 minutes - moderately stable data
+    LONG: 900, // 15 minutes - stable data
+    VERY_LONG: 3600, // 1 hour - rarely changing data
 } as const;
 
 /**
@@ -26,7 +26,7 @@ export const CacheKeys = {
     projectUsers: (projectId: string) => `project:${projectId}:users`,
     organizationUsers: (orgId: string) => `org:${orgId}:users`,
     workload: (projectId: string) => `workload:project:${projectId}`,
-    overAllocation: (projectId: string) => `overallocation:project:${projectId}`
+    overAllocation: (projectId: string) => `overallocation:project:${projectId}`,
 };
 
 interface RedisClient {
@@ -44,7 +44,7 @@ interface RedisClient {
 export async function getCached<T>(
     key: string,
     fetchFn: () => Promise<T>,
-    ttl: number = DEFAULT_TTL.MEDIUM
+    ttl: number = DEFAULT_TTL.MEDIUM,
 ): Promise<T> {
     try {
         const redisClient = client as RedisClient;
@@ -82,7 +82,7 @@ export async function invalidatePattern(pattern: string): Promise<number> {
     try {
         const redisClient = client as RedisClient;
         if (!redisClient.keys) return 0;
-        
+
         const keys = await redisClient.keys(pattern);
         if (keys.length === 0) return 0;
 
@@ -117,7 +117,7 @@ export async function invalidateUserCache(userId: string, orgId: string): Promis
         CacheKeys.userDashboard(userId, orgId),
         CacheKeys.userInitiatives(userId),
         CacheKeys.userDecisions(userId),
-        CacheKeys.userAlerts(userId)
+        CacheKeys.userAlerts(userId),
     ];
 
     let deleted = 0;
@@ -147,4 +147,3 @@ export async function invalidateProjectCache(projectId: string): Promise<number>
 export async function invalidateOrgCache(orgId: string): Promise<number> {
     return await invalidatePattern(`*:org:${orgId}*`);
 }
-

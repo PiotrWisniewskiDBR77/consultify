@@ -4,11 +4,12 @@
  * ETAP 10.2: Testy dla Config Layer - 95%+ coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { config } from '../../../src/config/Config.js';
 import { databaseConfig } from '../../../src/config/DatabaseConfig.js';
-import { queueConfig } from '../../../src/config/QueueConfig.js';
 import { featureFlags } from '../../../src/config/FeatureFlags.js';
+import { queueConfig } from '../../../src/config/QueueConfig.js';
 
 describe('Config', () => {
     let originalEnv: NodeJS.ProcessEnv;
@@ -124,17 +125,17 @@ describe('Config', () => {
         it('should have connection config structure when not mocked', () => {
             const originalMockRedis = process.env.MOCK_REDIS;
             delete process.env.MOCK_REDIS;
-            
+
             // Reload config
             vi.resetModules();
             const { queueConfig: reloadedConfig } = require('../../../src/config/QueueConfig.js');
-            
+
             if (reloadedConfig.connection) {
                 expect(reloadedConfig.connection.host).toBeDefined();
                 expect(reloadedConfig.connection.port).toBeGreaterThan(0);
                 expect(reloadedConfig.connection.port).toBeLessThanOrEqual(65535);
             }
-            
+
             if (originalMockRedis) {
                 process.env.MOCK_REDIS = originalMockRedis;
             }
@@ -183,4 +184,3 @@ describe('Config', () => {
         });
     });
 });
-

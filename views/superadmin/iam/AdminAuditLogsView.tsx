@@ -1,17 +1,29 @@
 /**
  * Admin Audit Logs View
- * 
+ *
  * Displays admin audit logs with risk scoring and filtering capabilities.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
-import { 
-    Shield, AlertTriangle, AlertCircle, CheckCircle, 
-    Clock, Filter, RefreshCw, Loader2, Eye, Check, Download, Calendar, X
+import {
+    AlertCircle,
+    AlertTriangle,
+    Calendar,
+    Check,
+    CheckCircle,
+    Clock,
+    Download,
+    Eye,
+    Filter,
+    Loader2,
+    RefreshCw,
+    Shield,
+    X,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { Api } from '../../../services/api';
 
 interface AuditLog {
     id: string;
@@ -53,7 +65,7 @@ const AdminAuditLogsView: React.FC = () => {
         status: '',
         riskScoreMin: '',
         fromDate: '',
-        toDate: ''
+        toDate: '',
     });
     const [showFilters, setShowFilters] = useState(false);
     const [resolving, setResolving] = useState<string | null>(null);
@@ -69,17 +81,14 @@ const AdminAuditLogsView: React.FC = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             const params: any = { limit: 100 };
             if (filters.actionType) params.actionType = filters.actionType;
             if (filters.status) params.status = filters.status;
             if (filters.riskScoreMin) params.riskScoreMin = parseInt(filters.riskScoreMin);
-            
-            const [logsData, statsData] = await Promise.all([
-                Api.getAdminAuditLogs(params),
-                Api.getAdminAuditStats()
-            ]);
-            
+
+            const [logsData, statsData] = await Promise.all([Api.getAdminAuditLogs(params), Api.getAdminAuditStats()]);
+
             setLogs(logsData);
             setStats(statsData);
         } catch (err: any) {
@@ -93,11 +102,18 @@ const AdminAuditLogsView: React.FC = () => {
         try {
             setResolving(logId);
             await Api.resolveAdminAuditLog(logId, resolutionNotes);
-            setLogs(prev => prev.map(log => 
-                log.id === logId 
-                    ? { ...log, status: 'resolved', resolved_at: new Date().toISOString(), resolution_notes: resolutionNotes }
-                    : log
-            ));
+            setLogs((prev) =>
+                prev.map((log) =>
+                    log.id === logId
+                        ? {
+                              ...log,
+                              status: 'resolved',
+                              resolved_at: new Date().toISOString(),
+                              resolution_notes: resolutionNotes,
+                          }
+                        : log,
+                ),
+            );
             setShowResolveModal(null);
             setResolutionNotes('');
             toast.success('Audit log resolved successfully');
@@ -115,9 +131,9 @@ const AdminAuditLogsView: React.FC = () => {
             const blob = await Api.exportAdminAuditLogs({
                 ...filters,
                 riskScoreMin: filters.riskScoreMin ? parseInt(filters.riskScoreMin) : undefined,
-                format: 'csv'
+                format: 'csv',
             });
-            
+
             // Create download link
             const url = URL.createObjectURL(blob as Blob);
             const a = document.createElement('a');
@@ -127,7 +143,7 @@ const AdminAuditLogsView: React.FC = () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
+
             toast.success('Export downloaded successfully');
         } catch (err: any) {
             toast.error(err.message || 'Failed to export audit logs');
@@ -142,7 +158,7 @@ const AdminAuditLogsView: React.FC = () => {
             status: '',
             riskScoreMin: '',
             fromDate: '',
-            toDate: ''
+            toDate: '',
         });
     };
 
@@ -181,17 +197,9 @@ const AdminAuditLogsView: React.FC = () => {
 
     const getStatusBadge = (status: string) => {
         if (status === 'resolved') {
-            return (
-                <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
-                    Resolved
-                </span>
-            );
+            return <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">Resolved</span>;
         }
-        return (
-            <span className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs">
-                Unresolved
-            </span>
-        );
+        return <span className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs">Unresolved</span>;
     };
 
     if (loading && logs.length === 0) {
@@ -217,7 +225,7 @@ const AdminAuditLogsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -229,7 +237,7 @@ const AdminAuditLogsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-red-500/10 rounded-lg">
@@ -241,7 +249,7 @@ const AdminAuditLogsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -253,7 +261,7 @@ const AdminAuditLogsView: React.FC = () => {
                         </div>
                     </div>
                 </Card>
-                
+
                 <Card variant="bordered" className="p-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -292,7 +300,7 @@ const AdminAuditLogsView: React.FC = () => {
                     >
                         <Filter className="w-4 h-4" />
                         Filters
-                        {Object.values(filters).some(v => v) && (
+                        {Object.values(filters).some((v) => v) && (
                             <span className="w-2 h-2 bg-indigo-500 rounded-full" />
                         )}
                     </button>
@@ -301,11 +309,7 @@ const AdminAuditLogsView: React.FC = () => {
                         disabled={exporting}
                         className="flex items-center gap-2 px-3 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50"
                     >
-                        {exporting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <Download className="w-4 h-4" />
-                        )}
+                        {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                         Export CSV
                     </button>
                     <button
@@ -324,7 +328,7 @@ const AdminAuditLogsView: React.FC = () => {
                 <Card variant="bordered" className="p-4">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-sm font-medium text-slate-300">Filter Audit Logs</h3>
-                        {Object.values(filters).some(v => v) && (
+                        {Object.values(filters).some((v) => v) && (
                             <button
                                 onClick={clearFilters}
                                 className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-300"
@@ -433,10 +437,15 @@ const AdminAuditLogsView: React.FC = () => {
                                 </tr>
                             ) : (
                                 logs.map((log) => (
-                                    <tr key={log.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+                                    <tr
+                                        key={log.id}
+                                        className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                                    >
                                         <td className="py-3 px-4">
                                             <div>
-                                                <p className="font-medium">{log.admin?.firstName} {log.admin?.lastName}</p>
+                                                <p className="font-medium">
+                                                    {log.admin?.firstName} {log.admin?.lastName}
+                                                </p>
                                                 <p className="text-sm text-slate-400">{log.admin?.email}</p>
                                             </div>
                                         </td>
@@ -448,7 +457,9 @@ const AdminAuditLogsView: React.FC = () => {
                                         <td className="py-3 px-4">
                                             <div>
                                                 <p className="text-sm">{log.resource_type || '-'}</p>
-                                                <p className="text-xs text-slate-400 truncate max-w-[150px]">{log.resource_id || '-'}</p>
+                                                <p className="text-xs text-slate-400 truncate max-w-[150px]">
+                                                    {log.resource_id || '-'}
+                                                </p>
                                             </div>
                                         </td>
                                         <td className="py-3 px-4 text-sm">{log.ip_address || 'Unknown'}</td>
@@ -494,7 +505,10 @@ const AdminAuditLogsView: React.FC = () => {
                         />
                         <div className="flex justify-end gap-2">
                             <button
-                                onClick={() => { setShowResolveModal(null); setResolutionNotes(''); }}
+                                onClick={() => {
+                                    setShowResolveModal(null);
+                                    setResolutionNotes('');
+                                }}
                                 className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
                             >
                                 Cancel
@@ -520,4 +534,3 @@ const AdminAuditLogsView: React.FC = () => {
 };
 
 export default AdminAuditLogsView;
-

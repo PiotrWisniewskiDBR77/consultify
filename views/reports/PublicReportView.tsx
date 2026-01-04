@@ -1,9 +1,10 @@
+import { AlertTriangle, Clock, Loader2, Lock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Loader2, AlertTriangle, Clock, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { OrganizationOverviewReport } from './OrganizationOverviewReport';
+import { useParams } from 'react-router-dom';
+
 import { InitiativeExecutionReport } from './InitiativeExecutionReport';
+import { OrganizationOverviewReport } from './OrganizationOverviewReport';
 
 interface ShareLinkData {
     entityType: 'ORG_REPORT' | 'INITIATIVE_REPORT';
@@ -92,9 +93,7 @@ export const PublicReportView: React.FC = () => {
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         {t('reports.linkExpired')}
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                        {t('reports.linkExpiredDescription')}
-                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">{t('reports.linkExpiredDescription')}</p>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <Lock className="w-4 h-4" />
                         <span>{t('reports.requestNewLink')}</span>
@@ -109,9 +108,7 @@ export const PublicReportView: React.FC = () => {
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
                 <div className="text-center max-w-md mx-auto p-8">
                     <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        {t('reports.error')}
-                    </h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('reports.error')}</h1>
                     <p className="text-gray-600 dark:text-gray-400">{error}</p>
                 </div>
             </div>
@@ -128,9 +125,7 @@ export const PublicReportView: React.FC = () => {
                             <Lock className="w-3 h-3" />
                             <span>{t('reports.sharedSnapshot', 'Shared Snapshot')}</span>
                         </div>
-                        <span className="text-xs text-white/70">
-                            {t('reports.readOnly', 'Read-only')}
-                        </span>
+                        <span className="text-xs text-white/70">{t('reports.readOnly', 'Read-only')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-white/70">
                         <Clock className="w-3 h-3" />
@@ -145,16 +140,10 @@ export const PublicReportView: React.FC = () => {
             <div className="pt-10">
                 {/* Report Content */}
                 {data.entityType === 'ORG_REPORT' && (
-                    <OrganizationOverviewReport
-                        isPublic={true}
-                        snapshotData={data.snapshot as never}
-                    />
+                    <OrganizationOverviewReport isPublic={true} snapshotData={data.snapshot as never} />
                 )}
                 {data.entityType === 'INITIATIVE_REPORT' && (
-                    <InitiativeExecutionReport
-                        isPublic={true}
-                        snapshotData={data.snapshot as never}
-                    />
+                    <InitiativeExecutionReport isPublic={true} snapshotData={data.snapshot as never} />
                 )}
             </div>
 
@@ -175,4 +164,3 @@ export const PublicReportView: React.FC = () => {
 };
 
 export default PublicReportView;
-

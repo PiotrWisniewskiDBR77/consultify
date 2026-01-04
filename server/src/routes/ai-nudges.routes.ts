@@ -1,12 +1,13 @@
 /**
  * AI Nudges Routes
  * API endpoints for managing proactive AI nudges
- * 
+ *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -14,14 +15,22 @@ const router = Router();
 // Service interfaces
 interface ProactiveNudgesInterface {
     getPendingNudges?: (userId: string, organizationId: string) => Promise<unknown[]>;
-    trackActivity?: (userId: string, organizationId: string, activity: {
-        type: string;
-        [key: string]: unknown;
-    }) => Promise<void>;
-    checkAndGenerateNudges?: (userId: string, organizationId: string, context: {
-        trigger?: string;
-        context?: Record<string, unknown>;
-    }) => Promise<unknown[]>;
+    trackActivity?: (
+        userId: string,
+        organizationId: string,
+        activity: {
+            type: string;
+            [key: string]: unknown;
+        },
+    ) => Promise<void>;
+    checkAndGenerateNudges?: (
+        userId: string,
+        organizationId: string,
+        context: {
+            trigger?: string;
+            context?: Record<string, unknown>;
+        },
+    ) => Promise<unknown[]>;
     dismissNudge?: (userId: string, nudgeId: string, reason?: string) => Promise<void>;
     markNudgeActed?: (userId: string, nudgeId: string, action?: string) => Promise<void>;
     suppressNudgeType?: (userId: string, nudgeType: string, duration?: string) => Promise<void>;
@@ -45,218 +54,233 @@ router.use(verifyToken);
  * GET /api/ai/nudges/pending
  * Get pending nudges for the current user
  */
-router.get('/pending', asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!proactiveNudges?.getPendingNudges) {
-        return res.status(503).json({
-            success: false,
-            error: 'Proactive nudges service not available'
-        });
-    }
-
-    try {
-        const userId = req.user?.id;
-        const organizationId = req.user?.organizationId || req.user?.organization_id;
-
-        if (!userId || !organizationId) {
-            return res.status(401).json({
+router.get(
+    '/pending',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!proactiveNudges?.getPendingNudges) {
+            return res.status(503).json({
                 success: false,
-                error: 'Unauthorized'
+                error: 'Proactive nudges service not available',
             });
         }
 
-        const nudges = await proactiveNudges.getPendingNudges(userId, organizationId);
+        try {
+            const userId = req.user?.id;
+            const organizationId = req.user?.organizationId || req.user?.organization_id;
 
-        res.json({
-            success: true,
-            data: nudges
-        });
-    } catch (error: unknown) {
-        console.error('[AI Nudges] Error fetching pending nudges:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-}));
+            if (!userId || !organizationId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized',
+                });
+            }
+
+            const nudges = await proactiveNudges.getPendingNudges(userId, organizationId);
+
+            res.json({
+                success: true,
+                data: nudges,
+            });
+        } catch (error: unknown) {
+            console.error('[AI Nudges] Error fetching pending nudges:', error);
+            res.status(500).json({
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * POST /api/ai/nudges/track
  * Track user activity for nudge generation
  */
-router.post('/track', asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!proactiveNudges?.trackActivity || !proactiveNudges?.checkAndGenerateNudges) {
-        return res.status(503).json({
-            success: false,
-            error: 'Proactive nudges service not available'
-        });
-    }
-
-    try {
-        const userId = req.user?.id;
-        const organizationId = req.user?.organizationId || req.user?.organization_id;
-        const { activityType, metadata } = req.body;
-
-        if (!userId || !organizationId) {
-            return res.status(401).json({
+router.post(
+    '/track',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!proactiveNudges?.trackActivity || !proactiveNudges?.checkAndGenerateNudges) {
+            return res.status(503).json({
                 success: false,
-                error: 'Unauthorized'
+                error: 'Proactive nudges service not available',
             });
         }
 
-        await proactiveNudges.trackActivity(userId, organizationId, {
-            type: activityType,
-            ...metadata
-        });
+        try {
+            const userId = req.user?.id;
+            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const { activityType, metadata } = req.body;
 
-        // Check if any nudges should be generated based on activity
-        const nudges = await proactiveNudges.checkAndGenerateNudges(userId, organizationId, {
-            trigger: activityType,
-            context: metadata
-        });
+            if (!userId || !organizationId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized',
+                });
+            }
 
-        res.json({
-            success: true,
-            nudges: nudges || []
-        });
-    } catch (error: unknown) {
-        console.error('[AI Nudges] Error tracking activity:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-}));
+            await proactiveNudges.trackActivity(userId, organizationId, {
+                type: activityType,
+                ...metadata,
+            });
+
+            // Check if any nudges should be generated based on activity
+            const nudges = await proactiveNudges.checkAndGenerateNudges(userId, organizationId, {
+                trigger: activityType,
+                context: metadata,
+            });
+
+            res.json({
+                success: true,
+                nudges: nudges || [],
+            });
+        } catch (error: unknown) {
+            console.error('[AI Nudges] Error tracking activity:', error);
+            res.status(500).json({
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
 
 /**
  * POST /api/ai/nudges/dismiss
  * Dismiss a nudge (user clicked "Not now")
  */
-router.post('/dismiss', asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!proactiveNudges?.dismissNudge) {
-        return res.status(503).json({
-            success: false,
-            error: 'Proactive nudges service not available'
-        });
-    }
-
-    try {
-        const userId = req.user?.id;
-        const { nudgeId, reason } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({
+router.post(
+    '/dismiss',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!proactiveNudges?.dismissNudge) {
+            return res.status(503).json({
                 success: false,
-                error: 'Unauthorized'
+                error: 'Proactive nudges service not available',
             });
         }
 
-        if (!nudgeId) {
-            return res.status(400).json({
+        try {
+            const userId = req.user?.id;
+            const { nudgeId, reason } = req.body;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized',
+                });
+            }
+
+            if (!nudgeId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'nudgeId is required',
+                });
+            }
+
+            await proactiveNudges.dismissNudge(userId, nudgeId, reason || 'not_now');
+
+            res.json({
+                success: true,
+            });
+        } catch (error: unknown) {
+            console.error('[AI Nudges] Error dismissing nudge:', error);
+            res.status(500).json({
                 success: false,
-                error: 'nudgeId is required'
+                error: error instanceof Error ? error.message : 'Unknown error',
             });
         }
-
-        await proactiveNudges.dismissNudge(userId, nudgeId, reason || 'not_now');
-
-        res.json({
-            success: true
-        });
-    } catch (error: unknown) {
-        console.error('[AI Nudges] Error dismissing nudge:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-}));
+    }),
+);
 
 /**
  * POST /api/ai/nudges/acted
  * Mark nudge as acted upon (user clicked "Yes, help")
  */
-router.post('/acted', asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!proactiveNudges?.markNudgeActed) {
-        return res.status(503).json({
-            success: false,
-            error: 'Proactive nudges service not available'
-        });
-    }
-
-    try {
-        const userId = req.user?.id;
-        const { nudgeId, action } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({
+router.post(
+    '/acted',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!proactiveNudges?.markNudgeActed) {
+            return res.status(503).json({
                 success: false,
-                error: 'Unauthorized'
+                error: 'Proactive nudges service not available',
             });
         }
 
-        if (!nudgeId) {
-            return res.status(400).json({
+        try {
+            const userId = req.user?.id;
+            const { nudgeId, action } = req.body;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized',
+                });
+            }
+
+            if (!nudgeId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'nudgeId is required',
+                });
+            }
+
+            await proactiveNudges.markNudgeActed(userId, nudgeId, action || 'accepted');
+
+            res.json({
+                success: true,
+            });
+        } catch (error: unknown) {
+            console.error('[AI Nudges] Error marking nudge as acted:', error);
+            res.status(500).json({
                 success: false,
-                error: 'nudgeId is required'
+                error: error instanceof Error ? error.message : 'Unknown error',
             });
         }
-
-        await proactiveNudges.markNudgeActed(userId, nudgeId, action || 'accepted');
-
-        res.json({
-            success: true
-        });
-    } catch (error: unknown) {
-        console.error('[AI Nudges] Error marking nudge as acted:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-}));
+    }),
+);
 
 /**
  * POST /api/ai/nudges/suppress
  * Suppress a type of nudge permanently (user clicked "Don't show again")
  */
-router.post('/suppress', asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!proactiveNudges?.suppressNudgeType) {
-        return res.status(503).json({
-            success: false,
-            error: 'Proactive nudges service not available'
-        });
-    }
-
-    try {
-        const userId = req.user?.id;
-        const { nudgeType, duration } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({
+router.post(
+    '/suppress',
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!proactiveNudges?.suppressNudgeType) {
+            return res.status(503).json({
                 success: false,
-                error: 'Unauthorized'
+                error: 'Proactive nudges service not available',
             });
         }
 
-        if (!nudgeType) {
-            return res.status(400).json({
+        try {
+            const userId = req.user?.id;
+            const { nudgeType, duration } = req.body;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized',
+                });
+            }
+
+            if (!nudgeType) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'nudgeType is required',
+                });
+            }
+
+            await proactiveNudges.suppressNudgeType(userId, nudgeType, duration || 'permanent');
+
+            res.json({
+                success: true,
+            });
+        } catch (error: unknown) {
+            console.error('[AI Nudges] Error suppressing nudge type:', error);
+            res.status(500).json({
                 success: false,
-                error: 'nudgeType is required'
+                error: error instanceof Error ? error.message : 'Unknown error',
             });
         }
-
-        await proactiveNudges.suppressNudgeType(userId, nudgeType, duration || 'permanent');
-
-        res.json({
-            success: true
-        });
-    } catch (error: unknown) {
-        console.error('[AI Nudges] Error suppressing nudge type:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-}));
+    }),
+);
 
 export default router;

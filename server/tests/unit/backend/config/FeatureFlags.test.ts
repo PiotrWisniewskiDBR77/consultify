@@ -1,11 +1,12 @@
 /**
  * FeatureFlags Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for FeatureFlags - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { loadFeatureFlags } from '../../../../src/config/FeatureFlags.js';
 
 describe('FeatureFlags', () => {
@@ -46,4 +47,3 @@ describe('FeatureFlags', () => {
         });
     });
 });
-

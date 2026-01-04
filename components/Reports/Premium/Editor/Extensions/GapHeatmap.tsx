@@ -1,14 +1,14 @@
 /**
  * GapHeatmap Extension
- * 
+ *
  * Custom TipTap node for embedding gap analysis heatmaps
  * showing maturity gaps across axes and sub-areas.
  */
 
-import { Node, mergeAttributes } from '@tiptap/core';
-import { NodeViewWrapper, NodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
+import { mergeAttributes, Node } from '@tiptap/core';
+import { NodeViewProps, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
+import { RefreshCw, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Settings, RefreshCw } from 'lucide-react';
 
 interface GapHeatmapAttrs {
     assessmentId: string | null;
@@ -53,12 +53,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
     const [isEditing, setIsEditing] = useState(false);
 
     const attrs = node.attrs as GapHeatmapAttrs;
-    const {
-        assessmentId,
-        showNumbers = true,
-        colorScheme = 'redGreen',
-        title = 'Analiza Luk'
-    } = attrs;
+    const { assessmentId, showNumbers = true, colorScheme = 'redGreen', title = 'Analiza Luk' } = attrs;
 
     // Fetch or use demo data
     useEffect(() => {
@@ -72,8 +67,8 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
                     { id: 'dataManagement', name: 'Zarządzanie Danymi', actual: 3.5, target: 5.5, gap: 2.0 },
                     { id: 'culture', name: 'Kultura', actual: 3.0, target: 4.5, gap: 1.5 },
                     { id: 'cybersecurity', name: 'Cyberbezpieczeństwo', actual: 4.0, target: 5.0, gap: 1.0 },
-                    { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0, gap: 2.0 }
-                ]
+                    { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0, gap: 2.0 },
+                ],
             });
             setIsLoading(false);
             return;
@@ -82,7 +77,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         const fetchData = async () => {
             try {
                 const response = await fetch(`/api/assessments/${assessmentId}/gaps`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (response.ok) {
                     const result = await response.json();
@@ -169,26 +164,37 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
                         <thead>
                             <tr>
                                 <th className="text-left py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">Oś</th>
-                                <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">Obecny</th>
-                                <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">Cel</th>
-                                <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">Luka</th>
-                                <th className="py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold w-48">Wizualizacja</th>
+                                <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
+                                    Obecny
+                                </th>
+                                <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
+                                    Cel
+                                </th>
+                                <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
+                                    Luka
+                                </th>
+                                <th className="py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold w-48">
+                                    Wizualizacja
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.axes.map((axis, idx) => (
-                                <tr key={axis.id} className={idx % 2 === 0 ? 'bg-white dark:bg-navy-900' : 'bg-slate-50 dark:bg-navy-800/50'}>
+                                <tr
+                                    key={axis.id}
+                                    className={
+                                        idx % 2 === 0 ? 'bg-white dark:bg-navy-900' : 'bg-slate-50 dark:bg-navy-800/50'
+                                    }
+                                >
                                     <td className="py-3 px-4 font-medium text-slate-900 dark:text-white">
                                         {axis.name}
                                     </td>
+                                    <td className="py-3 px-4 text-center">{showNumbers && axis.actual.toFixed(1)}</td>
+                                    <td className="py-3 px-4 text-center">{showNumbers && axis.target.toFixed(1)}</td>
                                     <td className="py-3 px-4 text-center">
-                                        {showNumbers && axis.actual.toFixed(1)}
-                                    </td>
-                                    <td className="py-3 px-4 text-center">
-                                        {showNumbers && axis.target.toFixed(1)}
-                                    </td>
-                                    <td className="py-3 px-4 text-center">
-                                        <span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg font-semibold ${getGapColor(axis.gap, colorScheme)}`}>
+                                        <span
+                                            className={`inline-flex items-center justify-center w-12 h-8 rounded-lg font-semibold ${getGapColor(axis.gap, colorScheme)}`}
+                                        >
                                             {axis.gap.toFixed(1)}
                                         </span>
                                     </td>
@@ -210,23 +216,27 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
                     </table>
                 </div>
             ) : (
-                <div className="flex items-center justify-center h-48 text-slate-400">
-                    Brak danych do wyświetlenia
-                </div>
+                <div className="flex items-center justify-center h-48 text-slate-400">Brak danych do wyświetlenia</div>
             )}
 
             {/* Legend */}
             <div className="mt-4 flex items-center justify-center gap-4 text-xs text-slate-500">
                 <span className="flex items-center gap-1">
-                    <span className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-green-200' : 'bg-blue-200'}`}></span>
+                    <span
+                        className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-green-200' : 'bg-blue-200'}`}
+                    ></span>
                     Mała luka (0-1)
                 </span>
                 <span className="flex items-center gap-1">
-                    <span className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-yellow-200' : 'bg-blue-300'}`}></span>
+                    <span
+                        className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-yellow-200' : 'bg-blue-300'}`}
+                    ></span>
                     Średnia (1-2)
                 </span>
                 <span className="flex items-center gap-1">
-                    <span className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-red-300' : 'bg-orange-400'}`}></span>
+                    <span
+                        className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-red-300' : 'bg-orange-400'}`}
+                    ></span>
                     Duża luka (2+)
                 </span>
             </div>
@@ -247,7 +257,7 @@ export const GapHeatmapExtension = Node.create({
             assessmentId: { default: null },
             showNumbers: { default: true },
             colorScheme: { default: 'redGreen' },
-            title: { default: 'Analiza Luk' }
+            title: { default: 'Analiza Luk' },
         };
     },
 
@@ -261,7 +271,7 @@ export const GapHeatmapExtension = Node.create({
 
     addNodeView() {
         return ReactNodeViewRenderer(GapHeatmapComponent);
-    }
+    },
 });
 
 export default GapHeatmapExtension;

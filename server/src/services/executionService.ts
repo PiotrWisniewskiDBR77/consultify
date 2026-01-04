@@ -1,14 +1,12 @@
 /**
  * Execution Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
-
 // Lazy load the JS service module
-const loadExecutionservice = createCachedLazyService('../../services/executionService.js');
+import service from '../../services/executionService.js';
 
 // Export default instance (for backward compatibility)
-export default loadExecutionservice();
+export default service;

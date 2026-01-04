@@ -13,7 +13,8 @@
  * @module server/services/approvalPatternService
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -519,6 +520,7 @@ const ApprovalPatternService = {
 };
 
 export default ApprovalPatternService;
+
 
 
 

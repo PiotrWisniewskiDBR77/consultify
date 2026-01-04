@@ -1,11 +1,12 @@
 /**
  * DunningService Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for DunningService - 85%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import DunningService from '../../../../src/services/dunningService.js';
 
@@ -37,7 +38,7 @@ describe('DunningService', () => {
                 stripe: { invoices: { pay: vi.fn() } },
                 EmailService: { send: vi.fn() },
                 NotificationService: { sendToAdmins: vi.fn() },
-                AuditService: { logSystemEvent: vi.fn() }
+                AuditService: { logSystemEvent: vi.fn() },
             });
         }
     });
@@ -53,7 +54,7 @@ describe('DunningService', () => {
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO dunning_status'),
                 expect.any(Array),
-                expect.any(Function)
+                expect.any(Function),
             );
         });
 
@@ -67,16 +68,18 @@ describe('DunningService', () => {
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining("UPDATE organizations SET status = 'suspended'"),
                 expect.any(Array),
-                expect.any(Function)
+                expect.any(Function),
             );
         });
     });
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                callback(new Error('Database error'));
-            });
+            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+                    callback(new Error('Database error'));
+                },
+            );
 
             expect(true).toBe(true);
         });

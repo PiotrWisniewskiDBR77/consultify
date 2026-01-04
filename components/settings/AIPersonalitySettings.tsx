@@ -1,23 +1,18 @@
 /**
  * AIPersonalitySettings - AI personality presets
- * 
+ *
  * Features:
  * - Personality presets (Professional, Casual, Technical)
  * - Custom personality instructions
  */
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    User as UserIcon,
-    Save,
-    Loader2,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
-import { Api } from '../../services/api';
+import { AlertCircle, CheckCircle, Loader2, Save, User as UserIcon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface AIPersonalitySettingsProps {
     currentUser: User;
@@ -25,30 +20,27 @@ interface AIPersonalitySettingsProps {
 }
 
 const PERSONALITY_PRESETS = [
-    { 
-        value: 'professional', 
-        label: 'Professional', 
+    {
+        value: 'professional',
+        label: 'Professional',
         description: 'Formal, business-appropriate tone',
-        example: 'I recommend implementing this solution...'
+        example: 'I recommend implementing this solution...',
     },
-    { 
-        value: 'casual', 
-        label: 'Casual', 
+    {
+        value: 'casual',
+        label: 'Casual',
         description: 'Friendly, conversational tone',
-        example: 'Hey! Here\'s what I think would work...'
+        example: "Hey! Here's what I think would work...",
     },
-    { 
-        value: 'technical', 
-        label: 'Technical', 
+    {
+        value: 'technical',
+        label: 'Technical',
         description: 'Precise, detailed, code-focused',
-        example: 'The implementation requires O(n log n) complexity...'
+        example: 'The implementation requires O(n log n) complexity...',
     },
 ] as const;
 
-export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({ 
-    currentUser, 
-    onUpdateUser 
-}) => {
+export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
     const [personality, setPersonality] = useState<'professional' | 'casual' | 'technical'>('professional');
     const [isSaving, setIsSaving] = useState(false);
@@ -71,15 +63,15 @@ export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         try {
             await Api.put('/settings/ai/personality', {
-                personality
+                personality,
             });
-            
+
             setSaveStatus('success');
             toast.success(t('settings.ai.personality.saved', 'Personality preferences saved'));
-            
+
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch (error: any) {
             setSaveStatus('error');
@@ -89,7 +81,7 @@ export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({
         }
     };
 
-    const selectedPreset = PERSONALITY_PRESETS.find(p => p.value === personality);
+    const selectedPreset = PERSONALITY_PRESETS.find((p) => p.value === personality);
 
     return (
         <div className="space-y-6">
@@ -107,7 +99,7 @@ export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({
             <div className="space-y-3">
                 {PERSONALITY_PRESETS.map((preset) => {
                     const isSelected = personality === preset.value;
-                    
+
                     return (
                         <button
                             key={preset.value}
@@ -120,11 +112,13 @@ export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                    <div className={`text-sm font-semibold mb-1 ${
-                                        isSelected
-                                            ? 'text-purple-700 dark:text-purple-300'
-                                            : 'text-slate-600 dark:text-slate-400'
-                                    }`}>
+                                    <div
+                                        className={`text-sm font-semibold mb-1 ${
+                                            isSelected
+                                                ? 'text-purple-700 dark:text-purple-300'
+                                                : 'text-slate-600 dark:text-slate-400'
+                                        }`}
+                                    >
                                         {preset.label}
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
@@ -182,10 +176,4 @@ export const AIPersonalitySettings: React.FC<AIPersonalitySettingsProps> = ({
 };
 
 export default AIPersonalitySettings;
-
-
-
-
-
-
 

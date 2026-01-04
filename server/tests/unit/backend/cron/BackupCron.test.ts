@@ -3,8 +3,9 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { startBackupJob, stopBackupJob, triggerManualBackup, getBackupCron } from '../../../../src/cron/BackupCron.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getBackupCron, startBackupJob, stopBackupJob, triggerManualBackup } from '../../../../src/cron/BackupCron.js';
 
 describe('BackupCron', () => {
     let mockBackupService: {
@@ -79,7 +80,7 @@ describe('BackupCron', () => {
             await expect(
                 triggerManualBackup('test-reason', {
                     backupService: mockBackupService,
-                })
+                }),
             ).rejects.toThrow('Backup failed');
         });
     });
@@ -108,7 +109,4 @@ describe('BackupCron', () => {
         });
     });
 });
-
-
-
 

@@ -1,6 +1,7 @@
+import { CheckCircle, Loader2, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+
 import { Api } from '../../services/api';
 
 /**
@@ -83,10 +84,7 @@ export const VerifyEmail: React.FC = () => {
                         </div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Verification Failed</h2>
                         <p className="text-slate-500 dark:text-slate-400 mb-6">{message}</p>
-                        <Link
-                            to="/login"
-                            className="text-blue-600 hover:text-blue-500 font-medium"
-                        >
+                        <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
                             Back to Login
                         </Link>
                     </div>

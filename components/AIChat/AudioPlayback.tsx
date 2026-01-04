@@ -1,20 +1,20 @@
 /**
  * AudioPlayback Component
- * 
+ *
  * Inline audio player for AI voice responses with:
  * - Progress bar with seek
  * - Speed control (0.5x - 2x)
  * - Pause/Play/Stop buttons
  * - Time display
  * - Compact and expanded variants
- * 
+ *
  * Part of the Universal Voice Conversation System
- * 
+ *
  * @version 1.0.0
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Square, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import { Pause, Play, RotateCcw, Square, Volume2, VolumeX } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // ============================================================================
 // Types
@@ -60,7 +60,7 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
     compact = false,
     className = '',
     showSpeedControl = true,
-    initialSpeed = 1
+    initialSpeed = 1,
 }) => {
     // State
     const [isPlaying, setIsPlaying] = useState(false);
@@ -181,7 +181,7 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
 
     const stop = useCallback(() => {
         if (!audioRef.current) return;
-        
+
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
         setIsPlaying(false);
@@ -191,22 +191,25 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
 
     const restart = useCallback(() => {
         if (!audioRef.current) return;
-        
+
         audioRef.current.currentTime = 0;
         audioRef.current.play();
     }, []);
 
-    const seek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (!audioRef.current || !progressRef.current) return;
+    const seek = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (!audioRef.current || !progressRef.current) return;
 
-        const rect = progressRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const percentage = x / rect.width;
-        const newTime = percentage * duration;
+            const rect = progressRef.current.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = x / rect.width;
+            const newTime = percentage * duration;
 
-        audioRef.current.currentTime = newTime;
-        setCurrentTime(newTime);
-    }, [duration]);
+            audioRef.current.currentTime = newTime;
+            setCurrentTime(newTime);
+        },
+        [duration],
+    );
 
     const cycleSpeed = useCallback(() => {
         const currentIndex = SPEED_OPTIONS.indexOf(speed);
@@ -220,7 +223,9 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
 
     if (error) {
         return (
-            <div className={`flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 text-sm ${className}`}>
+            <div
+                className={`flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 text-sm ${className}`}
+            >
                 <VolumeX size={16} />
                 <span>{error}</span>
             </div>
@@ -232,22 +237,16 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
         return (
             <div className={`inline-flex items-center gap-1 ${className}`}>
                 <audio ref={audioRef} src={src} preload="metadata" />
-                
+
                 <button
                     onClick={togglePlay}
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400"
                     disabled={isLoading}
                 >
-                    {isPlaying && !isPaused ? (
-                        <Pause size={16} />
-                    ) : (
-                        <Play size={16} />
-                    )}
+                    {isPlaying && !isPaused ? <Pause size={16} /> : <Play size={16} />}
                 </button>
 
-                <span className="text-xs text-slate-500 tabular-nums min-w-[40px]">
-                    {formatTime(currentTime)}
-                </span>
+                <span className="text-xs text-slate-500 tabular-nums min-w-[40px]">{formatTime(currentTime)}</span>
 
                 {showSpeedControl && (
                     <button
@@ -277,7 +276,7 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
                     className="absolute h-full bg-slate-300 dark:bg-slate-600 rounded-full"
                     style={{ width: `${progress}%` }}
                 />
-                
+
                 {/* Progress */}
                 <div
                     className="absolute h-full bg-primary-500 rounded-full transition-all"
@@ -310,9 +309,10 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
                         disabled={isLoading}
                         className={`
                             p-2 rounded-lg transition-colors
-                            ${isPlaying && !isPaused
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/20'
+                            ${
+                                isPlaying && !isPaused
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/20'
                             }
                         `}
                         title={isPlaying && !isPaused ? 'Pause' : 'Play'}
@@ -361,9 +361,10 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
                         onClick={() => setIsMuted(!isMuted)}
                         className={`
                             p-1.5 rounded-lg transition-colors
-                            ${isMuted
-                                ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+                            ${
+                                isMuted
+                                    ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
                             }
                         `}
                         title={isMuted ? 'Unmute' : 'Mute'}
@@ -377,12 +378,4 @@ export const AudioPlayback: React.FC<AudioPlaybackProps> = ({
 };
 
 export default AudioPlayback;
-
-
-
-
-
-
-
-
 

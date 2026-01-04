@@ -1,10 +1,11 @@
+import { CheckCircle2, ChevronRight, Circle, Loader2 } from 'lucide-react';
 import React from 'react';
-import { CheckCircle2, Circle, ChevronRight, Loader2 } from 'lucide-react';
-import { useJourneyProgress, PhaseProgress } from '../../hooks/useJourneyProgress';
+
+import { PhaseProgress, useJourneyProgress } from '../../hooks/useJourneyProgress';
 
 /**
  * JourneyProgressBar — Global progress indicator
- * 
+ *
  * Shows user's progress through phases A-F
  * with next action suggestion.
  */
@@ -60,9 +61,7 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
                 </div>
 
                 {/* Label */}
-                <span className={`text-[10px] font-medium mt-1.5 ${classes.text}`}>
-                    {phase.phaseName}
-                </span>
+                <span className={`text-[10px] font-medium mt-1.5 ${classes.text}`}>{phase.phaseName}</span>
 
                 {/* Progress indicator for current phase */}
                 {isCurrent && phase.progress > 0 && phase.progress < 100 && (
@@ -76,9 +75,7 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
             </div>
 
             {/* Connector line */}
-            {!isLast && (
-                <div className={`w-8 h-0.5 mx-1 ${classes.line} transition-colors`} />
-            )}
+            {!isLast && <div className={`w-8 h-0.5 mx-1 ${classes.line} transition-colors`} />}
         </div>
     );
 };
@@ -133,21 +130,25 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
     }
 
     return (
-        <div className={`bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 ${className}`}>
+        <div
+            className={`bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 ${className}`}
+        >
             {/* Phase timeline */}
             <div className="flex items-start justify-between mb-4">
                 {PHASE_ORDER.map((phaseKey, index) => (
                     <PhaseNode
                         key={phaseKey}
-                        phase={progress.phases[phaseKey] || {
-                            phase: phaseKey,
-                            phaseName: phaseKey,
-                            isCompleted: false,
-                            isActivated: false,
-                            completedMilestones: [],
-                            totalMilestones: 0,
-                            progress: 0,
-                        }}
+                        phase={
+                            progress.phases[phaseKey] || {
+                                phase: phaseKey,
+                                phaseName: phaseKey,
+                                isCompleted: false,
+                                isActivated: false,
+                                completedMilestones: [],
+                                totalMilestones: 0,
+                                progress: 0,
+                            }
+                        }
                         isCurrent={progress.currentPhase === phaseKey}
                         isLast={index === PHASE_ORDER.length - 1}
                     />
@@ -159,9 +160,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-2">
                         <Circle size={8} className="text-purple-500 fill-purple-500" />
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                            Następny krok:
-                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Następny krok:</span>
                         <span className="text-xs font-medium text-navy-900 dark:text-white">
                             {progress.nextAction.label}
                         </span>

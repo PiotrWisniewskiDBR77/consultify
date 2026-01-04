@@ -1,22 +1,23 @@
 /**
  * Tasks Routes
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * All task-related API endpoints with Zod validation
  */
 
 import { Router } from 'express';
+
+import TaskController from '../controllers/TaskController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import TaskController from '../controllers/TaskController.js';
 import {
-    CreateTaskSchema,
-    UpdateTaskSchema,
-    AssignTaskSchema,
-    ReassignTaskSchema,
-    EscalateTaskSchema,
-    ResolveEscalationSchema,
     AddTaskCommentSchema,
+    AssignTaskSchema,
+    CreateTaskSchema,
+    EscalateTaskSchema,
+    ReassignTaskSchema,
+    ResolveEscalationSchema,
+    UpdateTaskSchema,
 } from '../validators/task.validators.js';
 
 const router = Router();
@@ -32,17 +33,13 @@ router.use(verifyToken);
  * GET /api/tasks
  * Get all tasks with filters
  */
-router.get('/', TaskController.getTasks);
+router.get('/', (req, res, next) => { console.log('[TasksRoute] GET / matched'); next(); }, TaskController.getTasks);
 
 /**
  * POST /api/tasks
  * Create a new task
  */
-router.post(
-    '/',
-    validateBody(CreateTaskSchema),
-    TaskController.createTask
-);
+router.post('/', validateBody(CreateTaskSchema), TaskController.createTask);
 
 /**
  * GET /api/tasks/:id
@@ -54,11 +51,7 @@ router.get('/:id', TaskController.getTaskById);
  * PUT /api/tasks/:id
  * Update task
  */
-router.put(
-    '/:id',
-    validateBody(UpdateTaskSchema),
-    TaskController.updateTask
-);
+router.put('/:id', validateBody(UpdateTaskSchema), TaskController.updateTask);
 
 /**
  * DELETE /api/tasks/:id
@@ -80,11 +73,7 @@ router.get('/:taskId/comments', TaskController.getTaskComments);
  * POST /api/tasks/:taskId/comments
  * Add comment to task
  */
-router.post(
-    '/:taskId/comments',
-    validateBody(AddTaskCommentSchema),
-    TaskController.addTaskComment
-);
+router.post('/:taskId/comments', validateBody(AddTaskCommentSchema), TaskController.addTaskComment);
 
 /**
  * DELETE /api/tasks/:taskId/comments/:commentId
@@ -100,21 +89,13 @@ router.delete('/:taskId/comments/:commentId', TaskController.deleteTaskComment);
  * POST /api/tasks/:id/assign
  * Assign task to user
  */
-router.post(
-    '/:id/assign',
-    validateBody(AssignTaskSchema),
-    TaskController.assignTask
-);
+router.post('/:id/assign', validateBody(AssignTaskSchema), TaskController.assignTask);
 
 /**
  * POST /api/tasks/:id/reassign
  * Reassign task
  */
-router.post(
-    '/:id/reassign',
-    validateBody(ReassignTaskSchema),
-    TaskController.reassignTask
-);
+router.post('/:id/reassign', validateBody(ReassignTaskSchema), TaskController.reassignTask);
 
 /**
  * POST /api/tasks/:id/unassign
@@ -126,11 +107,7 @@ router.post('/:id/unassign', TaskController.unassignTask);
  * POST /api/tasks/:id/escalate
  * Escalate task
  */
-router.post(
-    '/:id/escalate',
-    validateBody(EscalateTaskSchema),
-    TaskController.escalateTask
-);
+router.post('/:id/escalate', validateBody(EscalateTaskSchema), TaskController.escalateTask);
 
 /**
  * POST /api/tasks/:taskId/escalations/:escalationId/resolve
@@ -139,7 +116,7 @@ router.post(
 router.post(
     '/:taskId/escalations/:escalationId/resolve',
     validateBody(ResolveEscalationSchema),
-    TaskController.resolveEscalation
+    TaskController.resolveEscalation,
 );
 
 /**

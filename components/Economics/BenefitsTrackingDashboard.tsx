@@ -1,23 +1,46 @@
 /**
  * Benefits Tracking Dashboard
- * 
+ *
  * Comprehensive dashboard for tracking planned vs actual benefits realization.
  * Includes variance analysis, trend visualization, and measurement entry.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-    TrendingUp, TrendingDown, Target, AlertTriangle,
-    Plus, Calendar, Check, X, Loader2, BarChart2,
-    ArrowUpRight, ArrowDownRight, Minus, Edit2, Trash2
+import {
+    AlertTriangle,
+    ArrowDownRight,
+    ArrowUpRight,
+    BarChart2,
+    Calendar,
+    Check,
+    Edit2,
+    Loader2,
+    Minus,
+    Plus,
+    Target,
+    Trash2,
+    TrendingDown,
+    TrendingUp,
+    X,
 } from 'lucide-react';
-import { 
-    BarChart, Bar, LineChart, Line, XAxis, YAxis, 
-    CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    ComposedChart, Area, ReferenceLine
-} from 'recharts';
-import { Api } from '../../services/api';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import {
+    Area,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    ComposedChart,
+    Legend,
+    Line,
+    LineChart,
+    ReferenceLine,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
+
+import { Api } from '../../services/api';
 
 interface BenefitTrackingEntry {
     id: string;
@@ -41,7 +64,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
     analysisId,
     analysisName,
     currency = 'PLN',
-    onClose
+    onClose,
 }) => {
     const [benefits, setBenefits] = useState<BenefitTrackingEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +93,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         return new Intl.NumberFormat('pl-PL', {
             style: 'currency',
             currency,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(value);
     };
 
@@ -89,7 +112,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 trend: 'neutral' as const,
                 periodsOnTrack: 0,
                 periodsBehind: 0,
-                periodsAhead: 0
+                periodsAhead: 0,
             };
         }
 
@@ -98,15 +121,15 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         const totalVariance = totalActual - totalPlanned;
         const variancePercent = totalPlanned > 0 ? (totalVariance / totalPlanned) * 100 : 0;
 
-        const periodsOnTrack = benefits.filter(b => Math.abs(b.variance) <= b.plannedBenefits * 0.1).length;
-        const periodsBehind = benefits.filter(b => b.variance < -b.plannedBenefits * 0.1).length;
-        const periodsAhead = benefits.filter(b => b.variance > b.plannedBenefits * 0.1).length;
+        const periodsOnTrack = benefits.filter((b) => Math.abs(b.variance) <= b.plannedBenefits * 0.1).length;
+        const periodsBehind = benefits.filter((b) => b.variance < -b.plannedBenefits * 0.1).length;
+        const periodsAhead = benefits.filter((b) => b.variance > b.plannedBenefits * 0.1).length;
 
         // Determine trend from last 3 periods
         const recentBenefits = benefits.slice(-3);
         let trend: 'up' | 'down' | 'neutral' = 'neutral';
         if (recentBenefits.length >= 2) {
-            const variances = recentBenefits.map(b => b.variance);
+            const variances = recentBenefits.map((b) => b.variance);
             const avgVariance = variances.reduce((a, b) => a + b, 0) / variances.length;
             trend = avgVariance > 0 ? 'up' : avgVariance < 0 ? 'down' : 'neutral';
         }
@@ -119,21 +142,22 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
             trend,
             periodsOnTrack,
             periodsBehind,
-            periodsAhead
+            periodsAhead,
         };
     }, [benefits]);
 
     // Prepare chart data
     const chartData = useMemo(() => {
-        return benefits.map(b => ({
-            period: b.trackingPeriod,
-            planned: b.plannedBenefits,
-            actual: b.actualBenefits,
-            variance: b.variance,
-            variancePercent: b.plannedBenefits > 0 
-                ? ((b.actualBenefits - b.plannedBenefits) / b.plannedBenefits) * 100 
-                : 0
-        })).sort((a, b) => a.period.localeCompare(b.period));
+        return benefits
+            .map((b) => ({
+                period: b.trackingPeriod,
+                planned: b.plannedBenefits,
+                actual: b.actualBenefits,
+                variance: b.variance,
+                variancePercent:
+                    b.plannedBenefits > 0 ? ((b.actualBenefits - b.plannedBenefits) / b.plannedBenefits) * 100 : 0,
+            }))
+            .sort((a, b) => a.period.localeCompare(b.period));
     }, [benefits]);
 
     const handleSaveMeasurement = async (data: {
@@ -143,11 +167,11 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
     }) => {
         try {
             await Api.updateAnalysisBenefits(analysisId, data as any);
-            
+
             // Reload benefits
             const response = await Api.getAnalysisBenefits(analysisId);
             setBenefits(response.benefits || []);
-            
+
             setShowMeasurementModal(false);
             setEditingEntry(null);
             toast.success('Pomiar zapisany');
@@ -176,7 +200,9 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                         </div>
                         <div className="flex justify-between gap-4">
                             <span className="text-slate-500">Realizacja:</span>
-                            <span className={`font-medium ${data.actual >= data.planned ? 'text-emerald-600' : 'text-red-600'}`}>
+                            <span
+                                className={`font-medium ${data.actual >= data.planned ? 'text-emerald-600' : 'text-red-600'}`}
+                            >
                                 {formatCurrency(data.actual)}
                             </span>
                         </div>
@@ -210,9 +236,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                         <Target size={24} className="text-emerald-500" />
                         Śledzenie korzyści
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {analysisName}
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{analysisName}</p>
                 </div>
                 <button
                     onClick={() => setShowMeasurementModal(true)}
@@ -234,7 +258,9 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 <SummaryCard
                     title="Realizacja"
                     value={formatCurrency(stats.totalActual)}
-                    icon={stats.totalActual >= stats.totalPlanned ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                    icon={
+                        stats.totalActual >= stats.totalPlanned ? <TrendingUp size={20} /> : <TrendingDown size={20} />
+                    }
                     color={stats.totalActual >= stats.totalPlanned ? 'green' : 'red'}
                 />
                 <SummaryCard
@@ -264,21 +290,21 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                         <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
                             <XAxis dataKey="period" tick={{ fill: '#64748b', fontSize: 12 }} />
-                            <YAxis 
-                                tickFormatter={(value) => formatCurrency(value).replace(' PLN', 'k')} 
+                            <YAxis
+                                tickFormatter={(value) => formatCurrency(value).replace(' PLN', 'k')}
                                 tick={{ fill: '#64748b', fontSize: 12 }}
                             />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend />
                             <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
-                            
+
                             <Bar dataKey="planned" name="Plan" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
                             <Bar dataKey="actual" name="Realizacja" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
-                            <Line 
-                                type="monotone" 
-                                dataKey="variance" 
-                                name="Odchylenie" 
-                                stroke="#f59e0b" 
+                            <Line
+                                type="monotone"
+                                dataKey="variance"
+                                name="Odchylenie"
+                                stroke="#f59e0b"
                                 strokeWidth={2}
                                 dot={{ fill: '#f59e0b', r: 4 }}
                             />
@@ -290,17 +316,13 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
             {/* Tracking History Table */}
             <div className="bg-white dark:bg-navy-800 rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5">
-                    <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                        Historia pomiarów
-                    </h3>
+                    <h3 className="text-lg font-bold text-navy-900 dark:text-white">Historia pomiarów</h3>
                 </div>
-                
+
                 {benefits.length === 0 ? (
                     <div className="p-12 text-center">
                         <Target size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-                        <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
-                            Brak pomiarów
-                        </h4>
+                        <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">Brak pomiarów</h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                             Rozpocznij śledzenie korzyści dodając pierwszy pomiar
                         </p>
@@ -338,12 +360,14 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {benefits.map((entry) => {
-                                    const variancePercent = entry.plannedBenefits > 0 
-                                        ? ((entry.actualBenefits - entry.plannedBenefits) / entry.plannedBenefits) * 100 
-                                        : 0;
+                                    const variancePercent =
+                                        entry.plannedBenefits > 0
+                                            ? ((entry.actualBenefits - entry.plannedBenefits) / entry.plannedBenefits) *
+                                              100
+                                            : 0;
                                     const isOnTrack = Math.abs(variancePercent) <= 10;
                                     const isAhead = variancePercent > 10;
-                                    
+
                                     return (
                                         <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -360,23 +384,29 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <span className={`font-medium ${entry.actualBenefits >= entry.plannedBenefits ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                <span
+                                                    className={`font-medium ${entry.actualBenefits >= entry.plannedBenefits ? 'text-emerald-600' : 'text-red-600'}`}
+                                                >
                                                     {formatCurrency(entry.actualBenefits)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <span className={`font-bold ${entry.variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                <span
+                                                    className={`font-bold ${entry.variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                                >
                                                     {formatPercent(variancePercent)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                    isOnTrack 
-                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                                        : isAhead 
-                                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                                                        : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
-                                                }`}>
+                                                <span
+                                                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                        isOnTrack
+                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                                            : isAhead
+                                                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                                                              : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                                                    }`}
+                                                >
                                                     {isOnTrack ? 'Zgodny' : isAhead ? 'Powyżej' : 'Poniżej'}
                                                 </span>
                                             </td>
@@ -425,7 +455,7 @@ const SummaryCard: React.FC<{
         blue: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400',
         green: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
         red: 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400',
-        orange: 'bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20 text-orange-600 dark:text-orange-400'
+        orange: 'bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20 text-orange-600 dark:text-orange-400',
     };
 
     return (
@@ -457,12 +487,12 @@ const MeasurementModal: React.FC<{
         const now = new Date();
         const year = now.getFullYear();
         const quarter = Math.floor(now.getMonth() / 3) + 1;
-        
+
         return [
             `Q${quarter} ${year}`,
             `Q${quarter > 1 ? quarter - 1 : 4} ${quarter > 1 ? year : year - 1}`,
             `Miesiąc ${now.getMonth() + 1}/${year}`,
-            `Rok ${year}`
+            `Rok ${year}`,
         ];
     }, []);
 
@@ -478,7 +508,7 @@ const MeasurementModal: React.FC<{
             await onSave({
                 trackingPeriod: trackingPeriod.trim(),
                 plannedBenefits,
-                actualBenefits
+                actualBenefits,
             });
         } finally {
             setIsSaving(false);
@@ -515,7 +545,7 @@ const MeasurementModal: React.FC<{
                                 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-navy-900 dark:text-white"
                         />
                         <div className="flex flex-wrap gap-2 mt-2">
-                            {periodSuggestions.map(suggestion => (
+                            {periodSuggestions.map((suggestion) => (
                                 <button
                                     key={suggestion}
                                     type="button"
@@ -560,15 +590,19 @@ const MeasurementModal: React.FC<{
 
                     {/* Variance Preview */}
                     {plannedBenefits > 0 && (
-                        <div className={`p-4 rounded-lg ${
-                            actualBenefits >= plannedBenefits 
-                                ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30'
-                                : 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30'
-                        }`}>
+                        <div
+                            className={`p-4 rounded-lg ${
+                                actualBenefits >= plannedBenefits
+                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30'
+                                    : 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30'
+                            }`}
+                        >
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-slate-600 dark:text-slate-400">Odchylenie:</span>
-                                <span className={`font-bold ${actualBenefits >= plannedBenefits ? 'text-emerald-600' : 'text-red-600'}`}>
-                                    {((actualBenefits - plannedBenefits) / plannedBenefits * 100).toFixed(1)}%
+                                <span
+                                    className={`font-bold ${actualBenefits >= plannedBenefits ? 'text-emerald-600' : 'text-red-600'}`}
+                                >
+                                    {(((actualBenefits - plannedBenefits) / plannedBenefits) * 100).toFixed(1)}%
                                 </span>
                             </div>
                         </div>
@@ -608,11 +642,3 @@ const MeasurementModal: React.FC<{
 };
 
 export default BenefitsTrackingDashboard;
-
-
-
-
-
-
-
-

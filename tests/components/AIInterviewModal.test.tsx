@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AIInterviewModal } from '../../../components/AIInterviewModal';
+import { AIInterviewModal } from '../../components/AIInterviewModal';
 import { Agent } from '../../../services/ai/agent';
 
 vi.mock('../../../services/ai/agent', () => ({
@@ -123,6 +123,7 @@ describe('AIInterviewModal Component', () => {
         expect(mockOnClose).toHaveBeenCalled();
     });
 });
+
 
 
 

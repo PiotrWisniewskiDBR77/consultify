@@ -1,7 +1,7 @@
-import React from 'react';
-import { ShieldCheck, Lock, Server, Key, Globe, Award } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { Award, Globe, Key, Lock, Server, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * TrustStrip - Horizontal trust badges strip for landing page
@@ -101,7 +101,7 @@ export const TrustStrip: React.FC = () => {
                 </div>
 
                 {/* Data Residency Options */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.4 }}
@@ -110,17 +110,21 @@ export const TrustStrip: React.FC = () => {
                 >
                     <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                         <Globe size={14} className="text-purple-500" />
-                        <span className="font-medium">{t('landing.compliance.dataResidency', 'Data Residency Options:')}</span>
+                        <span className="font-medium">
+                            {t('landing.compliance.dataResidency', 'Data Residency Options:')}
+                        </span>
                     </div>
                     <div className="flex flex-wrap items-center justify-center gap-3">
                         {regions.map((region, idx) => (
-                            <div 
+                            <div
                                 key={idx}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/10 text-xs"
                             >
                                 <span className="text-base">{region.flag}</span>
                                 <span className="font-semibold text-slate-700 dark:text-slate-300">{region.name}</span>
-                                <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">({region.label})</span>
+                                <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">
+                                    ({region.label})
+                                </span>
                             </div>
                         ))}
                     </div>
@@ -129,7 +133,10 @@ export const TrustStrip: React.FC = () => {
                 {/* Additional Trust Text */}
                 <div className="text-center mt-6">
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {t('landing.compliance.dataNote', 'Your data stays in your chosen region • No AI training on your data • Full regulatory compliance')}
+                        {t(
+                            'landing.compliance.dataNote',
+                            'Your data stays in your chosen region • No AI training on your data • Full regulatory compliance',
+                        )}
                     </p>
                 </div>
             </div>

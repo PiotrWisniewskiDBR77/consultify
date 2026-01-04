@@ -1,32 +1,33 @@
 /**
  * DataExportPanel - Data Export Management
- * 
+ *
  * Features:
  * - Export request form
  * - Export history
  * - Download links (with expiry)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Download,
-    FileArchive,
-    Plus,
-    RefreshCw,
-    Clock,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
-    Loader2,
     Building2,
     Calendar,
+    CheckCircle2,
+    Clock,
+    Download,
+    FileArchive,
     HardDrive,
-    User,
+    Loader2,
+    Plus,
+    RefreshCw,
     Search,
-    Trash2
+    Trash2,
+    User,
+    XCircle,
 } from 'lucide-react';
-import { Api } from '../../../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../services/api';
 
 interface ExportRequest {
     id: string;
@@ -77,8 +78,8 @@ export const DataExportPanel: React.FC = () => {
         excludeData: string[];
     }>({
         exportType: 'full',
-        includeData: DATA_TYPES.map(d => d.id),
-        excludeData: []
+        includeData: DATA_TYPES.map((d) => d.id),
+        excludeData: [],
     });
     const [creating, setCreating] = useState(false);
 
@@ -91,7 +92,7 @@ export const DataExportPanel: React.FC = () => {
 
             const [requestsResult, orgsResult] = await Promise.all([
                 Api.get(`/data-export/requests?${params.toString()}`),
-                Api.getOrganizations()
+                Api.getOrganizations(),
             ]);
             setRequests(requestsResult.requests || []);
             setOrganizations(orgsResult || []);
@@ -145,15 +146,21 @@ export const DataExportPanel: React.FC = () => {
     const getStatusBadge = (status: string) => {
         const configs: Record<string, { icon: React.ReactNode; bg: string; text: string }> = {
             pending: { icon: <Clock size={14} />, bg: 'bg-slate-500/20', text: 'text-slate-400' },
-            processing: { icon: <Loader2 size={14} className="animate-spin" />, bg: 'bg-blue-500/20', text: 'text-blue-400' },
+            processing: {
+                icon: <Loader2 size={14} className="animate-spin" />,
+                bg: 'bg-blue-500/20',
+                text: 'text-blue-400',
+            },
             completed: { icon: <CheckCircle2 size={14} />, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
             failed: { icon: <XCircle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
-            expired: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' }
+            expired: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' },
         };
         const config = configs[status] || configs.pending;
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+            <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+            >
                 {config.icon}
                 {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
@@ -164,7 +171,7 @@ export const DataExportPanel: React.FC = () => {
         const colors: Record<string, string> = {
             full: 'bg-violet-500/20 text-violet-400',
             partial: 'bg-blue-500/20 text-blue-400',
-            gdpr: 'bg-emerald-500/20 text-emerald-400'
+            gdpr: 'bg-emerald-500/20 text-emerald-400',
         };
         return (
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[type] || colors.full}`}>
@@ -184,8 +191,10 @@ export const DataExportPanel: React.FC = () => {
                         className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
                     >
                         <option value="">All Organizations</option>
-                        {organizations.map(org => (
-                            <option key={org.id} value={org.id}>{org.name}</option>
+                        {organizations.map((org) => (
+                            <option key={org.id} value={org.id}>
+                                {org.name}
+                            </option>
                         ))}
                     </select>
 
@@ -231,7 +240,7 @@ export const DataExportPanel: React.FC = () => {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {requests.map(request => (
+                    {requests.map((request) => (
                         <div key={request.id} className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-5">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
@@ -316,15 +325,16 @@ export const DataExportPanel: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Export Type</label>
                                 <div className="flex gap-3">
-                                    {(['full', 'partial'] as const).map(type => (
+                                    {(['full', 'partial'] as const).map((type) => (
                                         <button
                                             key={type}
                                             type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, exportType: type }))}
-                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${formData.exportType === type
+                                            onClick={() => setFormData((prev) => ({ ...prev, exportType: type }))}
+                                            className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
+                                                formData.exportType === type
                                                     ? 'bg-violet-500/20 border-violet-500/50 text-violet-400'
                                                     : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'
-                                                }`}
+                                            }`}
                                         >
                                             {type.charAt(0).toUpperCase() + type.slice(1)}
                                         </button>
@@ -335,28 +345,35 @@ export const DataExportPanel: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Include Data</label>
                                 <div className="max-h-64 overflow-y-auto bg-slate-800/50 rounded-lg p-3 space-y-2">
-                                    {DATA_TYPES.map(dataType => (
-                                        <label key={dataType.id} className="flex items-start gap-3 cursor-pointer group">
+                                    {DATA_TYPES.map((dataType) => (
+                                        <label
+                                            key={dataType.id}
+                                            className="flex items-start gap-3 cursor-pointer group"
+                                        >
                                             <input
                                                 type="checkbox"
                                                 checked={formData.includeData.includes(dataType.id)}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        setFormData(prev => ({
+                                                        setFormData((prev) => ({
                                                             ...prev,
-                                                            includeData: [...prev.includeData, dataType.id]
+                                                            includeData: [...prev.includeData, dataType.id],
                                                         }));
                                                     } else {
-                                                        setFormData(prev => ({
+                                                        setFormData((prev) => ({
                                                             ...prev,
-                                                            includeData: prev.includeData.filter(d => d !== dataType.id)
+                                                            includeData: prev.includeData.filter(
+                                                                (d) => d !== dataType.id,
+                                                            ),
                                                         }));
                                                     }
                                                 }}
                                                 className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-500"
                                             />
                                             <div>
-                                                <span className="text-sm text-slate-300 group-hover:text-white">{dataType.label}</span>
+                                                <span className="text-sm text-slate-300 group-hover:text-white">
+                                                    {dataType.label}
+                                                </span>
                                                 <p className="text-xs text-slate-500">{dataType.description}</p>
                                             </div>
                                         </label>
@@ -389,10 +406,4 @@ export const DataExportPanel: React.FC = () => {
 };
 
 export default DataExportPanel;
-
-
-
-
-
-
 

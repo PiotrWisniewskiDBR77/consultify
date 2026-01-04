@@ -3,10 +3,11 @@
  * Handles OAuth user creation, linking, and token generation
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import jwt from 'jsonwebtoken';
 import config from '../config.js';
-import ActivityService from './activityService.js';
+import ActivityService from '../src/services/ActivityService.js';
 import { v4 as uuidv4 } from 'uuid';
 
 

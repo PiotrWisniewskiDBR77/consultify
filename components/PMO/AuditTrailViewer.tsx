@@ -1,10 +1,25 @@
 // components/PMO/AuditTrailViewer.tsx
 // Audit Trail Viewer for PMO Standards Compliance
 
-import React, { useState, useEffect } from 'react';
-import { FileText, Search, Filter, Download, Calendar, User, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronRight, Shield, BookOpen } from 'lucide-react';
-import { Api } from '../../services/api';
+import {
+    AlertCircle,
+    BookOpen,
+    Calendar,
+    CheckCircle,
+    ChevronDown,
+    ChevronRight,
+    Clock,
+    Download,
+    FileText,
+    Filter,
+    Search,
+    Shield,
+    User,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { Api } from '../../services/api';
 
 interface AuditEntry {
     id: string;
@@ -28,20 +43,20 @@ interface AuditTrailViewerProps {
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
-    'GOVERNANCE_DECISION_MAKING': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    'SCOPE_CHANGE_CONTROL': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    'SCHEDULE_MILESTONES': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    'RESOURCE_RESPONSIBILITY': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-    'RISK_ISSUE_MANAGEMENT': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    'PERFORMANCE_REPORTING': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300'
+    GOVERNANCE_DECISION_MAKING: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    SCOPE_CHANGE_CONTROL: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    SCHEDULE_MILESTONES: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+    RESOURCE_RESPONSIBILITY: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    RISK_ISSUE_MANAGEMENT: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    PERFORMANCE_REPORTING: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
 };
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
-    'created': <CheckCircle size={14} className="text-green-500" />,
-    'updated': <Clock size={14} className="text-blue-500" />,
-    'deleted': <AlertCircle size={14} className="text-red-500" />,
-    'approved': <Shield size={14} className="text-purple-500" />,
-    'rejected': <AlertCircle size={14} className="text-orange-500" />
+    created: <CheckCircle size={14} className="text-green-500" />,
+    updated: <Clock size={14} className="text-blue-500" />,
+    deleted: <AlertCircle size={14} className="text-red-500" />,
+    approved: <Shield size={14} className="text-purple-500" />,
+    rejected: <AlertCircle size={14} className="text-orange-500" />,
 };
 
 export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId }) => {
@@ -80,7 +95,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     pmbokMapping: 'Project Decision / Authorization',
                     prince2Mapping: 'Project Board Decision',
                     createdAt: new Date().toISOString(),
-                    details: { decision: 'Approve Phase 1 Budget', value: '€250,000' }
+                    details: { decision: 'Approve Phase 1 Budget', value: '€250,000' },
                 },
                 {
                     id: '2',
@@ -96,7 +111,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     pmbokMapping: 'Change Request',
                     prince2Mapping: 'Request for Change (RFC)',
                     createdAt: new Date(Date.now() - 3600000).toISOString(),
-                    details: { title: 'Extend pilot timeline by 2 weeks', impact: 'Medium' }
+                    details: { title: 'Extend pilot timeline by 2 weeks', impact: 'Medium' },
                 },
                 {
                     id: '3',
@@ -112,8 +127,8 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     pmbokMapping: 'Project Schedule',
                     prince2Mapping: 'Project Plan / Stage Plan',
                     createdAt: new Date(Date.now() - 86400000).toISOString(),
-                    details: { change: 'Resequenced Q2 initiatives' }
-                }
+                    details: { change: 'Resequenced Q2 initiatives' },
+                },
             ]);
         } finally {
             setLoading(false);
@@ -134,7 +149,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         try {
             toast.loading('Generating audit report...');
             // In production, this would call an API to generate PDF/Excel
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             toast.dismiss();
             toast.success('Audit report downloaded');
         } catch (err) {
@@ -142,10 +157,13 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         }
     };
 
-    const filteredEntries = entries.filter(entry => {
-        if (searchTerm && !entry.objectType.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    const filteredEntries = entries.filter((entry) => {
+        if (
+            searchTerm &&
+            !entry.objectType.toLowerCase().includes(searchTerm.toLowerCase()) &&
             !entry.action.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !entry.actorName?.toLowerCase().includes(searchTerm.toLowerCase())) {
+            !entry.actorName?.toLowerCase().includes(searchTerm.toLowerCase())
+        ) {
             return false;
         }
         if (selectedDomain && entry.pmoDomainId !== selectedDomain) return false;
@@ -168,8 +186,8 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         return date.toLocaleDateString();
     };
 
-    const uniqueDomains = Array.from(new Set(entries.map(e => e.pmoDomainId)));
-    const uniqueActions = Array.from(new Set(entries.map(e => e.action)));
+    const uniqueDomains = Array.from(new Set(entries.map((e) => e.pmoDomainId)));
+    const uniqueActions = Array.from(new Set(entries.map((e) => e.action)));
 
     return (
         <div className="space-y-6">
@@ -226,8 +244,10 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                     <option value="">All Domains</option>
-                    {uniqueDomains.map(domain => (
-                        <option key={domain} value={domain}>{domain.replace(/_/g, ' ')}</option>
+                    {uniqueDomains.map((domain) => (
+                        <option key={domain} value={domain}>
+                            {domain.replace(/_/g, ' ')}
+                        </option>
                     ))}
                 </select>
 
@@ -238,8 +258,10 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                     <option value="">All Actions</option>
-                    {uniqueActions.map(action => (
-                        <option key={action} value={action}>{action}</option>
+                    {uniqueActions.map((action) => (
+                        <option key={action} value={action}>
+                            {action}
+                        </option>
                     ))}
                 </select>
             </div>
@@ -251,11 +273,15 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     <div className="text-xs text-slate-500">Total Entries</div>
                 </div>
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-white/5">
-                    <div className="text-2xl font-bold text-green-600">{entries.filter(e => e.action === 'approved').length}</div>
+                    <div className="text-2xl font-bold text-green-600">
+                        {entries.filter((e) => e.action === 'approved').length}
+                    </div>
                     <div className="text-xs text-slate-500">Approvals</div>
                 </div>
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-white/5">
-                    <div className="text-2xl font-bold text-blue-600">{entries.filter(e => e.action === 'created').length}</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                        {entries.filter((e) => e.action === 'created').length}
+                    </div>
                     <div className="text-xs text-slate-500">Created</div>
                 </div>
                 <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-white/5">
@@ -278,16 +304,20 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-100 dark:divide-white/5">
-                        {filteredEntries.map(entry => (
+                        {filteredEntries.map((entry) => (
                             <div key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                 <div
                                     className="p-4 flex items-start gap-4 cursor-pointer"
                                     onClick={() => toggleExpand(entry.id)}
                                 >
                                     <button className="mt-1 text-slate-400">
-                                        {expandedEntries.has(entry.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                        {expandedEntries.has(entry.id) ? (
+                                            <ChevronDown size={16} />
+                                        ) : (
+                                            <ChevronRight size={16} />
+                                        )}
                                     </button>
-                                    
+
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-3 mb-1">
                                             {ACTION_ICONS[entry.action] || <Clock size={14} />}
@@ -298,7 +328,9 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                                             <span className="text-sm text-slate-600 dark:text-slate-300 capitalize">
                                                 {entry.action}
                                             </span>
-                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${DOMAIN_COLORS[entry.pmoDomainId] || 'bg-slate-100'}`}>
+                                            <span
+                                                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${DOMAIN_COLORS[entry.pmoDomainId] || 'bg-slate-100'}`}
+                                            >
                                                 {entry.pmoDomainId?.split('_')[0]}
                                             </span>
                                         </div>
@@ -327,16 +359,28 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                                 <div>
-                                                    <div className="text-[10px] text-slate-400 uppercase mb-1">ISO 21500:2021</div>
-                                                    <div className="text-navy-900 dark:text-white">{entry.iso21500Mapping}</div>
+                                                    <div className="text-[10px] text-slate-400 uppercase mb-1">
+                                                        ISO 21500:2021
+                                                    </div>
+                                                    <div className="text-navy-900 dark:text-white">
+                                                        {entry.iso21500Mapping}
+                                                    </div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-[10px] text-slate-400 uppercase mb-1">PMBOK 7th Ed</div>
-                                                    <div className="text-navy-900 dark:text-white">{entry.pmbokMapping}</div>
+                                                    <div className="text-[10px] text-slate-400 uppercase mb-1">
+                                                        PMBOK 7th Ed
+                                                    </div>
+                                                    <div className="text-navy-900 dark:text-white">
+                                                        {entry.pmbokMapping}
+                                                    </div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-[10px] text-slate-400 uppercase mb-1">PRINCE2</div>
-                                                    <div className="text-navy-900 dark:text-white">{entry.prince2Mapping}</div>
+                                                    <div className="text-[10px] text-slate-400 uppercase mb-1">
+                                                        PRINCE2
+                                                    </div>
+                                                    <div className="text-navy-900 dark:text-white">
+                                                        {entry.prince2Mapping}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -350,8 +394,12 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                                     {Object.entries(entry.details).map(([key, value]) => (
                                                         <div key={key}>
-                                                            <div className="text-[10px] text-slate-400 uppercase mb-1">{key}</div>
-                                                            <div className="text-navy-900 dark:text-white">{String(value)}</div>
+                                                            <div className="text-[10px] text-slate-400 uppercase mb-1">
+                                                                {key}
+                                                            </div>
+                                                            <div className="text-navy-900 dark:text-white">
+                                                                {String(value)}
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -369,4 +417,3 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
 };
 
 export default AuditTrailViewer;
-

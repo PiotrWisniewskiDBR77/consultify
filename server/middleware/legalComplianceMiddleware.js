@@ -11,7 +11,7 @@
  * - /api/health (health checks)
  */
 
-const LegalService = import('legalService.js');
+const LegalService = import('../services/legalService.js');
 
 // Routes exempt from legal compliance check
 const EXEMPT_ROUTES = [

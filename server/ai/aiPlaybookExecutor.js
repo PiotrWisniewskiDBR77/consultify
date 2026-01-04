@@ -4,8 +4,9 @@ import ActionExecutionAdapter from './actionExecutionAdapter.js';
 import ActionDecisionService from './actionDecisionService.js';
 import SignalEngine from './signalEngine.js';
 import AsyncJobService from './asyncJobService.js';
-import * as auditLogger from '../utils/auditLogger.js';
-import db from '../database.js';
+import * as auditLogger from '../dist/utils/auditLogger.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 /**

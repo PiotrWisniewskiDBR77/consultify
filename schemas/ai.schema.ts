@@ -113,11 +113,13 @@ export const ArtifactSchema = z.object({
     version: z.number(),
     createdAt: z.date(),
     updatedAt: z.date().optional(),
-    metadata: z.object({
-        framework: z.string().optional(),
-        templateType: z.string().optional(),
-        exportFormats: z.array(z.string()).optional(),
-    }).optional(),
+    metadata: z
+        .object({
+            framework: z.string().optional(),
+            templateType: z.string().optional(),
+            exportFormats: z.array(z.string()).optional(),
+        })
+        .optional(),
 });
 
 /**
@@ -153,12 +155,16 @@ export const ChatMessageSchema = z.object({
     type: z.enum(['text', 'action_request', 'summary', 'file', 'tool_call']).optional(),
     options: z.array(ChatOptionSchema).optional(),
     multiSelect: z.boolean().optional(),
-    toolCalls: z.array(z.object({
-        name: z.string(),
-        args: z.record(z.string(), z.unknown()),
-        result: z.unknown().optional(),
-        status: z.enum(['pending', 'approved', 'rejected', 'executed']).optional(),
-    })).optional(),
+    toolCalls: z
+        .array(
+            z.object({
+                name: z.string(),
+                args: z.record(z.string(), z.unknown()),
+                result: z.unknown().optional(),
+                status: z.enum(['pending', 'approved', 'rejected', 'executed']).optional(),
+            }),
+        )
+        .optional(),
     isThinking: z.boolean().optional(),
     citations: z.array(ChatCitationSchema).optional(),
     actions: z.array(ChatResponseActionSchema).optional(),

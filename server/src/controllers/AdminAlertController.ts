@@ -1,15 +1,16 @@
 /**
  * Admin Alert Controller
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Handles admin alert-related business logic
  */
 
 import type { Response } from 'express';
+
+import { createAdminAlert, getAlertHistory } from '../services/adminAlertService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type { CreateAdminAlertRequest } from '../validators/admin.validators.js';
-import { getAlertHistory, createAdminAlert } from '../services/adminAlertService.js';
 
 // ==========================================
 // CONTROLLER METHODS
@@ -35,18 +36,20 @@ export class AdminAlertController {
     /**
      * Create admin alert
      */
-    static createAlert = asyncHandler(async (req: AuthenticatedRequest<CreateAdminAlertRequest>, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        const alertConfig = req.body;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    static createAlert = asyncHandler(
+        async (req: AuthenticatedRequest<CreateAdminAlertRequest>, res: Response): Promise<void> => {
+            const orgId = req.user?.organizationId;
+            const alertConfig = req.body;
+            if (!orgId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-        const alert = await createAdminAlert(orgId, alertConfig);
+            const alert = await createAdminAlert(orgId, alertConfig);
 
-        res.json({ success: true, alert });
-    });
+            res.json({ success: true, alert });
+        },
+    );
 
     /**
      * Get alert history
@@ -67,4 +70,3 @@ export class AdminAlertController {
 }
 
 export default AdminAlertController;
-

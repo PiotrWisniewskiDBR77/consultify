@@ -1,12 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Building2, Target, TrendingUp, Shield, Globe, Users, Briefcase,
-    Save, RefreshCw, ChevronDown, ChevronUp, CheckCircle, AlertCircle,
-    Loader2, Sparkles, BarChart3, Cpu, Lock
+    AlertCircle,
+    BarChart3,
+    Briefcase,
+    Building2,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    Cpu,
+    Globe,
+    Loader2,
+    Lock,
+    RefreshCw,
+    Save,
+    Shield,
+    Sparkles,
+    Target,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
-import { Api } from '../../services/api';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface OrganizationProfileFormProps {
@@ -46,30 +62,39 @@ interface OrganizationProfile {
 }
 
 const INDUSTRIES = [
-    'Technology', 'Financial Services', 'Healthcare', 'Industrial',
-    'Consumer', 'Energy', 'Telecommunications', 'Real Estate',
-    'Transportation', 'Education', 'Government', 'Other'
+    'Technology',
+    'Financial Services',
+    'Healthcare',
+    'Industrial',
+    'Consumer',
+    'Energy',
+    'Telecommunications',
+    'Real Estate',
+    'Transportation',
+    'Education',
+    'Government',
+    'Other',
 ];
 
 const COMPANY_SIZES = [
     { value: 'STARTUP', label: 'Startup (<50)', range: '< 50' },
     { value: 'SMB', label: 'SMB (50-250)', range: '50-250' },
     { value: 'MID_MARKET', label: 'Mid-Market (250-1000)', range: '250-1000' },
-    { value: 'ENTERPRISE', label: 'Enterprise (1000+)', range: '1000+' }
+    { value: 'ENTERPRISE', label: 'Enterprise (1000+)', range: '1000+' },
 ];
 
 const COMPETITIVE_POSITIONS = [
     { value: 'LEADER', label: 'Market Leader', description: 'Dominant position, setting industry standards' },
     { value: 'CHALLENGER', label: 'Challenger', description: 'Growing, actively competing for leadership' },
     { value: 'FOLLOWER', label: 'Follower', description: 'Stable position, following market trends' },
-    { value: 'NICHE', label: 'Niche Player', description: 'Specialized focus on specific segments' }
+    { value: 'NICHE', label: 'Niche Player', description: 'Specialized focus on specific segments' },
 ];
 
 const GROWTH_STAGES = [
     { value: 'STARTUP', label: 'Startup', description: 'Early stage, product-market fit focus' },
     { value: 'SCALE_UP', label: 'Scale-up', description: 'Rapid growth, scaling operations' },
     { value: 'MATURE', label: 'Mature', description: 'Established, optimizing efficiency' },
-    { value: 'TURNAROUND', label: 'Turnaround', description: 'Restructuring or transformation' }
+    { value: 'TURNAROUND', label: 'Turnaround', description: 'Restructuring or transformation' },
 ];
 
 const CLOUD_LEVELS = [
@@ -77,24 +102,30 @@ const CLOUD_LEVELS = [
     { value: 'EXPLORING', label: 'Exploring' },
     { value: 'PARTIAL', label: 'Partial' },
     { value: 'CLOUD_FIRST', label: 'Cloud-First' },
-    { value: 'CLOUD_NATIVE', label: 'Cloud-Native' }
+    { value: 'CLOUD_NATIVE', label: 'Cloud-Native' },
 ];
 
 const RISK_APPETITES = [
     { value: 'CONSERVATIVE', label: 'Conservative', description: 'Low risk tolerance' },
     { value: 'MODERATE', label: 'Moderate', description: 'Balanced approach' },
-    { value: 'AGGRESSIVE', label: 'Aggressive', description: 'High risk tolerance for growth' }
+    { value: 'AGGRESSIVE', label: 'Aggressive', description: 'High risk tolerance for growth' },
 ];
 
 const REGULATIONS = [
-    'GDPR', 'HIPAA', 'SOX', 'PCI-DSS', 'ISO 27001', 'SOC 2',
-    'CCPA', 'DORA', 'NIS2', 'FISMA', 'FedRAMP'
+    'GDPR',
+    'HIPAA',
+    'SOX',
+    'PCI-DSS',
+    'ISO 27001',
+    'SOC 2',
+    'CCPA',
+    'DORA',
+    'NIS2',
+    'FISMA',
+    'FedRAMP',
 ];
 
-export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = ({
-    currentUser,
-    organizationId
-}) => {
+export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = ({ currentUser, organizationId }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -107,9 +138,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         digital: false,
         market: false,
         constraints: false,
-        ai: false
+        ai: false,
     });
-    
+
     const [profile, setProfile] = useState<Partial<OrganizationProfile>>({
         industry: '',
         company_size: 'MID_MARKET',
@@ -125,7 +156,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         primary_markets: [],
         customer_segments: [],
         key_competitors: [],
-        regulatory_environment: []
+        regulatory_environment: [],
     });
 
     const effectiveOrgId = organizationId || currentUser.organizationId;
@@ -153,7 +184,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
     const handleSave = async () => {
         if (!effectiveOrgId) return;
-        
+
         try {
             setSaving(true);
             const response = await Api.put(`/organization-profiles/${effectiveOrgId}`, profile);
@@ -168,11 +199,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 
     const handleAnalyze = async () => {
         if (!effectiveOrgId) return;
-        
+
         try {
             setAnalyzing(true);
             const response = await Api.post(`/organization-profiles/${effectiveOrgId}/analyze`, {
-                analysisType: 'strategic_positioning'
+                analysisType: 'strategic_positioning',
             });
             toast.success('Analysis complete');
             // Could open a modal with results
@@ -185,28 +216,26 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
     };
 
     const updateField = (field: keyof OrganizationProfile, value: any) => {
-        setProfile(prev => ({ ...prev, [field]: value }));
+        setProfile((prev) => ({ ...prev, [field]: value }));
     };
 
     const updateArrayField = (field: keyof OrganizationProfile, value: string) => {
         const current = (profile[field] as string[]) || [];
         if (current.includes(value)) {
-            updateField(field, current.filter(v => v !== value));
+            updateField(
+                field,
+                current.filter((v) => v !== value),
+            );
         } else {
             updateField(field, [...current, value]);
         }
     };
 
     const toggleSection = (section: string) => {
-        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+        setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
     };
 
-    const renderSectionHeader = (
-        id: string,
-        title: string,
-        icon: React.ReactNode,
-        completionPct?: number
-    ) => (
+    const renderSectionHeader = (id: string, title: string, icon: React.ReactNode, completionPct?: number) => (
         <button
             onClick={() => toggleSection(id)}
             className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-950 transition-colors"
@@ -215,11 +244,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <div className="text-purple-500">{icon}</div>
                 <span className="font-semibold text-navy-900 dark:text-white">{title}</span>
                 {completionPct !== undefined && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        completionPct >= 80 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                        completionPct >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                        'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                    }`}>
+                    <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                            completionPct >= 80
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : completionPct >= 50
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                        }`}
+                    >
                         {completionPct}%
                     </span>
                 )}
@@ -249,7 +282,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                         Define your organization context for AI-powered strategic insights
                     </p>
                 </div>
-                
+
                 {/* Completeness Indicator */}
                 <div className="flex items-center gap-4">
                     <div className="text-right">
@@ -259,20 +292,29 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                     <div className="w-16 h-16 relative">
                         <svg className="w-16 h-16 transform -rotate-90">
                             <circle
-                                cx="32" cy="32" r="28"
+                                cx="32"
+                                cy="32"
+                                r="28"
                                 className="stroke-slate-200 dark:stroke-slate-700"
-                                strokeWidth="4" fill="none"
+                                strokeWidth="4"
+                                fill="none"
                             />
                             <circle
-                                cx="32" cy="32" r="28"
+                                cx="32"
+                                cy="32"
+                                r="28"
                                 className="stroke-purple-500"
-                                strokeWidth="4" fill="none"
+                                strokeWidth="4"
+                                fill="none"
                                 strokeDasharray={`${completeness * 1.76} 176`}
                                 strokeLinecap="round"
                             />
                         </svg>
                         {completeness >= 80 && (
-                            <CheckCircle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-500" size={24} />
+                            <CheckCircle
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-500"
+                                size={24}
+                            />
                         )}
                     </div>
                 </div>
@@ -323,8 +365,10 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     >
                                         <option value="">Select Industry</option>
-                                        {INDUSTRIES.map(ind => (
-                                            <option key={ind} value={ind}>{ind}</option>
+                                        {INDUSTRIES.map((ind) => (
+                                            <option key={ind} value={ind}>
+                                                {ind}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -372,8 +416,10 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                         onChange={(e) => updateField('company_size', e.target.value)}
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     >
-                                        {COMPANY_SIZES.map(size => (
-                                            <option key={size.value} value={size.value}>{size.label}</option>
+                                        {COMPANY_SIZES.map((size) => (
+                                            <option key={size.value} value={size.value}>
+                                                {size.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -384,7 +430,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                     <input
                                         type="number"
                                         value={profile.employee_count || ''}
-                                        onChange={(e) => updateField('employee_count', parseInt(e.target.value) || null)}
+                                        onChange={(e) =>
+                                            updateField('employee_count', parseInt(e.target.value) || null)
+                                        }
                                         placeholder="e.g., 500"
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     />
@@ -396,7 +444,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                     <input
                                         type="number"
                                         value={profile.annual_revenue || ''}
-                                        onChange={(e) => updateField('annual_revenue', parseFloat(e.target.value) || null)}
+                                        onChange={(e) =>
+                                            updateField('annual_revenue', parseFloat(e.target.value) || null)
+                                        }
                                         placeholder="e.g., 50000000"
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     />
@@ -445,12 +495,17 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                         onChange={(e) => updateField('competitive_position', e.target.value)}
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     >
-                                        {COMPETITIVE_POSITIONS.map(pos => (
-                                            <option key={pos.value} value={pos.value}>{pos.label}</option>
+                                        {COMPETITIVE_POSITIONS.map((pos) => (
+                                            <option key={pos.value} value={pos.value}>
+                                                {pos.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {COMPETITIVE_POSITIONS.find(p => p.value === profile.competitive_position)?.description}
+                                        {
+                                            COMPETITIVE_POSITIONS.find((p) => p.value === profile.competitive_position)
+                                                ?.description
+                                        }
                                     </p>
                                 </div>
                                 <div>
@@ -462,12 +517,14 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                         onChange={(e) => updateField('growth_stage', e.target.value)}
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     >
-                                        {GROWTH_STAGES.map(stage => (
-                                            <option key={stage.value} value={stage.value}>{stage.label}</option>
+                                        {GROWTH_STAGES.map((stage) => (
+                                            <option key={stage.value} value={stage.value}>
+                                                {stage.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {GROWTH_STAGES.find(s => s.value === profile.growth_stage)?.description}
+                                        {GROWTH_STAGES.find((s) => s.value === profile.growth_stage)?.description}
                                     </p>
                                 </div>
                             </div>
@@ -478,7 +535,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                 <input
                                     type="text"
                                     value={(profile.strategic_priorities || []).join(', ')}
-                                    onChange={(e) => updateField('strategic_priorities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'strategic_priorities',
+                                            e.target.value
+                                                .split(',')
+                                                .map((s) => s.trim())
+                                                .filter(Boolean),
+                                        )
+                                    }
                                     placeholder="e.g., Digital transformation, Customer experience, Cost optimization"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -515,7 +580,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                         max="7"
                                         step="0.1"
                                         value={profile.digital_maturity_overall || ''}
-                                        onChange={(e) => updateField('digital_maturity_overall', parseFloat(e.target.value) || null)}
+                                        onChange={(e) =>
+                                            updateField('digital_maturity_overall', parseFloat(e.target.value) || null)
+                                        }
                                         placeholder="e.g., 4.5"
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     />
@@ -529,8 +596,10 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                         onChange={(e) => updateField('cloud_adoption_level', e.target.value)}
                                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     >
-                                        {CLOUD_LEVELS.map(level => (
-                                            <option key={level.value} value={level.value}>{level.label}</option>
+                                        {CLOUD_LEVELS.map((level) => (
+                                            <option key={level.value} value={level.value}>
+                                                {level.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -544,7 +613,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                     min="0"
                                     max="100"
                                     value={profile.digital_budget_percent || ''}
-                                    onChange={(e) => updateField('digital_budget_percent', parseFloat(e.target.value) || null)}
+                                    onChange={(e) =>
+                                        updateField('digital_budget_percent', parseFloat(e.target.value) || null)
+                                    }
                                     placeholder="e.g., 25"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -556,7 +627,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                 <input
                                     type="text"
                                     value={(profile.technology_stack || []).join(', ')}
-                                    onChange={(e) => updateField('technology_stack', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'technology_stack',
+                                            e.target.value
+                                                .split(',')
+                                                .map((s) => s.trim())
+                                                .filter(Boolean),
+                                        )
+                                    }
                                     placeholder="e.g., AWS, React, Python, Kubernetes"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -577,7 +656,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                 <input
                                     type="text"
                                     value={(profile.primary_markets || []).join(', ')}
-                                    onChange={(e) => updateField('primary_markets', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'primary_markets',
+                                            e.target.value
+                                                .split(',')
+                                                .map((s) => s.trim())
+                                                .filter(Boolean),
+                                        )
+                                    }
                                     placeholder="e.g., Poland, DACH, CEE"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -589,7 +676,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                 <input
                                     type="text"
                                     value={(profile.customer_segments || []).join(', ')}
-                                    onChange={(e) => updateField('customer_segments', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'customer_segments',
+                                            e.target.value
+                                                .split(',')
+                                                .map((s) => s.trim())
+                                                .filter(Boolean),
+                                        )
+                                    }
                                     placeholder="e.g., B2B, Enterprise, SMB"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -601,7 +696,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                 <input
                                     type="text"
                                     value={(profile.key_competitors || []).join(', ')}
-                                    onChange={(e) => updateField('key_competitors', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'key_competitors',
+                                            e.target.value
+                                                .split(',')
+                                                .map((s) => s.trim())
+                                                .filter(Boolean),
+                                        )
+                                    }
                                     placeholder="e.g., Competitor A, Competitor B"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -615,7 +718,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                     min="0"
                                     max="100"
                                     value={profile.market_share_estimate || ''}
-                                    onChange={(e) => updateField('market_share_estimate', parseFloat(e.target.value) || null)}
+                                    onChange={(e) =>
+                                        updateField('market_share_estimate', parseFloat(e.target.value) || null)
+                                    }
                                     placeholder="e.g., 15"
                                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                 />
@@ -634,7 +739,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                     Regulatory Environment
                                 </label>
                                 <div className="flex flex-wrap gap-2">
-                                    {REGULATIONS.map(reg => (
+                                    {REGULATIONS.map((reg) => (
                                         <button
                                             key={reg}
                                             onClick={() => updateArrayField('regulatory_environment', reg)}
@@ -654,7 +759,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                                     Risk Appetite
                                 </label>
                                 <div className="flex gap-3">
-                                    {RISK_APPETITES.map(risk => (
+                                    {RISK_APPETITES.map((risk) => (
                                         <button
                                             key={risk.value}
                                             onClick={() => updateField('risk_appetite', risk.value)}
@@ -715,12 +820,4 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
 };
 
 export default OrganizationProfileForm;
-
-
-
-
-
-
-
-
 

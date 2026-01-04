@@ -1,7 +1,7 @@
 /**
  * Baselines Routes
  * API endpoints for baselines
- * 
+ *
  * Note: This is a TypeScript wrapper around the existing JS implementation
  * to maintain backward compatibility during migration.
  * TODO: Fully migrate to TypeScript

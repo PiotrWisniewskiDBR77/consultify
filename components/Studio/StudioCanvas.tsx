@@ -1,55 +1,45 @@
 /**
  * StudioCanvas - React Flow Canvas Component
- * 
+ *
  * Main canvas component for Consultify Studio.
  * Handles diagram rendering, editing, and interactions.
  */
 
-import React, { useCallback, useRef, useMemo, useState } from 'react';
+import 'reactflow/dist/style.css';
+
+import { Camera, Download, Grid3X3, Lock, Maximize2, Redo, Undo, Unlock, ZoomIn, ZoomOut } from 'lucide-react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
-    Node,
-    Edge,
-    Connection,
     addEdge,
-    useNodesState,
-    useEdgesState,
-    Controls,
-    MiniMap,
     Background,
     BackgroundVariant,
+    Connection,
+    ConnectionMode,
+    Controls,
+    Edge,
+    EdgeChange,
+    MarkerType,
+    MiniMap,
+    Node,
+    NodeChange,
+    OnEdgesChange,
+    OnNodesChange,
     Panel,
     ReactFlowProvider,
-    ConnectionMode,
-    MarkerType,
-    NodeChange,
-    EdgeChange,
-    OnNodesChange,
-    OnEdgesChange,
-    XYPosition
+    useEdgesState,
+    useNodesState,
+    XYPosition,
 } from 'reactflow';
-import 'reactflow/dist/style.css';
-import { 
-    ZoomIn, 
-    ZoomOut, 
-    Maximize2, 
-    Grid3X3, 
-    Lock, 
-    Unlock,
-    Undo,
-    Redo,
-    Download,
-    Camera
-} from 'lucide-react';
 
+import { DecisionNode } from './nodes/DecisionNode';
+import { MindmapNode } from './nodes/MindmapNode';
+import { OrgUnitNode } from './nodes/OrgUnitNode';
 // Import custom node types
 import { ProcessStepNode } from './nodes/ProcessStepNode';
-import { DecisionNode } from './nodes/DecisionNode';
-import { StartEndNode } from './nodes/StartEndNode';
-import { TextNode } from './nodes/TextNode';
-import { MindmapNode } from './nodes/MindmapNode';
 import { RACICell } from './nodes/RACICell';
-import { OrgUnitNode } from './nodes/OrgUnitNode';
+import { StartEndNode } from './nodes/StartEndNode';
 import { SwimLaneNode } from './nodes/SwimLaneNode';
+import { TextNode } from './nodes/TextNode';
 
 // Node type mapping
 const nodeTypes = {
@@ -60,7 +50,7 @@ const nodeTypes = {
     mindmapNode: MindmapNode,
     raciCell: RACICell,
     orgUnit: OrgUnitNode,
-    swimlane: SwimLaneNode
+    swimlane: SwimLaneNode,
 };
 
 // Default edge style
@@ -70,8 +60,8 @@ const defaultEdgeOptions = {
     style: { stroke: '#64748b', strokeWidth: 2 },
     markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: '#64748b'
-    }
+        color: '#64748b',
+    },
 };
 
 export interface StudioCanvasProps {
@@ -111,48 +101,57 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     showGrid = true,
     onExport,
     onSnapshot,
-    className = ''
+    className = '',
 }) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const [showGridState, setShowGridState] = useState(showGrid);
     const [isLockedState, setIsLockedState] = useState(isLocked);
 
     // Handle connection between nodes
-    const handleConnect = useCallback((params: Connection) => {
-        if (isLockedState) return;
-        onConnect(params);
-    }, [onConnect, isLockedState]);
+    const handleConnect = useCallback(
+        (params: Connection) => {
+            if (isLockedState) return;
+            onConnect(params);
+        },
+        [onConnect, isLockedState],
+    );
 
     // Custom node change handler (respects lock state)
-    const handleNodesChange = useCallback((changes: NodeChange[]) => {
-        if (isLockedState) {
-            // Only allow selection changes when locked
-            const selectionChanges = changes.filter(c => c.type === 'select');
-            if (selectionChanges.length > 0) {
-                onNodesChange(selectionChanges);
+    const handleNodesChange = useCallback(
+        (changes: NodeChange[]) => {
+            if (isLockedState) {
+                // Only allow selection changes when locked
+                const selectionChanges = changes.filter((c) => c.type === 'select');
+                if (selectionChanges.length > 0) {
+                    onNodesChange(selectionChanges);
+                }
+                return;
             }
-            return;
-        }
-        onNodesChange(changes);
-    }, [onNodesChange, isLockedState]);
+            onNodesChange(changes);
+        },
+        [onNodesChange, isLockedState],
+    );
 
     // Custom edge change handler (respects lock state)
-    const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
-        if (isLockedState) {
-            const selectionChanges = changes.filter(c => c.type === 'select');
-            if (selectionChanges.length > 0) {
-                onEdgesChange(selectionChanges);
+    const handleEdgesChange = useCallback(
+        (changes: EdgeChange[]) => {
+            if (isLockedState) {
+                const selectionChanges = changes.filter((c) => c.type === 'select');
+                if (selectionChanges.length > 0) {
+                    onEdgesChange(selectionChanges);
+                }
+                return;
             }
-            return;
-        }
-        onEdgesChange(changes);
-    }, [onEdgesChange, isLockedState]);
+            onEdgesChange(changes);
+        },
+        [onEdgesChange, isLockedState],
+    );
 
     // Highlight selected node
     const styledNodes = useMemo(() => {
-        return nodes.map(node => ({
+        return nodes.map((node) => ({
             ...node,
-            selected: node.id === selectedNodeId
+            selected: node.id === selectedNodeId,
         }));
     }, [nodes, selectedNodeId]);
 
@@ -166,7 +165,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             mindmapNode: '#ec4899',
             raciCell: '#6366f1',
             orgUnit: '#14b8a6',
-            swimlane: '#64748b'
+            swimlane: '#64748b',
         };
         return colors[node.type || 'processStep'] || '#64748b';
     }, []);
@@ -204,22 +203,20 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             >
                 {/* Background Grid */}
                 {showGridState && (
-                    <Background
-                        variant={BackgroundVariant.Dots}
-                        gap={20}
-                        size={1}
-                        color="rgba(255,255,255,0.05)"
-                    />
+                    <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(255,255,255,0.05)" />
                 )}
 
                 {/* Controls Panel */}
                 {showControls && (
-                    <Panel position="top-right" className="flex items-center gap-1 bg-slate-800/90 backdrop-blur-sm rounded-lg p-1 border border-white/10">
+                    <Panel
+                        position="top-right"
+                        className="flex items-center gap-1 bg-slate-800/90 backdrop-blur-sm rounded-lg p-1 border border-white/10"
+                    >
                         <button
                             onClick={() => setShowGridState(!showGridState)}
                             className={`p-2 rounded-md transition-colors ${
-                                showGridState 
-                                    ? 'bg-blue-500/20 text-blue-400' 
+                                showGridState
+                                    ? 'bg-blue-500/20 text-blue-400'
                                     : 'text-slate-400 hover:text-white hover:bg-white/10'
                             }`}
                             title="Toggle Grid"
@@ -229,8 +226,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
                         <button
                             onClick={() => setIsLockedState(!isLockedState)}
                             className={`p-2 rounded-md transition-colors ${
-                                isLockedState 
-                                    ? 'bg-amber-500/20 text-amber-400' 
+                                isLockedState
+                                    ? 'bg-amber-500/20 text-amber-400'
                                     : 'text-slate-400 hover:text-white hover:bg-white/10'
                             }`}
                             title={isLockedState ? 'Unlock Canvas' : 'Lock Canvas'}
@@ -261,13 +258,16 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
 
                 {/* Lock Indicator */}
                 {isLockedState && (
-                    <Panel position="top-center" className="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-500/30">
+                    <Panel
+                        position="top-center"
+                        className="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-500/30"
+                    >
                         Canvas Locked - View Only
                     </Panel>
                 )}
 
                 {/* Zoom Controls */}
-                <Controls 
+                <Controls
                     position="bottom-right"
                     showZoom={true}
                     showFitView={true}
@@ -301,12 +301,4 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = (props) => {
 };
 
 export default StudioCanvas;
-
-
-
-
-
-
-
-
 

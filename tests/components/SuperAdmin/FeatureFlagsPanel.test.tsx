@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { FeatureFlagsPanel } from '../../../components/SuperAdmin/FeatureFlagsPanel';
+import { FeatureFlagsPanel } from '../../components/SuperAdmin/FeatureFlagsPanel';
 import { Api } from '../../../services/api';
 
 jest.mock('../../../services/api');
@@ -45,6 +45,7 @@ describe('FeatureFlagsPanel', () => {
         });
     });
 });
+
 
 
 

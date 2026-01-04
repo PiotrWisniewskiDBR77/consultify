@@ -1,31 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Api } from '../../services/api';
 import {
-    Building2,
-    Users,
-    Search,
-    RefreshCw,
-    Edit2,
-    Trash2,
-    CheckCircle,
     AlertCircle,
-    XCircle,
-    Eye,
-    Plus,
-    Key,
-    Copy,
-    DollarSign,
-    TrendingUp,
-    Clock,
+    Building2,
+    Check,
+    CheckCircle,
     ChevronDown,
     ChevronUp,
-    Check,
-    X
+    Clock,
+    Copy,
+    DollarSign,
+    Edit2,
+    Eye,
+    Key,
+    Plus,
+    RefreshCw,
+    Search,
+    Trash2,
+    TrendingUp,
+    Users,
+    X,
+    XCircle,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
+
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 import { Organization } from '../../types';
+import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 interface AccessRequest {
     id: string;
@@ -66,7 +67,7 @@ export const OrganizationsView: React.FC = () => {
         code: '',
         role: 'USER',
         maxUses: 100,
-        expiresAt: ''
+        expiresAt: '',
     });
 
     // Inline Edit State
@@ -74,7 +75,7 @@ export const OrganizationsView: React.FC = () => {
     const [editForm, setEditForm] = useState<{ plan: string; status: string; discount_percent: number }>({
         plan: 'free',
         status: 'active',
-        discount_percent: 0
+        discount_percent: 0,
     });
 
     const fetchData = useCallback(async () => {
@@ -83,7 +84,7 @@ export const OrganizationsView: React.FC = () => {
             const [orgsData, reqsData, codesData] = await Promise.all([
                 Api.getOrganizations(),
                 Api.getAccessRequests().catch(() => []),
-                Api.getAccessCodes().catch(() => [])
+                Api.getAccessCodes().catch(() => []),
             ]);
             setOrganizations(orgsData);
             setRequests(reqsData);
@@ -100,7 +101,7 @@ export const OrganizationsView: React.FC = () => {
         fetchData();
     }, [fetchData]);
 
-    const pendingRequestsCount = requests.filter(r => r.status === 'pending').length;
+    const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length;
 
     // Organization Actions
     const handleDeleteOrg = async (id: string, name: string) => {
@@ -119,7 +120,7 @@ export const OrganizationsView: React.FC = () => {
         setEditForm({
             plan: org.plan,
             status: org.status,
-            discount_percent: org.discount_percent || 0
+            discount_percent: org.discount_percent || 0,
         });
     };
 
@@ -132,7 +133,7 @@ export const OrganizationsView: React.FC = () => {
             await Api.updateOrganization(orgId, {
                 plan: editForm.plan,
                 status: editForm.status,
-                discount_percent: editForm.discount_percent
+                discount_percent: editForm.discount_percent,
             });
             toast.success('Organization updated');
             setEditingOrgId(null);
@@ -192,32 +193,39 @@ export const OrganizationsView: React.FC = () => {
     };
 
     // Filtered Data
-    const filteredOrgs = organizations.filter(org =>
-        (org.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (org.id || '').includes(searchTerm)
+    const filteredOrgs = organizations.filter(
+        (org) =>
+            (org.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || (org.id || '').includes(searchTerm),
     );
 
     const getPlanColor = (plan: string) => {
         switch (plan) {
-            case 'enterprise': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-            case 'pro': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-            case 'trial': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-            default: return 'bg-slate-700/50 text-slate-300 border-white/10';
+            case 'enterprise':
+                return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+            case 'pro':
+                return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+            case 'trial':
+                return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+            default:
+                return 'bg-slate-700/50 text-slate-300 border-white/10';
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'active': return 'text-emerald-400';
-            case 'blocked': return 'text-red-400';
-            case 'pending': return 'text-yellow-400';
-            default: return 'text-slate-400';
+            case 'active':
+                return 'text-emerald-400';
+            case 'blocked':
+                return 'text-red-400';
+            case 'pending':
+                return 'text-yellow-400';
+            default:
+                return 'text-slate-400';
         }
     };
 
     return (
         <div className="p-8 overflow-y-auto h-full relative">
-
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
@@ -227,10 +235,18 @@ export const OrganizationsView: React.FC = () => {
                         </div>
                         Organizations
                     </h1>
-                    <p className="text-slate-400 mt-1 text-sm">Manage organizations, subscriptions, and access requests</p>
+                    <p className="text-slate-400 mt-1 text-sm">
+                        Manage organizations, subscriptions, and access requests
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <InfoButton cardId="superadmin-organizations" position="header-inline" size="md" showLabel label="Help" />
+                    <InfoButton
+                        cardId="superadmin-organizations"
+                        position="header-inline"
+                        size="md"
+                        showLabel
+                        label="Help"
+                    />
                     <button
                         onClick={fetchData}
                         disabled={loading}
@@ -246,10 +262,11 @@ export const OrganizationsView: React.FC = () => {
             <div className="flex gap-2 mb-6">
                 <button
                     onClick={() => setActiveTab('organizations')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'organizations'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                        }`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        activeTab === 'organizations'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                            : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                    }`}
                 >
                     <Building2 size={16} />
                     All Organizations
@@ -257,23 +274,27 @@ export const OrganizationsView: React.FC = () => {
                 </button>
                 <button
                     onClick={() => setActiveTab('pending')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'pending'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                        }`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        activeTab === 'pending'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                            : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                    }`}
                 >
                     <Clock size={16} />
                     Pending Requests
                     {pendingRequestsCount > 0 && (
-                        <span className="ml-1 bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold">{pendingRequestsCount}</span>
+                        <span className="ml-1 bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold">
+                            {pendingRequestsCount}
+                        </span>
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('codes')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'codes'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                        }`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        activeTab === 'codes'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                            : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
+                    }`}
                 >
                     <Key size={16} />
                     Access Codes
@@ -291,7 +312,7 @@ export const OrganizationsView: React.FC = () => {
                                 type="text"
                                 placeholder="Search organizations..."
                                 value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white focus:border-blue-500 outline-none"
                             />
                         </div>
@@ -313,25 +334,37 @@ export const OrganizationsView: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-white/5 text-sm">
                                 {loading ? (
-                                    <tr><td colSpan={7} className="p-8 text-center text-slate-500">Loading...</td></tr>
+                                    <tr>
+                                        <td colSpan={7} className="p-8 text-center text-slate-500">
+                                            Loading...
+                                        </td>
+                                    </tr>
                                 ) : filteredOrgs.length === 0 ? (
-                                    <tr><td colSpan={7} className="p-8 text-center text-slate-500">No organizations found</td></tr>
+                                    <tr>
+                                        <td colSpan={7} className="p-8 text-center text-slate-500">
+                                            No organizations found
+                                        </td>
+                                    </tr>
                                 ) : (
-                                    filteredOrgs.map(org => {
+                                    filteredOrgs.map((org) => {
                                         const isEditing = editingOrgId === org.id;
 
                                         return (
                                             <tr key={org.id} className="hover:bg-white/5 transition-colors group">
                                                 <td className="p-4">
                                                     <div className="font-medium text-white">{org.name}</div>
-                                                    <div className="text-xs text-slate-500 font-mono">{org.id.slice(0, 8)}...</div>
+                                                    <div className="text-xs text-slate-500 font-mono">
+                                                        {org.id.slice(0, 8)}...
+                                                    </div>
                                                 </td>
                                                 <td className="p-4 text-slate-300">{org.user_count}</td>
                                                 <td className="p-4">
                                                     {isEditing ? (
                                                         <select
                                                             value={editForm.plan}
-                                                            onChange={e => setEditForm({ ...editForm, plan: e.target.value })}
+                                                            onChange={(e) =>
+                                                                setEditForm({ ...editForm, plan: e.target.value })
+                                                            }
                                                             className="bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
                                                         >
                                                             <option value="free">Free</option>
@@ -340,7 +373,9 @@ export const OrganizationsView: React.FC = () => {
                                                             <option value="enterprise">Enterprise</option>
                                                         </select>
                                                     ) : (
-                                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getPlanColor(org.plan)}`}>
+                                                        <span
+                                                            className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getPlanColor(org.plan)}`}
+                                                        >
                                                             {org.plan}
                                                         </span>
                                                     )}
@@ -349,7 +384,9 @@ export const OrganizationsView: React.FC = () => {
                                                     {isEditing ? (
                                                         <select
                                                             value={editForm.status}
-                                                            onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                                            onChange={(e) =>
+                                                                setEditForm({ ...editForm, status: e.target.value })
+                                                            }
                                                             className="bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
                                                         >
                                                             <option value="active">Active</option>
@@ -357,8 +394,14 @@ export const OrganizationsView: React.FC = () => {
                                                             <option value="blocked">Blocked</option>
                                                         </select>
                                                     ) : (
-                                                        <span className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}>
-                                                            {org.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+                                                        <span
+                                                            className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}
+                                                        >
+                                                            {org.status === 'active' ? (
+                                                                <CheckCircle size={14} />
+                                                            ) : (
+                                                                <AlertCircle size={14} />
+                                                            )}
                                                             {org.status}
                                                         </span>
                                                     )}
@@ -371,17 +414,22 @@ export const OrganizationsView: React.FC = () => {
                                                                 min="0"
                                                                 max="100"
                                                                 value={editForm.discount_percent}
-                                                                onChange={e => setEditForm({ ...editForm, discount_percent: parseInt(e.target.value) || 0 })}
+                                                                onChange={(e) =>
+                                                                    setEditForm({
+                                                                        ...editForm,
+                                                                        discount_percent: parseInt(e.target.value) || 0,
+                                                                    })
+                                                                }
                                                                 className="w-16 bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
                                                             />
                                                             <span className="text-slate-500 text-xs">%</span>
                                                         </div>
+                                                    ) : org.discount_percent ? (
+                                                        <span className="text-emerald-400 font-bold">
+                                                            -{org.discount_percent}%
+                                                        </span>
                                                     ) : (
-                                                        org.discount_percent ? (
-                                                            <span className="text-emerald-400 font-bold">-{org.discount_percent}%</span>
-                                                        ) : (
-                                                            <span className="text-slate-600">-</span>
-                                                        )
+                                                        <span className="text-slate-600">-</span>
                                                     )}
                                                 </td>
                                                 <td className="p-4 text-slate-500 text-xs">
@@ -459,23 +507,40 @@ export const OrganizationsView: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm">
                             {loading ? (
-                                <tr><td colSpan={5} className="p-8 text-center text-slate-500">Loading...</td></tr>
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-slate-500">
+                                        Loading...
+                                    </td>
+                                </tr>
                             ) : requests.length === 0 ? (
-                                <tr><td colSpan={5} className="p-8 text-center text-slate-500">No access requests found.</td></tr>
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-slate-500">
+                                        No access requests found.
+                                    </td>
+                                </tr>
                             ) : (
-                                requests.map(req => (
+                                requests.map((req) => (
                                     <tr key={req.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="p-4 text-slate-500 text-xs">{new Date(req.requested_at).toLocaleString()}</td>
+                                        <td className="p-4 text-slate-500 text-xs">
+                                            {new Date(req.requested_at).toLocaleString()}
+                                        </td>
                                         <td className="p-4 text-white font-medium">{req.organization_name}</td>
                                         <td className="p-4">
-                                            <div className="text-white">{req.first_name} {req.last_name}</div>
+                                            <div className="text-white">
+                                                {req.first_name} {req.last_name}
+                                            </div>
                                             <div className="text-slate-500 text-xs">{req.email}</div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${req.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                req.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                                                    'bg-yellow-500/20 text-yellow-400'
-                                                }`}>
+                                            <span
+                                                className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                                                    req.status === 'approved'
+                                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                                        : req.status === 'rejected'
+                                                          ? 'bg-red-500/20 text-red-400'
+                                                          : 'bg-yellow-500/20 text-yellow-400'
+                                                }`}
+                                            >
                                                 {req.status}
                                             </span>
                                         </td>
@@ -501,7 +566,9 @@ export const OrganizationsView: React.FC = () => {
                                                 </div>
                                             )}
                                             {req.status === 'rejected' && req.rejection_reason && (
-                                                <span className="text-xs text-red-400 italic">Reason: {req.rejection_reason}</span>
+                                                <span className="text-xs text-red-400 italic">
+                                                    Reason: {req.rejection_reason}
+                                                </span>
                                             )}
                                         </td>
                                     </tr>
@@ -538,16 +605,29 @@ export const OrganizationsView: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-white/5 text-sm">
                                 {loading ? (
-                                    <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading...</td></tr>
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center text-slate-500">
+                                            Loading...
+                                        </td>
+                                    </tr>
                                 ) : codes.length === 0 ? (
-                                    <tr><td colSpan={6} className="p-8 text-center text-slate-500">No access codes generated yet.</td></tr>
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center text-slate-500">
+                                            No access codes generated yet.
+                                        </td>
+                                    </tr>
                                 ) : (
-                                    codes.map(code => (
+                                    codes.map((code) => (
                                         <tr key={code.id} className="hover:bg-white/5 transition-colors">
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
-                                                    <code className="bg-navy-950 px-2 py-1 rounded text-blue-400 font-mono text-xs border border-blue-500/20">{code.code}</code>
-                                                    <button onClick={() => copyCode(code.code)} className="text-slate-500 hover:text-white transition-colors">
+                                                    <code className="bg-navy-950 px-2 py-1 rounded text-blue-400 font-mono text-xs border border-blue-500/20">
+                                                        {code.code}
+                                                    </code>
+                                                    <button
+                                                        onClick={() => copyCode(code.code)}
+                                                        className="text-slate-500 hover:text-white transition-colors"
+                                                    >
                                                         <Copy size={12} />
                                                     </button>
                                                 </div>
@@ -558,14 +638,20 @@ export const OrganizationsView: React.FC = () => {
                                                     <div className="w-20 h-1.5 bg-navy-950 rounded-full overflow-hidden">
                                                         <div
                                                             className="h-full bg-blue-500"
-                                                            style={{ width: `${Math.min(100, (code.current_uses / code.max_uses) * 100)}%` }}
+                                                            style={{
+                                                                width: `${Math.min(100, (code.current_uses / code.max_uses) * 100)}%`,
+                                                            }}
                                                         />
                                                     </div>
-                                                    <span className="text-xs text-slate-400">{code.current_uses}/{code.max_uses}</span>
+                                                    <span className="text-xs text-slate-400">
+                                                        {code.current_uses}/{code.max_uses}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="p-4 text-slate-500 text-xs">
-                                                {code.expires_at ? new Date(code.expires_at).toLocaleDateString() : 'Never'}
+                                                {code.expires_at
+                                                    ? new Date(code.expires_at).toLocaleDateString()
+                                                    : 'Never'}
                                             </td>
                                             <td className="p-4 text-slate-500 text-xs">
                                                 {code.created_by_email || 'Super Admin'}
@@ -611,11 +697,15 @@ export const OrganizationsView: React.FC = () => {
 
                         <form onSubmit={handleGenerateCode} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">Custom Code (Optional)</label>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Custom Code (Optional)
+                                </label>
                                 <input
                                     type="text"
                                     value={newCodeData.code}
-                                    onChange={e => setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })}
+                                    onChange={(e) =>
+                                        setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
+                                    }
                                     placeholder="Leave empty for random"
                                     className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm placeholder:text-slate-600"
                                 />
@@ -628,7 +718,9 @@ export const OrganizationsView: React.FC = () => {
                                         type="number"
                                         min="1"
                                         value={newCodeData.maxUses}
-                                        onChange={e => setNewCodeData({ ...newCodeData, maxUses: parseInt(e.target.value) })}
+                                        onChange={(e) =>
+                                            setNewCodeData({ ...newCodeData, maxUses: parseInt(e.target.value) })
+                                        }
                                         className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
                                     />
                                 </div>
@@ -636,7 +728,7 @@ export const OrganizationsView: React.FC = () => {
                                     <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>
                                     <select
                                         value={newCodeData.role}
-                                        onChange={e => setNewCodeData({ ...newCodeData, role: e.target.value })}
+                                        onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
                                         className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
                                     >
                                         <option value="USER">User</option>
@@ -647,11 +739,13 @@ export const OrganizationsView: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">Expires At (Optional)</label>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Expires At (Optional)
+                                </label>
                                 <input
                                     type="date"
                                     value={newCodeData.expiresAt}
-                                    onChange={e => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
+                                    onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
                                     className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
                                 />
                             </div>
@@ -680,4 +774,3 @@ export const OrganizationsView: React.FC = () => {
 };
 
 export default OrganizationsView;
-

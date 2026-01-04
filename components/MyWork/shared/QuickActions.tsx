@@ -3,21 +3,21 @@
  * Part of My Work Module PMO Upgrade
  */
 
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    CheckCircle,
-    Calendar,
-    UserPlus,
     Archive,
-    Trash2,
-    MoreHorizontal,
-    Play,
-    Pause,
+    Calendar,
+    CheckCircle,
+    ExternalLink,
     Flag,
     MessageSquare,
-    ExternalLink
+    MoreHorizontal,
+    Pause,
+    Play,
+    Trash2,
+    UserPlus,
 } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type QuickActionType =
@@ -56,54 +56,54 @@ const actionConfig: Record<QuickActionType, Omit<QuickAction, 'type'>> = {
     complete: {
         label: 'Complete',
         icon: <CheckCircle />,
-        className: 'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400'
+        className: 'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400',
     },
     schedule: {
         label: 'Schedule',
         icon: <Calendar />,
-        className: 'hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400'
+        className: 'hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400',
     },
     delegate: {
         label: 'Delegate',
         icon: <UserPlus />,
-        className: 'hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-400'
+        className: 'hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-400',
     },
     archive: {
         label: 'Archive',
         icon: <Archive />,
-        className: 'hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300'
+        className: 'hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300',
     },
     delete: {
         label: 'Delete',
         icon: <Trash2 />,
         className: 'hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400',
-        confirmRequired: true
+        confirmRequired: true,
     },
     start: {
         label: 'Start',
         icon: <Play />,
-        className: 'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400'
+        className: 'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400',
     },
     pause: {
         label: 'Pause',
         icon: <Pause />,
-        className: 'hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30 dark:hover:text-amber-400'
+        className: 'hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30 dark:hover:text-amber-400',
     },
     flag: {
         label: 'Flag',
         icon: <Flag />,
-        className: 'hover:bg-orange-100 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400'
+        className: 'hover:bg-orange-100 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400',
     },
     comment: {
         label: 'Comment',
         icon: <MessageSquare />,
-        className: 'hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400'
+        className: 'hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400',
     },
     open: {
         label: 'Open',
         icon: <ExternalLink />,
-        className: 'hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300'
-    }
+        className: 'hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300',
+    },
 };
 
 /**
@@ -115,18 +115,18 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
     onAction,
     size = 'sm',
     direction = 'horizontal',
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
 
     const sizeClasses = {
         sm: 'p-1.5',
-        md: 'p-2'
+        md: 'p-2',
     };
 
     const iconSizes = {
         sm: 14,
-        md: 16
+        md: 16,
     };
 
     const handleAction = (action: QuickActionType) => {
@@ -171,7 +171,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                                 title={t(`myWork.actions.${actionType}`, config.label)}
                             >
                                 {React.cloneElement(config.icon as any, {
-                                    size: iconSizes[size]
+                                    size: iconSizes[size],
                                 })}
                             </button>
                         );
@@ -198,13 +198,13 @@ export const QuickActionButton: React.FC<{
     const sizeClasses = {
         sm: 'p-1.5 text-xs gap-1',
         md: 'p-2 text-sm gap-1.5',
-        lg: 'p-2.5 text-sm gap-2'
+        lg: 'p-2.5 text-sm gap-2',
     };
 
     const iconSizes = {
         sm: 12,
         md: 14,
-        lg: 16
+        lg: 16,
     };
 
     return (
@@ -222,11 +222,9 @@ export const QuickActionButton: React.FC<{
             title={t(`myWork.actions.${action}`, config.label)}
         >
             {React.cloneElement(config.icon as any, {
-                size: iconSizes[size]
+                size: iconSizes[size],
             })}
-            {showLabel && (
-                <span>{t(`myWork.actions.${action}`, config.label)}</span>
-            )}
+            {showLabel && <span>{t(`myWork.actions.${action}`, config.label)}</span>}
         </button>
     );
 };
@@ -241,7 +239,7 @@ export const MoreActionsButton: React.FC<{
 }> = ({ onClick, size = 'sm', className = '' }) => {
     const sizeClasses = {
         sm: 'p-1.5',
-        md: 'p-2'
+        md: 'p-2',
     };
 
     return (
@@ -262,16 +260,4 @@ export const MoreActionsButton: React.FC<{
 };
 
 export default QuickActions;
-
-
-
-
-
-
-
-
-
-
-
-
 

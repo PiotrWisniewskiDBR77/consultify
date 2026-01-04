@@ -1,16 +1,13 @@
 /**
  * Billing Cron Jobs
  * Handles scheduled tasks for billing system
- * 
+ *
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
-
-
-
 
 // ==========================================
 // TYPES
@@ -28,7 +25,7 @@ interface PayAsYouGoService {
     generatePayAsYouGoInvoice: (
         orgId: string,
         startDate: Date,
-        endDate: Date
+        endDate: Date,
     ) => Promise<{ invoiced: boolean; totalCost: number }>;
 }
 
@@ -71,16 +68,24 @@ class BillingCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.budgetManagementService) {
-            this.deps.budgetManagementService = await import('../../services/budgetManagementService.js').then(m => m.default || m);
+            this.deps.budgetManagementService = await import('../../services/budgetManagementService.js').then(
+                (m) => m.default || m,
+            );
         }
         if (!this.deps.adminAlertService) {
-            this.deps.adminAlertService = await import('../../services/adminAlertService.js').then(m => m.default || m);
+            this.deps.adminAlertService = await import('../../services/adminAlertService.js').then(
+                (m) => m.default || m,
+            );
         }
         if (!this.deps.payAsYouGoService) {
-            this.deps.payAsYouGoService = await import('../../services/payAsYouGoService.js').then(m => m.default || m);
+            this.deps.payAsYouGoService = await import('../../services/payAsYouGoService.js').then(
+                (m) => m.default || m,
+            );
         }
         if (!this.deps.seatManagementService) {
-            this.deps.seatManagementService = await import('../../services/seatManagementService.js').then(m => m.default || m);
+            this.deps.seatManagementService = await import('../../services/seatManagementService.js').then(
+                (m) => m.default || m,
+            );
         }
         return this.deps as Dependencies;
     }
@@ -116,7 +121,7 @@ class BillingCron {
                     (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
                         else resolve(rows || []);
-                    }
+                    },
                 );
             });
 
@@ -163,7 +168,7 @@ class BillingCron {
                     (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
                         else resolve(rows || []);
-                    }
+                    },
                 );
             });
 
@@ -173,11 +178,13 @@ class BillingCron {
                     const result = await deps.payAsYouGoService.generatePayAsYouGoInvoice(
                         org.organization_id,
                         lastMonthStart,
-                        lastMonthEnd
+                        lastMonthEnd,
                     );
                     if (result.invoiced) {
                         invoicesGenerated++;
-                        logger.info(`[BillingCron] Generated invoice for org ${org.organization_id}: $${result.totalCost}`);
+                        logger.info(
+                            `[BillingCron] Generated invoice for org ${org.organization_id}: $${result.totalCost}`,
+                        );
                     }
                 } catch (err: unknown) {
                     logger.error(`[BillingCron] Error generating invoice for org ${org.organization_id}:`, err);
@@ -207,7 +214,7 @@ class BillingCron {
                     (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
                         else resolve(rows || []);
-                    }
+                    },
                 );
             });
 
@@ -283,7 +290,4 @@ export const calculateMonthlyUsage = async (deps?: Partial<Dependencies>): Promi
 };
 
 export default BillingCron;
-
-
-
 

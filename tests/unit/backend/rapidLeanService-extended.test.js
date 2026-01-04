@@ -3,67 +3,93 @@
  * Tests new methods added for observation support
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-// Use real in-memory DB instead of mocks
-const db = require('../../../server/database');
-const RapidLeanService = require('../../../server/services/rapidLeanService');
+// Create a mock database object using vi.hoisted
+const { mockDb } = vi.hoisted(() => {
+    return {
+        mockDb: {
+            get: vi.fn(),
+            all: vi.fn(),
+            run: vi.fn(),
+        }
+    };
+});
+
+// Mock the database module to return our mock object
+vi.mock('../../../server/database.js', () => ({
+    default: mockDb,
+    getDatabase: () => mockDb
+}));
+
+import RapidLeanService from '../../../server/services/rapidLeanService.js';
 
 describe('RapidLeanService - Extended Methods', () => {
-    beforeEach(async () => {
-        // Clean up and ensure tables exist (setup.ts does this too, but let's be safe)
-        await new Promise((resolve) => {
-            db.run('DELETE FROM rapid_lean_observations', () => {
-                resolve();
-            });
-        });
+    beforeEach(() => {
+        vi.clearAllMocks();
     });
 
     describe('getObservations', () => {
-        it('should fetch and parse observations correctly from REAL DB', async () => {
-            const observationId = 'obs-' + Date.now();
-            const sql = `
-                INSERT INTO rapid_lean_observations (
-                    id, assessment_id, organization_id, template_id, location, answers, photos, notes, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
+        it('should fetch and parse observations correctly', async () => {
+            const mockRows = [{
+                id: 'obs-1',
+                assessment_id: 'test-assessment',
+                organization_id: 'test-org',
+                template_id: 'value_stream_template',
+                answers: JSON.stringify({ vs_1: true }),
+                photos: JSON.stringify(['photo1.jpg']),
+                notes: 'Test note',
+                timestamp: '2024-01-15T10:00:00Z'
+            }];
 
-            await new Promise((resolve, reject) => {
-                db.run(sql, [
-                    observationId, 'test-assessment', 'test-org', 'value_stream_template',
-                    'Line A', '{"vs_1": true}', '["photo1.jpg"]', 'Test note', '2024-01-15T10:00:00Z'
-                ], (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
+                cb(null, mockRows);
             });
 
             const observations = await RapidLeanService.getObservations('test-assessment');
 
             expect(Array.isArray(observations)).toBe(true);
             expect(observations.length).toBe(1);
-            expect(observations[0].id).toBe(observationId);
+            expect(observations[0].id).toBe('obs-1');
             expect(observations[0].answers).toEqual({ vs_1: true });
+            expect(mockDb.all).toHaveBeenCalledWith(
+                expect.stringContaining('SELECT * FROM rapid_lean_observations'),
+                ['test-assessment'],
+                expect.any(Function)
+            );
         });
 
-        it('should handle missing assessment', async () => {
+        it('should handle missing assessment (empty result)', async () => {
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
+                cb(null, []);
+            });
+
             const observations = await RapidLeanService.getObservations('non-existent');
             expect(observations.length).toBe(0);
+        });
+
+        it('should handle database errors', async () => {
+            mockDb.all.mockImplementation((sql, params, callback) => {
+                const cb = typeof params === 'function' ? params : callback;
+                cb(new Error('DB Error'));
+            });
+
+            await expect(RapidLeanService.getObservations('err-id'))
+                .rejects.toThrow('DB Error');
         });
     });
 
     describe('combineScores', () => {
         it('should weight base score higher than evidence', () => {
+            // Logic: base * 0.7 + evidence * 0.3
             const combined = RapidLeanService.combineScores(3.0, 5.0);
+            // 3.0 * 0.7 = 2.1
+            // 5.0 * 0.3 = 1.5
+            // Total = 3.6
             expect(combined).toBeCloseTo(3.6, 1);
         });
     });
 });
-
-
-
-
-
-
-
 

@@ -1,43 +1,41 @@
 /**
  * FeaturesPrivacyTab - AI Features & Privacy
- * 
+ *
  * Tab 5 of the reorganized AI & Intelligence section
  * Includes: AI Features toggles, Data Policy, Custom Instructions, System Personas
- * 
+ *
  * NEW FEATURES: Data retention, AI learning settings, external data policy, custom instructions
  */
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Sparkles,
-    Brain,
-    Eye,
-    Mic,
-    Focus,
-    FileCode,
-    History,
-    Shield,
-    Save,
-    RefreshCw,
-    Database,
-    Globe,
     BookOpen,
-    MessageSquare,
-    Settings,
+    Brain,
+    Check,
     Clock,
+    Database,
+    Eye,
+    FileCode,
+    Focus,
+    Globe,
+    History,
     Lock,
-    Check
+    MessageSquare,
+    Mic,
+    RefreshCw,
+    Save,
+    Settings,
+    Shield,
+    Sparkles,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAppStore } from '../../../store/useAppStore';
-import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
-import { OrgAISettings } from '../../../types';
-import {
-    SettingsCard,
-    SettingsToggle
-} from '../../AISettings';
+
 import { Api } from '../../../services/api';
+import { useAppStore } from '../../../store/useAppStore';
+import { OrgAISettings } from '../../../types';
+import type { SystemPrompt, SystemPromptContextConfig } from '../../../types/domain/ai';
+import { SettingsCard, SettingsToggle } from '../../AISettings';
 
 // Data retention options
 const RETENTION_OPTIONS = [
@@ -45,7 +43,7 @@ const RETENTION_OPTIONS = [
     { value: '30d', label: '30 days', description: 'Standard retention period' },
     { value: '90d', label: '90 days', description: 'Extended retention for analytics' },
     { value: '365d', label: '1 year', description: 'Long-term retention' },
-    { value: 'forever', label: 'Forever', description: 'Never delete (not recommended)' }
+    { value: 'forever', label: 'Forever', description: 'Never delete (not recommended)' },
 ];
 
 export const FeaturesPrivacyTab: React.FC = () => {
@@ -55,15 +53,15 @@ export const FeaturesPrivacyTab: React.FC = () => {
     const [settings, setSettings] = useState<OrgAISettings | null>(null);
     const [hasChanges, setHasChanges] = useState(false);
     const [activeSubTab, setActiveSubTab] = useState<'features' | 'data' | 'instructions' | 'personas'>('features');
-    
+
     // System prompts state
     const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
     const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
-    
+
     // Custom instructions state
     const [customInstructions, setCustomInstructions] = useState('');
     const [toneGuidelines, setToneGuidelines] = useState('professional');
-    
+
     // Data policy state
     const [dataRetention, setDataRetention] = useState('30d');
     const [aiLearningEnabled, setAILearningEnabled] = useState(false);
@@ -86,7 +84,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
         setLoading(true);
         try {
             const settingsRes = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (settingsRes.ok) {
                 const data = await settingsRes.json();
@@ -115,9 +113,9 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
             if (res.ok) {
                 const updated = await res.json();
@@ -134,7 +132,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
     };
 
     const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
-        setSettings(prev => prev ? { ...prev, [key]: value } : null);
+        setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
         setHasChanges(true);
     };
 
@@ -146,7 +144,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 content: editingPrompt.content,
                 description: editingPrompt.description,
                 context_config: editingPrompt.context_config,
-                updatedBy: 'Admin'
+                updatedBy: 'Admin',
             });
             toast.success('System Prompt Updated');
             setEditingPrompt(null);
@@ -207,8 +205,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('features')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'features' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'features'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -218,8 +216,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('data')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'data' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'data'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -229,8 +227,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('instructions')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'instructions' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'instructions'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -240,8 +238,8 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 <button
                     onClick={() => setActiveSubTab('personas')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                        activeSubTab === 'personas' 
-                            ? 'border-primary-500 text-primary-600 dark:text-violet-400' 
+                        activeSubTab === 'personas'
+                            ? 'border-primary-500 text-primary-600 dark:text-violet-400'
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                     }`}
                 >
@@ -339,7 +337,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                         iconColor="text-blue-400"
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {RETENTION_OPTIONS.map(opt => (
+                            {RETENTION_OPTIONS.map((opt) => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setDataRetention(opt.value)}
@@ -368,43 +366,67 @@ export const FeaturesPrivacyTab: React.FC = () => {
                         iconColor="text-emerald-400"
                     >
                         <div className="space-y-4">
-                            <div className={`p-4 rounded-xl transition-all cursor-pointer ${
-                                aiLearningEnabled
-                                    ? 'bg-success-500/20 border border-success-500/30'
-                                    : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
-                            }`}
-                            onClick={() => setAILearningEnabled(!aiLearningEnabled)}
+                            <div
+                                className={`p-4 rounded-xl transition-all cursor-pointer ${
+                                    aiLearningEnabled
+                                        ? 'bg-success-500/20 border border-success-500/30'
+                                        : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
+                                }`}
+                                onClick={() => setAILearningEnabled(!aiLearningEnabled)}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${aiLearningEnabled ? 'bg-success-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                                            <Brain size={18} className={aiLearningEnabled ? 'text-success-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'} />
+                                        <div
+                                            className={`p-2 rounded-lg ${aiLearningEnabled ? 'bg-success-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                        >
+                                            <Brain
+                                                size={18}
+                                                className={
+                                                    aiLearningEnabled
+                                                        ? 'text-success-600 dark:text-emerald-400'
+                                                        : 'text-slate-500 dark:text-slate-400'
+                                                }
+                                            />
                                         </div>
                                         <div>
-                                            <h4 className="font-medium text-navy-900 dark:text-white">Allow AI to Learn from Organization Data</h4>
+                                            <h4 className="font-medium text-navy-900 dark:text-white">
+                                                Allow AI to Learn from Organization Data
+                                            </h4>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                AI will improve responses based on your organization's patterns and decisions
+                                                AI will improve responses based on your organization's patterns and
+                                                decisions
                                             </p>
                                         </div>
                                     </div>
-                                    <div className={`w-11 h-6 rounded-full transition-colors ${
-                                        aiLearningEnabled ? 'bg-success-600 dark:bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
-                                    }`}>
-                                        <div className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
-                                            aiLearningEnabled ? 'translate-x-6' : 'translate-x-1'
-                                        }`} />
+                                    <div
+                                        className={`w-11 h-6 rounded-full transition-colors ${
+                                            aiLearningEnabled
+                                                ? 'bg-success-600 dark:bg-emerald-500'
+                                                : 'bg-slate-300 dark:bg-slate-600'
+                                        }`}
+                                    >
+                                        <div
+                                            className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
+                                                aiLearningEnabled ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                        />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="p-4 bg-warning-500/10 border border-warning-500/20 rounded-xl">
                                 <div className="flex gap-3">
-                                    <Shield size={18} className="text-warning-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                    <Shield
+                                        size={18}
+                                        className="text-warning-600 dark:text-amber-400 shrink-0 mt-0.5"
+                                    />
                                     <div>
-                                        <h4 className="font-medium text-warning-700 dark:text-amber-300">Privacy Notice</h4>
+                                        <h4 className="font-medium text-warning-700 dark:text-amber-300">
+                                            Privacy Notice
+                                        </h4>
                                         <p className="text-xs text-warning-700/70 dark:text-amber-200/70 mt-1">
-                                            When enabled, AI learning uses only aggregated, anonymized patterns. 
-                                            No personal or sensitive data is used for training.
+                                            When enabled, AI learning uses only aggregated, anonymized patterns. No
+                                            personal or sensitive data is used for training.
                                         </p>
                                     </div>
                                 </div>
@@ -418,31 +440,49 @@ export const FeaturesPrivacyTab: React.FC = () => {
                         icon={Globe}
                         iconColor="text-cyan-400"
                     >
-                        <div className={`p-4 rounded-xl transition-all cursor-pointer ${
-                            externalDataEnabled
-                                ? 'bg-info-500/20 border border-info-500/30'
-                                : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
-                        }`}
-                        onClick={() => setExternalDataEnabled(!externalDataEnabled)}
+                        <div
+                            className={`p-4 rounded-xl transition-all cursor-pointer ${
+                                externalDataEnabled
+                                    ? 'bg-info-500/20 border border-info-500/30'
+                                    : 'bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50'
+                            }`}
+                            onClick={() => setExternalDataEnabled(!externalDataEnabled)}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${externalDataEnabled ? 'bg-info-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                                        <Globe size={18} className={externalDataEnabled ? 'text-info-600 dark:text-cyan-400' : 'text-slate-500 dark:text-slate-400'} />
+                                    <div
+                                        className={`p-2 rounded-lg ${externalDataEnabled ? 'bg-info-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    >
+                                        <Globe
+                                            size={18}
+                                            className={
+                                                externalDataEnabled
+                                                    ? 'text-info-600 dark:text-cyan-400'
+                                                    : 'text-slate-500 dark:text-slate-400'
+                                            }
+                                        />
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-navy-900 dark:text-white">Allow External Data Access</h4>
+                                        <h4 className="font-medium text-navy-900 dark:text-white">
+                                            Allow External Data Access
+                                        </h4>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                             AI can fetch industry benchmarks, market data, and external references
                                         </p>
                                     </div>
                                 </div>
-                                <div className={`w-11 h-6 rounded-full transition-colors ${
-                                    externalDataEnabled ? 'bg-info-600 dark:bg-cyan-500' : 'bg-slate-300 dark:bg-slate-600'
-                                }`}>
-                                    <div className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
-                                        externalDataEnabled ? 'translate-x-6' : 'translate-x-1'
-                                    }`} />
+                                <div
+                                    className={`w-11 h-6 rounded-full transition-colors ${
+                                        externalDataEnabled
+                                            ? 'bg-info-600 dark:bg-cyan-500'
+                                            : 'bg-slate-300 dark:bg-slate-600'
+                                    }`}
+                                >
+                                    <div
+                                        className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
+                                            externalDataEnabled ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -461,7 +501,9 @@ export const FeaturesPrivacyTab: React.FC = () => {
                     >
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Tone & Style</label>
+                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                    Tone & Style
+                                </label>
                                 <select
                                     value={toneGuidelines}
                                     onChange={(e) => setToneGuidelines(e.target.value)}
@@ -476,7 +518,9 @@ export const FeaturesPrivacyTab: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Custom System Instructions</label>
+                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                    Custom System Instructions
+                                </label>
                                 <textarea
                                     value={customInstructions}
                                     onChange={(e) => setCustomInstructions(e.target.value)}
@@ -505,14 +549,34 @@ Example:
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { id: 'no_competitor', label: 'Competitor Analysis', desc: 'Avoid discussing competitor products/services' },
-                                    { id: 'no_legal', label: 'Legal Advice', desc: 'Don\'t provide legal recommendations' },
-                                    { id: 'no_financial', label: 'Financial Advice', desc: 'Avoid specific financial recommendations' },
-                                    { id: 'no_personnel', label: 'Personnel Decisions', desc: 'Don\'t advise on hiring/firing' },
+                                    {
+                                        id: 'no_competitor',
+                                        label: 'Competitor Analysis',
+                                        desc: 'Avoid discussing competitor products/services',
+                                    },
+                                    {
+                                        id: 'no_legal',
+                                        label: 'Legal Advice',
+                                        desc: "Don't provide legal recommendations",
+                                    },
+                                    {
+                                        id: 'no_financial',
+                                        label: 'Financial Advice',
+                                        desc: 'Avoid specific financial recommendations',
+                                    },
+                                    {
+                                        id: 'no_personnel',
+                                        label: 'Personnel Decisions',
+                                        desc: "Don't advise on hiring/firing",
+                                    },
                                     { id: 'no_medical', label: 'Medical Topics', desc: 'Avoid health-related advice' },
-                                    { id: 'no_politics', label: 'Political Topics', desc: 'Stay neutral on political matters' }
-                                ].map(topic => (
-                                    <label 
+                                    {
+                                        id: 'no_politics',
+                                        label: 'Political Topics',
+                                        desc: 'Stay neutral on political matters',
+                                    },
+                                ].map((topic) => (
+                                    <label
                                         key={topic.id}
                                         className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer"
                                     >
@@ -521,15 +585,19 @@ Example:
                                             className="w-4 h-4 mt-0.5 rounded border-slate-300 dark:border-slate-600 text-danger-500 focus:ring-danger-500 bg-white dark:bg-slate-700"
                                         />
                                         <div>
-                                            <span className="font-medium text-navy-900 dark:text-white text-sm">{topic.label}</span>
+                                            <span className="font-medium text-navy-900 dark:text-white text-sm">
+                                                {topic.label}
+                                            </span>
                                             <p className="text-xs text-slate-500 mt-0.5">{topic.desc}</p>
                                         </div>
                                     </label>
                                 ))}
                             </div>
-                            
+
                             <div>
-                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">Custom Restricted Keywords</label>
+                                <label className="block text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                    Custom Restricted Keywords
+                                </label>
                                 <textarea
                                     placeholder="Enter keywords or phrases the AI should avoid, one per line..."
                                     className="w-full h-24 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-navy-900 dark:text-white font-mono text-sm focus:border-primary-500 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
@@ -544,22 +612,22 @@ Example:
             {activeSubTab === 'personas' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Available Personas</h3>
-                        {prompts.map(p => (
+                        <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+                            Available Personas
+                        </h3>
+                        {prompts.map((p) => (
                             <div
                                 key={p.key}
                                 onClick={() => setEditingPrompt(p)}
                                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                                    editingPrompt?.key === p.key 
-                                        ? 'bg-violet-500/20 border-violet-500' 
+                                    editingPrompt?.key === p.key
+                                        ? 'bg-violet-500/20 border-violet-500'
                                         : 'bg-navy-900 border-white/5 hover:border-white/20'
                                 }`}
                             >
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="font-bold text-white">{p.key}</h3>
-                                    <span className="text-xs text-slate-400">
-                                        {formatPromptDate(p)}
-                                    </span>
+                                    <span className="text-xs text-slate-400">{formatPromptDate(p)}</span>
                                 </div>
                                 <p className="text-xs text-slate-400 line-clamp-2">{p.description}</p>
                             </div>
@@ -572,18 +640,26 @@ Example:
                                 <h3 className="text-lg font-bold text-white mb-4">Edit: {editingPrompt.key}</h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1">
+                                            Description
+                                        </label>
                                         <input
                                             value={editingPrompt.description}
-                                            onChange={e => setEditingPrompt({ ...editingPrompt, description: e.target.value })}
+                                            onChange={(e) =>
+                                                setEditingPrompt({ ...editingPrompt, description: e.target.value })
+                                            }
                                             className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">System Prompt</label>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1">
+                                            System Prompt
+                                        </label>
                                         <textarea
                                             value={editingPrompt.content}
-                                            onChange={e => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
+                                            onChange={(e) =>
+                                                setEditingPrompt({ ...editingPrompt, content: e.target.value })
+                                            }
                                             className="w-full h-64 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-violet-500 outline-none resize-none"
                                         />
                                     </div>
@@ -600,20 +676,32 @@ Example:
                                                 { id: 'include_user_profile', label: 'User Profile' },
                                                 { id: 'include_assessment_data', label: 'Assessment Data' },
                                                 { id: 'include_kb_articles', label: 'Knowledge Base' },
-                                                { id: 'include_task_history', label: 'Task History' }
-                                            ].map(opt => {
-                                                const config: SystemPromptContextConfig = typeof editingPrompt.context_config === 'string'
-                                                    ? (JSON.parse(editingPrompt.context_config || '{}') as SystemPromptContextConfig)
-                                                    : (editingPrompt.context_config || {});
+                                                { id: 'include_task_history', label: 'Task History' },
+                                            ].map((opt) => {
+                                                const config: SystemPromptContextConfig =
+                                                    typeof editingPrompt.context_config === 'string'
+                                                        ? (JSON.parse(
+                                                              editingPrompt.context_config || '{}',
+                                                          ) as SystemPromptContextConfig)
+                                                        : editingPrompt.context_config || {};
 
                                                 return (
-                                                    <label key={opt.id} className="flex items-center gap-2 cursor-pointer group">
+                                                    <label
+                                                        key={opt.id}
+                                                        className="flex items-center gap-2 cursor-pointer group"
+                                                    >
                                                         <input
                                                             type="checkbox"
                                                             checked={!!config[opt.id]}
-                                                            onChange={e => {
-                                                                const newConfig: SystemPromptContextConfig = { ...config, [opt.id]: e.target.checked };
-                                                                setEditingPrompt({ ...editingPrompt, context_config: newConfig });
+                                                            onChange={(e) => {
+                                                                const newConfig: SystemPromptContextConfig = {
+                                                                    ...config,
+                                                                    [opt.id]: e.target.checked,
+                                                                };
+                                                                setEditingPrompt({
+                                                                    ...editingPrompt,
+                                                                    context_config: newConfig,
+                                                                });
                                                             }}
                                                             className="w-4 h-4 rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700"
                                                         />
@@ -632,8 +720,8 @@ Example:
                                         >
                                             Cancel
                                         </button>
-                                        <button 
-                                            type="submit" 
+                                        <button
+                                            type="submit"
                                             className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium flex items-center gap-2"
                                         >
                                             <Save size={16} /> Save Persona

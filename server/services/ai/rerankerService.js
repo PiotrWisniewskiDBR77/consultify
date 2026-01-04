@@ -6,8 +6,9 @@
  *
  * @module rerankerService
  */
-import db from '../../database';
-import { aiLogger } from './logger';
+import { getDatabase } from '../../src/database/index.js';
+const db = getDatabase();
+import { aiLogger } from './logger.js';
 import { OpenAI } from 'openai';
 const deps = {
     db: db,

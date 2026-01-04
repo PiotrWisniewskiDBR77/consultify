@@ -1,7 +1,7 @@
 /**
  * Consultingflowengine Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

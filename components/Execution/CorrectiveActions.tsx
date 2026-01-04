@@ -1,29 +1,29 @@
 /**
  * CorrectiveActions Component
- * 
+ *
  * PMO Corrective Actions Management
- * 
+ *
  * Standards Compliance:
  * - ISO 21500:2021 - Corrective Action (Clause 4.5.4)
  * - PMI PMBOK 7th Edition - Corrective Action / Variance Response
  * - PRINCE2 - Issue Resolution
- * 
+ *
  * PMO Domain: PERFORMANCE_MONITORING
  */
 
-import React, { useState } from 'react';
 import {
     AlertTriangle,
-    CheckCircle2,
-    Clock,
-    User,
     Calendar,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
     Plus,
     Target,
     TrendingUp,
-    ChevronRight,
-    X
+    User,
+    X,
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 export type ActionStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type ActionPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -57,44 +57,44 @@ interface CorrectiveActionsProps {
 }
 
 const STATUS_CONFIG: Record<ActionStatus, { color: string; bgColor: string; icon: React.ReactNode; label: string }> = {
-    OPEN: { 
-        color: 'text-amber-600', 
-        bgColor: 'bg-amber-100 dark:bg-amber-900/20', 
+    OPEN: {
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-100 dark:bg-amber-900/20',
         icon: <AlertTriangle size={14} />,
-        label: 'Open'
+        label: 'Open',
     },
-    IN_PROGRESS: { 
-        color: 'text-blue-600', 
-        bgColor: 'bg-blue-100 dark:bg-blue-900/20', 
+    IN_PROGRESS: {
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100 dark:bg-blue-900/20',
         icon: <Clock size={14} />,
-        label: 'In Progress'
+        label: 'In Progress',
     },
-    COMPLETED: { 
-        color: 'text-green-600', 
-        bgColor: 'bg-green-100 dark:bg-green-900/20', 
+    COMPLETED: {
+        color: 'text-green-600',
+        bgColor: 'bg-green-100 dark:bg-green-900/20',
         icon: <CheckCircle2 size={14} />,
-        label: 'Completed'
+        label: 'Completed',
     },
-    CANCELLED: { 
-        color: 'text-slate-500', 
-        bgColor: 'bg-slate-100 dark:bg-slate-800', 
+    CANCELLED: {
+        color: 'text-slate-500',
+        bgColor: 'bg-slate-100 dark:bg-slate-800',
         icon: <X size={14} />,
-        label: 'Cancelled'
-    }
+        label: 'Cancelled',
+    },
 };
 
 const PRIORITY_COLORS: Record<ActionPriority, string> = {
     CRITICAL: 'bg-red-500 text-white',
     HIGH: 'bg-orange-500 text-white',
     MEDIUM: 'bg-amber-400 text-amber-900',
-    LOW: 'bg-green-400 text-green-900'
+    LOW: 'bg-green-400 text-green-900',
 };
 
 export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
     projectId,
     actions = [],
     onCreateAction,
-    onUpdateAction
+    onUpdateAction,
 }) => {
     const [filter, setFilter] = useState<'all' | ActionStatus>('all');
     const [selectedAction, setSelectedAction] = useState<CorrectiveAction | null>(null);
@@ -118,8 +118,8 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                 'Schedule 5 additional training sessions',
                 'Create quick reference guides',
                 'Deploy in-app tooltips',
-                'Establish super-user network'
-            ]
+                'Establish super-user network',
+            ],
         },
         {
             id: 'ca-2',
@@ -133,7 +133,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
             dueDate: '2025-01-05',
             createdDate: '2024-12-25',
             expectedImpact: 'Reduce variance to 3% by deferring non-critical features',
-            rootCause: 'Scope creep from additional security requirements'
+            rootCause: 'Scope creep from additional security requirements',
         },
         {
             id: 'ca-3',
@@ -148,29 +148,25 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
             createdDate: '2024-12-01',
             completedDate: '2024-12-18',
             expectedImpact: 'Reduce confusion and support tickets by 25%',
-            actualImpact: 'Support tickets reduced by 30%, exceeding target'
-        }
+            actualImpact: 'Support tickets reduced by 30%, exceeding target',
+        },
     ]);
 
-    const filteredActions = filter === 'all' 
-        ? localActions 
-        : localActions.filter(a => a.status === filter);
+    const filteredActions = filter === 'all' ? localActions : localActions.filter((a) => a.status === filter);
 
     // Summary stats
     const stats = {
         total: localActions.length,
-        open: localActions.filter(a => a.status === 'OPEN').length,
-        inProgress: localActions.filter(a => a.status === 'IN_PROGRESS').length,
-        completed: localActions.filter(a => a.status === 'COMPLETED').length,
-        overdue: localActions.filter(a => 
-            (a.status === 'OPEN' || a.status === 'IN_PROGRESS') && 
-            new Date(a.dueDate) < new Date()
-        ).length
+        open: localActions.filter((a) => a.status === 'OPEN').length,
+        inProgress: localActions.filter((a) => a.status === 'IN_PROGRESS').length,
+        completed: localActions.filter((a) => a.status === 'COMPLETED').length,
+        overdue: localActions.filter(
+            (a) => (a.status === 'OPEN' || a.status === 'IN_PROGRESS') && new Date(a.dueDate) < new Date(),
+        ).length,
     };
 
     const isOverdue = (action: CorrectiveAction) => {
-        return (action.status === 'OPEN' || action.status === 'IN_PROGRESS') && 
-               new Date(action.dueDate) < new Date();
+        return (action.status === 'OPEN' || action.status === 'IN_PROGRESS') && new Date(action.dueDate) < new Date();
     };
 
     return (
@@ -238,7 +234,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
 
             {/* Filter Tabs */}
             <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
-                {(['all', 'OPEN', 'IN_PROGRESS', 'COMPLETED'] as const).map(status => (
+                {(['all', 'OPEN', 'IN_PROGRESS', 'COMPLETED'] as const).map((status) => (
                     <button
                         key={status}
                         onClick={() => setFilter(status)}
@@ -261,7 +257,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                         <p>No corrective actions found</p>
                     </div>
                 ) : (
-                    filteredActions.map(action => {
+                    filteredActions.map((action) => {
                         const statusConfig = STATUS_CONFIG[action.status];
                         const overdue = isOverdue(action);
 
@@ -269,8 +265,8 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                             <div
                                 key={action.id}
                                 className={`bg-white dark:bg-navy-900 rounded-xl border-2 p-4 transition-all cursor-pointer hover:border-purple-300 dark:hover:border-purple-500/30 ${
-                                    overdue 
-                                        ? 'border-red-300 dark:border-red-500/30' 
+                                    overdue
+                                        ? 'border-red-300 dark:border-red-500/30'
                                         : 'border-slate-200 dark:border-white/10'
                                 }`}
                                 onClick={() => setSelectedAction(selectedAction?.id === action.id ? null : action)}
@@ -278,10 +274,14 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${PRIORITY_COLORS[action.priority]}`}>
+                                            <span
+                                                className={`px-2 py-0.5 rounded text-xs font-bold ${PRIORITY_COLORS[action.priority]}`}
+                                            >
                                                 {action.priority}
                                             </span>
-                                            <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+                                            <span
+                                                className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+                                            >
                                                 {statusConfig.icon}
                                                 {statusConfig.label}
                                             </span>
@@ -304,7 +304,9 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                                                     {action.assignee.name}
                                                 </span>
                                             )}
-                                            <span className={`flex items-center gap-1 ${overdue ? 'text-red-500' : ''}`}>
+                                            <span
+                                                className={`flex items-center gap-1 ${overdue ? 'text-red-500' : ''}`}
+                                            >
                                                 <Calendar size={12} />
                                                 Due: {new Date(action.dueDate).toLocaleDateString()}
                                             </span>
@@ -317,9 +319,12 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                                         </div>
                                     </div>
 
-                                    <ChevronRight size={20} className={`text-slate-400 transition-transform ${
-                                        selectedAction?.id === action.id ? 'rotate-90' : ''
-                                    }`} />
+                                    <ChevronRight
+                                        size={20}
+                                        className={`text-slate-400 transition-transform ${
+                                            selectedAction?.id === action.id ? 'rotate-90' : ''
+                                        }`}
+                                    />
                                 </div>
 
                                 {/* Expanded Details */}
@@ -327,7 +332,9 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 space-y-4">
                                         {action.rootCause && (
                                             <div>
-                                                <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">Root Cause</h5>
+                                                <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">
+                                                    Root Cause
+                                                </h5>
                                                 <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-950 p-3 rounded-lg">
                                                     {action.rootCause}
                                                 </p>
@@ -335,7 +342,9 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                                         )}
 
                                         <div>
-                                            <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">Expected Impact</h5>
+                                            <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">
+                                                Expected Impact
+                                            </h5>
                                             <p className="text-sm text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/10 p-3 rounded-lg">
                                                 {action.expectedImpact}
                                             </p>
@@ -343,7 +352,9 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
 
                                         {action.actualImpact && (
                                             <div>
-                                                <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">Actual Impact</h5>
+                                                <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">
+                                                    Actual Impact
+                                                </h5>
                                                 <p className="text-sm text-slate-600 dark:text-slate-300 bg-purple-50 dark:bg-purple-900/10 p-3 rounded-lg">
                                                     {action.actualImpact}
                                                 </p>
@@ -352,10 +363,15 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
 
                                         {action.steps && action.steps.length > 0 && (
                                             <div>
-                                                <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-2">Action Steps</h5>
+                                                <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-2">
+                                                    Action Steps
+                                                </h5>
                                                 <ul className="space-y-2">
                                                     {action.steps.map((step, i) => (
-                                                        <li key={i} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                                        <li
+                                                            key={i}
+                                                            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
+                                                        >
                                                             <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-800 flex items-center justify-center text-xs font-bold">
                                                                 {i + 1}
                                                             </span>
@@ -384,7 +400,10 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            onUpdateAction?.(action.id, { status: 'COMPLETED', completedDate: new Date().toISOString() });
+                                                            onUpdateAction?.(action.id, {
+                                                                status: 'COMPLETED',
+                                                                completedDate: new Date().toISOString(),
+                                                            });
                                                         }}
                                                         className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors"
                                                     >
@@ -403,12 +422,4 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
         </div>
     );
 };
-
-
-
-
-
-
-
-
 

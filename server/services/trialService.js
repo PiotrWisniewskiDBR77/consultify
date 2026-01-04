@@ -51,7 +51,7 @@ const deps = {
  */
 async function initDeps() {
     if (!deps._db) {
-        const { default: db } = await import('../database.js');
+        const { default: db } = await import('../src/database/index.js');
         deps._db = db;
     }
     if (!deps._uuidv4) {
@@ -63,7 +63,7 @@ async function initDeps() {
         deps._accessPolicyService = s;
     }
     if (!deps._activityService) {
-        const { default: s } = await import('./activityService.js');
+        const { default: s } = await import('../src/services/ActivityService.js');
         deps._activityService = s;
     }
     if (!deps._notificationService) {

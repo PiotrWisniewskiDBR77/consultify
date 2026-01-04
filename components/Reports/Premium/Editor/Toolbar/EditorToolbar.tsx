@@ -1,36 +1,36 @@
 /**
  * EditorToolbar
- * 
+ *
  * Professional toolbar for the Premium Report Editor with formatting controls,
  * block insertion, and AI assistant trigger.
  */
 
-import React from 'react';
 import { Editor } from '@tiptap/react';
 import {
+    AlignCenter,
+    AlignLeft,
+    AlignRight,
     Bold,
-    Italic,
-    Underline as UnderlineIcon,
-    Strikethrough,
+    Code,
     Heading1,
     Heading2,
     Heading3,
+    Highlighter,
+    Italic,
     List,
     ListOrdered,
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
-    Table,
+    Loader2,
+    Plus,
     Quote,
-    Code,
-    Highlighter,
-    Undo,
     Redo,
     Save,
     Sparkles,
-    Plus,
-    Loader2
+    Strikethrough,
+    Table,
+    Underline as UnderlineIcon,
+    Undo,
 } from 'lucide-react';
+import React from 'react';
 
 interface EditorToolbarProps {
     editor: Editor;
@@ -52,7 +52,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
     onClick,
     isActive = false,
     disabled = false,
-    title
+    title,
 }) => (
     <button
         type="button"
@@ -61,10 +61,11 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
         title={title}
         className={`
       p-2 rounded-lg transition-all duration-150
-      ${isActive
-                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200'
-            }
+      ${
+          isActive
+              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200'
+      }
       ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
     `}
     >
@@ -72,16 +73,9 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
     </button>
 );
 
-const ToolbarDivider: React.FC = () => (
-    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
-);
+const ToolbarDivider: React.FC = () => <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />;
 
-export const EditorToolbar: React.FC<EditorToolbarProps> = ({
-    editor,
-    isSaving,
-    onSave,
-    onAIClick
-}) => {
+export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, isSaving, onSave, onAIClick }) => {
     return (
         <div className="flex items-center gap-1 px-4 py-2 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-slate-700 flex-wrap">
             {/* History */}
@@ -231,11 +225,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 disabled={isSaving}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-all text-sm font-medium disabled:opacity-50"
             >
-                {isSaving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                    <Save className="w-4 h-4" />
-                )}
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Zapisz
             </button>
         </div>

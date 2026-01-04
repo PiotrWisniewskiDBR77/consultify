@@ -7,15 +7,11 @@
  *   router.get('/endpoint', userStateGuard.requireState(['ORG_MEMBER', 'TEAM_COLLAB']), handler)
  */
 
-const UserStateMachine = import('userStateMachine.js');
+import UserStateMachine from '../services/userStateMachine.js';
+import database from '../src/database/index.js';
 
 // Dependency injection for testability
-let db = null;
-try {
-    db = getDatabase();
-} catch (e) {
-    console.warn('userStateGuard: Database not available');
-}
+let db = database;
 
 /**
  * Attach user state to request

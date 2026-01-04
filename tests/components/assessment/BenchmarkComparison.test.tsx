@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BenchmarkComparison } from '../../../components/assessment/BenchmarkComparison';
+import { BenchmarkComparison } from '../../components/assessment/BenchmarkComparison';
 
 describe('BenchmarkComparison Component', () => {
     const defaultProps = {
@@ -222,6 +222,7 @@ describe('BenchmarkComparison Component', () => {
         });
     });
 });
+
 
 
 

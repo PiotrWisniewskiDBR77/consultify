@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, X, Zap, Building2, Rocket, ArrowRight, Calendar, Shield, Users, Cpu, BarChart3, HelpCircle, Bot, Key, Server } from 'lucide-react';
-import { EntryTopBar } from '../components/Landing/EntryTopBar';
-import { EntryFooter } from '../components/Landing/EntryFooter';
+import {
+    ArrowRight,
+    BarChart3,
+    Bot,
+    Building2,
+    Calendar,
+    Check,
+    Cpu,
+    HelpCircle,
+    Key,
+    Rocket,
+    Server,
+    Shield,
+    Users,
+    X,
+    Zap,
+} from 'lucide-react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
+import { EntryFooter } from '../components/Landing/EntryFooter';
+import { EntryTopBar } from '../components/Landing/EntryTopBar';
 
 const CALENDAR_URL = 'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
 
@@ -138,14 +155,14 @@ export const PricingView: React.FC = () => {
         },
         {
             q: 'What happens if I exceed my AI Credits?',
-            a: 'You can continue using AI features - overage is billed at the plan rate (€0.03-0.05/credit). We\'ll notify you when you reach 80% of your allocation.',
+            a: "You can continue using AI features - overage is billed at the plan rate (€0.03-0.05/credit). We'll notify you when you reach 80% of your allocation.",
         },
         {
             q: 'Is there a free trial?',
             a: 'Yes! All plans include a 14-day free trial with full access to Scale features, 2,000 AI Credits, and 5 seats. No credit card required.',
         },
         {
-            q: 'What\'s the difference between Managed AI and BYOK?',
+            q: "What's the difference between Managed AI and BYOK?",
             a: 'With Managed AI, we handle everything - you just use the features. With BYOK, you control costs and compliance by using your own API keys. BYOK is ideal for enterprises with existing AI contracts or strict data requirements.',
         },
     ];
@@ -176,8 +193,10 @@ export const PricingView: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
-                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6">
+                        <span
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
+                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6"
+                        >
                             <BarChart3 size={16} />
                             Pricing
                         </span>
@@ -190,8 +209,8 @@ export const PricingView: React.FC = () => {
                         </h1>
 
                         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
-                            Replace expensive consultants with AI-powered strategic guidance. 
-                            14-day free trial. No credit card required.
+                            Replace expensive consultants with AI-powered strategic guidance. 14-day free trial. No
+                            credit card required.
                         </p>
 
                         {/* Billing Toggle */}
@@ -205,7 +224,9 @@ export const PricingView: React.FC = () => {
                                 }`}
                             >
                                 Annual
-                                <span className="ml-2 text-xs text-green-600 dark:text-green-400 font-semibold">Save 17%</span>
+                                <span className="ml-2 text-xs text-green-600 dark:text-green-400 font-semibold">
+                                    Save 17%
+                                </span>
                             </button>
                             <button
                                 onClick={() => setBillingPeriod('monthly')}
@@ -250,64 +271,97 @@ export const PricingView: React.FC = () => {
                                     )}
 
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                                            tier.highlight
-                                                ? 'bg-white/20'
-                                                : 'bg-purple-100 dark:bg-purple-900/30'
-                                        }`}>
-                                            <Icon size={24} className={tier.highlight ? 'text-white' : 'text-purple-600 dark:text-purple-400'} />
+                                        <div
+                                            className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                                                tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
+                                            }`}
+                                        >
+                                            <Icon
+                                                size={24}
+                                                className={
+                                                    tier.highlight
+                                                        ? 'text-white'
+                                                        : 'text-purple-600 dark:text-purple-400'
+                                                }
+                                            />
                                         </div>
-                                        <h3 className={`text-2xl font-black ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}>
+                                        <h3
+                                            className={`text-2xl font-black ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}
+                                        >
                                             {tier.name}
                                         </h3>
                                     </div>
 
-                                    <p className={`text-sm mb-6 ${tier.highlight ? 'text-purple-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                                    <p
+                                        className={`text-sm mb-6 ${tier.highlight ? 'text-purple-100' : 'text-slate-500 dark:text-slate-400'}`}
+                                    >
                                         {tier.description}
                                     </p>
 
                                     <div className="mb-4">
-                                        <span className={`text-4xl font-black ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}>
+                                        <span
+                                            className={`text-4xl font-black ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}
+                                        >
                                             {displayPrice}
                                         </span>
-                                        <span className={`text-sm ml-2 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                        <span
+                                            className={`text-sm ml-2 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                                        >
                                             {tier.priceNote}
                                         </span>
                                     </div>
 
                                     {/* Key Metrics */}
-                                    <div className={`grid grid-cols-2 gap-3 mb-6 p-4 rounded-xl ${
-                                        tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
-                                    }`}>
+                                    <div
+                                        className={`grid grid-cols-2 gap-3 mb-6 p-4 rounded-xl ${
+                                            tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
+                                        }`}
+                                    >
                                         <div>
-                                            <div className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            <div
+                                                className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                                            >
                                                 Seats
                                             </div>
-                                            <div className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}>
+                                            <div
+                                                className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}
+                                            >
                                                 {tier.seats}
                                             </div>
                                         </div>
                                         <div>
-                                            <div className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            <div
+                                                className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                                            >
                                                 AI Credits
                                             </div>
-                                            <div className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}>
+                                            <div
+                                                className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}
+                                            >
                                                 {tier.aiCredits}
                                             </div>
                                         </div>
                                         <div>
-                                            <div className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            <div
+                                                className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                                            >
                                                 Extra Seats
                                             </div>
-                                            <div className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}>
+                                            <div
+                                                className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}
+                                            >
                                                 {tier.extraSeatPrice}
                                             </div>
                                         </div>
                                         <div>
-                                            <div className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            <div
+                                                className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                                            >
                                                 Overage
                                             </div>
-                                            <div className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}>
+                                            <div
+                                                className={`text-sm font-bold ${tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'}`}
+                                            >
                                                 {tier.overagePrice}
                                             </div>
                                         </div>
@@ -318,19 +372,33 @@ export const PricingView: React.FC = () => {
                                         {tier.features.map((feature, fIdx) => (
                                             <li key={fIdx} className="flex items-center gap-3">
                                                 {feature.included ? (
-                                                    <Check size={16} className={`flex-shrink-0 ${
-                                                        tier.highlight ? 'text-purple-200' : 'text-green-500'
-                                                    }`} />
+                                                    <Check
+                                                        size={16}
+                                                        className={`flex-shrink-0 ${
+                                                            tier.highlight ? 'text-purple-200' : 'text-green-500'
+                                                        }`}
+                                                    />
                                                 ) : (
-                                                    <X size={16} className={`flex-shrink-0 ${
-                                                        tier.highlight ? 'text-purple-300/50' : 'text-slate-300 dark:text-slate-600'
-                                                    }`} />
+                                                    <X
+                                                        size={16}
+                                                        className={`flex-shrink-0 ${
+                                                            tier.highlight
+                                                                ? 'text-purple-300/50'
+                                                                : 'text-slate-300 dark:text-slate-600'
+                                                        }`}
+                                                    />
                                                 )}
-                                                <span className={`text-sm ${
-                                                    feature.included
-                                                        ? tier.highlight ? 'text-purple-100' : 'text-slate-600 dark:text-slate-300'
-                                                        : tier.highlight ? 'text-purple-300/50' : 'text-slate-400 dark:text-slate-500'
-                                                }`}>
+                                                <span
+                                                    className={`text-sm ${
+                                                        feature.included
+                                                            ? tier.highlight
+                                                                ? 'text-purple-100'
+                                                                : 'text-slate-600 dark:text-slate-300'
+                                                            : tier.highlight
+                                                              ? 'text-purple-300/50'
+                                                              : 'text-slate-400 dark:text-slate-500'
+                                                    }`}
+                                                >
                                                     {feature.name}
                                                 </span>
                                             </li>
@@ -343,8 +411,8 @@ export const PricingView: React.FC = () => {
                                             tier.ctaVariant === 'primary'
                                                 ? 'bg-white text-purple-700 hover:bg-purple-50 shadow-lg'
                                                 : tier.ctaVariant === 'secondary'
-                                                ? 'bg-purple-600 text-white hover:bg-purple-500'
-                                                : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                                                  ? 'bg-purple-600 text-white hover:bg-purple-500'
+                                                  : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                                         }`}
                                     >
                                         {tier.cta}
@@ -383,7 +451,8 @@ export const PricingView: React.FC = () => {
                             AI Credits: Two Ways to Pay
                         </h2>
                         <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                            Choose Managed AI for simplicity, or BYOK for control. Both options give you full access to AI features.
+                            Choose Managed AI for simplicity, or BYOK for control. Both options give you full access to
+                            AI features.
                         </p>
                     </div>
 
@@ -401,11 +470,14 @@ export const PricingView: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-navy-950 dark:text-white">Managed AI</h3>
-                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">Default</span>
+                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                                        Default
+                                    </span>
                                 </div>
                             </div>
                             <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
-                                We handle everything. Latest models, optimized prompts, automatic failover between providers.
+                                We handle everything. Latest models, optimized prompts, automatic failover between
+                                providers.
                             </p>
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-white/5">
@@ -417,7 +489,9 @@ export const PricingView: React.FC = () => {
                                     <span className="font-bold text-navy-950 dark:text-white">€0.04/credit</span>
                                 </div>
                                 <div className="flex justify-between items-center py-2">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">Enterprise overage</span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                                        Enterprise overage
+                                    </span>
                                     <span className="font-bold text-navy-950 dark:text-white">€0.03/credit</span>
                                 </div>
                             </div>
@@ -436,23 +510,32 @@ export const PricingView: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-navy-950 dark:text-white">BYOK Mode</h3>
-                                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">Scale+ only</span>
+                                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                                        Scale+ only
+                                    </span>
                                 </div>
                             </div>
                             <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
-                                Use your own OpenAI/Anthropic/Azure keys. You pay providers directly, we charge orchestration fee.
+                                Use your own OpenAI/Anthropic/Azure keys. You pay providers directly, we charge
+                                orchestration fee.
                             </p>
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-white/5">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">Scale orchestration</span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                                        Scale orchestration
+                                    </span>
                                     <span className="font-bold text-navy-950 dark:text-white">€0.015/credit</span>
                                 </div>
                                 <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-white/5">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">Enterprise orchestration</span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                                        Enterprise orchestration
+                                    </span>
                                     <span className="font-bold text-navy-950 dark:text-white">€0.01/credit</span>
                                 </div>
                                 <div className="flex justify-between items-center py-2">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">Local LLM (Llama, Mistral)</span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                                        Local LLM (Llama, Mistral)
+                                    </span>
                                     <span className="font-bold text-navy-950 dark:text-white">€0.01/credit</span>
                                 </div>
                             </div>
@@ -476,9 +559,14 @@ export const PricingView: React.FC = () => {
                                 { action: 'Document Analysis', credits: '3/page' },
                                 { action: 'Strategic Analysis', credits: '25' },
                             ].map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
+                                <div
+                                    key={idx}
+                                    className="flex justify-between items-center p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                                >
                                     <span className="text-sm text-slate-600 dark:text-slate-400">{item.action}</span>
-                                    <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{item.credits}</span>
+                                    <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                                        {item.credits}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -494,7 +582,10 @@ export const PricingView: React.FC = () => {
                             Frequently Asked Questions
                         </h2>
                         <p className="text-slate-600 dark:text-slate-400">
-                            Have more questions? <a href="/contact" className="text-purple-600 hover:underline">Contact us</a>
+                            Have more questions?{' '}
+                            <a href="/contact" className="text-purple-600 hover:underline">
+                                Contact us
+                            </a>
                         </p>
                     </div>
 
@@ -512,9 +603,7 @@ export const PricingView: React.FC = () => {
                                     <HelpCircle size={20} className="text-purple-500 mt-0.5 flex-shrink-0" />
                                     {faq.q}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm pl-8">
-                                    {faq.a}
-                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm pl-8">{faq.a}</p>
                             </motion.div>
                         ))}
                     </div>
@@ -528,8 +617,8 @@ export const PricingView: React.FC = () => {
                         Ready to transform your organization?
                     </h2>
                     <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-xl mx-auto">
-                        Start your 14-day free trial today. Full Scale features, 2,000 AI Credits, 5 seats.
-                        No credit card required.
+                        Start your 14-day free trial today. Full Scale features, 2,000 AI Credits, 5 seats. No credit
+                        card required.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button

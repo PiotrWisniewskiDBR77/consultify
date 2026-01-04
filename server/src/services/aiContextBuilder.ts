@@ -3,8 +3,9 @@
  * AI Core Layer — Enterprise PMO Brain
  */
 
-import { get as dbGet, all as dbAll } from '../utils/DbPromise.js';
 import crypto from 'crypto';
+
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 
 // Interfaces
 export interface ContextOptions {
@@ -90,7 +91,12 @@ export const AIContextBuilder = {
     /**
      * Build complete 6-layer context + PMO health snapshot
      */
-    buildContext: async (userId: string, organizationId: string, projectId: string | null = null, options: ContextOptions = {}): Promise<AIContext> => {
+    buildContext: async (
+        userId: string,
+        organizationId: string,
+        projectId: string | null = null,
+        options: ContextOptions = {},
+    ): Promise<AIContext> => {
         const focusMode = options.focusMode || 'all';
 
         const PMOHealthService = await getPMOHealthService();
@@ -105,7 +111,7 @@ export const AIContextBuilder = {
         const external = await AIContextBuilder._buildExternalContext(organizationId, focusMode);
 
         // Fetch PMOHealthSnapshot
-        let pmo = { healthSnapshot: null };
+        const pmo = { healthSnapshot: null };
         if (projectId && PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
             try {
                 pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
@@ -115,7 +121,11 @@ export const AIContextBuilder = {
         }
 
         // Fetch pending approvals for HITL context
-        const pendingApprovals = await AIContextBuilder._buildPendingApprovalsContext(userId, organizationId, projectId);
+        const pendingApprovals = await AIContextBuilder._buildPendingApprovalsContext(
+            userId,
+            organizationId,
+            projectId,
+        );
 
         // Fetch effective AI settings
         let aiSettings = null;
@@ -136,7 +146,7 @@ export const AIContextBuilder = {
             external,
             pmo,
             pendingApprovals,
-            aiSettings
+            aiSettings,
         };
 
         const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
@@ -148,7 +158,7 @@ export const AIContextBuilder = {
             contextHash: AIContextBuilder._generateHash(platform, organization, project),
             currentScreen: options.currentScreen || null,
             selectedObjectId: options.selectedObjectId || null,
-            selectedObjectType: options.selectedObjectType || null
+            selectedObjectType: options.selectedObjectType || null,
         } as AIContext;
     },
 
@@ -168,11 +178,11 @@ export const AIContextBuilder = {
                         projectDocuments: [],
                         previousDecisions: [],
                         frameworkKnowledge: fullContext.knowledge?.frameworkKnowledge || [],
-                        pmoStandards: fullContext.knowledge?.pmoStandards || fullContext.knowledge
+                        pmoStandards: fullContext.knowledge?.pmoStandards || fullContext.knowledge,
                     },
                     external: null,
                     pmo: fullContext.pmo,
-                    pendingApprovals: []
+                    pendingApprovals: [],
                 };
 
             case 'project-data':
@@ -188,7 +198,7 @@ export const AIContextBuilder = {
                     },
                     external: null,
                     pmo: fullContext.pmo,
-                    pendingApprovals: fullContext.pendingApprovals
+                    pendingApprovals: fullContext.pendingApprovals,
                 };
 
             case 'research':
@@ -200,7 +210,7 @@ export const AIContextBuilder = {
                     knowledge: fullContext.knowledge,
                     external: null,
                     pmo: fullContext.pmo,
-                    pendingApprovals: fullContext.pendingApprovals
+                    pendingApprovals: fullContext.pendingApprovals,
                 };
 
             case 'web':
@@ -216,10 +226,10 @@ export const AIContextBuilder = {
                     external: {
                         ...fullContext.external,
                         webSearchEnabled: true,
-                        webSearchPriority: 'high'
+                        webSearchPriority: 'high',
                     },
                     pmo: null,
-                    pendingApprovals: []
+                    pendingApprovals: [],
                 };
 
             case 'all':
@@ -233,7 +243,8 @@ export const AIContextBuilder = {
      */
     _buildPlatformContext: async (userId: string, organizationId: string) => {
         const user: any = (await dbGet(`SELECT role FROM users WHERE id = ?`, [userId])) || {};
-        const policies: any = (await dbGet(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
+        const policies: any =
+            (await dbGet(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
 
         let platformRole = 'USER';
         if (user.role === 'SUPERADMIN') platformRole = 'SUPERADMIN';
@@ -247,8 +258,8 @@ export const AIContextBuilder = {
             globalPolicies: {
                 internetEnabled: policies.internet_enabled === 1,
                 maxPolicyLevel: policies.max_policy_level || 'ASSISTED',
-                auditRequired: policies.audit_required !== 0
-            }
+                auditRequired: policies.audit_required !== 0,
+            },
         };
     },
 
@@ -257,8 +268,11 @@ export const AIContextBuilder = {
      */
     _buildOrganizationContext: async (organizationId: string) => {
         const org: any = (await dbGet(`SELECT * FROM organizations WHERE id = ?`, [organizationId])) || {};
-        const projects = (await dbAll(`SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0`, [organizationId])) || [];
-        const memory: any = (await dbGet(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`, [organizationId])) || {};
+        const projects =
+            (await dbAll(`SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0`, [organizationId])) ||
+            [];
+        const memory: any =
+            (await dbGet(`SELECT * FROM ai_organization_memory WHERE organization_id = ?`, [organizationId])) || {};
 
         return {
             organizationId,
@@ -266,7 +280,7 @@ export const AIContextBuilder = {
             locations: [],
             activeProjectIds: projects.map((p: any) => p.id),
             activeProjectCount: projects.length,
-            pmoMaturityLevel: memory.pmo_maturity || 'BASIC'
+            pmoMaturityLevel: memory.pmo_maturity || 'BASIC',
         };
     },
 
@@ -277,10 +291,13 @@ export const AIContextBuilder = {
         const project: any = (await dbGet(`SELECT * FROM projects WHERE id = ?`, [projectId])) || {};
         if (!project.id) return null;
 
-        const initiatives: any = (await dbGet(`SELECT 
+        const initiatives: any = (await dbGet(
+            `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-                FROM initiatives WHERE project_id = ?`, [projectId])) || { total: 0, completed: 0 };
+                FROM initiatives WHERE project_id = ?`,
+            [projectId],
+        )) || { total: 0, completed: 0 };
 
         const PHASE_ORDER = ['Context', 'Assessment', 'Initiatives', 'Roadmap', 'Execution', 'Stabilization'];
         const phaseNumber = PHASE_ORDER.indexOf(project.current_phase || 'Context') + 1;
@@ -288,7 +305,7 @@ export const AIContextBuilder = {
         let governanceRules = {};
         try {
             governanceRules = JSON.parse(project.governance_settings || '{}');
-        } catch { }
+        } catch {}
 
         return {
             projectId,
@@ -298,13 +315,13 @@ export const AIContextBuilder = {
             governanceRules: {
                 requireApprovalForPhaseTransition: (governanceRules as any).requireApprovalForPhaseTransition || false,
                 stageGatesEnabled: (governanceRules as any).stageGatesEnabled || false,
-                aiPolicyOverride: null
+                aiPolicyOverride: null,
             },
             sponsorId: project.sponsor_id,
             projectManagerId: project.project_manager_id,
             roadmapStatus: project.status,
             initiativeCount: initiatives.total,
-            completedInitiatives: initiatives.completed
+            completedInitiatives: initiatives.completed,
         };
     },
 
@@ -314,26 +331,38 @@ export const AIContextBuilder = {
     _buildExecutionContext: async (userId: string, projectId: string | null) => {
         let taskSql = `SELECT id, title, status, due_date FROM tasks WHERE assignee_id = ? AND status NOT IN ('done', 'DONE')`;
         const taskParams = [userId];
-        if (projectId) { taskSql += ` AND project_id = ?`; taskParams.push(projectId); }
+        if (projectId) {
+            taskSql += ` AND project_id = ?`;
+            taskParams.push(projectId);
+        }
         taskSql += ` ORDER BY due_date ASC LIMIT 10`;
         const tasks = await dbAll(taskSql, taskParams);
 
         let initiativeSql = `SELECT id, name, status FROM initiatives WHERE owner_business_id = ? AND status NOT IN ('COMPLETED', 'CANCELLED')`;
         const initiativeParams = [userId];
-        if (projectId) { initiativeSql += ` AND project_id = ?`; initiativeParams.push(projectId); }
+        if (projectId) {
+            initiativeSql += ` AND project_id = ?`;
+            initiativeParams.push(projectId);
+        }
         initiativeSql += ` LIMIT 10`;
         const initiatives = await dbAll(initiativeSql, initiativeParams);
 
         let decisionSql = `SELECT id, title, created_at FROM decisions WHERE decision_owner_id = ? AND status = 'PENDING'`;
         const decisionParams = [userId];
-        if (projectId) { decisionSql += ` AND project_id = ?`; decisionParams.push(projectId); }
+        if (projectId) {
+            decisionSql += ` AND project_id = ?`;
+            decisionParams.push(projectId);
+        }
         decisionSql += ` LIMIT 10`;
         const decisions = await dbAll(decisionSql, decisionParams);
 
         let blockerSql = `SELECT id, 'TASK' as type, blocked_reason as description FROM tasks 
                    WHERE assignee_id = ? AND status IN ('blocked', 'BLOCKED')`;
         const blockerParams = [userId];
-        if (projectId) { blockerSql += ` AND project_id = ?`; blockerParams.push(projectId); }
+        if (projectId) {
+            blockerSql += ` AND project_id = ?`;
+            blockerParams.push(projectId);
+        }
         const blockers = await dbAll(blockerSql, blockerParams);
 
         let capacityStatus = 'HEALTHY';
@@ -345,8 +374,12 @@ export const AIContextBuilder = {
             userTasks: tasks.map((t: any) => ({ id: t.id, title: t.title, status: t.status, dueDate: t.due_date })),
             userInitiatives: initiatives.map((i: any) => ({ id: i.id, name: i.name, status: i.status })),
             pendingDecisions: decisions.map((d: any) => ({ id: d.id, title: d.title, createdAt: d.created_at })),
-            blockers: blockers.map((b: any) => ({ id: b.id, type: b.type, description: b.description || 'No reason provided' })),
-            capacityStatus
+            blockers: blockers.map((b: any) => ({
+                id: b.id,
+                type: b.type,
+                description: b.description || 'No reason provided',
+            })),
+            capacityStatus,
         };
     },
 
@@ -385,46 +418,69 @@ export const AIContextBuilder = {
                 ragDisabled: false,
                 projectDocuments: [],
                 strategicDirections: (strategicDirections || []).map((s: any) => ({
-                    title: s.title, description: s.description, priority: s.priority, progress_percentage: s.progress_percentage
+                    title: s.title,
+                    description: s.description,
+                    priority: s.priority,
+                    progress_percentage: s.progress_percentage,
                 })),
                 approvedIdeas: (approvedIdeas || []).slice(0, 5).map((i: any) => ({
-                    content: i.content, category: i.category, tags: i.tags || []
-                }))
+                    content: i.content,
+                    category: i.category,
+                    tags: i.tags || [],
+                })),
             };
         }
 
-        const project: any = (await dbGet(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId])) || { rag_enabled: 1 };
+        const project: any = (await dbGet(`SELECT rag_enabled FROM projects WHERE id = ?`, [projectId])) || {
+            rag_enabled: 1,
+        };
         if (project.rag_enabled === 0) {
             return { ragDisabled: true, projectDocuments: [], message: 'RAG is disabled for this project' };
         }
 
-        const decisions = await dbAll(`SELECT id, title, outcome FROM decisions 
+        const decisions = await dbAll(
+            `SELECT id, title, outcome FROM decisions 
                 WHERE project_id = ? AND status != 'PENDING' 
-                ORDER BY decided_at DESC LIMIT 10`, [projectId]);
+                ORDER BY decided_at DESC LIMIT 10`,
+            [projectId],
+        );
 
         const projectInfo: any = (await dbGet(`SELECT phase_history FROM projects WHERE id = ?`, [projectId])) || {};
         let phaseHistory = [];
-        try { phaseHistory = JSON.parse(projectInfo.phase_history || '[]'); } catch { }
+        try {
+            phaseHistory = JSON.parse(projectInfo.phase_history || '[]');
+        } catch {}
 
         let documents = [];
         if (organizationId && KnowledgeService) {
-            try { documents = await KnowledgeService.getDocuments(organizationId); } catch (err: unknown) { }
+            try {
+                documents = await KnowledgeService.getDocuments(organizationId);
+            } catch (err: unknown) {}
         }
 
         return {
             ragDisabled: false,
             projectDocuments: documents.map((d: any) => ({
-                id: d.id, filename: d.filename, category: d.category || null,
-                tags: d.tags ? (typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags) : []
+                id: d.id,
+                filename: d.filename,
+                category: d.category || null,
+                tags: d.tags ? (typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags) : [],
             })),
             previousDecisions: decisions.map((d: any) => ({ id: d.id, title: d.title, outcome: d.outcome || 'N/A' })),
             phaseHistory: phaseHistory.map((ph: any) => ({ phase: ph.phase, enteredAt: ph.enteredAt })),
             strategicDirections: (strategicDirections || []).map((s: any) => ({
-                title: s.title, description: s.description, priority: s.priority, progress_percentage: s.progress_percentage, success_metrics: s.success_metrics || []
+                title: s.title,
+                description: s.description,
+                priority: s.priority,
+                progress_percentage: s.progress_percentage,
+                success_metrics: s.success_metrics || [],
             })),
             approvedIdeas: (approvedIdeas || []).slice(0, 5).map((i: any) => ({
-                content: i.content, category: i.category, tags: i.tags || [], impact_score: i.impact_score
-            }))
+                content: i.content,
+                category: i.category,
+                tags: i.tags || [],
+                impact_score: i.impact_score,
+            })),
         };
     },
 
@@ -432,10 +488,11 @@ export const AIContextBuilder = {
      * Layer 6: External Context
      */
     _buildExternalContext: async (organizationId: string, _focusMode: string = 'all') => {
-        const policies: any = (await dbGet(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
+        const policies: any =
+            (await dbGet(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
         return {
             internetEnabled: policies.internet_enabled === 1,
-            externalSourcesUsed: []
+            externalSourcesUsed: [],
         };
     },
 
@@ -454,8 +511,12 @@ export const AIContextBuilder = {
                 pendingActions.slice(0, 5).map(async (action: any) => {
                     let patternInfo = null;
                     try {
-                        patternInfo = await AIActionExecutor.getPatternInfo(userId, action.action_type, action.payload || {});
-                    } catch (e: unknown) { }
+                        patternInfo = await AIActionExecutor.getPatternInfo(
+                            userId,
+                            action.action_type,
+                            action.payload || {},
+                        );
+                    } catch (e: unknown) {}
 
                     return {
                         id: action.id,
@@ -463,13 +524,15 @@ export const AIContextBuilder = {
                         title: action.draftContent?.title || action.draftContent?.name || action.action_type,
                         riskLevel: action.payload?.riskLevel || 'LOW',
                         createdAt: action.created_at,
-                        patternInfo
+                        patternInfo,
                     };
-                })
+                }),
             );
 
             const byType: any = {};
-            pendingActions.forEach((a: any) => { byType[a.action_type] = (byType[a.action_type] || 0) + 1; });
+            pendingActions.forEach((a: any) => {
+                byType[a.action_type] = (byType[a.action_type] || 0) + 1;
+            });
 
             const typeSummary = Object.entries(byType)
                 .map(([type, count]) => `${count} ${type.replace(/_/g, ' ').toLowerCase()}`)
@@ -480,7 +543,7 @@ export const AIContextBuilder = {
                 actions: actionsWithPatterns,
                 summary: `User has ${pendingActions.length} pending AI actions awaiting approval: ${typeSummary}`,
                 oldestCreatedAt: pendingActions[pendingActions.length - 1]?.created_at,
-                hasLearnedPatterns: actionsWithPatterns.some((a: any) => a.patternInfo?.decisionCount > 1)
+                hasLearnedPatterns: actionsWithPatterns.some((a: any) => a.patternInfo?.decisionCount > 1),
             };
         } catch (error: unknown) {
             console.error('[AIContextBuilder] Failed to get pending approvals:', error);
@@ -497,10 +560,10 @@ export const AIContextBuilder = {
             organizationId: organization?.organizationId,
             projectId: project?.projectId || null,
             role: platform?.role,
-            policyLevel: platform?.policyLevel
+            policyLevel: platform?.policyLevel,
         });
         return crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
-    }
+    },
 };
 
 export default AIContextBuilder;

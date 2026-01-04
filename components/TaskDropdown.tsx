@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { CheckSquare, AlertCircle, Clock, CheckCircle, ArrowRight, Loader2, Calendar } from 'lucide-react';
-import { Api } from '../services/api';
-import { AppView, Task, TaskStatus, TaskPriority } from '../types';
+import { AlertCircle, ArrowRight, Calendar, CheckCircle, CheckSquare, Clock, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+
+import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
+import { AppView, Task, TaskPriority, TaskStatus } from '../types';
 
 export const TaskDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -27,16 +28,15 @@ export const TaskDropdown = () => {
                 return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
             });
 
-            const pending = sorted.filter(t => t.status !== 'done');
-            const overdue = pending.filter(t => t.dueDate && new Date(t.dueDate) < new Date());
+            const pending = sorted.filter((t) => t.status !== 'done');
+            const overdue = pending.filter((t) => t.dueDate && new Date(t.dueDate) < new Date());
 
             setTasks(sorted.slice(0, 10)); // Show top 10 relevant
             setStats({
                 total: allTasks.length,
                 pending: pending.length,
-                overdue: overdue.length
+                overdue: overdue.length,
             });
-
         } catch (error) {
             console.error('Failed to fetch tasks', error);
         } finally {
@@ -73,10 +73,14 @@ export const TaskDropdown = () => {
 
     const getPriorityColor = (priority: TaskPriority) => {
         switch (priority) {
-            case 'high': return 'text-red-500 bg-red-50 dark:bg-red-500/10';
-            case 'medium': return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
-            case 'low': return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10';
-            default: return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
+            case 'high':
+                return 'text-red-500 bg-red-50 dark:bg-red-500/10';
+            case 'medium':
+                return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
+            case 'low':
+                return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10';
+            default:
+                return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10';
         }
     };
 
@@ -139,15 +143,17 @@ export const TaskDropdown = () => {
                     <div className="grid grid-cols-2 text-center py-2 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                         <div>
                             <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Overdue</div>
-                            <div className={`text-sm font-bold ${stats.overdue > 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                            <div
+                                className={`text-sm font-bold ${stats.overdue > 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}
+                            >
                                 {stats.overdue}
                             </div>
                         </div>
                         <div className="border-l border-slate-200 dark:border-white/10">
-                            <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Active</div>
-                            <div className="text-sm font-bold text-navy-900 dark:text-white">
-                                {stats.pending}
+                            <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                                Total Active
                             </div>
+                            <div className="text-sm font-bold text-navy-900 dark:text-white">{stats.pending}</div>
                         </div>
                     </div>
 
@@ -164,61 +170,80 @@ export const TaskDropdown = () => {
                                     <CheckSquare size={20} className="text-slate-300" />
                                 </div>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No tasks found</p>
-                                <button onClick={handleNavigateToTasks} className="text-xs text-purple-600 font-medium mt-2">Create new task</button>
+                                <button
+                                    onClick={handleNavigateToTasks}
+                                    className="text-xs text-purple-600 font-medium mt-2"
+                                >
+                                    Create new task
+                                </button>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-50 dark:divide-white/5">
-                                {tasks.slice(0, 5).map(task => ( // Just show top 5 in dropdown
-                                    <div
-                                        key={task.id}
-                                        className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
-                                        onClick={handleNavigateToTasks} // Or open detail modal if implemented
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="mt-0.5">
-                                                {task.status === TaskStatus.DONE ? (
-                                                    <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded textxs font-bold uppercase">
-                                                        <CheckCircle size={10} /> Done
-                                                    </div>
-                                                ) : (
-                                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-opacity-10 ${task.status === TaskStatus.IN_PROGRESS ? 'border-blue-500 text-blue-500 bg-blue-500' :
-                                                        task.status === TaskStatus.BLOCKED ? 'border-red-500 text-red-500 bg-red-500' :
-                                                            'border-slate-500 text-slate-500 bg-slate-500'
-                                                        }`}>
-                                                        {task.status.replace('_', ' ')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex justify-between items-start gap-2">
-                                                    <p className={`text-sm font-medium truncate ${task.status === TaskStatus.DONE ? 'text-slate-500 line-through' : 'text-navy-900 dark:text-white'}`}>
-                                                        {task.title}
-                                                    </p>
-                                                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0 ${getPriorityColor(task.priority)}`}>
-                                                        {task.priority || 'medium'}
-                                                    </span>
+                                {tasks.slice(0, 5).map(
+                                    (
+                                        task, // Just show top 5 in dropdown
+                                    ) => (
+                                        <div
+                                            key={task.id}
+                                            className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
+                                            onClick={handleNavigateToTasks} // Or open detail modal if implemented
+                                        >
+                                            <div className="flex gap-3">
+                                                <div className="mt-0.5">
+                                                    {task.status === TaskStatus.DONE ? (
+                                                        <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded textxs font-bold uppercase">
+                                                            <CheckCircle size={10} /> Done
+                                                        </div>
+                                                    ) : (
+                                                        <span
+                                                            className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-opacity-10 ${
+                                                                task.status === TaskStatus.IN_PROGRESS
+                                                                    ? 'border-blue-500 text-blue-500 bg-blue-500'
+                                                                    : task.status === TaskStatus.BLOCKED
+                                                                      ? 'border-red-500 text-red-500 bg-red-500'
+                                                                      : 'border-slate-500 text-slate-500 bg-slate-500'
+                                                            }`}
+                                                        >
+                                                            {task.status.replace('_', ' ')}
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    {task.dueDate && (
-                                                        <div className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-red-500 font-medium' : ''}`}>
-                                                            <Calendar size={12} />
-                                                            {formatDueDate(task.dueDate)}
-                                                        </div>
-                                                    )}
-                                                    {task.assigneeId && (
-                                                        <div className="flex items-center gap-1 truncate">
-                                                            <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[8px] font-bold">
-                                                                {/* Initials - simplified for now */}
-                                                                U
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start gap-2">
+                                                        <p
+                                                            className={`text-sm font-medium truncate ${task.status === TaskStatus.DONE ? 'text-slate-500 line-through' : 'text-navy-900 dark:text-white'}`}
+                                                        >
+                                                            {task.title}
+                                                        </p>
+                                                        <span
+                                                            className={`text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0 ${getPriorityColor(task.priority)}`}
+                                                        >
+                                                            {task.priority || 'medium'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        {task.dueDate && (
+                                                            <div
+                                                                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-red-500 font-medium' : ''}`}
+                                                            >
+                                                                <Calendar size={12} />
+                                                                {formatDueDate(task.dueDate)}
                                                             </div>
-                                                            {/* We don't have user name easily here without join, so skip or show generic */}
-                                                        </div>
-                                                    )}
+                                                        )}
+                                                        {task.assigneeId && (
+                                                            <div className="flex items-center gap-1 truncate">
+                                                                <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[8px] font-bold">
+                                                                    {/* Initials - simplified for now */}U
+                                                                </div>
+                                                                {/* We don't have user name easily here without join, so skip or show generic */}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ),
+                                )}
                                 {tasks.length > 5 && (
                                     <div className="p-2 text-center bg-slate-50/50 dark:bg-white/5">
                                         <button

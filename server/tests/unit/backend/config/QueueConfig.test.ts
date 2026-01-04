@@ -1,11 +1,12 @@
 /**
  * QueueConfig Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for QueueConfig - 95%+ coverage target
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { loadQueueConfig } from '../../../../src/config/QueueConfig.js';
 
 describe('QueueConfig', () => {
@@ -42,4 +43,3 @@ describe('QueueConfig', () => {
         });
     });
 });
-

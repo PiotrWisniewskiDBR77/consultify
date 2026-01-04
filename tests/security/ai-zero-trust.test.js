@@ -12,9 +12,9 @@
  * @module security/ai-zero-trust
  */
 
-const { describe, it, expect, beforeAll, vi } = require('vitest');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 describe('AI Zero-Trust Security Tests', () => {
 
@@ -125,7 +125,7 @@ describe('AI Zero-Trust Security Tests', () => {
             // Check timestamp freshness
             const now = Date.now();
             const requestTime = new Date(request.timestamp).getTime();
-            
+
             if (Math.abs(now - requestTime) > maxAgeSeconds * 1000) {
                 return { valid: false, reason: 'Request timestamp too old' };
             }
@@ -217,7 +217,7 @@ describe('AI Zero-Trust Security Tests', () => {
             const getSession = (sessionId, requestingUserId) => {
                 const session = sessions.get(sessionId);
                 if (!session) return null;
-                
+
                 // Zero-trust: verify user owns session
                 if (session.userId !== requestingUserId) {
                     return null; // Access denied
@@ -230,10 +230,10 @@ describe('AI Zero-Trust Security Tests', () => {
 
             // User1 can access their session
             expect(getSession(user1Session, 'user1')).not.toBeNull();
-            
+
             // User1 cannot access User2's session
             expect(getSession(user2Session, 'user1')).toBeNull();
-            
+
             // User2 cannot access User1's session
             expect(getSession(user1Session, 'user2')).toBeNull();
         });
@@ -254,7 +254,7 @@ describe('AI Zero-Trust Security Tests', () => {
 
             // User1 in Org1 creates a conversation
             addConversation('org1', 'user1', { id: 'conv1', messages: ['Hello'] });
-            
+
             // User2 in Org1 creates a conversation
             addConversation('org1', 'user2', { id: 'conv2', messages: ['Hi'] });
 
@@ -299,7 +299,7 @@ describe('AI Zero-Trust Security Tests', () => {
             const verifyServiceToken = (token, expectedService) => {
                 try {
                     const [serviceId, timestamp, signature] = token.split(':');
-                    
+
                     if (!SERVICE_KEYS[serviceId]) {
                         return { valid: false, reason: 'Unknown service' };
                     }
@@ -444,7 +444,7 @@ describe('AI Zero-Trust Security Tests', () => {
 
             const attemptOperation = (userId, operation, userPermissions, requiredPermissions) => {
                 const hasPermission = requiredPermissions.every(p => userPermissions.includes(p));
-                
+
                 if (!hasPermission) {
                     auditLog.push({
                         type: 'PERMISSION_DENIED',
@@ -478,6 +478,7 @@ module.exports = {
         }
     }
 };
+
 
 
 

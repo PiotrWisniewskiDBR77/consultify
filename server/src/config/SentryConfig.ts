@@ -1,18 +1,18 @@
 /**
  * Sentry Configuration
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * This module initializes Sentry error monitoring for the Express server.
  * Import this at the very top of server/index.js, before other imports.
  */
 
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import type { Express, NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import type { Express, Request, Response, NextFunction } from 'express';
 
 // Use Handlers from @sentry/node for compatibility
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Handlers = (Sentry as any).Handlers;
 
 // ==========================================
@@ -71,9 +71,9 @@ export function initSentry(app: Express): SentryHandlers {
     if (!isEnabled) {
         console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
         return {
-            requestHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
-            tracingHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
-            errorHandler: () => (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err),
+            requestHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
+            tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
+            errorHandler: (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err),
         };
     }
 
@@ -96,10 +96,10 @@ export function initSentry(app: Express): SentryHandlers {
         // Integrations
         integrations: [
             // Express integration (legacy API for compatibility)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             new (Sentry as any).Integrations.Express({ app }),
             // HTTP integration for tracing outgoing requests
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             new (Sentry as any).Integrations.Http({ tracing: true }),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
@@ -122,7 +122,7 @@ export function initSentry(app: Express): SentryHandlers {
             // Remove sensitive data from request body
             if (request?.data) {
                 const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
-                sensitiveFields.forEach(field => {
+                sensitiveFields.forEach((field) => {
                     if (typeof request.data === 'object' && request.data && field in request.data) {
                         (request.data as Record<string, unknown>)[field] = '[REDACTED]';
                     }
@@ -181,7 +181,7 @@ export function captureException(error: Error, context: Context = {}): void {
         return;
     }
 
-    Sentry.withScope(scope => {
+    Sentry.withScope((scope) => {
         if (context.user) {
             scope.setUser({
                 id: context.user.id,
@@ -206,13 +206,17 @@ export function captureException(error: Error, context: Context = {}): void {
 /**
  * Capture message manually
  */
-export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context: Context = {}): void {
+export function captureMessage(
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info',
+    context: Context = {},
+): void {
     if (!isEnabled) {
         console.log(`[${level.toUpperCase()}]`, message, context);
         return;
     }
 
-    Sentry.withScope(scope => {
+    Sentry.withScope((scope) => {
         if (context.tags) {
             Object.entries(context.tags).forEach(([key, value]) => {
                 scope.setTag(key, value);
@@ -263,4 +267,3 @@ export function clearUser(): void {
 
 // Export raw Sentry for advanced usage
 export { Sentry };
-

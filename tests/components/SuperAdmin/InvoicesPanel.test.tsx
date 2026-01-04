@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { InvoicesPanel } from '../../../components/SuperAdmin/billing/InvoicesPanel';
+import { InvoicesPanel } from '../../components/SuperAdmin/billing/InvoicesPanel';
 import { Api } from '../../../services/api';
 
 // Mock the Api module
@@ -345,6 +345,7 @@ describe('InvoicesPanel', () => {
         });
     });
 });
+
 
 
 

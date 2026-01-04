@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { User } from '../../types';
-import { useTranslation } from 'react-i18next';
-import { 
-    TrendingUp, TrendingDown, Coins, Activity, Calendar, 
-    BarChart3, PieChart, Loader2, RefreshCw, Sparkles,
-    Brain, MessageSquare, FileText, Zap
+import {
+    Activity,
+    BarChart3,
+    Brain,
+    Calendar,
+    Coins,
+    FileText,
+    Loader2,
+    MessageSquare,
+    PieChart,
+    RefreshCw,
+    Sparkles,
+    TrendingDown,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
+import { User } from '../../types';
 
 interface TokenUsageAnalyticsProps {
     currentUser: User;
@@ -34,14 +46,14 @@ const USAGE_TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; 
     analysis: { icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500', label: 'Analysis' },
     generation: { icon: <FileText className="w-4 h-4" />, color: 'bg-emerald-500', label: 'Content Generation' },
     automation: { icon: <Zap className="w-4 h-4" />, color: 'bg-amber-500', label: 'Automation' },
-    other: { icon: <Sparkles className="w-4 h-4" />, color: 'bg-slate-500', label: 'Other' }
+    other: { icon: <Sparkles className="w-4 h-4" />, color: 'bg-slate-500', label: 'Other' },
 };
 
 export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
     currentUser,
     className = '',
     showHeader = true,
-    compact = false
+    compact = false,
 }) => {
     const { t } = useTranslation();
     const [usageData, setUsageData] = useState<UsageData | null>(null);
@@ -61,7 +73,6 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
             // Fetch usage analytics from API
             const data = await Api.getTokenUsageAnalytics(currentUser.organizationId || '', timeRange);
             setUsageData(data);
-
         } catch (err: any) {
             console.error('[TokenUsageAnalytics] Failed to fetch usage:', err);
             // Use mock data if API fails
@@ -79,7 +90,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
             return {
                 date: date.toISOString().split('T')[0],
                 tokens: Math.floor(Math.random() * 3000) + 500,
-                cost: Math.random() * 0.5
+                cost: Math.random() * 0.5,
             };
         });
 
@@ -92,17 +103,17 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
             usageByType: [
                 { type: 'chat', tokens: Math.round(totalUsed * 0.45), percentage: 45 },
                 { type: 'analysis', tokens: Math.round(totalUsed * 0.25), percentage: 25 },
-                { type: 'generation', tokens: Math.round(totalUsed * 0.20), percentage: 20 },
-                { type: 'automation', tokens: Math.round(totalUsed * 0.10), percentage: 10 }
+                { type: 'generation', tokens: Math.round(totalUsed * 0.2), percentage: 20 },
+                { type: 'automation', tokens: Math.round(totalUsed * 0.1), percentage: 10 },
             ],
             totalUsed,
             totalLimit: 100000,
             avgDailyUsage: avgDaily,
-            peakUsage: Math.max(...dailyUsage.map(d => d.tokens)),
+            peakUsage: Math.max(...dailyUsage.map((d) => d.tokens)),
             estimatedDaysRemaining: Math.round((100000 - totalUsed) / avgDaily),
             costThisMonth: dailyUsage.reduce((sum, d) => sum + d.cost, 0),
             trend: Math.random() > 0.5 ? 'up' : 'down',
-            trendPercentage: Math.round(Math.random() * 20)
+            trendPercentage: Math.round(Math.random() * 20),
         };
     };
 
@@ -182,10 +193,16 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                         <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                             <Coins className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <div className={`flex items-center gap-1 text-xs font-medium ${
-                            usageData.trend === 'up' ? 'text-red-500' : 'text-emerald-500'
-                        }`}>
-                            {usageData.trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                        <div
+                            className={`flex items-center gap-1 text-xs font-medium ${
+                                usageData.trend === 'up' ? 'text-red-500' : 'text-emerald-500'
+                            }`}
+                        >
+                            {usageData.trend === 'up' ? (
+                                <TrendingUp className="w-3 h-3" />
+                            ) : (
+                                <TrendingDown className="w-3 h-3" />
+                            )}
                             {usageData.trendPercentage}%
                         </div>
                     </div>
@@ -248,9 +265,11 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                 <div className="w-full bg-slate-100 dark:bg-navy-800 rounded-full h-3 overflow-hidden">
                     <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                            usagePercentage >= 90 ? 'bg-red-500' :
-                            usagePercentage >= 75 ? 'bg-amber-500' :
-                            'bg-gradient-to-r from-purple-500 to-indigo-500'
+                            usagePercentage >= 90
+                                ? 'bg-red-500'
+                                : usagePercentage >= 75
+                                  ? 'bg-amber-500'
+                                  : 'bg-gradient-to-r from-purple-500 to-indigo-500'
                         }`}
                         style={{ width: `${Math.min(100, usagePercentage)}%` }}
                     />
@@ -274,7 +293,9 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                                 <div key={item.type}>
                                     <div className="flex items-center justify-between mb-1.5">
                                         <div className="flex items-center gap-2 text-sm">
-                                            <div className={`w-6 h-6 rounded-md ${config.color} flex items-center justify-center text-white`}>
+                                            <div
+                                                className={`w-6 h-6 rounded-md ${config.color} flex items-center justify-center text-white`}
+                                            >
                                                 {config.icon}
                                             </div>
                                             <span className="text-slate-700 dark:text-slate-300">{config.label}</span>
@@ -283,9 +304,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                                             <span className="text-sm font-medium text-slate-900 dark:text-white">
                                                 {formatNumber(item.tokens)}
                                             </span>
-                                            <span className="text-xs text-slate-500 ml-2">
-                                                ({item.percentage}%)
-                                            </span>
+                                            <span className="text-xs text-slate-500 ml-2">({item.percentage}%)</span>
                                         </div>
                                     </div>
                                     <div className="w-full bg-slate-100 dark:bg-navy-800 rounded-full h-1.5">
@@ -310,7 +329,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                     </h3>
                     <div className="flex items-end gap-1 h-32">
                         {usageData.dailyUsage.slice(-14).map((day, index) => {
-                            const maxTokens = Math.max(...usageData.dailyUsage.map(d => d.tokens));
+                            const maxTokens = Math.max(...usageData.dailyUsage.map((d) => d.tokens));
                             const height = (day.tokens / maxTokens) * 100;
                             return (
                                 <div
@@ -343,12 +362,4 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
 };
 
 export default TokenUsageAnalytics;
-
-
-
-
-
-
-
-
 

@@ -3,27 +3,28 @@
  * Groups: Overdue, Today, This Week, Later, No Date
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Plus,
-    Loader2,
-    CheckCircle2,
     AlertCircle,
     Calendar,
     CalendarDays,
-    Clock,
-    CircleDashed,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
-    Pin
+    CircleDashed,
+    Clock,
+    Loader2,
+    Pin,
+    Plus,
 } from 'lucide-react';
-import { TaskRow } from './TaskRow';
-import { TaskTimeGroup } from './WorkSidebar';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
 import { Api } from '../../services/api';
 import { Task } from '../../types';
-import toast from 'react-hot-toast';
+import { TaskRow } from './TaskRow';
+import { TaskTimeGroup } from './WorkSidebar';
 
 interface TaskCounts {
     total: number;
@@ -57,7 +58,7 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
         icon: AlertCircle,
         color: 'text-red-600 dark:text-red-400',
         bgColor: 'bg-red-50 dark:bg-red-900/20',
-        borderColor: 'border-red-200 dark:border-red-800/30'
+        borderColor: 'border-red-200 dark:border-red-800/30',
     },
     {
         key: 'today',
@@ -65,7 +66,7 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
         icon: Calendar,
         color: 'text-blue-600 dark:text-blue-400',
         bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-        borderColor: 'border-blue-200 dark:border-blue-800/30'
+        borderColor: 'border-blue-200 dark:border-blue-800/30',
     },
     {
         key: 'week',
@@ -73,7 +74,7 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
         icon: CalendarDays,
         color: 'text-slate-600 dark:text-slate-400',
         bgColor: 'bg-slate-50 dark:bg-slate-800/50',
-        borderColor: 'border-slate-200 dark:border-slate-700/30'
+        borderColor: 'border-slate-200 dark:border-slate-700/30',
     },
     {
         key: 'later',
@@ -81,7 +82,7 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
         icon: Clock,
         color: 'text-slate-500 dark:text-slate-400',
         bgColor: 'bg-white dark:bg-navy-900',
-        borderColor: 'border-slate-200 dark:border-white/10'
+        borderColor: 'border-slate-200 dark:border-white/10',
     },
     {
         key: 'no-date',
@@ -89,19 +90,17 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
         icon: CircleDashed,
         color: 'text-slate-400 dark:text-slate-500',
         bgColor: 'bg-white dark:bg-navy-900',
-        borderColor: 'border-slate-100 dark:border-white/5'
-    }
+        borderColor: 'border-slate-100 dark:border-white/5',
+    },
 ];
 
 const categorizeTask = (task: Task): TaskTimeGroup => {
-    const isCompleted = ['done', 'completed', 'validated'].includes(
-        task.status?.toLowerCase() || ''
-    );
-    
+    const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
+
     if (isCompleted) return 'later'; // Put completed tasks in "later" group
-    
+
     if (!task.dueDate) return 'no-date';
-    
+
     const dueDate = new Date(task.dueDate);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -109,9 +108,9 @@ const categorizeTask = (task: Task): TaskTimeGroup => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const endOfWeek = new Date(today);
     endOfWeek.setDate(endOfWeek.getDate() + 7);
-    
+
     dueDate.setHours(0, 0, 0, 0);
-    
+
     if (dueDate < today) return 'overdue';
     if (dueDate.getTime() === today.getTime()) return 'today';
     if (dueDate < endOfWeek) return 'week';
@@ -122,13 +121,13 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
     activeTimeGroup,
     onCountsChange,
     onTaskClick,
-    onCreateTask
+    onCreateTask,
 }) => {
     const { t } = useTranslation();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedGroups, setExpandedGroups] = useState<Set<TaskTimeGroup>>(
-        new Set(['overdue', 'today', 'week', 'later', 'no-date'])
+        new Set(['overdue', 'today', 'week', 'later', 'no-date']),
     );
     const [pinnedTaskIds, setPinnedTaskIds] = useState<Set<string>>(() => {
         const saved = localStorage.getItem('pinnedTaskIds');
@@ -163,10 +162,10 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             today: [],
             week: [],
             later: [],
-            'no-date': []
+            'no-date': [],
         };
 
-        tasks.forEach(task => {
+        tasks.forEach((task) => {
             const category = categorizeTask(task);
             groups[category].push(task);
             groups.all.push(task);
@@ -177,10 +176,10 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             urgent: 0,
             high: 1,
             medium: 2,
-            low: 3
+            low: 3,
         };
 
-        Object.keys(groups).forEach(key => {
+        Object.keys(groups).forEach((key) => {
             groups[key as TaskTimeGroup].sort((a, b) => {
                 // Pinned tasks first
                 const aPinned = pinnedTaskIds.has(a.id) ? 0 : 1;
@@ -211,7 +210,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             today: groupedTasks.today.length,
             week: groupedTasks.week.length,
             later: groupedTasks.later.length,
-            noDate: groupedTasks['no-date'].length
+            noDate: groupedTasks['no-date'].length,
         };
         onCountsChange(counts);
     }, [groupedTasks, onCountsChange]);
@@ -229,13 +228,13 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             today: activeTimeGroup === 'today' ? groupedTasks.today : [],
             week: activeTimeGroup === 'week' ? groupedTasks.week : [],
             later: activeTimeGroup === 'later' ? groupedTasks.later : [],
-            'no-date': activeTimeGroup === 'no-date' ? groupedTasks['no-date'] : []
+            'no-date': activeTimeGroup === 'no-date' ? groupedTasks['no-date'] : [],
         };
     }, [activeTimeGroup, groupedTasks]);
 
     // Handlers
     const toggleGroup = (group: TaskTimeGroup) => {
-        setExpandedGroups(prev => {
+        setExpandedGroups((prev) => {
             const next = new Set(prev);
             if (next.has(group)) {
                 next.delete(group);
@@ -248,19 +247,16 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
 
     const handleToggleComplete = async (taskId: string, completed: boolean) => {
         try {
-            await Api.updateTask(taskId, { 
-                status: completed ? 'completed' : 'todo' 
+            await Api.updateTask(taskId, {
+                status: completed ? 'completed' : 'todo',
             });
-            setTasks(prev => 
-                prev.map(t => 
-                    t.id === taskId 
-                        ? { ...t, status: completed ? 'completed' : 'todo' } as unknown as Task
-                        : t
-                )
+            setTasks((prev) =>
+                prev.map((t) =>
+                    t.id === taskId ? ({ ...t, status: completed ? 'completed' : 'todo' } as unknown as Task) : t,
+                ),
             );
-            toast.success(completed 
-                ? t('myWork.taskCompleted', 'Task completed') 
-                : t('myWork.taskReopened', 'Task reopened')
+            toast.success(
+                completed ? t('myWork.taskCompleted', 'Task completed') : t('myWork.taskReopened', 'Task reopened'),
             );
         } catch (error) {
             console.error('Failed to update task:', error);
@@ -269,7 +265,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
     };
 
     const handleTogglePin = (taskId: string) => {
-        setPinnedTaskIds(prev => {
+        setPinnedTaskIds((prev) => {
             const next = new Set(prev);
             if (next.has(taskId)) {
                 next.delete(taskId);
@@ -284,7 +280,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
     const handleDelete = async (taskId: string) => {
         try {
             await Api.deleteTask(taskId);
-            setTasks(prev => prev.filter(t => t.id !== taskId));
+            setTasks((prev) => prev.filter((t) => t.id !== taskId));
             toast.success(t('myWork.taskDeleted', 'Task deleted'));
         } catch (error) {
             console.error('Failed to delete task:', error);
@@ -294,7 +290,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
 
     // Separate pinned tasks
     const pinnedTasks = useMemo(() => {
-        return tasks.filter(t => pinnedTaskIds.has(t.id));
+        return tasks.filter((t) => pinnedTaskIds.has(t.id));
     }, [tasks, pinnedTaskIds]);
 
     if (loading) {
@@ -343,7 +339,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
                                     </span>
                                 </div>
                                 <AnimatePresence>
-                                    {pinnedTasks.map(task => (
+                                    {pinnedTasks.map((task) => (
                                         <TaskRow
                                             key={task.id}
                                             task={task}
@@ -359,11 +355,11 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
                         )}
 
                         {/* Time Groups */}
-                        {timeGroupConfigs.map(config => {
+                        {timeGroupConfigs.map((config) => {
                             const groupTasks = displayTasks[config.key].filter(
-                                t => !pinnedTaskIds.has(t.id) || activeTimeGroup !== 'all'
+                                (t) => !pinnedTaskIds.has(t.id) || activeTimeGroup !== 'all',
                             );
-                            
+
                             if (groupTasks.length === 0) return null;
 
                             const isExpanded = expandedGroups.has(config.key);
@@ -384,11 +380,13 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
                                         <span className={`text-xs font-medium uppercase tracking-wide ${config.color}`}>
                                             {config.label}
                                         </span>
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                                            config.key === 'overdue' 
-                                                ? 'bg-red-100 dark:bg-red-800/50 text-red-600 dark:text-red-300'
-                                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                                        }`}>
+                                        <span
+                                            className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                                config.key === 'overdue'
+                                                    ? 'bg-red-100 dark:bg-red-800/50 text-red-600 dark:text-red-300'
+                                                    : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                                            }`}
+                                        >
                                             {groupTasks.length}
                                         </span>
                                     </button>
@@ -396,7 +394,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
                                     {/* Group Tasks */}
                                     {isExpanded && (
                                         <AnimatePresence>
-                                            {groupTasks.map(task => (
+                                            {groupTasks.map((task) => (
                                                 <TaskRow
                                                     key={task.id}
                                                     task={task}
@@ -420,4 +418,3 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
 };
 
 export default MyTasksList;
-

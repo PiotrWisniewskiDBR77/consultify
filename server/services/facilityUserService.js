@@ -17,7 +17,8 @@
  * @module facilityUserService
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 import { v4 as uuid } from 'uuid';
 
 
@@ -527,6 +528,7 @@ const FacilityUserService = {
 };
 
 export default FacilityUserService;
+
 
 
 

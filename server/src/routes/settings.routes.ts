@@ -1,7 +1,7 @@
 /**
  * Settings Routes
  * API endpoints for settings
- * 
+ *
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 

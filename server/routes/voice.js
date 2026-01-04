@@ -23,8 +23,9 @@ import multer from 'multer';
 import verifyToken from '../middleware/authMiddleware.js';
 import speechToTextService from '../services/ai/speechToTextService.js';
 import textToSpeechService from '../services/ai/textToSpeechService.js';
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
+
 
 // ============================================================================
 // Multer Configuration for Audio Upload

@@ -1,12 +1,12 @@
 /**
  * Organizations Routes Unit Tests
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Unit tests for organizations routes - 90%+ coverage target
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Organizations Routes', () => {
     let mockReq: Partial<Request>;
@@ -57,9 +57,11 @@ describe('Organizations Routes', () => {
 
     describe('GET /api/organizations/current', () => {
         it('should return current user organizations', () => {
-            mockOrgController.getCurrentOrganizations.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.([{ id: 'org-123', name: 'Organization 1' }]);
-            });
+            mockOrgController.getCurrentOrganizations.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.([{ id: 'org-123', name: 'Organization 1' }]);
+                },
+            );
 
             expect(mockOrgController.getCurrentOrganizations).toBeDefined();
         });
@@ -92,9 +94,11 @@ describe('Organizations Routes', () => {
         it('should return organization by ID', () => {
             mockReq.params = { orgId: 'org-123' };
 
-            mockOrgController.getOrganizationById.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ id: 'org-123', name: 'Organization 1' });
-            });
+            mockOrgController.getOrganizationById.mockImplementation(
+                (req: Partial<Request>, res: Partial<Response>) => {
+                    res.json?.({ id: 'org-123', name: 'Organization 1' });
+                },
+            );
 
             expect(mockOrgController.getOrganizationById).toBeDefined();
         });
@@ -215,4 +219,3 @@ describe('Organizations Routes', () => {
         });
     });
 });
-

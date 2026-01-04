@@ -1,11 +1,11 @@
 /**
  * DecisionNode - Diamond-shaped decision point
- * 
+ *
  * Diamond node for yes/no branching decisions.
  */
 
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 interface DecisionData {
     label: string;
@@ -13,11 +13,7 @@ interface DecisionData {
     noLabel?: string;
 }
 
-export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({ 
-    data, 
-    selected,
-    isConnectable
-}: any) => {
+export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({ data, selected, isConnectable }: any) => {
     const { label, yesLabel = 'Yes', noLabel = 'No' } = data;
 
     return (
@@ -40,9 +36,7 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({
             >
                 {/* Content (rotated back) */}
                 <div className="-rotate-45 text-center p-2 max-w-[90px]">
-                    <div className="font-medium text-sm text-white truncate">
-                        {label || 'Decision'}
-                    </div>
+                    <div className="font-medium text-sm text-white truncate">{label || 'Decision'}</div>
                 </div>
             </div>
 
@@ -77,12 +71,4 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(({
 DecisionNode.displayName = 'DecisionNode';
 
 export default DecisionNode;
-
-
-
-
-
-
-
-
 

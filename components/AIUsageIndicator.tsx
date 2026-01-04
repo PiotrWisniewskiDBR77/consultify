@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { AlertTriangle, TrendingUp, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { Api } from '../services/api';
-import { Zap, TrendingUp, AlertTriangle } from 'lucide-react';
 
 interface UsageData {
     daily: number;
@@ -20,10 +21,7 @@ interface AIUsageIndicatorProps {
  * Shows user's AI token usage with visual progress bar
  * Uses /api/llm/user/usage endpoint
  */
-export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
-    compact = false,
-    showTrend = false
-}) => {
+export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({ compact = false, showTrend = false }) => {
     const [usage, setUsage] = useState<UsageData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,7 +36,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
                     monthly: data.tokensUsed, // Fallback if monthly not available
                     dailyLimit: data.tokensLimit,
                     monthlyLimit: data.tokensLimit * 30, // Fallback
-                    percentage: (data.tokensUsed / data.tokensLimit) * 100
+                    percentage: (data.tokensUsed / data.tokensLimit) * 100,
                 });
                 setError(null);
             } catch (err) {
@@ -144,17 +142,20 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
                 <div className="mt-3 pt-3 border-t border-white/5">
                     <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Last 7 days</div>
                     <div className="flex gap-1 h-8 items-end">
-                        {usage.recentUsage.slice(0, 7).reverse().map((day, idx) => {
-                            const height = Math.max(10, (day.tokens / usage.dailyLimit) * 100);
-                            return (
-                                <div
-                                    key={idx}
-                                    className={`flex-1 rounded-sm ${getProgressColor((day.tokens / usage.dailyLimit) * 100)}`}
-                                    style={{ height: `${Math.min(100, height)}%` }}
-                                    title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
-                                />
-                            );
-                        })}
+                        {usage.recentUsage
+                            .slice(0, 7)
+                            .reverse()
+                            .map((day, idx) => {
+                                const height = Math.max(10, (day.tokens / usage.dailyLimit) * 100);
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`flex-1 rounded-sm ${getProgressColor((day.tokens / usage.dailyLimit) * 100)}`}
+                                        style={{ height: `${Math.min(100, height)}%` }}
+                                        title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
+                                    />
+                                );
+                            })}
                     </div>
                 </div>
             )}

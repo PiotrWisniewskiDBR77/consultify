@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
 import { AuthSlice, createAuthSlice } from './slices/authSlice';
-import { UISlice, createUISlice } from './slices/uiSlice';
 import { ChatSlice, createChatSlice } from './slices/chatSlice';
-import { ProjectSlice, createProjectSlice } from './slices/projectSlice';
+import { createProjectSlice, ProjectSlice } from './slices/projectSlice';
+import { createUISlice, UISlice } from './slices/uiSlice';
 
 // Combine all slice types into AppState
 export type AppState = AuthSlice & UISlice & ChatSlice & ProjectSlice;
@@ -44,6 +45,6 @@ export const useAppStore = create<AppState>()(
                 currentProjectId: state.currentProjectId,
                 notifications: state.notifications,
             }),
-        }
-    )
+        },
+    ),
 );

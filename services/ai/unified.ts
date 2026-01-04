@@ -1,6 +1,7 @@
-import { AIProviderConfig, AIMessageHistory } from '../../types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+import { AIMessageHistory, AIProviderConfig } from '../../types';
 import { Api } from '../api';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const UnifiedAI = {
     sendMessage: async (
@@ -8,13 +9,13 @@ export const UnifiedAI = {
         history: AIMessageHistory[],
         message: string,
         systemInstruction?: string,
-        roleName?: string
+        roleName?: string,
     ): Promise<string> => {
         // ALWAYS route through backend API ('system')
         // This ensures the AIPipeline (Server) handles RAG, Memory, Thinking, and Artifacts.
         return (Api as any).chatWithAI(message, history, systemInstruction, roleName, {
             model: config?.modelId,
-            temperature: 0.7
+            temperature: 0.7,
         });
     },
 
@@ -25,7 +26,7 @@ export const UnifiedAI = {
         onChunk: (text: string) => void,
         onDone: () => void,
         systemInstruction?: string,
-        roleName?: string
+        roleName?: string,
     ): Promise<void> => {
         // ALWAYS route through backend API ('system')
         // This ensures the AIPipeline (Server) handles RAG, Memory, Thinking, and Artifacts.
@@ -39,10 +40,11 @@ export const UnifiedAI = {
             roleName,
             undefined, // language
             undefined, // onThinking - let Api handle it or pass through if we add output
-            { // OPTIONS
+            {
+                // OPTIONS
                 model: config?.modelId,
-                temperature: 0.7
-            }
+                temperature: 0.7,
+            },
         );
-    }
+    },
 };

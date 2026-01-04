@@ -1,6 +1,6 @@
 /**
  * SecuritySettings - Enterprise Security Management Component
- * 
+ *
  * Features:
  * - Two-Factor Authentication management
  * - Password Policy configuration
@@ -8,14 +8,30 @@
  * - Login History viewer
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Shield, Key, Clock, Users, History, RefreshCw,
-    Lock, Unlock, Smartphone, Monitor, Globe, AlertTriangle,
-    Check, X, Download, LogOut, Settings, Eye, EyeOff
+    AlertTriangle,
+    Check,
+    Clock,
+    Download,
+    Eye,
+    EyeOff,
+    Globe,
+    History,
+    Key,
+    Lock,
+    LogOut,
+    Monitor,
+    RefreshCw,
+    Settings,
+    Shield,
+    Smartphone,
+    Unlock,
+    Users,
+    X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface SecuritySettingsData {
     organizationId: string;
@@ -100,7 +116,7 @@ export const SecuritySettings: React.FC = () => {
     const fetchSettings = useCallback(async () => {
         try {
             const res = await fetch('/api/security/settings', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
             setSettings(data);
@@ -113,8 +129,8 @@ export const SecuritySettings: React.FC = () => {
     const fetchSessions = useCallback(async () => {
         try {
             const [ownRes, allRes] = await Promise.all([
-                fetch('/api/security/sessions', { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch('/api/security/sessions/all', { headers: { 'Authorization': `Bearer ${token}` } })
+                fetch('/api/security/sessions', { headers: { Authorization: `Bearer ${token}` } }),
+                fetch('/api/security/sessions/all', { headers: { Authorization: `Bearer ${token}` } }),
             ]);
 
             if (ownRes.ok) {
@@ -134,7 +150,7 @@ export const SecuritySettings: React.FC = () => {
     const fetchLoginHistory = useCallback(async () => {
         try {
             const res = await fetch('/api/security/login-history?all=true&limit=100', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -148,7 +164,7 @@ export const SecuritySettings: React.FC = () => {
     const fetch2FAStatus = useCallback(async () => {
         try {
             const res = await fetch('/api/security/2fa/org-status', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -162,12 +178,7 @@ export const SecuritySettings: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
-            await Promise.all([
-                fetchSettings(),
-                fetchSessions(),
-                fetchLoginHistory(),
-                fetch2FAStatus()
-            ]);
+            await Promise.all([fetchSettings(), fetchSessions(), fetchLoginHistory(), fetch2FAStatus()]);
             setLoading(false);
         };
         loadData();
@@ -179,10 +190,10 @@ export const SecuritySettings: React.FC = () => {
             const res = await fetch('/api/security/settings', {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
             });
 
             if (!res.ok) {
@@ -205,7 +216,7 @@ export const SecuritySettings: React.FC = () => {
         try {
             const res = await fetch(`/api/security/sessions/${sessionId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
@@ -225,7 +236,7 @@ export const SecuritySettings: React.FC = () => {
         try {
             const res = await fetch(`/api/security/sessions/user/${userId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
@@ -245,7 +256,7 @@ export const SecuritySettings: React.FC = () => {
             day: 'numeric',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
@@ -277,7 +288,7 @@ export const SecuritySettings: React.FC = () => {
         <div className="space-y-6">
             {/* Tabs - Clean underline style */}
             <div className="admin-tabs">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -369,14 +380,16 @@ export const SecuritySettings: React.FC = () => {
                             <h3 className="text-lg font-semibold text-white">User 2FA Status</h3>
                         </div>
                         <div className="divide-y divide-white/5">
-                            {twoFAStatus?.users.map(user => (
+                            {twoFAStatus?.users.map((user) => (
                                 <div key={user.id} className="p-4 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-medium">
                                             {user.firstName?.[0] || '?'}
                                         </div>
                                         <div>
-                                            <p className="text-white font-medium">{user.firstName} {user.lastName}</p>
+                                            <p className="text-white font-medium">
+                                                {user.firstName} {user.lastName}
+                                            </p>
                                             <p className="text-sm text-slate-400">{user.email}</p>
                                         </div>
                                     </div>
@@ -414,7 +427,9 @@ export const SecuritySettings: React.FC = () => {
                                 min="6"
                                 max="32"
                                 value={formData.passwordMinLength || 8}
-                                onChange={(e) => setFormData({ ...formData, passwordMinLength: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, passwordMinLength: parseInt(e.target.value) })
+                                }
                                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
                             />
                             <div className="flex justify-between text-xs text-slate-500 mt-1">
@@ -429,7 +444,9 @@ export const SecuritySettings: React.FC = () => {
                                 <input
                                     type="checkbox"
                                     checked={formData.passwordRequireUppercase || false}
-                                    onChange={(e) => setFormData({ ...formData, passwordRequireUppercase: e.target.checked })}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, passwordRequireUppercase: e.target.checked })
+                                    }
                                     className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
                                 />
                                 <span className="text-slate-300">Require uppercase letter (A-Z)</span>
@@ -439,7 +456,9 @@ export const SecuritySettings: React.FC = () => {
                                 <input
                                     type="checkbox"
                                     checked={formData.passwordRequireNumber || false}
-                                    onChange={(e) => setFormData({ ...formData, passwordRequireNumber: e.target.checked })}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, passwordRequireNumber: e.target.checked })
+                                    }
                                     className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
                                 />
                                 <span className="text-slate-300">Require number (0-9)</span>
@@ -449,7 +468,9 @@ export const SecuritySettings: React.FC = () => {
                                 <input
                                     type="checkbox"
                                     checked={formData.passwordRequireSpecial || false}
-                                    onChange={(e) => setFormData({ ...formData, passwordRequireSpecial: e.target.checked })}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, passwordRequireSpecial: e.target.checked })
+                                    }
                                     className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
                                 />
                                 <span className="text-slate-300">Require special character (!@#$%^&*)</span>
@@ -466,7 +487,9 @@ export const SecuritySettings: React.FC = () => {
                                 min="0"
                                 max="365"
                                 value={formData.passwordExpiryDays || 0}
-                                onChange={(e) => setFormData({ ...formData, passwordExpiryDays: parseInt(e.target.value) })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, passwordExpiryDays: parseInt(e.target.value) })
+                                }
                                 className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white"
                             />
                         </div>
@@ -486,7 +509,9 @@ export const SecuritySettings: React.FC = () => {
                                     min="5"
                                     max="1440"
                                     value={formData.sessionTimeoutMinutes || 480}
-                                    onChange={(e) => setFormData({ ...formData, sessionTimeoutMinutes: parseInt(e.target.value) })}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, sessionTimeoutMinutes: parseInt(e.target.value) })
+                                    }
                                     className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white"
                                 />
                             </div>
@@ -500,7 +525,9 @@ export const SecuritySettings: React.FC = () => {
                                     min="1"
                                     max="20"
                                     value={formData.maxSessionsPerUser || 5}
-                                    onChange={(e) => setFormData({ ...formData, maxSessionsPerUser: parseInt(e.target.value) })}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, maxSessionsPerUser: parseInt(e.target.value) })
+                                    }
                                     className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-white"
                                 />
                             </div>
@@ -554,7 +581,7 @@ export const SecuritySettings: React.FC = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                        allSessions.map(session => (
+                                        allSessions.map((session) => (
                                             <tr key={session.id} className="hover:bg-white/5">
                                                 <td className="px-4 py-3">
                                                     <div>
@@ -565,7 +592,9 @@ export const SecuritySettings: React.FC = () => {
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-2 text-slate-300">
                                                         {getDeviceIcon(session.userAgent)}
-                                                        <span className="text-xs">{session.deviceInfo || 'Unknown'}</span>
+                                                        <span className="text-xs">
+                                                            {session.deviceInfo || 'Unknown'}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-slate-300">
@@ -624,11 +653,13 @@ export const SecuritySettings: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    loginHistory.map(item => (
+                                    loginHistory.map((item) => (
                                         <tr key={item.id} className="hover:bg-white/5">
                                             <td className="px-4 py-3">
                                                 <div>
-                                                    <p className="text-white font-medium">{item.userName || 'Unknown'}</p>
+                                                    <p className="text-white font-medium">
+                                                        {item.userName || 'Unknown'}
+                                                    </p>
                                                     <p className="text-xs text-slate-400">{item.userEmail}</p>
                                                 </div>
                                             </td>
@@ -641,17 +672,15 @@ export const SecuritySettings: React.FC = () => {
                                                     <span className="flex items-center gap-1 text-red-400 text-xs">
                                                         <X size={14} /> Failed
                                                         {item.failureReason && (
-                                                            <span className="text-slate-500">({item.failureReason})</span>
+                                                            <span className="text-slate-500">
+                                                                ({item.failureReason})
+                                                            </span>
                                                         )}
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-300">
-                                                {item.ipAddress || 'N/A'}
-                                            </td>
-                                            <td className="px-4 py-3 text-slate-400">
-                                                {item.location || 'Unknown'}
-                                            </td>
+                                            <td className="px-4 py-3 text-slate-300">{item.ipAddress || 'N/A'}</td>
+                                            <td className="px-4 py-3 text-slate-400">{item.location || 'Unknown'}</td>
                                             <td className="px-4 py-3 text-slate-400 text-xs">
                                                 {formatDate(item.createdAt)}
                                             </td>
@@ -668,4 +697,3 @@ export const SecuritySettings: React.FC = () => {
 };
 
 export default SecuritySettings;
-

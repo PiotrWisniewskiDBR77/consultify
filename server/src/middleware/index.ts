@@ -5,126 +5,92 @@
 
 // Auth Middleware
 export {
-    verifyToken,
+    type AuthenticatedUser,
+    type AuthRequest,
+    type JWTPayload,
     optionalAuth,
-    requireRole,
-    requireSuperAdmin,
     requireOrganization,
     requirePermission,
+    requireRole,
+    requireSuperAdmin,
     setDependencies,
-    type AuthRequest,
-    type AuthenticatedUser,
-    type JWTPayload,
+    verifyToken,
 } from './auth.middleware.js';
 
 // Admin & Security Middleware
+export { checkPermission, setDependencies as setAdminDependencies, verifyAdmin } from './admin.middleware.js';
 export {
-    verifyAdmin,
-    checkPermission,
-    setDependencies as setAdminDependencies,
-} from './admin.middleware.js';
-
-export {
-    verifySuperAdmin,
-    setDependencies as setSuperAdminDependencies,
-} from './superAdmin.middleware.js';
-
-export {
-    requirePermission as requirePermissionPBAC,
-    requireAnyPermission,
-    requireAllPermissions,
     auditAction,
+    requireAllPermissions,
+    requireAnyPermission,
+    requirePermission as requirePermissionPBAC,
     setDependencies as setPermissionDependencies,
 } from './permission.middleware.js';
-
 export {
-    requireOrgAccess,
+    ORG_ROLE_HIERARCHY,
+    requireConsultantScope,
     requireRole as requireGlobalRole,
+    requireOrgAccess,
     requireOrgMember,
     requireOrgRole,
     requireOrgRoleOrHigher,
-    requireConsultantScope,
     requireOwnerOrSuperadmin,
-    ORG_ROLE_HIERARCHY,
 } from './rbac.middleware.js';
-
-export {
-    securityHeaders,
-    createRateLimiter,
-    rateLimitPresets,
-    validateRequest,
-} from './securityHeaders.middleware.js';
+export { createRateLimiter, rateLimitPresets, securityHeaders, validateRequest } from './securityHeaders.middleware.js';
+export { setDependencies as setSuperAdminDependencies, verifySuperAdmin } from './superAdmin.middleware.js';
 
 // Business Middleware
 export {
-    default as orgContextMiddleware,
+    FEATURE_REQUIREMENTS,
+    getAccessibleFeatures,
+    isFeatureAccessible,
+    requireAccess,
+    requireFeature,
+} from './featureGate.middleware.js';
+export { fileFilter, upload } from './fileUpload.middleware.js';
+export {
     getUserOrganizations,
+    default as orgContextMiddleware,
     resolveUserOrgAccess,
 } from './orgContext.middleware.js';
-
+export { checkPlanLimit, PLAN_LIMITS, setDependencies as setPlanLimitsDependencies } from './planLimits.middleware.js';
+export { enforceProjectQuota, setDependencies as setProjectQuotaDependencies } from './projectQuota.middleware.js';
 export {
-    checkPlanLimit,
-    PLAN_LIMITS,
-    setDependencies as setPlanLimitsDependencies,
-} from './planLimits.middleware.js';
-
-export {
-    enforceTokenQuota,
     enforceStorageQuota,
-    recordTokenUsageAfterResponse,
+    enforceTokenQuota,
     recordStorageAfterUpload,
+    recordTokenUsageAfterResponse,
     setDependencies as setQuotaDependencies,
 } from './quota.middleware.js';
-
-export {
-    enforceProjectQuota,
-    setDependencies as setProjectQuotaDependencies,
-} from './projectQuota.middleware.js';
-
-export {
-    requireFeature,
-    requireAccess,
-    isFeatureAccessible,
-    getAccessibleFeatures,
-    FEATURE_REQUIREMENTS,
-} from './featureGate.middleware.js';
-
 export { validateBody } from './validation.middleware.js';
-
-export { upload, fileFilter } from './fileUpload.middleware.js';
 
 // Specialized Middleware
 export { demoGuard } from './demoGuard.middleware.js';
-
 export {
-    trialEntryGuard,
-    requireOrgContext,
-    isTrialEntryUser,
-    BLOCKED_ROUTES,
-    setDependencies as setTrialEntryDependencies,
-} from './trialEntryGuard.middleware.js';
-
-export {
-    validateInitiative,
-    validateTask,
-    validateInitiativeStatus,
-    validateTaskStatus,
     logStatusChange,
     setDependencies as setPMOValidationDependencies,
+    validateInitiative,
+    validateInitiativeStatus,
+    validateTask,
+    validateTaskStatus,
 } from './pmoValidation.middleware.js';
-
+export {
+    BLOCKED_ROUTES,
+    isTrialEntryUser,
+    requireOrgContext,
+    setDependencies as setTrialEntryDependencies,
+    trialEntryGuard,
+} from './trialEntryGuard.middleware.js';
 export {
     attachUserState,
-    requireState,
+    PHASES,
     requirePhase,
+    requireState,
     requirePermission as requireStatePermission,
+    setDependencies as setUserStateDependencies,
     transitionState,
     USER_STATES,
-    PHASES,
-    setDependencies as setUserStateDependencies,
 } from './userStateGuard.middleware.js';
 
 // Re-export error handler from existing location
 export { errorHandler } from './errorHandler.js';
-
-

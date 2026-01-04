@@ -1,11 +1,11 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Sparkles, X } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
  * DemoUpgradePrompt — Subtle upgrade nudge for demo users
- * 
+ *
  * Appears contextually when demo users explore premium features
  * Designed to be non-intrusive and professional (BCG/McKinsey style)
  */
@@ -21,12 +21,15 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
     isVisible,
     onClose,
     feature = 'full access',
-    variant = 'toast'
+    variant = 'toast',
 }) => {
     const { t } = useTranslation();
 
     const handleContactSales = () => {
-        window.open('https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017', '_blank');
+        window.open(
+            'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
+            '_blank',
+        );
     };
 
     // Toast variant - subtle bottom-right notification
@@ -44,7 +47,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
                         <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
                             {/* Gradient accent */}
                             <div className="h-1 bg-gradient-to-r from-purple-500 to-indigo-500" />
-                            
+
                             <div className="p-4">
                                 <button
                                     onClick={onClose}
@@ -62,7 +65,10 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
                                             {t('demo.upgrade.title', 'Unlock Full Potential')}
                                         </h4>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                            {t('demo.upgrade.description', 'Get dedicated environment with your company data and full AI capabilities.')}
+                                            {t(
+                                                'demo.upgrade.description',
+                                                'Get dedicated environment with your company data and full AI capabilities.',
+                                            )}
                                         </p>
                                         <button
                                             onClick={handleContactSales}
@@ -149,7 +155,11 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
                         </h3>
 
                         <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            {t('demo.upgrade.modalDescription', 'You\'ve explored {feature}. Get a dedicated environment with your real company data and unlimited AI capabilities.', { feature })}
+                            {t(
+                                'demo.upgrade.modalDescription',
+                                "You've explored {feature}. Get a dedicated environment with your real company data and unlimited AI capabilities.",
+                                { feature },
+                            )}
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3">
@@ -175,12 +185,4 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
 };
 
 export default DemoUpgradePrompt;
-
-
-
-
-
-
-
-
 

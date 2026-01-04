@@ -3,17 +3,9 @@
  * BCG/McKinsey style: Heatmap, data-dense, actionable
  */
 
-import React from 'react';
 import { motion } from 'framer-motion';
-import {
-    Users,
-    TrendingUp,
-    TrendingDown,
-    AlertTriangle,
-    CheckCircle2,
-    ArrowRight,
-    BarChart3
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, CheckCircle2, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface TeamMember {
@@ -57,13 +49,11 @@ const CapacityIndicator: React.FC<{ capacity: number }> = ({ capacity }) => {
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(capacity, 100)}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
                     className={`h-full rounded-full ${getColor()}`}
                 />
             </div>
-            <span className={`text-xs font-bold tabular-nums w-10 text-right ${getTextColor()}`}>
-                {capacity}%
-            </span>
+            <span className={`text-xs font-bold tabular-nums w-10 text-right ${getTextColor()}`}>{capacity}%</span>
         </div>
     );
 };
@@ -88,33 +78,31 @@ const TeamMemberRow: React.FC<{
             onClick={onClick}
         >
             {/* Avatar */}
-            <div className={`
+            <div
+                className={`
                 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white
-                ${isOverloaded 
-                    ? 'bg-gradient-to-br from-rose-500 to-red-600' 
-                    : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                ${
+                    isOverloaded
+                        ? 'bg-gradient-to-br from-rose-500 to-red-600'
+                        : 'bg-gradient-to-br from-violet-500 to-purple-600'
                 }
-            `}>
+            `}
+            >
                 {member.initials}
             </div>
 
             {/* Name & Progress */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
-                        {member.name}
-                    </span>
-                    {isOverloaded && (
-                        <AlertTriangle size={12} className="text-rose-500 shrink-0" />
-                    )}
+                    <span className="text-sm font-medium text-navy-900 dark:text-white truncate">{member.name}</span>
+                    {isOverloaded && <AlertTriangle size={12} className="text-rose-500 shrink-0" />}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <span>{member.tasksCompleted}/{member.tasksTotal} tasks</span>
+                    <span>
+                        {member.tasksCompleted}/{member.tasksTotal} tasks
+                    </span>
                     {TrendIcon && (
-                        <TrendIcon 
-                            size={10} 
-                            className={member.trend === 'up' ? 'text-emerald-500' : 'text-rose-500'} 
-                        />
+                        <TrendIcon size={10} className={member.trend === 'up' ? 'text-emerald-500' : 'text-rose-500'} />
                     )}
                 </div>
             </div>
@@ -132,22 +120,66 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
     velocityTrend = 'stable',
     loading = false,
     onViewAll,
-    onMemberClick
+    onMemberClick,
 }) => {
     const { t } = useTranslation();
 
     // Default/mock members
-    const displayMembers: TeamMember[] = members.length > 0 ? members : [
-        { id: '1', name: 'Anna Kowalska', initials: 'AK', capacity: 95, tasksCompleted: 6, tasksTotal: 8, trend: 'up' },
-        { id: '2', name: 'Piotr Nowak', initials: 'PN', capacity: 120, tasksCompleted: 5, tasksTotal: 12, trend: 'down' },
-        { id: '3', name: 'Marta Wiśniewska', initials: 'MW', capacity: 65, tasksCompleted: 3, tasksTotal: 5, trend: 'stable' },
-        { id: '4', name: 'Jan Kowalczyk', initials: 'JK', capacity: 40, tasksCompleted: 2, tasksTotal: 3, trend: 'up' },
-        { id: '5', name: 'Karolina Mazur', initials: 'KM', capacity: 85, tasksCompleted: 4, tasksTotal: 7, trend: 'stable' },
-    ];
+    const displayMembers: TeamMember[] =
+        members.length > 0
+            ? members
+            : [
+                  {
+                      id: '1',
+                      name: 'Anna Kowalska',
+                      initials: 'AK',
+                      capacity: 95,
+                      tasksCompleted: 6,
+                      tasksTotal: 8,
+                      trend: 'up',
+                  },
+                  {
+                      id: '2',
+                      name: 'Piotr Nowak',
+                      initials: 'PN',
+                      capacity: 120,
+                      tasksCompleted: 5,
+                      tasksTotal: 12,
+                      trend: 'down',
+                  },
+                  {
+                      id: '3',
+                      name: 'Marta Wiśniewska',
+                      initials: 'MW',
+                      capacity: 65,
+                      tasksCompleted: 3,
+                      tasksTotal: 5,
+                      trend: 'stable',
+                  },
+                  {
+                      id: '4',
+                      name: 'Jan Kowalczyk',
+                      initials: 'JK',
+                      capacity: 40,
+                      tasksCompleted: 2,
+                      tasksTotal: 3,
+                      trend: 'up',
+                  },
+                  {
+                      id: '5',
+                      name: 'Karolina Mazur',
+                      initials: 'KM',
+                      capacity: 85,
+                      tasksCompleted: 4,
+                      tasksTotal: 7,
+                      trend: 'stable',
+                  },
+              ];
 
-    const calculatedAvgCapacity = avgCapacity || Math.round(displayMembers.reduce((sum, m) => sum + m.capacity, 0) / displayMembers.length);
-    const overloadedCount = displayMembers.filter(m => m.capacity > 100).length;
-    const availableCount = displayMembers.filter(m => m.capacity < 50).length;
+    const calculatedAvgCapacity =
+        avgCapacity || Math.round(displayMembers.reduce((sum, m) => sum + m.capacity, 0) / displayMembers.length);
+    const overloadedCount = displayMembers.filter((m) => m.capacity > 100).length;
+    const availableCount = displayMembers.filter((m) => m.capacity < 50).length;
 
     const VelocityTrendIcon = velocityTrend === 'up' ? TrendingUp : velocityTrend === 'down' ? TrendingDown : null;
 
@@ -205,9 +237,11 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
                         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
                             {t('executive.team.avgCapacity', 'Avg Capacity')}
                         </p>
-                        <p className={`text-lg font-bold ${
-                            calculatedAvgCapacity > 90 ? 'text-amber-500' : 'text-navy-900 dark:text-white'
-                        }`}>
+                        <p
+                            className={`text-lg font-bold ${
+                                calculatedAvgCapacity > 90 ? 'text-amber-500' : 'text-navy-900 dark:text-white'
+                            }`}
+                        >
                             {calculatedAvgCapacity}%
                         </p>
                     </div>
@@ -215,7 +249,9 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
                         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
                             {t('executive.team.overloaded', 'Overloaded')}
                         </p>
-                        <p className={`text-lg font-bold ${overloadedCount > 0 ? 'text-rose-500' : 'text-navy-900 dark:text-white'}`}>
+                        <p
+                            className={`text-lg font-bold ${overloadedCount > 0 ? 'text-rose-500' : 'text-navy-900 dark:text-white'}`}
+                        >
                             {overloadedCount}
                         </p>
                     </div>
@@ -223,7 +259,9 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
                         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
                             {t('executive.team.available', 'Available')}
                         </p>
-                        <p className={`text-lg font-bold ${availableCount > 0 ? 'text-emerald-500' : 'text-navy-900 dark:text-white'}`}>
+                        <p
+                            className={`text-lg font-bold ${availableCount > 0 ? 'text-emerald-500' : 'text-navy-900 dark:text-white'}`}
+                        >
                             {availableCount}
                         </p>
                     </div>
@@ -240,10 +278,7 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.05 }}
                         >
-                            <TeamMemberRow
-                                member={member}
-                                onClick={() => onMemberClick?.(member.id)}
-                            />
+                            <TeamMemberRow member={member} onClick={() => onMemberClick?.(member.id)} />
                         </motion.div>
                     ))}
                 </div>
@@ -266,12 +301,4 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
 };
 
 export default TeamPerformancePreview;
-
-
-
-
-
-
-
-
 
